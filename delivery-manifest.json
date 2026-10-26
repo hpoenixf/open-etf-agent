@@ -1,16 +1,16 @@
 {
   "schemaVersion": "local-delivery-manifest@2",
-  "status": "v0.2-offline-candidate-with-real-kit-checks",
+  "status": "v0.2-maintenance-offline-candidate-with-real-kit-checks",
   "published": false,
-  "baselineCommit": "1a787437c2a900c8a9fe27048e81aa86b703305b",
-  "codeInputInventorySha256": "3fff7f50fbc8c23b19ba2f5f1c918a1e389f8cc5b9cb10187891356bb46c03f7",
+  "baselineCommit": "2e5c21166f61f772e9738bc52782d10fbadfb662",
+  "codeInputInventorySha256": "c37be717033a00e5a5e477ba57e6a62fdef8fc0e1209d40fd44b7f8c40b1b7f1",
   "manifestExcludesSelf": true,
   "kit": {
     "revision": "db6ac2f43cc0319fa0f10b4f73d67521d5209c88",
     "plan": "passed",
     "apply": "passed",
-    "statusCompleted": "6/7",
-    "verifyCheck": "refused: incomplete 2.7",
+    "statusCompleted": "2/3 maintenance; original 6/7",
+    "verifyCheck": "refused: incomplete 2.10 publication; original 2.7 live/semantic/release",
     "structuralOnly": true
   },
   "pending": [
@@ -25,8 +25,8 @@
     },
     {
       "path": "README.md",
-      "bytes": 3512,
-      "sha256": "7b4d4844b730a0a7b18116cbcadf4a895d30f0ec729e430477e84652a63b9e19"
+      "bytes": 3819,
+      "sha256": "b43687a1b5b667d96f2030e09062d3ebe7bb7a5d4f88247f41efd47c24d5ddc4"
     },
     {
       "path": "docs/dependencies/sdk-selection.md",
@@ -99,6 +99,26 @@
       "sha256": "d0584908029d81b33eb6c71765ede2b50d2d2a160bc7089d0c34668eedf1583f"
     },
     {
+      "path": "docs/verification/v02-maintenance-demo-receipt.json",
+      "bytes": 1583,
+      "sha256": "f0ac662605adae561b0b788b5e1924973be68a87477625b54da89549ccad3df9"
+    },
+    {
+      "path": "docs/verification/v02-maintenance-inputs.sha256",
+      "bytes": 2417,
+      "sha256": "c37be717033a00e5a5e477ba57e6a62fdef8fc0e1209d40fd44b7f8c40b1b7f1"
+    },
+    {
+      "path": "docs/verification/v02-maintenance-observations.md",
+      "bytes": 1511,
+      "sha256": "665648ec28a00a635dfad8927d7c18377c2f5832d514243de38e9861358bfbc1"
+    },
+    {
+      "path": "docs/verification/v02-maintenance-provenance.json",
+      "bytes": 2351,
+      "sha256": "8743529c6da53e6b6ded36fd92cbb2fbd164812c70b71f253e71539efb73c02e"
+    },
+    {
       "path": "docs/verification/v02-observations.md",
       "bytes": 7623,
       "sha256": "df19c27477846035058fcd6802530b1a08adbc75976b55de36386a4f524f9771"
@@ -144,6 +164,26 @@
       "sha256": "0928188f2e9c646c6a95372dfa405e1f682fd3d77423586463d14f010c404ce2"
     },
     {
+      "path": "openspec/changes/v02-fixture-source-boundary/evidence.md",
+      "bytes": 1625,
+      "sha256": "fb9c67b0d93cb6516790343f9cebd2deaf0756ed82ccd6b4d1da0ccf6355506d"
+    },
+    {
+      "path": "openspec/changes/v02-fixture-source-boundary/proposal.md",
+      "bytes": 805,
+      "sha256": "5f9210ae7d71eb3f858859d243a39533f096941898a117fe377998564ad090c3"
+    },
+    {
+      "path": "openspec/changes/v02-fixture-source-boundary/specs/report/spec.md",
+      "bytes": 428,
+      "sha256": "99b00b7e293813aafc33ce40095ec127e4b37f5e7dd0b706e5d944a010df729a"
+    },
+    {
+      "path": "openspec/changes/v02-fixture-source-boundary/tasks.md",
+      "bytes": 279,
+      "sha256": "1a5b45ce995cc3d9b9852734c0aeae6fc325f942930194cd187bd3302bafb387"
+    },
+    {
       "path": "openspec/changes/v02-skills-mcp-stream/evidence.md",
       "bytes": 4436,
       "sha256": "762a7b21fed417d678ce73df5b061cf3f71b29deff9667012363f2d947a20eb4"
@@ -185,8 +225,8 @@
     },
     {
       "path": "src/extensions.mjs",
-      "bytes": 3966,
-      "sha256": "93728f07441d1384840920e9d20aa6fc62c2dac0b0313953d5c4bacfdcf073b4"
+      "bytes": 3946,
+      "sha256": "0bc6ab3e24f1b8e51a3373dacca48ba5e6857064ff7aee29675340d57d4711db"
     },
     {
       "path": "src/fixture-gateway.mjs",
@@ -280,8 +320,8 @@
     },
     {
       "path": "test/v02-cli.test.mjs",
-      "bytes": 2185,
-      "sha256": "35a5a96e8acbb7352584576c7cb154fb907b4438ef85d61f3f45ecf0ca8c383f"
+      "bytes": 2464,
+      "sha256": "ebff1773412ae39e26d55655b067bb7476383e9c6a84ad8d26b0763fb81bba29"
     },
     {
       "path": "tooling/openspec-evidence-kit-db6ac2f/LICENSE",

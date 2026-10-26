@@ -1,0 +1,2 @@
+# Requirement: acquired sources bound the scripted fixture report
+The skill-mcp case reads exactly A/B page 1 and must not assert page-2 offline-editing conditions. Its actual saved report must preserve supported format/online/PDF facts and original page snapshots. Test the saved bytes after CLI exit, not only an in-memory string. Preserve the earlier commit/receipt evidence; do not retrospectively replace its content hash.

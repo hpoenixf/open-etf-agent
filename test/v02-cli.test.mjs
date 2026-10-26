@@ -14,6 +14,9 @@ test('2.5 skill-mcp uses ordinary Host calls, real child and acquired method/sou
   assert.throws(() => process.kill(summary.mcp.pid, 0), { code: 'ESRCH' });
   const manifest = JSON.parse(await readFile(join(summary.directory, 'manifest.json'), 'utf8'));
   assert.equal(manifest.sources.length, 2); assert.equal(manifest.methods.length, 1);
+  assert.ok(manifest.sources.every(source => source.page === 1));
+  const report = await readFile(join(summary.directory, 'report.md'), 'utf8');
+  assert.doesNotMatch(report, /offline editing/i, 'page-2 editing condition must not be asserted from only acquired page-1 sources');
   assert.equal(manifest.methods[0].name, 'compare-guides'); assert.match(manifest.methods[0].text, /free and enterprise/);
   for (const source of manifest.sources) { assert.ok(Number.isInteger(source.mcp.protocolRequestId)); assert.ok(source.mcp.modelCallId); }
   const events = (await readFile(join(summary.directory, 'run.jsonl'), 'utf8')).trim().split('\n').map(JSON.parse);

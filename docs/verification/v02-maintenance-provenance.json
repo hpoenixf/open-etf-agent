@@ -1,0 +1,60 @@
+{
+  "kind": "actual local artifact hashes; raw logs omitted",
+  "artifacts": [
+    {
+      "basename": "build.txt",
+      "sha256": "ff16a578dacd2bc8be9b92cd3a124047e47ee4c548f655f4a1569dff899676cb",
+      "summary": "docs/verification/v02-maintenance-observations.md"
+    },
+    {
+      "basename": "demo-document-compare.txt",
+      "sha256": "ab81d303f0f23e2cab5665e187b4c6ba9cac85a5d1fdc770cfe4b5bc26b6da57",
+      "summary": "docs/verification/v02-maintenance-observations.md"
+    },
+    {
+      "basename": "demo-skill-mcp.txt",
+      "sha256": "3eb4d4154db619817656fcfa11d66e18866318f902984063d25e4f3b729f715c",
+      "summary": "docs/verification/v02-maintenance-observations.md"
+    },
+    {
+      "basename": "install.txt",
+      "sha256": "adcf84617f30a9d5375852dcfd3545b1f57ed5c542f33d3cf85987af5dc51189",
+      "summary": "docs/verification/v02-maintenance-observations.md"
+    },
+    {
+      "basename": "source-red.txt",
+      "sha256": "0631973ebeacd7dd66d22116aa75d94a9fa3c1144675f5d7b31448798c08e980",
+      "summary": "docs/verification/v02-maintenance-observations.md"
+    },
+    {
+      "basename": "test.txt",
+      "sha256": "d2c439048b6166756bd7967701817a3afd60965b7c3e41abba1f78cfa53e4272",
+      "summary": "docs/verification/v02-maintenance-observations.md"
+    },
+    {
+      "basename": "final-kit-lint.json",
+      "sha256": "412a8b76d16f9ddf65d8dd208dac7768dd412c4603382197221e7ea3d4d8bf5b",
+      "summary": "docs/verification/v02-maintenance-observations.md"
+    },
+    {
+      "basename": "final-kit-status.json",
+      "sha256": "e35ae0b93d01100e844e4d47597a8d82bbecd3c158af17b116da9de249d74051",
+      "summary": "docs/verification/v02-maintenance-observations.md"
+    },
+    {
+      "basename": "final-kit-verify.json",
+      "sha256": "f59fbcaeb7b18ccce01751e0cd9de8dda7a21516b90b83965f8817b2fa5a5819",
+      "summary": "docs/verification/v02-maintenance-observations.md"
+    },
+    {
+      "basename": "kit-lint---stage-apply.json",
+      "sha256": "412a8b76d16f9ddf65d8dd208dac7768dd412c4603382197221e7ea3d4d8bf5b",
+      "summary": "docs/verification/v02-maintenance-observations.md"
+    },
+    {
+      "basename": "kit-lint---stage-plan.json",
+      "sha256": "9b449cf7fe511f0b749bbd9b4d55c2af0ad6778228fcc5f4cc46e88289895acd",
+      "summary": "docs/verification/v02-maintenance-observations.md"
+    }
+  ]
+}

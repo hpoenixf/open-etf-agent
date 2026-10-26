@@ -1,6 +1,6 @@
 # Open ETF Agent — v0.2 offline candidate
 
-Local development candidate, not a release. v0.1 remains frozen on its independent phase branch. v0.2 adds explicit Skill reads, real stdio MCP and complete model SSE assembly without another Runtime. Live/provider/data/cost, semantic review, project license and public publication remain separate open gates.
+Local maintenance candidate, not a release. The original phase/v0.2 commit and receipt history remain frozen; this branch removes a claim from an unacquired page without expanding the case. [Maintenance evidence](docs/verification/v02-maintenance-observations.md) records a new real RED, full 49-test validation and actual Kit refusal of publication. v0.1 remains frozen on its independent phase branch. v0.2 adds explicit Skill reads, real stdio MCP and complete model SSE assembly without another Runtime. Live/provider/data/cost, semantic review, project license and public publication remain separate open gates.
 
 ## Run independently
 
