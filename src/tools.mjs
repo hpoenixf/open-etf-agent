@@ -57,10 +57,11 @@ export async function readFixturePage({ documentId, page }) {
   const text = d.pages[page - 1];
   return { sourceId: `${d.id}@${d.version}:p${page}`, documentId, name: d.name, version: d.version, page, text, sha256: sha256(text), mediaType: 'text/plain; charset=utf-8' };
 }
-export async function createToolHost({ directory, extensions = [] }) {
+export async function createToolHost({ directory, extensions = [], hooks, allowedTools, allowedDocuments }) {
   directory = await safeDirectory(directory);
   const input = JSON.parse(await readFile(new URL('../fixtures/documents.json', import.meta.url), 'utf8'));
-  const documents = new Map(input.documents.map(d => [d.id, d]));
+  if (allowedDocuments !== undefined && (!Array.isArray(allowedDocuments) || !allowedDocuments.length || allowedDocuments.some(id => !input.documents.some(d => d.id === id)))) fail('Invalid document allowlist');
+  const documents = new Map(input.documents.filter(d => allowedDocuments === undefined || allowedDocuments.includes(d.id)).map(d => [d.id, d]));
   const sources = new Map();
   const methods = new Map();
   let receipt = null;
@@ -126,34 +127,54 @@ export async function createToolHost({ directory, extensions = [] }) {
     if (typeof binding.description !== 'string' || !object(binding.parameters) || typeof binding.validate !== 'function' || typeof binding.execute !== 'function') fail('Invalid extension binding');
     bindings[binding.name] = binding;
   }
+  if (allowedTools !== undefined) {
+    if (!Array.isArray(allowedTools) || !allowedTools.length || new Set(allowedTools).size !== allowedTools.length || allowedTools.some(name => !Object.hasOwn(bindings, name))) fail('Invalid tool allowlist');
+    for (const name of Object.keys(bindings)) if (!allowedTools.includes(name)) delete bindings[name];
+  }
   return {
+    get sources() { return structuredClone([...sources.values()]); },
     definitions: Object.entries(bindings).map(([name, b]) => ({ name, description: b.description, parameters: b.parameters })),
     get receipt() { return receipt && structuredClone(receipt); },
     async execute(call, { signal, onDispatch = () => {} } = {}) {
       const callId = typeof call?.id === 'string' ? call.id : null;
-      let binding;
+      const start = performance.now(); let original; let effective; let binding;
+      async function finish(result) {
+        result.durationMs = performance.now() - start;
+        if (original) { result.original = original; result.effective = effective; }
+        if (hooks) result.hookErrors = await hooks.observe(result.status === 'succeeded' ? 'after' : 'failure', { callId, result }, { signal });
+        return result;
+      }
       try {
         fields(call, ['id', 'name', 'arguments']);
         if (!callId || callId.length > 200 || /[\u0000-\u001f]/.test(callId)) fail('Invalid call ID');
+        if (hooks) { ({ original, effective } = await hooks.before(call, { signal })); call = effective; }
         if (!Object.hasOwn(bindings, call.name)) fail('Unknown tool');
         binding = bindings[call.name]; await binding.validate(call.arguments); checkSignal(signal);
-      } catch (error) { return { callId, status: 'rejected', dispatched: false, error: error.message }; }
+        onDispatch({ original: structuredClone(original || call), effective: structuredClone(call) }); // Root resource reservation precedes the actual handler.
+      } catch (error) { return finish({ callId, status: 'rejected', dispatched: false, error: error.message }); }
       try {
-        onDispatch();
         let value = await binding.execute(call.arguments, { callId, signal });
-        if (binding.sourceResult) {
-          value = validateSource(value);
-          const old = sources.get(value.sourceId);
-          if (old && old.sha256 !== value.sha256) fail('Conflicting source identity');
-          sources.set(value.sourceId, structuredClone(value));
+        function remember(source) {
+          const validated = validateSource(source); const old = sources.get(validated.sourceId);
+          if (old && old.sha256 !== validated.sha256) fail('Conflicting source identity');
+          return validated;
+        }
+        if (binding.sourceResult) { value = remember(value); sources.set(value.sourceId, structuredClone(value)); }
+        if (binding.sourceResults) {
+          if (!Array.isArray(value?.sources) || value.sources.length > 16) fail('Invalid batch sources');
+          const validated = value.sources.map(remember);
+          const batchIds = new Map();
+          for (const source of validated) { if (batchIds.has(source.sourceId) && batchIds.get(source.sourceId) !== source.sha256) fail('Conflicting batch source identity'); batchIds.set(source.sourceId, source.sha256); }
+          for (const source of validated) sources.set(source.sourceId, structuredClone(source));
+          value = { ...value, sources: validated };
         }
         if (binding.methodResult) {
           if (!object(value) || !['id', 'name', 'text', 'sha256', 'version'].every(k => typeof value[k] === 'string') || value.sha256 !== sha256(value.text) || Buffer.byteLength(value.text) > 65536) fail('Invalid acquired method snapshot');
           methods.set(value.id, structuredClone(value));
         }
-        return { callId, status: 'succeeded', dispatched: true, value };
+        return finish({ callId, status: 'succeeded', dispatched: true, value });
       } catch (error) {
-        return { callId, status: 'failed', dispatched: true, error: error.code || error.message, partialPaths: error.partialPaths || [] };
+        return finish({ callId, status: 'failed', dispatched: true, error: error.code || error.message, partialPaths: error.partialPaths || [] });
       }
     }
   };

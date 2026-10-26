@@ -26,6 +26,15 @@ License/publication and live-provider/data/cost authorization remain pending. Th
 - Actual stdio cancellation and timeout leave the owned child absent. Complete fixture SSE is separately tested; no live model capability is inferred.
 - [Observed failures and fixes](../verification/v02-observations.md), [dependency decision](../dependencies/sdk-selection.md), [artifact provenance](../verification/v02-evidence-provenance.json).
 
+## v0.3: local cooperation and honest effect identity
+
+- Synchronous root reservations prevent two read workers spending the last tool unit; fixed read workers are not model agents.
+- Before Hook inputs are copied/frozen, permitted patches are revalidated, and a trusted alias never creates tool permission. Configuring an alias alone does not perform it: the first demo correctly rejected its missing explicit callback.
+- An alias to save_report exposed a real observability defect: the file existed but the original name suppressed file_saved. Dispatch and effects now use effective identity, with original preserved.
+- A release callback before final log processing could announce an earlier status. It now observes Runtime finalization attempts, not a fictional guarantee that every external resource closed.
+- One-level fixture-child reuses Runtime with only allowed read_page documents and shared budget. Live independent model behavior remains unproved.
+- [Actual failures and regressions](../verification/v03-observations.md), [artifact hash provenance](../verification/v03-evidence-provenance.json).
+
 ## Later stages
 
-v0.3–v1.0 remain the public roadmap, not pre-created implementations. Each future stage should add only its needed requirement, test, code, actual observation and independently runnable fixed point; no ten-version copy or fabricated completion table.
+v0.4–v1.0 remain the public roadmap, not pre-created implementations. Each future stage should add only its needed requirement, test, code, actual observation and independently runnable fixed point; no ten-version copy or fabricated completion table.

@@ -28,7 +28,7 @@ export async function prepareSkillMcp({ signal } = {}) {
         const method = results.find(r => r.value?.version?.startsWith('sha256:'))?.value;
         if (!method) throw new Error('Method was not actually loaded');
         const sources = results.filter(r => r.value?.sourceId).map(r => r.value.sourceId);
-        return call('save_report', { text: `# Skill + actual stdio MCP\n\nScripted fixture; semantic status: unreviewed. Method ${method.name} was actually read (${method.sha256}); this demonstrates loading, not a semantic adoption assessment.\n\nFree A exports CSV; free B adds Markdown. Both require online exports; enterprise PDF and offline editing are not free-edition privileges. Sources below are the actual MCP-returned snapshots.`, sourceIds: sources });
+        return call('save_report', { text: `# Skill + actual stdio MCP\n\nScripted fixture; semantic status: unreviewed. Method ${method.name} was actually read (${method.sha256}); this demonstrates loading, not a semantic adoption assessment.\n\nFree A exports CSV; free B adds Markdown. Both require online exports; enterprise PDF is not a free-edition privilege. Sources below are the actual MCP-returned snapshots.`, sourceIds: sources });
       }
       const receipt = results.find(r => r.value?.fileId)?.value;
       if (!receipt) throw new Error('No save receipt');

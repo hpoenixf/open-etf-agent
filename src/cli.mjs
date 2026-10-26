@@ -9,14 +9,31 @@ async function main(args) {
     const arg = args[i];
     if (seen.has(arg)) throw new Error('INVALID_ARGUMENT: duplicate option'); seen.add(arg);
     if (arg === '--live') { options.live = true; continue; }
-    if (!['--case', '--output'].includes(arg) || !args[i + 1] || args[i + 1].startsWith('--')) throw new Error('INVALID_ARGUMENT: --case and --output need values; only --live is a flag');
+    if (!['--case', '--output', '--observe'].includes(arg) || !args[i + 1] || args[i + 1].startsWith('--')) throw new Error('INVALID_ARGUMENT: --case and --output need values; only --live is a flag');
     options[arg.slice(2)] = args[++i];
   }
   if (options.live) throw new Error('LIVE_BLOCKED: provider/model, synthetic-data scope and fee authorization have not been approved for this public project; no network request was made');
-  if (!['document-compare', 'skill-mcp', 'T1', 'T2', 'T3', 'T4'].includes(options.case)) throw new Error('INVALID_ARGUMENT: unsupported case');
+  if (options.observe) {
+    if (seen.has('--case') || seen.has('--output')) throw new Error('INVALID_ARGUMENT: observe is read-only and cannot combine with case/output');
+    const { readTimeline } = await import('./observe.mjs');
+    process.stdout.write(JSON.stringify(await readTimeline(options.observe), null, 2) + '\n'); return;
+  }
+  if (options.case === 'model-child') throw new Error('MODEL_CHILD_BLOCKED: no independent live model authorization/evidence; use fixture-child only for offline wiring');
+  if (!['batch-read', 'fixture-child', 'document-compare', 'skill-mcp', 'T1', 'T2', 'T3', 'T4'].includes(options.case)) throw new Error('INVALID_ARGUMENT: unsupported case');
   const definitions = JSON.parse(await readFile(new URL('../fixtures/cases.json', import.meta.url), 'utf8'));
   const controller = new AbortController(); const cancel = () => controller.abort();
   process.on('SIGINT', cancel); process.on('SIGTERM', cancel);
+  if (['batch-read', 'fixture-child'].includes(options.case)) {
+    let result; let assembled;
+    try {
+      const { prepareCooperation } = await import('./cooperation-demo.mjs');
+      assembled = prepareCooperation({ mode: options.case, outputRoot: options.output, signal: controller.signal });
+      result = await run({ question: 'Compare the synthetic guides using ' + options.case + '; Main saves the cited report.', gateway: assembled.gateway, extensions: assembled.extensions, hooks: assembled.hooks, rootBudget: assembled.rootBudget, outputRoot: options.output, signal: controller.signal });
+    } finally { process.off('SIGINT', cancel); process.off('SIGTERM', cancel); }
+    process.stdout.write(JSON.stringify({ caseId: options.case, ...result, observations: assembled.metadata }, null, 2) + '\n');
+    if (result.status !== 'completed') process.exitCode = 1;
+    return;
+  }
   if (options.case === 'skill-mcp') {
     let assembled; let result; let closed;
     try {
