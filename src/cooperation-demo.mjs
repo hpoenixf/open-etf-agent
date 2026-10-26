@@ -2,6 +2,7 @@ import { createRootBudget, batchRead } from './cooperation.mjs';
 import { createHookChain } from './hooks.mjs';
 import { readFixturePage } from './tools.mjs';
 import { runReadOnlyChild } from './child.mjs';
+import { readChildSources } from './child-results.mjs';
 const tasks = [{ taskId: 'version-a', documentId: 'atlas-a', page: 1 }, { taskId: 'version-b', documentId: 'atlas-b', page: 1 }];
 export function prepareCooperation({ mode, outputRoot, signal } = {}) {
   if (!['batch-read', 'fixture-child'].includes(mode)) throw new Error('Unsupported offline cooperation mode');
@@ -26,7 +27,8 @@ export function prepareCooperation({ mode, outputRoot, signal } = {}) {
           return { kind: 'final', text: 'Derived fixture observation from ' + messages.filter(m => m.role === 'tool').length + ' actual page results. No live semantic assessment.' };
         }
       } });
-      return { sources: child.sources || [], child: { taskId: child.taskId, runId: child.runId, status: child.status, code: child.code, derived: true, summary: child.answer, mode: child.mode, toolsDispatched: child.toolsDispatched }, workerKind: 'fixture-child' };
+      const sources = await readChildSources({ directory: child.directory, refs: (child.resultRefs || []).map(ref => ref.resultRef), allowedDocuments: ['atlas-a', 'atlas-b'] });
+      return { sources, child: { taskId: child.taskId, runId: child.runId, status: child.status, code: child.code, derived: true, summary: child.answer, mode: child.mode, toolsDispatched: child.toolsDispatched }, workerKind: 'fixture-child' };
     }
   };
   let step = 0;

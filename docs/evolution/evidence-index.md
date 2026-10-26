@@ -35,6 +35,15 @@ License/publication and live-provider/data/cost authorization remain pending. Th
 - One-level fixture-child reuses Runtime with only allowed read_page documents and shared budget. Live independent model behavior remains unproved.
 - [Actual failures and regressions](../verification/v03-observations.md), [artifact hash provenance](../verification/v03-evidence-provenance.json).
 
+## v0.4: immutable originals are not per-call observations
+
+- Before RED, independent review corrected a faulty test idea: switching document A to B was not proof of same-document version retention. The actual test now reopens both versions of one document.
+- One ResultStore replaces Host's source Map. Immutable originals, typed numeric derivations and an ordinary content index permit exact reread without pretending to resume execution.
+- A source-owner integration initially replaced repeat MCP observations with the first stored acquisition. The actual negative reproduced the identity mismatch; stable source identity and current call observation are now separate.
+- Context's initial sourceId/hash shortcut could launder a lookalike tool payload into an original ref. Actual RED led to explicit Host refs, text-hash checking and complete intrinsic identity verification.
+- Query variation is connected to actual ordinary read_page calls, not merely a ranking helper. Zero hits expose the missing report rather than fabricate a comparison.
+- [Actual observations](../verification/v04-observations.md), [provenance](../verification/v04-evidence-provenance.json), [real content-record receipts](../verification/v04-demo-receipts.json).
+
 ## Later stages
 
-v0.4–v1.0 remain the public roadmap, not pre-created implementations. Each future stage should add only its needed requirement, test, code, actual observation and independently runnable fixed point; no ten-version copy or fabricated completion table.
+v0.5–v1.0 remain the public roadmap, not pre-created implementations. Each future stage should add only its needed requirement, test, code, actual observation and independently runnable fixed point; no ten-version copy or fabricated completion table.

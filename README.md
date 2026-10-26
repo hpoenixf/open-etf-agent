@@ -1,10 +1,10 @@
-# Open ETF Agent — v0.3 offline candidate
+# Open ETF Agent — v0.4 offline candidate
 
-An independent local stage, not a release. v0.1 and v0.2 remain frozen on their phase branches. v0.3 adds explicit bounded Hooks, root-budgeted fixed read workers, a one-level **fixture-child** and a read-only metadata view. Actual independent-model reasoning, semantic review, live/provider/data/cost, project license and publication gates remain open.
+An independently runnable local stage, not a release. v0.4 adds one immutable Research Result owner, bounded Context projection, exact reread and real scoped lexical retrieval. Earlier phase branches stay frozen; v0.2 has a separate maintenance patch preserving its old evidence. Provider/data/cost authorization, live/model-child semantics, project license and public publication remain open gates.
 
 ## Run
 
-Node 26.11.1–26.x; exact official registry dependencies are locked. Installation scripts are unnecessary:
+Node 26.11.1–26.x. Installation scripts are unnecessary; the official SDK dependency closure remains locked:
 
 ```sh
 npm ci --ignore-scripts --no-audit --no-fund
@@ -14,31 +14,33 @@ npm run demo -- --case document-compare
 npm run demo -- --case skill-mcp
 npm run demo -- --case batch-read
 npm run demo -- --case fixture-child
+npm run demo -- --case retrieve-reread --query "offline editing"
+npm run demo -- --case retrieve-reread --query "Markdown"
 node src/cli.mjs --observe runs/<run-id>
 ```
 
-Cached `npm ci --offline --ignore-scripts --no-audit --no-fund` is supported. Installation may require registry access; every default demo runs offline after installation. Build syntax-checks/copies native ESM and original fixtures; built CLI uses `node dist/src/cli.mjs`. `--live` and `--case model-child` explicitly refuse unsupported live claims before starting a run.
+Cached `npm ci --offline --ignore-scripts --no-audit --no-fund` works. Installation may access the registry; demos run offline after installation. The native-ESM build copies all source/fixtures and runs as `node dist/src/cli.mjs`. `--live` and `--case model-child` remain blocked before Run creation; a scripted fixture-child is not independent live model reasoning.
 
-## What is actually implemented
+## What changed
 
-- Original four questions retain denominator four, independent file readback and semanticStatus unreviewed. Every saved report has actual page/version/hash snapshots and a file receipt.
-- Skill metadata, actual body reads and adoption are separate; explicit supported frontmatter/resources never execute scripts or confer authority.
-- The original stdio fixture uses exact official SDK 1.32.2 and verified protocol 2025-11-25. It is not the latest protocol or an OS sandbox. [SDK selection](docs/dependencies/sdk-selection.md) preserves the failed v2 experiment and dependency cost.
-- Complete bounded model SSE waits for supported finish plus DONE; partial parseable arguments never reach dispatch. Offline fragmented streams do not prove a provider's reasoning.
-- Explicit Hook arrays receive copied/frozen records. Only configured fields/exact aliases may be proposed before ordinary Host revalidation. after means returned result, not general persistence. Observer errors cannot rewrite receipts.
-- Fixed batch-read workers run in one process with concurrency at most two, paired task IDs, explicit partial failures and shared root reservations. They are not model agents.
-- fixture-child calls the same Runtime with a separate local message list, narrow document/read_page subset, no save tool and no recursive child capability. Main imports validated original sources and owns the final report. A scripted child demonstrates plumbing, not independent model reasoning.
-- rootUsage counts consumed model/tool reservations, not billed tokens or money. Concurrent workers cannot each spend the last unit; child counts do not duplicate the root allowance. Metadata links root/run/task/call identity, durations and returned usage; missing usage/cost remain null.
-- --observe reads only bounded run.jsonl metadata fields from an explicitly selected safe directory. It projects typed identity/event fields and three explicit safe token counters, omitting prompt, argument and source-text fields and never executes models/tools or resumes a Run.
+- **One original-source owner:** Host's source Map is removed. ResultStore owns immutable source records, typed calculation records and `content-index.json`. The index is a content lookup, not an execution checkpoint. Reports embed delivery copies read from the stored records plus exact ResultRefs, safe relative record paths and record hashes.
+- **Identity is not just text:** the same sourceId cannot be rebound to another document/version/page/name even when text hashes match. A same-document newer version gets its own ref. Reopening the store reads the old bytes without fetching latest material. Unknown/corrupt refs and missing indexes over existing records fail explicitly.
+- **Current observation versus stored provenance:** repeated acquisition of the same page keeps the original record/ref while returning that call's adapter receipt. `read_result` returns the stored acquisition's provenance, not a new MCP request. Raw `sourceAcquisition` on such a reread is historical provenance, not a fresh transport effect.
+- **Context is a working view:** original history remains unchanged. Only complete settled call/result groups may be projected, preserving IDs/status/errors and the original question/latest group. Replacement requires a Host ResultRef, matching actual text hash and full intrinsic identity; lookalike tool objects are not promoted to sources. Exact reread remains an ordinary tool. No generated summary exists at this stage.
+- **Local byte limits:** Context and final Chat request encoding have explicit UTF-8 byte bounds, including final schemas/wrappers. These are not Provider token-window claims. If mandatory material cannot fit, the request fails instead of silently dropping requirements.
+- **Real candidate-driven reads:** query tokens rank only allowed synthetic pages with deterministic ties. The fixture then issues ordinary read_page calls from those candidates and read_result from the acquired ref. Markdown selects B page 1; offline editing selects page 2. Hits are not sources until read. One-sided results admit the gap; zero hits fail the required-report contract without reading or saving.
+- **Citations:** numbered original-source citations and separately typed numeric derivations resolve to actual stored records. `[C1]` retains calculation inputs/units/current-versus-baseline convention/code identity; it is not a document page. Invalid markers reject before save.
 
-## Lifecycle and limits
+## Retained mechanisms and boundaries
 
-Before-Hook failure/timeout rejects before dispatch. after/failure observation errors are returned. release sees the Runtime's final log-write/close **attempts**, final status/code/logErrors; it does not assert every external resource is released. CLI-owned MCP closes later, and log close can fail. Release hookErrors are returned, not claimed retrospectively persisted.
+The four original questions retain denominator four, actual saved-file readback and semanticStatus unreviewed. Skills are bounded explicitly loaded data, not permission or executable scripts. Official SDK 1.32.2 uses verified protocol 2025-11-25, not the latest protocol; [dependency evidence](docs/dependencies/sdk-selection.md) records the rejected v2 behavior and maintenance boundary. MCP is a trusted original fixture process, not a sandbox.
 
-Callbacks and cancellation are cooperative trusted in-process code, not isolation from malicious JavaScript. Resource roots are local single-user directories; static symlinks are rejected, but same-user hostile filesystem races are outside the claimed boundary. Partial/unknown effects are retained, never blindly retried. Effective tool identity is used for effects; an alias preserves the original proposal rather than hiding it.
+Hook patches are narrow and revalidated; observation errors do not rewrite receipts. Fixed batch workers and one-level fixture-child share root reservations; Main owns the report. Child imports reread only granted original typed refs, not arbitrary paths or derived summaries. A readonly metadata view uses typed fields/token counters rather than raw provider usage objects; it is not general semantic anonymization.
 
-No Plugin, database, checkpoints/recovery, daemon, HTTP service, RAG, Memory, arbitrary shell or paid calls are introduced. Earlier artifacts remain readable but are not executable recovery state. Initialization-phase MCP cancellation has not been specifically verified; active call cancellation/timeout and active SSE cancellation have actual tests.
+Single-user local roots and one content-index writer are assumed. Static symlinks are rejected; hostile same-user filesystem races and power-loss transactions are not promised. Immutable-record publication and index replacement are separate operations: a failed index update can leave an unacknowledged orphan record, not a successful source receipt. No automatic blind retry or recovery follows. Callback cancellation is cooperative.
 
-## Evidence, not maturity by test count
+No database, Plugin, daemon, HTTP service, model summary/Memory, vector platform, arbitrary shell or paid calls are introduced. Earlier files remain readable, but none are executable Run checkpoints. Initialization-phase MCP cancellation remains specifically untested; active call/stream cancellation and call timeout have real checks.
 
-[Observations](docs/verification/v03-observations.md) preserve real RED stages, first-run failures and fixes. The candidate passed 71 serial offline tests, independent npm build/test and all four demos; no model semantics were inferred. [Article evidence index](docs/evolution/evidence-index.md) records motivations and failure stories. The final actual pinned public Evidence Kit run, after both review fixes and 71 tests, reports 6/7 structural tasks and refuses the remaining live/semantic/release gate. No completion.json or formal release is claimed. Metadata projection is typed filtering, not a general semantic privacy guarantee.
+## Evidence
+
+[Observed failures/fixes](docs/verification/v04-observations.md), [artifact hashes](docs/verification/v04-evidence-provenance.json) and [article evidence index](docs/evolution/evidence-index.md) distinguish mechanisms from semantics. Current source passed 96 serial tests, independent cached install/build/test and all five demos. The actual pinned public Evidence Kit reports 6/7 structural tasks and refuses the remaining live/semantic/license/publication gate. No completion.json, formal release or semantic approval is claimed.

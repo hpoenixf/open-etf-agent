@@ -28,18 +28,21 @@ function encodeMessages(messages) {
 
 // No authorization is implied by importing this adapter. CLI keeps live blocked.
 // The caller must supply an explicit reviewed grant; never derive it from data.
-export function createChatGateway({ endpoint, model, apiKey, authorization, stream = false, fetchImpl = globalThis.fetch }) {
+export function createChatGateway({ endpoint, model, apiKey, authorization, stream = false, maxInputBytes = 262144, fetchImpl = globalThis.fetch }) {
   if (!authorization?.providerApproved || !authorization?.syntheticDataApproved || !authorization?.costApproved) throw new Error('LIVE_BLOCKED');
+  if (!Number.isSafeInteger(maxInputBytes) || maxInputBytes < 1 || maxInputBytes > 1048576) throw new Error('Invalid input byte limit');
   const url = new URL(endpoint);
   if (url.protocol !== 'https:' || url.username || url.password || url.search || url.hash || !url.pathname.endsWith('/chat/completions')) throw new Error('Invalid trusted endpoint');
   if (typeof model !== 'string' || !model || typeof apiKey !== 'string' || !apiKey) throw new Error('Missing trusted provider configuration');
   return {
     mode: 'live',
     async next({ messages, tools, signal }) {
+      const body = JSON.stringify({ model, stream, ...(stream ? { stream_options: { include_usage: true } } : {}), n: 1, messages: encodeMessages(messages), tools: tools.map(t => ({ type: 'function', function: t })) });
+      if (Buffer.byteLength(body) > maxInputBytes) throw new Error('PROVIDER_INPUT_BYTE_LIMIT');
       const response = await fetchImpl(url, {
         method: 'POST', redirect: 'error', signal,
         headers: { 'content-type': 'application/json', authorization: `Bearer ${apiKey}` },
-        body: JSON.stringify({ model, stream, ...(stream ? { stream_options: { include_usage: true } } : {}), n: 1, messages: encodeMessages(messages), tools: tools.map(t => ({ type: 'function', function: t })) })
+        body
       });
       if (!response.ok) throw new Error(`PROVIDER_HTTP_${response.status}`);
       if (stream) {
