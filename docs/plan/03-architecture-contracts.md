@@ -1,173 +1,88 @@
-# 03 · 架构、责任与演进契约
+# 03 · 架构契约：先把结果交出去，再按变化拆分
 
-> 本文描述目标设计，不要求 v0.1 提前实现所有接口。一个 Module 可以是少量文件；核心数不等于独立 package 数，也不等于全部能力数。
+> 目标设计，非当前实现。第20—21章强调按问题寻找最小机制，本方案不把六层视角或章节目录当作必须创建的服务清单。
 
-## 1. 从三个核心开始，而不是八个空盒子
+## 1. v0.1真正需要的结构
 
-```mermaid
-flowchart LR
-    CLI[CLI 输入] --> R[Runtime]
-    R --> M[Model Gateway]
-    M --> R
-    R --> T[Tool Host]
-    T --> R
-    R --> OUT[终端回答]
-```
+`CLI → Runtime ↔ Gateway / Tool Host → 保存工具 → report.md + 来源 + 运行记录`
 
-v0.1 的三项责任已经足够：决定下一次合法执行步骤、完成一次模型往返、执行一次工具调用。消息装配、工具表和预算可先是局部函数；没有第二种真实变化需求时，不为其建泛化服务。
+最初可只有runtime.ts、model.ts、tools.ts与CLI，加普通报告生成/文件函数。保存属于一项受限工具效果，计入工具预算；它不是完整Publication系统。运行记录用于观察，不能未经设计就驱动恢复。
 
-v0.4 的材料外置使 Context/Result 值得独立；v0.5 的进程故障使持久执行值得独立；v0.6 的多个交付通道使 Publication 值得独立。这是本计划要让读者看见的演进原因。
+**从第一版就有文件，并不意味着从第一版就有恢复。** 这是R2对旧方案最重要的依赖修正。
 
-## 2. 最终八个核心责任模块
+## 2. 责任分组何时值得抽出
 
-| ID | Module / 首次版本 | 自己决定和保存什么 | 明确不拥有 |
+| ID | Module | 首次版本 | 拥有的事实 | 不拥有 |
+| --- | --- | --- | --- | --- |
+| K1 | Runtime | v0.1 | 原任务、执行步骤、有限资源、取消与终态 | 来源真实性、金融结论、替工具签成功 |
+| K2 | Model Gateway | v0.1 | 一次模型请求/响应与协议完整性 | 授权、额外预算、供应商内部思考 |
+| K3 | Tool Host | v0.1 | 描述与执行绑定、输入检查、派发/回执 | 研究充分性、任意扩权 |
+| K5 | Context | v0.4 | 本轮材料选择与容量表示 | 改写原文、删除原始用户要求 |
+| K6 | Research Result | v0.4 | 原文/结果身份、版本、窗口、派生与引用 | 证明每条语义结论正确 |
+| K4 | Extension Host | v0.7 | 包贡献注册/激活、版本绑定、释放 | 接管所有业务事实、全能生命周期总管 |
+| K7 | Session & Recovery | v0.7 | 持久执行游标、claim/fence、回放协调 | 从摘要重建授权、盲重放未知外部效果 |
+| K8 | Publication | v0.8 | 正文预览/提交/修订与交付回执 | 文件字节真值、用户已读、金融准确性 |
+
+K编号保留原提案的概念标识，出现次序改变，不要求按数字建目录。累计为3、3、3、5、5、5、7、8、8、8。它只计核心责任分组，Hook、Child、Memory、Report、Artifact、Worker和UI也是实际Module；不得隐瞒这些维护成本。
+
+函数式注册和窄Adapter先存在，包生命周期后出现。一个稳定函数接口足够时不引入Manager；只有两个真实消费者及不同实现验证了替换价值，才扩成公开Seam。
+
+## 3. 入门阶段的接口演进
+
+| 行为 | 早期最小实现 | 需要后再升级 | 保留的不变量 |
 | --- | --- | --- | --- |
-| K1 | Runtime / v0.1 | 原 Run 的执行生命周期、下一合法步骤、取消、根资源计数与结束 | 研究语义真值、工具业务效果、正文最终可见性 |
-| K2 | Model Gateway / v0.1 | 实际模型请求绑定、协议组装、发送与响应完整性 | 新权限、额外预算、Provider 内部推理事实 |
-| K3 | Tool Host / v0.1 | 已绑定工具调用的参数检查、派发、实际回执和局部失败 | 来源语义、Child 总终态、全局发布批准 |
-| K4 | Extension Host / v0.3 | 可信贡献的注册、激活、版本绑定、释放与 Hook 局部执行 | 每项能力的业务事实、万能副作用事务 |
-| K5 | Context / v0.4 | 下一模型回合的受控材料投影与容量拟合 | 修改原始结果、自动新增授权、记忆真值 |
-| K6 | Research Result / v0.4 | 结果/来源身份、版本、窗口、派生关系和引用读取 | 证明结论正确、替代调用回执 |
-| K7 | Session & Recovery / v0.5 | 持久身份、调用/执行游标、claim/fence、回放协调 | 按内容重新研究、重签工具成功、替每个扩展解释业务状态 |
-| K8 | Publication / v0.6 | 正文候选、预览、提交修订及发布回执 | 文件字节真值、浏览器已读、金融正确性 |
+| 报告 | v0.1保存确定Markdown/manifest | v0.6读台/附件；v0.8Publication | 保存回执才说明文件存在；旧内容不被新版本偷换 |
+| 来源 | v0.1调用结果带文档/版本/页码 | v0.4ResultRef和回读 | 不能由模型编来源，摘要不是原文 |
+| 注册 | v0.1显式工具，v0.2显式方法/MCP | v0.7可信插件代际 | Tool描述与执行来自同一绑定 |
+| Hook | v0.3局部回调链 | v0.7纳入包快照 | 原回执不被观测改写，派发前修正需重校验 |
+| 子任务 | v0.3同进程batch/model两种worker | v0.7持久交接，v0.8后台组合 | 根预算、窄授权、Main最终综合 |
+| 状态 | v0.1JSONL/文件，v0.4材料快照 | v0.7SQLite执行存储 | 日志、内容、可恢复控制不是一个对象 |
+| 记忆 | v0.5显式单写入文件库 | 后续可换存储Adapter | 版本冲突/忘记和原Run授权各有责任 |
 
-K1 的资源政策不是独立预算平台；最初用小对象和计数器，持久化后消费原存储事务。K7 组织恢复，但不成为包含 Memory、Child、Publication 等全部内部类型的总管。八项是当前规划的责任分组，若实现表明某项可更深地合并，应通过设计评审调整，不为维持数字制造转发层。
+新实现接管后移除重复路径。旧报告需要只读Adapter，不意味着旧执行引擎永久常驻。教学演进应有实际diff，而不是在v0.1放好所有未来能力再用开关假装演进。
 
-## 3. 核心之外的能力如何接入
+## 4. 持久性有三个不同层次
 
-| 能力 | 接入 Seam | 真实事实的持有者 |
-| --- | --- | --- |
-| Skill | 方法目录＋按需读取 Tool＋Context 输入 | Skill 内容/版本由适配器提供；Host 管读取；Context 管使用 |
-| MCP | 工具描述/执行 Adapter | SDK 管协议；Tool Host 管实际调用与授权 |
-| Plugin/Hook | K4 注册与局部回调 | 注册生命周期归 K4，工具结果仍归 K3/K6 |
-| RAG | 资料查询与原文读取 Tool | 资料/结果模块；检索分数不认证来源充分性 |
-| HTTP/CLI | Run 接纳与用户事件读取 | 入口确定请求/主体身份，不另建 Runtime |
-| Artifact | 受限文件保存/读取 Adapter | 文件服务拥有字节、哈希与访问身份，Publication 只引用 |
-| Child | 可嵌入 Runtime＋根资源服务＋交接包 | Child 拥有局部执行，Root 拥有授权上限与总资源 |
-| Worker | 持久任务领取与驱动入口 | K7 保有 claim/fence，Worker 不能绕开其提交条件 |
-| Compaction | Context 的已结算区间与摘要采纳 | 压缩能力拥有候选和采纳记录，K6 保留原材料 |
-| Memory | 显式记忆命令＋Context 输入 | 记忆能力拥有版本和撤回，不能改投资事实 |
-| Web/PDF/Python | Tool 与 Result/Artifact 接口 | 各 Adapter 管真实读取/执行，K6 记录派生谱系 |
-| Observe/Evaluate | 只读记录与发布结果查询 | 不获得 Run、权限或发布的决定权 |
+1. **结果可回读**：文件保存、来源快照和manifest在进程退出后仍可访问。v0.1即需要。
+2. **未来任务可复用**：已采纳偏好、摘要/资料库按明确范围供新任务读取。v0.4—v0.5需要，其中共享记忆是显式扩展。
+3. **未完成执行可接续**：原模型提议、真实派发、预算/取消、owner/fence和下一动作保持一致。只有v0.7具备完整设计与故障验收后才承诺。
 
-适配器和扩展中依然存在实际 Module，不能为了宣传“八个模块”把所有复杂度藏在 extensions 文件夹里。评审同时记录核心变化和扩展自己的复杂度。
+第一层不自动推出第三层。reader刷新不resume，重新调用模型也不等于恢复。早期未知外部效果保留unknown并停止相应路径，不靠重开进程自动重试。
 
-## 4. 依赖方向
+## 5. 三类事实与单向交接
 
-```mermaid
-flowchart TD
-    UI[Web UI / CLI] --> APP[应用装配与请求接纳]
-    APP --> R[K1 Runtime]
-    APP --> EXT[K4 Extension Host]
-    R --> MODEL[K2 Gateway]
-    R --> HOST[K3 Tool Host]
-    R --> CTX[K5 Context]
-    CTX --> RESULT[K6 Result]
-    R --> STATE[K7 Session / Recovery]
-    R --> PUB[K8 Publication]
-    HOST --> ADAPTER[Tool / MCP / 研究适配器]
-    ADAPTER --> RESULT
-    PUB --> DELIVERY[用户事件 / History]
-    DELIVERY --> UI
-    EXT -.注册受限贡献.-> HOST
-    EXT -.提供方法.-> CTX
-```
+**执行记录**：请求、工具提议、派发/回执、资源、取消；**研究材料**：已读原文、检索候选、派生结果、摘要；**用户交付**：已保存报告、正文修订、附件和用户事件。
 
-图描述依赖与交接，不是严格的调用栈或六个进程。SQLite、模型 SDK、MCP SDK、文件系统和容器都是在装配层选择的具体 Adapter。核心不能 import Web 前端、某个 ETF 数据源、某个 MCP SDK 的具体 client 或某个 PDF 解析器。
+可以共用存储设施，但不能用同一无类型事件数组既驱动恢复、又全量发给模型、又直接推给浏览器。观测是只读视图，评估是独立判断；它们都不成为运行时新的否决者。
 
-公开扩展只访问公开窄接口；不允许导入 `core/**/internal` 或持有一个能任意 mutate Runtime 的对象。共享类型只放跨真实接口的最小契约，不能建设一个随每项功能膨胀的 `common.ts`。
+Runtime只调用窄接口。模型Gateway不import ETF业务；核心不import具体MCP/解析器/UI；应用装配选择具体Adapter。Child复用Runtime，不复制一套循环；Memory和Compaction各有语义，不并成“智能记忆层”。
 
-### 目标目录（按期生长，不预创建）
+## 6. 身份与契约随需求出现
 
-```text
-src/
-  core/
-    runtime/       # v0.1；最初可用同名文件
-    model/
-    tools/
-    extensions/    # v0.3
-    context/       # v0.4
-    results/
-    session/       # v0.5
-    publication/   # v0.6
-  adapters/
-    skills/ mcp/ sqlite/ artifacts/ web/ pdf/ python/
-  features/
-    children/ background/ compaction/ memory/
-  app/             # CLI / HTTP / composition
-  public-api.ts    # 稳定前小步演进，v1.0才承诺公开面
-web/               # v0.6才出现
-examples/
-  document-compare/
-  synthetic-etf/
-fixtures/
-tests/
-docs/evolution/
-```
+v0.1有runId、callId、真实来源位置和保存操作/文件ID；v0.2加入资源/服务绑定；v0.3加入taskId及Child交接；v0.4加入稳定ResultRef/version/locator；v0.5加入segment与memory revision；v0.6加report/artifact revision；v0.7加入checkpoint/schema/fence；v0.8加conversation/message/publication/event cursor。
 
-默认一个 npm package。只有真正出现独立分发需求才拆 workspace/package，不因目录多就做多包发布。
+不用一个消息ID代替全部身份，也不让早期对象预带十几个未来字段。每次字段扩展要展示新增行为、旧表示迁移与何时不适用。
 
-## 5. 身份逐期引入
+工具回执至少区分未派发、确定成功、确定失败、派发后未知。业务范围拒绝可能发生在handler内部：此时handler已派发，但受保护读取未发生，不能把两者都写成dispatched=false。把检查放哪一层须与实际观察一致。
 
-| 版本 | 必需身份 | 不得偷换 |
-| --- | --- | --- |
-| v0.1 | runId、modelAttemptId、toolCallId | 数组位置或工具名称不能代替调用身份 |
-| v0.2—v0.3 | Skill/服务/扩展版本绑定 | 新包内容不能悄悄替换运行中旧绑定 |
-| v0.4 | resultId、sourceId/version、locator、citationId | 摘要不能成为原文；新抓取不能改旧来源版本 |
-| v0.5 | checkpointVersion、effectId、leaseOwner、fence、schemaVersion | 日志不等于可重放的执行凭据 |
-| v0.6 | conversationId、messageId、publicationId/revision、eventId、artifactId | 已生成、已提交、已推送、已显示是不同事实 |
-| v0.7 | rootRunId、childId、handoffId | Child 完成不等于 Root 完成 |
-| v0.8 | segmentId、memoryId/revision、forget 标记 | 压缩成功不等于证据真实，偏好不是授权 |
+## 7. 权限、内容与局部失败
 
-不能为了 schema 统一而让 v0.1 所有对象都携带十几个未来字段。字段随行为引入，并在对应版本演进说明解释旧结构如何被替换。
+初始资料/工具集合由可信入口形成；Skill、来源文本、模型角色或MCP只读提示不生成权限。Child只能取子集；新任务或新下载请求分别检查，不从旧对话自动继承全部权限。
 
-## 6. 三类记录必须分开
+同Run恢复保留原grant、预算和绑定；本计划不实现复杂动态撤权传播。取消是显式生命周期动作，后续派发受其约束。主体认证、资料可用性、结果身份不同，不能将文件不可读统称“授权失效”。
 
-**执行事实**：模型实际发送、工具派发与回执、预算消耗、claim/fence。用于 Runtime 和恢复。
+资料作为资料进入模型，不能通过摘要/Hook混入system身份。文件失败保留独立正文，缺一条引用展示缺口；依赖未获准材料的内容不能通过删引用洗成公开信息。
 
-**研究材料**：原始数据、读取窗口、计算结果、Child 交接、派生摘要。用于模型理解及可核对引用。
+## 8. 物理执行能力出现时才承担对应可靠性
 
-**用户交付**：获准预览、已提交正文、附件引用、用户事件。用于界面和 History。
+v0.7：封存提议→核验授权/资源→派发→有确定回执则带fence提交→无回执则unknown与能力级对账。网络调用与远端效果没有普遍原子事务；不能靠数据库去重声称外部exactly-once。
 
-三者可以共用一个数据库事务设施，但不能用同一个未经区分的事件数组既恢复工具、又给模型、又直接推到浏览器。观测是它们的只读投影，不是第四套事实账本。
+v0.8：Publication提交与用户事件用同库事务，流交付用游标/去重，浏览器读取仍有独立状态；文件与数据库通过幂等内容身份收敛。
 
-## 7. 有副作用后的提交协议
+v0.9：容器/网络/解析器有各自限制。任意代码执行不能偷换成“一个子进程”，MCP也不天然是安全沙箱。
 
-```mermaid
-flowchart LR
-    I[记录稳定调用意图] --> A[核验参数 授权 资源]
-    A --> D[实际派发]
-    D --> O{有确定回执?}
-    O -->|有| C[带当前 fence 提交结果]
-    O -->|无| U[unknown / 能力级对账]
-    C --> N[下一轮读取已结算事实]
-    U --> Q[不伪造成功 不盲目重放]
-```
+## 9. 简洁性如何验收
 
-派发记录与外部系统效果不存在普遍原子性。已经提交的回执可以复用；没有回执不等于没有执行。只读工具允许重试时也要记录新 attempt 与取得时间，不能把新结果重新签发为旧观察。写工具需要业务幂等键或对账；本计划默认不开放金融写入。
+每期记录：新增能力实际改到了哪些位置，为什么；删除了什么旧代码；移除本期可选扩展后默认案例是否仍可用。第一次真实需求改变接口可以接受，成熟扩展反复要求进入多个核心内部则应修正Seam。
 
-同一 Run 使用原授权快照。配置更新只影响新 Run；本项目 v1.0 不实现完整的动态撤权传播。需要立即阻止原 Run 时使用明确取消并拒绝后续派发，不能让恢复逻辑悄悄扩大权限。账户安全事件和多组织授权不在支持范围内。
-
-## 8. 公开扩展面的最小方向
-
-以下是概念示意，不是当前可编译 API，也不是要求 v0.1 实现的抽象：
-
-```ts
-// 概念示意：每项依赖都有窄接口，不向扩展暴露整个 Runtime。
-registerTool(descriptor, executeBoundCall);
-registerSkill(metadata, readApprovedResource);
-registerHook(event, scopedCallback);
-startRun(input, admittedCapabilities);
-readResult(resultRef, permittedWindow);
-readPublication(runId, revision);
-```
-
-v0.3 的扩展 API 在 0.x 阶段允许有说明的破坏性修订；需要同步改示例并在版本差异中解释。v1.0 只冻结已经出现两个真实消费者、且能通过公开入口完成接入的面。仅为一个实现创建的 Adapter 要继续接受“是否必要”的检验。
-
-## 9. 简洁性与维护性验收
-
-每个版本除了功能演示，还要回答三个问题：新增能力改到了哪些非本能力模块，原因是什么；哪些旧代码/旧接口已删除；移除这项扩展后默认 demo 是否仍能运行。
-
-新增能力在首次出现时修改核心接口并不自动是坏设计。但如果成熟扩展每次升级仍反复修改 Runtime、Context、Recovery、Publication 的内部逻辑，就应停下来修正 Seam，而不是继续复制特殊分支。
-
-不设机械的代码行数合格线，不制造第二套复杂度评分平台。使用实际 diff、依赖检查和一个增删扩展示例解释局部性；构造更少但更深的 Module，而不是更多薄转发层。
+不要按行数设机械质量线，不把共用types文件做成第二个Runtime，也不为每个章节建立package。v1.0前默认单包，出现独立分发需求才讨论多包。
