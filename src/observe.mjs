@@ -1,3 +1,4 @@
+import { projectMemoryEffect } from './memory-effects.mjs';
 import { open, constants } from 'node:fs/promises';
 import { join } from 'node:path';
 import { safeDirectory } from './tools.mjs';
@@ -18,11 +19,11 @@ export async function readTimeline(directory) {
   const checks = {
     runId: identity, rootId: identity, taskId: value => value === null || identity(value),
     sequence: value => count(value) && value > 0,
-    type: value => ['run_started', 'model_proposal', 'tool_proposal', 'tool_result', 'file_saved', 'run_finished'].includes(value),
+    type: value => ['run_started', 'model_proposal', 'tool_proposal', 'tool_result', 'file_saved', 'run_finished','working_note'].includes(value),
     kind: value => ['calls', 'final'].includes(value), callId: identity,
     callIds: value => Array.isArray(value) && value.length <= 16 && value.every(identity),
     name: value => typeof value === 'string' && /^[a-z][a-z0-9_]{0,63}$/.test(value),
-    status: value => ['completed', 'failed', 'cancelled', 'succeeded', 'rejected', 'unknown'].includes(value),
+    status: value => ['completed', 'failed', 'cancelled', 'succeeded', 'rejected', 'unknown','applied','no-eligible-group','no-backed-material','budget-exhausted','summary-failed','summary-timeout','stale','memory-stale','invalid-summary','no-net-saving','persistence-failed','invalid-note-receipt'].includes(value),
     code: value => value === null || (typeof value === 'string' && /^[A-Z][A-Z0-9_]{0,100}$/.test(value)),
     dispatched: value => typeof value === 'boolean', durationMs: finite, toolsDispatched: count
   };
@@ -39,6 +40,8 @@ export async function readTimeline(directory) {
       entry.usage = Object.keys(usage).length ? usage : null;
       entry.cost = finite(event.cost) ? event.cost : null;
     }
+    if(event.type==='working_note'){for(const key of ['beforeBytes','afterBytes'])if(count(event[key]))entry[key]=event[key];for(const key of ['noteRef','persistedNoteRef'])if(event[key]===null||typeof event[key]==='string'&&/^note:sha256:[a-f0-9]{64}$/.test(event[key]))entry[key]=event[key];}
+    if(event.type==='tool_result'){const effect=projectMemoryEffect(event.memoryEffect);if(effect)entry.memoryEffect=effect;}
     return entry;
   });
   return { schemaVersion: 'readonly-metadata@1', replayable: false, entries };

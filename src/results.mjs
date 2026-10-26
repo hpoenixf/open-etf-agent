@@ -3,12 +3,14 @@ import { join } from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { safeDirectory, ensureSafeDirectory, publishImmutable } from './storage-files.mjs';
 import { validateSource, sha256 } from './source.mjs';
+import { validateNote, noteRef } from './working-note.mjs';
 import { validateCalculation } from './calculation.mjs';
 const identityKeys=['sourceId','documentId','name','version','page','sha256','mediaType'];
 const identity=source=>Object.fromEntries(identityKeys.map(key=>[key,source[key]]));
-const refPattern=/^(?:result|calculation):sha256:[a-f0-9]{64}$/;
+const refPattern=/^(?:result|calculation|note):sha256:[a-f0-9]{64}$/;
 function baseDescriptor(kind,value) {
   if(kind==='source') { const fields=identity(value); return {kind,...fields,resultRef:'result:sha256:'+sha256(JSON.stringify(fields))}; }
+  if(kind==='note')return {kind:'note',resultRef:noteRef(value)};
   return {kind:'calculation',calculation:value.calculation,resultRef:'calculation:sha256:'+sha256(JSON.stringify({kind:'calculation',value}))};
 }
 function recordPath(ref) { return 'results/'+ref.split(':').at(-1)+'.json'; }
@@ -37,11 +39,12 @@ export async function createResultStore({directory,allowedDocuments}={}) {
   catch(error) { if(error.code!=='ENOENT') throw error; if((await readdir(records)).length) throw new Error('Missing content index for nonempty original records'); entries=[]; await writeIndex(directory,entries); }
   const bySource=new Map(),byRef=new Map();
   for(const item of entries) {
-    if(!item||!['source','calculation'].includes(item.kind)||!refPattern.test(item.resultRef)||item.recordPath!==recordPath(item.resultRef)||!/^[a-f0-9]{64}$/.test(item.recordSha256)||byRef.has(item.resultRef)) throw new Error('Corrupt content index identity');
+    if(!item||!['source','calculation','note'].includes(item.kind)||!refPattern.test(item.resultRef)||item.recordPath!==recordPath(item.resultRef)||!/^[a-f0-9]{64}$/.test(item.recordSha256)||byRef.has(item.resultRef)) throw new Error('Corrupt content index identity');
     if(item.kind==='source') {
       if(!/^[a-f0-9]{64}$/.test(item.sha256)||!Number.isSafeInteger(item.page)||item.page<1||['sourceId','documentId','name','version','mediaType'].some(k=>typeof item[k]!=='string'||!item[k]||item[k].length>200||/[\u0000-\u001f]/.test(item[k]))||item.mediaType!=='text/plain; charset=utf-8'||baseDescriptor('source',item).resultRef!==item.resultRef||bySource.has(item.sourceId)) throw new Error('Corrupt source index identity');
       const keys=[...identityKeys,'kind','resultRef','recordPath','recordSha256'].sort().join(','); if(Object.keys(item).sort().join(',')!==keys) throw new Error('Corrupt index fields');
       bySource.set(item.sourceId,structuredClone(item));
+    } else if(item.kind==='note'){if(!item.resultRef.startsWith('note:')||Object.keys(item).sort().join(',')!==['kind','resultRef','recordPath','recordSha256'].sort().join(','))throw new Error('Corrupt note index');
     } else if(item.calculation!=='calculate_change@1'||!item.resultRef.startsWith('calculation:')||Object.keys(item).sort().join(',')!==['kind','calculation','resultRef','recordPath','recordSha256'].sort().join(',')) throw new Error('Corrupt calculation index');
     byRef.set(item.resultRef,structuredClone(item));
   }
@@ -50,7 +53,8 @@ export async function createResultStore({directory,allowedDocuments}={}) {
     const expected=byRef.get(resultRef); if(!expected||expected.kind!==kind||!refPattern.test(resultRef)) throw new Error('Unknown or invalid typed result ref'); scope(expected);
     await safeDirectory(records); const bytes=await boundedBytes(join(directory,recordPath(resultRef)),524288); if(sha256(bytes)!==expected.recordSha256) throw new Error('Corrupt record snapshot hash');
     const record=parse(bytes); if(record.schemaVersion!=='research-result@1'||record.kind!==kind||record.resultRef!==resultRef) throw new Error('Corrupt result record identity');
-    const value=kind==='source'?validateSource(record.value):validateCalculation(record.value); if(kind==='source'&&value.derived===true) throw new Error('Derived observation is not an original source');
+    const value=kind==='source'?validateSource(record.value):kind==='note'?validateNote(record.value):validateCalculation(record.value); if(kind==='source'&&value.derived===true) throw new Error('Derived observation is not an original source');
+    if(kind==='note')for(const ref of value.sourceRefs){const owned=byRef.get(ref.resultRef);if(!owned||owned.kind!=='source'||identityKeys.some(key=>owned[key]!==ref[key]))throw new Error('Unknown note source ref');scope(owned);}
     const base=baseDescriptor(kind,value); if(base.resultRef!==resultRef||Object.keys(base).some(key=>base[key]!==expected[key])) throw new Error('Corrupt result snapshot identity'); return value;
   }
   let queue=Promise.resolve();
@@ -66,6 +70,7 @@ export async function createResultStore({directory,allowedDocuments}={}) {
     queue=operation.catch(()=>{}); return operation;
   }
   return {
+    async addNote(input,{signal}={}){const value=validateNote(input);for(const ref of value.sourceRefs){const owned=byRef.get(ref.resultRef);if(!owned||owned.kind!=='source'||identityKeys.some(key=>owned[key]!==ref[key]))throw new Error('Unknown or mismatched note source ref');await readRecord(ref.resultRef,'source');}return addRecord('note',value,signal);},readNote:ref=>readRecord(ref,'note'),
     async add(input,{signal}={}) { const value=validateSource(input); if(value.derived===true) throw new Error('Derived observation is not an original source'); return addRecord('source',value,signal); },
     async addCalculation(input,{signal}={}) { return addRecord('calculation',validateCalculation(input),signal); },
     read:ref=>readRecord(ref,'source'), readCalculation:ref=>readRecord(ref,'calculation'),

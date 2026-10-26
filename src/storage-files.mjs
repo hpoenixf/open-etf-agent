@@ -37,4 +37,3 @@ export async function publishImmutable(directory, filename, bytes, signal) {
     await unlink(temp).catch(() => {});
   }
 }
-

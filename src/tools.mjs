@@ -1,3 +1,4 @@
+import { projectMemoryEffect } from './memory-effects.mjs';
 import { readFile } from 'node:fs/promises';
 import { createResultStore } from './results.mjs';
 import { safeDirectory, publishImmutable as publish } from './storage-files.mjs';
@@ -10,7 +11,7 @@ const fail = message => { throw new Error(message); };
 function fields(value, names) {
   if (!object(value) || Object.keys(value).length !== names.length || names.some(k => !Object.hasOwn(value, k))) fail('Invalid argument fields');
 }
-export async function createToolHost({ directory, extensions = [], hooks, allowedTools, allowedDocuments }) {
+export async function createToolHost({ directory, extensions = [], hooks, allowedTools, allowedDocuments, enableNotes=false }) {
   directory = await safeDirectory(directory);
   const input = JSON.parse(await readFile(new URL('../fixtures/documents.json', import.meta.url), 'utf8'));
   if (allowedDocuments !== undefined && (!Array.isArray(allowedDocuments) || !allowedDocuments.length || allowedDocuments.some(id => !input.documents.some(d => d.id === id)))) fail('Invalid document allowlist');
@@ -85,6 +86,7 @@ export async function createToolHost({ directory, extensions = [], hooks, allowe
       }
     }
   };
+  if(enableNotes)bindings.read_note={description:'Read an acquired derived working note, never original evidence or permission.',parameters:{type:'object',properties:{resultRef:{type:'string',pattern:'^note:sha256:[a-f0-9]{64}$'}},required:['resultRef'],additionalProperties:false},validate(args){fields(args,['resultRef']);if(typeof args.resultRef!=='string'||!/^note:sha256:[a-f0-9]{64}$/.test(args.resultRef))fail('Invalid derived note ref');},async execute(args){return{...await results.readNote(args.resultRef),resultRef:args.resultRef};}};
   if (!Array.isArray(extensions) || extensions.length > 16) fail('Invalid extension list');
   for (const binding of extensions) {
     if (!binding || typeof binding.name !== 'string' || !/^[a-z][a-z0-9_]{0,63}$/.test(binding.name)) fail('Invalid extension name');
@@ -99,6 +101,7 @@ export async function createToolHost({ directory, extensions = [], hooks, allowe
   return {
     async getSources() { return Promise.all((await results.list()).map(ref => results.read(ref.resultRef))); },
     getResultRefs: () => results.list(),
+    persistWorkingNote: (note,options) => results.addNote(note,options),
     resolveSource: id => results.resolve(id),
     definitions: Object.entries(bindings).map(([name, b]) => ({ name, description: b.description, parameters: b.parameters })),
     get receipt() { return receipt && structuredClone(receipt); },
@@ -144,7 +147,7 @@ export async function createToolHost({ directory, extensions = [], hooks, allowe
         }
         return finish({ callId, status: 'succeeded', dispatched: true, value });
       } catch (error) {
-        return finish({ callId, status: 'failed', dispatched: true, error: error.code || error.message, partialPaths: error.partialPaths || [] });
+        return finish({ callId, status: 'failed', dispatched: true, error: error.code || error.message, partialPaths: error.partialPaths || [], ...(binding.memoryEffect&&projectMemoryEffect(error.memoryEffect)?{memoryEffect:projectMemoryEffect(error.memoryEffect)}:{}) });
       }
     }
   };

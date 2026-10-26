@@ -5,3 +5,5 @@ test-output/
 .env
 .env.*
 *.log
+
+!.env.example

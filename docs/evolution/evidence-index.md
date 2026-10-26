@@ -44,6 +44,16 @@ License/publication and live-provider/data/cost authorization remain pending. Th
 - Query variation is connected to actual ordinary read_page calls, not merely a ranking helper. Zero hits expose the missing report rather than fabricate a comparison.
 - [Actual observations](../verification/v04-observations.md), [provenance](../verification/v04-evidence-provenance.json), [real content-record receipts](../verification/v04-demo-receipts.json).
 
+## v0.5: questions fixed before implementation
+
+The initial fourteen assertions now have actual RED→GREEN evidence, followed by integration and independent review negatives. The offline candidate passed 124 tests and seven independent demos; live semantics remain unproved.
+
+- Forgetting a stored entry is weaker than removing its old typed text from the next model input: search results, historical write arguments and derived-note dependencies can each reintroduce it. Historical execution records and already exported reports remain historical facts.
+- A Memory write's intent must be operator-bound and scoped, not a Boolean supplied by the model. A one-use grant requires durable reservation before mutation; failures after reservation can consume authority without completing the operation. That is an explicit partial effect, not permission for silent replay.
+- Compaction must save bytes against the actual reference-only view, not an inflated raw-text baseline. Note metadata and original refs count toward the comparison.
+- Generating a summary and persisting a note are both asynchronous. The original basis or Memory revision may change in either interval; an immutable note file alone is not evidence that the note was adopted.
+- [Proposed contracts and verification order](../../openspec/changes/v05-notes-memory/design.md). [Actual terminal execution evidence](../verification/v05-observations.md) preserves Hook-copy forgetting, lost partial Memory effects, note scope and observe-event failures instead of retelling them as first-try success.
+
 ## Later stages
 
-v0.5–v1.0 remain the public roadmap, not pre-created implementations. Each future stage should add only its needed requirement, test, code, actual observation and independently runnable fixed point; no ten-version copy or fabricated completion table.
+v0.6–v1.0 remain the public roadmap, not pre-created implementations. Each future stage should add only its needed requirement, test, code, actual observation and independently runnable fixed point; no ten-version copy or fabricated completion table.

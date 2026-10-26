@@ -1,32 +1,43 @@
 {
   "schemaVersion": "local-delivery-manifest@2",
-  "status": "v0.4-offline-candidate-with-real-kit-checks",
+  "status": "v0.5-offline-candidate-kit-pending",
   "published": false,
-  "baselineCommit": "26731bdd68d3420f80f68ecd848d0f37eb1885ca",
-  "codeInputInventorySha256": "aece230a363c50e076623f93378bb317d0b1170c2c1eea3fa8a316f773983427",
+  "baselineCommit": "6e95fb0f6f75d41a695f2fc1e25491c104a8a1db",
+  "codeInputInventorySha256": "35e26cb8a36a8d3eee2ed9fca838bc4639235aa8104fe423644e4d2dfd75fea4",
   "manifestExcludesSelf": true,
   "kit": {
     "revision": "db6ac2f43cc0319fa0f10b4f73d67521d5209c88",
-    "plan": "passed",
-    "apply": "passed",
-    "statusCompleted": "6/7",
-    "verifyCheck": "refused: incomplete 4.7",
-    "structuralOnly": true
+    "v05Execution": "not-run-before-public-backup-freeze",
+    "completion": false
   },
-  "pending": [
-    "authorized live/provider/data/cost and semantic review",
-    "project license and public push/merge/tag/release authorization"
+  "offline": {
+    "testsPassed": 124,
+    "testsTotal": 124,
+    "independentInstallBuildTest": true,
+    "demosPassed": 7,
+    "reportReceiptsReadBack": 10
+  },
+  "remainingGates": [
+    "v05 Kit execution",
+    "authorized live execution and semantic review",
+    "project license decision",
+    "formal release"
   ],
   "files": [
     {
+      "path": ".env.example",
+      "bytes": 293,
+      "sha256": "d711c11fff96fa0848fb7a3145307261a5cad2a4172d10b2bfe8701b60887aeb"
+    },
+    {
       "path": ".gitignore",
-      "bytes": 57,
-      "sha256": "6cc1fd97488637fa5030818165511cf872c65bc9a3e40d8f880143fdadb72e4d"
+      "bytes": 72,
+      "sha256": "32c2b1fc458c752f56eca9fa94c6d04ca02c676cea6f8463191c93ba77499c08"
     },
     {
       "path": "README.md",
-      "bytes": 5980,
-      "sha256": "6c93bc0c56642323a5d404c71c8f8e3cdd748a39a8ea095a5158ddc23ae8e882"
+      "bytes": 8763,
+      "sha256": "073313c2bebaeba11bdd56739523b6d19dd990315ab1ae815d54106f7fe07b69"
     },
     {
       "path": "docs/dependencies/sdk-selection.md",
@@ -50,8 +61,8 @@
     },
     {
       "path": "docs/evolution/evidence-index.md",
-      "bytes": 6149,
-      "sha256": "3e47cb8e6df3d6fdcd44cc2f9249213e614fb8a9cbac401089aac4f30cbcdfe2"
+      "bytes": 7712,
+      "sha256": "3db99762b9cfb010a5d3ebcd13fb9f1fcda3013bdcd154e01cc4ac6cf6a74f11"
     },
     {
       "path": "docs/evolution/v04-design-preparation.md",
@@ -154,6 +165,31 @@
       "sha256": "4019e2120409b1ea381cdacad7452f560d7fa0acb610271d26366754c2a43755"
     },
     {
+      "path": "docs/verification/v05-candidate-inputs.sha256",
+      "bytes": 5785,
+      "sha256": "35e26cb8a36a8d3eee2ed9fca838bc4639235aa8104fe423644e4d2dfd75fea4"
+    },
+    {
+      "path": "docs/verification/v05-demo-receipts.json",
+      "bytes": 12634,
+      "sha256": "fabc02c0697a1365b36236ac40b40e6222c7c774d4399fd772d0e893be138c2f"
+    },
+    {
+      "path": "docs/verification/v05-evidence-provenance.json",
+      "bytes": 5254,
+      "sha256": "457d7c18e5c8d209f7eda7c18d2664a0569cd538482945f1fe5e056b8b4f7b7c"
+    },
+    {
+      "path": "docs/verification/v05-live-preparation.md",
+      "bytes": 2303,
+      "sha256": "72ef69d676ab7497e8c2cc9b7e7e41517e7807bbb3804ab8920bccc1128b3572"
+    },
+    {
+      "path": "docs/verification/v05-observations.md",
+      "bytes": 5696,
+      "sha256": "a6d51eb9219498f62b594f5ba7a55584be3e901a3a7db13bde3b4992f370869b"
+    },
+    {
       "path": "fixtures/cases.json",
       "bytes": 1383,
       "sha256": "9f91af7bbf425d20e48d985d3f33e7770ca2aaf1e9fe011c1d35ace31a062ba6"
@@ -254,14 +290,39 @@
       "sha256": "3f1ed302af1d5cea97a6ff14a8288462242fa457f3c157b4c9c2b1f035ae09b8"
     },
     {
+      "path": "openspec/changes/v05-notes-memory/design.md",
+      "bytes": 5281,
+      "sha256": "f248080cd12a0a2d3a227ff67c2e5720b36003d5b3f1b5ff0407a793edad22a9"
+    },
+    {
+      "path": "openspec/changes/v05-notes-memory/evidence.md",
+      "bytes": 6457,
+      "sha256": "832b03dd97eac2f78d26480445f5fb232403dd1db8fd420fb8cc64800c57e43c"
+    },
+    {
+      "path": "openspec/changes/v05-notes-memory/proposal.md",
+      "bytes": 1428,
+      "sha256": "cd08825245f97abcb1561bfd58a53b21e183e1c8aa46f8ff647e5b2f1677a825"
+    },
+    {
+      "path": "openspec/changes/v05-notes-memory/specs/working-input/spec.md",
+      "bytes": 4249,
+      "sha256": "5c13a58e2a42f867777ed8be24a7ba9fb66a523de6f530a2c733f786c380d0ed"
+    },
+    {
+      "path": "openspec/changes/v05-notes-memory/tasks.md",
+      "bytes": 649,
+      "sha256": "d059c352e6bfe57b58b0c220ed74b0fa447b67c0b07e76cca2dda6b158bc3009"
+    },
+    {
       "path": "package-lock.json",
       "bytes": 43059,
-      "sha256": "a1354bb00da10faf6765bd8e6cd5ef579405c6f26d47a48a0847debce195c681"
+      "sha256": "0d869c607e28ec524bc634c4194dded570819ce9524e52009a527e7154616c98"
     },
     {
       "path": "package.json",
       "bytes": 414,
-      "sha256": "50302d9969d6f5d1d487ac998316165575943fd7f306a20f265cb3521e7ef68f"
+      "sha256": "096b2ec49fa273a96a6c387a860ea1b8d576fb182b84e732238f19c85b1bd5b1"
     },
     {
       "path": "scripts/build.mjs",
@@ -285,8 +346,13 @@
     },
     {
       "path": "src/cli.mjs",
-      "bytes": 6234,
-      "sha256": "e453b44aa152baa119eef974303e52d6ec1e763d02b7bc03f8cf5d0226a691ce"
+      "bytes": 7538,
+      "sha256": "3e85cf3d36f1ed5b7cfc22437331805ebe328fdb5a78a0d802dc03d09fcb61ae"
+    },
+    {
+      "path": "src/compaction.mjs",
+      "bytes": 6986,
+      "sha256": "8be9332faeaec7a22d2dd5c4905edfcf70f5fd002df980f0c41e5e0061e712ed"
     },
     {
       "path": "src/context.mjs",
@@ -334,14 +400,34 @@
       "sha256": "fbc19a7192bf79ddb142aad1d828bd4f5fc5e183e2def8b7a71ac30431d04d39"
     },
     {
+      "path": "src/memory-effects.mjs",
+      "bytes": 813,
+      "sha256": "92b5079e6d0c8c5c40f6cae28de4612fba772b591c61a27092fba9236c148592"
+    },
+    {
+      "path": "src/memory-projection.mjs",
+      "bytes": 3259,
+      "sha256": "b4c5215c4507b35db0b6c74dc3a6ec2f5cfb2dc62ce3c13f4537d4ef1b34f6fe"
+    },
+    {
+      "path": "src/memory-tools.mjs",
+      "bytes": 3421,
+      "sha256": "a570111989bc2f7d102a3c97778d26a16fbdaac48d1ddd10084358b4d25af812"
+    },
+    {
+      "path": "src/memory.mjs",
+      "bytes": 9143,
+      "sha256": "78826d5d0bce89e92c97134d5cc497ce835a09dcc12539e668fb4e527f48caae"
+    },
+    {
       "path": "src/observe.mjs",
-      "bytes": 3040,
-      "sha256": "1f86e10422fbc91722c3af3027fa3c97cd29b2d17e8b63d9f7e91a93d15047a1"
+      "bytes": 3742,
+      "sha256": "e8e52829907d8a75a5a2e6d08e5ddfc82841f0ffdd988d2640a66f654f4133fd"
     },
     {
       "path": "src/results.mjs",
-      "bytes": 7813,
-      "sha256": "8368b4fd157b5c7b208680630c8b9d7883671a023774e7347b5675872b101427"
+      "bytes": 8837,
+      "sha256": "03710e2518e770ed4b0f486ec3cfbd66b3b0f90644d1832d83266a9f4b5d6a60"
     },
     {
       "path": "src/retrieval-demo.mjs",
@@ -355,8 +441,8 @@
     },
     {
       "path": "src/runtime.mjs",
-      "bytes": 8197,
-      "sha256": "93144c8b459ae88920547eac59a11fe6791acddcfe7fb87768c290cf35d476cf"
+      "bytes": 10244,
+      "sha256": "d07c77cea74e8219505b10beef8b37eea5e0d9741d98624976bfe6fb03c81ae4"
     },
     {
       "path": "src/skills.mjs",
@@ -370,8 +456,8 @@
     },
     {
       "path": "src/storage-files.mjs",
-      "bytes": 1766,
-      "sha256": "5b7527c0ce08d7db4dc9db667df6b122168c0d6b6882106f996d275168df8ddd"
+      "bytes": 1765,
+      "sha256": "8bfe8fc5588dadc7d6ffa403467d82b9ea994826bb92125419d34e50a753f464"
     },
     {
       "path": "src/stream.mjs",
@@ -380,13 +466,33 @@
     },
     {
       "path": "src/tools.mjs",
-      "bytes": 12277,
-      "sha256": "9689c78118fb8a1a161628964535c21d3aa834b9a52220c4d52b01470bdb3e51"
+      "bytes": 13101,
+      "sha256": "75886d1024aa10602289711a027a0ce4b62e4c8798fcd0bf3cfc771bfcbece0c"
+    },
+    {
+      "path": "src/working-demo.mjs",
+      "bytes": 5898,
+      "sha256": "cd3d8973b54bc141978cc654d33746ea3b02211991394d2f7fd04d8b6f61fa9a"
+    },
+    {
+      "path": "src/working-note.mjs",
+      "bytes": 1615,
+      "sha256": "6bc9411849e92afdd8ff5c06d55067e833d7d9a4dcf5fecb778c35b16d1adaa7"
     },
     {
       "path": "test/cli.test.mjs",
       "bytes": 3518,
       "sha256": "6ec93a272e4c2975145202687a3bb9dabefbdb4bb502ac2cf1a97e4fa06f2866"
+    },
+    {
+      "path": "test/compaction-bounds.test.mjs",
+      "bytes": 2103,
+      "sha256": "9f44ac12299a711817b4f93c9c5f0afccc8c1ada5f4633ddb0976cec2a798bdf"
+    },
+    {
+      "path": "test/compaction.test.mjs",
+      "bytes": 5291,
+      "sha256": "f66446d4b05d5129044f64aa5d4953fd3993e77158079fbc06db530186dbabf3"
     },
     {
       "path": "test/context.test.mjs",
@@ -422,6 +528,26 @@
       "path": "test/mcp.test.mjs",
       "bytes": 3996,
       "sha256": "542de6e2119f754b6e08136e465572247f8487314013eac803b161e7e5d75ebf"
+    },
+    {
+      "path": "test/memory-bounds.test.mjs",
+      "bytes": 1070,
+      "sha256": "8461af51526c49d5da1707a2c3ba0e66641b02947efe2699268ff95c95f0ec0d"
+    },
+    {
+      "path": "test/memory-effects.test.mjs",
+      "bytes": 2301,
+      "sha256": "0cc0824e1bfbb7658b168115ea73b1b919a18f1dc16d7243cc84e73cd910ebc1"
+    },
+    {
+      "path": "test/memory-projection.test.mjs",
+      "bytes": 4254,
+      "sha256": "6b52417a06f35a07cb8bef5017ab4420000a4e1e34cfc0dc151e861429df25e1"
+    },
+    {
+      "path": "test/memory.test.mjs",
+      "bytes": 5139,
+      "sha256": "52833284f81331b5fd566f0af52825758d3a40bea6ab205218a220fd7180cf5a"
     },
     {
       "path": "test/research-integration.test.mjs",
@@ -482,6 +608,16 @@
       "path": "test/v04-cli.test.mjs",
       "bytes": 2550,
       "sha256": "fd27d2d6a63f27a6ed7865cbc04727496f12d9a8bc0f5d6915d3dd5c1fc919d4"
+    },
+    {
+      "path": "test/v05-cli.test.mjs",
+      "bytes": 3935,
+      "sha256": "8516f2ade190c773a927ea8ba6d876be00dd2b45eee0eff10bc3996de741e9eb"
+    },
+    {
+      "path": "test/working-input-integration.test.mjs",
+      "bytes": 9655,
+      "sha256": "f7e64391962ea60570b0e280146c29045aaa27cdbf11598aff101cde5a84790a"
     },
     {
       "path": "tooling/openspec-evidence-kit-db6ac2f/LICENSE",
