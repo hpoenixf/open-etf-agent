@@ -1,30 +1,38 @@
-# Open ETF Agent — v0.1 local candidate
+# Open ETF Agent — v0.2 offline candidate
 
-Not released; the mandatory authorized live exit is still blocked. Original implementation and synthetic fixtures against public PR #1. All 23 offline tests and independent npm ci/build/test/demo commands passed on Node 26.11.1, including three independently identified regression fixes. No private code/data. License selection/publication pending; private/UNLICENSED metadata prevents accidental npm publication.
+Local development candidate, not a release. v0.1 remains frozen on its independent phase branch. v0.2 adds explicit Skill reads, real stdio MCP and complete model SSE assembly without another Runtime. Live/provider/data/cost, semantic review, project license and public publication remain separate open gates.
 
-## Independent commands
+## Run independently
 
-Node 26.11.1–26.x; zero third-party dependencies:
+Node 26.11.1–26.x. First installation may fetch locked official npm artifacts; installation scripts are not needed:
 
 ```sh
-npm ci --offline --ignore-scripts --no-audit --no-fund
+npm ci --ignore-scripts --no-audit --no-fund
 npm run build
 npm test
 npm run demo -- --case document-compare
+npm run demo -- --case skill-mcp
 ```
 
-Build and demo were exercised through child-process tests and the independent npm commands above. The lockfile has no third-party packages; build only syntax-checks native ESM and copies src/fixtures into dist. It does not claim static type checking. `node dist/src/cli.mjs --case document-compare` runs the built copy with its own fixtures.
+After caching, `npm ci --offline --ignore-scripts --no-audit --no-fund` also works. Demos run offline. Build syntax-checks native ESM and copies source/fixtures, including Skill resources; it does not compile TypeScript. `node dist/src/cli.mjs --case skill-mcp` runs the built copy. Tests run serially. The original fixture server is one short-lived Node child, not a daemon or OS sandbox.
 
-Default scripted gateway demonstrates plumbing, not real model quality. `--case T1` (or T2/T3/T4) selects one case but still records all four in the denominator, with others not-run. `--output ./runs` selects a trusted operator output root; models cannot choose paths. Live is blocked before reading credentials or making requests. The programmatic non-streaming Chat Completions adapter has not been tested against a real provider.
+## Actually demonstrated
 
-Each run creates report.md, manifest.json and run.jsonl. Manifest preserves original acquired page text/version/physical page/SHA-256 plus saved file identity and receipt. Source text is data, never permission. T3 separates difference 180 rows/export, total ratio 2.5, and increase ratio 1.5. Fixtures are original synthetic product guides, not real fund advice.
+- Four questions retain denominator 4 and semanticStatus unreviewed. Selecting T1–T4 marks other questions not-run instead of dropping them.
+- skill-mcp lists Skill metadata, explicitly reads its body, acquires both source pages through an actual SDK process and saves through the same Host/Runtime budget. Discovery does not authorize the fixture's unapproved tool.
+- Real report.md, manifest.json and run.jsonl retain source/method snapshots, version/page/hash, model-call versus SDK-request identity and save receipt. Tests reopen files after the CLI exits; the CLI does not claim the user opened them.
+- Gateway supports text/function Chat Completions, non-streaming or bounded SSE. Tool arguments are not dispatched before valid finish and DONE. Injected offline streams prove mechanisms only; --live remains blocked before requests.
 
-T4 readback is performed by the tests after the demo child process exits; the CLI itself does not launch a second reader or claim that the user opened a file. All semantics remain unreviewed; HTTP download is not-applicable. JSONL is diagnostic, not recovery control. No HTTP/DB/plugins/v0.2.
+## Explicit limits
 
-## Failures and local trust boundary
+Skills support only plain name/description frontmatter, in that order, and bounded UTF-8 resources under explicit nonsymlink directories. No Skill scripts execute. Reading a method is not proof of semantic adoption.
 
-Tools reject unknown IDs/arguments and file paths. Writes use exclusive temporary files and no-overwrite publication. A report followed by manifest failure produces explicit partialEffects and no successful receipt. No write is automatically retried. A timed-out in-flight tool remains unknown; cancellation prevents later dispatch. Existing saved receipts survive independent logging failure.
+MCP uses exact official SDK 1.32.2 and verified 2025-11-25 handshake, not the latest 2026 protocol. The first SDK v2 candidate failed strict stdout handling; [selection evidence](docs/dependencies/sdk-selection.md) records why and the dependency cost. Only the original allowlisted fixture server is launched; arbitrary third-party servers, OAuth and network transports are unsupported.
 
-Only local single-user, trusted output roots are supported. Static symlink ancestors are rejected before directory creation. This is not an OS sandbox against a hostile same-user process racing filesystem paths. File-set publication is not a multi-file transaction. No database, background execution or interrupted-run recovery is claimed.
+Local single-user roots only. Static symlinks are rejected; hostile same-user filesystem races are not an OS security boundary. Partial/unknown effects remain explicit; writes are not blindly retried. Files and JSONL are not recovery checkpoints. No plugins, hooks, workers, database, RAG, Memory or HTTP reader are added.
 
-See openspec/changes/v01-first-report for proposal, requirements, stable tasks and actual evidence; fixtures/cases.json retains four questions and semanticStatus unreviewed. The user-owned public Evidence Kit is pinned under tooling/ and was actually run: plan/apply structural checks passed; verify --check correctly refuses incomplete live/publication tasks. See docs/verification/kit-integration.md. This does not certify semantics or a release.
+## Evidence
+
+[v0.2 observations](docs/verification/v02-observations.md) retain RED results, the failed SDK experiment, fixes and actual process outcomes. [Article evidence index](docs/evolution/evidence-index.md) records design motivations rather than a premature success story. The pinned user-owned public Evidence Kit provides actual structural checks, separate from product tests and release approval.
+
+Current regression: 49/49 offline tests plus independent install/build/default/skill-mcp commands passed. Later review may add corrections; use exact candidate inventories and observations rather than treating test count as maturity certification.

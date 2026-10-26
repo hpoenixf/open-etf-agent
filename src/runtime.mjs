@@ -15,13 +15,13 @@ async function bounded(promise, signal) {
   try { return await Promise.race([promise, stopped]); } finally { signal.removeEventListener('abort', cancel); }
 }
 
-export async function run({ question, gateway, outputRoot = 'runs', requireReport = true, signal, limits = {} }) {
+export async function run({ question, gateway, outputRoot = 'runs', requireReport = true, signal, limits = {}, extensions = [] }) {
   if (typeof question !== 'string' || !question.trim() || Buffer.byteLength(question) > 16000 || typeof gateway?.next !== 'function') throw failure('INVALID_INPUT');
   const budget = { maxRounds: 12, maxTools: 12, timeoutMs: 30000, ...limits };
   for (const [key, value] of Object.entries(budget)) if (!['maxRounds', 'maxTools', 'timeoutMs'].includes(key) || !Number.isSafeInteger(value) || value < 1 || value > (key === 'timeoutMs' ? 300000 : 1000)) throw failure('INVALID_LIMIT');
   const root = await ensureSafeDirectory(outputRoot);
   const directory = await mkdtemp(join(root, 'run-')); const runId = basename(directory);
-  const host = await createToolHost({ directory });
+  const host = await createToolHost({ directory, extensions });
   const controller = new AbortController();
   const cancel = () => controller.abort(failure('CANCELLED'));
   signal?.addEventListener('abort', cancel, { once: true }); if (signal?.aborted) cancel();

@@ -1,0 +1,160 @@
+{
+  "kind": "original local artifact hash receipts; raw logs excluded",
+  "artifacts": [
+    {
+      "basename": "skills-stream-red.txt",
+      "sha256": "ce5be18f11c133fa6766d7ee8710df11b85cfc107514316ff05ba7a3875ff38d",
+      "summary": "docs/verification/v02-observations.md"
+    },
+    {
+      "basename": "skills-stream-green-1.txt",
+      "sha256": "d109d5ecb0045d3db61e697c6914df4b80f1eaa93363acabffeb274ebb265892",
+      "summary": "docs/verification/v02-observations.md"
+    },
+    {
+      "basename": "skills-stream-green-2.txt",
+      "sha256": "a6354537a535fb1f756ba0fd4b673a6902fed1deffac3e5996f6a0f4d1e075ff",
+      "summary": "docs/verification/v02-observations.md"
+    },
+    {
+      "basename": "mcp-extensions-red.txt",
+      "sha256": "6a08c15d1491893a4cd70ce758f053737c081e91899b7b2d07dccecfb4325f42",
+      "summary": "docs/verification/v02-observations.md"
+    },
+    {
+      "basename": "mcp-extensions-green-1.txt",
+      "sha256": "496098e8ece41c562c11474364383b8dca60b541949ccd967536951f4b0e14c8",
+      "summary": "docs/verification/v02-observations.md"
+    },
+    {
+      "basename": "mcp-v1-green.txt",
+      "sha256": "453c9060a628f4ac41bdca2a2d437d5951ecc02a22fca9bfbc9b6b8b7ac1a57f",
+      "summary": "docs/verification/v02-observations.md"
+    },
+    {
+      "basename": "assembly-red.txt",
+      "sha256": "34cbb224e2be3fea102a2cc01c7b10c00d23be6af0fb9e80bd60d563bd56c896",
+      "summary": "docs/verification/v02-observations.md"
+    },
+    {
+      "basename": "assembly-green.txt",
+      "sha256": "18f1082738a909d36025fb64fba04a0e0b805732e10c1911e6bafe60a741dec0",
+      "summary": "docs/verification/v02-observations.md"
+    },
+    {
+      "basename": "source-pair-red.txt",
+      "sha256": "6adcf3d9bd8309f58fab826161f8c949b94a73b76a2fdcd987340b0191c12150",
+      "summary": "docs/verification/v02-observations.md"
+    },
+    {
+      "basename": "all-green-1.txt",
+      "sha256": "e6f9262f04cc0f076beb3f5c9534662c3c7d685ac30532b1d106c27f2118b230",
+      "summary": "docs/verification/v02-observations.md"
+    },
+    {
+      "basename": "npm-ci.txt",
+      "sha256": "adcf84617f30a9d5375852dcfd3545b1f57ed5c542f33d3cf85987af5dc51189",
+      "summary": "docs/verification/v02-observations.md"
+    },
+    {
+      "basename": "npm-build.txt",
+      "sha256": "40ed74494db87fc865a9a69bcc72288716b40c065f5bc52ccc133389d2e70fb2",
+      "summary": "docs/verification/v02-observations.md"
+    },
+    {
+      "basename": "npm-test.txt",
+      "sha256": "2a158070892df1f4ef79a4e43832f3345911fddd26b0ee2572567e07f7b652e0",
+      "summary": "docs/verification/v02-observations.md"
+    },
+    {
+      "basename": "npm-default-demo.txt",
+      "sha256": "ce13db4bf45163f23e7b5f99c66dbf7e5d74e4ca24d5a043b576f19a0759d73d",
+      "summary": "docs/verification/v02-observations.md"
+    },
+    {
+      "basename": "npm-skill-demo.txt",
+      "sha256": "c576ad8f56e1a7e002dcfe5750c691f851107ac4b0d02efeb8974284cd9f099c",
+      "summary": "docs/verification/v02-observations.md"
+    },
+    {
+      "basename": "schema-red.txt",
+      "sha256": "a41b74aa3abe2e46c04aecf263c994492cb5656aaaaf6572a24b75188402a421",
+      "summary": "docs/verification/v02-observations.md"
+    },
+    {
+      "basename": "schema-green.txt",
+      "sha256": "f031c95847327e4db58805537e56f0c27fecf2b9a28e17d109cf7705a6aeb110",
+      "summary": "docs/verification/v02-observations.md"
+    },
+    {
+      "basename": "mcp-lifecycle-check.txt",
+      "sha256": "a3a89fa1d67b54ba0f6f2f32b2733af65afcf732991bb86d1e40b7ca4a6197a3",
+      "summary": "docs/verification/v02-observations.md"
+    },
+    {
+      "basename": "final-npm-build.txt",
+      "sha256": "40ed74494db87fc865a9a69bcc72288716b40c065f5bc52ccc133389d2e70fb2",
+      "summary": "docs/verification/v02-observations.md"
+    },
+    {
+      "basename": "final-npm-test.txt",
+      "sha256": "d8438fd8c925d3f6bfa55070181cccad966e8389b265768442f45f932c6da399",
+      "summary": "docs/verification/v02-observations.md"
+    },
+    {
+      "basename": "final-default-demo.txt",
+      "sha256": "d30bcd5ce04644fc1d5b3404c8e1268339c749c2ea4ec5091640f2752d294262",
+      "summary": "docs/verification/v02-observations.md"
+    },
+    {
+      "basename": "final-skill-demo.txt",
+      "sha256": "fa65ea5d49a45105eef1a8e6829561d07849e2e271f21195ef08f1281385d7e6",
+      "summary": "docs/verification/v02-observations.md"
+    },
+    {
+      "basename": "kit-plan.json",
+      "sha256": "d50493fec19507765139ee1a6c4b20afb1b9808637f3f7e9f871e119dc9c8dd9",
+      "summary": "docs/verification/v02-observations.md"
+    },
+    {
+      "basename": "kit-apply-format-failure.json",
+      "sha256": "1f0ba5bbe556d2faa8a9a3a842137653ad35da8c298aebad854bb29249d9e9fb",
+      "summary": "docs/verification/v02-observations.md"
+    },
+    {
+      "basename": "kit-lint.json",
+      "sha256": "b20d0b5ae5ea6778ee3b68981794ae81b12d0daf833b0a23386b5281944120c2",
+      "summary": "docs/verification/v02-observations.md"
+    },
+    {
+      "basename": "kit-status.json",
+      "sha256": "578a2ac19450cb8ca51ebab37336b95af0cbc89eb7ad22b2a15e6eefe17a4a79",
+      "summary": "docs/verification/v02-observations.md"
+    },
+    {
+      "basename": "kit-verify.json",
+      "sha256": "09974037d55930beda9e6f71c3f875229039f56e1aa6f173816282589b840976",
+      "summary": "docs/verification/v02-observations.md"
+    },
+    {
+      "basename": "review-complete-tests.txt",
+      "sha256": "6c9d6b47b4181f8931933c60053f6fb52fe27d3229d313462e3e2b93ad953b56",
+      "summary": "docs/verification/v02-observations.md"
+    },
+    {
+      "basename": "kit-final-lint.json",
+      "sha256": "b20d0b5ae5ea6778ee3b68981794ae81b12d0daf833b0a23386b5281944120c2",
+      "summary": "docs/verification/v02-observations.md"
+    },
+    {
+      "basename": "kit-final-status.json",
+      "sha256": "ea5e7555c49f2b8dbcd41f4703fb04e213e613d39f6ef7295d5b506b9e147f01",
+      "summary": "docs/verification/v02-observations.md"
+    },
+    {
+      "basename": "kit-final-verify.json",
+      "sha256": "a96d069e9e6dc5fe29e7484fdc3c3a270efb8739d83f256ad9acbc9bb2c879a2",
+      "summary": "docs/verification/v02-observations.md"
+    }
+  ]
+}

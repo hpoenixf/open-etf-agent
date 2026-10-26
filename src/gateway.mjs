@@ -28,7 +28,7 @@ function encodeMessages(messages) {
 
 // No authorization is implied by importing this adapter. CLI keeps live blocked.
 // The caller must supply an explicit reviewed grant; never derive it from data.
-export function createChatGateway({ endpoint, model, apiKey, authorization, fetchImpl = globalThis.fetch }) {
+export function createChatGateway({ endpoint, model, apiKey, authorization, stream = false, fetchImpl = globalThis.fetch }) {
   if (!authorization?.providerApproved || !authorization?.syntheticDataApproved || !authorization?.costApproved) throw new Error('LIVE_BLOCKED');
   const url = new URL(endpoint);
   if (url.protocol !== 'https:' || url.username || url.password || url.search || url.hash || !url.pathname.endsWith('/chat/completions')) throw new Error('Invalid trusted endpoint');
@@ -39,9 +39,14 @@ export function createChatGateway({ endpoint, model, apiKey, authorization, fetc
       const response = await fetchImpl(url, {
         method: 'POST', redirect: 'error', signal,
         headers: { 'content-type': 'application/json', authorization: `Bearer ${apiKey}` },
-        body: JSON.stringify({ model, stream: false, n: 1, messages: encodeMessages(messages), tools: tools.map(t => ({ type: 'function', function: t })) })
+        body: JSON.stringify({ model, stream, ...(stream ? { stream_options: { include_usage: true } } : {}), n: 1, messages: encodeMessages(messages), tools: tools.map(t => ({ type: 'function', function: t })) })
       });
       if (!response.ok) throw new Error(`PROVIDER_HTTP_${response.status}`);
+      if (stream) {
+        if (!response.headers.get('content-type')?.startsWith('text/event-stream')) throw new Error('PROVIDER_STREAM_CONTENT_TYPE');
+        const { readChatStream } = await import('./stream.mjs');
+        return readChatStream(response.body, { signal });
+      }
       const reader = response.body.getReader(); const parts = []; let size = 0;
       try {
         for (;;) {

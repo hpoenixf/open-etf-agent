@@ -13,10 +13,24 @@ async function main(args) {
     options[arg.slice(2)] = args[++i];
   }
   if (options.live) throw new Error('LIVE_BLOCKED: provider/model, synthetic-data scope and fee authorization have not been approved for this public project; no network request was made');
-  if (!['document-compare', 'T1', 'T2', 'T3', 'T4'].includes(options.case)) throw new Error('INVALID_ARGUMENT: unsupported case');
+  if (!['document-compare', 'skill-mcp', 'T1', 'T2', 'T3', 'T4'].includes(options.case)) throw new Error('INVALID_ARGUMENT: unsupported case');
   const definitions = JSON.parse(await readFile(new URL('../fixtures/cases.json', import.meta.url), 'utf8'));
   const controller = new AbortController(); const cancel = () => controller.abort();
   process.on('SIGINT', cancel); process.on('SIGTERM', cancel);
+  if (options.case === 'skill-mcp') {
+    let assembled; let result; let closed;
+    try {
+      const { prepareSkillMcp } = await import('./extensions.mjs');
+      assembled = await prepareSkillMcp({ signal: controller.signal });
+      result = await run({ question: 'Read the comparison Skill, compare the two free-edition guides via MCP, and save a cited report.', gateway: assembled.gateway, extensions: assembled.extensions, outputRoot: options.output, requireReport: true, signal: controller.signal });
+    } finally {
+      try { closed = await assembled?.close(); }
+      finally { process.off('SIGINT', cancel); process.off('SIGTERM', cancel); }
+    }
+    process.stdout.write(JSON.stringify({ caseId: 'skill-mcp', ...result, mcp: closed, semanticStatus: 'unreviewed' }, null, 2) + '\n');
+    if (result.status !== 'completed') process.exitCode = 1;
+    return;
+  }
   const cases = [];
   try {
     for (const c of definitions.cases) {

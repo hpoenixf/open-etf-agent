@@ -17,11 +17,14 @@ Goal: develop independent stages from v0.1 through v1.0, preserving concrete des
 
 License/publication and live-provider/data/cost authorization remain pending. They block those effects and a fully closed v0.1 release, not all independent local design or development. Semantics remain unreviewed. No historical snapshot is silently upgraded to a stronger claim.
 
-## v0.2 next — requirements and design preparation
+## v0.2: explicit extensions with shared evidence ownership
 
-Only the next increment is prepared: explicit local Skill subset, trusted stdio MCP through an official pinned SDK, and complete model SSE assembly. Reuse the same Runtime/Host chain and keep the v0.1 offline candidate independently runnable. No plugin lifecycle, background worker, database, RAG or Memory.
-
-Before implementation: fix dependency source/version/integrity and lifecycle behavior, then observe focused RED scenarios. Real stdio process evidence and model stream-completion evidence must be separate; a mock cannot prove either process lifecycle or live model behavior. Provider authorization is still separate.
+- Skill discovery advertises metadata, while actual body/resource reads carry hashes; reading a method does not prove a model followed it.
+- Official SDK v2 accepted polluted stdout, and the failing negative test itself leaked an unexpectedly successful session until the outer timeout. Preserve both defects rather than calling a timeout a passing cleanup test.
+- Maintained SDK v1 was selected for exact 2025-11-25 behavior, with a larger 95-package dependency graph and installation scripts disabled. It is not a claim to implement the newest protocol.
+- A self-consistent source hash was insufficient: the acquired document/page also must match the request. Remote input schema must agree with the narrow local binding, not only have matching property names.
+- Actual stdio cancellation and timeout leave the owned child absent. Complete fixture SSE is separately tested; no live model capability is inferred.
+- [Observed failures and fixes](../verification/v02-observations.md), [dependency decision](../dependencies/sdk-selection.md), [artifact provenance](../verification/v02-evidence-provenance.json).
 
 ## Later stages
 
