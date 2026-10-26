@@ -1,0 +1,197 @@
+{
+  "schemaVersion": "local-delivery-manifest@2",
+  "status": "v0.1-offline-candidate-with-real-kit-checks",
+  "published": false,
+  "codeInputInventorySha256": "9e04696c9b6c3a3096f888017025fc4265bceeba850caea37fc48081f290ce14",
+  "manifestExcludesSelf": true,
+  "historicalManifest": "docs/verification/baseline-delivery-manifest.json",
+  "kit": {
+    "revision": "db6ac2f43cc0319fa0f10b4f73d67521d5209c88",
+    "plan": "passed",
+    "apply": "passed",
+    "statusCompleted": "6/8",
+    "verifyCheck": "refused: incomplete 1.7, 1.8",
+    "structuralOnly": true
+  },
+  "pending": [
+    "authorized live/provider/data/cost and semantic review",
+    "project license and public push/merge/tag/release authorization"
+  ],
+  "files": [
+    {
+      "path": ".gitignore",
+      "bytes": 57,
+      "sha256": "6cc1fd97488637fa5030818165511cf872c65bc9a3e40d8f880143fdadb72e4d"
+    },
+    {
+      "path": "README.md",
+      "bytes": 3323,
+      "sha256": "797ba336577e512396a70e3b12a8d9c8e95a4ddd894fc6bf5a2f81c43962701b"
+    },
+    {
+      "path": "docs/evolution/evidence-index.md",
+      "bytes": 3306,
+      "sha256": "517b94566dc374fcaab14ce4ce0e6b4a5140a19931bd0d4fe875366264589b27"
+    },
+    {
+      "path": "docs/verification/baseline-delivery-manifest.json",
+      "bytes": 5038,
+      "sha256": "728fb92babe784f630cd7e129162a17e9c0b09034412b04996fa47a6fef2ba49"
+    },
+    {
+      "path": "docs/verification/candidate-inputs.sha256",
+      "bytes": 1268,
+      "sha256": "9e04696c9b6c3a3096f888017025fc4265bceeba850caea37fc48081f290ce14"
+    },
+    {
+      "path": "docs/verification/demo-receipts.json",
+      "bytes": 5629,
+      "sha256": "58817c045cd5bb2f86dfb5844bd482e969cfe79aaad178c57fb5915e346520b2"
+    },
+    {
+      "path": "docs/verification/evidence-provenance.json",
+      "bytes": 4141,
+      "sha256": "b033b18a5d964ed4d644dbadfbba98a2302ff1cdd06dae90226c571e43ce143b"
+    },
+    {
+      "path": "docs/verification/kit-integration.md",
+      "bytes": 3330,
+      "sha256": "57dbb2bcce5d554e1c0e51aa1f12d30ebffff972e615633575b8ce7ade51bc33"
+    },
+    {
+      "path": "docs/verification/observations.md",
+      "bytes": 4171,
+      "sha256": "2ff368fa15f23453f6837c67c9e3f974ed1705d223e8c6fe4a5baf97381da42a"
+    },
+    {
+      "path": "fixtures/cases.json",
+      "bytes": 1383,
+      "sha256": "9f91af7bbf425d20e48d985d3f33e7770ca2aaf1e9fe011c1d35ace31a062ba6"
+    },
+    {
+      "path": "fixtures/documents.json",
+      "bytes": 1492,
+      "sha256": "0eed0f1ba7aef916b67eedb397e92e52c68d1ef5d2b7598b4013330c314ea8f1"
+    },
+    {
+      "path": "openspec/changes/v01-first-report/evidence.md",
+      "bytes": 13419,
+      "sha256": "5480da1145ac58fd1592c7ffa48bd0c69cf6b11eb033198bfd5f94d07956b386"
+    },
+    {
+      "path": "openspec/changes/v01-first-report/proposal.md",
+      "bytes": 2351,
+      "sha256": "05fdfc0e8be4e5172df9e52ec6b606623effab13c0282135d3f9a2e5bd2bf765"
+    },
+    {
+      "path": "openspec/changes/v01-first-report/specs/report/spec.md",
+      "bytes": 2656,
+      "sha256": "4e8bf67498efea8b573fbadd49af3990e213b9de8b615a0bc0af350b48578fed"
+    },
+    {
+      "path": "openspec/changes/v01-first-report/tasks.md",
+      "bytes": 633,
+      "sha256": "0928188f2e9c646c6a95372dfa405e1f682fd3d77423586463d14f010c404ce2"
+    },
+    {
+      "path": "package-lock.json",
+      "bytes": 280,
+      "sha256": "02185ea8572c9a596ec34a003a8c12788791ac8eaa1e0f8ea682a72021c39ead"
+    },
+    {
+      "path": "package.json",
+      "bytes": 300,
+      "sha256": "70830afc9ca3db0fa5cfcb60fdfd5bb23008ba074f9ca45b6ed88057db84a09e"
+    },
+    {
+      "path": "scripts/build.mjs",
+      "bytes": 1246,
+      "sha256": "9ed1f17697395a90f0cb4313d4b565bb112be7617e903420a06244aa1c8c3039"
+    },
+    {
+      "path": "src/cli.mjs",
+      "bytes": 2805,
+      "sha256": "b15b3f168e66c0a1347973ac8811daed5e169960347f23fe20e6b0362b0e25a6"
+    },
+    {
+      "path": "src/fixture-gateway.mjs",
+      "bytes": 3000,
+      "sha256": "5ba1ae02049188f7b5890aca19df3bfe5e987cd389ef3b103518cbad88c40bcd"
+    },
+    {
+      "path": "src/gateway.mjs",
+      "bytes": 3564,
+      "sha256": "5b17695a171575f384744b3236fb0468bb8eee96361e52f40e2381360bd052da"
+    },
+    {
+      "path": "src/runtime.mjs",
+      "bytes": 6042,
+      "sha256": "a54a95cfad7e3d3b4d75e9a0a952016b77da5928936d504dbec5c2dfef5f850c"
+    },
+    {
+      "path": "src/tools.mjs",
+      "bytes": 8454,
+      "sha256": "07db2562003aa2a829ee1bb30e233ed3e741c57a582c0181cbc2ed6aa9cb455d"
+    },
+    {
+      "path": "test/cli.test.mjs",
+      "bytes": 3518,
+      "sha256": "6ec93a272e4c2975145202687a3bb9dabefbdb4bb502ac2cf1a97e4fa06f2866"
+    },
+    {
+      "path": "test/gateway.test.mjs",
+      "bytes": 2820,
+      "sha256": "87c3ee7ba7d26fe5865cdeaabfb63c29bee53cdfcddff8df84a0039dc04c3e1a"
+    },
+    {
+      "path": "test/review.test.mjs",
+      "bytes": 2533,
+      "sha256": "33bcbce62f88ab575ec9e64780d2e93a835af1372d77395e30cce98d5e30e4e0"
+    },
+    {
+      "path": "test/runtime.test.mjs",
+      "bytes": 3438,
+      "sha256": "fef2495115d3f243d3d8e0208ab14a23f353d94b393681a1001e8d6b08180eab"
+    },
+    {
+      "path": "test/tools.test.mjs",
+      "bytes": 4071,
+      "sha256": "c9087a84374ef79b9e273f8999db43d413dc0791c078fc99c5b61716e4cb646a"
+    },
+    {
+      "path": "tooling/openspec-evidence-kit-db6ac2f/LICENSE",
+      "bytes": 1065,
+      "sha256": "c8392b9ccf4512cc5c346903d4ca2540e64811826f9af1540a80357542b66820"
+    },
+    {
+      "path": "tooling/openspec-evidence-kit-db6ac2f/NOTICE.md",
+      "bytes": 1072,
+      "sha256": "8909baef8edc03f98838941e6a2d4473e8fb7a8777872b871ae41f1ff455b2b5"
+    },
+    {
+      "path": "tooling/openspec-evidence-kit-db6ac2f/bin/spec-evidence.mjs",
+      "bytes": 2073,
+      "sha256": "8f4c9b4be66a08a326f7051c594207021440e67ba0b7f504ddfa05f460ac456d"
+    },
+    {
+      "path": "tooling/openspec-evidence-kit-db6ac2f/package-lock.json",
+      "bytes": 362,
+      "sha256": "ece4d77665f0ee8a4859c44a3ba1b13631d20bbc6d8b1e8d6d95eb81b8be85a1"
+    },
+    {
+      "path": "tooling/openspec-evidence-kit-db6ac2f/package.json",
+      "bytes": 834,
+      "sha256": "6c9bf099710800b738f2e8b4fc2cdc6d5d44ff4da0a99759b8ed105b8b83d1d3"
+    },
+    {
+      "path": "tooling/openspec-evidence-kit-db6ac2f/source-manifest.json",
+      "bytes": 1580,
+      "sha256": "5c94bf98067b8d86f0f1171cc433ff9721da6215c64cc4b1e3e449de685ff0cf"
+    },
+    {
+      "path": "tooling/openspec-evidence-kit-db6ac2f/src/evidence.mjs",
+      "bytes": 10887,
+      "sha256": "a9e36d5c9ff4607cd38f64083ed7833ce5cba57f7f854bf56cc5a29c72122f38"
+    }
+  ]
+}

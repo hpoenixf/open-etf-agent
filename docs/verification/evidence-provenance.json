@@ -1,0 +1,85 @@
+{
+  "schemaVersion": "authored-evidence-provenance@1",
+  "kind": "sanitized-engineering-summary",
+  "observations": [
+    {
+      "evidenceId": "EV-01",
+      "originalArtifactSha256": "5e9c6741d9a34bce31cb15e5b1a9c2032282d461ad1a842f07f8bd3e883230bc",
+      "originalArtifactBasename": "red-20261026.txt",
+      "portableSummary": "docs/verification/observations.md",
+      "inputInventorySha256": "1414aedf60b6eca3f7180c0c61e5b93bd234ea108000f9f6e7b3c776f28d363a"
+    },
+    {
+      "evidenceId": "EV-02",
+      "originalArtifactSha256": "8f9e74831185e4583e9e99ac2c8ecda97c0b4abb3df9f0f3b5b1db95e7eb55fb",
+      "originalArtifactBasename": "core-green-20261026.txt",
+      "portableSummary": "docs/verification/observations.md",
+      "inputInventorySha256": "3c35639b1c949476d1e49c044ba11d0aca8a205ec13ea895cf0ea907e91c981a"
+    },
+    {
+      "evidenceId": "EV-03",
+      "originalArtifactSha256": "a715b293555b7947a781d600557077e20f8c38bbbadfe32e8e1e6af6f8c108ed",
+      "originalArtifactBasename": "cli-red-20261026.txt",
+      "portableSummary": "docs/verification/observations.md",
+      "inputInventorySha256": "b55b10a528e576bfbab7448bc9080a85575de3fd7c306131220ce730927cbd76"
+    },
+    {
+      "evidenceId": "EV-04",
+      "originalArtifactSha256": "5cb27d2fde307d361090b6f7b86b158c24428449939ffe5c80e02cea12e5a2ce",
+      "originalArtifactBasename": "cli-green-20261026.txt",
+      "portableSummary": "docs/verification/observations.md",
+      "inputInventorySha256": "fc0e0c5715ab8bc6e9b743df55fcfebbfd057b64f7496cda9a41fd54d17709bf"
+    },
+    {
+      "evidenceId": "EV-05",
+      "originalArtifactSha256": "e597ebf50192093499fe795ee013081ff618389c2d8e491178c4dc6d2fc7f88f",
+      "originalArtifactBasename": "review-red-20261026.txt",
+      "portableSummary": "docs/verification/observations.md",
+      "inputInventorySha256": "7bd1292fe885e2a03249326c8e527618fa4f66bedb6d783fc3f9e34c4f4e55f0"
+    },
+    {
+      "evidenceId": "EV-06",
+      "originalArtifactSha256": "e1415e314051f84a6f193d975676c0a23deb25d7550ad7e5b8d17dd5259fc2a6",
+      "originalArtifactBasename": "review-green-20261026.txt",
+      "portableSummary": "docs/verification/observations.md",
+      "inputInventorySha256": "9e04696c9b6c3a3096f888017025fc4265bceeba850caea37fc48081f290ce14"
+    },
+    {
+      "evidenceId": "EV-07",
+      "originalArtifactSha256": "337dc611b45f3c064d1d20e4edfd90615d250f66686e9fab7c641d44879c7585",
+      "originalArtifactBasename": "all-green-20261026.txt",
+      "portableSummary": "docs/verification/observations.md",
+      "inputInventorySha256": "9e04696c9b6c3a3096f888017025fc4265bceeba850caea37fc48081f290ce14"
+    },
+    {
+      "evidenceId": "EV-08",
+      "originalArtifactSha256": "92f0ca01f89ac8d63ec413adcb4b2817dcdb8d30284744b81acab5cf3277b3ee",
+      "originalArtifactBasename": "npm-ci-20261026.txt",
+      "portableSummary": "docs/verification/observations.md",
+      "inputInventorySha256": "9e04696c9b6c3a3096f888017025fc4265bceeba850caea37fc48081f290ce14"
+    },
+    {
+      "evidenceId": "EV-09",
+      "originalArtifactSha256": "f1308c815061c44d9d858621491f754ea79c0268834fe884b01db09bc547aa18",
+      "originalArtifactBasename": "npm-build-20261026.txt",
+      "portableSummary": "docs/verification/observations.md",
+      "inputInventorySha256": "9e04696c9b6c3a3096f888017025fc4265bceeba850caea37fc48081f290ce14"
+    },
+    {
+      "evidenceId": "EV-10",
+      "originalArtifactSha256": "2311b7f5e92dc0d779540976bc44fcefd42fb0d5d91beee0eabf2fbb77514598",
+      "originalArtifactBasename": "npm-test-20261026.txt",
+      "portableSummary": "docs/verification/observations.md",
+      "inputInventorySha256": "9e04696c9b6c3a3096f888017025fc4265bceeba850caea37fc48081f290ce14"
+    },
+    {
+      "evidenceId": "EV-11",
+      "originalArtifactSha256": "a462a8d3c98c87e448f8e78a1eb404e40662910ad51cf88433df0a7ae59922aa",
+      "originalArtifactBasename": "npm-demo-20261026.txt",
+      "portableSummary": "docs/verification/observations.md",
+      "inputInventorySha256": "9e04696c9b6c3a3096f888017025fc4265bceeba850caea37fc48081f290ce14"
+    }
+  ],
+  "kitCliExecuted": false,
+  "releaseApproved": false
+}

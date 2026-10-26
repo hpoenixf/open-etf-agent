@@ -1,0 +1,37 @@
+{
+  "repository": "hpoenixf/openspec-evidence-kit",
+  "revision": "db6ac2f43cc0319fa0f10b4f73d67521d5209c88",
+  "version": "0.1.0",
+  "files": [
+    {
+      "path": "bin/spec-evidence.mjs",
+      "gitBlobSha1": "510119d16251333d92f4e7547331dff8c9636797",
+      "source": "https://github.com/hpoenixf/openspec-evidence-kit/blob/db6ac2f43cc0319fa0f10b4f73d67521d5209c88/bin/spec-evidence.mjs"
+    },
+    {
+      "path": "src/evidence.mjs",
+      "gitBlobSha1": "bc8ddc159f19e73e79593fbdd7e0cc6445cce018",
+      "source": "https://github.com/hpoenixf/openspec-evidence-kit/blob/db6ac2f43cc0319fa0f10b4f73d67521d5209c88/src/evidence.mjs"
+    },
+    {
+      "path": "LICENSE",
+      "gitBlobSha1": "d1c97ad3235628fb65a5d7ae54d8088665e86021",
+      "source": "https://github.com/hpoenixf/openspec-evidence-kit/blob/db6ac2f43cc0319fa0f10b4f73d67521d5209c88/LICENSE"
+    },
+    {
+      "path": "NOTICE.md",
+      "gitBlobSha1": "00ea9655c5ce8be9ceae02bc8ba45f8384adddcf",
+      "source": "https://github.com/hpoenixf/openspec-evidence-kit/blob/db6ac2f43cc0319fa0f10b4f73d67521d5209c88/NOTICE.md"
+    },
+    {
+      "path": "package.json",
+      "gitBlobSha1": "69b11b13d0ed37973e859ef7c54ad77e792685c3",
+      "source": "https://github.com/hpoenixf/openspec-evidence-kit/blob/db6ac2f43cc0319fa0f10b4f73d67521d5209c88/package.json"
+    },
+    {
+      "path": "package-lock.json",
+      "gitBlobSha1": "405436bfe6b4a62a429ab518d5123060e0ca631b",
+      "source": "https://github.com/hpoenixf/openspec-evidence-kit/blob/db6ac2f43cc0319fa0f10b4f73d67521d5209c88/package-lock.json"
+    }
+  ]
+}
