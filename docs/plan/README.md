@@ -1,5 +1,9 @@
 # Open ETF Agent：分阶段可运行演进方案
 
+> **历史方案 · Superseded（2026-10-27）**
+>
+> 下文保留最初的计划快照；其中 `planned` 与版本范围仅描述当时方案，不代表当前实现状态。当前代码见 [main README](https://github.com/hpoenixf/open-etf-agent/blob/main/README.md)，后续顺序以 [CLI 优先、一版一个模块的路线](https://github.com/hpoenixf/open-etf-agent/blob/main/docs/plan/v1-to-v2.md)为准（本次对照固定于 [`0cf4b99`](https://github.com/hpoenixf/open-etf-agent/tree/0cf4b99e77bb77aa2530734d011e7f37985d1897)）；已公开切片的引入版本与固定源码见[当前版本血缘 registry](https://github.com/hpoenixf/open-etf-agent/blob/0cf4b99e77bb77aa2530734d011e7f37985d1897/versions.json)，它不是正式 Release 清单。旧 v0.8 的 Web / SSE / Worker 捆绑方案已被取代：已公开的 v0.8 仅 Publication，Worker 与 Web 分期；本页不签发实现或验证资格。原计划正文与 `docs/plan/versions.json` 作为历史保留，未改写为已发布。
+
 状态：**提案，全部运行版本仍为 planned**。更新日期：2026-10-26。本方案定义版本范围、接口演进与验收条件，不是已发布功能清单。
 
 ## 1. 项目主张
