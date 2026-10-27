@@ -3,7 +3,7 @@
   "repository": "hpoenixf/open-etf-agent",
   "articleCatalog": {
     "repository": "hpoenixf/eff-agent-article",
-    "commit": "f5fd11184c76ce3007197a08793407021740fe52",
+    "commit": "fb7c776874e71d689212c6fc3c4f0efde598fa81",
     "path": "book.mjs",
     "collection": "modules",
     "count": 31
@@ -69,6 +69,11 @@
       "kind": "test",
       "file": "test/durable-runtime.test.mjs",
       "name": "7.3 cancel during pending model is durable and late proposal cannot dispatch"
+    },
+    "publication": {
+      "kind": "test",
+      "file": "test/publication-cli.test.mjs",
+      "name": "8.2 local CLI starts same Runtime and separately reads body, current event and immutable Artifact"
     }
   },
   "articles": [
@@ -264,9 +269,9 @@
     {
       "slug": "019-agent-answer-publication",
       "title": "Publication：为什么需要独立发布系统",
-      "status": "draft",
-      "target": null,
-      "scope": "独立 Publication 模块尚未纳入当前稳定版；T4/Artifact 不冒充完整发布系统"
+      "status": "verified",
+      "target": "publication",
+      "scope": "同一 Runtime 提交正文并经独立 CLI 回读，与报告 Artifact 分离；不含 Web / SSE / Worker 或完整发布系统"
     },
     {
       "slug": "agent-progressive-answer-coherence",

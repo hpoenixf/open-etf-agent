@@ -1,15 +1,15 @@
 {
   "schemaVersion": 1,
   "kind": "actual-provider-free-runtime-execution",
-  "executedAt": "2026-10-27T04:15:59.039Z",
+  "executedAt": "2026-10-27T05:11:55.324Z",
   "node": "v26.11.1",
-  "sourceCommit": "765fd771430c55e1598b3f7bc32f342215a46f33",
-  "inputSha256": "1ad12ed9ab53bf0f862f8a22eb4719cdddfd90bfc57f050d6efc3bf5f6ed44aa",
+  "sourceCommit": "2c096ce47be2161f97531170af07ef255872f8b1",
+  "inputSha256": "9254594cc3ee3fa84cd3a600b949bbb595659746d525f79409aa7dd3f2781645",
   "runnerSha256": "85b93aafffec1b903d17c2549ef3be9ace84b9531e0463bff3adfc36de085f55",
-  "targetsSha256": "231e74ea6459950216ec8056ff2874d3bb567299883b3de5c926e68c498dc59c",
+  "targetsSha256": "bbb403182b02432e2cbf30648ece1f5223803898e30cd1cfd8fa3b3c804e549f",
   "commitConfirmation": {
-    "commit": "765fd771430c55e1598b3f7bc32f342215a46f33",
-    "tree": "47e564901db663e69939655533b6ff24c777be0d",
+    "commit": "2c096ce47be2161f97531170af07ef255872f8b1",
+    "tree": "62ead44dcdb89fab9f6f6a38bd26634c94f7f802",
     "method": "actual-local-git-objects"
   },
   "executionBounds": {
@@ -38,7 +38,7 @@
           }
         ]
       },
-      "stdoutSha256": "89e2eb2d814de611c1afc868b2055d0900211507fa965a06cfaa10eab90a82cd",
+      "stdoutSha256": "f443540d06a36c15893ff9717cb6aa9ac9c02129534b15c0aa7b1af915daad7f",
       "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
     },
     "reread": {
@@ -58,7 +58,7 @@
           }
         ]
       },
-      "stdoutSha256": "32136782aebca0725b30251a2b9cd9c18ba18212b6908fd11cbafc9e61c592d5",
+      "stdoutSha256": "9332a9768efd103abef8d238b2fd65797078f506218f9e2b00c858969d2a91eb",
       "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
     },
     "compaction": {
@@ -78,7 +78,7 @@
           }
         ]
       },
-      "stdoutSha256": "4f0a014adca8f4bdb0e1f9d5a33179a78c918ced1f5473101e2e864d9161d746",
+      "stdoutSha256": "1fa75703925c5087bee384255ac6976bd06d9b9f480700207d432b982e970006",
       "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
     },
     "memory": {
@@ -98,7 +98,7 @@
           }
         ]
       },
-      "stdoutSha256": "6688fdefbdba3d48fbc3f00860de32ca195261f36b50e67c2b9da2e579ec5e9f",
+      "stdoutSha256": "82fa7ec27066aab53435bc79a81842ae716f19415edd2d8bd54057f2bee0f585",
       "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
     },
     "mcp": {
@@ -118,7 +118,7 @@
           }
         ]
       },
-      "stdoutSha256": "640833cdc5c504fb143207d606bebe48095ae70b2d0206a45e0d3731917ea8f2",
+      "stdoutSha256": "8cf3d15e4be88537c3d3acec7c3337aca8b78a911de039104cd44c4876c89a46",
       "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
     },
     "batch": {
@@ -138,7 +138,7 @@
           }
         ]
       },
-      "stdoutSha256": "c16955fcd15fc1781c880a5f895e243dceaa0664d6f1f94d2b1c41847f4945fe",
+      "stdoutSha256": "5e5c52846013a010210f8a2178b56469938643676aba3c111f3d7c9e7e665730",
       "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
     },
     "provider": {
@@ -154,7 +154,7 @@
         "failed": 0,
         "skipped": 0
       },
-      "stdoutSha256": "129c8bd6ee98b2b3655fceed3d96a590bbf7b96d44e3296713be1035ae195e6d",
+      "stdoutSha256": "6c6df6bd67a59ba725d0b6896790e0d39d71eda027bc56117c921d45285d42cf",
       "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
     },
     "plugins": {
@@ -170,7 +170,7 @@
         "failed": 0,
         "skipped": 0
       },
-      "stdoutSha256": "8b1b2377d349043a7f9296c5de281d12aa7deaf0c31c340f892101da59aba8c9",
+      "stdoutSha256": "cbfb02e44284748fe348b667f56c21ef8d279b6c189fee99022151670d0d0933",
       "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
     },
     "surface": {
@@ -186,7 +186,7 @@
         "failed": 0,
         "skipped": 0
       },
-      "stdoutSha256": "315ca949a087da6ec9cfb264bfb310cf942664be0b20b327bfc9f7f9fe8fbc71",
+      "stdoutSha256": "a85578eeaa148d23d5339c54b26e86a91d6a85eec23015287a683256ee68cab7",
       "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
     },
     "trust": {
@@ -202,7 +202,7 @@
         "failed": 0,
         "skipped": 0
       },
-      "stdoutSha256": "3a25c727144a538b4db00dee39b4bbecd2180a0b2a555a34bc3d36a93c4e398d",
+      "stdoutSha256": "24cf6bec06635963198a2acaf83c3b67c7e022753f8d2d37ae56423a1b5250a4",
       "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
     },
     "hooks": {
@@ -218,7 +218,7 @@
         "failed": 0,
         "skipped": 0
       },
-      "stdoutSha256": "d8d061d741e8616688ef2932782799e3cd055b5b5f68c77184505b104c2ea2f9",
+      "stdoutSha256": "c875ecdfc9dfce70bd4fe74209cb3ab865f5818560ac4d5a1db1fa5a2b3b55ff",
       "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
     },
     "budget": {
@@ -234,7 +234,7 @@
         "failed": 0,
         "skipped": 0
       },
-      "stdoutSha256": "1af6659745872d219174cece20d9dcb98296cdcc85b51fc9b5d2ad6a2499a142",
+      "stdoutSha256": "c38a77fd2edce29f8acc075092b27530da4606164ad7013376c5d9de43e3ed84",
       "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
     },
     "control": {
@@ -250,7 +250,23 @@
         "failed": 0,
         "skipped": 0
       },
-      "stdoutSha256": "e8f4b1fe405887fbb09ed5f7b0ddb577b9afa267b2861ad87e7ecf64723f3cdb",
+      "stdoutSha256": "21ae217fc54bb01803ed036915ce22a29faf17cbc2cec6002130addee6401b22",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "publication": {
+      "target": {
+        "kind": "test",
+        "file": "test/publication-cli.test.mjs",
+        "name": "8.2 local CLI starts same Runtime and separately reads body, current event and immutable Artifact"
+      },
+      "exitCode": 0,
+      "observed": {
+        "name": "8.2 local CLI starts same Runtime and separately reads body, current event and immutable Artifact",
+        "passed": 1,
+        "failed": 0,
+        "skipped": 0
+      },
+      "stdoutSha256": "62badf2de549c176dd1faf5331a7c4c04f4908eeeabe0cf3c273ee2d2c5cf5e2",
       "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
     }
   }

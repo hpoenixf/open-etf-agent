@@ -1,4 +1,4 @@
-# 验证证据索引 · v0.1–v0.7
+# 验证证据索引 · v0.1–v0.8
 
 [返回项目首页](../../README.md) · [31 篇文章覆盖契约](../../README.md#reading)
 
@@ -82,6 +82,19 @@
 - **Qualification：** [Spec / evidence](https://github.com/hpoenixf/open-etf-agent/blob/5f70dc0b4760ad70ef211f4823828ab2fee5c525/openspec/changes/v07-trusted-recovery/evidence.md)
 - **未验边界：** 真实进程中断/新 PID 的证据才支持恢复；终态 resume 只回读。DB fence 不约束任意外部副作用，未知效果不重试；无 v0.7 live 恢复资格。
 
+### v0.8 · Publication 最小正文提交与回读
+
+固定代码：[`2c096ce`](https://github.com/hpoenixf/open-etf-agent/tree/2c096ce47be2161f97531170af07ef255872f8b1)
+
+- **Observations：** [v08-observations.md](https://github.com/hpoenixf/open-etf-agent/blob/2c096ce47be2161f97531170af07ef255872f8b1/docs/verification/v08-observations.md) · [原始执行摘要](https://github.com/hpoenixf/open-etf-agent/blob/2c096ce47be2161f97531170af07ef255872f8b1/docs/verification/v08-observations.safe.json)
+- **Receipts：** [独立安装/构建、五个 CLI 进程与新旧 Artifact 回读](https://github.com/hpoenixf/open-etf-agent/blob/2c096ce47be2161f97531170af07ef255872f8b1/docs/verification/v08-independent-delivery.safe.json)
+- **Provenance / frozen inputs：** [原119文件验证输入](https://github.com/hpoenixf/open-etf-agent/blob/2c096ce47be2161f97531170af07ef255872f8b1/docs/verification/v08-candidate-inputs.json) · [0.8.0 发布输入](https://github.com/hpoenixf/open-etf-agent/blob/2c096ce47be2161f97531170af07ef255872f8b1/docs/verification/v08-publication-inputs.json) · [仅版本字段晋级的窄验证](https://github.com/hpoenixf/open-etf-agent/blob/2c096ce47be2161f97531170af07ef255872f8b1/docs/verification/v08-metadata-promotion.safe.json)
+- **Qualification：** [Spec / evidence](https://github.com/hpoenixf/open-etf-agent/blob/2c096ce47be2161f97531170af07ef255872f8b1/openspec/changes/v08-publication-only/evidence.md) · [实际 RED](https://github.com/hpoenixf/open-etf-agent/blob/2c096ce47be2161f97531170af07ef255872f8b1/docs/verification/v08-publication-red.safe.json) · [Owner / Runtime / CLI GREEN](https://github.com/hpoenixf/open-etf-agent/blob/2c096ce47be2161f97531170af07ef255872f8b1/docs/verification/v08-publication-green.safe.json) · [Kit 结构结果](https://github.com/hpoenixf/open-etf-agent/blob/2c096ce47be2161f97531170af07ef255872f8b1/docs/verification/v08-kit.safe.json)
+- **精确版本边界：** 286/286 全套实跑对应 `0.8.0-dev.0`；`0.8.0` 仅修改两个版本字段，其他117项和95条依赖锁定记录保持不变，随后只做必要窄验证。没有把这说成新聚合摘要下又跑了一次286，也不借用旧扩大候选的298结果。
+- **最小模块边界：** 同一 Runtime 提交独立正文/当前事件、显式修订身份与 CLI 回读；Publication 不是报告 Artifact 的别名。已提交正文可独立于后续 Run 失败保留。没有新增 Web Chat、HTTP/SSE 产品层、Worker、队列或认证系统，也没有新真实模型调用/浏览器验收。
+- **覆盖清单输入口径：** 当前覆盖检查绑定115个 `src/fixtures/test/package` 输入，checker另以 `runnerSha256` 绑定；阶段的119输入额外包括build、checker、live runner与live pins四个脚本。集合不同不是源码漂移。
+
+
 ## v0.7 分项入口
 
 以下也固定在 v0.7 的原快照，避免把成功 demo 与中断恢复混在一起：
@@ -96,7 +109,7 @@
 
 ## 单列历史 live 与维护，不抹平版本
 
-- [v0.1–v0.5 首批真实调用](https://github.com/hpoenixf/open-etf-agent/blob/d075068ac99a6c798d012c46bff4fe0c33eb9979/docs/verification/live-v01-v05-first-batch.md)：各自原版本的历史 HTTP / 产物记录，未触达机制保持未覆盖。**不是 v0.6/v0.7 的 live 资格，不是模型质量认证。**
+- [v0.1–v0.5 首批真实调用](https://github.com/hpoenixf/open-etf-agent/blob/d075068ac99a6c798d012c46bff4fe0c33eb9979/docs/verification/live-v01-v05-first-batch.md)：各自原版本的历史 HTTP / 产物记录，未触达机制保持未覆盖。**不是 v0.6/v0.7/v0.8 的 live 资格，不是模型质量认证。**
 - [受限 live 入口与授权](../live-validation.md)：默认覆盖 smoke 不调用此入口；provider、合成数据与费用仍需独立授权。[下一批计划](live-runtime-next-cases.md)只是计划。
 - [v0.2 独立措辞维护](https://github.com/hpoenixf/open-etf-agent/tree/a10d4f1bd1ecc39224272156221fe29792b64094)：未读页面不能写成已知事实，原阶段证据保持不变。
 - [v0.6 errno 窄范围维护](https://github.com/hpoenixf/open-etf-agent/blob/765fd771430c55e1598b3f7bc32f342215a46f33/docs/verification/v06-errno-maintenance.md)：区分原阶段与维护输入。Node 26.11.1 是本机实际执行；26.8.1 的 v0.6 全绿是用户观察，不冒称本机 v0.7 最低版本实测。

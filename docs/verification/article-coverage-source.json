@@ -1,10 +1,10 @@
 {
   "schemaVersion": 1,
   "repository": "hpoenixf/open-etf-agent",
-  "commit": "765fd771430c55e1598b3f7bc32f342215a46f33",
-  "tree": "47e564901db663e69939655533b6ff24c777be0d",
-  "retrievedFrom": "https://api.github.com/repos/hpoenixf/open-etf-agent/git/commits/765fd771430c55e1598b3f7bc32f342215a46f33",
-  "retrievedAt": "2026-10-27T03:45:00Z",
+  "commit": "2c096ce47be2161f97531170af07ef255872f8b1",
+  "tree": "62ead44dcdb89fab9f6f6a38bd26634c94f7f802",
+  "retrievedFrom": "https://api.github.com/repos/hpoenixf/open-etf-agent/git/commits/2c096ce47be2161f97531170af07ef255872f8b1",
+  "retrievedAt": "2026-10-27T05:11:01.141572Z",
   "inputs": [
     {
       "path": "fixtures/cases.json",
@@ -24,11 +24,11 @@
     },
     {
       "path": "package-lock.json",
-      "gitBlob": "abc5957607aae5cf87d230b1a271ce4d73d28029"
+      "gitBlob": "69b563f49120b3934e300372158b753e81149d16"
     },
     {
       "path": "package.json",
-      "gitBlob": "8bb9c853606c11dc83ffd4781f197ab54852efd4"
+      "gitBlob": "bda02a7d67b9661938cccf422797f8bec044a329"
     },
     {
       "path": "src/artifact-demo.mjs",
@@ -76,7 +76,7 @@
     },
     {
       "path": "src/durable-demo.mjs",
-      "gitBlob": "6260039d3ecc95fed038a84eee9c80cd0bb5dba6"
+      "gitBlob": "c1b69d657740244b6a8760c1fe6f73923ef8a9fd"
     },
     {
       "path": "src/durable-memory.mjs",
@@ -163,6 +163,10 @@
       "gitBlob": "947b7cc11cb4d7a45a285c4f8f7e382bcf47936f"
     },
     {
+      "path": "src/publication.mjs",
+      "gitBlob": "5acc8e711283d39cb9fb0d77c494751306882df2"
+    },
+    {
       "path": "src/reader-cli.mjs",
       "gitBlob": "4bf63987a24e972b1b826c146d7b1f3b40c57347"
     },
@@ -188,15 +192,15 @@
     },
     {
       "path": "src/runtime.mjs",
-      "gitBlob": "8665f9e0177e3aff2e3e636cfc703a9e9af1a71e"
+      "gitBlob": "13ada65f0f07000cb58ce02113e083164dfea928"
     },
     {
       "path": "src/session-cli.mjs",
-      "gitBlob": "2afd6882227e120ca126f5bb0243c4202a0623cc"
+      "gitBlob": "fd6652c06d06c2e3318e780d817e2ec223251410"
     },
     {
       "path": "src/session.mjs",
-      "gitBlob": "0429e4da0867416e46d01e799b7c61fd64a94f86"
+      "gitBlob": "f12ba8744599005eaf189e261de068f888561bab"
     },
     {
       "path": "src/skills.mjs",
@@ -225,6 +229,10 @@
     {
       "path": "src/working-note.mjs",
       "gitBlob": "1cd6d77c46a27d520dc698390cbc248abcf977d5"
+    },
+    {
+      "path": "test/article-coverage.test.mjs",
+      "gitBlob": "36fa407ee0fb9d03f5354114fe0946fc36529c21"
     },
     {
       "path": "test/artifact-integration.test.mjs",
@@ -311,6 +319,10 @@
       "gitBlob": "d816a6edbdb8eba83288f1288e58261370ee39b0"
     },
     {
+      "path": "test/fixtures/publication-process.mjs",
+      "gitBlob": "8290e2f596e409489afdfeb2e3566e02508f6dc6"
+    },
+    {
       "path": "test/fixtures/recovery-process.mjs",
       "gitBlob": "d92dbb43e5f196d070c0c0f0bfa3fd8f0893a5ed"
     },
@@ -365,6 +377,18 @@
     {
       "path": "test/plugins.test.mjs",
       "gitBlob": "2d93911ef9349cc52301cb719e4347f04be96bb2"
+    },
+    {
+      "path": "test/publication-cli.test.mjs",
+      "gitBlob": "f77cb2dbc2b7e2c20e95bafa404d59e940f2347b"
+    },
+    {
+      "path": "test/publication-runtime.test.mjs",
+      "gitBlob": "d431d13ade754a62d63932665afdaeb89f3de183"
+    },
+    {
+      "path": "test/publication.test.mjs",
+      "gitBlob": "32218a41ec2ac01557b20528c6315e0a797f9d4d"
     },
     {
       "path": "test/reader.test.mjs",

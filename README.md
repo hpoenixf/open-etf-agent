@@ -20,9 +20,9 @@
 
 目前的入门案例是**原创合成文档比较**，并非真实基金分析。v0.7 另有小型原创合成 ETF Plugin，仍不是实时基金数据或真实基金分析；完整 ETF 研究工具在后续路线中。本项目不提供交易执行或投资建议。
 
-> **从哪里开始？** 直接克隆 `main`，无需切换阶段分支：默认提供最新已验证稳定的开发代码 **v0.7**，增加可信 Plugin、原生 SQLite 和同一 Runtime 的检查点恢复。七个固定阶段保留在 `phase/v0.1`—`phase/v0.7`；当前实现对应 [v0.7 固定快照 `5f70dc0`](https://github.com/hpoenixf/open-etf-agent/tree/5f70dc0b4760ad70ef211f4823828ab2fee5c525)，此前 [v0.6 固定快照 `7480b65`](https://github.com/hpoenixf/open-etf-agent/tree/7480b656b18192e6d6b44aab65255b970d58e6f8) 不被改写。这里的“稳定”指下文 **provider-free Runtime 回归与交付验证**，**不等于正式 Release、模型能力认证、live 恢复认证或生产就绪**。项目原创代码采用 [MIT 许可证](LICENSE)，第三方组件保留各自许可。
+> **从哪里开始？** 直接克隆 `main`，无需切换阶段分支：默认提供最新已验证稳定的开发代码 **v0.8**，本期仅增加 Publication 正文提交与独立回读，沿用 v0.7 的 Runtime、SQLite 与恢复边界。八个固定阶段保留在 `phase/v0.1`—`phase/v0.8`；当前实现对应 [v0.8 固定快照 `2c096ce`](https://github.com/hpoenixf/open-etf-agent/tree/2c096ce47be2161f97531170af07ef255872f8b1)，此前 [v0.7 固定快照 `5f70dc0`](https://github.com/hpoenixf/open-etf-agent/tree/5f70dc0b4760ad70ef211f4823828ab2fee5c525) 与 [v0.6 固定快照 `7480b65`](https://github.com/hpoenixf/open-etf-agent/tree/7480b656b18192e6d6b44aab65255b970d58e6f8) 不被改写。这里的“稳定”指下文 **provider-free Runtime 回归与交付验证**，**不等于正式 Release、模型能力认证、live 恢复认证或生产就绪**。项目原创代码采用 [MIT 许可证](LICENSE)，第三方组件保留各自许可。
 
-> **想看真实模型调用，而不只是 fixture？** 先看 [v0.1–v0.5 的 16 次真实 HTTP 调用记录](#live-evidence)，再看 [独立受限 live runner 的入口与授权条件](#live-entry)。这些是历史证据，不是 v0.7 live 恢复资格。
+> **想看真实模型调用，而不只是 fixture？** 先看 [v0.1–v0.5 的 16 次真实 HTTP 调用记录](#live-evidence)，再看 [独立受限 live runner 的入口与授权条件](#live-entry)。这些是历史证据，不是 v0.8 live 恢复资格。
 
 ### 在这里可以看到什么
 
@@ -35,7 +35,7 @@
 
 需要 **Node.js 26.8.1–26.x** 与 npm。默认示例不需要模型密钥；安装依赖可能访问 npm，安装后的示例离线运行。
 
-Node 下限按实际 API 使用范围放宽到 26.8.1。当前维护与 v0.7 的本地验证由 Node 26.11.1 执行；26.8.1 全绿是使用者提供的 v0.6 观察，未在本执行环境重跑，不冒充 v0.7 的最低版本实测。详见 [v0.6 文件系统包装异常修复与验证](docs/verification/v06-errno-maintenance.md)与 [v0.7 工具链证据](docs/verification/v07-observations.md)。
+Node 下限按实际 API 使用范围放宽到 26.8.1。当前维护与 v0.8 的本地验证由 Node 26.11.1 执行；26.8.1 全绿是使用者提供的 v0.6 观察，未在本执行环境重跑，不冒充 v0.8 的最低版本实测。详见 [v0.6 文件系统包装异常修复与验证](docs/verification/v06-errno-maintenance.md)与 [v0.7 工具链证据](docs/verification/v07-observations.md)。
 
 ```sh
 # 默认 main 已包含最新已验证稳定代码，无需切换阶段分支
@@ -137,10 +137,24 @@ node --test --test-concurrency=1 test/durable-runtime.test.mjs
 
 CLI 只恢复其固定合成 profile，不会把真实 provider 偷换成 fixture；**没有新增 v0.7 真实模型请求，也没有 v0.7 live 恢复合格结论**。Web Chat、后台 Worker、多租户和一般外部 exactly-once 不在本期范围。
 
-<a id="versions"></a>
-## 版本演进 · Seven fixed stages
+### v0.8：一个答案块的提交与回读
 
-七个阶段链接均指向固定提交，保留当时的代码、锁文件、示例与证据。表中的测试数是**各快照已记录的离线回归**，不是成熟度评分，也不是 CI 或模型能力徽章。
+本期只做 Publication。正文与文件报告分别有自己的回执；正文已提交，后续 Run 失败也不会抹掉它。显式替换通过修订号 CAS 校验，块身份与展示位置保持不变，相同正文还要核对原绑定才能复用原回执。
+
+```sh
+node dist/src/session-cli.mjs start --session runs/publication-demo --case durable-publication
+# 将 run-YOUR_ID 换成 start 实际输出的 Run ID
+node dist/src/session-cli.mjs publication --session runs/publication-demo --run run-YOUR_ID
+node dist/src/session-cli.mjs publication-event --session runs/publication-demo --run run-YOUR_ID
+node dist/src/session-cli.mjs publication-revisions --session runs/publication-demo --run run-YOUR_ID
+```
+
+这是使用合成回复的真实本地 SQLite/进程闭环，不调用模型。仅支持一个根 Run 的正文块及选定修订读取；不包含后台 Worker、Web Chat、SSE、全局 History 或多租户。行为与反例见 [Publication 谱系和边界](docs/evolution/v08-publication-lineage.md)及[实测记录](docs/verification/v08-observations.md)。
+
+<a id="versions"></a>
+## 版本演进 · Eight fixed stages
+
+八个阶段链接均指向固定提交，保留当时的代码、锁文件、示例与证据。表中的测试数是**各快照已记录的离线回归**，不是成熟度评分，也不是 CI 或模型能力徽章。
 
 | 阶段 | 这一步解决什么 | 新增可见机制 | 记录的离线回归 |
 | --- | --- | --- | ---: |
@@ -151,6 +165,7 @@ CLI 只恢复其固定合成 profile，不会把真实 provider 偷换成 fixtur
 | [v0.5 · 笔记与显式记忆](https://github.com/hpoenixf/open-etf-agent/tree/05c0dd2dc550f4f7e5da034340ff5c3159768fcf) | 分清原文、派生笔记和未来偏好 | Compaction、Memory 保存/修订/忘记 | 124 |
 | [v0.6 · 交付与阅读](https://github.com/hpoenixf/open-etf-agent/tree/7480b656b18192e6d6b44aab65255b970d58e6f8) | 已保存结果能按身份打开、下载并核对 | Artifact / Revision、CSV 附件、loopback Reader、HTTP evaluate | 171 |
 | [v0.7 · 可信贡献与恢复](https://github.com/hpoenixf/open-etf-agent/tree/5f70dc0b4760ad70ef211f4823828ab2fee5c525) | 不把包加载或文件重开冒充同一 Run 的恢复 | Trusted Plugin、SQLite、lease/fence、封存提案与结果消费检查点 | [249](docs/verification/v07-observations.md) |
+| [v0.8 · 正文独立提交](https://github.com/hpoenixf/open-etf-agent/tree/2c096ce47be2161f97531170af07ef255872f8b1) | 不把运行终态或文件报告当作正文提交 | 单块 Publication、稳定身份与展示位置、修订 CAS、原回执回读 | [286及版本元数据等价说明](docs/verification/v08-observations.md) |
 
 **v0.2 的维护入口：** 原始阶段保留历史；[独立维护快照 `a10d4f1`](https://github.com/hpoenixf/open-etf-agent/tree/a10d4f1bd1ecc39224272156221fe29792b64094)修正了报告中涉及未读取页面的措辞。若专门体验 v0.2，请使用 `maintenance/v0.2-source-boundary`，不要把旧快照当作已修复版本。
 
@@ -178,17 +193,20 @@ CLI 只恢复其固定合成 profile，不会把真实 provider 偷换成 fixtur
 | **ResultStore / Context** | 保存不可变原文；为下一请求组织有界工作视图 | 工作视图不改写原始来源；检索命中不冒充已读原文 |
 | **Compaction / Memory** | 派生工作笔记；显式库与写入意图；排除已忘记内容的后续输入 | 摘要不升级为原文，临时要求不自动成为长期偏好 |
 | **Trusted Plugin（v0.7）** | 显式贡献、身份绑定、原子激活与逆序资源释放 | 不充当沙箱，不由模型安装或扩权 |
+| **Publication（v0.8）** | 原 Session 事务中的独立正文、修订与当前交付位置 | 不替代 Artifact、不因 Run 失败删除已提交正文、不引入第二执行器 |
 | **SQLite / Checkpoint（v0.7）** | 在原 Runtime 边界持久化请求、预算、提案、结果与消费位置 | 不建立第二条执行链，不重试 unknown，不承诺外部 exactly-once |
 
 从当前 [源码目录](src)进入；设计动因与真实失败见[演进证据索引](docs/evolution/evidence-index.md)。
 
 ## 验证到哪里，声明到哪里
 
-先看 [v0.1–v0.7 验证证据索引](docs/verification/README.md)：按阶段进入 observations、receipts、provenance 与 qualification，历史证据不被新测试数字覆盖。
+先看 [v0.1–v0.8 验证证据索引](docs/verification/README.md)：按阶段进入 observations、receipts、provenance 与 qualification，历史证据不被新测试数字覆盖。
 
 当前 main 保留 [v0.6 窄范围维护修复](docs/verification/v06-errno-maintenance.md)：包装后的真实文件已存在异常仍能进入原有身份/字节核对，未知错误、取消与 null/undefined 原因不被吞掉。维护版本在 Node 26.11.1 完整回归 184/184；不借此改写固定阶段的历史证据，也不冒称模型质量通过。
 
 v0.7 最终冻结输入在 Node 26.11.1 **249/249** 通过，包含 12 个真实进程中断/取消/跨重启期限场景及独立恢复反例；另有独立锁定安装/构建、5 个 durable profile、9 份退出后报告回执、T1–T4 **HTTP 4/4** 与保留的 v0.6 产物回读。原 Evidence Kit 记录 **6/6、provider-free completion**，不把结构检查当作测试执行认证。组件 RED/GREEN、失败与修复、精确输入及执行范围见 [v0.7 实测记录](docs/verification/v07-observations.md)、[冻结输入](docs/verification/v07-candidate-inputs.json)和 [交付回读](docs/verification/v07-delivery-receipts.safe.json)。本阶段新增真实模型调用为 **0**。
+
+v0.8 在同一 Runtime 上完成 **286/286** provider-free 全量检查及独立安装、构建和跨进程 CLI 回读；正文提交后故障、真实进程中断、旧回执确认分别有用例。随后仅将两份包元数据的版本字段提升到 0.8.0：117 个行为/测试输入与 95 项锁定依赖不变，补做独立安装/构建与版本检查，未把这一步冒称重新跑过 286 项。两个精确输入摘要及证据归属见 [v0.8 记录](docs/verification/v08-observations.md)。没有新增模型调用。
 
 | 已有证据 | 仍需分别验证 / 当前不支持 |
 | --- | --- |
@@ -226,7 +244,7 @@ v0.7 最终冻结输入在 Node 26.11.1 **249/249** 通过，包含 12 个真实
 
 这些文章讨论更广的 Agent 工程问题。右侧是本仓库可运行的**最小机制实验**，不是原文全部高级能力的开源实现；具体支持范围以对应快照为准。
 
-**覆盖契约（31 篇模块文章）：** `verified` 只表示表中明确限定的最小 Runtime 切片，不是整篇文章实现、模型质量或生产认证；`无公开对应` 不借相邻机制认领；`draft` 尚未取得资格。表由 [唯一清单](docs/verification/article-coverage.json)生成，文章目录固定来自 [book.mjs / modules](https://github.com/hpoenixf/eff-agent-article/blob/f5fd11184c76ce3007197a08793407021740fe52/book.mjs)。
+**覆盖契约（31 篇模块文章）：** `verified` 只表示表中明确限定的最小 Runtime 切片，不是整篇文章实现、模型质量或生产认证；`无公开对应` 不借相邻机制认领；`draft` 尚未取得资格。表由 [唯一清单](docs/verification/article-coverage.json)生成，文章目录固定来自 [book.mjs / modules](https://github.com/hpoenixf/eff-agent-article/blob/fb7c776874e71d689212c6fc3c4f0efde598fa81/book.mjs)。
 
 <!-- article-coverage:start -->
 | 文章 | 对应 commit + case | 状态 |
@@ -235,30 +253,30 @@ v0.7 最终冻结输入在 Node 26.11.1 **249/249** 通过，包含 12 个真实
 | [Web：从搜索到连续阅读](https://hpoenixf.com/eff-agent-article/articles/021-agent-web-research-from-search-to-deep-reading) | —<br>缺 HTTP 获取、连续阅读、页面状态和来源撤销 | 无公开对应 |
 | [Agent 说“今天”时，到底是哪一天](https://hpoenixf.com/eff-agent-article/articles/agent-temporal-semantics-market-calendar) | —<br>缺可信时区、日历覆盖和行情 dataAsOf | 无公开对应 |
 | [PDF：从文本到证据](https://hpoenixf.com/eff-agent-article/articles/024-agent-pdf-from-text-to-evidence) | —<br>缺 PDF 文本/页图/版面定位/多模态读取 | 无公开对应 |
-| [Subagent：从隔离到专业化协作](https://hpoenixf.com/eff-agent-article/articles/agent-subagent-context-specialization) | [765fd77](https://github.com/hpoenixf/open-etf-agent/commit/765fd771430c55e1598b3f7bc32f342215a46f33) + `--case fixture-child`<br>一层脚本 Child 共享预算并交回原始结果；非真实模型专家 | verified |
+| [Subagent：从隔离到专业化协作](https://hpoenixf.com/eff-agent-article/articles/agent-subagent-context-specialization) | [2c096ce](https://github.com/hpoenixf/open-etf-agent/commit/2c096ce47be2161f97531170af07ef255872f8b1) + `--case fixture-child`<br>一层脚本 Child 共享预算并交回原始结果；非真实模型专家 | verified |
 | [自定义专家，不应该只是一个 Prompt 输入框](https://hpoenixf.com/eff-agent-article/articles/agent-custom-expert-from-prompt-to-recovery) | —<br>缺专家 CRUD/版本冻结/目录权限/历史身份/恢复 | 无公开对应 |
 | [Adaptive Research 与 Python](https://hpoenixf.com/eff-agent-article/articles/adaptive-research-python-workbench) | —<br>缺模型研究问题修订、任意获准 Python、数据工件接力 | 无公开对应 |
 | [Python：从工具到计算工作台](https://hpoenixf.com/eff-agent-article/articles/agent-python-compute-workbench-evolution) | —<br>缺隔离执行/代码与输入身份/失败后工件保留 | 无公开对应 |
 | [把个人持仓接入 Agent：我们怎样设计一个只读金融 MCP](https://hpoenixf.com/eff-agent-article/articles/portfolio-mcp-readonly-investment-data) | —<br>缺 portfolio-report、份额/现金/快照口径和方案计算 | 无公开对应 |
 | [数据过期后的受控刷新](https://hpoenixf.com/eff-agent-article/articles/unavailable-is-correct) | —<br>缺刷新任务身份、scope/fingerprint 去重、来源拒绝与原子发布新证据 | 无公开对应 |
-| [结果外置与完整性：模型到底读到了多少](https://hpoenixf.com/eff-agent-article/articles/tool-results-outside-model-context) | [765fd77](https://github.com/hpoenixf/open-etf-agent/commit/765fd771430c55e1598b3f7bc32f342215a46f33) + `--case retrieve-reread`<br>词法候选→真实读页→精确原文回读；非完整原文覆盖平台 | verified |
-| [Main 压缩：摘要不改写原始事实](https://hpoenixf.com/eff-agent-article/articles/agent-main-run-context-compaction) | [765fd77](https://github.com/hpoenixf/open-etf-agent/commit/765fd771430c55e1598b3f7bc32f342215a46f33) + `--case compact-and-reread`<br>派生便笺与原文分离、采用后回读；摘要质量未评 | verified |
-| [Memory：从保存、召回到安全遗忘](https://hpoenixf.com/eff-agent-article/articles/026-agent-memory-forget-durable-effects) | [765fd77](https://github.com/hpoenixf/open-etf-agent/commit/765fd771430c55e1598b3f7bc32f342215a46f33) + `--case explicit-memory`<br>显式合成意图的保存/修订/忘记；非认证用户 Memory 服务 | verified |
+| [结果外置与完整性：模型到底读到了多少](https://hpoenixf.com/eff-agent-article/articles/tool-results-outside-model-context) | [2c096ce](https://github.com/hpoenixf/open-etf-agent/commit/2c096ce47be2161f97531170af07ef255872f8b1) + `--case retrieve-reread`<br>词法候选→真实读页→精确原文回读；非完整原文覆盖平台 | verified |
+| [Main 压缩：摘要不改写原始事实](https://hpoenixf.com/eff-agent-article/articles/agent-main-run-context-compaction) | [2c096ce](https://github.com/hpoenixf/open-etf-agent/commit/2c096ce47be2161f97531170af07ef255872f8b1) + `--case compact-and-reread`<br>派生便笺与原文分离、采用后回读；摘要质量未评 | verified |
+| [Memory：从保存、召回到安全遗忘](https://hpoenixf.com/eff-agent-article/articles/026-agent-memory-forget-durable-effects) | [2c096ce](https://github.com/hpoenixf/open-etf-agent/commit/2c096ce47be2161f97531170af07ef255872f8b1) + `--case explicit-memory`<br>显式合成意图的保存/修订/忘记；非认证用户 Memory 服务 | verified |
 | [RAG：文档撤权与历史回放](https://hpoenixf.com/eff-agent-article/articles/027-rag-revocation-publish-replay) | —<br>缺动态 ACL/撤权传播、发布资格与历史回放再授权 | 无公开对应 |
-| [Provider：统一接口之后，为什么还需要共享准入](https://hpoenixf.com/eff-agent-article/articles/agent-provider-architecture-and-admission) | [765fd77](https://github.com/hpoenixf/open-etf-agent/commit/765fd771430c55e1598b3f7bc32f342215a46f33) + `test/gateway.test.mjs` · 1.4 injected offline transport verifies request encoding and matched tool results<br>离线 transport 的 Gateway 编码与配对；无共享 Provider 准入 | verified |
+| [Provider：统一接口之后，为什么还需要共享准入](https://hpoenixf.com/eff-agent-article/articles/agent-provider-architecture-and-admission) | [2c096ce](https://github.com/hpoenixf/open-etf-agent/commit/2c096ce47be2161f97531170af07ef255872f8b1) + `test/gateway.test.mjs` · 1.4 injected offline transport verifies request encoding and matched tool results<br>离线 transport 的 Gateway 编码与配对；无共享 Provider 准入 | verified |
 | [模型返回 HTTP 200，为什么下一次还要排队](https://hpoenixf.com/eff-agent-article/articles/agent-provider-admission-capacity-lease) | —<br>缺跨进程队列、租约/隔离、远端 unknown/释放及 PG 控制库 | 无公开对应 |
-| [Extension Host：从功能机到智能机](https://hpoenixf.com/eff-agent-article/articles/020-agent-extension-host-smartphone) | [765fd77](https://github.com/hpoenixf/open-etf-agent/commit/765fd771430c55e1598b3f7bc32f342215a46f33) + `test/plugins.test.mjs` · 7.1 two trusted packages use the ordinary Host and acquired source/method owners<br>可信包接入同一 Host；不是隔离沙箱或完整多生态 Host | verified |
-| [从接上 MCP 到真正用上工具：Agent 的接入链路怎样构建](https://hpoenixf.com/eff-agent-article/articles/mcp-host-from-discovery-to-consumption) | [765fd77](https://github.com/hpoenixf/open-etf-agent/commit/765fd771430c55e1598b3f7bc32f342215a46f33) + `--case skill-mcp`<br>真实 stdio 合成 MCP 发现、准入与取得；非金融数据服务 | verified |
-| [Tool Surface：Agent 有工具，模型为什么看不到](https://hpoenixf.com/eff-agent-article/articles/agent-model-capability-presentation-tool-surface) | [765fd77](https://github.com/hpoenixf/open-etf-agent/commit/765fd771430c55e1598b3f7bc32f342215a46f33) + `test/cooperation-integration.test.mjs` · 3.4 fixture child shares root counters and advertises only allowed read tool<br>Child 只呈现获准读工具；非完整动态能力编排 | verified |
-| [A35 内容信任：Prompt Injection 不只是恶意文本](https://hpoenixf.com/eff-agent-article/articles/agent-content-trust-prompt-injection) | [765fd77](https://github.com/hpoenixf/open-etf-agent/commit/765fd771430c55e1598b3f7bc32f342215a46f33) + `test/context.test.mjs` · 4.2 projection never launders a lookalike or altered payload into an acquired ref<br>Context 拒绝伪造原文身份；非完整 A35 安全模块 | verified |
-| [多生态 Hook：Claude、Pi 与 Codex](https://hpoenixf.com/eff-agent-article/articles/agent-multi-ecosystem-hook-execution) | [765fd77](https://github.com/hpoenixf/open-etf-agent/commit/765fd771430c55e1598b3f7bc32f342215a46f33) + `test/cooperation-integration.test.mjs` · 3.3 Host revalidates effective Hook arguments and preserves original call<br>同一 Host 复验 Hook 改参并保留原调用；无多生态转换层 | verified |
-| [工具调用到模型输入的观测链](https://hpoenixf.com/eff-agent-article/articles/agent-tool-lifecycle-and-model-input) | [765fd77](https://github.com/hpoenixf/open-etf-agent/commit/765fd771430c55e1598b3f7bc32f342215a46f33) + `--case batch-read`<br>合成 worker 经现有 Runtime/Host 保存来源；非完整观测平台 | verified |
-| [Run 预算与约束治理](https://hpoenixf.com/eff-agent-article/articles/agent-runtime-constraint-governance-v2) | [765fd77](https://github.com/hpoenixf/open-etf-agent/commit/765fd771430c55e1598b3f7bc32f342215a46f33) + `test/cooperation-integration.test.mjs` · 3.3 root budget refusal stops before a second model request<br>根预算拒绝阻止下一模型请求；非全部预算政策 | verified |
+| [Extension Host：从功能机到智能机](https://hpoenixf.com/eff-agent-article/articles/020-agent-extension-host-smartphone) | [2c096ce](https://github.com/hpoenixf/open-etf-agent/commit/2c096ce47be2161f97531170af07ef255872f8b1) + `test/plugins.test.mjs` · 7.1 two trusted packages use the ordinary Host and acquired source/method owners<br>可信包接入同一 Host；不是隔离沙箱或完整多生态 Host | verified |
+| [从接上 MCP 到真正用上工具：Agent 的接入链路怎样构建](https://hpoenixf.com/eff-agent-article/articles/mcp-host-from-discovery-to-consumption) | [2c096ce](https://github.com/hpoenixf/open-etf-agent/commit/2c096ce47be2161f97531170af07ef255872f8b1) + `--case skill-mcp`<br>真实 stdio 合成 MCP 发现、准入与取得；非金融数据服务 | verified |
+| [Tool Surface：Agent 有工具，模型为什么看不到](https://hpoenixf.com/eff-agent-article/articles/agent-model-capability-presentation-tool-surface) | [2c096ce](https://github.com/hpoenixf/open-etf-agent/commit/2c096ce47be2161f97531170af07ef255872f8b1) + `test/cooperation-integration.test.mjs` · 3.4 fixture child shares root counters and advertises only allowed read tool<br>Child 只呈现获准读工具；非完整动态能力编排 | verified |
+| [A35 内容信任：Prompt Injection 不只是恶意文本](https://hpoenixf.com/eff-agent-article/articles/agent-content-trust-prompt-injection) | [2c096ce](https://github.com/hpoenixf/open-etf-agent/commit/2c096ce47be2161f97531170af07ef255872f8b1) + `test/context.test.mjs` · 4.2 projection never launders a lookalike or altered payload into an acquired ref<br>Context 拒绝伪造原文身份；非完整 A35 安全模块 | verified |
+| [多生态 Hook：Claude、Pi 与 Codex](https://hpoenixf.com/eff-agent-article/articles/agent-multi-ecosystem-hook-execution) | [2c096ce](https://github.com/hpoenixf/open-etf-agent/commit/2c096ce47be2161f97531170af07ef255872f8b1) + `test/cooperation-integration.test.mjs` · 3.3 Host revalidates effective Hook arguments and preserves original call<br>同一 Host 复验 Hook 改参并保留原调用；无多生态转换层 | verified |
+| [工具调用到模型输入的观测链](https://hpoenixf.com/eff-agent-article/articles/agent-tool-lifecycle-and-model-input) | [2c096ce](https://github.com/hpoenixf/open-etf-agent/commit/2c096ce47be2161f97531170af07ef255872f8b1) + `--case batch-read`<br>合成 worker 经现有 Runtime/Host 保存来源；非完整观测平台 | verified |
+| [Run 预算与约束治理](https://hpoenixf.com/eff-agent-article/articles/agent-runtime-constraint-governance-v2) | [2c096ce](https://github.com/hpoenixf/open-etf-agent/commit/2c096ce47be2161f97531170af07ef255872f8b1) + `test/cooperation-integration.test.mjs` · 3.3 root budget refusal stops before a second model request<br>根预算拒绝阻止下一模型请求；非全部预算政策 | verified |
 | [Agent 的请求数、Token 与 Credits 记账](https://hpoenixf.com/eff-agent-article/articles/agent-personal-credits-shadow-accounting) | —<br>缺账户/物理尝试身份、归因、价格目录与影子成本核算 | 无公开对应 |
-| [Agent 收到控制指令后，为什么不能立刻执行](https://hpoenixf.com/eff-agent-article/articles/agent-control-events-durable-owner-adoption) | [765fd77](https://github.com/hpoenixf/open-etf-agent/commit/765fd771430c55e1598b3f7bc32f342215a46f33) + `test/durable-runtime.test.mjs` · 7.3 cancel during pending model is durable and late proposal cannot dispatch<br>持久取消阻止迟到提案执行并跨进程保持；非完整控制事件系统 | verified |
+| [Agent 收到控制指令后，为什么不能立刻执行](https://hpoenixf.com/eff-agent-article/articles/agent-control-events-durable-owner-adoption) | [2c096ce](https://github.com/hpoenixf/open-etf-agent/commit/2c096ce47be2161f97531170af07ef255872f8b1) + `test/durable-runtime.test.mjs` · 7.3 cancel during pending model is durable and late proposal cannot dispatch<br>持久取消阻止迟到提案执行并跨进程保持；非完整控制事件系统 | verified |
 | [定时研究：会话结束后继续](https://hpoenixf.com/eff-agent-article/articles/agent-autonomous-scheduled-research) | —<br>缺跨会话触发、任务克隆、去重/通知和时间语义 | 无公开对应 |
 | [Langfuse：从 Trace 到可信观测](https://hpoenixf.com/eff-agent-article/articles/025-agent-langfuse-from-trace-to-trustworthy-observability) | —<br>缺 Langfuse exporter/span/session 归属与远端失败隔离 | 无公开对应 |
-| [Publication：为什么需要独立发布系统](https://hpoenixf.com/eff-agent-article/articles/019-agent-answer-publication) | —<br>独立 Publication 模块尚未纳入当前稳定版；T4/Artifact 不冒充完整发布系统 | draft |
+| [Publication：为什么需要独立发布系统](https://hpoenixf.com/eff-agent-article/articles/019-agent-answer-publication) | [2c096ce](https://github.com/hpoenixf/open-etf-agent/commit/2c096ce47be2161f97531170af07ef255872f8b1) + `test/publication-cli.test.mjs` · 8.2 local CLI starts same Runtime and separately reads body, current event and immutable Artifact<br>同一 Runtime 提交正文并经独立 CLI 回读，与报告 Artifact 分离；不含 Web / SSE / Worker 或完整发布系统 | verified |
 | [渐进式回答如何保持连贯](https://hpoenixf.com/eff-agent-article/articles/agent-progressive-answer-coherence) | —<br>缺 committed blocks/revision、前端渐进展示和历史一致性 | 无公开对应 |
 | [异步研究：离开页面后怎样按时交付](https://hpoenixf.com/eff-agent-article/articles/agent-asynchronous-research-time-bound-delivery) | —<br>缺离开后持续任务、by/at 交付约定、通知和同 Run 恢复 | 无公开对应 |
 | [Agent 问完用户之后：持久人机交互](https://hpoenixf.com/eff-agent-article/articles/agent-durable-human-interaction-response-adoption) | —<br>缺 request/response/adoption/effect 身份、Human Park/Continue 与认证用户回复 | 无公开对应 |
@@ -284,7 +302,6 @@ node scripts/check-article-coverage.mjs --render
 
 | 阶段 | 规划方向 |
 | --- | --- |
-| **v0.8** | 仅 Publication：从原模块提炼稳定正文身份、修订与提交回执，CLI 最小闭环 |
 | **v0.9（候选）** | 仅独立 Worker 与必需的持久队列，不捆绑 Web UI |
 | **v0.10（候选）** | 仅交付读取/HTTP-SSE Adapter，协议客户端验证，不冒称浏览器验收 |
 | **后续 0.x** | Web 取材、PDF 解析、隔离 Python 分别独立评估；一版一个模块，不赶编号 |
@@ -303,10 +320,11 @@ node scripts/check-article-coverage.mjs --render
 
 **Open ETF Agent** is a small research Agent built through independently runnable development snapshots. Start with a source-linked Markdown report, then add Skills, MCP, bounded cooperation, exact source rereading, derived notes and explicit Memory.
 
-- **Run:** clone `main` directly using [Quickstart](#quickstart). The default branch contains the latest verified stable development code, **v0.7**, with a [fixed stage snapshot](https://github.com/hpoenixf/open-etf-agent/tree/5f70dc0b4760ad70ef211f4823828ab2fee5c525). Node.js 26.8.1–26.x is required; local v0.7 qualification uses 26.11.1, and demos run offline after dependency installation.
+- **Run:** clone `main` directly using [Quickstart](#quickstart). The default branch contains the latest verified stable development code, **v0.8**, with a [fixed stage snapshot](https://github.com/hpoenixf/open-etf-agent/tree/2c096ce47be2161f97531170af07ef255872f8b1). Node.js 26.8.1–26.x is required; local v0.8 qualification uses 26.11.1, and demos run offline after dependency installation.
+- **Publication:** v0.8 adds one durable body block, stable identity/ordinal, revision CAS and independent CLI readback. It records 286 provider-free checks followed by a separately verified version-metadata-only promotion; see [exact evidence](docs/verification/v08-observations.md). No Worker, Web Chat or new live-model qualification is claimed.
 - **Inspect:** each [stage](#versions) retains its fixed implementation, fixtures and evidence. The [v0.7 README](https://github.com/hpoenixf/open-etf-agent/blob/5f70dc0b4760ad70ef211f4823828ab2fee5c525/README.md) has detailed English instructions for trusted packages and same-Run continuation. The [v0.6 README](https://github.com/hpoenixf/open-etf-agent/blob/7480b656b18192e6d6b44aab65255b970d58e6f8/README.md) remains available for the earlier artifact/HTTP stage.
 - **Interpret honestly:** v0.6 qualification records 171 offline tests, eight demos, eleven report readbacks and four-case HTTP checks, with no new model calls. v0.7 records 249/249 tests, independent installation/build, five durable profiles, nine report receipts and HTTP 4/4, with zero new provider calls. Real process interruption/new-PID checks, not terminal file readback alone, qualify its bounded recovery. Unknown effects are not retried. “Stable” means bounded Runtime qualification, not a formal release or production-readiness claim.
-- **Real calls:** [16 historical HTTP requests across v0.1–v0.5](#live-evidence) are separate from the offline demos. Model quality remains unreviewed. The demo CLI refuses `--live`; the separate `scripts/live-validate.mjs` runner requires explicit provider/data/cost authorization. This is **not v0.7 live-recovery qualification**.
+- **Real calls:** [16 historical HTTP requests across v0.1–v0.5](#live-evidence) are separate from the offline demos. Model quality remains unreviewed. The demo CLI refuses `--live`; the separate `scripts/live-validate.mjs` runner requires explicit provider/data/cost authorization. This is **not v0.8 live-recovery qualification**.
 - **Scope:** local, single-user, synthetic examples; no trading or investment advice. These snapshots are not formal releases, and original project code is licensed under [MIT](LICENSE); third-party licenses and notices remain in force.
 
 ---
