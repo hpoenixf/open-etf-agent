@@ -1,10 +1,10 @@
 {
   "schemaVersion": 1,
   "repository": "hpoenixf/open-etf-agent",
-  "commit": "bb8c52b867592ca060afc6c83d1019b29c9ca89f",
-  "tree": "c8b5a81ea8ac59f4aa7144b304c6f1a9fe310fd8",
-  "retrievedFrom": "https://api.github.com/repos/hpoenixf/open-etf-agent/git/trees/c8b5a81ea8ac59f4aa7144b304c6f1a9fe310fd8?recursive=1",
-  "retrievedAt": "2026-10-27T08:33:13.239367+00:00",
+  "commit": "dad9c6e64f32c3d7579aea96613776b40917ec6d",
+  "tree": "ed7018acf6ed5dab5d4496bcc7aa7d3bd7fe2702",
+  "retrievedFrom": "https://api.github.com/repos/hpoenixf/open-etf-agent/git/trees/ed7018acf6ed5dab5d4496bcc7aa7d3bd7fe2702?recursive=1",
+  "retrievedAt": "2026-10-27T09:21:53.747180+00:00",
   "inputs": [
     {
       "path": "fixtures/cases.json",
@@ -24,11 +24,11 @@
     },
     {
       "path": "package-lock.json",
-      "gitBlob": "69b563f49120b3934e300372158b753e81149d16"
+      "gitBlob": "6a69edcfb702ebf843d3c06d17c05ede3dcbd013"
     },
     {
       "path": "package.json",
-      "gitBlob": "bda02a7d67b9661938cccf422797f8bec044a329"
+      "gitBlob": "4d82275a4b568c61cffcce41d7fb723aa10f221c"
     },
     {
       "path": "src/artifact-demo.mjs",
@@ -76,7 +76,7 @@
     },
     {
       "path": "src/durable-demo.mjs",
-      "gitBlob": "c1b69d657740244b6a8760c1fe6f73923ef8a9fd"
+      "gitBlob": "61df020c3de26ee44546289afd56461606364ce3"
     },
     {
       "path": "src/durable-memory.mjs",
@@ -192,11 +192,11 @@
     },
     {
       "path": "src/runtime.mjs",
-      "gitBlob": "13ada65f0f07000cb58ce02113e083164dfea928"
+      "gitBlob": "6882bd2bc7f7074dc2e253d5a61ae031d21264bd"
     },
     {
       "path": "src/session-cli.mjs",
-      "gitBlob": "fd6652c06d06c2e3318e780d817e2ec223251410"
+      "gitBlob": "2a2bf6fb896c6a43a0bef06e253c9ae0d1e08052"
     },
     {
       "path": "src/session.mjs",
@@ -221,6 +221,10 @@
     {
       "path": "src/tools.mjs",
       "gitBlob": "d7939ba940b250f38b4d17b0550ab4031e19c711"
+    },
+    {
+      "path": "src/worker.mjs",
+      "gitBlob": "df8338fdc8c4a679c711a509a56a4f6cfdd1f3b6"
     },
     {
       "path": "src/working-demo.mjs",
@@ -325,6 +329,10 @@
     {
       "path": "test/fixtures/recovery-process.mjs",
       "gitBlob": "d92dbb43e5f196d070c0c0f0bfa3fd8f0893a5ed"
+    },
+    {
+      "path": "test/fixtures/worker-process.mjs",
+      "gitBlob": "485610ed4c0b1df7705658273c7f903a99e7f687"
     },
     {
       "path": "test/gateway.test.mjs",
@@ -461,6 +469,18 @@
     {
       "path": "test/v06-cli.test.mjs",
       "gitBlob": "d7dc3a6ebac849281717a191e10c3af414eeace8"
+    },
+    {
+      "path": "test/worker-cli.test.mjs",
+      "gitBlob": "6fb768d061d3ae496895acd3b086d8682b15ab02"
+    },
+    {
+      "path": "test/worker-process.test.mjs",
+      "gitBlob": "245e251dde34fec677c6a14a3f2b5d346bdee719"
+    },
+    {
+      "path": "test/worker.test.mjs",
+      "gitBlob": "55c35716ca65a4470a2593b83acba4096ecf583d"
     },
     {
       "path": "test/working-input-integration.test.mjs",

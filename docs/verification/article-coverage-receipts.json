@@ -1,15 +1,15 @@
 {
   "schemaVersion": 1,
   "kind": "actual-provider-free-runtime-execution",
-  "executedAt": "2026-10-27T08:36:38.834Z",
+  "executedAt": "2026-10-27T09:22:52.041Z",
   "node": "v26.11.1",
-  "sourceCommit": "bb8c52b867592ca060afc6c83d1019b29c9ca89f",
-  "inputSha256": "e7c44dc9b2d677fdd0e814cbc2ea5fcf50cdd899df980bf2e5d07e938c001d9b",
+  "sourceCommit": "dad9c6e64f32c3d7579aea96613776b40917ec6d",
+  "inputSha256": "133f1ad482f5203bee3cddf5f85c6851e9ab7c360e34c090f3cc7f192215dedf",
   "runnerSha256": "9a2ff81fa7ba5f8946aa38e747938d991daaa4990d58a0ad56716db294eaab3f",
-  "targetsSha256": "bbb403182b02432e2cbf30648ece1f5223803898e30cd1cfd8fa3b3c804e549f",
+  "targetsSha256": "01aff6496a7790607c08ab0118c44d4ed067a49c8cc0e4c6a357c337eb19601b",
   "commitConfirmation": {
-    "commit": "bb8c52b867592ca060afc6c83d1019b29c9ca89f",
-    "tree": "c8b5a81ea8ac59f4aa7144b304c6f1a9fe310fd8",
+    "commit": "dad9c6e64f32c3d7579aea96613776b40917ec6d",
+    "tree": "ed7018acf6ed5dab5d4496bcc7aa7d3bd7fe2702",
     "method": "actual-local-git-objects"
   },
   "executionBounds": {
@@ -38,7 +38,7 @@
           }
         ]
       },
-      "stdoutSha256": "4a7064f4a3530582c176638ed19bedbba22e1ec35547e966ac099323aa1a943c",
+      "stdoutSha256": "f76a1ffc76d8f8ac0cef5d370c4efc6197ab7ee6619c2afcd4f670c9fc3042af",
       "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
     },
     "reread": {
@@ -58,7 +58,7 @@
           }
         ]
       },
-      "stdoutSha256": "9871d361d0fbfe9775001e679fc6c6ddea58632fa63fbccdc1fff4f6322a0cb3",
+      "stdoutSha256": "fdb59736f4339cf8aaa3c55a958138f122f8bb6ed8202e0f688c1d5f6ec4a300",
       "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
     },
     "compaction": {
@@ -78,7 +78,7 @@
           }
         ]
       },
-      "stdoutSha256": "353847a435c92780e6330cb04fb3887879c8981f4b4e39d01159122f66207074",
+      "stdoutSha256": "de813b38c42ddeec576bbc7da2037d416ca54bfef4e2c7e02201730276c83384",
       "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
     },
     "memory": {
@@ -98,7 +98,7 @@
           }
         ]
       },
-      "stdoutSha256": "5eecf9569e146e87a24072ca64c6d80e7a3de87e84212ae6d082a33883a46096",
+      "stdoutSha256": "a5e6a0b9b12b6c723f4ceb1ea8aa5034d6315a0ebfcf3b5f8a466ea1a14e12fb",
       "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
     },
     "mcp": {
@@ -118,7 +118,7 @@
           }
         ]
       },
-      "stdoutSha256": "cf0b4f5b8a58fcef80b367297b171b8e29fd3f79592f4601e212f8696eb2161a",
+      "stdoutSha256": "aaad18f6ffb77b557d7e4300bed404d67ddcb61e67c7aaac00ddee64a560a8da",
       "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
     },
     "batch": {
@@ -138,7 +138,7 @@
           }
         ]
       },
-      "stdoutSha256": "5f65d9bf31934bbd7a0e868954013b0042cfbfab860331b4ec4009f641b020d3",
+      "stdoutSha256": "10ff5f6a0e76f74df23b03f800d5090eaae8b9d76bbd1454cdc3faddd6f73e98",
       "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
     },
     "provider": {
@@ -154,7 +154,7 @@
         "failed": 0,
         "skipped": 0
       },
-      "stdoutSha256": "e583202c70ca2f836e46a6cc9b9379db0de0f0bd35a82235b3ce474168e60c2a",
+      "stdoutSha256": "66a59c147a866afb5d5e3c498635a7fa803352c359407da011b7e9c0dc9525a2",
       "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
     },
     "plugins": {
@@ -170,7 +170,7 @@
         "failed": 0,
         "skipped": 0
       },
-      "stdoutSha256": "40d32bff1ef14a6e845ee945ca8c7f79d6f98e7d0d4c2cf70134417b861d2482",
+      "stdoutSha256": "fbad39c95eb0b5e85bda1fbc490767a2de1dd3c42aca256de6a0dfe458afac5f",
       "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
     },
     "surface": {
@@ -186,7 +186,7 @@
         "failed": 0,
         "skipped": 0
       },
-      "stdoutSha256": "e0f18d74049addebd8c2aff81aff215e1b78c60237b39b6e7259afe132aef284",
+      "stdoutSha256": "664ce98b374c1d1a989d6d13c347eae4191369b14c057c3d23c9272eada29e95",
       "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
     },
     "trust": {
@@ -202,7 +202,7 @@
         "failed": 0,
         "skipped": 0
       },
-      "stdoutSha256": "63703b025d70dc67e58e89f828c0ed112d29ef493c1e974c9ed2dce7b028f32c",
+      "stdoutSha256": "e8b1e8cfbfe6991fefdda277b6f11b593b75e090920b8815fd2ace2437a75e9f",
       "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
     },
     "hooks": {
@@ -218,7 +218,7 @@
         "failed": 0,
         "skipped": 0
       },
-      "stdoutSha256": "801445b1d5bafd3b5a1a23e2605477c8af4a0bd3ef93b6382089d457c75d9456",
+      "stdoutSha256": "f399207dfedee7e1f2771a80cb3ac9cb1745385b3437a1ad7d20d0812edbf946",
       "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
     },
     "budget": {
@@ -234,7 +234,7 @@
         "failed": 0,
         "skipped": 0
       },
-      "stdoutSha256": "9598fefc2bb5788fa284f55453a1a3a72e004fffd6d133ca86242beb43fad31b",
+      "stdoutSha256": "3b72860e9b6b3b44a32355e8e279a05d30421fd6178044f94e9b5911c1e1c4fe",
       "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
     },
     "control": {
@@ -250,7 +250,7 @@
         "failed": 0,
         "skipped": 0
       },
-      "stdoutSha256": "f64fb55941587c7ee34944c35d4abe9f5177c8d1f1144b1a1994d2102010c560",
+      "stdoutSha256": "e63fdf4d3429ef7f25b6be9e694b9d0cff4aae7117172bb5f2364eb3c7c5d053",
       "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
     },
     "publication": {
@@ -266,7 +266,23 @@
         "failed": 0,
         "skipped": 0
       },
-      "stdoutSha256": "f9502b16f93f64e149e864322527ec55ffcd2a068eaa3d65c63caa0fda881734",
+      "stdoutSha256": "27ed6f1febeb777c2999abe3cf0fd08709e85e3004dc8d4b60dce42cf4a897a9",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "worker": {
+      "target": {
+        "kind": "test",
+        "file": "test/worker-cli.test.mjs",
+        "name": "9.1 submit exits before a separate work process drives and reads the original Run"
+      },
+      "exitCode": 0,
+      "observed": {
+        "name": "9.1 submit exits before a separate work process drives and reads the original Run",
+        "passed": 1,
+        "failed": 0,
+        "skipped": 0
+      },
+      "stdoutSha256": "234545fc12b8b552702e98ad32266433d88da438bc2dfc559984aa31060e6eef",
       "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
     }
   }

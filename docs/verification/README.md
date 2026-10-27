@@ -1,4 +1,4 @@
-# 验证证据索引 · v0.1–v0.8
+# 验证证据索引 · v0.1–v0.9
 
 [返回项目首页](../../README.md) · [31 篇文章覆盖契约](../../README.md#reading)
 
@@ -102,6 +102,15 @@
 - **覆盖清单输入口径：** 当前覆盖检查绑定115个 `src/fixtures/test/package` 输入，checker另以 `runnerSha256` 绑定；阶段的119输入额外包括build、checker、live runner与live pins四个脚本。集合不同不是源码漂移。
 
 
+### v0.9 · 独立调用的单 Run Worker
+
+固定代码：[`dad9c6e`](https://github.com/hpoenixf/open-etf-agent/tree/dad9c6e64f32c3d7579aea96613776b40917ec6d)
+
+- **Observations：** [本版说明](https://github.com/hpoenixf/open-etf-agent/blob/dad9c6e64f32c3d7579aea96613776b40917ec6d/docs/verification/v09-observations.md) · [原305项历史机读记录](https://github.com/hpoenixf/open-etf-agent/blob/dad9c6e64f32c3d7579aea96613776b40917ec6d/docs/verification/v09-observations.safe.json) · [当前组合309项实际记录](https://github.com/hpoenixf/open-etf-agent/blob/dad9c6e64f32c3d7579aea96613776b40917ec6d/docs/verification/v09-combined-observations.safe.json)。两次执行和输入分别保留，不改标或累加。
+- **Receipts / delivery：** [原独立安装/构建](https://github.com/hpoenixf/open-etf-agent/blob/dad9c6e64f32c3d7579aea96613776b40917ec6d/docs/verification/v09-independent-install.safe.json) · [原八进程 CLI 与旧 Artifact 回读](https://github.com/hpoenixf/open-etf-agent/blob/dad9c6e64f32c3d7579aea96613776b40917ec6d/docs/verification/v09-independent-delivery.safe.json) · [58交付输入与55构建文件等价核对](https://github.com/hpoenixf/open-etf-agent/blob/dad9c6e64f32c3d7579aea96613776b40917ec6d/docs/verification/v09-delivery-equivalence.safe.json)，后者不是新执行。
+- **Provenance / frozen inputs：** [原124输入](https://github.com/hpoenixf/open-etf-agent/blob/dad9c6e64f32c3d7579aea96613776b40917ec6d/docs/verification/v09-candidate-inputs.json) · [当前124输入](https://github.com/hpoenixf/open-etf-agent/blob/dad9c6e64f32c3d7579aea96613776b40917ec6d/docs/verification/v09-combined-inputs.json)；组合只纳入已公开的覆盖校验器/测试变更，Worker行为/package/dependencies未变。
+- **Qualification：** [Spec / evidence](https://github.com/hpoenixf/open-etf-agent/blob/dad9c6e64f32c3d7579aea96613776b40917ec6d/openspec/changes/v09-single-run-worker/evidence.md) · [本次Kit结构记录](https://github.com/hpoenixf/open-etf-agent/blob/dad9c6e64f32c3d7579aea96613776b40917ec6d/docs/verification/v09-combined-kit.safe.json)。真实进程/SQLite、合成模型动作；无调度平台、浏览器、真实模型质量或正式Release结论。
+
 ## v0.7 分项入口
 
 以下也固定在 v0.7 的原快照，避免把成功 demo 与中断恢复混在一起：
@@ -116,7 +125,7 @@
 
 ## 单列历史 live 与维护，不抹平版本
 
-- [v0.1–v0.5 首批真实调用](https://github.com/hpoenixf/open-etf-agent/blob/d075068ac99a6c798d012c46bff4fe0c33eb9979/docs/verification/live-v01-v05-first-batch.md)：各自原版本的历史 HTTP / 产物记录，未触达机制保持未覆盖。**不是 v0.6/v0.7/v0.8 的 live 资格，不是模型质量认证。**
+- [v0.1–v0.5 首批真实调用](https://github.com/hpoenixf/open-etf-agent/blob/d075068ac99a6c798d012c46bff4fe0c33eb9979/docs/verification/live-v01-v05-first-batch.md)：各自原版本的历史 HTTP / 产物记录，未触达机制保持未覆盖。**不是 v0.6/v0.7/v0.8/v0.9 的 live 资格，不是模型质量认证。**
 - [受限 live 入口与授权](../live-validation.md)：默认覆盖 smoke 不调用此入口；provider、合成数据与费用仍需独立授权。[下一批计划](live-runtime-next-cases.md)只是计划。
 - [v0.2 独立措辞维护](https://github.com/hpoenixf/open-etf-agent/tree/a10d4f1bd1ecc39224272156221fe29792b64094)：未读页面不能写成已知事实，原阶段证据保持不变。
 - [v0.6 errno 窄范围维护](https://github.com/hpoenixf/open-etf-agent/blob/765fd771430c55e1598b3f7bc32f342215a46f33/docs/verification/v06-errno-maintenance.md)：区分原阶段与维护输入。Node 26.11.1 是本机实际执行；26.8.1 的 v0.6 全绿是用户观察，不冒称本机 v0.7 最低版本实测。

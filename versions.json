@@ -35,6 +35,10 @@
     "0.8": {
       "commit": "2c096ce47be2161f97531170af07ef255872f8b1",
       "tree": "62ead44dcdb89fab9f6f6a38bd26634c94f7f802"
+    },
+    "0.9": {
+      "commit": "dad9c6e64f32c3d7579aea96613776b40917ec6d",
+      "tree": "ed7018acf6ed5dab5d4496bcc7aa7d3bd7fe2702"
     }
   },
   "targets": {
@@ -121,6 +125,12 @@
       "evidencePath": "test/publication-cli.test.mjs",
       "evidenceGitBlob": "f77cb2dbc2b7e2c20e95bafa404d59e940f2347b",
       "selector": "8.2 local CLI starts same Runtime and separately reads body, current event and immutable Artifact"
+    },
+    "worker": {
+      "since": "0.9",
+      "evidencePath": "test/worker-cli.test.mjs",
+      "evidenceGitBlob": "6fb768d061d3ae496895acd3b086d8682b15ab02",
+      "selector": "9.1 submit exits before a separate work process drives and reads the original Run"
     }
   },
   "notes": [
@@ -128,6 +138,6 @@
     "Current execution qualification remains article-coverage.json verifiedAt and its actual receipt; it never rewrites since.",
     "v0.2 source-boundary maintenance a10d4f1bd1ecc39224272156221fe29792b64094 follows a79e89bf709d4a2245b5a8652882a591ba467519; MCP already existed.",
     "ecf6cb45b4062586614e83aed917c92d704cb63b introduced v0.4 Result/Context/Retrieval; Compaction/Memory first appear in its v0.5 successor 05c0dd2dc550f4f7e5da034340ff5c3159768fcf.",
-    "The original plan is preserved as historical, not converted from planned to released. Unpublished v0.9 is deliberately absent."
+    "The original plan is preserved as historical, not converted from planned to released. v0.9 records the actual fixed single-Run Worker slice, not full scheduling."
   ]
 }

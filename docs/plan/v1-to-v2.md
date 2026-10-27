@@ -1,6 +1,6 @@
 # 从 v0.8 到 v2.0：CLI 优先，一次做好一个模块
 
-> **状态：planned。** 以下是可裁剪的候选顺序，不是已实现清单、发布日期或正式 Release 承诺。实际覆盖以 README 现状表及其引用的统一能力清单为准，本页不另维护一份覆盖表。
+> **状态：v0.8/v0.9 已交付，其余 planned。** 以下后续顺序可裁剪，不是发布日期或正式 Release 承诺。实际覆盖以 README 现状表及其引用的统一能力清单为准，本页不另维护一份覆盖表。
 
 ## 方向：从已有实践提炼，先完成最小闭环
 
@@ -15,17 +15,17 @@ Open ETF Agent 延续 ETF Agent 已形成的模块职责、实现经验与文章
 
 ## 2026-10-27 调整：先走完当前单模块闭环
 
-已交付的 [v0.8 固定代码][v08] 只包含 Publication：稳定块/投递序号、显式修订 CAS、原回执与 CLI 读取。没有顺带交付 Worker 或 Web。后续路线继续到 2.0，但每一步都先审原 Owner 与失败合同，再写 Spec、实现和必要验证；下列命令意图不是当前可运行命令。
+已交付的 [v0.8 固定代码][v08] 只包含 Publication：稳定块/投递序号、显式修订 CAS、原回执与 CLI 读取。没有顺带交付 Worker 或 Web。随后 [v0.9 固定代码][v09] 单独完成最小 Worker，不把它反写为 v0.8 功能。后续路线继续到 2.0，但每一步都先审原 Owner 与失败合同，再写 Spec、实现和必要验证；除已标明交付的 v0.9 外，下列条目仍是候选意图。
 
-| 候选阶段 | 唯一主模块与最小 CLI 交付 | 明确不含 |
+| 阶段 / 状态 | 唯一主模块与最小 CLI 交付 | 明确不含 |
 | --- | --- | --- |
-| **0.9** | **单 Run Worker。** 提交一个有界合成任务，提交进程退出，另一进程以原 Session lease/fence 驱动同一 Runtime；CLI 读回原结果。 | 不建 Task/队列状态机、Scheduler、常驻服务；同 generator 的 background 不是独立 Worker，也不声称前台短问并发。 |
+| **0.9 · 已交付** | **单 Run Worker。** 提交一个有界合成任务，提交进程退出，另一进程以原 Session lease/fence 驱动同一 Runtime；CLI 读回原结果。 | 不建 Task/队列状态机、Scheduler、常驻服务；同 generator 的 background 不是独立 Worker，也不声称前台短问并发。 |
 | **0.10** | **只读交付适配。** 显式选定 Run，读取原 Publication/Artifact；需要网络消费者时再加最小 loopback HTTP。 | 不加执行写接口、全局 History、前端或通用事件总线；SSE 只有实际消费者与重放合同明确时才纳入。 |
 | **后续单独一期** | **PDF 输入。** CLI 读一份许可明确的本地合成 PDF，原页/选区能被现有证据引用并回读。 | 不带 OCR 平台、爬虫或 Web。 |
 | **后续单独一期** | **受控 Python 计算。** CLI 让一个已限定输入的计算得到可回读结果，真实隔离/超时/停止边界单独验收。 | 不把普通子进程称为沙箱，不增权限或为它引入整个平台；环境不具备就延期。 |
 | **可选，后置** | **Web 读取界面。** 只消费已合格接口；有真实浏览器条件时再单独验收。 | 不成为 CLI 的 1.0/2.0 前置门；既有未验 WIP 不自动晋级。 |
 
-0.11、0.12 等编号在各自范围确认时再定，不为填满版本号强塞模块。合成 ETF 继续作为已有工具链的示例输入；只有出现独立 Owner 合同才另立一期，不为重复展示再造模块。v0.9 当前仅有 [Spec 草稿](../../openspec/changes/v09-single-run-worker/proposal.md)，不是已实现能力。
+0.11、0.12 等编号在各自范围确认时再定，不为填满版本号强塞模块。合成 ETF 继续作为已有工具链的示例输入；只有出现独立 Owner 合同才另立一期，不为重复展示再造模块。v0.9 的 [Spec 与实际证据](../../openspec/changes/v09-single-run-worker/evidence.md)已对应固定单 Run 实现；0.10 及后续未因此自动开始或取得资格。
 
 ## 1.x → 2.0 候选顺序
 
@@ -112,3 +112,5 @@ RAG的难点是撤权与披露提交顺序，不是先搭向量库。先用真�
 [original-roadmap]: https://github.com/hpoenixf/open-etf-agent/blob/c390eb2dd951b53b1dab2d64a9cd72d216fde8dc/docs/plan/02-roadmap-research.md
 [original-matrix]: https://github.com/hpoenixf/open-etf-agent/blob/c390eb2dd951b53b1dab2d64a9cd72d216fde8dc/docs/plan/05-coverage-matrix.md
 
+
+[v09]: https://github.com/hpoenixf/open-etf-agent/tree/dad9c6e64f32c3d7579aea96613776b40917ec6d

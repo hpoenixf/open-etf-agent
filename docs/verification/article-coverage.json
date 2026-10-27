@@ -74,6 +74,11 @@
       "kind": "test",
       "file": "test/publication-cli.test.mjs",
       "name": "8.2 local CLI starts same Runtime and separately reads body, current event and immutable Artifact"
+    },
+    "worker": {
+      "kind": "test",
+      "file": "test/worker-cli.test.mjs",
+      "name": "9.1 submit exits before a separate work process drives and reads the original Run"
     }
   },
   "articles": [
@@ -255,9 +260,9 @@
     {
       "slug": "agent-autonomous-scheduled-research",
       "title": "定时研究：会话结束后继续",
-      "status": "无公开对应",
-      "target": null,
-      "scope": "缺跨会话触发、任务克隆、去重/通知和时间语义"
+      "status": "verified",
+      "target": "worker",
+      "scope": "显式 submit 与独立 work 进程沿原 Run 回读；无定时触发、Task 编排、通知或前台并发"
     },
     {
       "slug": "025-agent-langfuse-from-trace-to-trustworthy-observability",
@@ -296,5 +301,5 @@
     }
   ],
   "versions": "versions.json",
-  "verifiedAt": "bb8c52b867592ca060afc6c83d1019b29c9ca89f"
+  "verifiedAt": "dad9c6e64f32c3d7579aea96613776b40917ec6d"
 }
