@@ -3,7 +3,7 @@
   "repository": "hpoenixf/open-etf-agent",
   "articleCatalog": {
     "repository": "hpoenixf/eff-agent-article",
-    "commit": "d69e12b82006f6c1e38ea7466bc91494e42dd41c",
+    "commit": "fc5b8c7147404a1ef17a7c8c1840e440abe8efb6",
     "path": "book.mjs",
     "collection": "modules",
     "count": 31
