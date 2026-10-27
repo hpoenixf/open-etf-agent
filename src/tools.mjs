@@ -1,7 +1,8 @@
 import {openArtifactStore,encodeCsv,projectArtifactEffects} from './artifacts.mjs';
 import {saveReport} from './report.mjs';
 import { projectMemoryEffect } from './memory-effects.mjs';
-import { readFile } from 'node:fs/promises';
+import { readFile, open, constants } from 'node:fs/promises';
+import { join } from 'node:path';
 import { createResultStore } from './results.mjs';
 import { safeDirectory } from './storage-files.mjs';
 export { safeDirectory, ensureSafeDirectory } from './storage-files.mjs';
@@ -10,10 +11,11 @@ export { sha256, validateSource, readFixturePage, READ_PAGE_SCHEMA } from './sou
 const checkSignal = signal => signal?.throwIfAborted();
 const object = value => value !== null && typeof value === 'object' && !Array.isArray(value);
 const fail = message => { throw new Error(message); };
+const recoveryFail = message => { throw Object.assign(new Error(message), {code:'RECOVERY_CHECKPOINT_MISMATCH'}); };
 function fields(value, names) {
   if (!object(value) || Object.keys(value).length !== names.length || names.some(k => !Object.hasOwn(value, k))) fail('Invalid argument fields');
 }
-export async function createToolHost({ directory, extensions = [], hooks, allowedTools, allowedDocuments, enableNotes=false }) {
+export async function createToolHost({ directory, extensions = [], hooks, allowedTools, allowedDocuments, enableNotes=false, restore }) {
   directory = await safeDirectory(directory);
   const input = JSON.parse(await readFile(new URL('../fixtures/documents.json', import.meta.url), 'utf8'));
   if (allowedDocuments !== undefined && (!Array.isArray(allowedDocuments) || !allowedDocuments.length || allowedDocuments.some(id => !input.documents.some(d => d.id === id)))) fail('Invalid document allowlist');
@@ -97,12 +99,52 @@ export async function createToolHost({ directory, extensions = [], hooks, allowe
     if (!Array.isArray(allowedTools) || !allowedTools.length || new Set(allowedTools).size !== allowedTools.length || allowedTools.some(name => !Object.hasOwn(bindings, name))) fail('Invalid tool allowlist');
     for (const name of Object.keys(bindings)) if (!allowedTools.includes(name)) delete bindings[name];
   }
+  const definitions=Object.entries(bindings).map(([name,b])=>({name,description:b.description,parameters:b.parameters}));
+  const definitionsHash=sha256(JSON.stringify(definitions));
+  async function validateReceipt(value) {
+    const artifact=await artifacts.read(value.artifactId); const revision=await artifacts.readRevision(value.revisionId);
+    if(value.path!=='report.md'||value.sha256!==sha256(artifact.bytes)||value.bytes!==artifact.bytes.length||value.fileId!=='sha256:'+value.sha256||value.mediaType!==artifact.mediaType||revision.reportId!==value.artifactId||JSON.stringify(revision.attachmentIds)!==JSON.stringify(value.attachmentIds))recoveryFail('Recovered report receipt mismatch');
+    for(const [filename,max] of [['report.md',1048576],['manifest.json',5*1048576]]){
+      const file=await open(join(directory,filename),constants.O_RDONLY|constants.O_NOFOLLOW);
+      try{const stat=await file.stat();if(!stat.isFile()||stat.size>max)fail('Unsafe recovered report');const bytes=await file.readFile();if(bytes.length>max)recoveryFail('Recovered report size limit');if(filename==='report.md'){if(!bytes.equals(artifact.bytes))recoveryFail('Recovered report bytes mismatch');}else{const manifest=JSON.parse(bytes);if(JSON.stringify(manifest.receipt)!==JSON.stringify(value))recoveryFail('Recovered manifest receipt mismatch');}}finally{await file.close();}
+    }
+  }
+  if(restore!==undefined){
+    if(restore?.schemaVersion!=='tool-host@1'||restore.definitionsHash!==definitionsHash||typeof restore.saveAttempted!=='boolean'||!Array.isArray(restore.methods)||restore.methods.length>64)fail('Unsupported or mismatched Host snapshot');
+    await results.verifySnapshot(restore.results);
+    for(const method of restore.methods){if(!object(method)||!['id','name','text','sha256','version'].every(k=>typeof method[k]==='string')||method.sha256!==sha256(method.text)||Buffer.byteLength(method.text)>65536||methods.has(method.id))fail('Invalid recovered method');methods.set(method.id,structuredClone(method));}
+    saveAttempted=restore.saveAttempted;receipt=structuredClone(restore.receipt);
+    if(receipt){if(!saveAttempted)recoveryFail('Recovered receipt without save attempt');await validateReceipt(receipt);}
+  }
+  async function rememberValue(binding,value,signal){
+    async function remember(source){const current=validateSource(source);const ref=await results.add(current,{signal});return{...current,resultRef:ref.resultRef};}
+    if(binding.sourceResult)value=await remember(value);
+    if(binding.sourceResults){if(!Array.isArray(value?.sources)||value.sources.length>16)fail('Invalid batch sources');const validated=value.sources.map(validateSource),ids=new Map();for(const source of validated){const id=JSON.stringify(['documentId','name','version','page','sha256','mediaType'].map(key=>source[key]));if(ids.has(source.sourceId)&&ids.get(source.sourceId)!==id)fail('Conflicting batch source identity');ids.set(source.sourceId,id);}const imported=[];for(const source of validated)imported.push(await remember(source));value={...value,sources:imported};}
+    if(binding.methodResult){if(!object(value)||!['id','name','text','sha256','version'].every(k=>typeof value[k]==='string')||value.sha256!==sha256(value.text)||Buffer.byteLength(value.text)>65536)fail('Invalid acquired method snapshot');if(methods.has(value.id)&&JSON.stringify(methods.get(value.id))!==JSON.stringify(value))fail('Method identity rebind conflict');methods.set(value.id,structuredClone(value));}
+    return value;
+  }
   return {
+    snapshot: () => ({schemaVersion:'tool-host@1',definitionsHash,results:results.snapshot(),methods:structuredClone([...methods.values()]),saveAttempted,receipt:structuredClone(receipt)}),
+    async verifyWorkingInput(working){if(working.noteRef){const value=await results.readNote(working.noteRef);const projected=working.messages.find(m=>m.role==='tool'&&m.result?.value?.resultRef===working.noteRef)?.result.value;if(!projected||JSON.stringify({...value,resultRef:working.noteRef})!==JSON.stringify(projected))recoveryFail('Recovered working note mismatch');}},
+    async verifyResult(call,result){
+      if(result.status!=='succeeded')return;
+      const name=result.effective?.name||call.name,binding=bindings[name],value=result.value;
+      if(!binding)recoveryFail('Recovered tool binding mismatch');
+      async function source(current){const stored=await results.read(current?.resultRef);for(const key of ['sourceId','documentId','name','version','page','text','sha256','mediaType'])if(stored[key]!==current[key])recoveryFail('Recovered source payload mismatch');}
+      if(binding.sourceResult||name==='read_result')await source(value);
+      if(binding.sourceResults){if(!Array.isArray(value?.sources))recoveryFail('Recovered sources mismatch');for(const item of value.sources)await source(item);}
+      if(binding.methodResult){const method=methods.get(value?.id);if(!method||JSON.stringify(method)!==JSON.stringify(value))recoveryFail('Recovered method payload mismatch');}
+      if(name==='calculate_change'||name==='read_note'){const {resultRef,...payload}=value;const stored=await results.readTyped(resultRef);if(JSON.stringify(stored)!==JSON.stringify(payload))recoveryFail('Recovered typed payload mismatch');}
+      if(name==='save_report'){await validateReceipt(value);if(JSON.stringify(value)!==JSON.stringify(receipt))recoveryFail('Recovered report acknowledgement mismatch');}
+      if(name==='create_csv'){const record=await artifacts.read(value?.artifactId);for(const key of Object.keys(value))if(value[key]!== (key==='bytes'?record.bytes.length:record[key]))recoveryFail('Recovered artifact payload mismatch');}
+      if(binding.verifyResult)await binding.verifyResult(value);
+    },
+    async reconcile(call,context){const binding=bindings[context.effective?.name||call.name];if(!binding?.reconcile||typeof binding.recoveryVersion!=='string')return null;const result=await binding.reconcile(structuredClone(context.effective?.arguments||call.arguments),{callId:call.id,signal:context.signal});if(!result)return null;return{callId:call.id,status:'succeeded',dispatched:true,value:await rememberValue(binding,result,context.signal),durationMs:0,reconciled:true,recoveryVersion:binding.recoveryVersion};},
     async getSources() { return Promise.all((await results.list()).map(ref => results.read(ref.resultRef))); },
     getResultRefs: () => results.list(),
     persistWorkingNote: (note,options) => results.addNote(note,options),
     resolveSource: id => results.resolve(id),
-    definitions: Object.entries(bindings).map(([name, b]) => ({ name, description: b.description, parameters: b.parameters })),
+    definitions,
     get receipt() { return receipt && structuredClone(receipt); },
     async execute(call, { signal, onDispatch = () => {} } = {}) {
       const callId = typeof call?.id === 'string' ? call.id : null;
@@ -123,27 +165,7 @@ export async function createToolHost({ directory, extensions = [], hooks, allowe
       } catch (error) { return finish({ callId, status: 'rejected', dispatched: false, error: error.message }); }
       try {
         let value = await binding.execute(call.arguments, { callId, signal });
-        async function remember(source) {
-          const current = validateSource(source);
-          const ref = await results.add(current, { signal });
-          // Document identity stays fixed; this call's adapter receipt is not replaced by the first acquisition.
-          return { ...current, resultRef: ref.resultRef };
-        }
-        if (binding.sourceResult) value = await remember(value);
-        if (binding.sourceResults) {
-          if (!Array.isArray(value?.sources) || value.sources.length > 16) fail('Invalid batch sources');
-          const validated = value.sources.map(validateSource); const batchIds = new Map();
-          for (const source of validated) {
-            const identity = JSON.stringify(['documentId','name','version','page','sha256','mediaType'].map(key => source[key]));
-            if (batchIds.has(source.sourceId) && batchIds.get(source.sourceId) !== identity) fail('Conflicting batch source identity'); batchIds.set(source.sourceId, identity);
-          }
-          const imported = []; for (const source of validated) imported.push(await remember(source));
-          value = { ...value, sources: imported };
-        }
-        if (binding.methodResult) {
-          if (!object(value) || !['id', 'name', 'text', 'sha256', 'version'].every(k => typeof value[k] === 'string') || value.sha256 !== sha256(value.text) || Buffer.byteLength(value.text) > 65536) fail('Invalid acquired method snapshot');
-          methods.set(value.id, structuredClone(value));
-        }
+        value = await rememberValue(binding,value,signal);
         return finish({ callId, status: 'succeeded', dispatched: true, value });
       } catch (error) {
         return finish({ callId, status: 'failed', dispatched: true, error: error.code || error.message, partialPaths: error.partialPaths || [], ...(binding.artifactEffects&&projectArtifactEffects(error.artifactEffects)?{artifactEffects:projectArtifactEffects(error.artifactEffects)}:{}), ...(binding.memoryEffect&&projectMemoryEffect(error.memoryEffect)?{memoryEffect:projectMemoryEffect(error.memoryEffect)}:{}) });

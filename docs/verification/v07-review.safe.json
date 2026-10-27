@@ -1,0 +1,163 @@
+{
+  "schemaVersion": "v07-independent-runtime-review@1",
+  "date": "2026-10-27",
+  "scope": "Independent Runtime review assertions on the evolving v0.7 candidate, separate from process-restart qualification and the full regression.",
+  "runtime": "Node v26.11.1",
+  "providerCalls": 0,
+  "newDependencies": 0,
+  "command": "NODE_OPTIONS=--max-old-space-size=512 node --test --test-concurrency=1 test/durable-review.test.mjs",
+  "observations": [
+    {
+      "phase": "RED-review",
+      "exit": 1,
+      "tests": 6,
+      "passed": 1,
+      "failed": 5,
+      "postCommandSourceSha256": {
+        "src/runtime.mjs": "3ca27743a6cd19e218ac7de27de79b2e1bb9b2d548a9f99dcf8a307fe3ea1267",
+        "src/tools.mjs": "80101bffd191de694bd97d6c529d768b2b7f8b73037d9e664f506fd2171d9c89",
+        "src/results.mjs": "a99a58b7aaa31c9787fcdff9fdcbba7b819f19ed456946eefdc66d60c2442daa",
+        "src/session.mjs": "8399797798c1daf9d81c12efec5778adc36f22e31142908d52fd64df86b9c2d0",
+        "test/durable-review.test.mjs": "7c08d42ad6e7bf762e3610e34a79decfffe579d63cb6d1221027ea201c35ca1c"
+      }
+    },
+    {
+      "phase": "GREEN-review",
+      "exit": 0,
+      "tests": 6,
+      "passed": 6,
+      "failed": 0,
+      "postCommandSourceSha256": {
+        "src/runtime.mjs": "01a7c988c508c47376bd9bef280f9f2c5d0225b066d7775903dbc3251026d97a",
+        "src/tools.mjs": "80101bffd191de694bd97d6c529d768b2b7f8b73037d9e664f506fd2171d9c89",
+        "src/results.mjs": "a99a58b7aaa31c9787fcdff9fdcbba7b819f19ed456946eefdc66d60c2442daa",
+        "src/session.mjs": "5979efebc2430878262a9d1b31713e348020d85ad3627db70c5f3946da2daddf",
+        "test/durable-review.test.mjs": "7c08d42ad6e7bf762e3610e34a79decfffe579d63cb6d1221027ea201c35ca1c"
+      }
+    },
+    {
+      "phase": "RED-replay-boundaries",
+      "exit": 1,
+      "tests": 8,
+      "passed": 6,
+      "failed": 2,
+      "postCommandSourceSha256": {
+        "src/runtime.mjs": "c524d4322ff7874bf03a601e343519467a96ba3559bff02d541e047d05d1adbc",
+        "src/tools.mjs": "80101bffd191de694bd97d6c529d768b2b7f8b73037d9e664f506fd2171d9c89",
+        "src/results.mjs": "a99a58b7aaa31c9787fcdff9fdcbba7b819f19ed456946eefdc66d60c2442daa",
+        "src/session.mjs": "5979efebc2430878262a9d1b31713e348020d85ad3627db70c5f3946da2daddf",
+        "test/durable-review.test.mjs": "2be3eb028332f0fde6653bbefe5e2a3be2f6280b585a56aa6742f58c49655b68"
+      }
+    },
+    {
+      "phase": "GREEN-replay-boundaries",
+      "exit": 0,
+      "tests": 8,
+      "passed": 8,
+      "failed": 0,
+      "postCommandSourceSha256": {
+        "src/runtime.mjs": "cd6c7f1fbfda8951e2ab094e8cef96ca59c0a9cba49c4927d3f070cbe342e3c9",
+        "src/tools.mjs": "80101bffd191de694bd97d6c529d768b2b7f8b73037d9e664f506fd2171d9c89",
+        "src/results.mjs": "a99a58b7aaa31c9787fcdff9fdcbba7b819f19ed456946eefdc66d60c2442daa",
+        "src/session.mjs": "5979efebc2430878262a9d1b31713e348020d85ad3627db70c5f3946da2daddf",
+        "test/durable-review.test.mjs": "2be3eb028332f0fde6653bbefe5e2a3be2f6280b585a56aa6742f58c49655b68"
+      }
+    },
+    {
+      "phase": "RED-typed-original-history",
+      "command": "NODE_OPTIONS=--max-old-space-size=512 node --test --test-concurrency=1 --test-name-pattern='history cannot substitute' test/durable-review.test.mjs",
+      "exit": 1,
+      "tests": 2,
+      "passed": 0,
+      "failed": 2,
+      "postCommandSourceSha256": {
+        "src/runtime.mjs": "cd6c7f1fbfda8951e2ab094e8cef96ca59c0a9cba49c4927d3f070cbe342e3c9",
+        "src/tools.mjs": "1d2df788eb034f15bf2d8ab0473dc5213cf73abb6bc250f527fc1633018a108e",
+        "src/results.mjs": "a99a58b7aaa31c9787fcdff9fdcbba7b819f19ed456946eefdc66d60c2442daa",
+        "src/session.mjs": "5979efebc2430878262a9d1b31713e348020d85ad3627db70c5f3946da2daddf",
+        "test/durable-review.test.mjs": "b651276c1fe1cb6580d2b181133e75665767e16b1cec66c895d235fb0e137c93"
+      }
+    },
+    {
+      "phase": "GREEN-typed-original-history",
+      "command": "NODE_OPTIONS=--max-old-space-size=512 node --test --test-concurrency=1 --test-name-pattern='history cannot substitute' test/durable-review.test.mjs",
+      "exit": 0,
+      "tests": 2,
+      "passed": 2,
+      "failed": 0
+    },
+    {
+      "phase": "GREEN-final-review",
+      "exit": 0,
+      "tests": 10,
+      "passed": 10,
+      "failed": 0,
+      "postCommandSourceSha256": {
+        "src/runtime.mjs": "65680576f5f9ccdc44f39f60ef732f9687e87da8a4ea78ec5243d2527b655ef5",
+        "src/tools.mjs": "f3db4c59b20b0ac337b5961c1f73d77bab39df008691ff4af11e33b98f3e089c",
+        "src/results.mjs": "a99a58b7aaa31c9787fcdff9fdcbba7b819f19ed456946eefdc66d60c2442daa",
+        "src/session.mjs": "5979efebc2430878262a9d1b31713e348020d85ad3627db70c5f3946da2daddf",
+        "test/durable-review.test.mjs": "b651276c1fe1cb6580d2b181133e75665767e16b1cec66c895d235fb0e137c93"
+      }
+    }
+  ],
+  "cases": [
+    {
+      "name": "Exhausted shared in-memory root must not count an undispatched action",
+      "red": "Actual toolsDispatched 1; expected 0.",
+      "green": "0 dispatches, no unknown effects, original root usage retained."
+    },
+    {
+      "name": "Exhausted real SQLite root reservation",
+      "red": "Actual toolsDispatched 2; expected 1.",
+      "green": "Only the first handler dispatch and durable root unit are counted."
+    },
+    {
+      "name": "Recovery uses persisted effective arguments",
+      "red": "Passed before this review round: reconciliation observed effective arguments and did not call the original execute handler.",
+      "green": "Remains passing."
+    },
+    {
+      "name": "Terminal outcome consistency",
+      "red": "A synthetic SQLite mutation changed outcome.answer independently from the settled Runtime state and was returned as completed.",
+      "green": "The contradictory stored outcome is refused rather than returned as a second truth."
+    },
+    {
+      "name": "Original assistant/tool call pairing",
+      "red": "A synthetic SQLite mutation changed tool.callId and the next Gateway request still ran to completion.",
+      "green": "The malformed executable history is refused before any additional Gateway call."
+    },
+    {
+      "name": "Cancellation retains already committed report",
+      "red": "Actual first report receipt existed; cancelled readback returned no receipt.",
+      "green": "Cancelled readback retains the same known report receipt, validates its bytes, and makes no additional Gateway request."
+    },
+    {
+      "name": "Duplicate proposed IDs in a pending suffix",
+      "red": "A corrupted active proposal with duplicate call IDs in the not-yet-consumed suffix was accepted and the Run completed.",
+      "green": "The invalid proposal is refused before another model request or tool reservation."
+    },
+    {
+      "name": "Already consumed group with a rewound cursor",
+      "red": "A corrupted active checkpoint rewound the cursor to an already consumed call and the Run completed after replay.",
+      "green": "Cursor must agree with the actual paired history; refusal preserves the original model and tool counts."
+    },
+    {
+      "name": "Recovered source payload remains bound to its original Host record",
+      "red": "Host snapshot and original source records still reopened successfully. Only the historical tool payload text and its matching hash were changed in synthetic SQLite. Resume made a third Gateway request instead of refusing at the two original requests.",
+      "green": "The self-consistent but non-original historical source payload is rejected before any additional Gateway request."
+    },
+    {
+      "name": "Recovered method payload remains bound to its acquired method snapshot",
+      "red": "Host.methods remained original and valid. Only historical tool payload text, its matching hash and matching version were changed in synthetic SQLite. Resume made a third Gateway request.",
+      "green": "The altered method payload is rejected before another Gateway request; correct Host.methods alone no longer legitimizes a contradictory model input."
+    }
+  ],
+  "boundaries": [
+    "Two tests intentionally alter only isolated synthetic SQLite snapshots to test corrupt-state handling; no existing or production database is opened.",
+    "The reconciliation test verifies the selected adapter call boundary only; it is not by itself a process-restart demonstration.",
+    "The cancellation test reopens the same real SQLite database in-process. The separate durable-runtime process suite is required to establish actual kill/new-process recovery.",
+    "Recorded hashes are observed after each command on a shared evolving candidate, not a claim of an immutable complete dependency closure. Final qualification must pin and regress the full candidate.",
+    "Raw test output stays ignored under test-output; this file contains only sanitized authored observations."
+  ]
+}

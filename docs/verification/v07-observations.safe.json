@@ -1,0 +1,121 @@
+{
+  "schemaVersion": "open-etf-v07-observations@1",
+  "date": "2026-10-27",
+  "scope": "Actual provider-free original/synthetic Runtime, real SQLite, OS process and loopback HTTP observations. Logs, DBs and machine-local output directories are excluded.",
+  "nodeVersion": "v26.11.1",
+  "nodeHeapMiB": 512,
+  "testConcurrency": 1,
+  "modelCalls": 0,
+  "dependencyCount": 95,
+  "dependencyLockGraphChanged": false,
+  "engineRange": ">=26.8.1 <27",
+  "minimumVersionExecutionEvidence": "26.8.1 v0.6 pass is user-reported only; v0.7 locally tested on 26.11.1",
+  "stages": [
+    {
+      "stage": "runtime-red",
+      "exitCode": 1,
+      "counts": {
+        "tests": 4,
+        "pass": 0,
+        "fail": 4
+      },
+      "originalLogSha256": "692513aa64ae7aa60ac3e035560ebc0220b20cbd607d7f72f4f07bcb44c32bcf"
+    },
+    {
+      "stage": "runtime-initial-green",
+      "exitCode": 0,
+      "counts": {
+        "tests": 10,
+        "pass": 10,
+        "fail": 0
+      },
+      "originalLogSha256": "9e9ae8eba0c27629d2816b010f08482b955d1a3c2d5392a58e87584b3ac82e89"
+    },
+    {
+      "stage": "feature-process-check",
+      "exitCode": 0,
+      "counts": {
+        "tests": 8,
+        "pass": 8,
+        "fail": 0
+      },
+      "originalLogSha256": "48a98c6bab737eb1c9bd905e59544a965a6eee908252bf9a9a40f7e5ca2dd4a5"
+    },
+    {
+      "stage": "first-full-suite",
+      "exitCode": 1,
+      "counts": {
+        "tests": 234,
+        "pass": 232,
+        "fail": 2
+      },
+      "originalLogSha256": "1b036c0df4803373ead5622d88cadf4829d2f85055078f0cc995b0bb6bb8a7ed"
+    },
+    {
+      "stage": "final-full-suite",
+      "exitCode": 0,
+      "counts": {
+        "tests": 249,
+        "pass": 249,
+        "fail": 0
+      },
+      "originalLogSha256": "899d255ba649e71919bbaa85fa7bb6cb4d2d818027fd7ddc2389914f5fe3c642"
+    },
+    {
+      "stage": "independent-default-cache",
+      "exitCode": 1,
+      "result": "ENOTCACHED; no install completed",
+      "originalLogSha256": "8d038028f66ece710bafe0423557db573a0254c2d6980dde7eac583d92b97a21"
+    },
+    {
+      "stage": "independent-other-cache",
+      "exitCode": 1,
+      "result": "ENOTCACHED; no install completed",
+      "originalLogSha256": "73e06127d86c7afa49f8fdc183bf854ffc311236b7e8e6e1bc5f62aa1032fcf2"
+    },
+    {
+      "stage": "independent-official-install",
+      "exitCode": 0,
+      "result": "passed",
+      "originalLogSha256": "ca4c2e9e6c8cab3e1ccd8441dcb8d2a784e3ff4983c7bf63c995cffcd69b55d5"
+    },
+    {
+      "stage": "independent-build",
+      "exitCode": 0,
+      "result": "passed",
+      "originalLogSha256": "ceabdc3a012c1ecf40059e7f0004ddc116472ed7ef84f0f9bce5b57fb3ae5b21"
+    }
+  ],
+  "finalInputDigest": "sha256:e52d1cefcb87f3466c15adca1145fe1d6e8daba18d9a16f6e80f291cf1ac08c2",
+  "finalInputsDrift": false,
+  "independent": {
+    "separateOrdinaryDirectory": true,
+    "newNodeModulesFromOriginalLock": true,
+    "installation": "official npm registry; ignore-scripts/no-audit/no-fund; no new dependency graph",
+    "build": "native ESM syntax-checked copy",
+    "commands": 17,
+    "durableProfiles": 5,
+    "postExitReportReceipts": 9,
+    "httpDenominator": 4,
+    "httpPassed": 4,
+    "evidence": "docs/verification/v07-delivery-receipts.safe.json"
+  },
+  "semanticStatus": "unreviewed",
+  "release": "not-claimed",
+  "publication": "prepared-only",
+  "kit": {
+    "tasks": 6,
+    "completed": 6,
+    "status": "recorded-complete",
+    "lane": "provider-free",
+    "structuralOnly": true,
+    "evidence": "docs/verification/v07-kit.safe.json"
+  },
+  "retainedOldArtifact": {
+    "status": "passed",
+    "stage": "v0.6",
+    "bytes": 933,
+    "transport": "actual-loopback-http",
+    "evidence": "docs/verification/v07-old-artifact.safe.json"
+  }
+}
