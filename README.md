@@ -141,7 +141,9 @@ Memory 示例使用合成的操作意图，不会保存真实用户的永久偏�
 | 原文与派生笔记分离，Memory 有显式写入意图和忘记后的未来输入边界 | 忘记不自动抹去历史报告；文件可重开不等于中断 Run 可恢复 |
 | 本机单用户、受限路径、明确的失败与部分效果 | 不承诺生产金融服务、多租户、交易、后台调度或通用向量平台 |
 
-公开快照保留的真实模型、语义复核与正式发布未完成项，不能被离线测试数抵消。当前项目尚未选定许可证，`package.json` 保持 `private: true` / `UNLICENSED`；随附 Evidence Kit 的独立 MIT / NOTICE 不代表整个项目采用同一许可。
+后续已有 [v0.1–v0.5 首批真实调用记录](https://github.com/hpoenixf/open-etf-agent/blob/d075068ac99a6c798d012c46bff4fe0c33eb9979/docs/verification/live-v01-v05-first-batch.md)，分别保留原版本、真实拒绝与文件回读。当前验收以 Runtime 正确性为目标；模型措辞仅作观察，未触达机制仍未验证。读者可从[显式受限验证入口](https://github.com/hpoenixf/open-etf-agent/blob/d075068ac99a6c798d012c46bff4fe0c33eb9979/docs/live-validation.md)了解如何使用自己的配置和费用授权；上述默认命令仍运行固定离线快照。
+
+当前项目尚未选定许可证，`package.json` 保持 `private: true` / `UNLICENSED`；随附 Evidence Kit 的独立 MIT / NOTICE 不代表整个项目采用同一许可。
 
 [v0.5 失败与修复记录](https://github.com/hpoenixf/open-etf-agent/blob/05c0dd2dc550f4f7e5da034340ff5c3159768fcf/docs/verification/v05-observations.md) · [产物来源与哈希](https://github.com/hpoenixf/open-etf-agent/blob/05c0dd2dc550f4f7e5da034340ff5c3159768fcf/docs/verification/v05-evidence-provenance.json) · [SDK 选择与兼容边界](https://github.com/hpoenixf/open-etf-agent/blob/05c0dd2dc550f4f7e5da034340ff5c3159768fcf/docs/dependencies/sdk-selection.md)
 
@@ -157,7 +159,7 @@ Memory 示例使用合成的操作意图，不会保存真实用户的永久偏�
 | [主运行上下文压缩](https://hpoenixf.github.io/eff-agent-article/articles/agent-main-run-context-compaction) | [v0.5](https://github.com/hpoenixf/open-etf-agent/tree/05c0dd2dc550f4f7e5da034340ff5c3159768fcf)：`compact-and-reread`，派生笔记不取代原文 |
 | [Memory：忘记与持久效果](https://hpoenixf.github.io/eff-agent-article/articles/026-agent-memory-forget-durable-effects) | [v0.5](https://github.com/hpoenixf/open-etf-agent/tree/05c0dd2dc550f4f7e5da034340ff5c3159768fcf)：`explicit-memory`，存储回执与未来输入分别验证 |
 
-更多内容见[文章阅读站](https://hpoenixf.github.io/eff-agent-article/)。v0.1 独立文章仍在准备中，当前请先阅读该阶段的 README 与验证记录。
+从零开始可先读 [v0.1：从第一份可回读报告开始](https://hpoenixf.github.io/eff-agent-article/articles/open-etf-agent-v01-first-readable-report?lang=zh)（[完整英文版](https://hpoenixf.github.io/eff-agent-article/en/articles/open-etf-agent-v01-first-readable-report?lang=en)）。更多内容见[文章阅读站](https://hpoenixf.github.io/eff-agent-article/)。
 
 <a id="roadmap"></a>
 ## 后续路线 · Planned, not shipped
