@@ -1,0 +1,257 @@
+{
+  "schemaVersion": 1,
+  "kind": "actual-provider-free-runtime-execution",
+  "executedAt": "2026-10-27T04:15:59.039Z",
+  "node": "v26.11.1",
+  "sourceCommit": "765fd771430c55e1598b3f7bc32f342215a46f33",
+  "inputSha256": "1ad12ed9ab53bf0f862f8a22eb4719cdddfd90bfc57f050d6efc3bf5f6ed44aa",
+  "runnerSha256": "85b93aafffec1b903d17c2549ef3be9ace84b9531e0463bff3adfc36de085f55",
+  "targetsSha256": "231e74ea6459950216ec8056ff2874d3bb567299883b3de5c926e68c498dc59c",
+  "commitConfirmation": {
+    "commit": "765fd771430c55e1598b3f7bc32f342215a46f33",
+    "tree": "47e564901db663e69939655533b6ff24c777be0d",
+    "method": "actual-local-git-objects"
+  },
+  "executionBounds": {
+    "nodeHeapMiB": 512,
+    "temporaryDirectory": "owned-smoke-output",
+    "perTargetMs": 30000,
+    "totalMs": 120000
+  },
+  "modelCalls": 0,
+  "semanticStatus": "unreviewed",
+  "results": {
+    "child": {
+      "target": {
+        "kind": "cli",
+        "case": "fixture-child"
+      },
+      "exitCode": 0,
+      "observed": {
+        "case": "fixture-child",
+        "completedRuns": 1,
+        "artifacts": [
+          {
+            "bytes": 954,
+            "sha256": "54463149ca42d7bb39104695e17963be61c3203d1069e223e6b05976f66e6004",
+            "mediaType": "text/markdown; charset=utf-8"
+          }
+        ]
+      },
+      "stdoutSha256": "89e2eb2d814de611c1afc868b2055d0900211507fa965a06cfaa10eab90a82cd",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "reread": {
+      "target": {
+        "kind": "cli",
+        "case": "retrieve-reread"
+      },
+      "exitCode": 0,
+      "observed": {
+        "case": "retrieve-reread",
+        "completedRuns": 1,
+        "artifacts": [
+          {
+            "bytes": 1348,
+            "sha256": "009d3f77cf5208b2260e4dde2cbdcd21288b4fd600899eb2b0f7a827f0e3c016",
+            "mediaType": "text/markdown; charset=utf-8"
+          }
+        ]
+      },
+      "stdoutSha256": "32136782aebca0725b30251a2b9cd9c18ba18212b6908fd11cbafc9e61c592d5",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "compaction": {
+      "target": {
+        "kind": "cli",
+        "case": "compact-and-reread"
+      },
+      "exitCode": 0,
+      "observed": {
+        "case": "compact-and-reread",
+        "completedRuns": 1,
+        "artifacts": [
+          {
+            "bytes": 992,
+            "sha256": "c8fcdc248076d65c01d9161d95dc18f690bc4f877c307cccd8e983e351a02d26",
+            "mediaType": "text/markdown; charset=utf-8"
+          }
+        ]
+      },
+      "stdoutSha256": "4f0a014adca8f4bdb0e1f9d5a33179a78c918ced1f5473101e2e864d9161d746",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "memory": {
+      "target": {
+        "kind": "cli",
+        "case": "explicit-memory"
+      },
+      "exitCode": 0,
+      "observed": {
+        "case": "explicit-memory",
+        "completedRuns": 3,
+        "artifacts": [
+          {
+            "bytes": 884,
+            "sha256": "0f4ea5fdd0dbb4a1f48d1c68331c926fd6f851302600a932c9dcf9ad9fc23e60",
+            "mediaType": "text/markdown; charset=utf-8"
+          }
+        ]
+      },
+      "stdoutSha256": "6688fdefbdba3d48fbc3f00860de32ca195261f36b50e67c2b9da2e579ec5e9f",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "mcp": {
+      "target": {
+        "kind": "cli",
+        "case": "skill-mcp"
+      },
+      "exitCode": 0,
+      "observed": {
+        "case": "skill-mcp",
+        "completedRuns": 1,
+        "artifacts": [
+          {
+            "bytes": 953,
+            "sha256": "6422cf85cf33e47f2ada20ae8dd85191b6939a62a754ed53ce3265af9a22493f",
+            "mediaType": "text/markdown; charset=utf-8"
+          }
+        ]
+      },
+      "stdoutSha256": "640833cdc5c504fb143207d606bebe48095ae70b2d0206a45e0d3731917ea8f2",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "batch": {
+      "target": {
+        "kind": "cli",
+        "case": "batch-read"
+      },
+      "exitCode": 0,
+      "observed": {
+        "case": "batch-read",
+        "completedRuns": 1,
+        "artifacts": [
+          {
+            "bytes": 951,
+            "sha256": "64ab2dfa9f08eef9d243c336e307a021c7ef8fffbe4a138bf0303afb7eead4ff",
+            "mediaType": "text/markdown; charset=utf-8"
+          }
+        ]
+      },
+      "stdoutSha256": "c16955fcd15fc1781c880a5f895e243dceaa0664d6f1f94d2b1c41847f4945fe",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "provider": {
+      "target": {
+        "kind": "test",
+        "file": "test/gateway.test.mjs",
+        "name": "1.4 injected offline transport verifies request encoding and matched tool results"
+      },
+      "exitCode": 0,
+      "observed": {
+        "name": "1.4 injected offline transport verifies request encoding and matched tool results",
+        "passed": 1,
+        "failed": 0,
+        "skipped": 0
+      },
+      "stdoutSha256": "129c8bd6ee98b2b3655fceed3d96a590bbf7b96d44e3296713be1035ae195e6d",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "plugins": {
+      "target": {
+        "kind": "test",
+        "file": "test/plugins.test.mjs",
+        "name": "7.1 two trusted packages use the ordinary Host and acquired source/method owners"
+      },
+      "exitCode": 0,
+      "observed": {
+        "name": "7.1 two trusted packages use the ordinary Host and acquired source/method owners",
+        "passed": 1,
+        "failed": 0,
+        "skipped": 0
+      },
+      "stdoutSha256": "8b1b2377d349043a7f9296c5de281d12aa7deaf0c31c340f892101da59aba8c9",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "surface": {
+      "target": {
+        "kind": "test",
+        "file": "test/cooperation-integration.test.mjs",
+        "name": "3.4 fixture child shares root counters and advertises only allowed read tool"
+      },
+      "exitCode": 0,
+      "observed": {
+        "name": "3.4 fixture child shares root counters and advertises only allowed read tool",
+        "passed": 1,
+        "failed": 0,
+        "skipped": 0
+      },
+      "stdoutSha256": "315ca949a087da6ec9cfb264bfb310cf942664be0b20b327bfc9f7f9fe8fbc71",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "trust": {
+      "target": {
+        "kind": "test",
+        "file": "test/context.test.mjs",
+        "name": "4.2 projection never launders a lookalike or altered payload into an acquired ref"
+      },
+      "exitCode": 0,
+      "observed": {
+        "name": "4.2 projection never launders a lookalike or altered payload into an acquired ref",
+        "passed": 1,
+        "failed": 0,
+        "skipped": 0
+      },
+      "stdoutSha256": "3a25c727144a538b4db00dee39b4bbecd2180a0b2a555a34bc3d36a93c4e398d",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "hooks": {
+      "target": {
+        "kind": "test",
+        "file": "test/cooperation-integration.test.mjs",
+        "name": "3.3 Host revalidates effective Hook arguments and preserves original call"
+      },
+      "exitCode": 0,
+      "observed": {
+        "name": "3.3 Host revalidates effective Hook arguments and preserves original call",
+        "passed": 1,
+        "failed": 0,
+        "skipped": 0
+      },
+      "stdoutSha256": "d8d061d741e8616688ef2932782799e3cd055b5b5f68c77184505b104c2ea2f9",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "budget": {
+      "target": {
+        "kind": "test",
+        "file": "test/cooperation-integration.test.mjs",
+        "name": "3.3 root budget refusal stops before a second model request"
+      },
+      "exitCode": 0,
+      "observed": {
+        "name": "3.3 root budget refusal stops before a second model request",
+        "passed": 1,
+        "failed": 0,
+        "skipped": 0
+      },
+      "stdoutSha256": "1af6659745872d219174cece20d9dcb98296cdcc85b51fc9b5d2ad6a2499a142",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "control": {
+      "target": {
+        "kind": "test",
+        "file": "test/durable-runtime.test.mjs",
+        "name": "7.3 cancel during pending model is durable and late proposal cannot dispatch"
+      },
+      "exitCode": 0,
+      "observed": {
+        "name": "7.3 cancel during pending model is durable and late proposal cannot dispatch",
+        "passed": 1,
+        "failed": 0,
+        "skipped": 0
+      },
+      "stdoutSha256": "e8f4b1fe405887fbb09ed5f7b0ddb577b9afa267b2861ad87e7ecf64723f3cdb",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  }
+}

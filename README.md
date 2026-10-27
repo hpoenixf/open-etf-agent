@@ -184,6 +184,8 @@ CLI 只恢复其固定合成 profile，不会把真实 provider 偷换成 fixtur
 
 ## 验证到哪里，声明到哪里
 
+先看 [v0.1–v0.7 验证证据索引](docs/verification/README.md)：按阶段进入 observations、receipts、provenance 与 qualification，历史证据不被新测试数字覆盖。
+
 当前 main 保留 [v0.6 窄范围维护修复](docs/verification/v06-errno-maintenance.md)：包装后的真实文件已存在异常仍能进入原有身份/字节核对，未知错误、取消与 null/undefined 原因不被吞掉。维护版本在 Node 26.11.1 完整回归 184/184；不借此改写固定阶段的历史证据，也不冒称模型质量通过。
 
 v0.7 最终冻结输入在 Node 26.11.1 **249/249** 通过，包含 12 个真实进程中断/取消/跨重启期限场景及独立恢复反例；另有独立锁定安装/构建、5 个 durable profile、9 份退出后报告回执、T1–T4 **HTTP 4/4** 与保留的 v0.6 产物回读。原 Evidence Kit 记录 **6/6、provider-free completion**，不把结构检查当作测试执行认证。组件 RED/GREEN、失败与修复、精确输入及执行范围见 [v0.7 实测记录](docs/verification/v07-observations.md)、[冻结输入](docs/verification/v07-candidate-inputs.json)和 [交付回读](docs/verification/v07-delivery-receipts.safe.json)。本阶段新增真实模型调用为 **0**。
@@ -224,12 +226,56 @@ v0.7 最终冻结输入在 Node 26.11.1 **249/249** 通过，包含 12 个真实
 
 这些文章讨论更广的 Agent 工程问题。右侧是本仓库可运行的**最小机制实验**，不是原文全部高级能力的开源实现；具体支持范围以对应快照为准。
 
-| 从问题读起 | 对应公开实验 |
-| --- | --- |
-| [MCP Host：从发现到消费](https://hpoenixf.com/eff-agent-article/articles/mcp-host-from-discovery-to-consumption) | [v0.2 维护版](https://github.com/hpoenixf/open-etf-agent/tree/a10d4f1bd1ecc39224272156221fe29792b64094)：`skill-mcp`，发现、准入与实际取得分别记录 |
-| [工具结果如何离开模型上下文](https://hpoenixf.com/eff-agent-article/articles/tool-results-outside-model-context) | [v0.4](https://github.com/hpoenixf/open-etf-agent/tree/ecf6cb45b4062586614e83aed917c92d704cb63b)：`retrieve-reread`，原文存储与工作视图分离 |
-| [主运行上下文压缩](https://hpoenixf.com/eff-agent-article/articles/agent-main-run-context-compaction) | [v0.5](https://github.com/hpoenixf/open-etf-agent/tree/05c0dd2dc550f4f7e5da034340ff5c3159768fcf)：`compact-and-reread`，派生笔记不取代原文 |
-| [Memory：忘记与持久效果](https://hpoenixf.com/eff-agent-article/articles/026-agent-memory-forget-durable-effects) | [v0.5](https://github.com/hpoenixf/open-etf-agent/tree/05c0dd2dc550f4f7e5da034340ff5c3159768fcf)：`explicit-memory`，存储回执与未来输入分别验证 |
+**覆盖契约（31 篇模块文章）：** `verified` 只表示表中明确限定的最小 Runtime 切片，不是整篇文章实现、模型质量或生产认证；`无公开对应` 不借相邻机制认领；`draft` 尚未取得资格。表由 [唯一清单](docs/verification/article-coverage.json)生成，文章目录固定来自 [book.mjs / modules](https://github.com/hpoenixf/eff-agent-article/blob/f5fd11184c76ce3007197a08793407021740fe52/book.mjs)。
+
+<!-- article-coverage:start -->
+| 文章 | 对应 commit + case | 状态 |
+| --- | --- | --- |
+| [Entry：为什么入口越来越简单](https://hpoenixf.com/eff-agent-article/articles/022-agent-entry-from-intent-to-direct-research) | —<br>缺 Direct/Research 决策、授权目录呈现与普通追问 | 无公开对应 |
+| [Web：从搜索到连续阅读](https://hpoenixf.com/eff-agent-article/articles/021-agent-web-research-from-search-to-deep-reading) | —<br>缺 HTTP 获取、连续阅读、页面状态和来源撤销 | 无公开对应 |
+| [Agent 说“今天”时，到底是哪一天](https://hpoenixf.com/eff-agent-article/articles/agent-temporal-semantics-market-calendar) | —<br>缺可信时区、日历覆盖和行情 dataAsOf | 无公开对应 |
+| [PDF：从文本到证据](https://hpoenixf.com/eff-agent-article/articles/024-agent-pdf-from-text-to-evidence) | —<br>缺 PDF 文本/页图/版面定位/多模态读取 | 无公开对应 |
+| [Subagent：从隔离到专业化协作](https://hpoenixf.com/eff-agent-article/articles/agent-subagent-context-specialization) | [765fd77](https://github.com/hpoenixf/open-etf-agent/commit/765fd771430c55e1598b3f7bc32f342215a46f33) + `--case fixture-child`<br>一层脚本 Child 共享预算并交回原始结果；非真实模型专家 | verified |
+| [自定义专家，不应该只是一个 Prompt 输入框](https://hpoenixf.com/eff-agent-article/articles/agent-custom-expert-from-prompt-to-recovery) | —<br>缺专家 CRUD/版本冻结/目录权限/历史身份/恢复 | 无公开对应 |
+| [Adaptive Research 与 Python](https://hpoenixf.com/eff-agent-article/articles/adaptive-research-python-workbench) | —<br>缺模型研究问题修订、任意获准 Python、数据工件接力 | 无公开对应 |
+| [Python：从工具到计算工作台](https://hpoenixf.com/eff-agent-article/articles/agent-python-compute-workbench-evolution) | —<br>缺隔离执行/代码与输入身份/失败后工件保留 | 无公开对应 |
+| [把个人持仓接入 Agent：我们怎样设计一个只读金融 MCP](https://hpoenixf.com/eff-agent-article/articles/portfolio-mcp-readonly-investment-data) | —<br>缺 portfolio-report、份额/现金/快照口径和方案计算 | 无公开对应 |
+| [数据过期后的受控刷新](https://hpoenixf.com/eff-agent-article/articles/unavailable-is-correct) | —<br>缺刷新任务身份、scope/fingerprint 去重、来源拒绝与原子发布新证据 | 无公开对应 |
+| [结果外置与完整性：模型到底读到了多少](https://hpoenixf.com/eff-agent-article/articles/tool-results-outside-model-context) | [765fd77](https://github.com/hpoenixf/open-etf-agent/commit/765fd771430c55e1598b3f7bc32f342215a46f33) + `--case retrieve-reread`<br>词法候选→真实读页→精确原文回读；非完整原文覆盖平台 | verified |
+| [Main 压缩：摘要不改写原始事实](https://hpoenixf.com/eff-agent-article/articles/agent-main-run-context-compaction) | [765fd77](https://github.com/hpoenixf/open-etf-agent/commit/765fd771430c55e1598b3f7bc32f342215a46f33) + `--case compact-and-reread`<br>派生便笺与原文分离、采用后回读；摘要质量未评 | verified |
+| [Memory：从保存、召回到安全遗忘](https://hpoenixf.com/eff-agent-article/articles/026-agent-memory-forget-durable-effects) | [765fd77](https://github.com/hpoenixf/open-etf-agent/commit/765fd771430c55e1598b3f7bc32f342215a46f33) + `--case explicit-memory`<br>显式合成意图的保存/修订/忘记；非认证用户 Memory 服务 | verified |
+| [RAG：文档撤权与历史回放](https://hpoenixf.com/eff-agent-article/articles/027-rag-revocation-publish-replay) | —<br>缺动态 ACL/撤权传播、发布资格与历史回放再授权 | 无公开对应 |
+| [Provider：统一接口之后，为什么还需要共享准入](https://hpoenixf.com/eff-agent-article/articles/agent-provider-architecture-and-admission) | [765fd77](https://github.com/hpoenixf/open-etf-agent/commit/765fd771430c55e1598b3f7bc32f342215a46f33) + `test/gateway.test.mjs` · 1.4 injected offline transport verifies request encoding and matched tool results<br>离线 transport 的 Gateway 编码与配对；无共享 Provider 准入 | verified |
+| [模型返回 HTTP 200，为什么下一次还要排队](https://hpoenixf.com/eff-agent-article/articles/agent-provider-admission-capacity-lease) | —<br>缺跨进程队列、租约/隔离、远端 unknown/释放及 PG 控制库 | 无公开对应 |
+| [Extension Host：从功能机到智能机](https://hpoenixf.com/eff-agent-article/articles/020-agent-extension-host-smartphone) | [765fd77](https://github.com/hpoenixf/open-etf-agent/commit/765fd771430c55e1598b3f7bc32f342215a46f33) + `test/plugins.test.mjs` · 7.1 two trusted packages use the ordinary Host and acquired source/method owners<br>可信包接入同一 Host；不是隔离沙箱或完整多生态 Host | verified |
+| [从接上 MCP 到真正用上工具：Agent 的接入链路怎样构建](https://hpoenixf.com/eff-agent-article/articles/mcp-host-from-discovery-to-consumption) | [765fd77](https://github.com/hpoenixf/open-etf-agent/commit/765fd771430c55e1598b3f7bc32f342215a46f33) + `--case skill-mcp`<br>真实 stdio 合成 MCP 发现、准入与取得；非金融数据服务 | verified |
+| [Tool Surface：Agent 有工具，模型为什么看不到](https://hpoenixf.com/eff-agent-article/articles/agent-model-capability-presentation-tool-surface) | [765fd77](https://github.com/hpoenixf/open-etf-agent/commit/765fd771430c55e1598b3f7bc32f342215a46f33) + `test/cooperation-integration.test.mjs` · 3.4 fixture child shares root counters and advertises only allowed read tool<br>Child 只呈现获准读工具；非完整动态能力编排 | verified |
+| [A35 内容信任：Prompt Injection 不只是恶意文本](https://hpoenixf.com/eff-agent-article/articles/agent-content-trust-prompt-injection) | [765fd77](https://github.com/hpoenixf/open-etf-agent/commit/765fd771430c55e1598b3f7bc32f342215a46f33) + `test/context.test.mjs` · 4.2 projection never launders a lookalike or altered payload into an acquired ref<br>Context 拒绝伪造原文身份；非完整 A35 安全模块 | verified |
+| [多生态 Hook：Claude、Pi 与 Codex](https://hpoenixf.com/eff-agent-article/articles/agent-multi-ecosystem-hook-execution) | [765fd77](https://github.com/hpoenixf/open-etf-agent/commit/765fd771430c55e1598b3f7bc32f342215a46f33) + `test/cooperation-integration.test.mjs` · 3.3 Host revalidates effective Hook arguments and preserves original call<br>同一 Host 复验 Hook 改参并保留原调用；无多生态转换层 | verified |
+| [工具调用到模型输入的观测链](https://hpoenixf.com/eff-agent-article/articles/agent-tool-lifecycle-and-model-input) | [765fd77](https://github.com/hpoenixf/open-etf-agent/commit/765fd771430c55e1598b3f7bc32f342215a46f33) + `--case batch-read`<br>合成 worker 经现有 Runtime/Host 保存来源；非完整观测平台 | verified |
+| [Run 预算与约束治理](https://hpoenixf.com/eff-agent-article/articles/agent-runtime-constraint-governance-v2) | [765fd77](https://github.com/hpoenixf/open-etf-agent/commit/765fd771430c55e1598b3f7bc32f342215a46f33) + `test/cooperation-integration.test.mjs` · 3.3 root budget refusal stops before a second model request<br>根预算拒绝阻止下一模型请求；非全部预算政策 | verified |
+| [Agent 的请求数、Token 与 Credits 记账](https://hpoenixf.com/eff-agent-article/articles/agent-personal-credits-shadow-accounting) | —<br>缺账户/物理尝试身份、归因、价格目录与影子成本核算 | 无公开对应 |
+| [Agent 收到控制指令后，为什么不能立刻执行](https://hpoenixf.com/eff-agent-article/articles/agent-control-events-durable-owner-adoption) | [765fd77](https://github.com/hpoenixf/open-etf-agent/commit/765fd771430c55e1598b3f7bc32f342215a46f33) + `test/durable-runtime.test.mjs` · 7.3 cancel during pending model is durable and late proposal cannot dispatch<br>持久取消阻止迟到提案执行并跨进程保持；非完整控制事件系统 | verified |
+| [定时研究：会话结束后继续](https://hpoenixf.com/eff-agent-article/articles/agent-autonomous-scheduled-research) | —<br>缺跨会话触发、任务克隆、去重/通知和时间语义 | 无公开对应 |
+| [Langfuse：从 Trace 到可信观测](https://hpoenixf.com/eff-agent-article/articles/025-agent-langfuse-from-trace-to-trustworthy-observability) | —<br>缺 Langfuse exporter/span/session 归属与远端失败隔离 | 无公开对应 |
+| [Publication：为什么需要独立发布系统](https://hpoenixf.com/eff-agent-article/articles/019-agent-answer-publication) | —<br>独立 Publication 模块尚未纳入当前稳定版；T4/Artifact 不冒充完整发布系统 | draft |
+| [渐进式回答如何保持连贯](https://hpoenixf.com/eff-agent-article/articles/agent-progressive-answer-coherence) | —<br>缺 committed blocks/revision、前端渐进展示和历史一致性 | 无公开对应 |
+| [异步研究：离开页面后怎样按时交付](https://hpoenixf.com/eff-agent-article/articles/agent-asynchronous-research-time-bound-delivery) | —<br>缺离开后持续任务、by/at 交付约定、通知和同 Run 恢复 | 无公开对应 |
+| [Agent 问完用户之后：持久人机交互](https://hpoenixf.com/eff-agent-article/articles/agent-durable-human-interaction-response-adoption) | —<br>缺 request/response/adoption/effect 身份、Human Park/Continue 与认证用户回复 | 无公开对应 |
+<!-- article-coverage:end -->
+
+```sh
+# 默认快速检查：真实 Git commit / 公开元数据 + 源码与既有实跑回执一致性；不重跑 case
+node scripts/check-article-coverage.mjs
+# 显式有界复跑：仅现有 CLI 和精确 node:test，去重；不允许 live 或任意 shell 命令
+node scripts/check-article-coverage.mjs --smoke
+# 清单修改后更新表；render 本身不给 verified 资格
+node scripts/check-article-coverage.mjs --render
+```
+
+固定提交是可复现的历史锚点；当前 `main` 的相关源码、fixtures、锁文件及原测试必须仍与 [冻结输入](docs/verification/article-coverage-source.json)逐字节匹配。两者相同才复用同一实际执行；源码、case 或校验器变更会使 [回执](docs/verification/article-coverage-receipts.json)失效，须重新冻结和实跑，不能只改链接维持绿灯。历史锚点不是“永远最新 main”的别名。`--check` 检查已有实跑证据，**不声称这台机器刚执行了 case**；没有本地 Git 对象时只尝试公共 GitHub 元数据，离线或失败不会假 pass。`--smoke` 需要 quickstart 的已安装依赖与 Node 范围，最多 16 个去重目标、每个 30 秒、总计 120 秒；仅原创合成数据，不继承模型凭据或任意 Node 预加载；子进程及嵌套 Node 使用固定 512 MiB heap，`TMPDIR` 指向本次自有输出目录，输出留在 `test-output/`，safe 回执只存身份与执行/产物摘要，不发布数据库或原始日志。
+
+多篇文章若共用 target，则共享同一次最小机制执行证据，不增加实现数量。上述 Gateway 测试的离线 transport、脚本 Child 和 fixture MCP 都不是新真实模型调用。证据是可复核执行记录而非防伪签名；当前运行仍只有 Runtime 验收，`semanticStatus: unreviewed` 不变。
 
 从零开始可先读 [v0.1：从第一份可回读报告开始](https://hpoenixf.com/eff-agent-article/articles/open-etf-agent-v01-first-readable-report?lang=zh)（[完整英文版](https://hpoenixf.com/eff-agent-article/en/articles/open-etf-agent-v01-first-readable-report?lang=en)）。更多内容见[文章阅读站](https://hpoenixf.com/eff-agent-article/)。
 
@@ -238,13 +284,15 @@ v0.7 最终冻结输入在 Node 26.11.1 **249/249** 通过，包含 12 个真实
 
 | 阶段 | 规划方向 |
 | --- | --- |
-| **v0.8** | Web Chat、Publication、SSE / History、后台 Worker |
-| **v0.9** | 有界 Web、真实 PDF 解析、隔离 Python、合成 ETF 案例 |
-| **v1.0** | 稳定公共接口、运行配置验收与实际能力声明 |
+| **v0.8** | 仅 Publication：从原模块提炼稳定正文身份、修订与提交回执，CLI 最小闭环 |
+| **v0.9（候选）** | 仅独立 Worker 与必需的持久队列，不捆绑 Web UI |
+| **v0.10（候选）** | 仅交付读取/HTTP-SSE Adapter，协议客户端验证，不冒称浏览器验收 |
+| **后续 0.x** | Web 取材、PDF 解析、隔离 Python 分别独立评估；一版一个模块，不赶编号 |
+| **v1.0 / v2.0** | 已完成模块的稳定资格里程碑，不新增一包功能；见[修订路线](docs/plan/v1-to-v2.md) |
 
 [PR #1 原始提案](https://github.com/hpoenixf/open-etf-agent/pull/1) · [完整路线与验收合同](https://github.com/hpoenixf/open-etf-agent/blob/c390eb2dd951b53b1dab2d64a9cd72d216fde8dc/docs/plan/README.md) · [目标能力矩阵](https://github.com/hpoenixf/open-etf-agent/blob/c390eb2dd951b53b1dab2d64a9cd72d216fde8dc/docs/plan/05-coverage-matrix.md)
 
-原始提案中的“全部 planned”保留为当时的设计记录；当前已公开的实现快照见上方版本表。路线是方向，不是已交付功能清单。
+原始提案保留为历史设计记录；后续按“一版一个真实模块、CLI/API 优先、少依赖配置、从原 ETF Agent 模块提炼”的修订方向推进。已有较大候选只保留为 WIP，不因代码已写就捆绑发布。当前公开实现见固定版本表，路线不是已交付清单。
 
 ### 反馈与参与
 
