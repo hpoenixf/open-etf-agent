@@ -177,12 +177,12 @@ npm run serve -- --run runs/run-YOUR_ID
 
 | 从问题读起 | 对应公开实验 |
 | --- | --- |
-| [MCP Host：从发现到消费](https://hpoenixf.github.io/eff-agent-article/articles/mcp-host-from-discovery-to-consumption) | [v0.2 维护版](https://github.com/hpoenixf/open-etf-agent/tree/a10d4f1bd1ecc39224272156221fe29792b64094)：`skill-mcp`，发现、准入与实际取得分别记录 |
-| [工具结果如何离开模型上下文](https://hpoenixf.github.io/eff-agent-article/articles/tool-results-outside-model-context) | [v0.4](https://github.com/hpoenixf/open-etf-agent/tree/ecf6cb45b4062586614e83aed917c92d704cb63b)：`retrieve-reread`，原文存储与工作视图分离 |
-| [主运行上下文压缩](https://hpoenixf.github.io/eff-agent-article/articles/agent-main-run-context-compaction) | [v0.5](https://github.com/hpoenixf/open-etf-agent/tree/05c0dd2dc550f4f7e5da034340ff5c3159768fcf)：`compact-and-reread`，派生笔记不取代原文 |
-| [Memory：忘记与持久效果](https://hpoenixf.github.io/eff-agent-article/articles/026-agent-memory-forget-durable-effects) | [v0.5](https://github.com/hpoenixf/open-etf-agent/tree/05c0dd2dc550f4f7e5da034340ff5c3159768fcf)：`explicit-memory`，存储回执与未来输入分别验证 |
+| [MCP Host：从发现到消费](https://hpoenixf.com/eff-agent-article/articles/mcp-host-from-discovery-to-consumption) | [v0.2 维护版](https://github.com/hpoenixf/open-etf-agent/tree/a10d4f1bd1ecc39224272156221fe29792b64094)：`skill-mcp`，发现、准入与实际取得分别记录 |
+| [工具结果如何离开模型上下文](https://hpoenixf.com/eff-agent-article/articles/tool-results-outside-model-context) | [v0.4](https://github.com/hpoenixf/open-etf-agent/tree/ecf6cb45b4062586614e83aed917c92d704cb63b)：`retrieve-reread`，原文存储与工作视图分离 |
+| [主运行上下文压缩](https://hpoenixf.com/eff-agent-article/articles/agent-main-run-context-compaction) | [v0.5](https://github.com/hpoenixf/open-etf-agent/tree/05c0dd2dc550f4f7e5da034340ff5c3159768fcf)：`compact-and-reread`，派生笔记不取代原文 |
+| [Memory：忘记与持久效果](https://hpoenixf.com/eff-agent-article/articles/026-agent-memory-forget-durable-effects) | [v0.5](https://github.com/hpoenixf/open-etf-agent/tree/05c0dd2dc550f4f7e5da034340ff5c3159768fcf)：`explicit-memory`，存储回执与未来输入分别验证 |
 
-从零开始可先读 [v0.1：从第一份可回读报告开始](https://hpoenixf.github.io/eff-agent-article/articles/open-etf-agent-v01-first-readable-report?lang=zh)（[完整英文版](https://hpoenixf.github.io/eff-agent-article/en/articles/open-etf-agent-v01-first-readable-report?lang=en)）。更多内容见[文章阅读站](https://hpoenixf.github.io/eff-agent-article/)。
+从零开始可先读 [v0.1：从第一份可回读报告开始](https://hpoenixf.com/eff-agent-article/articles/open-etf-agent-v01-first-readable-report?lang=zh)（[完整英文版](https://hpoenixf.com/eff-agent-article/en/articles/open-etf-agent-v01-first-readable-report?lang=en)）。更多内容见[文章阅读站](https://hpoenixf.com/eff-agent-article/)。
 
 <a id="roadmap"></a>
 ## 后续路线 · Planned, not shipped
