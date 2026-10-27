@@ -108,7 +108,7 @@
     {
       "slug": "agent-subagent-context-specialization",
       "title": "Subagent：从隔离到专业化协作",
-      "status": "draft",
+      "status": "verified",
       "target": "child",
       "scope": "一层脚本 Child 共享预算并交回原始结果；非真实模型专家"
     },
@@ -150,21 +150,21 @@
     {
       "slug": "tool-results-outside-model-context",
       "title": "结果外置与完整性：模型到底读到了多少",
-      "status": "draft",
+      "status": "verified",
       "target": "reread",
       "scope": "词法候选→真实读页→精确原文回读；非完整原文覆盖平台"
     },
     {
       "slug": "agent-main-run-context-compaction",
       "title": "Main 压缩：摘要不改写原始事实",
-      "status": "draft",
+      "status": "verified",
       "target": "compaction",
       "scope": "派生便笺与原文分离、采用后回读；摘要质量未评"
     },
     {
       "slug": "026-agent-memory-forget-durable-effects",
       "title": "Memory：从保存、召回到安全遗忘",
-      "status": "draft",
+      "status": "verified",
       "target": "memory",
       "scope": "显式合成意图的保存/修订/忘记；非认证用户 Memory 服务"
     },
@@ -178,7 +178,7 @@
     {
       "slug": "agent-provider-architecture-and-admission",
       "title": "Provider：统一接口之后，为什么还需要共享准入",
-      "status": "draft",
+      "status": "verified",
       "target": "provider",
       "scope": "离线 transport 的 Gateway 编码与配对；无共享 Provider 准入"
     },
@@ -192,49 +192,49 @@
     {
       "slug": "020-agent-extension-host-smartphone",
       "title": "Extension Host：从功能机到智能机",
-      "status": "draft",
+      "status": "verified",
       "target": "plugins",
       "scope": "可信包接入同一 Host；不是隔离沙箱或完整多生态 Host"
     },
     {
       "slug": "mcp-host-from-discovery-to-consumption",
       "title": "从接上 MCP 到真正用上工具：Agent 的接入链路怎样构建",
-      "status": "draft",
+      "status": "verified",
       "target": "mcp",
       "scope": "真实 stdio 合成 MCP 发现、准入与取得；非金融数据服务"
     },
     {
       "slug": "agent-model-capability-presentation-tool-surface",
       "title": "Tool Surface：Agent 有工具，模型为什么看不到",
-      "status": "draft",
+      "status": "verified",
       "target": "surface",
       "scope": "Child 只呈现获准读工具；非完整动态能力编排"
     },
     {
       "slug": "agent-content-trust-prompt-injection",
       "title": "A35 内容信任：Prompt Injection 不只是恶意文本",
-      "status": "draft",
+      "status": "verified",
       "target": "trust",
       "scope": "Context 拒绝伪造原文身份；非完整 A35 安全模块"
     },
     {
       "slug": "agent-multi-ecosystem-hook-execution",
       "title": "多生态 Hook：Claude、Pi 与 Codex",
-      "status": "draft",
+      "status": "verified",
       "target": "hooks",
       "scope": "同一 Host 复验 Hook 改参并保留原调用；无多生态转换层"
     },
     {
       "slug": "agent-tool-lifecycle-and-model-input",
       "title": "工具调用到模型输入的观测链",
-      "status": "draft",
+      "status": "verified",
       "target": "batch",
       "scope": "合成 worker 经现有 Runtime/Host 保存来源；非完整观测平台"
     },
     {
       "slug": "agent-runtime-constraint-governance-v2",
       "title": "Run 预算与约束治理",
-      "status": "draft",
+      "status": "verified",
       "target": "budget",
       "scope": "根预算拒绝阻止下一模型请求；非全部预算政策"
     },
@@ -248,7 +248,7 @@
     {
       "slug": "agent-control-events-durable-owner-adoption",
       "title": "Agent 收到控制指令后，为什么不能立刻执行",
-      "status": "draft",
+      "status": "verified",
       "target": "control",
       "scope": "持久取消阻止迟到提案执行并跨进程保持；非完整控制事件系统"
     },
@@ -269,7 +269,7 @@
     {
       "slug": "019-agent-answer-publication",
       "title": "Publication：为什么需要独立发布系统",
-      "status": "draft",
+      "status": "verified",
       "target": "publication",
       "scope": "同一 Runtime 提交正文并经独立 CLI 回读，与报告 Artifact 分离；不含 Web / SSE / Worker 或完整发布系统"
     },
@@ -296,5 +296,5 @@
     }
   ],
   "versions": "versions.json",
-  "verifiedAt": "2c096ce47be2161f97531170af07ef255872f8b1"
+  "verifiedAt": "bb8c52b867592ca060afc6c83d1019b29c9ca89f"
 }

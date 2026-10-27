@@ -1,10 +1,10 @@
 {
   "schemaVersion": 1,
   "repository": "hpoenixf/open-etf-agent",
-  "commit": "2c096ce47be2161f97531170af07ef255872f8b1",
-  "tree": "62ead44dcdb89fab9f6f6a38bd26634c94f7f802",
-  "retrievedFrom": "https://api.github.com/repos/hpoenixf/open-etf-agent/git/commits/2c096ce47be2161f97531170af07ef255872f8b1",
-  "retrievedAt": "2026-10-27T05:11:01.141572Z",
+  "commit": "bb8c52b867592ca060afc6c83d1019b29c9ca89f",
+  "tree": "c8b5a81ea8ac59f4aa7144b304c6f1a9fe310fd8",
+  "retrievedFrom": "https://api.github.com/repos/hpoenixf/open-etf-agent/git/trees/c8b5a81ea8ac59f4aa7144b304c6f1a9fe310fd8?recursive=1",
+  "retrievedAt": "2026-10-27T08:33:13.239367+00:00",
   "inputs": [
     {
       "path": "fixtures/cases.json",
@@ -232,7 +232,7 @@
     },
     {
       "path": "test/article-coverage.test.mjs",
-      "gitBlob": "36fa407ee0fb9d03f5354114fe0946fc36529c21"
+      "gitBlob": "228ab0bfc64d2d80de12be93d9e6e65aff98c250"
     },
     {
       "path": "test/artifact-integration.test.mjs",
