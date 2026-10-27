@@ -1,4 +1,6 @@
-# Acceptance plan — unexecuted
+# Acceptance plan — original scope and later evidence
+
+The initial plan below was unexecuted when published. Actual subsequent executions and input identities are now in [evidence](evidence.md); this plan itself is not a pass receipt.
 
 All inputs are original synthetic data. No private payload, model billing, browser, external site or new service is required. Start with the smallest failing contract-derived selection/binding case, not the full suite. Test names and exact commands are frozen with the tests after scope review; this document is not a pass receipt.
 

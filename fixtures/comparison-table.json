@@ -1,0 +1,9 @@
+{
+  "schemaVersion": "comparison-table@1",
+  "synthetic": true,
+  "rows": [
+    {"id":"baseline","value":100,"unit":"amount","currency":"USD","dataAsOf":"2026-10-01"},
+    {"id":"other","value":999,"unit":"amount","currency":"USD","dataAsOf":"2026-10-01"},
+    {"id":"tail-current","value":250,"unit":"amount","currency":"USD","dataAsOf":"2026-10-01"}
+  ]
+}

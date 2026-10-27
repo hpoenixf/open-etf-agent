@@ -1,7 +1,7 @@
 import { mkdtemp, open } from 'node:fs/promises';
 import { resolve, join, basename } from 'node:path';
 import { randomUUID } from 'node:crypto';
-import { createToolHost, ensureSafeDirectory } from './tools.mjs';
+import { createToolHost, ensureSafeDirectory, assertHostSnapshotVersion } from './tools.mjs';
 import { createRootBudget } from './cooperation.mjs';
 import { compactWorkingView } from './compaction.mjs';
 import { projectMemory } from './memory-projection.mjs';
@@ -62,6 +62,12 @@ async function drive({ question, gateway, outputRoot='runs', requireReport=true,
   if(hostSignal!==undefined&&(typeof hostSignal?.aborted!=='boolean'||typeof hostSignal.addEventListener!=='function'||typeof hostSignal.removeEventListener!=='function'))throw failure('INVALID_HOST_SIGNAL');
   if(submitting&&typeof durable.runId!=='string')throw failure('SUBMISSION_ID_REQUIRED');
   if(submitting&&durable.rootId!==undefined&&durable.rootId!==durable.runId)throw failure('ROOT_SCOPE_MISMATCH');
+  // Refuse an unsupported persisted Host protocol before plugin activation or
+  // claiming execution. Session/Artifact reads remain separate from resumption.
+  if (!submitting && durable?.runId) {
+    const prior=durable.store.inspect(durable.runId);
+    if (prior.snapshot.host!=null) assertHostSnapshotVersion(prior.snapshot.host);
+  }
   let selected, outcome;
   try {
     if(!submitting&&plugins){selected=await activateTrustedPlugins({plugins,expectedBindings:durable?.bindings.plugins,signal});if(hooks&&selected.hooks)throw failure('AMBIGUOUS_HOOK_CONFIGURATION');extensions=[...extensions,...selected.extensions];hooks??=selected.hooks;}
@@ -74,6 +80,7 @@ async function drive({ question, gateway, outputRoot='runs', requireReport=true,
     let stored,claim,directory,runId,deadlineAt=Date.now()+budget.timeoutMs;
     let state={schemaVersion:'runtime-checkpoint@1',phase:'ready',messages:[{role:'user',content:question}],usedIds:[],rounds:0,toolsDispatched:0,proposal:null,cursor:0,result:null,host:null,working:null,answer:'',status:'failed',code:null,unknownEffects:[],partialEffects:[],hookErrors:[]};
     function boundToOriginal(saved) {
+      if (!submitting && saved.snapshot.host!=null) assertHostSnapshotVersion(saved.snapshot.host);
       validateRuntimeCheckpoint(saved.snapshot,saved.definition);
       if(canonical(saved.definition.bindings)!==canonical(durable.bindings)||saved.definition.grantId!==durable.grantId||saved.definition.question!==question||canonical(saved.definition.limits)!==canonical(budget)||canonical(saved.definition.config)!==canonical(config))throw failure('RUN_BINDINGS_MISMATCH');
     }

@@ -1,6 +1,6 @@
 # Result / Reference: preserve the original consumption contract
 
-Status: planning only, 2026-10-27. This is a controlled adaptation of ETF Agent's existing Result/Reference responsibilities, not a verbatim source release or a new same-named architecture. Detailed original-source pins and restricted review remain outside this public repository. No private code, SQL, Spec prose or payload is copied here.
+Original planning status (retained): planning only, 2026-10-27. This is a controlled adaptation of ETF Agent's existing Result/Reference responsibilities, not a verbatim source release or a new same-named architecture. Detailed original-source pins and restricted review remain outside this public repository. No private code, SQL, Spec prose or payload is copied here.
 
 | Original responsibility retained | Existing public reuse / smallest increment | Explicitly excluded |
 | --- | --- | --- |
@@ -13,3 +13,10 @@ Status: planning only, 2026-10-27. This is a controlled adaptation of ETF Agent'
 The public baseline already has immutable ResultRefs, explicit arithmetic, actual next-step scripted consumption and downloadable CSV. This increment joins their currently separate facts; it must not announce them as newly invented modules. The existing [result-consumption article](https://hpoenixf.com/eff-agent-article/articles/financial-agent-python-result-consumption) explains why execution success, numeric qualification, actual model input and final delivery differ. It was read at article source `fc5b8c7147404a1ef17a7c8c1840e440abe8efb6`. Its Python and financial-method scope is substantially wider than this proposed public JavaScript slice.
 
 No new dependency or system prerequisite is proposed. Reuse the current Node, locked Zod, Result, calculator, Gateway, Artifact serializer and Reader. If a new module/dependency becomes necessary, stop that expansion for scope review rather than hiding it as an adapter.
+
+
+## 2026-10-27 local implementation record
+
+The contract adaptation is now implemented in the existing owners and has local provider-free qualification; it is not yet a numbered feature release. See the [actual evidence](../../openspec/changes/result-reference-consumption/evidence.md). Source selection, derived identity, encoded next-request material and report/CSV are checked separately. The original private implementation, Python platform and financial semantic judgement are not claimed to have been released.
+
+Independent review required one necessary Runtime preflight and an explicit `tool-host@2` execution snapshot boundary. Old active Runs must finish on their original version before upgrade; no old-snapshot migration or missing-digest fallback is provided. Original immutable Result/Artifact/Publication reading stays separate and unchanged. This compatibility change must be included in promotion notes, not described as an internal no-effect edit.

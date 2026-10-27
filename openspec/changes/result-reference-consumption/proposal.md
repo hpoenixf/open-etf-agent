@@ -1,6 +1,8 @@
 # Result / Reference consumption increment
 
-Status: **scope-review draft, 2026-10-27; not implemented or qualified**. This is the existing roadmap's 1.1 intent, not an assigned release or a claim that 1.0 has shipped. Planning base: public main `4ec2bb54b9747c46e8e95b9d742a50862aae9f75`, package 0.9.0. No version/dependency change is proposed now.
+Current local record, 2026-10-27: RC.1–RC.3 are qualified by actual 333/333 regression and independent locked build/CLI readback; RC.4 publication is incomplete. See [evidence](evidence.md) and the explicit `tool-host@2` compatibility boundary in [design](design.md). No numbered version has been promoted.
+
+Original planning status (retained): **scope-review draft, 2026-10-27; not implemented or qualified**. This is the existing roadmap's 1.1 intent, not an assigned release or a claim that 1.0 has shipped. Planning base: public main `4ec2bb54b9747c46e8e95b9d742a50862aae9f75`, package 0.9.0. No version/dependency change is proposed now.
 
 ## One increment, one useful loop
 

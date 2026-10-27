@@ -1,6 +1,7 @@
 import { open, constants, lstat, rename, unlink, readdir } from 'node:fs/promises';
 import { join } from 'node:path';
 import { randomUUID } from 'node:crypto';
+import { isDeepStrictEqual } from 'node:util';
 import { safeDirectory, ensureSafeDirectory, publishImmutable } from './storage-files.mjs';
 import { validateSource, sha256 } from './source.mjs';
 import { validateNote, noteRef } from './working-note.mjs';
@@ -8,6 +9,24 @@ import { validateCalculation } from './calculation.mjs';
 const identityKeys=['sourceId','documentId','name','version','page','sha256','mediaType'];
 const identity=source=>Object.fromEntries(identityKeys.map(key=>[key,source[key]]));
 const refPattern=/^(?:result|calculation|note):sha256:[a-f0-9]{64}$/;
+const exact=(value,keys)=>value && typeof value==='object' && !Array.isArray(value) && Object.keys(value).sort().join(',')===keys.slice().sort().join(',');
+const validSelection=value=>exact(value,['offset','limit'])&&Number.isSafeInteger(value.offset)&&value.offset>=0&&value.offset<32&&Number.isSafeInteger(value.limit)&&value.limit>=1&&value.limit<=32;
+function comparisonRows(text) {
+  const value=JSON.parse(text);
+  if (!exact(value,['schemaVersion','synthetic','rows']) || value.schemaVersion!=='comparison-table@1' || value.synthetic!==true || !Array.isArray(value.rows) || value.rows.length<1 || value.rows.length>32) throw new Error('Unsupported comparison table');
+  const ids=new Set();
+  for (const row of value.rows) {
+    if (!exact(row,['id','value','unit','currency','dataAsOf']) || typeof row.id!=='string' || !/^[A-Za-z0-9_-]{1,64}$/.test(row.id) || ids.has(row.id)
+      || !(row.value===null||Number.isFinite(row.value))
+      || !(row.unit===null||typeof row.unit==='string'&&/^[A-Za-z][A-Za-z0-9 /%_-]{0,39}$/.test(row.unit))
+      || !(row.currency===null||typeof row.currency==='string'&&/^[A-Z]{3}$/.test(row.currency))
+      || !(row.dataAsOf===null||typeof row.dataAsOf==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(row.dataAsOf)&&Number.isFinite(Date.parse(row.dataAsOf))&&new Date(row.dataAsOf).toISOString().slice(0,10)===row.dataAsOf)) throw new Error('Invalid comparison row');
+    ids.add(row.id);
+  }
+  return value.rows;
+}
+const unavailable=(code,facts={})=>({available:false,kind:'comparison-unavailable',code,...facts});
+
 function baseDescriptor(kind,value) {
   if(kind==='source') { const fields=identity(value); return {kind,...fields,resultRef:'result:sha256:'+sha256(JSON.stringify(fields))}; }
   if(kind==='note')return {kind:'note',resultRef:noteRef(value)};
@@ -55,7 +74,43 @@ export async function createResultStore({directory,allowedDocuments}={}) {
     const record=parse(bytes); if(record.schemaVersion!=='research-result@1'||record.kind!==kind||record.resultRef!==resultRef) throw new Error('Corrupt result record identity');
     const value=kind==='source'?validateSource(record.value):kind==='note'?validateNote(record.value):validateCalculation(record.value); if(kind==='source'&&value.derived===true) throw new Error('Derived observation is not an original source');
     if(kind==='note')for(const ref of value.sourceRefs){const owned=byRef.get(ref.resultRef);if(!owned||owned.kind!=='source'||identityKeys.some(key=>owned[key]!==ref[key]))throw new Error('Unknown note source ref');scope(owned);}
+    if(kind==='calculation'&&value.binding)await verifyComparison(value);
     const base=baseDescriptor(kind,value); if(base.resultRef!==resultRef||Object.keys(base).some(key=>base[key]!==expected[key])) throw new Error('Corrupt result snapshot identity'); return value;
+  }
+  async function readSelection(resultRef,selection) {
+    if(!validSelection(selection))return unavailable('INVALID_SELECTION');
+    const owned=byRef.get(resultRef);
+    if (!owned || owned.kind!=='source' || grant&&!grant.has(owned.documentId)) return unavailable('SOURCE_UNAVAILABLE');
+    // Known record integrity/storage failures are not converted into ordinary
+    // missing optional data; original fail-closed ownership still applies.
+    const source=await readRecord(resultRef,'source');
+    let rows;
+    try { rows=comparisonRows(source.text); }
+    catch { return unavailable('UNSUPPORTED_COMPARISON_SOURCE',{sourceRef:resultRef}); }
+    if(selection.offset>=rows.length)return unavailable('SELECTION_EMPTY',{sourceRef:resultRef});
+    const selected=rows.slice(selection.offset,selection.offset+selection.limit).map((row,index)=>({index:selection.offset+index,row}));
+    return {available:true,resultRef,contentHash:source.sha256,rows:selected,coverage:{offset:selection.offset,requested:selection.limit,total:rows.length,returned:selected.length,rowIndices:selected.map(r=>r.index),complete:true,storedTableComplete:selection.offset===0&&selected.length===rows.length}};
+  }
+  async function resolveComparison(input) {
+    if(!exact(input,['resultRef','selection','baselineRow','currentRow']) || typeof input.resultRef!=='string' || !/^result:sha256:[a-f0-9]{64}$/.test(input.resultRef) || ![input.baselineRow,input.currentRow].every(v=>Number.isSafeInteger(v)&&v>=0&&v<32))return unavailable('INVALID_COMPARISON_INPUT');
+    const selected=await readSelection(input.resultRef,input.selection);if(!selected.available)return selected;
+    const facts={sourceRef:selected.resultRef,contentHash:selected.contentHash,coverage:selected.coverage};
+    const baseline=selected.rows.find(row=>row.index===input.baselineRow),current=selected.rows.find(row=>row.index===input.currentRow);
+    if(!baseline||!current)return unavailable('OPERAND_NOT_SELECTED',facts);
+    const a=baseline.row,b=current.row;
+    if([a.unit,b.unit,a.currency,b.currency,a.dataAsOf,b.dataAsOf].some(value=>value===null))return unavailable('COMPARISON_METADATA_UNKNOWN',facts);
+    if(a.unit!==b.unit)return unavailable('UNIT_MISMATCH',facts);
+    if(a.currency!==b.currency)return unavailable('CURRENCY_MISMATCH',facts);
+    if(a.dataAsOf!==b.dataAsOf)return unavailable('CUTOFF_MISMATCH',facts);
+    if(a.value===null||b.value===null)return unavailable('OPERAND_UNKNOWN',facts);
+    if(a.value===0)return unavailable('ZERO_DENOMINATOR',facts);
+    if(![b.value-a.value,b.value/a.value,(b.value-a.value)/a.value].every(Number.isFinite))return unavailable('NUMERIC_OVERFLOW',facts);
+    return {available:true,inputs:{baseline:a.value,current:b.value,baselineUnit:a.unit,currentUnit:b.unit},binding:{schemaVersion:'comparison-binding@1',sourceRef:selected.resultRef,contentHash:selected.contentHash,selection:structuredClone(input.selection),coverage:selected.coverage,baseline:{rowIndex:baseline.index,rowId:a.id,field:'value'},current:{rowIndex:current.index,rowId:b.id,field:'value'},unit:a.unit,currency:a.currency,dataAsOf:a.dataAsOf}};
+  }
+  async function verifyComparison(value) {
+    const b=value.binding;
+    const resolved=await resolveComparison({resultRef:b.sourceRef,selection:b.selection,baselineRow:b.baseline.rowIndex,currentRow:b.current.rowIndex});
+    if(!resolved.available||!isDeepStrictEqual(resolved.inputs,value.inputs)||!isDeepStrictEqual(resolved.binding,b))throw new Error('Bound calculation differs from original selected inputs');
   }
   let queue=Promise.resolve();
   function addRecord(kind,value,signal) {
@@ -78,7 +133,8 @@ export async function createResultStore({directory,allowedDocuments}={}) {
     async readTyped(resultRef) { const entry=byRef.get(resultRef); if(!entry) throw new Error('Unknown result ref'); return readRecord(resultRef,entry.kind); },
     async addNote(input,{signal}={}){const value=validateNote(input);for(const ref of value.sourceRefs){const owned=byRef.get(ref.resultRef);if(!owned||owned.kind!=='source'||identityKeys.some(key=>owned[key]!==ref[key]))throw new Error('Unknown or mismatched note source ref');await readRecord(ref.resultRef,'source');}return addRecord('note',value,signal);},readNote:ref=>readRecord(ref,'note'),
     async add(input,{signal}={}) { const value=validateSource(input); if(value.derived===true) throw new Error('Derived observation is not an original source'); return addRecord('source',value,signal); },
-    async addCalculation(input,{signal}={}) { return addRecord('calculation',validateCalculation(input),signal); },
+    async addCalculation(input,{signal}={}) { const value=validateCalculation(input);if(value.binding)await verifyComparison(value);return addRecord('calculation',value,signal); },
+    readSelection, resolveComparison,
     read:ref=>readRecord(ref,'source'), readCalculation:ref=>readRecord(ref,'calculation'),
     async resolve(sourceId) { const item=bySource.get(sourceId); if(!item) throw new Error('Unknown acquired source ID'); scope(item); return structuredClone(item); },
     async list() { return [...byRef.values()].filter(item=>item.kind==='source'&&(!grant||grant.has(item.documentId))).map(item=>structuredClone(item)); },

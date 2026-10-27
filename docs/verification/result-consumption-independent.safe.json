@@ -1,0 +1,133 @@
+{
+  "schemaVersion": "result-consumption-independent-delivery@1",
+  "inputSha256": "4704f6d92356d125c6d8db56d128492efb0364005bb781439f38e1c50ebf046d",
+  "startedAt": "2026-10-27T15:49:33.586769+00:00",
+  "runtime": "Node v26.11.1",
+  "heapMiB": 512,
+  "sourceCopiedFromFrozenInputs": 60,
+  "commands": [
+    {
+      "label": "offline-install",
+      "exitCode": 0,
+      "durationSeconds": 1.787894073058851,
+      "outputSha256": "d50d0945c1d8839f9ddcabfa0b18491117c206b4ced6fec8d06cd030e35aaa9c",
+      "normalizedCommand": [
+        "npm",
+        "ci",
+        "--offline",
+        "--ignore-scripts",
+        "--no-audit",
+        "--no-fund",
+        "--cache",
+        "<existing local cache>"
+      ]
+    },
+    {
+      "label": "independent-build",
+      "exitCode": 0,
+      "durationSeconds": 3.0387145470594987,
+      "outputSha256": "6507b5de37fbdc4cf340b850bc047948e3c5052a922647e669b9971b5c215e2b",
+      "normalizedCommand": [
+        "node",
+        "scripts/build.mjs"
+      ]
+    },
+    {
+      "label": "independent-cli",
+      "exitCode": 0,
+      "durationSeconds": 0.13548678799998015,
+      "outputSha256": "d5a090d6b1f81e0df8c4abd6339c16d459252b92de39aa2f0df8e6c09ee886d2",
+      "normalizedCommand": [
+        "node",
+        "dist/src/cli.mjs",
+        "--case",
+        "result-consumption",
+        "--output",
+        "<independent run root>"
+      ]
+    },
+    {
+      "label": "independent-readback",
+      "exitCode": 0,
+      "durationSeconds": 0.0793726610718295,
+      "outputSha256": "e64094c321e2f8d83cdac35b668dcd7c72edc7498f84f5602f6bb781bbd0ba6c",
+      "normalizedCommand": [
+        "node",
+        "<readback harness>",
+        "<producer outcome>"
+      ]
+    }
+  ],
+  "offline": true,
+  "ignoreScripts": true,
+  "providerCalls": 0,
+  "packageVersion": "0.9.0",
+  "newDependencies": 0,
+  "priorAttempt": "independent-attempt1.safe.json: npm double-loaded the same empty config path before package installation; corrected runner only",
+  "delivery": {
+    "caseId": "result-consumption",
+    "producerExited": true,
+    "readerProcess": 460,
+    "mode": "fixture",
+    "semanticStatus": "unreviewed",
+    "report": {
+      "artifactId": "artifact:sha256:d087249a9ebcb33e18eb07217f601f487a543b4b86f42ea704a9401622d4ad7a",
+      "sha256": "2ff2131a22f6dd2b0d0981339d837348369a07a22870ab7695c9de8209cecc4c",
+      "bytes": 1366
+    },
+    "csv": {
+      "artifactId": "artifact:sha256:32f93461b42e359988a4362bc5f4e76c5129975cfae73049a74fcc28f83e4c65",
+      "sha256": "70e02d34a0abdd22bcf384fcf9e42617c92f85b4af25452f039e874c441c3a75",
+      "bytes": 743
+    },
+    "calculationRef": "calculation:sha256:7b14b3bb7231673776b7e08e29886d950dda209ed1dccb238b97c48434d4f68d",
+    "sourceRef": "result:sha256:0116b79f0e455091a4fed8826b1963f90cb83255a4a1b0523751106c25dbd469",
+    "contentHash": "5904cd51243be2a5682aed8ace3089ca0dfa448b8dcb59b47ee12a5cb74eed0e",
+    "values": {
+      "baseline": 100,
+      "current": 250,
+      "difference": 150,
+      "ratio": 2.5,
+      "increaseRatio": 1.5,
+      "currency": "USD",
+      "dataAsOf": "2026-10-01"
+    },
+    "providerCalls": 0
+  },
+  "completedAt": "2026-10-27T15:49:38.631754+00:00",
+  "installedPackages": 95,
+  "builtFilesByteIdentical": 57,
+  "licenseByteIdentical": true,
+  "packageAndLockByteIdentical": true,
+  "sourceInputDrift": [],
+  "installedInputDrift": [],
+  "private": true,
+  "originalRecordSha256": "f6d8e6ed2eb48d77964583a3799ba5aca6c9aeaf1c7ee38f861268b1b2530533",
+  "firstAttempt": {
+    "schemaVersion": "result-consumption-independent-delivery@1",
+    "inputSha256": "4704f6d92356d125c6d8db56d128492efb0364005bb781439f38e1c50ebf046d",
+    "startedAt": "2026-10-27T15:48:54.690111+00:00",
+    "runtime": "Node v26.11.1",
+    "heapMiB": 512,
+    "sourceCopiedFromFrozenInputs": 60,
+    "commands": [
+      {
+        "label": "offline-install",
+        "exitCode": 1,
+        "durationSeconds": 0.1311446549370885,
+        "outputSha256": "250e369d730a46c4d41df37449a5c58c169b4b1d2ab546951a8bed0285805a95"
+      }
+    ],
+    "offline": true,
+    "ignoreScripts": true,
+    "providerCalls": 0,
+    "packageVersion": "0.9.0",
+    "newDependencies": 0,
+    "originalRecordSha256": "da45622eabd5bd06e0a5f9195dcdb40b13fa45357b284723e0d2e2c32b5d1663"
+  },
+  "harnessSha256": {
+    "run-independent.py": "35ede436a7ab96a7d5c9b2e501ada05ec038fc495f3fe47277909f7e27251f35",
+    "read-independent.mjs": "cfc285b32c1d4823aa14c15502776680bd2726003a3241c262c55bdefb11e0ea"
+  },
+  "normalization": "Environment-local paths are replaced; no assertion of a new run by this projection."
+}

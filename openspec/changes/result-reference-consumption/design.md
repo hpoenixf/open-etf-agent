@@ -32,3 +32,18 @@ An absent/invalid optional numeric reference or attachment must not add a whole-
 ## Qualification and boundaries
 
 No feature code, tests or version change has been executed for this draft. Focused unit/production-seam tests precede one final frozen-input regression run and relevant locked install/build/CLI readback. Public coverage/README/article binding follows only an actually published and qualified source. Reuse earlier observations solely where input equivalence is explicit; do not inherit 309/309 as a new run. No semantic/live/browser claim is proposed.
+
+
+## 2026-10-27 implementation review clarification (not final qualification)
+
+The initial draft above remains the scope history. The selected `value` field is fixed by `comparison-table@1`; only the two original row indices and one bounded window are caller-selected. A window's `limit` is an upper bound ending at the known stored-table end. `complete` means this end-bounded window was fully materialized, while `storedTableComplete` separately reports whether it includes every stored row. Neither field means complete upstream holdings or a model's reasoning coverage.
+
+Focused observations have now exercised the original source, actual Gateway encoder with an injected synthetic transport, and fresh-process CLI readback. Independent review then found additional malformed-reference and recovered-call identity counterexamples: earlier focused passes are not the final qualification. Invalid optional reference values must produce local unavailable observations without granting access or fabricating an Artifact. Structural extra fields, acquired-record integrity failures, genuine cancellation and storage failures retain their original boundaries. Recovery must bind the original submitted call as well as its effective Hook call and original stored result; value equality alone is insufficient, especially when two unavailable requests have the same reason.
+
+## 2026-10-27 reviewed execution-protocol boundary
+
+The request receipt now binds the original JSON call, Hook mode and actual effective call in one domain-separated digest (`tool-request@1`). All successful Hook executions/reconciliations, plus calculator/CSV calls without Hooks, carry that fixed-length identity. It is not authorization, source qualification or a signature. Existing original/effective Hook metadata must remain paired; verification occurs before choosing a result-validation branch. This adds bounded Context metadata, not a copy of unbound CSV rows.
+
+This is an explicit **`tool-host@2` execution snapshot boundary**, not invisible backward compatibility. Finish active Runs on their original version before upgrading. A saved `tool-host@1` cannot resume under this protocol; it is rejected with `UNSUPPORTED_HOST_SNAPSHOT_VERSION`, without migration, fallback or a missing-digest compatibility bypass. Original immutable Result/Artifact/Publication reading is unchanged; refusing resumption is not permission to delete or rewrite previous results.
+
+The existing Runtime has one necessary pure preflight: inspect the selected Run's Host version before plugin activation/claim, then check the version again at its existing original-binding boundary before claim. The Host also checks before creating/opening its writable owners. This refuses an observed incompatible snapshot without changing the Run, invoking tools or fabricating a terminal failure. The checks are not an atomic cross-version migration or a guarantee against arbitrary later concurrent changes; the Session's existing lease/fence still owns execution. The supported upgrade procedure ends old active execution first.
