@@ -18,7 +18,7 @@
 
 目前的入门案例是**原创合成文档比较**，并非真实基金分析。ETF 研究工具在后续路线中；本项目不提供交易执行或投资建议。
 
-> **从哪里开始？** 直接克隆 `main`：主干默认提供最新已验证稳定的开发代码，目前是 **v0.6**，包含可运行实现、锁文件、示例与证据。固定阶段保留在 `phase/v0.1`—`phase/v0.6`；当前实现对应 [v0.6 固定快照 `7480b65`](https://github.com/hpoenixf/open-etf-agent/tree/7480b656b18192e6d6b44aab65255b970d58e6f8)。这里的“稳定”指下文列出的 Runtime 回归与交付验证，**不等于正式 Release、模型能力认证或生产就绪**。许可证仍待选择。
+> **从哪里开始？** 直接克隆 `main`：主干默认提供最新已验证稳定的开发代码，目前是 **v0.6**，包含可运行实现、锁文件、示例与证据。固定阶段保留在 `phase/v0.1`—`phase/v0.6`；当前实现对应 [v0.6 固定快照 `7480b65`](https://github.com/hpoenixf/open-etf-agent/tree/7480b656b18192e6d6b44aab65255b970d58e6f8)。这里的“稳定”指下文列出的 Runtime 回归与交付验证，**不等于正式 Release、模型能力认证或生产就绪**。项目原创代码采用 [MIT 许可证](LICENSE)，第三方组件保留各自许可。
 
 ### 在这里可以看到什么
 
@@ -160,7 +160,9 @@ npm run serve -- --run runs/run-YOUR_ID
 
 后续已有 [v0.1–v0.5 首批真实调用记录](https://github.com/hpoenixf/open-etf-agent/blob/d075068ac99a6c798d012c46bff4fe0c33eb9979/docs/verification/live-v01-v05-first-batch.md)，分别保留原版本、真实拒绝与文件回读。当前验收以 Runtime 正确性为目标；模型措辞仅作观察，未触达机制仍未验证。读者可从[显式受限验证入口](https://github.com/hpoenixf/open-etf-agent/blob/d075068ac99a6c798d012c46bff4fe0c33eb9979/docs/live-validation.md)了解如何使用自己的配置和费用授权；上述默认命令运行 main 的离线示例；这些历史真实调用不冒充 v0.6 新机制的 live 覆盖。
 
-当前项目尚未选定许可证，`package.json` 保持 `private: true` / `UNLICENSED`；随附 Evidence Kit 的独立 MIT / NOTICE 不代表整个项目采用同一许可。
+## 许可证 · License
+
+项目原创代码与随附原创文档采用 [MIT](LICENSE)，Copyright © 2026 Huang Pengfei。第三方依赖、随附 Evidence Kit 及其 NOTICE 保留原许可证与归属；本许可不覆盖项目之外的私有源码、书稿或外部内容。`private: true` 仅防止意外发布 npm 包，不限制 MIT 授予的使用权。
 
 [v0.6 验证记录](docs/verification/v06-observations.md) · [v0.6 原始 Spec / RED-GREEN 证据](openspec/changes/v06-artifact-reader/evidence.md) · [v0.6 固定来源清单](https://github.com/hpoenixf/open-etf-agent/blob/7480b656b18192e6d6b44aab65255b970d58e6f8/docs/verification/v06-candidate-inputs.json)
 
@@ -208,7 +210,7 @@ npm run serve -- --run runs/run-YOUR_ID
 - **Run:** clone `main` directly using [Quickstart](#quickstart). It now contains the latest verified stable development code (v0.6), not just the project homepage. Node.js 26.11.1–26.x is required; demos run offline after dependency installation.
 - **Inspect:** each [stage](#versions) retains its fixed implementation, fixtures and evidence. The [v0.6 README](https://github.com/hpoenixf/open-etf-agent/blob/7480b656b18192e6d6b44aab65255b970d58e6f8/README.md) has detailed English instructions for artifacts, downloads and loopback HTTP evaluation.
 - **Interpret honestly:** v0.6 qualification records 171 offline tests, eight demos, eleven report readbacks and four-case HTTP checks, with no new model calls. “Stable” means this bounded Runtime qualification, not a formal release or production-readiness claim. Sources, derived notes, memory and execution observations stay distinct.
-- **Scope:** local, single-user, synthetic examples; no trading or investment advice. These snapshots are not formal releases, and the project license is still undecided.
+- **Scope:** local, single-user, synthetic examples; no trading or investment advice. These snapshots are not formal releases, and original project code is licensed under [MIT](LICENSE); third-party licenses and notices remain in force.
 
 ---
 
