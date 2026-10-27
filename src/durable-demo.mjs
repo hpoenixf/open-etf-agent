@@ -6,8 +6,9 @@ import { openDurableMemory } from './durable-memory.mjs';
 import { createDurableChildBinding } from './durable-child.mjs';
 import { createExamplePlugins } from './example-plugins.mjs';
 import { sha256 } from './source.mjs';
+import { PUBLICATION_BINDING } from './publication.mjs';
 
-export const durableCases=['durable-report','durable-child','durable-compaction','durable-memory','trusted-plugins'];
+export const durableCases=['durable-report','durable-publication','durable-child','durable-compaction','durable-memory','trusted-plugins'];
 const call=(id,name,args={})=>({kind:'calls',calls:[{id,name,arguments:args}]});
 function facts(messages){
   const values=messages.filter(m=>m.role==='tool').map(m=>m.result?.value);const ids=new Set(messages.flatMap(m=>m.calls?.map(c=>c.id)||[]));const sources=new Map();let note;
@@ -20,6 +21,7 @@ export async function runDurableDemo({directory,caseId='durable-report',runId,si
   const store=await openSession({directory});let token;let plugins;let workingInput;let extensions=[];
   const bindings={gateway:{mode:'fixture',provider:'synthetic',protocol:'fixture@1',model:caseId,version:'1'},plugins:[],adapters:[{id:'durable-demo',version:'1',contentSha256:sha256(await readFile(new URL(import.meta.url)))}]};
   try{
+    if(caseId==='durable-publication')bindings.adapters.push(PUBLICATION_BINDING);
     if(caseId==='trusted-plugins'){plugins=await createExamplePlugins();bindings.plugins=plugins.map(({id,version,schemaVersion,contentSha256})=>({id,version,schemaVersion,contentSha256}));}
     if(caseId==='durable-memory'){
       const selected=await openDurableMemory({directory:join(directory,'synthetic-memory')});const text='SYNTHETIC preference: retain original source identities.';
@@ -49,6 +51,6 @@ export async function runDurableDemo({directory,caseId='durable-report',runId,si
       if(!ids.has('save-report'))return call('save-report','save_report',{text:'# Synthetic '+caseId+'\n\nThis offline fixture exercises the same Runtime and the selected durable boundary. Source identities and actual saved bytes are checked; model reasoning and financial conclusions are not assessed.',sourceIds:[...sources.keys()]});
       return{kind:'final',text:'Saved the original synthetic report with immutable source and artifact identities.'};
     }};
-    return await run({question:'Synthetic '+caseId+': preserve this exact request, original sources, bounded resources and actual report receipts.',gateway,plugins,extensions,workingInput,outputRoot:join(directory,'runs'),signal,requireReport:true,limits:{maxRounds:16,maxTools:16,timeoutMs:30000},durable:{store,runId,grantId:'synthetic-demo-'+caseId,bindings,rootLimits:{model:32,tool:16},onClaim:value=>{token=value;},onCheckpoint}});
+    return await run({publication:caseId==='durable-publication',question:'Synthetic '+caseId+': preserve this exact request, original sources, bounded resources and actual report receipts.',gateway,plugins,extensions,workingInput,outputRoot:join(directory,'runs'),signal,requireReport:true,limits:{maxRounds:16,maxTools:16,timeoutMs:30000},durable:{store,runId,grantId:'synthetic-demo-'+caseId,bindings,rootLimits:{model:32,tool:16},onClaim:value=>{token=value;},onCheckpoint}});
   }finally{store.close();}
 }

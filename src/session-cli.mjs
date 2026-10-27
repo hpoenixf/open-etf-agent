@@ -2,20 +2,21 @@ import { lstat } from 'node:fs/promises';
 import { resolve, join } from 'node:path';
 import { openSession } from './session.mjs';
 
-const cases = ['durable-report', 'durable-child', 'durable-compaction', 'durable-memory', 'trusted-plugins'];
+const cases = ['durable-report', 'durable-publication', 'durable-child', 'durable-compaction', 'durable-memory', 'trusted-plugins'];
 const fail = code => { throw Object.assign(new Error(code), { code }); };
 function argumentsFor(args) {
  const [action, ...rest] = args;
- if (!['start', 'resume', 'inspect', 'cancel'].includes(action)) fail('INVALID_ARGUMENT');
+ if (!['start', 'resume', 'inspect', 'cancel', 'publication', 'publication-revisions', 'publication-event'].includes(action)) fail('INVALID_ARGUMENT');
  const options = { action }; const seen = new Set();
  for (let i = 0; i < rest.length; i += 2) {
   const key = rest[i]; const value = rest[i + 1];
-  if (!['--session', '--run', '--case'].includes(key) || seen.has(key) || typeof value !== 'string' || !value || value.startsWith('--') || value.includes('\0')) fail('INVALID_ARGUMENT');
+  if (!['--session', '--run', '--case', '--revision'].includes(key) || seen.has(key) || typeof value !== 'string' || !value || value.startsWith('--') || value.includes('\0')) fail('INVALID_ARGUMENT');
   seen.add(key); options[key.slice(2)] = value;
  }
  if (!options.session || options.session.length > 4096 || (action === 'start' ? options.run !== undefined : options.run === undefined)) fail('INVALID_ARGUMENT');
  if (options.run !== undefined && !/^[A-Za-z0-9][A-Za-z0-9_.:@/-]{0,199}$/.test(options.run)) fail('INVALID_ARGUMENT');
- if (options.case !== undefined && (!cases.includes(options.case) || ['inspect', 'cancel'].includes(action))) fail('INVALID_ARGUMENT');
+ if (options.case !== undefined && (!cases.includes(options.case) || !['start', 'resume'].includes(action))) fail('INVALID_ARGUMENT');
+ if (options.revision !== undefined && (action !== 'publication' || !/^[1-3]$/.test(options.revision))) fail('INVALID_ARGUMENT');
  options.session = resolve(options.session); return options;
 }
 async function existingSession(directory) {
@@ -36,6 +37,11 @@ async function main(args) {
  if (options.action !== 'start') {
   const store = await openSession({ directory: options.session });
   try {
+   if (options.action.startsWith('publication')) {
+    const value = options.action === 'publication' ? store.publication(options.run, options.revision === undefined ? undefined : Number(options.revision)) : options.action === 'publication-revisions' ? store.publicationRevisions(options.run) : store.publicationEvent(options.run);
+    if (value === null) fail('PUBLICATION_NOT_FOUND');
+    process.stdout.write(JSON.stringify(value, null, 2) + '\n'); return;
+   }
    if (options.action === 'inspect' || options.action === 'cancel') {
     const state = options.action === 'inspect' ? store.inspect(options.run) : store.cancel(options.run);
     process.stdout.write(JSON.stringify(state, null, 2) + '\n'); return;

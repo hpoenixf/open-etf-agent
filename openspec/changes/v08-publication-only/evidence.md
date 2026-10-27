@@ -1,0 +1,19 @@
+# Evidence — Publication-only amended candidate
+
+The 2026-10-27 amendment is explicit new scope, not a claim that the earlier browser acceptance passed. The expanded candidate archive and observations remain separate. No result is carried forward as qualification of this extracted tree without the necessary new checks.
+
+Planned resources: existing Node 26.11.1, heap 512 MiB, serial tests, synthetic repository-local SQLite and engineering TMPDIR. No provider call, browser, network listener, new credentials or active-schema migration. Private task's heavier verification takes priority; test windows are coordinated.
+
+Static review after the original RED added one storage-encoding counterexample: admitted 64,000-byte text can expand when JSON escapes controls. The bounded stored envelope allows that representation without raising the visible input limit. This additional assertion has no separate observed RED; it joins the first actual GREEN/qualification batch.
+
+## Observation Log
+| Date / phase | Evidence ID | Task | Command | Actual result | Artifact | Revision | Origin |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| 2026-10-27 RED | EV-801 | 8.1 | node --test --test-concurrency=1 test/publication.test.mjs test/publication-runtime.test.mjs | failed: 12 Publication assertions among 19 failures; loadable absent/mismatched original-owner seams | docs/verification/v08-publication-red.safe.json | pre-implementation-source-and-test-hashes | observed-run |
+| 2026-10-27 RED | EV-802 | 8.2 | same exact serial 19-case command | failed: 7 Runtime assertions among 19 failures; no committed receipt/binding/postcommit seam | docs/verification/v08-publication-red.safe.json | pre-implementation-source-and-test-hashes | observed-run |
+| 2026-10-27 GREEN | EV-803 | 8.1 | node --test --test-concurrency=1 test/publication.test.mjs test/publication-runtime.test.mjs test/publication-cli.test.mjs | passed: 23/23; 13 owner cases include true SQLite rollback and original receipt/CAS/binding boundaries | docs/verification/v08-publication-green.safe.json | focused-source-and-test-hashes | observed-run |
+| 2026-10-27 GREEN | EV-804 | 8.2 | same exact serial 23-case command | passed: 7 Runtime and 3 CLI cases; actual process kill after commit before checkpoint resumes one original revision with no new model invocation | docs/verification/v08-publication-green.safe.json | focused-source-and-test-hashes | observed-run |
+| 2026-10-27 CHECK | EV-805 | 8.3 | node --test --test-concurrency=1 test/*.test.mjs | passed: 286/286 no skips/cancellations, including existing Runtime/Session/Artifact and coverage-checker regressions; 119 frozen input hashes unchanged | docs/verification/v08-observations.safe.json | v08-candidate-inputs | observed-run |
+| 2026-10-27 CHECK | EV-806 | 8.3 | offline locked npm ci then native build and five built CLI commands | passed: 95 unchanged dependency entries, five different process IDs, original receipt retained, current 764-byte and retained v0.6 933-byte Artifact readback | docs/verification/v08-independent-delivery.safe.json | v08-candidate-inputs | observed-run |
+| 2026-10-27 CHECK | EV-807 | 8.3 | original Kit lint plan/apply and public-only scan plus built/source hash check | passed: Kit issues empty; no selected sensitive patterns; original MIT bytes preserved; 119 qualified inputs unchanged | docs/verification/v08-publication-scan.safe.json | v08-candidate-inputs | observed-run |
+| 2026-10-27 CHECK | EV-808 | 8.3 | version-only JSON comparison, independent offline npm ci and native build, built-file hash check | passed: 2 metadata leaves only; 117 other inputs and 95 dependency entries identical; 54 built hashes match; original 286 and five-process delivery were not rerun | docs/verification/v08-metadata-promotion.safe.json | v08-publication-inputs | observed-run |
