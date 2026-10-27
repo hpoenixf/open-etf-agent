@@ -1,0 +1,59 @@
+{
+  "caseId": "skill-mcp",
+  "status": "completed",
+  "receipt": {
+    "operationId": "skill-mcp-5",
+    "fileId": "sha256:a3b6c115b4be6944c3d34d3631e0037e8c50cf1555ea50b6cb4e7faef112a48a",
+    "path": "report.md",
+    "sha256": "a3b6c115b4be6944c3d34d3631e0037e8c50cf1555ea50b6cb4e7faef112a48a",
+    "bytes": 785,
+    "mediaType": "text/markdown; charset=utf-8"
+  },
+  "toolsDispatched": 5,
+  "rounds": 6,
+  "semanticStatus": "unreviewed",
+  "observation": "EV-214",
+  "mcpClosed": true,
+  "manifestSha256": "584f7dfbfbfef404a199a0742d5885b6a266e645eaaef4299f9f6ea08e519e2c",
+  "sources": [
+    {
+      "sourceId": "atlas-a@A-2026-01:p1",
+      "documentId": "atlas-a",
+      "name": "Atlas Notes synthetic guide",
+      "version": "A-2026-01",
+      "page": 1,
+      "sha256": "948ef1fc240590b97eb97b9f5a9e74eac4136ff14983bc7102dfc91eabad30a0",
+      "mediaType": "text/plain; charset=utf-8",
+      "mcp": {
+        "serverName": "open-etf-synthetic-pages",
+        "protocolVersion": "2025-11-25",
+        "protocolRequestId": 3,
+        "modelCallId": "skill-mcp-3"
+      }
+    },
+    {
+      "sourceId": "atlas-b@B-2026-02:p1",
+      "documentId": "atlas-b",
+      "name": "Atlas Notes synthetic guide",
+      "version": "B-2026-02",
+      "page": 1,
+      "sha256": "a25c6c264eb82e4f4472028726e5c140a3ef9e082ca8ed3427c9e894d5a54f2d",
+      "mediaType": "text/plain; charset=utf-8",
+      "mcp": {
+        "serverName": "open-etf-synthetic-pages",
+        "protocolVersion": "2025-11-25",
+        "protocolRequestId": 4,
+        "modelCallId": "skill-mcp-4"
+      }
+    }
+  ],
+  "methods": [
+    {
+      "id": "compare",
+      "name": "compare-guides",
+      "sha256": "f5dddc14e6deb9f0308bd1360794f343870cb31f2924f533370b6eb650d77754",
+      "version": "sha256:f5dddc14e6deb9f0308bd1360794f343870cb31f2924f533370b6eb650d77754",
+      "mediaType": "text/markdown; charset=utf-8"
+    }
+  ]
+}

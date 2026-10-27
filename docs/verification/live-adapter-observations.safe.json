@@ -1,0 +1,326 @@
+{
+  "note": "Actual local test logs retained ignored. Hashes attest original logs; these are portable summaries, not raw logs.",
+  "stages": [
+    {
+      "stage": "config-green",
+      "exitCode": 0,
+      "counts": {
+        "tests": 6,
+        "pass": 6,
+        "fail": 0
+      },
+      "originalLogSha256": "dc28507630ca9ecfa1177c7d92cd76a12a715e5f3f43a7e1e8f8bdd89108f713"
+    },
+    {
+      "stage": "config-red",
+      "exitCode": 1,
+      "counts": {
+        "tests": 6,
+        "pass": 0,
+        "fail": 6
+      },
+      "originalLogSha256": "e44e6eb7589869aa9974ccc9179c83b2f255ab4b2e003106ef8809d0da67571a"
+    },
+    {
+      "stage": "pinned-harness-offline",
+      "exitCode": 0,
+      "counts": {
+        "tests": 2,
+        "pass": 2,
+        "fail": 0
+      },
+      "originalLogSha256": "312c7f55812f3ed427de327754b19c2be65f769257c2ee777b9a019a33327106"
+    },
+    {
+      "stage": "trace-final-green",
+      "exitCode": 0,
+      "counts": {
+        "tests": 17,
+        "pass": 17,
+        "fail": 0
+      },
+      "originalLogSha256": "236aec70f4aef0dfa46a457a1f8a59e02dbb366f2ba0df08e626afacaf223935"
+    },
+    {
+      "stage": "trace-green",
+      "exitCode": 0,
+      "counts": {
+        "tests": 16,
+        "pass": 16,
+        "fail": 0
+      },
+      "originalLogSha256": "792947fe8ab13b0703a78458813c82f412ca763751ac1c2d534cdc6ef9deb69c"
+    },
+    {
+      "stage": "trace-invalid-red",
+      "exitCode": 1,
+      "counts": {
+        "tests": 1,
+        "pass": 0,
+        "fail": 1
+      },
+      "originalLogSha256": "d2d8682dab237e8373dd28a2039c2256863b2153554b3079e51a58c62cf9902c"
+    },
+    {
+      "stage": "trace-red",
+      "exitCode": 1,
+      "counts": {
+        "tests": 2,
+        "pass": 0,
+        "fail": 2
+      },
+      "originalLogSha256": "d52637a11e631230d3c3e7a883ea2463af73a36ff57a778750f91977274cfb09"
+    },
+    {
+      "stage": "transport-green",
+      "exitCode": 0,
+      "counts": {
+        "tests": 11,
+        "pass": 11,
+        "fail": 0
+      },
+      "originalLogSha256": "625ab83eb34ad9d45727fb0822e08d61e6ce70ab03909a39fccd362a60e0319e"
+    },
+    {
+      "stage": "transport-red",
+      "exitCode": 1,
+      "counts": {
+        "tests": 5,
+        "pass": 0,
+        "fail": 5
+      },
+      "originalLogSha256": "b40732490b39c0487ba7ec5c56b2374b9fa45870bf7b01f7bd79db24e11fe96a"
+    },
+    {
+      "stage": "unknown-green",
+      "exitCode": 0,
+      "counts": {
+        "tests": 12,
+        "pass": 12,
+        "fail": 0
+      },
+      "originalLogSha256": "394137d23c638ca2d562f776aac0c13ab3df5f45bbd658ac4681086429b6bfb0"
+    },
+    {
+      "stage": "unknown-red",
+      "exitCode": 1,
+      "counts": {
+        "tests": 1,
+        "pass": 0,
+        "fail": 1
+      },
+      "originalLogSha256": "334ee54b076e13b4574d91e1a0fd44b5c974480098e7be4faffe892221079be5"
+    },
+    {
+      "stage": "full-green",
+      "exitCode": 0,
+      "counts": {
+        "tests": 141,
+        "pass": 141,
+        "fail": 0
+      },
+      "originalLogSha256": "420090b19d337f99a5aad72ba7be8753b3ace1dd225b72c5ffbd679c7f8d2c8f"
+    },
+    {
+      "stage": "build",
+      "exitCode": 0,
+      "counts": {},
+      "originalLogSha256": "cc47b3c7ea0be9e58d1ccd722db0a400df8eb44348f4885365d776ae6086ec10"
+    },
+    {
+      "stage": "kit-plan",
+      "exitCode": 0,
+      "result": {
+        "change": "v05-live-configuration",
+        "stage": "plan",
+        "issues": [],
+        "structuralOnly": true,
+        "semanticQuality": "unverified"
+      },
+      "originalLogSha256": "3749e4d1c97b94c74815f28529353f097e95d848adbd4ed311f484768f79003f"
+    },
+    {
+      "stage": "kit-apply",
+      "exitCode": 0,
+      "result": {
+        "change": "v05-live-configuration",
+        "stage": "apply",
+        "issues": [],
+        "structuralOnly": true,
+        "semanticQuality": "unverified"
+      },
+      "originalLogSha256": "35ca8fdbed095a69c8f7dffca84a18c74f28a499d474c0f377b7fcd20780b582"
+    },
+    {
+      "stage": "kit-status",
+      "exitCode": 0,
+      "result": {
+        "change": "v05-live-configuration",
+        "tasks": {
+          "total": 4,
+          "completed": 2
+        },
+        "completion": "not-recorded",
+        "issues": [],
+        "rerun": false,
+        "semanticQuality": "unverified",
+        "release": "not-claimed"
+      },
+      "originalLogSha256": "5e5327c20628f827d63e1f1d80eb39be2e4fe95f0c67ad2b9fcf040ba021eb49"
+    },
+    {
+      "stage": "kit-verify",
+      "exitCode": 1,
+      "result": {
+        "status": "refused",
+        "issues": [
+          "incomplete task 5.10",
+          "incomplete task 5.11"
+        ]
+      },
+      "originalLogSha256": "a46562850ea0ad97bcee352c7dec17be3837d6fe84e328c77308f03182baf480"
+    },
+    {
+      "stage": "portable-red",
+      "exitCode": 1,
+      "counts": {
+        "tests": 7,
+        "pass": 2,
+        "fail": 5
+      },
+      "originalLogSha256": "110e93f5573bed696eedb869fbd7f1bf104f56dda813e87608cd970e9c495d61"
+    },
+    {
+      "stage": "portable-green",
+      "exitCode": 0,
+      "counts": {
+        "tests": 22,
+        "pass": 22,
+        "fail": 0
+      },
+      "originalLogSha256": "75c8e7c117c887cef420739e0af3c159f8a7a3e5ef5bc38e2a5f380bda04a37c"
+    },
+    {
+      "stage": "portable-independent-green",
+      "exitCode": 0,
+      "counts": {
+        "tests": 23,
+        "pass": 23,
+        "fail": 0
+      },
+      "originalLogSha256": "1c512a998470df74a53e596269398c1f7c41e69a05a0a8c3f9c3184227373d2c"
+    },
+    {
+      "stage": "portable-full-green",
+      "exitCode": 0,
+      "counts": {
+        "tests": 147,
+        "pass": 147,
+        "fail": 0
+      },
+      "originalLogSha256": "38ef1554dc425ec4b8d6a51ee6bcb3c017fb39403346303cbd6458d392ccc8f5"
+    },
+    {
+      "stage": "portable-build",
+      "exitCode": 0,
+      "counts": {},
+      "originalLogSha256": "cc47b3c7ea0be9e58d1ccd722db0a400df8eb44348f4885365d776ae6086ec10"
+    },
+    {
+      "stage": "portable-kit-plan",
+      "exitCode": 0,
+      "result": {
+        "change": "v05-live-configuration",
+        "stage": "plan",
+        "issues": [],
+        "structuralOnly": true,
+        "semanticQuality": "unverified"
+      },
+      "originalLogSha256": "3749e4d1c97b94c74815f28529353f097e95d848adbd4ed311f484768f79003f"
+    },
+    {
+      "stage": "portable-kit-apply",
+      "exitCode": 1,
+      "result": {
+        "change": "v05-live-configuration",
+        "stage": "apply",
+        "issues": [
+          "task 5.10: missing ordered CHECK observation with a local artifact"
+        ],
+        "structuralOnly": true,
+        "semanticQuality": "unverified"
+      },
+      "originalLogSha256": "43229dcbf5f343e09c5f2fb6ae6ee4e822d869884f76a0e750482890bc1a26b6"
+    },
+    {
+      "stage": "portable-kit-apply-corrected",
+      "exitCode": 0,
+      "result": {
+        "change": "v05-live-configuration",
+        "stage": "apply",
+        "issues": [],
+        "structuralOnly": true,
+        "semanticQuality": "unverified"
+      },
+      "originalLogSha256": "35ca8fdbed095a69c8f7dffca84a18c74f28a499d474c0f377b7fcd20780b582"
+    },
+    {
+      "stage": "final-kit-lint",
+      "exitCode": 0,
+      "result": {
+        "change": "v05-live-configuration",
+        "stage": "apply",
+        "issues": [],
+        "structuralOnly": true,
+        "semanticQuality": "unverified"
+      },
+      "originalLogSha256": "35ca8fdbed095a69c8f7dffca84a18c74f28a499d474c0f377b7fcd20780b582"
+    },
+    {
+      "stage": "final-kit-status",
+      "exitCode": 0,
+      "result": {
+        "change": "v05-live-configuration",
+        "tasks": {
+          "total": 4,
+          "completed": 4
+        },
+        "completion": "not-recorded",
+        "issues": [],
+        "rerun": false,
+        "semanticQuality": "unverified",
+        "release": "not-claimed"
+      },
+      "originalLogSha256": "b96b31f5fadd4c936a20723a000a456cf2d2484461d404e2b7245c0b39043888"
+    },
+    {
+      "stage": "final-kit-verify",
+      "exitCode": 1,
+      "result": {
+        "status": "stale",
+        "generated": false,
+        "rerun": false
+      },
+      "originalLogSha256": "738325e3f4a3fefd563de821a31554d9ed266f76618718abef2be83665bf9487"
+    },
+    {
+      "stage": "kit-normal-generate",
+      "exitCode": 0,
+      "result": {
+        "status": "written",
+        "rerun": false
+      },
+      "originalLogSha256": "c92d1da0fd4a95ec23628000b15875ca13e7d323a47f2e168212f5e95841d0d1"
+    },
+    {
+      "stage": "kit-normal-check",
+      "exitCode": 0,
+      "result": {
+        "status": "current",
+        "generated": true,
+        "rerun": false
+      },
+      "originalLogSha256": "ed3c44cde7364d748d85106e381b55d502c75cba52321f2e35261bfeb90a987e"
+    }
+  ]
+}

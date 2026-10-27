@@ -1,0 +1,352 @@
+{
+  "synthetic": true,
+  "semanticStatus": "unreviewed",
+  "postExitReportHashesChecked": true,
+  "demos": [
+    {
+      "demo": "demo",
+      "runs": [
+        {
+          "caseId": "T1",
+          "status": "completed",
+          "semanticStatus": "unreviewed",
+          "rootUsage": {
+            "model": 4,
+            "tool": 3
+          },
+          "receipt": {
+            "operationId": "T1-step-3",
+            "fileId": "sha256:67243fa3c98c7d9015cb7f8148f6d11504a542994a541e279a24b12e50ade2c5",
+            "path": "report.md",
+            "sha256": "67243fa3c98c7d9015cb7f8148f6d11504a542994a541e279a24b12e50ade2c5",
+            "bytes": 933,
+            "mediaType": "text/markdown; charset=utf-8"
+          },
+          "originalSourceRefs": [
+            "result:sha256:d7dd8e8ecb2d6deb3cceff5b10d6ca5694371e061b2af49cd5ec4f0e76da0b0a",
+            "result:sha256:9b093eab344ca1b18ced5ab587c53320ee3289d19c1a8b0232b626c9013a9ea5"
+          ],
+          "adoptedNotes": []
+        },
+        {
+          "caseId": "T2",
+          "status": "completed",
+          "semanticStatus": "unreviewed",
+          "rootUsage": {
+            "model": 4,
+            "tool": 3
+          },
+          "receipt": {
+            "operationId": "T2-step-3",
+            "fileId": "sha256:291fad0455325edf90fc627fff039f667a8e5740a378ff30d09f0db214f97258",
+            "path": "report.md",
+            "sha256": "291fad0455325edf90fc627fff039f667a8e5740a378ff30d09f0db214f97258",
+            "bytes": 937,
+            "mediaType": "text/markdown; charset=utf-8"
+          },
+          "originalSourceRefs": [
+            "result:sha256:9ee1138473d69424883273c48edaaa933a71ff41185b73d889ea64f74c2c0a31",
+            "result:sha256:e6258d712555e5af22388c4c667975c95b2891b275b8df1d018ba29d203eb457"
+          ],
+          "adoptedNotes": []
+        },
+        {
+          "caseId": "T3",
+          "status": "completed",
+          "semanticStatus": "unreviewed",
+          "rootUsage": {
+            "model": 5,
+            "tool": 4
+          },
+          "receipt": {
+            "operationId": "T3-step-4",
+            "fileId": "sha256:3162819a5e8eda1656bbcf089546719796253e2bc3de5a0d240d33355bf65171",
+            "path": "report.md",
+            "sha256": "3162819a5e8eda1656bbcf089546719796253e2bc3de5a0d240d33355bf65171",
+            "bytes": 1578,
+            "mediaType": "text/markdown; charset=utf-8"
+          },
+          "originalSourceRefs": [
+            "result:sha256:d7dd8e8ecb2d6deb3cceff5b10d6ca5694371e061b2af49cd5ec4f0e76da0b0a",
+            "result:sha256:9b093eab344ca1b18ced5ab587c53320ee3289d19c1a8b0232b626c9013a9ea5"
+          ],
+          "adoptedNotes": []
+        },
+        {
+          "caseId": "T4",
+          "status": "completed",
+          "semanticStatus": "unreviewed",
+          "rootUsage": {
+            "model": 4,
+            "tool": 3
+          },
+          "receipt": {
+            "operationId": "T4-step-3",
+            "fileId": "sha256:ca0d119ce116be1e13780fd145a9e6f252dfe450a006ce8ce085c474b0f4ea35",
+            "path": "report.md",
+            "sha256": "ca0d119ce116be1e13780fd145a9e6f252dfe450a006ce8ce085c474b0f4ea35",
+            "bytes": 933,
+            "mediaType": "text/markdown; charset=utf-8"
+          },
+          "originalSourceRefs": [
+            "result:sha256:d7dd8e8ecb2d6deb3cceff5b10d6ca5694371e061b2af49cd5ec4f0e76da0b0a",
+            "result:sha256:9b093eab344ca1b18ced5ab587c53320ee3289d19c1a8b0232b626c9013a9ea5"
+          ],
+          "adoptedNotes": []
+        }
+      ]
+    },
+    {
+      "demo": "demo-skill-mcp",
+      "runs": [
+        {
+          "caseId": "skill-mcp",
+          "status": "completed",
+          "semanticStatus": "unreviewed",
+          "rootUsage": {
+            "model": 6,
+            "tool": 5
+          },
+          "receipt": {
+            "operationId": "skill-mcp-5",
+            "fileId": "sha256:6422cf85cf33e47f2ada20ae8dd85191b6939a62a754ed53ce3265af9a22493f",
+            "path": "report.md",
+            "sha256": "6422cf85cf33e47f2ada20ae8dd85191b6939a62a754ed53ce3265af9a22493f",
+            "bytes": 953,
+            "mediaType": "text/markdown; charset=utf-8"
+          },
+          "originalSourceRefs": [
+            "result:sha256:d7dd8e8ecb2d6deb3cceff5b10d6ca5694371e061b2af49cd5ec4f0e76da0b0a",
+            "result:sha256:9b093eab344ca1b18ced5ab587c53320ee3289d19c1a8b0232b626c9013a9ea5"
+          ],
+          "adoptedNotes": []
+        }
+      ]
+    },
+    {
+      "demo": "demo-batch-read",
+      "runs": [
+        {
+          "caseId": "batch-read",
+          "status": "completed",
+          "semanticStatus": "unreviewed",
+          "rootUsage": {
+            "model": 3,
+            "tool": 4
+          },
+          "receipt": {
+            "operationId": "main-save",
+            "fileId": "sha256:64ab2dfa9f08eef9d243c336e307a021c7ef8fffbe4a138bf0303afb7eead4ff",
+            "path": "report.md",
+            "sha256": "64ab2dfa9f08eef9d243c336e307a021c7ef8fffbe4a138bf0303afb7eead4ff",
+            "bytes": 951,
+            "mediaType": "text/markdown; charset=utf-8"
+          },
+          "originalSourceRefs": [
+            "result:sha256:d7dd8e8ecb2d6deb3cceff5b10d6ca5694371e061b2af49cd5ec4f0e76da0b0a",
+            "result:sha256:9b093eab344ca1b18ced5ab587c53320ee3289d19c1a8b0232b626c9013a9ea5"
+          ],
+          "adoptedNotes": []
+        }
+      ]
+    },
+    {
+      "demo": "demo-fixture-child",
+      "runs": [
+        {
+          "caseId": "fixture-child",
+          "status": "completed",
+          "semanticStatus": "unreviewed",
+          "rootUsage": {
+            "model": 6,
+            "tool": 4
+          },
+          "receipt": {
+            "operationId": "main-save",
+            "fileId": "sha256:54463149ca42d7bb39104695e17963be61c3203d1069e223e6b05976f66e6004",
+            "path": "report.md",
+            "sha256": "54463149ca42d7bb39104695e17963be61c3203d1069e223e6b05976f66e6004",
+            "bytes": 954,
+            "mediaType": "text/markdown; charset=utf-8"
+          },
+          "originalSourceRefs": [
+            "result:sha256:d7dd8e8ecb2d6deb3cceff5b10d6ca5694371e061b2af49cd5ec4f0e76da0b0a",
+            "result:sha256:9b093eab344ca1b18ced5ab587c53320ee3289d19c1a8b0232b626c9013a9ea5"
+          ],
+          "adoptedNotes": []
+        }
+      ]
+    },
+    {
+      "demo": "demo-retrieve-reread",
+      "runs": [
+        {
+          "caseId": "retrieve-reread",
+          "status": "completed",
+          "semanticStatus": "unreviewed",
+          "rootUsage": {
+            "model": 6,
+            "tool": 5
+          },
+          "receipt": {
+            "operationId": "retrieve-5",
+            "fileId": "sha256:009d3f77cf5208b2260e4dde2cbdcd21288b4fd600899eb2b0f7a827f0e3c016",
+            "path": "report.md",
+            "sha256": "009d3f77cf5208b2260e4dde2cbdcd21288b4fd600899eb2b0f7a827f0e3c016",
+            "bytes": 1348,
+            "mediaType": "text/markdown; charset=utf-8"
+          },
+          "originalSourceRefs": [
+            "result:sha256:9ee1138473d69424883273c48edaaa933a71ff41185b73d889ea64f74c2c0a31",
+            "result:sha256:e6258d712555e5af22388c4c667975c95b2891b275b8df1d018ba29d203eb457"
+          ],
+          "adoptedNotes": []
+        }
+      ]
+    },
+    {
+      "demo": "demo-compact-and-reread",
+      "runs": [
+        {
+          "caseId": "compact-and-reread",
+          "status": "completed",
+          "semanticStatus": "unreviewed",
+          "rootUsage": {
+            "model": 18,
+            "tool": 9
+          },
+          "receipt": {
+            "operationId": "save-comparison",
+            "fileId": "sha256:c8fcdc248076d65c01d9161d95dc18f690bc4f877c307cccd8e983e351a02d26",
+            "path": "report.md",
+            "sha256": "c8fcdc248076d65c01d9161d95dc18f690bc4f877c307cccd8e983e351a02d26",
+            "bytes": 992,
+            "mediaType": "text/markdown; charset=utf-8"
+          },
+          "originalSourceRefs": [
+            "result:sha256:d7dd8e8ecb2d6deb3cceff5b10d6ca5694371e061b2af49cd5ec4f0e76da0b0a",
+            "result:sha256:9b093eab344ca1b18ced5ab587c53320ee3289d19c1a8b0232b626c9013a9ea5"
+          ],
+          "adoptedNotes": [
+            {
+              "noteRef": "note:sha256:8ddc9efadcfb452cb1f0133315387d20a571852dec5e8a4557d0960c0689ba21",
+              "beforeBytes": 3554,
+              "afterBytes": 3007
+            },
+            {
+              "noteRef": "note:sha256:023e6febf5a3d280017bcb8f0a5bbc5b7cc8f9e323862c96eb6c56beadb744f3",
+              "beforeBytes": 4401,
+              "afterBytes": 3015
+            },
+            {
+              "noteRef": "note:sha256:ce8784c88ef89a384cd82e6144dd95366fcded0722a89b311ca0cb7dc6b70c44",
+              "beforeBytes": 5256,
+              "afterBytes": 3039
+            },
+            {
+              "noteRef": "note:sha256:6e664bc7e2fa426310254d3eec72767ad50f62b3ccd80a7dbc9fcec8d8ff1972",
+              "beforeBytes": 7222,
+              "afterBytes": 4166
+            },
+            {
+              "noteRef": "note:sha256:5bed3d3d425651b28e68134c239599339b8568dba4c67cace179592aaa6b52d4",
+              "beforeBytes": 8138,
+              "afterBytes": 3136
+            },
+            {
+              "noteRef": "note:sha256:7639776eab9db4e654242c396357123191f0accde181a83781019bf51ac91592",
+              "beforeBytes": 9187,
+              "afterBytes": 3287
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "demo": "demo-explicit-memory",
+      "runs": [
+        {
+          "caseId": "demo-explicit-memory",
+          "status": "completed",
+          "semanticStatus": "unreviewed",
+          "rootUsage": {
+            "model": 3,
+            "tool": 2
+          },
+          "receipt": null,
+          "adoptedNotes": []
+        },
+        {
+          "caseId": "demo-explicit-memory",
+          "status": "completed",
+          "semanticStatus": "unreviewed",
+          "rootUsage": {
+            "model": 3,
+            "tool": 2
+          },
+          "receipt": null,
+          "adoptedNotes": []
+        },
+        {
+          "caseId": "demo-explicit-memory",
+          "status": "completed",
+          "semanticStatus": "unreviewed",
+          "rootUsage": {
+            "model": 6,
+            "tool": 5
+          },
+          "receipt": {
+            "operationId": "save-report",
+            "fileId": "sha256:0f4ea5fdd0dbb4a1f48d1c68331c926fd6f851302600a932c9dcf9ad9fc23e60",
+            "path": "report.md",
+            "sha256": "0f4ea5fdd0dbb4a1f48d1c68331c926fd6f851302600a932c9dcf9ad9fc23e60",
+            "bytes": 884,
+            "mediaType": "text/markdown; charset=utf-8"
+          },
+          "originalSourceRefs": [
+            "result:sha256:d7dd8e8ecb2d6deb3cceff5b10d6ca5694371e061b2af49cd5ec4f0e76da0b0a",
+            "result:sha256:9b093eab344ca1b18ced5ab587c53320ee3289d19c1a8b0232b626c9013a9ea5"
+          ],
+          "adoptedNotes": []
+        }
+      ],
+      "memory": {
+        "libraryId": "23a64313-7a67-4563-b4da-37482c4d09f9",
+        "entryId": "613850eb-d558-4e96-a725-e337623f1070",
+        "receipts": [
+          {
+            "kind": "memory-write-receipt",
+            "libraryId": "23a64313-7a67-4563-b4da-37482c4d09f9",
+            "id": "613850eb-d558-4e96-a725-e337623f1070",
+            "revision": 1,
+            "sha256": "8b4e6e816970e3d6198a1d3ca99a8342a96e5441f8131e01ce0dda9342d3d97d",
+            "operation": "saved",
+            "intentId": "demo-c9b9d0e6-9779-4674-96fc-8c5b2d06458a-save",
+            "recordHash": "02198c38708698d8de78ebd10f278a6c69049ff74319ec1308e569882edd41ff"
+          },
+          {
+            "kind": "memory-write-receipt",
+            "libraryId": "23a64313-7a67-4563-b4da-37482c4d09f9",
+            "id": "613850eb-d558-4e96-a725-e337623f1070",
+            "revision": 2,
+            "sha256": "57953771f587223cc3e87793da00ae05aa25994a799692c1d4fbe8f441fe3c66",
+            "operation": "revised",
+            "intentId": "demo-c9b9d0e6-9779-4674-96fc-8c5b2d06458a-revise",
+            "recordHash": "6756ed0cb87a38b16b719d4835ff3e50be67cd16d7026aa9e8d0132d80657f2c"
+          },
+          {
+            "kind": "memory-write-receipt",
+            "libraryId": "23a64313-7a67-4563-b4da-37482c4d09f9",
+            "id": "613850eb-d558-4e96-a725-e337623f1070",
+            "revision": 3,
+            "sha256": null,
+            "operation": "forgotten",
+            "intentId": "demo-c9b9d0e6-9779-4674-96fc-8c5b2d06458a-forget",
+            "recordHash": "35beccfffbe00ab3c0592ef6f14254205182c61b2e6f442357baa7e613d86877"
+          }
+        ],
+        "currentActiveCount": 0
+      }
+    }
+  ]
+}

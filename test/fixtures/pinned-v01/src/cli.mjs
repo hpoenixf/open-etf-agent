@@ -1,0 +1,41 @@
+import { readFile } from 'node:fs/promises';
+import { run } from './runtime.mjs';
+import { createFixtureGateway } from './fixture-gateway.mjs';
+
+async function main(args) {
+  const options = { case: 'document-compare', output: 'runs', live: false };
+  const seen = new Set();
+  for (let i = 0; i < args.length; i++) {
+    const arg = args[i];
+    if (seen.has(arg)) throw new Error('INVALID_ARGUMENT: duplicate option'); seen.add(arg);
+    if (arg === '--live') { options.live = true; continue; }
+    if (!['--case', '--output'].includes(arg) || !args[i + 1] || args[i + 1].startsWith('--')) throw new Error('INVALID_ARGUMENT: --case and --output need values; only --live is a flag');
+    options[arg.slice(2)] = args[++i];
+  }
+  if (options.live) throw new Error('LIVE_BLOCKED: provider/model, synthetic-data scope and fee authorization have not been approved for this public project; no network request was made');
+  if (!['document-compare', 'T1', 'T2', 'T3', 'T4'].includes(options.case)) throw new Error('INVALID_ARGUMENT: unsupported case');
+  const definitions = JSON.parse(await readFile(new URL('../fixtures/cases.json', import.meta.url), 'utf8'));
+  const controller = new AbortController(); const cancel = () => controller.abort();
+  process.on('SIGINT', cancel); process.on('SIGTERM', cancel);
+  const cases = [];
+  try {
+    for (const c of definitions.cases) {
+      if (options.case !== 'document-compare' && options.case !== c.id) {
+        cases.push({ caseId: c.id, question: c.question, status: 'not-run', semanticStatus: 'unreviewed', httpDownload: 'not-applicable' }); continue;
+      }
+      if (controller.signal.aborted) {
+        cases.push({ caseId: c.id, question: c.question, status: 'not-run', reason: 'cancelled', semanticStatus: 'unreviewed', httpDownload: 'not-applicable' }); continue;
+      }
+      try {
+        const result = await run({ question: c.question, gateway: createFixtureGateway(c.id), outputRoot: options.output, requireReport: true, signal: controller.signal });
+        cases.push({ caseId: c.id, question: c.question, expected: c.expected, mode: 'fixture', ...result, httpDownload: 'not-applicable' });
+      } catch {
+        cases.push({ caseId: c.id, question: c.question, status: 'failed', code: 'RUN_SETUP_FAILED', semanticStatus: 'unreviewed', httpDownload: 'not-applicable' });
+      }
+    }
+  } finally { process.off('SIGINT', cancel); process.off('SIGTERM', cancel); }
+  process.stdout.write(JSON.stringify({ mode: 'fixture', denominator: definitions.denominator, cases }, null, 2) + '\n');
+  if (cases.some(c => c.status === 'failed' || c.status === 'cancelled') || controller.signal.aborted) process.exitCode = 1;
+}
+try { await main(process.argv.slice(2)); }
+catch (error) { process.stderr.write(error.message + '\n'); process.exitCode = 2; }

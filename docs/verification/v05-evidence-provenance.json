@@ -1,0 +1,170 @@
+{
+  "kind": "actual local artifact hashes; raw logs excluded",
+  "artifacts": [
+    {
+      "basename": "cli-first-green.txt",
+      "sha256": "75a71ba7d75fb6265830f45af6b0f59558149f4e9c49df87b0452bea6b7d530a",
+      "summary": "docs/verification/v05-observations.md"
+    },
+    {
+      "basename": "cli-red.txt",
+      "sha256": "15099a49c1e9323f85eda09f6cb857fcc0d41b46340a99eb6e145f45d10f34ce",
+      "summary": "docs/verification/v05-observations.md"
+    },
+    {
+      "basename": "core-bounds-green.txt",
+      "sha256": "83bac85486cc423425d20c31750730c3c70a91b82656c32001aa38c463473fba",
+      "summary": "docs/verification/v05-observations.md"
+    },
+    {
+      "basename": "core-first-green.txt",
+      "sha256": "dfc858d1e9d2fdb43855b6bf4d3e52b97e90673851fe8649baa375125b3e88bb",
+      "summary": "docs/verification/v05-observations.md"
+    },
+    {
+      "basename": "final-review-green.txt",
+      "sha256": "700ae1fa855d9c8507bd1212f12c6c8ae73a9e76c00fc0ae0e02b6666ae96c35",
+      "summary": "docs/verification/v05-observations.md"
+    },
+    {
+      "basename": "final-review-red.txt",
+      "sha256": "69b24eaec93791b9d9ba0da576c2511a6380e2d170f61f54813f145ed36f862a",
+      "summary": "docs/verification/v05-observations.md"
+    },
+    {
+      "basename": "full-test.txt",
+      "sha256": "1741053e75e9fb6f8ff5ba6400e48f5c92f48b475cecd0132460d6682bebcf19",
+      "summary": "docs/verification/v05-observations.md"
+    },
+    {
+      "basename": "independent-build.txt",
+      "sha256": "4f3052591757394b7eb8d620b28157b8c20d3e460808d3ecd7f2e7b8d767d086",
+      "summary": "docs/verification/v05-observations.md"
+    },
+    {
+      "basename": "independent-ci.txt",
+      "sha256": "adcf84617f30a9d5375852dcfd3545b1f57ed5c542f33d3cf85987af5dc51189",
+      "summary": "docs/verification/v05-observations.md"
+    },
+    {
+      "basename": "independent-demo-batch-read.txt",
+      "sha256": "c5e1476771403fd70498d6c6f9fa424a1160f75b05c370b9bba42d25f1c6ef0f",
+      "summary": "docs/verification/v05-observations.md"
+    },
+    {
+      "basename": "independent-demo-compact-and-reread.txt",
+      "sha256": "3887744720cd780b406eab4e5c110ac296048b633ece6b7e87710f46c336c0c7",
+      "summary": "docs/verification/v05-observations.md"
+    },
+    {
+      "basename": "independent-demo-explicit-memory.txt",
+      "sha256": "6dd8f9d52e6b721cb134f91281f40a880908061a69edabf61d5bfe6b991bf350",
+      "summary": "docs/verification/v05-observations.md"
+    },
+    {
+      "basename": "independent-demo-fixture-child.txt",
+      "sha256": "12b3215ac2a85848ef59b3ad5dd749b1fe6cb873340062ecb4dcd16767c45e52",
+      "summary": "docs/verification/v05-observations.md"
+    },
+    {
+      "basename": "independent-demo-retrieve-reread.txt",
+      "sha256": "af8c352ccaa15f6d4743fea62c1e7aab215b7ca7af9f2bd82193af27499e1800",
+      "summary": "docs/verification/v05-observations.md"
+    },
+    {
+      "basename": "independent-demo-skill-mcp.txt",
+      "sha256": "166ee1d5af13e89fcfa549e3002cecb6a322edf2538cd0da56bd820824308b88",
+      "summary": "docs/verification/v05-observations.md"
+    },
+    {
+      "basename": "independent-demo.txt",
+      "sha256": "7bd2db759322bc8eaddc8b16ae01389311d0c78dc00bbeece44834eb81ddf254",
+      "summary": "docs/verification/v05-observations.md"
+    },
+    {
+      "basename": "independent-test.txt",
+      "sha256": "f6641aa5ec4b08bf58a196218846a13d334a435fa9f040f9a671fafe35f33c70",
+      "summary": "docs/verification/v05-observations.md"
+    },
+    {
+      "basename": "initial-red.txt",
+      "sha256": "9d6e26f41c02e701e3ce8e4d9985222d5b0a273a21270ca95a6294034d8f7b80",
+      "summary": "docs/verification/v05-observations.md"
+    },
+    {
+      "basename": "integration-first-green.txt",
+      "sha256": "b4255cac748ac81b5deaec3358fcbfec6659ec20c928af6474829f9313a31e71",
+      "summary": "docs/verification/v05-observations.md"
+    },
+    {
+      "basename": "integration-red.txt",
+      "sha256": "37aeb0d83b9f1d67f2de001a9e3c72330fc859d8b1292c7daf171ab474fff409",
+      "summary": "docs/verification/v05-observations.md"
+    },
+    {
+      "basename": "note-scope-red.txt",
+      "sha256": "f39f74cde834e4ea177b22a693cf1bb2e7e6da39627e232edbed41623f36a5a1",
+      "summary": "docs/verification/v05-observations.md"
+    },
+    {
+      "basename": "npm-ci.txt",
+      "sha256": "adcf84617f30a9d5375852dcfd3545b1f57ed5c542f33d3cf85987af5dc51189",
+      "summary": "docs/verification/v05-observations.md"
+    },
+    {
+      "basename": "review-bounds-red.txt",
+      "sha256": "7423965af42fe12bff68150e571cf5fcde12d919dcbdd434f7e7cf83254e1c1e",
+      "summary": "docs/verification/v05-observations.md"
+    },
+    {
+      "basename": "runtime-note-red.txt",
+      "sha256": "4716174dad5b7107b83cedf31d660905ed629e5d57945071896327d166f94084",
+      "summary": "docs/verification/v05-observations.md"
+    },
+    {
+      "basename": "working-input-final-green.txt",
+      "sha256": "9e4303f54ba9683332d3bda6765e73a158595e49154c3e7b7b9c666e3d77b467",
+      "summary": "docs/verification/v05-observations.md"
+    },
+    {
+      "basename": "working-input-green.txt",
+      "sha256": "76b4c8e3d49e145755a4ad82a389cb10ed7f0e85b68d69fea1ab71d800609668",
+      "summary": "docs/verification/v05-observations.md"
+    },
+    {
+      "basename": "kit-apply.txt",
+      "sha256": "4716e8cf99d047782158719881357754c80f6f124d62a8804f8b0bc269bdc1d2",
+      "summary": "docs/verification/v05-observations.md"
+    },
+    {
+      "basename": "kit-final-lint.txt",
+      "sha256": "4716e8cf99d047782158719881357754c80f6f124d62a8804f8b0bc269bdc1d2",
+      "summary": "docs/verification/v05-observations.md"
+    },
+    {
+      "basename": "kit-final-status.txt",
+      "sha256": "5a5b7e5fbc9224b2e9c7946f9445cd4d73041f634f0496acca3cc4cc63c8f6bd",
+      "summary": "docs/verification/v05-observations.md"
+    },
+    {
+      "basename": "kit-final-verify.txt",
+      "sha256": "5a586ee5fdc4331341503ed73215e4806ed308744a3a38b7f8139740676ed415",
+      "summary": "docs/verification/v05-observations.md"
+    },
+    {
+      "basename": "kit-plan.txt",
+      "sha256": "5d2064f520c9219c1ac9001fcedc9f17f1ac178979d7b178b0fb1c1eebd98328",
+      "summary": "docs/verification/v05-observations.md"
+    },
+    {
+      "basename": "kit-status.txt",
+      "sha256": "0fbeb32772d2e3d6f2138c5de0da761bcb03f657dfbacf19bae3abfe3fb3c359",
+      "summary": "docs/verification/v05-observations.md"
+    },
+    {
+      "basename": "kit-verify.txt",
+      "sha256": "234151eefd9a0eba18c0f10c18eca5a8070bcdcac4f296bcffec47d1d3af89f7",
+      "summary": "docs/verification/v05-observations.md"
+    }
+  ]
+}
