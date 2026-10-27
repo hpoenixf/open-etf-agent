@@ -1,4 +1,4 @@
-# v1.0 → v2.0：一次做好一个模块
+# 从 v0.8 到 v2.0：CLI 优先，一次做好一个模块
 
 > **状态：planned。** 以下是可裁剪的候选顺序，不是已实现清单、发布日期或正式 Release 承诺。实际覆盖以 README 现状表及其引用的统一能力清单为准，本页不另维护一份覆盖表。
 
@@ -7,13 +7,27 @@
 Open ETF Agent 延续 ETF Agent 已形成的模块职责、实现经验与文章动因：先找原模块和合同，再提取可以独立运行的最小能力。不是另写一套同名系统，再给它配上一篇文章。
 
 - **一个功能版本，一个主模块。** 可以接通既有消费者，但不借“集成”再增加一组 Owner。Owner 指负责该事实的模块，不意味着新服务或 Manager。
-- **CLI / API 优先。** 用真实文件、HTTP/SSE 客户端和独立进程验证。浏览器界面单独取得资格；API 通过不等于界面通过。
+- **CLI 优先，API 按消费者需要增加。** 先用真实文件和独立进程完成闭环，再增加必要 HTTP/SSE 读取适配。浏览器界面不作前置条件，单独取得资格；API 通过不等于界面通过。
 - **先复用，后加依赖。** 优先现有代码、Node 标准能力、SQLite 和已采用的 SDK。通用底座可用成熟轻量开源替代；具体选择时核对官方 API、许可证和维护状况，不为小需求引入整套平台。
 - **只简化部署，不删核心合同。** 身份、授权、预算、来源、局部失败和未知结果不能随之丢失。模型负责语义判断，Runtime 负责合法执行与真实效果。
 
 [原路线][original-roadmap]中的 Publication、Web、PDF、隔离 Python、合成 ETF、后台执行，应按模块独立完成和验收；可以继续使用 0.10、0.11 等版本，不为一个编号打包交付。既有或已规划的 Decimal、单位、币种、数据截止日与 CSV，不重复算作 1.x 新功能。
 
-## 候选顺序
+## 2026-10-27 调整：先走完当前单模块闭环
+
+已交付的 [v0.8 固定代码][v08] 只包含 Publication：稳定块/投递序号、显式修订 CAS、原回执与 CLI 读取。没有顺带交付 Worker 或 Web。后续路线继续到 2.0，但每一步都先审原 Owner 与失败合同，再写 Spec、实现和必要验证；下列命令意图不是当前可运行命令。
+
+| 候选阶段 | 唯一主模块与最小 CLI 交付 | 明确不含 |
+| --- | --- | --- |
+| **0.9** | **单 Run Worker。** 提交一个有界合成任务，提交进程退出，另一进程以原 Session lease/fence 驱动同一 Runtime；CLI 读回原结果。 | 不建 Task/队列状态机、Scheduler、常驻服务；同 generator 的 background 不是独立 Worker，也不声称前台短问并发。 |
+| **0.10** | **只读交付适配。** 显式选定 Run，读取原 Publication/Artifact；需要网络消费者时再加最小 loopback HTTP。 | 不加执行写接口、全局 History、前端或通用事件总线；SSE 只有实际消费者与重放合同明确时才纳入。 |
+| **后续单独一期** | **PDF 输入。** CLI 读一份许可明确的本地合成 PDF，原页/选区能被现有证据引用并回读。 | 不带 OCR 平台、爬虫或 Web。 |
+| **后续单独一期** | **受控 Python 计算。** CLI 让一个已限定输入的计算得到可回读结果，真实隔离/超时/停止边界单独验收。 | 不把普通子进程称为沙箱，不增权限或为它引入整个平台；环境不具备就延期。 |
+| **可选，后置** | **Web 读取界面。** 只消费已合格接口；有真实浏览器条件时再单独验收。 | 不成为 CLI 的 1.0/2.0 前置门；既有未验 WIP 不自动晋级。 |
+
+0.11、0.12 等编号在各自范围确认时再定，不为填满版本号强塞模块。合成 ETF 继续作为已有工具链的示例输入；只有出现独立 Owner 合同才另立一期，不为重复展示再造模块。v0.9 当前仅有 [Spec 草稿](../../openspec/changes/v09-single-run-worker/proposal.md)，不是已实现能力。
+
+## 1.x → 2.0 候选顺序
 
 | 阶段 | 唯一模块与最小可跑结果 | 本期不做 |
 | --- | --- | --- |
@@ -50,6 +64,8 @@ Open ETF Agent 延续 ETF Agent 已形成的模块职责、实现经验与文章
 
 | 原模块 | 提炼时保留什么 | 对应文章 |
 | --- | --- | --- |
+| Publication | 稳定块与投递位不随修订改变；提交后失败不抹正文。 | [正文发布的提交边界][publication] |
+| ScheduledTaskWorker 的单 Run 切片 | claim / lease / cancel → 同一 Runtime → 原持久事实结算；不照搬 Schedule/Task 平台。 | [定时研究中的有限 Run 与恢复][schedule]；[background 与并发的区别][async-delivery] |
 | Result / Reference | 原结果、选区、派生与实际消费分开；来源可回读。 | [计算结果如何进入报告][result] |
 | Temporal | 原任务时间不被恢复时的“现在”覆盖。 | [Agent 说“今天”时，到底是哪一天][time] |
 | Memory | 命中不等于当前有效或已经采用；更正/遗忘具有持续效果。 | [Memory 的完整生命周期][memory] |
@@ -83,6 +99,9 @@ RAG的难点是撤权与披露提交顺序，不是先搭向量库。先用真�
 原始规划及边界见[原路线][original-roadmap]与[能力矩阵][original-matrix]；不从版本号反推完成状态。
 
 [result]: https://hpoenixf.com/eff-agent-article/articles/financial-agent-python-result-consumption
+[publication]: https://hpoenixf.com/eff-agent-article/articles/019-agent-answer-publication
+[async-delivery]: https://hpoenixf.com/eff-agent-article/articles/agent-asynchronous-research-time-bound-delivery
+[v08]: https://github.com/hpoenixf/open-etf-agent/tree/2c096ce47be2161f97531170af07ef255872f8b1
 [time]: https://hpoenixf.com/eff-agent-article/articles/agent-temporal-semantics-market-calendar
 [memory]: https://hpoenixf.com/eff-agent-article/articles/026-agent-memory-forget-durable-effects
 [human]: https://hpoenixf.com/eff-agent-article/articles/agent-durable-human-interaction-response-adoption

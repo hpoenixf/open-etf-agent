@@ -302,8 +302,8 @@ node scripts/check-article-coverage.mjs --render
 
 | 阶段 | 规划方向 |
 | --- | --- |
-| **v0.9（候选）** | 仅独立 Worker 与必需的持久队列，不捆绑 Web UI |
-| **v0.10（候选）** | 仅交付读取/HTTP-SSE Adapter，协议客户端验证，不冒称浏览器验收 |
+| **v0.9（候选）** | 单 Run Worker，复用原 Session 身份与 lease/fence；不新增 Task/队列或 Web UI |
+| **v0.10（候选）** | CLI 先行；有明确网络消费者时再加最小只读交付适配，不预设 SSE 或浏览器验收 |
 | **后续 0.x** | Web 取材、PDF 解析、隔离 Python 分别独立评估；一版一个模块，不赶编号 |
 | **v1.0 / v2.0** | 已完成模块的稳定资格里程碑，不新增一包功能；见[修订路线](docs/plan/v1-to-v2.md) |
 

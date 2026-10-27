@@ -90,8 +90,9 @@
 - **Receipts：** [独立安装/构建、五个 CLI 进程与新旧 Artifact 回读](https://github.com/hpoenixf/open-etf-agent/blob/2c096ce47be2161f97531170af07ef255872f8b1/docs/verification/v08-independent-delivery.safe.json)
 - **Provenance / frozen inputs：** [原119文件验证输入](https://github.com/hpoenixf/open-etf-agent/blob/2c096ce47be2161f97531170af07ef255872f8b1/docs/verification/v08-candidate-inputs.json) · [0.8.0 发布输入](https://github.com/hpoenixf/open-etf-agent/blob/2c096ce47be2161f97531170af07ef255872f8b1/docs/verification/v08-publication-inputs.json) · [仅版本字段晋级的窄验证](https://github.com/hpoenixf/open-etf-agent/blob/2c096ce47be2161f97531170af07ef255872f8b1/docs/verification/v08-metadata-promotion.safe.json)
 - **Qualification：** [Spec / evidence](https://github.com/hpoenixf/open-etf-agent/blob/2c096ce47be2161f97531170af07ef255872f8b1/openspec/changes/v08-publication-only/evidence.md) · [实际 RED](https://github.com/hpoenixf/open-etf-agent/blob/2c096ce47be2161f97531170af07ef255872f8b1/docs/verification/v08-publication-red.safe.json) · [Owner / Runtime / CLI GREEN](https://github.com/hpoenixf/open-etf-agent/blob/2c096ce47be2161f97531170af07ef255872f8b1/docs/verification/v08-publication-green.safe.json) · [Kit 结构结果](https://github.com/hpoenixf/open-etf-agent/blob/2c096ce47be2161f97531170af07ef255872f8b1/docs/verification/v08-kit.safe.json)
-- **精确版本边界：** 286/286 全套实跑对应 `0.8.0-dev.0`；`0.8.0` 仅修改两个版本字段，其他117项和95条依赖锁定记录保持不变，随后只做必要窄验证。没有把这说成新聚合摘要下又跑了一次286，也不借用旧扩大候选的298结果。
+- **精确版本边界：** 286/286 全套实跑对应 `0.8.0-dev.0`；`0.8.0` 仅修改两个文件中的三个版本字段，其他117项和95条依赖锁定记录保持不变，随后只做必要窄验证。没有把这说成新聚合摘要下又跑了一次286，也不借用旧扩大候选的298结果。
 - **最小模块边界：** 同一 Runtime 提交独立正文/当前事件、显式修订身份与 CLI 回读；Publication 不是报告 Artifact 的别名。已提交正文可独立于后续 Run 失败保留。没有新增 Web Chat、HTTP/SSE 产品层、Worker、队列或认证系统，也没有新真实模型调用/浏览器验收。
+- **2026-10-27 后续交付记录：** [代码、README、019 源/正文与独立站点缺口](v08-delivery-2026-10-27.md) · [唯一当前维护状态](v08-maintenance-2026-10-27.safe.json)。019 实际正文已核；整个维护流程 publication 仍 blocked，未作完整归档。
 - **覆盖清单输入口径：** 当前覆盖检查绑定115个 `src/fixtures/test/package` 输入，checker另以 `runnerSha256` 绑定；阶段的119输入额外包括build、checker、live runner与live pins四个脚本。集合不同不是源码漂移。
 
 
