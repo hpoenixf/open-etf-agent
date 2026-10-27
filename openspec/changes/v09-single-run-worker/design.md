@@ -1,4 +1,4 @@
-# Single-Run Worker design draft
+# Single-Run Worker design
 
 ## One authority, no Task shadow state
 
@@ -8,7 +8,7 @@ The original ScheduledTaskWorker's Task-level coordination lease is intentionall
 
 ## Admission and selected execution
 
-Proposed CLI shape (not current commands): `session submit --session DIR --run ID --case durable-publication`, then in a fresh process `session work --session DIR --run ID`. Retain existing inspect/cancel/publication commands. Explicit ID gives a lost-output caller an original read target; it is not a new credential or account identity.
+Implemented CLI shape (local qualification recorded separately): `session submit --session DIR --run ID --case durable-publication`, then in a fresh process `session work --session DIR --run ID`. Retain existing inspect/cancel/publication commands. Explicit ID gives a lost-output caller an original read target; it is not a new credential or account identity.
 
 Submission uses a shared Runtime preparation function for input/config/binding validation and the initial checkpoint. It persists via Session and returns the original Run ID only after commit. No model/tool dispatch, plugin activation, worker claim or timer remains after submit. Reusing an occupied ID never overwrites the Run or creates another ID: exact same immutable admission may return the original fact; a different definition fails closed. Do not add a separate deduplication table or silently choose a new Run on conflict.
 
@@ -37,3 +37,11 @@ One selected Run, one local SQLite file, no network listener and no additional c
 ## Review gate
 
 The lifecycle seam and original-contract adaptation are the main review risks. Confirm explicit submission identity, same Runtime and one lease before writing code. If the implementation needs a queue, second Task state machine, dynamic configuration, external service or private source copying, stop that expansion and return to scope review rather than treating it as necessary boilerplate.
+
+## Implementation decision — 2026-10-27
+
+The approved scope is implemented as `submitRun` sharing `drive` in `runtime.mjs`, a thin `workRun` observer around the same `run`, and two selected-profile CLI operations. `session.mjs` and its schema are unchanged. There is no new package, persistent job lifecycle, Task lease or dispatch loop. The candidate uses version 0.9.0; a version field is not a release verdict.
+
+`hostSignal` is distinct from existing user-cancel `signal`. The sequential driver tracks its currently owned host/model/tool promise. On host interruption it waits at most 500 ms for that promise to settle; only a confirmed settled operation permits release of its still-current original claim. A promise that does not acknowledge stop retains the original reservation and lease-expiry boundary, and the observer reports `effectsStopped: false` / `leaseReleased: false`. Settlement means the local promise ended, not proof a remote effect never happened. Unknown model reservations remain unknown on recovery and are not retried. The cooperative synthetic profile is the only CLI work profile.
+
+Worker summaries use transient `busy`, `interrupted`, `unresolved` or `settled` observations. `settled` includes durable failure/cancellation, not just success; the CLI exits successfully only for original `completed`. No transient observation is persisted as a second Run status.

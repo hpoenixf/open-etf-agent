@@ -6,7 +6,7 @@ const cases = ['durable-report', 'durable-publication', 'durable-child', 'durabl
 const fail = code => { throw Object.assign(new Error(code), { code }); };
 function argumentsFor(args) {
  const [action, ...rest] = args;
- if (!['start', 'resume', 'inspect', 'cancel', 'publication', 'publication-revisions', 'publication-event'].includes(action)) fail('INVALID_ARGUMENT');
+ if (!['start', 'submit', 'work', 'resume', 'inspect', 'cancel', 'publication', 'publication-revisions', 'publication-event'].includes(action)) fail('INVALID_ARGUMENT');
  const options = { action }; const seen = new Set();
  for (let i = 0; i < rest.length; i += 2) {
   const key = rest[i]; const value = rest[i + 1];
@@ -15,7 +15,8 @@ function argumentsFor(args) {
  }
  if (!options.session || options.session.length > 4096 || (action === 'start' ? options.run !== undefined : options.run === undefined)) fail('INVALID_ARGUMENT');
  if (options.run !== undefined && !/^[A-Za-z0-9][A-Za-z0-9_.:@/-]{0,199}$/.test(options.run)) fail('INVALID_ARGUMENT');
- if (options.case !== undefined && (!cases.includes(options.case) || !['start', 'resume'].includes(action))) fail('INVALID_ARGUMENT');
+ if (options.case !== undefined && (!cases.includes(options.case) || !['start', 'submit', 'resume'].includes(action))) fail('INVALID_ARGUMENT');
+ if (action === 'submit' && options.case !== 'durable-publication') fail('INVALID_ARGUMENT');
  if (options.revision !== undefined && (action !== 'publication' || !/^[1-3]$/.test(options.revision))) fail('INVALID_ARGUMENT');
  options.session = resolve(options.session); return options;
 }
@@ -32,9 +33,9 @@ function resumeCase(state) {
 }
 async function main(args) {
  const options = argumentsFor(args);
- if (options.action !== 'start') await existingSession(options.session);
+ if (!['start', 'submit'].includes(options.action)) await existingSession(options.session);
  let caseId = options.case || 'durable-report';
- if (options.action !== 'start') {
+ if (!['start', 'submit'].includes(options.action)) {
   const store = await openSession({ directory: options.session });
   try {
    if (options.action.startsWith('publication')) {
@@ -47,6 +48,7 @@ async function main(args) {
     process.stdout.write(JSON.stringify(state, null, 2) + '\n'); return;
    }
    caseId = resumeCase(store.inspect(options.run));
+   if (options.action === 'work' && caseId !== 'durable-publication') fail('WORKER_PROFILE_REQUIRED');
    if (options.case !== undefined && options.case !== caseId) fail('CASE_MISMATCH');
   } finally { store.close(); }
  }
@@ -54,10 +56,11 @@ async function main(args) {
  process.on('SIGINT', cancel); process.on('SIGTERM', cancel);
  try {
   // Control-only commands never load or call the fixture Gateway assembly.
-  const { runDurableDemo } = await import('./durable-demo.mjs');
-  const outcome = await runDurableDemo({ directory: options.session, caseId, runId: options.run, signal: controller.signal });
+  const { runDurableDemo, submitDurableDemo, workDurableDemo } = await import('./durable-demo.mjs');
+  const execute = options.action === 'submit' ? submitDurableDemo : options.action === 'work' ? workDurableDemo : runDurableDemo;
+  const outcome = await execute({ directory: options.session, caseId, runId: options.run, ...(options.action === 'work' ? { hostSignal: controller.signal } : { signal: controller.signal }) });
   process.stdout.write(JSON.stringify(outcome, null, 2) + '\n');
-  if (outcome.status !== 'completed') process.exitCode = 1;
+  if (options.action === 'work' ? outcome.workerStatus !== 'settled' || outcome.run.status !== 'completed' : options.action !== 'submit' && outcome.status !== 'completed') process.exitCode = 1;
  } finally { process.off('SIGINT', cancel); process.off('SIGTERM', cancel); }
 }
 try { await main(process.argv.slice(2)); }

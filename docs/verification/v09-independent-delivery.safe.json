@@ -1,0 +1,85 @@
+{
+  "schemaVersion": "open-etf-v09-independent@1",
+  "runtime": "v26.11.1",
+  "scope": "Independently installed and built source; actual separate submit/work/read CLI processes; no HTTP/browser/live-model claim",
+  "commands": [
+    {
+      "label": "built-submit",
+      "exitCode": 0,
+      "pid": 445
+    },
+    {
+      "label": "built-inspect-admitted",
+      "exitCode": 0,
+      "pid": 456
+    },
+    {
+      "label": "built-work",
+      "exitCode": 0,
+      "pid": 467
+    },
+    {
+      "label": "built-read",
+      "exitCode": 0,
+      "pid": 478
+    },
+    {
+      "label": "built-event",
+      "exitCode": 0,
+      "pid": 489
+    },
+    {
+      "label": "built-revisions",
+      "exitCode": 0,
+      "pid": 500
+    },
+    {
+      "label": "built-work-terminal",
+      "exitCode": 0,
+      "pid": 511
+    },
+    {
+      "label": "built-inspect-terminal",
+      "exitCode": 0,
+      "pid": 522
+    }
+  ],
+  "distinctProcessCount": 8,
+  "admission": {
+    "explicitRunId": "independent-worker-original",
+    "fence": 0,
+    "zeroDispatch": true,
+    "originalDefinitionPreserved": true,
+    "originalDeadlineRetained": true
+  },
+  "worker": {
+    "status": "settled",
+    "durableStatus": "completed",
+    "sameRunId": true,
+    "terminalSecondWorkUnchanged": true
+  },
+  "publication": {
+    "revision": 1,
+    "deliveryOrdinal": 1,
+    "payloadHash": "c87c18daea03c0481fe55dcea2a82be4e513dcad91cc204d29b9a48fc2d47b70",
+    "originalReceiptRetained": true,
+    "rootUsage": {
+      "model": 4,
+      "tool": 3
+    }
+  },
+  "report": {
+    "artifactId": "artifact:sha256:fa38680ec6591e731e3680a3c9ca3b4a7d6c78fdaa2a126d362e3e6481896281",
+    "sha256": "24d55b7cc2a48a2b7b80d31d60649bb1db0a9c47ece48c1606ac366235e12624",
+    "bytes": 764
+  },
+  "oldArtifact": {
+    "version": "v0.6 retained synthetic bytes",
+    "artifactId": "artifact:sha256:855d3143bd39da091d835557851703807c29266805e3e79b8aa94c50992c414e",
+    "sha256": "67243fa3c98c7d9015cb7f8148f6d11504a542994a541e279a24b12e50ade2c5",
+    "bytes": 933,
+    "originalBytesUnchanged": true
+  },
+  "providerCalls": 0,
+  "semanticStatus": "unreviewed"
+}

@@ -1,0 +1,34 @@
+{
+  "schemaVersion": "open-etf-v09-independent-install@1",
+  "sourceInputSha256": "80966655766966b504f48055c17d0aafce65263ec019b0bd3f59a80dc128fdea",
+  "version": "0.9.0",
+  "startedAt": "2026-10-27T06:35:53.260203+00:00",
+  "endedAt": "2026-10-27T06:35:57.972541+00:00",
+  "runtime": "Node v26.11.1",
+  "heapMiB": 512,
+  "commands": [
+    {
+      "label": "offline-install",
+      "exitCode": 0
+    },
+    {
+      "label": "build",
+      "exitCode": 0
+    },
+    {
+      "label": "built-delivery",
+      "exitCode": 0
+    }
+  ],
+  "offline": true,
+  "ignoreScripts": true,
+  "networkDownloads": 0,
+  "packagesInstalled": 95,
+  "newDependencies": 0,
+  "nonTestInputFiles": 61,
+  "builtFilesByteIdentical": 55,
+  "originalInputsUnchanged": true,
+  "providerCalls": 0,
+  "licenseByteIdentical": true,
+  "private": true
+}

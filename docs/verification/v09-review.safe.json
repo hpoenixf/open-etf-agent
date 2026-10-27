@@ -1,0 +1,35 @@
+{
+  "schemaVersion": "open-etf-v09-independent-static-review@1",
+  "recordedAt": "2026-10-27T06:34:43.143442+00:00",
+  "inputSha256": "80966655766966b504f48055c17d0aafce65263ec019b0bd3f59a80dc128fdea",
+  "baselinePublicCommit": "2c096ce47be2161f97531170af07ef255872f8b1",
+  "standards": {
+    "actionableFindings": 0,
+    "result": "pass"
+  },
+  "specCorrectness": {
+    "blockingFindings": 0,
+    "result": "static-pass"
+  },
+  "inspected": [
+    "immutable no-dispatch submission",
+    "same-Run Runtime execution",
+    "user cancellation versus host interruption",
+    "unknown-effect and original debit preservation",
+    "one Session lease/fence",
+    "durable Publication and terminal readback",
+    "all 19 Worker test definitions",
+    "frozen source/test/package byte identity"
+  ],
+  "delta": {
+    "sourceFiles": 4,
+    "testAndHelperFiles": 4,
+    "versionOnlyPackageFiles": 2,
+    "sessionChanged": false,
+    "schemaChanged": false,
+    "newDependencies": 0,
+    "newServices": 0
+  },
+  "testsExecutedByReviewer": false,
+  "qualificationBoundary": "Independent read-only review only; execution and installation evidence recorded separately."
+}

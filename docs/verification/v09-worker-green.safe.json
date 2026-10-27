@@ -1,0 +1,62 @@
+{
+  "observedAt": "2026-10-27T06:15:59.484888+00:00",
+  "endedAt": "2026-10-27T06:16:03.132726+00:00",
+  "exitCode": 0,
+  "durationSeconds": 3.648,
+  "node": "26.11.1",
+  "heapMiB": 512,
+  "concurrency": 1,
+  "hardTimeoutSeconds": 60,
+  "counts": {
+    "tests": 16,
+    "pass": 16,
+    "fail": 0,
+    "cancelled": 0,
+    "skipped": 0
+  },
+  "rawLocalSha256": "7e80d686f41875f2a518713f142de58b5e6581660b8411d58bf2ea69733fad0e",
+  "newModelCalls": 0,
+  "qualification": "Focused Worker candidate checks only; no full-suite/installation/Spec completion claim",
+  "schemaVersion": "open-etf-v09-focused@1",
+  "command": "node --test --test-concurrency=1 test/worker.test.mjs test/worker-cli.test.mjs test/worker-process.test.mjs",
+  "inputs": [
+    {
+      "path": "src/runtime.mjs",
+      "sha256": "9b740b606d8bab2b9267d660cc7ca15684e64da4f642bb57c00c6e3bb2c878f8"
+    },
+    {
+      "path": "src/worker.mjs",
+      "sha256": "7aba65ed6a16a9561ebae2a6d0831122490606e64379e5d4f8986f1665b478c1"
+    },
+    {
+      "path": "src/durable-demo.mjs",
+      "sha256": "5ad468d1e92d4dcf752f1bde12f720fd57be99dc0c27313c4b059a9a1d71372d"
+    },
+    {
+      "path": "src/session-cli.mjs",
+      "sha256": "5acf1397e58796c384e9b6c7df4b8dbd57b62ed7af270139e9ac20ca7f356f3d"
+    },
+    {
+      "path": "src/session.mjs",
+      "sha256": "a43d3aed96463d31d168928d43efa5b5975a16aff941fa7593cfe3f71429177b"
+    },
+    {
+      "path": "test/worker.test.mjs",
+      "sha256": "0aa6adc8388400b014e6a09541aa7ba4a85fdee39518ff5c29a3d84a1cc005f1"
+    },
+    {
+      "path": "test/worker-cli.test.mjs",
+      "sha256": "42fec0b2cf07a1de2fe81c1265f507308a3416cf578a37b8bbb587906dac99ef"
+    },
+    {
+      "path": "test/worker-process.test.mjs",
+      "sha256": "1570f062ca192f5b3950571aeca3d437b6bcbbc1ab6ad7f33b9755d44d4c2ddd"
+    },
+    {
+      "path": "test/fixtures/worker-process.mjs",
+      "sha256": "b2aae1e9b4ba086e113e4f8af132c98bbe36906349bffb1299f4629fc98933d6"
+    }
+  ],
+  "extraCasesAfterThisRun": 3,
+  "extraCasesQualifiedByThisRun": false
+}

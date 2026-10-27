@@ -1,0 +1,123 @@
+{
+  "schemaVersion": "open-etf-v09-kit@1",
+  "completedAt": "2026-10-27T06:38:05.858068+00:00",
+  "kitCommit": "db6ac2f43cc0319fa0f10b4f73d67521d5209c88",
+  "runtime": "Node v26.11.1",
+  "heapMiB": 512,
+  "inputSha256": "80966655766966b504f48055c17d0aafce65263ec019b0bd3f59a80dc128fdea",
+  "results": [
+    {
+      "name": "plan",
+      "exitCode": 0,
+      "result": {
+        "change": "v09-single-run-worker",
+        "stage": "plan",
+        "issues": [],
+        "structuralOnly": true,
+        "semanticQuality": "unverified"
+      }
+    },
+    {
+      "name": "apply",
+      "exitCode": 0,
+      "result": {
+        "change": "v09-single-run-worker",
+        "stage": "apply",
+        "issues": [],
+        "structuralOnly": true,
+        "semanticQuality": "unverified"
+      }
+    },
+    {
+      "name": "verify",
+      "exitCode": 0,
+      "result": {
+        "status": "written",
+        "rerun": false
+      }
+    },
+    {
+      "name": "verify-check",
+      "exitCode": 0,
+      "result": {
+        "status": "current",
+        "generated": true,
+        "rerun": false
+      }
+    },
+    {
+      "name": "lint-verify",
+      "exitCode": 0,
+      "result": {
+        "change": "v09-single-run-worker",
+        "stage": "verify",
+        "issues": [],
+        "structuralOnly": true,
+        "semanticQuality": "unverified"
+      }
+    },
+    {
+      "name": "status",
+      "exitCode": 0,
+      "result": {
+        "change": "v09-single-run-worker",
+        "tasks": {
+          "total": 3,
+          "completed": 3
+        },
+        "completion": "recorded-complete",
+        "issues": [],
+        "rerun": false,
+        "semanticQuality": "unverified",
+        "release": "not-claimed",
+        "record": {
+          "schemaVersion": "spec-evidence-completion@1",
+          "changeName": "v09-single-run-worker",
+          "outcome": "passed",
+          "lane": "provider-free",
+          "revision": "sha256:80966655766966b504f48055c17d0aafce65263ec019b0bd3f59a80dc128fdea",
+          "observedAt": "2026-10-27T06:38:05.800818+00:00",
+          "checks": [
+            {
+              "name": "final serial suite 305/305 on 124 frozen version 0.9.0 inputs",
+              "status": "passed",
+              "artifact": "docs/verification/v09-observations.safe.json"
+            },
+            {
+              "name": "initial RED and focused GREEN with actual independent process/signals",
+              "status": "passed",
+              "artifact": "docs/verification/v09-worker-green.safe.json"
+            },
+            {
+              "name": "independent locked offline install and 55 byte-identical built files",
+              "status": "passed",
+              "artifact": "docs/verification/v09-independent-install.safe.json"
+            },
+            {
+              "name": "eight built CLI processes and original v0.6 Artifact read-only bytes",
+              "status": "passed",
+              "artifact": "docs/verification/v09-independent-delivery.safe.json"
+            },
+            {
+              "name": "independent hash-bound source and test review",
+              "status": "passed",
+              "artifact": "docs/verification/v09-review.safe.json"
+            },
+            {
+              "name": "original Evidence Kit verify/check and lint verify",
+              "status": "passed",
+              "artifact": "openspec/changes/v09-single-run-worker/verify.md"
+            }
+          ],
+          "scope": "Local single-Run Worker runtime/delivery qualification only. Same Session/Runtime, no Task/queue/schema/service expansion. Actual process/storage checks use synthetic Gateway input, not a live model. No semantic, browser, foreground concurrency, full scheduling, formal Release, remote publication or entire version-maintenance completion claim. Original v0.8 and expanded WIP evidence is not reused as this qualification. Source, README coverage, article/source and new-domain publication remain separate publisher gates."
+        }
+      }
+    }
+  ],
+  "structuralOnly": true,
+  "testsExecutedByKit": false,
+  "semanticQuality": "unverified",
+  "formalRelease": "not-claimed",
+  "formalArchival": false,
+  "maintenanceComplete": false
+}

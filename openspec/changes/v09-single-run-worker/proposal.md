@@ -1,6 +1,6 @@
 # v0.9 proposal — one independently invoked Run Worker
 
-Status: **scope accepted on 2026-10-27; implementation not yet qualified or published**.
+Status: **local implementation and provider-free delivery qualified on 2026-10-27; remote publication and version maintenance tracked separately**.
 
 ## Accepted scope review — 2026-10-27 05:47 UTC
 
@@ -33,3 +33,7 @@ No change to original grant/budget/deadline at takeover, no automatic unknown re
 No HTTP/SSE product surface, browser, global History, multi-Run queue, fairness/concurrency product, Schedule, notifications, parallel Child, public authentication or new packages. Same-generator background is not this Worker; foreground short questions while research runs are not implemented by this proposal.
 
 Stop after the one input → independent process → durable readback loop and its identity/cancel/crash/unknown counterexamples pass, independent locked install/build works, existing regressions remain green and safe evidence is frozen. No real model requests are authorized by this draft.
+
+## Maintenance base update — 2026-10-27
+
+The later CI/lineage maintenance main is `0cf4b99e77bb77aa2530734d011e7f37985d1897`. This rebind preserves its files and adds only this previously scoped Worker module. The original design, contract review and implementation are unchanged. A new 124-input combined suite passed 309/309; historical 305 and delivery receipts keep their original identities. The new fixed-phase/coverage/README/article gates remain distinct from local qualification.

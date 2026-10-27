@@ -1,6 +1,6 @@
-# Worker: proposed single-Run adaptation of an existing owner
+# Worker: single-Run adaptation of an existing owner
 
-Status: **draft, no v0.9 implementation or validation**. Reviewed on 2026-10-27 against the original ETF Agent ScheduledTaskWorker responsibilities and failure cases. Detailed private source pins and review remain outside the public repository. This is not verbatim private source disclosure or a full port.
+Initial research status: **draft, no v0.9 implementation or validation at that point**. Reviewed on 2026-10-27 against the original ETF Agent ScheduledTaskWorker responsibilities and failure cases. Detailed private source pins and review remain outside the public repository. This is not verbatim private source disclosure or a full port.
 
 The original worker claims a managed Task Root, observes lease and cancellation, invokes the existing Runtime/Recovery, then derives settlement from durable facts. Its coordination lease is distinct from the original Run's execution lease. Ordinary background delivery that continues the same generator after disconnect is a different mechanism; it does not establish independent Worker execution. Foreground short-question concurrency is separate and is not proposed here.
 
@@ -26,6 +26,14 @@ After public qualification, consider a short natural example in the existing sch
 
 ## Original scenario origins, newly authored public tests
 
-Two claimants for one Run; stale fence mutation; host lease loss without user Stop; cancellation before dispatch; cancellation after committed body; and a fresh process after SIGKILL with an unknown request all inform the proposed synthetic cases. None has been executed as v0.9 qualification. Original multi-Task fairness and private timing numbers are deliberately not imported.
+Two claimants for one Run; stale fence mutation; host lease loss without user Stop; cancellation before dispatch; cancellation after committed body; and a fresh process after SIGKILL with an unknown request all inform the proposed synthetic cases. At the initial research stage none had been executed as v0.9 qualification. Original multi-Task fairness and private timing numbers are deliberately not imported.
 
 No new packages or downloaded bytes are proposed. Reuse the existing Node standard library, SQLite, Session and locked dependencies. Their existing licenses remain unchanged; no queue framework, daemon configuration or new credentials are needed. If an implementation finds a new dependency indispensable, record official source/license/size/necessity before adding it rather than silently expanding this decision.
+
+## Dated adaptation result — 2026-10-27
+
+The approved candidate now adapts these contracts in four public files: Runtime shares validation/admission and adds non-user interruption; Worker selects and observes the same Run; the existing synthetic assembly selects submit/work; and the existing CLI exposes those bounded commands. Session, SQLite schema, Publication and Artifact owners are reused without modification. This is newly authored public JavaScript around the existing public owners, derived from original responsibilities and failure rules, not a literal private-source extraction.
+
+The first actual public RED had 10 failures and one already-passing cancellation invariant. The first focused GREEN had 16 passes, including five real-process scenarios (SIGTERM, competing workers/cancel, two SIGKILL recovery boundaries and elapsed admission deadline). Three additional counterexamples were added after that focused run; they are not included in its denominator. Final qualification and immutable input binding are recorded separately in the v0.9 verification receipts. No provider/model-quality, foreground-concurrency or full scheduling claim follows from these results.
+
+Final local runtime and delivery qualification is now recorded in [v0.9 observations](../verification/v09-observations.md), with independent install/CLI and Spec receipts. A fixed published v0.9 commit and article/README rebinding remain separate publisher work; these local results do not mark the entire scheduling article verified.
