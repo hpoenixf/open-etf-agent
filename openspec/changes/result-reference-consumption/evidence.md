@@ -26,6 +26,8 @@ Initial planning and scope review preceded implementation. The published six-doc
 | 2026-10-27 CHECK | EV-RC-013 | RC.3 | node --test --test-concurrency=1 --test-reporter=tap test/*.test.mjs | passed: actual 333/333 in 40.932s, no skips/failures/cancellations, all frozen inputs unchanged | docs/verification/result-consumption-observations.safe.json | execution digest 4704f6d9 | observed-run |
 | 2026-10-27 CHECK | EV-RC-014 | RC.3 | offline locked npm ci; build; built result-consumption CLI; separate readback process | passed: 95 original packages, 57 built files match, 1366-byte report and 743-byte CSV retain one original calculation/source identity | docs/verification/result-consumption-independent.safe.json | execution digest 4704f6d9 | observed-run |
 
+| 2026-10-27 CHECK | EV-RC-015 | RC.4 | fixed-source smoke; actual GitHub ref/tree/body readback; exact-commit code/article/blog CI and canonical verifier | passed: 15 original targets executed once; source/main/README and 34 article leaves match; canonical CI verifies 85 edition bodies and two homepages | docs/verification/result-consumption-publication.safe.json | code ade806a18e0b89c07b929111ea30afbebad93279; article bbbbe900ee5dacbf4dfc4c95529a4f2d1cb23cde; blog a86f36d705d93b57617756e2791ab7af7fd72e5f | observed-run |
+
 ## Interpretation and limits
 
 The first RED used the initial coverage-field name; before the first GREEN it was clarified to `storedTableComplete` so it cannot imply complete upstream holdings. Each actual receipt preserves its own input/test identity. The initial 18/21 passes did not cover all later independent-review findings; those counterexamples and their actual failures remain visible. RED stops at the first failing assertion in a case, so it does not claim that every later negative assertion in that case was reached.
@@ -38,6 +40,17 @@ The independent install first failed before package installation because the har
 
 `tool-host@2` is an explicit execution-resumption boundary. Finish old active Runs before upgrading; v1 snapshots are rejected with `UNSUPPORTED_HOST_SNAPSHOT_VERSION`, without migration or a missing-hash bypass. Original result/artifact/publication read interfaces retain their formats. The protocol test uses a synthetic v1 checkpoint, verifies unchanged Session facts/database bytes/original files and zero activation/model calls on refusal, then verifies v2 resumption. A controlled version change between inspections verifies the second pre-claim check; this is not proof of atomic migration under arbitrary concurrent changes.
 
-RC.1–RC.3 are locally qualified. RC.4 (fixed-source publication, coverage/README/article maintenance) is not complete. No numbered release, remote feature promotion, formal Release or complete four-state maintenance archive is asserted. The Kit is a structural view of authored evidence, not an executor or a fictional `spec:close` command.
+Historical local checkpoint, 2026-10-27 15:55 UTC: RC.1–RC.3 are locally qualified. RC.4 (fixed-source publication, coverage/README/article maintenance) is not complete. No numbered release, remote feature promotion, formal Release or complete four-state maintenance archive is asserted. The Kit is a structural view of authored evidence, not an executor or a fictional `spec:close` command.
 
-Actual [Kit structure checks](../../../docs/verification/result-consumption-kit.safe.json): plan/apply pass; status is 3/4 tasks, not-recorded. `verify --check` correctly refuses only incomplete RC.4. This expected publication boundary is retained, not relabeled as a full Kit close.
+Historical [Kit structure checks](../../../docs/verification/result-consumption-kit.safe.json): plan/apply pass; status is 3/4 tasks, not-recorded. `verify --check` correctly refuses only incomplete RC.4. This expected publication boundary is retained, not relabeled as a full Kit close.
+
+
+## Dated delivery and manual evidence registration — 2026-10-27
+
+RC.4 now has actual fixed-source, README, article-source and canonical publication evidence in [the four-state record](../../../docs/verification/result-consumption-publication.safe.json). Code main is `ade806a18e0b89c07b929111ea30afbebad93279`; article source is `bbbbe900ee5dacbf4dfc4c95529a4f2d1cb23cde`; the blog lock is `a86f36d705d93b57617756e2791ab7af7fd72e5f`. Exact-commit CI succeeded on all three repositories. The existing canonical verifier checked 85 pinned edition bodies and two homepages against source/blog identities and rendered-byte hashes; only 33 edition pins changed and the other 52 were retained. This maintainer inspected that CI evidence and did not retry the denied direct-domain request.
+
+The original 333-case local suite and independent locked install/build/process readback remain their original executions. Fixed source P was separately exercised once by the existing 15-target smoke. Closure changes only documentation and the original Kit's structural view; no local Runtime rerun is implied. The public package remains 0.9.0, and no new numbered release is inferred from the original roadmap's 1.1 intent.
+
+The catalog has 33 module articles while the existing coverage contract registers 31. The two unregistered articles are explicitly disclosed in README and the four-state record, not given invented cases or since values. The result-consumption essay remains in its existing thinking category.
+
+The source, article and delivery records are manually registered here without moving the existing change path or fabricating an automatic `spec:close`. Initial failures and pre-publication incomplete observations remain intact. Kit status is a structural record of authored evidence, not semantic/live certification or a formal Release.

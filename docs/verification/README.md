@@ -1,6 +1,6 @@
 # 验证证据索引 · v0.1–v0.9
 
-[返回项目首页](../../README.md) · [31 篇文章覆盖契约](../../README.md#reading)
+[返回项目首页](../../README.md) · [已登记 31 篇的覆盖契约](../../README.md#reading)
 
 ## 怎样读
 
@@ -129,6 +129,15 @@
 - [受限 live 入口与授权](../live-validation.md)：默认覆盖 smoke 不调用此入口；provider、合成数据与费用仍需独立授权。[下一批计划](live-runtime-next-cases.md)只是计划。
 - [v0.2 独立措辞维护](https://github.com/hpoenixf/open-etf-agent/tree/a10d4f1bd1ecc39224272156221fe29792b64094)：未读页面不能写成已知事实，原阶段证据保持不变。
 - [v0.6 errno 窄范围维护](https://github.com/hpoenixf/open-etf-agent/blob/765fd771430c55e1598b3f7bc32f342215a46f33/docs/verification/v06-errno-maintenance.md)：区分原阶段与维护输入。Node 26.11.1 是本机实际执行；26.8.1 的 v0.6 全绿是用户观察，不冒称本机 v0.7 最低版本实测。
+
+## 未编号增量 · Result / Reference 消费
+
+固定实现：[源提交 `e442f60`](https://github.com/hpoenixf/open-etf-agent/tree/e442f600891be79625fc78751e2d9f39905920da)；本次合入 main 的固定点为 [`ade806a`](https://github.com/hpoenixf/open-etf-agent/tree/ade806a18e0b89c07b929111ea30afbebad93279)。package 仍为 0.9.0，不表示路线中的 1.0 或 1.1 已发行。
+
+- [原始 RED/GREEN 与完整 333 项本地执行](result-consumption-observations.safe.json) · [冻结输入](result-consumption-inputs.json) · [独立安装/build/CLI 与新进程字节回读](result-consumption-independent.safe.json)。收尾没有把这些历史执行重标为再次运行。
+- [Spec / evidence](../../openspec/changes/result-reference-consumption/evidence.md) · [代码、README、双语文章与正式站点四状态](result-consumption-publication.safe.json)。已登记覆盖仍为 31 条，实际 modules 为 33 篇；另外两篇未映射，不补造 verified。
+- 升级使用 `tool-host@2`：旧活动 Run 应在升级前结束，v1 检查点不能跨版本续跑；原不可变 Result、Artifact 和 Publication 可继续读取。生产 Gateway 编码由离线 transport 验证，不是实际 Provider 或金融语义资格。
+- 原 Kit 的拒绝 RC.4 [历史记录](result-consumption-kit.safe.json)保留；后续采用现有目录的人工证据登记及结构化 verify，不声称工具自动归档或正式 Release。
 
 ## 当前文章覆盖的机器证据
 
