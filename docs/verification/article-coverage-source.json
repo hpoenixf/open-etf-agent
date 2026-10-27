@@ -1,10 +1,10 @@
 {
   "schemaVersion": 1,
   "repository": "hpoenixf/open-etf-agent",
-  "commit": "e442f600891be79625fc78751e2d9f39905920da",
-  "tree": "44de8cb7ceb1a7aba5ed20b262d53feb8f2fafcf",
-  "retrievedFrom": "https://api.github.com/repos/hpoenixf/open-etf-agent/git/trees/44de8cb7ceb1a7aba5ed20b262d53feb8f2fafcf?recursive=1",
-  "retrievedAt": "2026-10-27T16:04:07.199213+00:00",
+  "commit": "ff5b9273ef0d239e804f61792702cd2e94174be7",
+  "tree": "0d8f3c27a08a1da9bce0fe562683d5721d0d7a61",
+  "retrievedFrom": "https://api.github.com/repos/hpoenixf/open-etf-agent/git/trees/0d8f3c27a08a1da9bce0fe562683d5721d0d7a61?recursive=1",
+  "retrievedAt": "2026-10-27T22:44:08.599971+00:00",
   "inputs": [
     {
       "path": "fixtures/cases.json",
@@ -28,11 +28,11 @@
     },
     {
       "path": "package-lock.json",
-      "gitBlob": "6a69edcfb702ebf843d3c06d17c05ede3dcbd013"
+      "gitBlob": "a5961767adc5d7e1747555b87b4a18784b1d2173"
     },
     {
       "path": "package.json",
-      "gitBlob": "4d82275a4b568c61cffcce41d7fb723aa10f221c"
+      "gitBlob": "2e37aff38191c8ae4f1f42baba80169e08eedc7e"
     },
     {
       "path": "src/artifact-demo.mjs",
