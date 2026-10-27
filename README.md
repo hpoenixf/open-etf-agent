@@ -179,7 +179,7 @@ Worker 的 SIGTERM / 宿主停止不等于用户取消。已封存工作可沿�
 | [v0.4 · 原文可离开窗口](https://github.com/hpoenixf/open-etf-agent/tree/ecf6cb45b4062586614e83aed917c92d704cb63b) | 缩小输入，仍能找回原版本 | ResultStore、Context、词法检索、ResultRef 精确回读 | 96 |
 | [v0.5 · 笔记与显式记忆](https://github.com/hpoenixf/open-etf-agent/tree/05c0dd2dc550f4f7e5da034340ff5c3159768fcf) | 分清原文、派生笔记和未来偏好 | Compaction、Memory 保存/修订/忘记 | 124 |
 | [v0.6 · 交付与阅读](https://github.com/hpoenixf/open-etf-agent/tree/7480b656b18192e6d6b44aab65255b970d58e6f8) | 已保存结果能按身份打开、下载并核对 | Artifact / Revision、CSV 附件、loopback Reader、HTTP evaluate | 171 |
-| [v0.7 · 可信贡献与恢复](https://github.com/hpoenixf/open-etf-agent/tree/5f70dc0b4760ad70ef211f4823828ab2fee5c525) | 不把包加载或文件重开冒充同一 Run 的恢复 | Trusted Plugin、SQLite、lease/fence、封存提案与结果消费检查点 | [249](docs/verification/v07-observations.md) |
+| [v0.7 · 可信贡献与恢复](https://github.com/hpoenixf/open-etf-agent/tree/5f70dc0b4760ad70ef211f4823828ab2fee5c525) | 不把包加载或文件重开冒充同一 Run 的恢复 | Trusted Plugin、SQLite、lease/fence、封存提案与结果消费检查点 | [249](https://github.com/hpoenixf/open-etf-agent/blob/5f70dc0b4760ad70ef211f4823828ab2fee5c525/docs/verification/v07-observations.safe.json) |
 | [v0.8 · 正文独立提交](https://github.com/hpoenixf/open-etf-agent/tree/2c096ce47be2161f97531170af07ef255872f8b1) | 不把运行终态或文件报告当作正文提交 | 单块 Publication、稳定身份与展示位置、修订 CAS、原回执回读 | [全量机读回执](docs/verification/v08-observations.safe.json) · [原执行输出提炼](docs/verification/v08-full-suite-extract.safe.json) |
 | [v0.9 · 单 Run Worker](https://github.com/hpoenixf/open-etf-agent/tree/dad9c6e64f32c3d7579aea96613776b40917ec6d) | 提交进程退出，不等于原工作丢失或取消 | 独立 submit/work、同 Runtime 与原 lease/fence、持久终态回读 | [309 项组合实跑](docs/verification/v09-combined-observations.safe.json) · [历史交付等价核对](docs/verification/v09-delivery-equivalence.safe.json) |
 

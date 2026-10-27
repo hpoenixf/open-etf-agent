@@ -28,5 +28,9 @@ jobs:
         run: npm ci --ignore-scripts --no-audit --no-fund
       - name: Check existing fixed-source coverage receipts (no smoke)
         run: node scripts/check-article-coverage.mjs --check
+      - name: Check fixed article backlinks (read-only; no Runtime execution)
+        run: |
+          node --test --test-concurrency=1 scripts/check-article-backlinks.test.mjs scripts/article-receipt-binding.test.mjs
+          node scripts/check-article-backlinks.mjs --code
       - name: Run the complete Runtime suite
         run: npm test
