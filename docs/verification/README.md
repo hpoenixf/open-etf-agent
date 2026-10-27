@@ -1,4 +1,4 @@
-# 验证证据索引 · v0.1–v0.9
+# 验证证据索引 · v0.1–v0.10
 
 [返回项目首页](../../README.md) · [已登记 31 篇的覆盖契约](../../README.md#reading)
 
@@ -111,6 +111,15 @@
 - **Provenance / frozen inputs：** [原124输入](https://github.com/hpoenixf/open-etf-agent/blob/dad9c6e64f32c3d7579aea96613776b40917ec6d/docs/verification/v09-candidate-inputs.json) · [当前124输入](https://github.com/hpoenixf/open-etf-agent/blob/dad9c6e64f32c3d7579aea96613776b40917ec6d/docs/verification/v09-combined-inputs.json)；组合只纳入已公开的覆盖校验器/测试变更，Worker行为/package/dependencies未变。
 - **Qualification：** [Spec / evidence](https://github.com/hpoenixf/open-etf-agent/blob/dad9c6e64f32c3d7579aea96613776b40917ec6d/openspec/changes/v09-single-run-worker/evidence.md) · [本次Kit结构记录](https://github.com/hpoenixf/open-etf-agent/blob/dad9c6e64f32c3d7579aea96613776b40917ec6d/docs/verification/v09-combined-kit.safe.json)。真实进程/SQLite、合成模型动作；无调度平台、浏览器、真实模型质量或正式Release结论。
 
+### v0.10 · Result / Reference 消费模块
+
+固定源码：[`ff5b927`](https://github.com/hpoenixf/open-etf-agent/tree/ff5b9273ef0d239e804f61792702cd2e94174be7)；固定资格提交：[`ae82c26`](https://github.com/hpoenixf/open-etf-agent/tree/ae82c26e6511c1dac9d67e864284b55eee6a82c2)。旧重复读取适配候选取消；本模块承载原计划 1.1 的最小增量，不重复排期，也不代表 1.0 已完成。
+
+- **原实现执行：** [333/333 实跑与反例](https://github.com/hpoenixf/open-etf-agent/blob/e442f600891be79625fc78751e2d9f39905920da/docs/verification/result-consumption-observations.safe.json)属于原 0.9.0 元数据下的冻结输入，不改称编号后又跑了一次。
+- **本次编号资格：** [精确等价与新窄安装/build/CLI/独立字节回读](https://github.com/hpoenixf/open-etf-agent/blob/ff5b9273ef0d239e804f61792702cd2e94174be7/docs/verification/v010-numbering.safe.json)：只改三个版本字段，123 个非 package 执行输入与 95 条依赖记录未变。
+- **新固定输入与实际 smoke：** [125 输入](https://github.com/hpoenixf/open-etf-agent/blob/ae82c26e6511c1dac9d67e864284b55eee6a82c2/docs/verification/article-coverage-source.json) · [原 15 目标的新版实际回执](https://github.com/hpoenixf/open-etf-agent/blob/ae82c26e6511c1dac9d67e864284b55eee6a82c2/docs/verification/article-coverage-receipts.json)。这是限定 Runtime case，不是全套重新执行或模型语义评审。
+- **升级边界：** [`tool-host@2` 契约](https://github.com/hpoenixf/open-etf-agent/blob/ff5b9273ef0d239e804f61792702cd2e94174be7/openspec/changes/result-reference-consumption/design.md)：先结束旧活动 Run；v1 检查点不能跨版本续跑，旧不可变成果仍可读。真实 Provider、金融语义、正式 Release 与生产资格未由此取得。
+
 ## v0.7 分项入口
 
 以下也固定在 v0.7 的原快照，避免把成功 demo 与中断恢复混在一起：
@@ -130,9 +139,9 @@
 - [v0.2 独立措辞维护](https://github.com/hpoenixf/open-etf-agent/tree/a10d4f1bd1ecc39224272156221fe29792b64094)：未读页面不能写成已知事实，原阶段证据保持不变。
 - [v0.6 errno 窄范围维护](https://github.com/hpoenixf/open-etf-agent/blob/765fd771430c55e1598b3f7bc32f342215a46f33/docs/verification/v06-errno-maintenance.md)：区分原阶段与维护输入。Node 26.11.1 是本机实际执行；26.8.1 的 v0.6 全绿是用户观察，不冒称本机 v0.7 最低版本实测。
 
-## 未编号增量 · Result / Reference 消费
+## 编号前的历史交付 · Result / Reference 消费
 
-固定实现：[源提交 `e442f60`](https://github.com/hpoenixf/open-etf-agent/tree/e442f600891be79625fc78751e2d9f39905920da)；本次合入 main 的固定点为 [`ade806a`](https://github.com/hpoenixf/open-etf-agent/tree/ade806a18e0b89c07b929111ea30afbebad93279)。package 仍为 0.9.0，不表示路线中的 1.0 或 1.1 已发行。
+固定实现：[源提交 `e442f60`](https://github.com/hpoenixf/open-etf-agent/tree/e442f600891be79625fc78751e2d9f39905920da)；本次合入 main 的固定点为 [`ade806a`](https://github.com/hpoenixf/open-etf-agent/tree/ade806a18e0b89c07b929111ea30afbebad93279)。该次执行与发布的 package 为 0.9.0；随后由上方 v0.10 资格完成编号，不回改这份历史，也不表示路线中的 1.0 或 1.1 已发行。
 
 - [原始 RED/GREEN 与完整 333 项本地执行](result-consumption-observations.safe.json) · [冻结输入](result-consumption-inputs.json) · [独立安装/build/CLI 与新进程字节回读](result-consumption-independent.safe.json)。收尾没有把这些历史执行重标为再次运行。
 - [Spec / evidence](../../openspec/changes/result-reference-consumption/evidence.md) · [代码、README、双语文章与正式站点四状态](result-consumption-publication.safe.json)。已登记覆盖仍为 31 条，实际 modules 为 33 篇；另外两篇未映射，不补造 verified。

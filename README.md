@@ -20,9 +20,9 @@
 
 目前的入门案例是**原创合成文档比较**，并非真实基金分析。v0.7 另有小型原创合成 ETF Plugin，仍不是实时基金数据或真实基金分析；完整 ETF 研究工具在后续路线中。本项目不提供交易执行或投资建议。
 
-> **从哪里开始？** 直接克隆 `main`，无需切换阶段分支：默认提供最新已验证稳定的开发代码 **v0.9**，本期仅增加单 Run Worker：提交进程退出后，另一进程沿原 Session 租约驱动同一 Runtime。九个固定阶段保留在 `phase/v0.1`—`phase/v0.9`；当前实现对应 [v0.9 固定快照 `dad9c6e`](https://github.com/hpoenixf/open-etf-agent/tree/dad9c6e64f32c3d7579aea96613776b40917ec6d)；此前 [v0.8 Publication 快照 `2c096ce`](https://github.com/hpoenixf/open-etf-agent/tree/2c096ce47be2161f97531170af07ef255872f8b1)、 [v0.7 固定快照 `5f70dc0`](https://github.com/hpoenixf/open-etf-agent/tree/5f70dc0b4760ad70ef211f4823828ab2fee5c525) 与 [v0.6 固定快照 `7480b65`](https://github.com/hpoenixf/open-etf-agent/tree/7480b656b18192e6d6b44aab65255b970d58e6f8) 不被改写。这里的“稳定”指下文 **provider-free Runtime 回归与交付验证**，**不等于正式 Release、模型能力认证、live 恢复认证或生产就绪**。项目原创代码采用 [MIT 许可证](LICENSE)，第三方组件保留各自许可。
+> **从哪里开始？** 直接克隆 `main`，无需切换阶段分支：默认提供最新已验证稳定的开发代码 **v0.10.0**，本期完成 Result / Reference 消费：从原始选区计算，让下一 Gateway 请求、报告与 CSV 使用同一结果。当前实现对应 [v0.10 固定源码 `ff5b927`](https://github.com/hpoenixf/open-etf-agent/tree/ff5b9273ef0d239e804f61792702cd2e94174be7)；此前九个阶段的 `phase/v0.1`—`phase/v0.9` 及 [v0.9 Worker 快照 `dad9c6e`](https://github.com/hpoenixf/open-etf-agent/tree/dad9c6e64f32c3d7579aea96613776b40917ec6d)、 [v0.8 Publication 快照 `2c096ce`](https://github.com/hpoenixf/open-etf-agent/tree/2c096ce47be2161f97531170af07ef255872f8b1)、 [v0.7 固定快照 `5f70dc0`](https://github.com/hpoenixf/open-etf-agent/tree/5f70dc0b4760ad70ef211f4823828ab2fee5c525) 与 [v0.6 固定快照 `7480b65`](https://github.com/hpoenixf/open-etf-agent/tree/7480b656b18192e6d6b44aab65255b970d58e6f8) 不被改写。这里的“稳定”指下文 **provider-free Runtime 回归与交付验证**，**不等于正式 Release、模型能力认证、live 恢复认证或生产就绪**。项目原创代码采用 [MIT 许可证](LICENSE)，第三方组件保留各自许可。
 
-> **想看真实模型调用，而不只是 fixture？** 先看 [v0.1–v0.5 的 16 次真实 HTTP 调用记录](#live-evidence)，再看 [独立受限 live runner 的入口与授权条件](#live-entry)。这些是历史证据，不是 v0.9 live 恢复资格。
+> **想看真实模型调用，而不只是 fixture？** 先看 [v0.1–v0.5 的 16 次真实 HTTP 调用记录](#live-evidence)，再看 [独立受限 live runner 的入口与授权条件](#live-entry)。这些是历史证据，不是 v0.10 live 恢复资格。
 
 ### 在这里可以看到什么
 
@@ -35,7 +35,7 @@
 
 需要 **Node.js 26.8.1–26.x** 与 npm。默认示例不需要模型密钥；安装依赖可能访问 npm，安装后的示例离线运行。
 
-Node 下限按实际 API 使用范围放宽到 26.8.1。当前维护与 v0.9 的本地验证由 Node 26.11.1 执行；26.8.1 全绿是使用者提供的 v0.6 观察，未在本执行环境重跑，不冒充 v0.9 的最低版本实测。详见 [v0.6 文件系统包装异常修复与验证](docs/verification/v06-errno-maintenance.md)与 [v0.7 工具链证据](docs/verification/v07-observations.md)。
+Node 下限按实际 API 使用范围放宽到 26.8.1。当前 v0.10 的窄安装、构建与 CLI 验证由 Node 26.11.1 执行；26.8.1 全绿是使用者提供的 v0.6 观察，未在本执行环境重跑，不冒充 v0.10 的最低版本实测。详见 [v0.6 文件系统包装异常修复与验证](docs/verification/v06-errno-maintenance.md)与 [v0.7 工具链证据](docs/verification/v07-observations.md)。
 
 ```sh
 # 默认 main 已包含最新已验证稳定代码，无需切换阶段分支
@@ -100,7 +100,7 @@ Memory 示例使用合成的操作意图，不会保存真实用户的永久偏�
 
 ### v0.10：从原始选区到同一份报告与 CSV
 
-这一完整的 Result / Reference 模块现整理为 **v0.10.0**，可从[固定源码 `ff5b927`](https://github.com/hpoenixf/open-etf-agent/tree/ff5b9273ef0d239e804f61792702cd2e94174be7)复现。本提交已取得新版固定源码资格，main 晋级另行记录；这不是 v1.0 或 v1.1 已发布。它取代缺少独立消费者的旧 0.10 读取适配候选，并承载原计划 1.1 的这项最小增量，不重复实现一遍：
+这一完整的 Result / Reference 模块现整理为 **v0.10.0**，可从[固定源码 `ff5b927`](https://github.com/hpoenixf/open-etf-agent/tree/ff5b9273ef0d239e804f61792702cd2e94174be7)复现。main 提供这一已编号模块；这不是 v1.0 或 v1.1 已发布。它取代缺少独立消费者的旧 0.10 读取适配候选，并承载原计划 1.1 的这项最小增量，不重复实现一遍：
 
 ```sh
 node src/cli.mjs --case result-consumption --output runs/result-consumption
@@ -183,9 +183,9 @@ node dist/src/session-cli.mjs publication --session runs/worker-demo --run origi
 Worker 的 SIGTERM / 宿主停止不等于用户取消。已封存工作可沿原身份继续；已分派但结果不明的请求不自动重发，已提交正文也不因后续 Run 失败消失。SQLite、独立进程和 SIGTERM/SIGKILL 边界有真实合成测试，模型动作仍是脚本，不是真实模型判断。范围不含 Schedule、通知、前台问答并发或 Web。见 [Worker 谱系](docs/evolution/v09-worker-lineage.md)、[实际进程用例](test/worker-process.test.mjs)及[本版记录](docs/verification/v09-observations.md)。
 
 <a id="versions"></a>
-## 版本演进 · Nine fixed stages
+## 版本演进 · Ten fixed snapshots
 
-九个阶段链接均指向固定提交，保留当时的代码、锁文件、示例与证据。表中的测试数是**各快照已记录的离线回归**，不是成熟度评分，也不是 CI 或模型能力徽章。
+十个阶段链接均指向固定提交，保留当时的代码、锁文件、示例与证据。表中的测试数是**各快照已记录的离线回归**，不是成熟度评分，也不是 CI 或模型能力徽章。
 
 | 阶段 | 这一步解决什么 | 新增可见机制 | 记录的离线回归 |
 | --- | --- | --- | ---: |
@@ -198,6 +198,7 @@ Worker 的 SIGTERM / 宿主停止不等于用户取消。已封存工作可沿�
 | [v0.7 · 可信贡献与恢复](https://github.com/hpoenixf/open-etf-agent/tree/5f70dc0b4760ad70ef211f4823828ab2fee5c525) | 不把包加载或文件重开冒充同一 Run 的恢复 | Trusted Plugin、SQLite、lease/fence、封存提案与结果消费检查点 | [249](https://github.com/hpoenixf/open-etf-agent/blob/5f70dc0b4760ad70ef211f4823828ab2fee5c525/docs/verification/v07-observations.safe.json) |
 | [v0.8 · 正文独立提交](https://github.com/hpoenixf/open-etf-agent/tree/2c096ce47be2161f97531170af07ef255872f8b1) | 不把运行终态或文件报告当作正文提交 | 单块 Publication、稳定身份与展示位置、修订 CAS、原回执回读 | [全量机读回执](docs/verification/v08-observations.safe.json) · [原执行输出提炼](docs/verification/v08-full-suite-extract.safe.json) |
 | [v0.9 · 单 Run Worker](https://github.com/hpoenixf/open-etf-agent/tree/dad9c6e64f32c3d7579aea96613776b40917ec6d) | 提交进程退出，不等于原工作丢失或取消 | 独立 submit/work、同 Runtime 与原 lease/fence、持久终态回读 | [309 项组合实跑](docs/verification/v09-combined-observations.safe.json) · [历史交付等价核对](docs/verification/v09-delivery-equivalence.safe.json) |
+| [v0.10 · 同一结果贯通消费](https://github.com/hpoenixf/open-etf-agent/tree/ff5b9273ef0d239e804f61792702cd2e94174be7) | 原选区与派生结果能核对到实际消费者 | 来源绑定计算、下一 Gateway 编码、同引用报告/CSV与独立回读 | [原实现 333 项](docs/verification/result-consumption-observations.safe.json) · [编号窄资格](docs/verification/v010-numbering.safe.json) · [15 个原目标新回执](docs/verification/article-coverage-receipts.json) |
 
 **v0.2 的维护入口：** 原始阶段保留历史；[独立维护快照 `a10d4f1`](https://github.com/hpoenixf/open-etf-agent/tree/a10d4f1bd1ecc39224272156221fe29792b64094)修正了报告中涉及未读取页面的措辞。若专门体验 v0.2，请使用 `maintenance/v0.2-source-boundary`，不要把旧快照当作已修复版本。
 
@@ -233,7 +234,7 @@ Worker 的 SIGTERM / 宿主停止不等于用户取消。已封存工作可沿�
 
 ## 验证到哪里，声明到哪里
 
-先看 [v0.1–v0.9 验证证据索引](docs/verification/README.md)：按阶段进入 observations、receipts、provenance 与 qualification，历史证据不被新测试数字覆盖。
+先看 [v0.1–v0.10 验证证据索引](docs/verification/README.md)：按阶段进入 observations、receipts、provenance 与 qualification，历史证据不被新测试数字覆盖。
 
 当前 main 保留 [v0.6 窄范围维护修复](docs/verification/v06-errno-maintenance.md)：包装后的真实文件已存在异常仍能进入原有身份/字节核对，未知错误、取消与 null/undefined 原因不被吞掉。维护版本在 Node 26.11.1 完整回归 184/184；不借此改写固定阶段的历史证据，也不冒称模型质量通过。
 
@@ -262,7 +263,7 @@ v0.9 的原 Worker 组合先留下 305/305 历史记录；合入既有 CI/版本
 
 默认 `npm run demo -- --live` 会拒绝；这不表示项目从未做过真实调用，也不能通过把参数改成另一个 fixture 绕过限制。另有独立的 `scripts/live-validate.mjs` runner，入口见 [固定版受限验证说明](https://github.com/hpoenixf/open-etf-agent/blob/d075068ac99a6c798d012c46bff4fe0c33eb9979/docs/live-validation.md)与 [当前说明](docs/live-validation.md)。
 
-这个 runner 要求读者**自己的 provider、合成数据和费用授权**，显式选择固定版本、私有配置与跨版本共用的预算 ledger；未知结果会阻止继续，不自动重试，也不继承其他操作者的预算或凭据。上方 quickstart / demo / session 命令仍是离线示例。本次 v0.9 没有新增模型请求，不把这份历史记录改称当前版本的 live 认证。
+这个 runner 要求读者**自己的 provider、合成数据和费用授权**，显式选择固定版本、私有配置与跨版本共用的预算 ledger；未知结果会阻止继续，不自动重试，也不继承其他操作者的预算或凭据。上方 quickstart / demo / session 命令仍是离线示例。本次 v0.10 没有新增模型请求，不把这份历史记录改称当前版本的 live 认证。
 
 ## 许可证 · License
 
@@ -339,7 +340,7 @@ v0.9 的单 Run Worker 已列入固定阶段；同一条链上的 Result / Refer
 
 | 阶段 | 规划方向 |
 | --- | --- |
-| **v0.10（已资格化，待 main 晋级）** | Result / Reference：原选区 → 计算 → 下一 Gateway 编码 → 同引用报告/CSV；旧重复读取适配候选已取消 |
+| **v0.10（已交付）** | Result / Reference：原选区 → 计算 → 下一 Gateway 编码 → 同引用报告/CSV；旧重复读取适配候选已取消 |
 | **后续 0.x** | Web 取材、PDF 解析、隔离 Python 分别独立评估；一版一个模块，不赶编号 |
 | **v1.0 / v2.0** | 已完成模块的稳定资格里程碑，不计作新增功能版；见[修订路线](docs/plan/v1-to-v2.md) |
 
@@ -358,13 +359,13 @@ Web 取材是原路线中的外网输入候选，仍未编号；Web 读取界面
 
 **Open ETF Agent** is a small research Agent built through independently runnable development snapshots. Start with a source-linked Markdown report, then add Skills, MCP, bounded cooperation, exact source rereading, derived notes and explicit Memory.
 
-- **Run:** clone `main` directly using [Quickstart](#quickstart). The default branch contains the latest verified stable development code, **v0.9**, with a [fixed stage snapshot](https://github.com/hpoenixf/open-etf-agent/tree/dad9c6e64f32c3d7579aea96613776b40917ec6d). Node.js 26.8.1–26.x is required; local v0.9 qualification uses 26.11.1, and demos run offline after dependency installation.
+- **Run:** clone `main` directly using [Quickstart](#quickstart). The default branch contains the latest verified stable development code, **v0.10.0**, with a [fixed source snapshot](https://github.com/hpoenixf/open-etf-agent/tree/ff5b9273ef0d239e804f61792702cd2e94174be7). Node.js 26.8.1–26.x is required; local v0.10 narrow qualification uses 26.11.1, and demos run offline after dependency installation.
 - **Publication:** v0.8 adds one durable body block, stable identity/ordinal, revision CAS and independent CLI readback. It records 286 provider-free checks followed by a separately verified version-metadata-only promotion; see the [machine-readable full-suite record](docs/verification/v08-observations.safe.json) and [historical output extract](docs/verification/v08-full-suite-extract.safe.json). That v0.8 slice did not include Worker or Web Chat and did not obtain new live-model qualification.
-- **Worker:** v0.9 adds explicit submit in one process and bounded work in another through the original Session lease and same Runtime. Host stop is not user cancellation; unknown dispatched requests are not automatically retried. The current combined input passed [309 provider-free cases](docs/verification/v09-combined-observations.safe.json). Original install/eight-process CLI evidence is retained only with [exact unchanged delivery-input proof](docs/verification/v09-delivery-equivalence.safe.json), not relabeled as a fresh run. No queue, scheduler, foreground-chat concurrency or new model calls are added.
-- **Result / Reference:** the completed source-selection → calculation → next-request encoding → report/CSV loop is assigned **v0.10.0**, with [fixed source](https://github.com/hpoenixf/open-etf-agent/tree/ff5b9273ef0d239e804f61792702cd2e94174be7) and [fresh narrow install/build/process readback](https://github.com/hpoenixf/open-etf-agent/blob/ff5b9273ef0d239e804f61792702cd2e94174be7/docs/verification/v010-numbering.safe.json). Main promotion is recorded separately. The original 333-case execution is retained under its original metadata, not relabeled. Finish v1 active Runs before the explicit `tool-host@2` upgrade; immutable artifacts remain readable.
+- **Worker:** v0.9 adds explicit submit in one process and bounded work in another through the original Session lease and same Runtime. Host stop is not user cancellation; unknown dispatched requests are not automatically retried. That v0.9 combined input passed [309 provider-free cases](docs/verification/v09-combined-observations.safe.json). Original install/eight-process CLI evidence is retained only with [exact unchanged delivery-input proof](docs/verification/v09-delivery-equivalence.safe.json), not relabeled as a fresh run. No queue, scheduler, foreground-chat concurrency or new model calls are added.
+- **Result / Reference:** the completed source-selection → calculation → next-request encoding → report/CSV loop is assigned **v0.10.0**, with [fixed source](https://github.com/hpoenixf/open-etf-agent/tree/ff5b9273ef0d239e804f61792702cd2e94174be7) and [fresh narrow install/build/process readback](https://github.com/hpoenixf/open-etf-agent/blob/ff5b9273ef0d239e804f61792702cd2e94174be7/docs/verification/v010-numbering.safe.json). The default main branch now carries this numbered module. The original 333-case execution is retained under its original metadata, not relabeled. Finish v1 active Runs before the explicit `tool-host@2` upgrade; immutable artifacts remain readable.
 - **Inspect:** each [stage](#versions) retains its fixed implementation, fixtures and evidence. The [v0.7 README](https://github.com/hpoenixf/open-etf-agent/blob/5f70dc0b4760ad70ef211f4823828ab2fee5c525/README.md) has detailed English instructions for trusted packages and same-Run continuation. The [v0.6 README](https://github.com/hpoenixf/open-etf-agent/blob/7480b656b18192e6d6b44aab65255b970d58e6f8/README.md) remains available for the earlier artifact/HTTP stage.
 - **Interpret honestly:** v0.6 qualification records 171 offline tests, eight demos, eleven report readbacks and four-case HTTP checks, with no new model calls. v0.7 records 249/249 tests, independent installation/build, five durable profiles, nine report receipts and HTTP 4/4, with zero new provider calls. Real process interruption/new-PID checks, not terminal file readback alone, qualify its bounded recovery. Unknown effects are not retried. “Stable” means bounded Runtime qualification, not a formal release or production-readiness claim.
-- **Real calls:** [16 historical HTTP requests across v0.1–v0.5](#live-evidence) are separate from the offline demos. Model quality remains unreviewed. The demo CLI refuses `--live`; the separate `scripts/live-validate.mjs` runner requires explicit provider/data/cost authorization. This is **not v0.9 live-recovery qualification**.
+- **Real calls:** [16 historical HTTP requests across v0.1–v0.5](#live-evidence) are separate from the offline demos. Model quality remains unreviewed. The demo CLI refuses `--live`; the separate `scripts/live-validate.mjs` runner requires explicit provider/data/cost authorization. This is **not v0.10 live-recovery qualification**.
 - **Scope:** local, single-user, synthetic examples; no trading or investment advice. These snapshots are not formal releases, and original project code is licensed under [MIT](LICENSE); third-party licenses and notices remain in force.
 
 ---
