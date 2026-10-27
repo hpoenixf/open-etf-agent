@@ -29,7 +29,9 @@
 <a id="quickstart"></a>
 ## 快速运行 · Quickstart
 
-需要 **Node.js 26.11.1–26.x** 与 npm。默认示例不需要模型密钥；安装依赖可能访问 npm，安装后的示例离线运行。
+需要 **Node.js 26.8.1–26.x** 与 npm。默认示例不需要模型密钥；安装依赖可能访问 npm，安装后的示例离线运行。
+
+Node 下限按实际 API 使用范围放宽到 26.8.1。当前维护回归由本地 Node 26.11.1 执行；26.8.1 全绿是使用者提供的观察，未在本执行环境重跑。详见 [v0.6 文件系统包装异常修复与验证](docs/verification/v06-errno-maintenance.md)。
 
 ```sh
 # 默认 main 已包含最新已验证稳定代码，无需切换阶段分支
@@ -151,6 +153,8 @@ npm run serve -- --run runs/run-YOUR_ID
 
 ## 验证到哪里，声明到哪里
 
+当前 main 另含 [v0.6 窄范围维护修复](docs/verification/v06-errno-maintenance.md)：包装后的真实文件已存在异常仍能进入原有身份/字节核对，未知错误和取消不被吞掉。维护版本在 Node 26.11.1 完整回归 184/184；不借此改写下方固定阶段的历史证据，也不冒称模型质量通过。
+
 | 已有证据 | 仍需分别验证 / 当前不支持 |
 | --- | --- |
 | v0.6 记录了独立安装后的 171/171 测试、构建、八类示例、11 份报告退出后回读与 T1–T4 HTTP 验证 | 不据此宣称真实模型理解、选择资料或摘要质量已通过；v0.6 没有新增真实模型调用 |
@@ -207,7 +211,7 @@ npm run serve -- --run runs/run-YOUR_ID
 
 **Open ETF Agent** is a small research Agent built through independently runnable development snapshots. Start with a source-linked Markdown report, then add Skills, MCP, bounded cooperation, exact source rereading, derived notes and explicit Memory.
 
-- **Run:** clone `main` directly using [Quickstart](#quickstart). It now contains the latest verified stable development code (v0.6), not just the project homepage. Node.js 26.11.1–26.x is required; demos run offline after dependency installation.
+- **Run:** clone `main` directly using [Quickstart](#quickstart). It now contains the latest verified stable development code (v0.6), not just the project homepage. Node.js 26.8.1–26.x is required; demos run offline after dependency installation.
 - **Inspect:** each [stage](#versions) retains its fixed implementation, fixtures and evidence. The [v0.6 README](https://github.com/hpoenixf/open-etf-agent/blob/7480b656b18192e6d6b44aab65255b970d58e6f8/README.md) has detailed English instructions for artifacts, downloads and loopback HTTP evaluation.
 - **Interpret honestly:** v0.6 qualification records 171 offline tests, eight demos, eleven report readbacks and four-case HTTP checks, with no new model calls. “Stable” means this bounded Runtime qualification, not a formal release or production-readiness claim. Sources, derived notes, memory and execution observations stay distinct.
 - **Scope:** local, single-user, synthetic examples; no trading or investment advice. These snapshots are not formal releases, and original project code is licensed under [MIT](LICENSE); third-party licenses and notices remain in force.
