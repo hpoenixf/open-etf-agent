@@ -10,6 +10,12 @@
 - 一个阶段的测试数只说明其当时冻结输入的那次执行；**不跨版本加总为成熟度**。先前 candidate / prepared-only / license-pending 文本是当时状态，不覆盖首页当前 MIT 与已公开代码事实。
 - 验收范围是 Runtime：合法边界、原文身份、持久效果与实际交付。模型答案语义质量不作为本索引的验收结论。
 
+## 全量执行与版本血缘
+
+- v0.8 的 [原始结构化 observations / fullSuite](v08-observations.safe.json) 已记录完整命令、退出码、耗时、输入摘要及286/286计数，不只存在于散文。
+- [历史执行输出提炼](v08-full-suite-extract.safe.json) 直接核对保留输出中的286条case与汇总，并把继承的执行元数据单列；不是新执行，也不是最终0.8.0摘要下重新跑过全套。
+- [versions.json](../../versions.json) 只登记已有固定公开代码；`since` 表示最小切片引入，覆盖清单的 `verifiedAt` 表示当前回执验证点。它不是旧计划的实施状态表，也不是正式 Release 注册表。
+
 ## 按阶段进入
 
 ### v0.1 · 第一份可回读报告

@@ -19,7 +19,8 @@ const escapeRegex = text => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 const safePath = path => typeof path === 'string' && /^[a-zA-Z0-9_./-]+$/.test(path) && !isAbsolute(path) && !path.split('/').some(part => part === '..' || part === '.' || !part);
 
 export function validateManifest(m) {
-  ensure(m.schemaVersion === 1 && m.repository === REPO, 'Unsupported coverage manifest');
+  ensure(m.schemaVersion === 2 && m.repository === REPO, 'Unsupported coverage manifest');
+  ensure(m.versions === 'versions.json' && /^[a-f0-9]{40}$/.test(m.verifiedAt), 'Missing fixed verifiedAt or versions registry');
   ensure(m.source === 'docs/verification/article-coverage-source.json' && m.receipt === 'docs/verification/article-coverage-receipts.json', 'Unexpected evidence path');
   ensure(Number.isInteger(m.articleCatalog?.count) && m.articleCatalog.count >= 1 && m.articleCatalog.count <= 256 && m.articles?.length === m.articleCatalog.count, 'Catalog count must be an integer from 1 to 256 matching the article list');
   ensure(/^[a-f0-9]{40}$/.test(m.articleCatalog.commit), 'Article catalog must use a fixed commit');
@@ -40,14 +41,32 @@ export function validateManifest(m) {
   ensure(used.size <= 16, 'Smoke target bound exceeded');
 }
 
-export function renderTable(m, commit) {
+export function validateVersions(v, m) {
+  ensure(v?.schemaVersion === 1 && v.repository === REPO && v.kind === 'public-code-lineage-not-release-registry', 'Invalid version lineage registry');
+  ensure(v.versions && typeof v.versions === 'object' && !Array.isArray(v.versions) && Object.keys(v.versions).length > 0 && Object.keys(v.versions).length <= 64, 'Missing/bounded version pins');
+  for (const [version, pin] of Object.entries(v.versions)) {
+    ensure(/^\d+\.\d+(?:\.\d+)?$/.test(version) && pin && Object.keys(pin).sort().join(',') === 'commit,tree' && /^[a-f0-9]{40}$/.test(pin.commit) && /^[a-f0-9]{40}$/.test(pin.tree), 'Version needs a fixed public commit/tree, not planned/released labels');
+  }
+  ensure(v.targets && stable(Object.keys(v.targets).sort()) === stable(Object.keys(m.targets).sort()), 'Each actual target needs exactly one since entry');
+  for (const [id, entry] of Object.entries(v.targets)) {
+    ensure(entry && typeof entry.since === 'string' && Object.hasOwn(v.versions, entry.since) && Object.keys(entry).sort().join(',') === 'evidenceGitBlob,evidencePath,selector,since', 'Unknown/malformed since version');
+    ensure(safePath(entry.evidencePath) && /^(src|test)\//.test(entry.evidencePath) && /^[a-f0-9]{40}$/.test(entry.evidenceGitBlob), 'Invalid historical evidence path/blob');
+    ensure(entry.selector === (m.targets[id].case ?? m.targets[id].name), 'Historical selector differs from actual target');
+  }
+}
+
+export function renderTable(m, commit, versions) {
+  validateVersions(versions, m);
+  ensure(commit === m.verifiedAt, 'verifiedAt differs from fixed verification source');
   const rows = m.articles.map(a => {
     const t = a.target && m.targets[a.target];
     const label = !t ? '—' : t.kind === 'cli' ? `\`--case ${t.case}\`` : `\`${t.file}\` · ${t.name}`;
     const link = t ? `[${commit.slice(0, 7)}](https://github.com/${REPO}/commit/${commit}) + ${label}` : label;
-    return `| [${a.title}](https://hpoenixf.com/eff-agent-article/articles/${a.slug}) | ${link}<br>${a.scope} | ${a.status} |`;
+    const origin = t && versions.targets[a.target];
+    const since = origin ? `[v${origin.since}](https://github.com/${REPO}/commit/${versions.versions[origin.since].commit})` : '—';
+    return `| [${a.title}](https://hpoenixf.com/eff-agent-article/articles/${a.slug}) | ${since} | ${link}<br>${a.scope} | ${a.status} |`;
   });
-  return [BEGIN, '| 文章 | 对应 commit + case | 状态 |', '| --- | --- | --- |', ...rows, END].join('\n');
+  return [BEGIN, '| 文章 | since · 引入版本 | verifiedAt · 固定 commit + case | 状态 |', '| --- | --- | --- | --- |', ...rows, END].join('\n');
 }
 
 async function assertRegular(root, path) {
@@ -91,7 +110,7 @@ async function github(path) {
   ensure(response.ok, `COMMIT_UNCONFIRMED: public metadata HTTP ${response.status}; not a complete pass`);
   return response.json();
 }
-export async function confirmCommit(root, source, gitDir) {
+async function committedTree(root, source, gitDir) {
   let entries; let method;
   const local = git(['cat-file', '-p', `${source.commit}^{commit}`], root, gitDir);
   if (local.status === 0) {
@@ -108,9 +127,25 @@ export async function confirmCommit(root, source, gitDir) {
     ensure(tree.sha === source.tree && !tree.truncated && Array.isArray(tree.tree), 'Public tree is incomplete');
     entries = tree.tree; method = 'fresh-public-github-metadata';
   }
+  return { entries, method };
+}
+export async function confirmCommit(root, source, gitDir) {
+  const { entries, method } = await committedTree(root, source, gitDir);
   const selected = entries.filter(e => e.type === 'blob' && (/^(src\/|fixtures\/|test\/)/.test(e.path) || ['package.json', 'package-lock.json'].includes(e.path))).map(e => ({ path: e.path, gitBlob: e.sha })).sort((a,b)=>a.path.localeCompare(b.path));
   ensure(stable(selected) === stable([...source.inputs].sort((a,b)=>a.path.localeCompare(b.path))), 'Fixed commit inputs differ from source manifest');
   return { commit: source.commit, tree: source.tree, method };
+}
+
+export async function confirmVersions(root, versions, gitDir) {
+  const confirmations = [];
+  for (const [version, pin] of Object.entries(versions.versions)) {
+    const { entries, method } = await committedTree(root, pin, gitDir);
+    for (const evidence of Object.values(versions.targets).filter(item => item.since === version)) {
+      ensure(entries.some(item => item.type === 'blob' && item.mode === '100644' && item.path === evidence.evidencePath && item.sha === evidence.evidenceGitBlob), `Historical source differs: v${version} ${evidence.evidencePath}`);
+    }
+    confirmations.push({ version, commit: pin.commit, tree: pin.tree, method });
+  }
+  return confirmations;
 }
 
 export function commandFor(t, output) {
@@ -171,6 +206,7 @@ async function smoke(root, m, source, identity, confirmation) {
   return receipt;
 }
 export function validateReceipt(receipt, m, source, inputHash, runnerHash) {
+  ensure(m.verifiedAt === source.commit, 'Stale receipt: verifiedAt differs from fixed source');
   ensure(receipt.schemaVersion === 1 && receipt.kind === 'actual-provider-free-runtime-execution' && receipt.modelCalls === 0 && receipt.semanticStatus === 'unreviewed', 'Missing actual bounded execution receipt');
   ensure(receipt.sourceCommit === source.commit && receipt.inputSha256 === inputHash && receipt.runnerSha256 === runnerHash && receipt.targetsSha256 === sha(stable(m.targets)), 'Stale receipt: source, case or checker changed; re-run smoke or downgrade to draft');
   for (const a of m.articles.filter(a => a.status === 'verified')) {
@@ -187,8 +223,9 @@ async function main(args) {
   ensure(args.length === 0, 'Usage: node scripts/check-article-coverage.mjs [--check|--smoke|--render] [--git-dir READ_ONLY_OBJECT_STORE]');
   const m = await json(join(ROOT, MANIFEST)); validateManifest(m);
   const source = await json(join(ROOT, m.source));
+  const versions = await json(join(ROOT, m.versions)); validateVersions(versions, m);
   const readmePath = join(ROOT, 'README.md'), readme = await readFile(readmePath, 'utf8');
-  const table = renderTable(m, source.commit);
+  const table = renderTable(m, source.commit, versions);
   ensure(readme.split(BEGIN).length === 2 && readme.split(END).length === 2, 'Missing/duplicate generated table markers');
   ensure(readme.indexOf(BEGIN) < readme.indexOf(END), 'Generated table markers are reversed; README not modified');
   const expected = readme.slice(0, readme.indexOf(BEGIN)) + table + readme.slice(readme.indexOf(END) + END.length);
@@ -196,8 +233,9 @@ async function main(args) {
   ensure(expected === readme, 'README table drift; run --render');
   const identity = await sourceIdentity(ROOT, source);
   const confirmation = await confirmCommit(ROOT, source, gitDir);
+  const lineageConfirmation = await confirmVersions(ROOT, versions, gitDir);
   const receipt = mode === '--smoke' ? await smoke(ROOT, m, source, identity, confirmation) : await json(join(ROOT, m.receipt));
   validateReceipt(receipt, m, source, identity, sha(await readFile(fileURLToPath(import.meta.url))));
-  console.log(JSON.stringify({ status: 'passed', mode, confirmation, articles: m.articles.length, verified: m.articles.filter(a => a.status === 'verified').length, uniqueExecutedTargets: new Set(Object.values(receipt.results).map(r=>stable(r.target))).size, executionTime: receipt.executedAt, executedOnThisInvocation: mode === '--smoke', scope: 'Runtime only; original synthetic fixtures; no live/model-quality claim' }, null, 2));
+  console.log(JSON.stringify({ status: 'passed', mode, confirmation, lineageConfirmation, verifiedAt: source.commit, articles: m.articles.length, verified: m.articles.filter(a => a.status === 'verified').length, uniqueExecutedTargets: new Set(Object.values(receipt.results).map(r=>stable(r.target))).size, executionTime: receipt.executedAt, executedOnThisInvocation: mode === '--smoke', scope: 'Runtime only; original synthetic fixtures; no live/model-quality claim' }, null, 2));
 }
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) main(process.argv.slice(2)).catch(error => { console.error(error.message); process.exitCode = 1; });

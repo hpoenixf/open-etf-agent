@@ -3,8 +3,10 @@ import assert from 'node:assert/strict';
 import { readFile, mkdir, mkdtemp, writeFile, copyFile } from 'node:fs/promises';
 import { spawnSync } from 'node:child_process';
 import { resolve, join } from 'node:path';
-import { validateManifest, renderTable, commandFor, verifyTap, gitBlob, sourceIdentity, confirmCommit, validateReceipt, smokeEnvironment } from '../scripts/check-article-coverage.mjs';
+import { validateManifest, renderTable, commandFor, verifyTap, gitBlob, sourceIdentity, confirmCommit, validateReceipt, smokeEnvironment, validateVersions, confirmVersions } from '../scripts/check-article-coverage.mjs';
 const manifest = JSON.parse(await readFile(new URL('../docs/verification/article-coverage.json', import.meta.url)));
+const versions = JSON.parse(await readFile(new URL('../versions.json', import.meta.url)));
+const changeVersions = f => { const copy = structuredClone(versions); f(copy); return copy; };
 const change = f => { const copy = structuredClone(manifest); f(copy); return copy; };
 
 test('coverage: full module list and only three statuses', () => {
@@ -37,14 +39,20 @@ test('coverage: renamed, absent and skipped cases cannot produce pass receipts',
   assert.equal(verifyTap(output, 'actual target').passed, 1);
   for (const invalid of [output.replace('actual target','other'), output.replace('actual target','actual target # SKIP'), output.replace('# pass 1','# pass 0'), output.replace('# skipped 0','# skipped 1')]) assert.throws(()=>verifyTap(invalid,'actual target'));
 });
-test('coverage: generated table is three-column and exact catalog titles survive', () => {
-  const table=renderTable(manifest,'a'.repeat(40)); assert.match(table,/\| 文章 \| 对应 commit \+ case \| 状态 \|/);
+test('coverage: generated table separates introduction from fixed verification and keeps exact titles', () => {
+  const table=renderTable(manifest,manifest.verifiedAt,versions); assert.match(table,/\| 文章 \| since · 引入版本 \| verifiedAt · 固定 commit \+ case \| 状态 \|/);
   assert.equal(table.split('\n').filter(line=>line.startsWith('| [')).length,31);
   assert.match(table,/Memory：从保存、召回到安全遗忘/);
 });
-test('coverage: stale source and checker receipts never retain verified', () => {
-  const receipt={schemaVersion:1,kind:'actual-provider-free-runtime-execution',modelCalls:0,semanticStatus:'unreviewed',sourceCommit:'a',inputSha256:'old',runnerSha256:'old',targetsSha256:'old'};
-  assert.throws(()=>validateReceipt(receipt,manifest,{commit:'a'},'new','new'),/Stale receipt/);
+test('coverage: stale source, input, target and checker hashes are independently rejected', async () => {
+  const receipt = JSON.parse(await readFile(new URL('../docs/verification/article-coverage-receipts.json', import.meta.url)));
+  const source = {commit:manifest.verifiedAt};
+  assert.doesNotThrow(() => validateReceipt(receipt,manifest,source,receipt.inputSha256,receipt.runnerSha256));
+  for (const field of ['sourceCommit','inputSha256','runnerSha256','targetsSha256']) {
+    const bad = {...receipt,[field]:'0'.repeat(field === 'sourceCommit' ? 40 : 64)};
+    assert.throws(() => validateReceipt(bad,manifest,source,receipt.inputSha256,receipt.runnerSha256), /Stale receipt: source, case or checker changed/);
+  }
+  assert.throws(() => validateReceipt(receipt,manifest,{commit:'0'.repeat(40)},receipt.inputSha256,receipt.runnerSha256), /Stale receipt: verifiedAt differs/);
 });
 test('coverage: changed source and unlisted source file require requalification', async () => {
   await mkdir('test-output',{recursive:true});const root=await mkdtemp(resolve('test-output/coverage-selftest-'));
@@ -80,7 +88,7 @@ test('coverage: render refuses reversed markers without changing README bytes', 
   const root = await mkdtemp(resolve('test-output/coverage-render-'));
   await mkdir(join(root,'scripts'));
   await mkdir(join(root,'docs/verification'), {recursive:true});
-  for (const path of ['scripts/check-article-coverage.mjs','docs/verification/article-coverage.json','docs/verification/article-coverage-source.json']) {
+  for (const path of ['scripts/check-article-coverage.mjs','docs/verification/article-coverage.json','docs/verification/article-coverage-source.json','versions.json']) {
     await copyFile(new URL('../'+path, import.meta.url), join(root,path));
   }
   const original = Buffer.from('before\n<!-- article-coverage:end -->\nmiddle\n<!-- article-coverage:start -->\nafter\n');
@@ -89,4 +97,46 @@ test('coverage: render refuses reversed markers without changing README bytes', 
   assert.equal(result.status, 1);
   assert.match(result.stderr, /markers are reversed/);
   assert.deepEqual(await readFile(join(root,'README.md')), original);
+});
+
+test('coverage: planned versions, missing provenance and substituted selectors fail closed', () => {
+  validateVersions(versions, manifest);
+  assert.throws(() => validateVersions(changeVersions(v => delete v.targets.mcp), manifest), /exactly one since/);
+  assert.throws(() => validateVersions(changeVersions(v => v.targets.mcp.since = '2.0'), manifest), /since/);
+  assert.throws(() => validateVersions(changeVersions(v => v.versions['0.2'].commit = 'main'), manifest), /fixed public/);
+  assert.throws(() => validateVersions(changeVersions(v => v.versions['0.2'].status = 'planned'), manifest), /fixed public/);
+  assert.throws(() => validateVersions(changeVersions(v => v.targets.mcp.evidencePath = '../private.mjs'), manifest), /evidence path/);
+  assert.throws(() => validateVersions(changeVersions(v => v.targets.mcp.selector = 'different-case'), manifest), /selector/);
+});
+test('coverage: newer verification anchors never rewrite since or invent introduction for absent modules', () => {
+  const before = JSON.stringify(versions); const m = change(x => x.verifiedAt = 'a'.repeat(40));
+  const table = renderTable(m, m.verifiedAt, versions);
+  assert.ok(table.includes('[v0.2](https://github.com/hpoenixf/open-etf-agent/commit/a79e89bf709d4a2245b5a8652882a591ba467519)'));
+  assert.ok(table.includes('[v0.5](https://github.com/hpoenixf/open-etf-agent/commit/05c0dd2dc550f4f7e5da034340ff5c3159768fcf)'));
+  assert.match(table, /\[aaaaaaa\].*--case skill-mcp/);
+  assert.ok(table.split('\n').find(line => line.includes('/articles/024-agent-pdf-from-text-to-evidence')).includes('| — | —<br>'));
+  assert.equal(JSON.stringify(versions), before);
+  assert.throws(() => renderTable(m, manifest.verifiedAt, versions), /verifiedAt differs/);
+  assert.throws(() => validateManifest(change(x => delete x.verifiedAt)), /verifiedAt/);
+});
+test('coverage: historical commit/tree/path/blob are checked against actual local Git objects', async () => {
+  await mkdir('test-output', {recursive:true}); const root = await mkdtemp(resolve('test-output/coverage-history-')); const gitDir = join(root,'objects.git');
+  function git(args, input) { const p = spawnSync('git',args,{encoding:'utf8',input,shell:false,timeout:5000,env:{PATH:process.env.PATH,GIT_CONFIG_NOSYSTEM:'1',GIT_CONFIG_GLOBAL:'/dev/null'}}); assert.equal(p.status,0,p.stderr);return p.stdout.trim(); }
+  git(['init','--bare',gitDir]); const g = (...args) => ['--git-dir',gitDir,...args];
+  const blob = git(g('hash-object','-w','--stdin'),'export const fixture = 1;\n');
+  const src = git(g('mktree'),`100644 blob ${blob}\texample.mjs\n`);
+  const tree = git(g('mktree'),`040000 tree ${src}\tsrc\n`);
+  const commit = git(g('hash-object','-t','commit','-w','--stdin'),`tree ${tree}\nauthor Synthetic <synthetic@example.invalid> 0 +0000\ncommitter Synthetic <synthetic@example.invalid> 0 +0000\n\nSynthetic history fixture\n`);
+  const v = {versions:{'0.1':{commit,tree}},targets:{fixture:{since:'0.1',evidencePath:'src/example.mjs',evidenceGitBlob:blob}}};
+  const confirmed = await confirmVersions(root,v,gitDir);assert.equal(confirmed[0].method,'actual-local-git-objects');
+  await assert.rejects(confirmVersions(root,{...v,targets:{fixture:{...v.targets.fixture,evidenceGitBlob:'0'.repeat(40)}}},gitDir),/Historical source differs/);
+  await assert.rejects(confirmVersions(root,{...v,versions:{'0.1':{commit,tree:'0'.repeat(40)}}},gitDir),/tree mismatch/);
+  await assert.rejects(confirmVersions(root,{...v,versions:{'0.1':{commit:'0'.repeat(40),tree}}},gitDir),/lacks the fixed commit/);
+});
+test('coverage: CI uses pinned read-only actions and checks receipts without smoke', async () => {
+  const yaml = await readFile(new URL('../.github/workflows/verify.yml', import.meta.url),'utf8');
+  assert.match(yaml,/permissions:\n  contents: read/); assert.match(yaml,/persist-credentials: false/);
+  assert.match(yaml,/actions\/checkout@[a-f0-9]{40}/);assert.match(yaml,/actions\/setup-node@[a-f0-9]{40}/);
+  assert.match(yaml,/run: node scripts\/check-article-coverage\.mjs --check/); assert.match(yaml,/run: npm test/);
+  assert.doesNotMatch(yaml,/--smoke|secrets\.|pull_request_target|contents: write/);
 });
