@@ -1,0 +1,68 @@
+{
+  "version": "v01",
+  "baselineCommit": "1a787437c2a900c8a9fe27048e81aa86b703305b",
+  "baselineFilesVerified": 7,
+  "runtimeBlob": "a8bdd32ce57c618f9019b08814c237b25e04facc",
+  "gatewayBlob": "d6bf7beab27f309730141a87c258a94c1dca92b4",
+  "caseId": "T1",
+  "model": "deepseek-v4.1-flash",
+  "endpoint": "https://opencode.ai/zen/go/v1/chat/completions",
+  "synthetic": true,
+  "status": "failed",
+  "code": "TOOL_REJECTED",
+  "semanticStatus": "unreviewed",
+  "calls": 2,
+  "reservedCny": 200,
+  "totalReservedCny": 200,
+  "totalAccountedCny": 200,
+  "receipt": null,
+  "scopeLimit": "one original synthetic question per frozen version; does not prove every feature or live semantic quality",
+  "costObservations": [
+    {
+      "status": "completed",
+      "httpStatus": 200,
+      "costUsd": 0,
+      "listCostUsd": 0.0001701,
+      "allowanceUsd": 0.00012758,
+      "billingSource": "go",
+      "costAnomaly": false,
+      "estimated": false,
+      "tokens": {
+        "prompt_tokens": 682,
+        "completion_tokens": 113,
+        "total_tokens": 795
+      }
+    },
+    {
+      "status": "completed",
+      "httpStatus": 200,
+      "costUsd": 0,
+      "listCostUsd": 0.00030102,
+      "allowanceUsd": 0.00022577,
+      "billingSource": "go",
+      "costAnomaly": false,
+      "estimated": false,
+      "tokens": {
+        "prompt_tokens": 1178,
+        "completion_tokens": 364,
+        "total_tokens": 1542
+      }
+    }
+  ],
+  "observedTools": [
+    {
+      "name": "read_page",
+      "status": "succeeded",
+      "count": 2
+    },
+    {
+      "name": "calculate_change",
+      "status": "rejected",
+      "dispatched": false
+    }
+  ],
+  "diagnosis": "Exact rejected arguments and validator error were not persisted by the original v01 logger; cause unresolved, not fabricated.",
+  "adapterInventorySha256": "28f814435d12e0fbcaae8e87aeeb6e08e54c3691f777de28d0addeeab2d8d9bf",
+  "inventoryTiming": "Recorded after terminal execution with no intervening adapter source edits.",
+  "ceilingStatus": "Explicit operator ceiling not exceeded; numeric ceiling retained locally."
+}

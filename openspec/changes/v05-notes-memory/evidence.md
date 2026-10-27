@@ -36,3 +36,5 @@ No v0.5 execution has occurred at creation of this plan.
 | 2026-10-26 GREEN | EV-514 | 5.5 | related 15-case reviewer regression | passed: 15/15 | docs/verification/v05-observations.md | inputs-35e26cb8a36a8d3e | observed-run |
 | 2026-10-26 GREEN | EV-515 | 5.5 | full serial npm test | passed: 124/124 | docs/verification/v05-observations.md | inputs-35e26cb8a36a8d3e | observed-run |
 | 2026-10-26 GREEN | EV-516 | 5.5 | independent offline ci build test and seven demos | passed: all stages exit 0, 124/124 and ten report hash readbacks | docs/verification/v05-observations.md | inputs-35e26cb8a36a8d3e | observed-run |
+| 2026-10-26 CHECK | EV-517 | 5.6 | actual pinned Kit plan apply status and verify check | passed: structural lint/status; verify correctly refused open 5.6/5.7 before this evidence update | docs/verification/v05-observations.md | d8b5554130fc3d333d0e181edf92a51e9030f20c | observed-run |
+| 2026-10-26 CHECK | EV-518 | 5.6 | actual Kit apply status verify check after recording evidence | passed: apply/status 6/7; verify correctly refused only open 5.7 | docs/verification/v05-observations.md | documentation-only-after-d8b5554 | observed-run |

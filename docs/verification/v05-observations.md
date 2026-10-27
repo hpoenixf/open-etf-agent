@@ -33,3 +33,11 @@ The current 66-file source/test/fixture/build/package/example inventory has SHA-
 The full serial suite passed 124/124 (exit 0, approximately 14.105 seconds). A separate local project directory, without inherited node_modules, then independently passed cached installation, build, all 124 tests, and seven complete demos: original four-question comparison, Skill/MCP, batch reads, fixture child, lexical retrieval/reread, compaction/reread and explicit Memory. Each stage exited 0 under a 120-second command cap. Ten report receipts across those demos were independently read after process exit and their SHA-256 values checked. Portable receipts are in `v05-demo-receipts.json`; raw logs remain local ignored artifacts and their hashes remain in `v05-evidence-provenance.json`.
 
 The final v0.5 Kit stage has not yet run at this freeze; tasks 5.6 and 5.7 remain open. This local offline candidate is being frozen for authorized backup before live configuration or formal release. The actual environment file is not included. No live request, semantic approval, project license choice or release closure follows from the offline result.
+
+## EV-517 — Kit after the publication freeze
+
+The immutable offline backup freeze remains local commit `d8b5554130fc3d333d0e181edf92a51e9030f20c`. After that freeze, actual pinned Kit plan/apply/status commands all exited 0; verify --check exited 1 and accurately refused then-incomplete tasks 5.6 and 5.7. Only ignored local logs were written during publication, so no frozen branch drift occurred. The parent publisher subsequently confirmed all six remote stage refs, including the v0.5 content-equivalent remote commit abbreviated `05c0dd2`; local and remote commit ancestry differ, and their tree content was independently checked. Code backup publication is not a project license decision, live semantic approval or formal release.
+
+This later documentation-only change records the real Kit observation and marks only 5.6; 5.7 remains unfinished. The 124-test/7-demo source inventory is unchanged, and no additional source-validation claim is made by a document update.
+
+EV-518: after recording 5.6, actual Kit apply/status again exited 0, with 6/7 tasks checked; verify --check exited 1 solely for incomplete 5.7. No completion record was written and no source tests were rerun for these documentation-only changes.

@@ -1,13 +1,16 @@
 {
   "schemaVersion": "local-delivery-manifest@2",
-  "status": "v0.5-offline-candidate-kit-pending",
+  "status": "v0.5-offline-candidate-with-real-kit-checks",
   "published": false,
-  "baselineCommit": "6e95fb0f6f75d41a695f2fc1e25491c104a8a1db",
+  "baselineCommit": "d8b5554130fc3d333d0e181edf92a51e9030f20c",
   "codeInputInventorySha256": "35e26cb8a36a8d3eee2ed9fca838bc4639235aa8104fe423644e4d2dfd75fea4",
   "manifestExcludesSelf": true,
   "kit": {
     "revision": "db6ac2f43cc0319fa0f10b4f73d67521d5209c88",
-    "v05Execution": "not-run-before-public-backup-freeze",
+    "plan": "passed",
+    "apply": "passed",
+    "statusCompleted": "6/7",
+    "verifyCheck": "refused incomplete task 5.7",
     "completion": false
   },
   "offline": {
@@ -18,7 +21,6 @@
     "reportReceiptsReadBack": 10
   },
   "remainingGates": [
-    "v05 Kit execution",
     "authorized live execution and semantic review",
     "project license decision",
     "formal release"
@@ -36,8 +38,8 @@
     },
     {
       "path": "README.md",
-      "bytes": 8763,
-      "sha256": "073313c2bebaeba11bdd56739523b6d19dd990315ab1ae815d54106f7fe07b69"
+      "bytes": 8891,
+      "sha256": "d75df4293dc28e602db9252ceba3d4966b13873e742c09f23c0dd26e6a874b34"
     },
     {
       "path": "docs/dependencies/sdk-selection.md",
@@ -176,8 +178,8 @@
     },
     {
       "path": "docs/verification/v05-evidence-provenance.json",
-      "bytes": 5254,
-      "sha256": "457d7c18e5c8d209f7eda7c18d2664a0569cd538482945f1fe5e056b8b4f7b7c"
+      "bytes": 6597,
+      "sha256": "10e5c3ae73546d4c511d597a058ea67405949875b9566b6782b2ea06b2368f6e"
     },
     {
       "path": "docs/verification/v05-live-preparation.md",
@@ -186,8 +188,8 @@
     },
     {
       "path": "docs/verification/v05-observations.md",
-      "bytes": 5696,
-      "sha256": "a6d51eb9219498f62b594f5ba7a55584be3e901a3a7db13bde3b4992f370869b"
+      "bytes": 6922,
+      "sha256": "34b250825bbc67c6bc707a2d62371c13b95474ad700d35b7afc9e270f705d1e4"
     },
     {
       "path": "fixtures/cases.json",
@@ -296,8 +298,8 @@
     },
     {
       "path": "openspec/changes/v05-notes-memory/evidence.md",
-      "bytes": 6457,
-      "sha256": "832b03dd97eac2f78d26480445f5fb232403dd1db8fd420fb8cc64800c57e43c"
+      "bytes": 7003,
+      "sha256": "993be7fe7c5844d7fd3b1c0b142a688a2de7e60e2b379ebff94ef1da853e192d"
     },
     {
       "path": "openspec/changes/v05-notes-memory/proposal.md",
@@ -312,7 +314,7 @@
     {
       "path": "openspec/changes/v05-notes-memory/tasks.md",
       "bytes": 649,
-      "sha256": "d059c352e6bfe57b58b0c220ed74b0fa447b67c0b07e76cca2dda6b158bc3009"
+      "sha256": "43561cebcba03f7e84e713bcaab8a6279dae609582152ed444a4de5d5f336c31"
     },
     {
       "path": "package-lock.json",
@@ -654,5 +656,10 @@
       "bytes": 10887,
       "sha256": "a9e36d5c9ff4607cd38f64083ed7833ce5cba57f7f854bf56cc5a29c72122f38"
     }
-  ]
+  ],
+  "previousPublishedEquivalent": {
+    "localCommit": "d8b5554130fc3d333d0e181edf92a51e9030f20c",
+    "remoteCommitAbbreviation": "05c0dd2",
+    "source": "root publisher readback"
+  }
 }
