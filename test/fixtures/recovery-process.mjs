@@ -5,8 +5,11 @@ import { openDurableMemory } from '../../src/durable-memory.mjs';
 import { createDurableChildBinding } from '../../src/durable-child.mjs';
 import { sha256 } from '../../src/source.mjs';
 import { openSession } from '../../src/session.mjs';
-const [directory,mode,stop,runId]=process.argv.slice(2);
-const store=await openSession({directory,leaseMs:150});
+const [directory,mode,stop,rawRunId,rawClock,rawStall]=process.argv.slice(2);
+const runId=rawRunId||undefined;
+const leaseClock=rawClock?Number(rawClock):undefined,stallMs=rawStall?Number(rawStall):0;
+if((leaseClock!==undefined&&(mode!=='compaction'||!Number.isSafeInteger(leaseClock)))||!Number.isSafeInteger(stallMs)||stallMs<0||stallMs>1000)throw new Error('Invalid recovery fixture clock');
+const store=await openSession({directory,leaseMs:150,...(leaseClock===undefined?{}:{clock:()=>leaseClock})});
 const trace=event=>appendFile(join(directory,'attempts.jsonl'),JSON.stringify({pid:process.pid,...event})+'\n');
 const bindings={gateway:{mode:'fixture',provider:'synthetic',protocol:'fixture@1',model:'scripted',version:'1'},plugins:[],adapters:[]};
 let token;let workingInput;let memory;
@@ -29,6 +32,6 @@ let extensions=mode==='unknown'?[{name:'unknown_tool',description:'Synthetic ext
 if(memory)extensions=memory.extensions;
 if(mode==='child'){bindings.adapters.push({id:'child-handoff',version:'1'});const binding=createDurableChildBinding({store,parentClaim:()=>token,parentRunId:runId,outputRoot:directory,question:'Read the first synthetic page.',documents:['atlas-a'],dimensions:['free export limit'],gatewayFactory:()=>({mode:'fixture',async next({messages}){await trace({kind:'child-model'});return messages.some(m=>m.role==='tool')?{kind:'final',text:'Derived synthetic handoff.'}:{kind:'calls',calls:[{id:'child-read',name:'read_page',arguments:{documentId:'atlas-a',page:1}}]};}})});const execute=binding.execute;binding.execute=async(...args)=>{const result=await execute(...args);process.send?.({phase:'child-handoff',runId:token.runId});if(stop==='child-handoff')await new Promise(()=>{});return result;};extensions=[binding];}
 try{
- const result=await run({question:'Keep this exact synthetic request.',gateway,outputRoot:directory,requireReport:mode==='report',extensions,workingInput,limits:{maxRounds:12,maxTools:12,timeoutMs:mode==='deadline'?200:15000},durable:{store,runId,grantId:'synthetic-grant',bindings,rootLimits:{model:32,tool:16},onClaim:value=>{token=value;},async onCheckpoint(event){process.send?.({kind:'checkpoint',...event,pid:process.pid});if(stop===event.phase&&(mode!=='compaction'||event.noteRef)&&(mode!=='report'||event.callId==='save-one'||event.phase==='result-committed'&&event.cursor===0&&store.inspect(event.runId).snapshot.result?.value?.fileId))await new Promise(()=>{});}}});
+ const result=await run({question:'Keep this exact synthetic request.',gateway,outputRoot:directory,requireReport:mode==='report',extensions,workingInput,limits:{maxRounds:12,maxTools:12,timeoutMs:mode==='deadline'?200:15000},durable:{store,runId,grantId:'synthetic-grant',bindings,rootLimits:{model:32,tool:16},onClaim:value=>{token=value;if(stallMs)Atomics.wait(new Int32Array(new SharedArrayBuffer(4)),0,0,stallMs);},async onCheckpoint(event){process.send?.({kind:'checkpoint',...event,pid:process.pid});if(stop===event.phase&&(mode!=='compaction'||event.noteRef)&&(mode!=='report'||event.callId==='save-one'||event.phase==='result-committed'&&event.cursor===0&&store.inspect(event.runId).snapshot.result?.value?.fileId))await new Promise(()=>{});}}});
  process.send?.({kind:'outcome',result,pid:process.pid});process.stdout.write(JSON.stringify(result)+'\n');
 }finally{store.close();}
