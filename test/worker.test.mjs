@@ -7,8 +7,8 @@ import * as runtime from '../src/runtime.mjs';
 import { openSession } from '../src/session.mjs';
 
 const bindings = { gateway: { mode: 'fixture', provider: 'synthetic', protocol: 'fixture@1', model: 'worker-contract', version: '1' }, plugins: [], adapters: [{ id: 'publication', version: 'publication@1' }] };
-async function fixture() {
- await mkdir('test-output', { recursive: true }); const directory = await mkdtemp(resolve('test-output/worker-')); const store = await openSession({ directory, leaseMs: 100 }); let calls = 0;
+async function fixture({ clock = Date.now } = {}) {
+ await mkdir('test-output', { recursive: true }); const directory = await mkdtemp(resolve('test-output/worker-')); const store = await openSession({ directory, leaseMs: 100, clock }); let calls = 0;
  const options = { question: 'Synthetic worker: keep the original Run.', outputRoot: join(directory, 'runs'), requireReport: false, publication: true,
   limits: { maxRounds: 3, maxTools: 3, timeoutMs: 5000 }, gateway: { mode: 'fixture', async next() { calls++; return { kind: 'final', text: 'Original bounded worker answer.' }; } },
   durable: { store, runId: 'selected-worker-run', grantId: 'synthetic-worker-grant', bindings, rootLimits: { model: 3, tool: 3 } } };
@@ -74,10 +74,18 @@ test('9.2 explicit cancellation before work is durable and starts no model reque
  } finally { f.store.close(); }
 });
 test('9.2 explicit cancel wins a host-stop race without erasing an independently committed body', async () => {
- const f = await fixture(); const stop = new AbortController(), cancel = new AbortController(); let original;
+ // This race starts after publication; unrelated wall-clock lease expiry must not prevent its setup.
+ const now = Date.now(); const f = await fixture({ clock: () => now });
+ const stop = new AbortController(), cancel = new AbortController(); let original, cancelledBeforeHostStop;
  try {
-  const outcome = await runtime.run({ ...f.options, hostSignal: stop.signal, signal: cancel.signal, durable: { ...f.options.durable, runId: undefined, onPublication(value) { original = value.receipt; cancel.abort(); stop.abort(); } } });
-  assert.equal(outcome.status, 'cancelled'); assert.ok(original); assert.equal(f.store.inspect(original.runId).status, 'cancelled'); assert.deepEqual(f.store.confirmPublication(original).receipt, original);
+  const outcome = await runtime.run({ ...f.options, hostSignal: stop.signal, signal: cancel.signal, durable: { ...f.options.durable, runId: undefined, onPublication(value) {
+   original = value.receipt; assert.deepEqual(f.store.confirmPublication(original).receipt, original);
+   cancel.abort(); cancelledBeforeHostStop = f.store.inspect(original.runId).status; stop.abort();
+  } } });
+  const diagnostic = `outcome=${outcome.status}/${outcome.code}`;
+  assert.ok(original, `Publication must commit before the cancellation race: ${diagnostic}`);
+  assert.equal(cancelledBeforeHostStop, 'cancelled', `User cancellation must persist before host stop: ${diagnostic}`);
+  assert.equal(outcome.status, 'cancelled', diagnostic); assert.equal(f.store.inspect(original.runId).status, 'cancelled'); assert.deepEqual(f.store.confirmPublication(original).receipt, original);
  } finally { f.store.close(); }
 });
 test('9.2 an unacknowledged model stop retains the lease and original reservation instead of promising clean handoff', async () => {
