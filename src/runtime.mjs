@@ -76,9 +76,10 @@ export async function run({ question, gateway, outputRoot = 'runs', requireRepor
         if (result.callId !== call.id) throw failure('CALL_PAIR_MISMATCH');
         const partialPaths = (result.partialPaths || []).filter(path => ['report.md', 'manifest.json'].includes(path));
         if (partialPaths.length) partialEffects.push({ callId: call.id, name: effectiveName, ...(effectiveName !== call.name ? { originalName: call.name } : {}), partialPaths });
+        if(result.artifactEffects)partialEffects.push({callId:call.id,name:effectiveName,artifactEffects:structuredClone(result.artifactEffects)});
         if(result.memoryEffect)partialEffects.push({callId:call.id,name:effectiveName,memoryEffect:structuredClone(result.memoryEffect)});
         messages.push({ role: 'tool', callId: call.id, result });
-        await record('tool_result', { callId: call.id, name: effectiveName, status: result.status, dispatched: result.dispatched, partialPaths, memoryEffect:result.memoryEffect, durationMs: result.durationMs, resultRef: result.value?.resultRef, sourceAcquisition: result.value?.mcp ? { serverName: result.value.mcp.serverName, protocolVersion: result.value.mcp.protocolVersion, protocolRequestId: result.value.mcp.protocolRequestId, modelCallId: result.value.mcp.modelCallId } : undefined, original: result.original, effective: result.effective, hookErrors: result.hookErrors || [] });
+        await record('tool_result', { callId: call.id, name: effectiveName, status: result.status, dispatched: result.dispatched, partialPaths, memoryEffect:result.memoryEffect, artifactEffects:result.artifactEffects, artifactId:result.value?.artifactId, durationMs: result.durationMs, resultRef: result.value?.resultRef, sourceAcquisition: result.value?.mcp ? { serverName: result.value.mcp.serverName, protocolVersion: result.value.mcp.protocolVersion, protocolRequestId: result.value.mcp.protocolRequestId, modelCallId: result.value.mcp.modelCallId } : undefined, original: result.original, effective: result.effective, hookErrors: result.hookErrors || [] });
         if (effectiveName === 'save_report' && result.status === 'succeeded') await record('file_saved', { receipt: result.value });
         if (result.status !== 'succeeded') throw failure(result.dispatched ? 'TOOL_FAILED' : 'TOOL_REJECTED');
       }

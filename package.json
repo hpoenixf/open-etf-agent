@@ -1,6 +1,6 @@
 {
   "name": "open-etf-agent",
-  "version": "0.5.0-dev.0",
+  "version": "0.6.0-dev.0",
   "private": true,
   "type": "module",
   "license": "UNLICENSED",
@@ -10,7 +10,9 @@
   "scripts": {
     "build": "node scripts/build.mjs",
     "test": "node --test --test-concurrency=1 test/*.test.mjs",
-    "demo": "node src/cli.mjs"
+    "demo": "node src/cli.mjs",
+    "serve": "node src/reader-cli.mjs",
+    "evaluate": "node src/evaluate-cli.mjs"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "1.32.2",

@@ -1,3 +1,5 @@
+> Historical v0.5 preparation snapshot. Later bounded runtime evidence and the current explicit entry are documented in [live validation](../live-validation.md) and [first-batch observations](live-v01-v05-first-batch.md). The original text below is retained as history, not current live authorization or status.
+
 # v0.5 live preparation — no configuration copied or live request sent
 
 The implemented single-protocol Gateway takes an exact HTTPS `/chat/completions` endpoint, model ID and API key. Its separate trusted grant requires provider, synthetic-data and cost approval. Merely possessing an API key or setting an environment flag must not create that approval. The offline CLI currently blocks live before creating a Run.

@@ -1,0 +1,44 @@
+import {open,constants,readdir} from 'node:fs/promises';
+import {join} from 'node:path';
+import {safeDirectory,ensureSafeDirectory,publishImmutable} from './storage-files.mjs';
+import {sha256,validateSource} from './source.mjs';
+const formats={markdown:{extension:'md',mediaType:'text/markdown; charset=utf-8'},html:{extension:'html',mediaType:'text/html; charset=utf-8'},csv:{extension:'csv',mediaType:'text/csv; charset=utf-8'},svg:{extension:'svg',mediaType:'image/svg+xml; charset=utf-8'}};
+const fail=message=>{throw new Error(message);};
+const bytesOf=value=>Buffer.from(JSON.stringify(value)+'\n');
+const artifactPattern=/^artifact:sha256:([a-f0-9]{64})$/;
+const revisionPattern=/^revision:sha256:([a-f0-9]{64})$/;
+function object(value){return value!==null&&typeof value==='object'&&!Array.isArray(value);}
+export function encodeCsv(rows){
+ if(!Array.isArray(rows)||!rows.length||rows.length>1000||!Array.isArray(rows[0])||!rows[0].length||rows[0].length>32)fail('Invalid CSV rows');const width=rows[0].length;
+ let total=0;const lines=[];
+ for(const row of rows){if(!Array.isArray(row)||row.length!==width)fail('Invalid CSV width');const cells=[];for(let index=0;index<width;index++){const cell=row[index];if(typeof cell!=='string'||Buffer.byteLength(cell)>64000||/\u0000/.test(cell))fail('Invalid CSV cell');let value=/^[\s]*[=+@-]/.test(cell)||/^[\t\r]/.test(cell)?"'"+cell:cell;if(/[",\r\n]/.test(value))value='"'+value.replaceAll('"','""')+'"';total+=Buffer.byteLength(value)+(index?1:0);if(total>1048576)fail('CSV too large');cells.push(value);}total+=2;if(total>1048576)fail('CSV too large');lines.push(cells.join(','));}
+ return lines.join('\r\n')+'\r\n';
+}
+function encode(format,content){
+ if(!Object.hasOwn(formats,format))fail('Unsupported artifact format');const text=format==='csv'?encodeCsv(content):content;
+ if(typeof text!=='string'||!text.length||Buffer.byteLength(text)>1048576||text.includes('\0'))fail('Invalid artifact content');const bytes=Buffer.from(text);if(new TextDecoder('utf-8',{fatal:true}).decode(bytes)!==text)fail('Invalid UTF-8 content');
+ if(format==='html'&&(!/^\s*(?:<!doctype html>\s*)?<html[\s>]/i.test(text)||!/<\/html>\s*$/i.test(text)))fail('HTML format mismatch');
+ if(format==='svg'&&(!/^\s*<svg\s[^>]*xmlns=["']http:\/\/www\.w3\.org\/2000\/svg["'][^>]*>/i.test(text)||!/<\/svg>\s*$/i.test(text)||/<!DOCTYPE|<!ENTITY/i.test(text)))fail('SVG format mismatch');return bytes;
+}
+async function boundedRead(directory,filename,max){await safeDirectory(directory);let handle;try{handle=await open(join(directory,filename),constants.O_RDONLY|constants.O_NOFOLLOW);const stat=await handle.stat();if(!stat.isFile()||stat.size>max)fail('Unsafe artifact file');const buffer=Buffer.alloc(max+1);let at=0;while(at<buffer.length){const {bytesRead}=await handle.read(buffer,at,buffer.length-at);if(!bytesRead)break;at+=bytesRead;}if(at>max)fail('Artifact read limit');return buffer.subarray(0,at);}finally{await handle?.close();}}
+async function identicalPublish(directory,name,bytes,signal){try{await publishImmutable(directory,name,bytes,signal);}catch(error){if(error.code!=='EEXIST')throw error;const old=await boundedRead(directory,name,Math.max(bytes.length,1));if(!old.equals(bytes))fail('Immutable artifact collision');}}
+function descriptor(format,bytes){const {extension,mediaType}=formats[format];const hash=sha256(bytes);const artifactId='artifact:sha256:'+sha256(JSON.stringify({sha256:hash,format,mediaType}));return{artifactId,sha256:hash,format,mediaType,bytes:bytes.length,contentPath:'artifacts/objects/'+hash+'.'+extension};}
+function sourceSnapshot(source){if(source?.derived===true||source?.kind==='derived-working-note'||source?.origin==='derived-summary')fail('Derived observation is not an original source');const valid=validateSource(source);return Object.fromEntries(['sourceId','documentId','name','version','page','text','sha256','mediaType'].map(key=>[key,valid[key]]));}
+export async function openArtifactStore({directory,readOnly=false}){
+ directory=await safeDirectory(directory);const root=join(directory,'artifacts');const objects=join(root,'objects');const records=join(root,'records');const revisions=join(root,'revisions');
+ for(const path of [root,objects,records,revisions])await(readOnly?safeDirectory(path):ensureSafeDirectory(path));
+ async function read(id){const match=typeof id==='string'&&artifactPattern.exec(id);if(!match)fail('Invalid artifact ID');const record=JSON.parse((await boundedRead(records,match[1]+'.json',4096)).toString('utf8'));if(!object(record)||!Object.hasOwn(formats,record.format)||typeof record.sha256!=='string'||!/^[a-f0-9]{64}$/.test(record.sha256))fail('Invalid artifact record');
+  const filename=record.sha256+'.'+formats[record.format].extension;const bytes=await boundedRead(objects,filename,1048576);const expected=descriptor(record.format,bytes);if(JSON.stringify(record)!==JSON.stringify(expected)||record.artifactId!==id)fail('Artifact identity or bytes mismatch');return{...record,bytes};
+ }
+ async function readRevision(id){const match=typeof id==='string'&&revisionPattern.exec(id);if(!match)fail('Invalid revision ID');const record=JSON.parse((await boundedRead(revisions,match[1]+'.json',5*1048576)).toString('utf8'));if(!object(record)||record.revisionId!==id||record.schemaVersion!=='open-etf-artifact-revision@1')fail('Invalid revision record');const body={schemaVersion:record.schemaVersion,reportId:record.reportId,attachmentIds:record.attachmentIds,sources:record.sources};if('revision:sha256:'+sha256(JSON.stringify(body))!==id)fail('Revision identity mismatch');await validateRevision(body);return structuredClone(record);}
+ async function validateRevision({reportId,attachmentIds,sources}){const report=await read(reportId);if(!['markdown','html'].includes(report.format))fail('Invalid report format');if(!Array.isArray(attachmentIds)||attachmentIds.length>16||new Set(attachmentIds).size!==attachmentIds.length||attachmentIds.includes(reportId))fail('Invalid attachments');for(const id of attachmentIds)await read(id);if(!Array.isArray(sources)||!sources.length||sources.length>64)fail('Missing original sources');const ids=new Set();for(const source of sources){const valid=sourceSnapshot(source);if(JSON.stringify(valid)!==JSON.stringify(source)||ids.has(valid.sourceId))fail('Invalid or duplicate source snapshot');ids.add(valid.sourceId);}}
+ return{
+  async put({format,content},{signal}={}){if(readOnly)fail('Read-only artifact store');const bytes=encode(format,content);const record=descriptor(format,bytes);const effects=[];try{await identicalPublish(objects,record.sha256+'.'+formats[format].extension,bytes,signal);effects.push({kind:'artifact-content',sha256:record.sha256});await identicalPublish(records,record.artifactId.slice('artifact:sha256:'.length)+'.json',bytesOf(record),signal);return structuredClone(record);}catch(error){error.artifactEffects=effects;throw error;}},
+  read,
+  async revise({reportId,attachmentIds=[],sources},{signal}={}){if(readOnly)fail('Read-only artifact store');if(!Array.isArray(sources))fail('Missing sources');const body={schemaVersion:'open-etf-artifact-revision@1',reportId,attachmentIds:structuredClone(attachmentIds),sources:sources.map(sourceSnapshot)};await validateRevision(body);const revisionId='revision:sha256:'+sha256(JSON.stringify(body));const record={...body,revisionId};await identicalPublish(revisions,revisionId.slice('revision:sha256:'.length)+'.json',bytesOf(record),signal);return structuredClone(record);},
+  readRevision,
+  async listRevisions(){const names=(await readdir(await safeDirectory(revisions))).sort();const result=[];for(const name of names){if(!/^[a-f0-9]{64}\.json$/.test(name))continue;const r=await readRevision('revision:sha256:'+name.slice(0,-5));result.push({revisionId:r.revisionId,reportId:r.reportId,attachmentIds:r.attachmentIds});if(result.length>1000)fail('Revision listing limit');}return result;}
+ };
+}
+// Only typed known identities leave an Artifact failure; never arbitrary filesystem paths or text.
+export function projectArtifactEffects(value){if(!Array.isArray(value)||value.length>20)return undefined;const projected=[];for(const effect of value){if(!object(effect))return undefined;if(effect.kind==='artifact'&&artifactPattern.test(effect.artifactId))projected.push({kind:'artifact',artifactId:effect.artifactId});else if(effect.kind==='revision'&&revisionPattern.test(effect.revisionId))projected.push({kind:'revision',revisionId:effect.revisionId});else if(effect.kind==='artifact-content'&&typeof effect.sha256==='string'&&/^[a-f0-9]{64}$/.test(effect.sha256))projected.push({kind:'artifact-content',sha256:effect.sha256});else return undefined;}return projected.length?projected:undefined;}

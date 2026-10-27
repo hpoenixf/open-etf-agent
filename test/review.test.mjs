@@ -16,7 +16,8 @@ test('1.2 runtime preserves known partial file effects on manifest publication f
   } };
   const r = await run({ question: 'save original report', gateway, outputRoot });
   assert.equal(r.status, 'failed'); assert.equal(r.receipt, null);
-  assert.deepEqual(r.partialEffects, [{ callId: 'save', name: 'save_report', partialPaths: ['report.md'] }]);
+  assert.deepEqual(r.partialEffects.filter(effect=>effect.partialPaths), [{ callId: 'save', name: 'save_report', partialPaths: ['report.md'] }]);
+  assert.deepEqual(r.partialEffects.find(effect=>effect.artifactEffects).artifactEffects.map(effect=>effect.kind),['artifact','revision']);
   const events = (await readFile(join(r.directory, 'run.jsonl'), 'utf8')).trim().split('\n').map(JSON.parse);
   assert.deepEqual(events.find(e => e.type === 'tool_result' && e.callId === 'save').partialPaths, ['report.md']);
   assert.match(await readFile(join(r.directory, 'report.md'), 'utf8'), /Exact body/);

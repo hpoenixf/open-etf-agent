@@ -18,7 +18,7 @@ node scripts/live-validate.mjs \
 
 The owner-only ignored config contains exactly `CHAT_BASE_URL`, `CHAT_API_KEY`, `CHAT_MODEL`. Never put credentials in command arguments or baseline tracked files. Unknown request outcomes block further use of that ledger; there is no automatic resume or retry. Configuration scope and budget checks are local safeguards, not a provider-side billing guarantee.
 
-Tests inject a test-owned Git identity/status executable while hashing actual frozen v0.5 source bytes and running its real Runtime/Gateway with a fake provider. They create no extra Git worktree and require no sibling checkout. This fixture test is not a claim of a new remote live run; the original five real runs retain their earlier adapter hashes.
+Tests inject a test-owned Git identity/status executable while hashing an immutable seven-file original public v0.1 fixture closure and running that original Runtime/Gateway with a fake provider. They create no extra Git worktree and require no sibling checkout. This fixture test is not a claim of a new remote live run; the original five real runs retain their earlier adapter hashes.
 
 ## Reusable boundaries
 

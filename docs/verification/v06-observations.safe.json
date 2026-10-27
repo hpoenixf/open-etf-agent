@@ -1,0 +1,253 @@
+{
+  "scope": "Actual provider-free Runtime/Artifact/loopback observations. Original full logs remain ignored locally; hashes and aggregate counts are portable projections, not raw logs. Model semantics not assessed.",
+  "stages": [
+    {
+      "stage": "associated-green",
+      "exitCode": 0,
+      "counts": {
+        "tests": 8,
+        "pass": 8,
+        "fail": 0
+      },
+      "originalLogSha256": "472e5a8bc010359136662d30a074a82d1d6189303120fe17d4abb22a2ec332a4"
+    },
+    {
+      "stage": "associated-regression",
+      "exitCode": 1,
+      "counts": {
+        "tests": 8,
+        "pass": 5,
+        "fail": 3
+      },
+      "originalLogSha256": "4b55e89a06cd0d179ee370f6ecb797448a0eb509bc6f87490949a5ff94481118"
+    },
+    {
+      "stage": "cli-green",
+      "exitCode": 0,
+      "counts": {
+        "tests": 3,
+        "pass": 3,
+        "fail": 0
+      },
+      "originalLogSha256": "42a9db3b2081b3e30b951a51b1505afb06acf11b94f20dd708412108edaf6df2"
+    },
+    {
+      "stage": "cli-red",
+      "exitCode": 1,
+      "counts": {
+        "tests": 3,
+        "pass": 0,
+        "fail": 3
+      },
+      "originalLogSha256": "e21edbf4041497b9e4a93f8d6df3801b031f7989e9eec427d5c6725ae915541f"
+    },
+    {
+      "stage": "csv-bound-green",
+      "exitCode": 0,
+      "counts": {
+        "tests": 11,
+        "pass": 11,
+        "fail": 0
+      },
+      "originalLogSha256": "984c140537a8b405fe1639e44c6462dbef57ba29a1288aa7bf30963a009e1846"
+    },
+    {
+      "stage": "csv-bound-red",
+      "exitCode": 1,
+      "counts": {
+        "tests": 1,
+        "pass": 0,
+        "fail": 1
+      },
+      "originalLogSha256": "b9f6a09ee51e28e51fb92cbfd0c5a17b31bec07b34fdcdc6c4bae68367ef96cd"
+    },
+    {
+      "stage": "evaluate-green",
+      "exitCode": 0,
+      "counts": {
+        "tests": 17,
+        "pass": 17,
+        "fail": 0
+      },
+      "originalLogSha256": "f2599d485e48656c332a68a85f46a91533995a1757f44d27f82080ef182fb296"
+    },
+    {
+      "stage": "evaluate-red",
+      "exitCode": 1,
+      "counts": {
+        "tests": 3,
+        "pass": 0,
+        "fail": 3
+      },
+      "originalLogSha256": "28bd4ee2bb3ed4d4accd2cc5e3dd7695c66cd7a808d2bc4b8fc8095e8a5e923c"
+    },
+    {
+      "stage": "final-build",
+      "exitCode": 0,
+      "counts": {},
+      "originalLogSha256": "d8ddd62c0c0818c9d898e939485d10798fc27ee6dfa16411f1053daab6b2ff6d"
+    },
+    {
+      "stage": "final-independent-test",
+      "exitCode": 0,
+      "counts": {
+        "tests": 171,
+        "pass": 171,
+        "fail": 0
+      },
+      "originalLogSha256": "782b0d83acea4440b310ce6275a3106b0bd0244b9f463b322fd3edffd1a05191"
+    },
+    {
+      "stage": "first-green",
+      "exitCode": 0,
+      "counts": {
+        "tests": 10,
+        "pass": 10,
+        "fail": 0
+      },
+      "originalLogSha256": "4e12ffc05a1b40b900b7d98ae082c3fb4fdfb2c3719f06e9a4aebb9b86697b00"
+    },
+    {
+      "stage": "first-red",
+      "exitCode": 1,
+      "counts": {
+        "tests": 10,
+        "pass": 0,
+        "fail": 10
+      },
+      "originalLogSha256": "d683bc13b96623e1a3b627f04c18d0c6f5c4ac172390c30e19178d04e6e73947"
+    },
+    {
+      "stage": "full-first",
+      "exitCode": 0,
+      "counts": {
+        "tests": 167,
+        "pass": 167,
+        "fail": 0
+      },
+      "originalLogSha256": "2b2c730f901c541b92a6f34eab7a76b5912f31efb844b7b2eabd1afe28efc14d"
+    },
+    {
+      "stage": "independent-build",
+      "exitCode": 0,
+      "counts": {},
+      "originalLogSha256": "d8ddd62c0c0818c9d898e939485d10798fc27ee6dfa16411f1053daab6b2ff6d"
+    },
+    {
+      "stage": "independent-ci",
+      "exitCode": 0,
+      "counts": {},
+      "originalLogSha256": "adcf84617f30a9d5375852dcfd3545b1f57ed5c542f33d3cf85987af5dc51189"
+    },
+    {
+      "stage": "independent-test",
+      "exitCode": 0,
+      "counts": {
+        "tests": 168,
+        "pass": 168,
+        "fail": 0
+      },
+      "originalLogSha256": "eb8ffb3aa44dfd91bb9ada9169f705aeae658600e08b7f0c87b0f44d9a736fc0"
+    },
+    {
+      "stage": "integration-green",
+      "exitCode": 0,
+      "counts": {
+        "tests": 14,
+        "pass": 14,
+        "fail": 0
+      },
+      "originalLogSha256": "1cc714116ce16d854b37ccec025fb53c159f98cc78403604e1cac50c7450c8be"
+    },
+    {
+      "stage": "integration-red",
+      "exitCode": 1,
+      "counts": {
+        "tests": 4,
+        "pass": 1,
+        "fail": 3
+      },
+      "originalLogSha256": "5bc2f1346fd6aae3ba61ec14e3c6e6bb82399a3ed1d6b31a77a90818f545ef76"
+    },
+    {
+      "stage": "review-green",
+      "exitCode": 0,
+      "counts": {
+        "tests": 24,
+        "pass": 24,
+        "fail": 0
+      },
+      "originalLogSha256": "9aaf44078b449adcd55bc6ec40af663bd6015a82d097f1ecbdeed07ab8f0ca50"
+    },
+    {
+      "stage": "review-red",
+      "exitCode": 1,
+      "counts": {
+        "tests": 3,
+        "pass": 0,
+        "fail": 3
+      },
+      "originalLogSha256": "79c6861282d44cdafc1eb48526f43addec06e521205d38a032a6ebe2b7e1660e"
+    },
+    {
+      "stage": "kit-lint___stage_apply",
+      "exitCode": 0,
+      "result": {
+        "change": "v06-artifact-reader",
+        "stage": "apply",
+        "issues": [],
+        "structuralOnly": true,
+        "semanticQuality": "unverified"
+      },
+      "originalLogSha256": "57661e02e11b7f22d820fb4bb7d5db959cc799245cfd9f21e845562d4feec613"
+    },
+    {
+      "stage": "kit-lint___stage_plan",
+      "exitCode": 0,
+      "result": {
+        "change": "v06-artifact-reader",
+        "stage": "plan",
+        "issues": [],
+        "structuralOnly": true,
+        "semanticQuality": "unverified"
+      },
+      "originalLogSha256": "7951fcce51f94faf450de288abace64e5f5349be0ea3f8d22e81475fcd4ba036"
+    },
+    {
+      "stage": "kit-status",
+      "exitCode": 0,
+      "result": {
+        "change": "v06-artifact-reader",
+        "tasks": {
+          "total": 5,
+          "completed": 5
+        },
+        "completion": "not-recorded",
+        "issues": [],
+        "rerun": false,
+        "semanticQuality": "unverified",
+        "release": "not-claimed"
+      },
+      "originalLogSha256": "58a5b6739e09e937d98a80b8ea8ecc68a0fdd115b43b008c5ee68c43cd6758a5"
+    },
+    {
+      "stage": "kit-verify",
+      "exitCode": 0,
+      "result": {
+        "status": "written",
+        "rerun": false
+      },
+      "originalLogSha256": "c92d1da0fd4a95ec23628000b15875ca13e7d323a47f2e168212f5e95841d0d1"
+    },
+    {
+      "stage": "kit-verify___check",
+      "exitCode": 0,
+      "result": {
+        "status": "current",
+        "generated": true,
+        "rerun": false
+      },
+      "originalLogSha256": "ed3c44cde7364d748d85106e381b55d502c75cba52321f2e35261bfeb90a987e"
+    }
+  ]
+}

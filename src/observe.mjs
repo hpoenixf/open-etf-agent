@@ -1,3 +1,4 @@
+import {projectArtifactEffects} from './artifacts.mjs';
 import { projectMemoryEffect } from './memory-effects.mjs';
 import { open, constants } from 'node:fs/promises';
 import { join } from 'node:path';
@@ -41,7 +42,7 @@ export async function readTimeline(directory) {
       entry.cost = finite(event.cost) ? event.cost : null;
     }
     if(event.type==='working_note'){for(const key of ['beforeBytes','afterBytes'])if(count(event[key]))entry[key]=event[key];for(const key of ['noteRef','persistedNoteRef'])if(event[key]===null||typeof event[key]==='string'&&/^note:sha256:[a-f0-9]{64}$/.test(event[key]))entry[key]=event[key];}
-    if(event.type==='tool_result'){const effect=projectMemoryEffect(event.memoryEffect);if(effect)entry.memoryEffect=effect;}
+    if(event.type==='tool_result'){const artifacts=projectArtifactEffects(event.artifactEffects);if(artifacts)entry.artifactEffects=artifacts;if(typeof event.artifactId==='string'&&/^artifact:sha256:[a-f0-9]{64}$/.test(event.artifactId))entry.artifactId=event.artifactId;const effect=projectMemoryEffect(event.memoryEffect);if(effect)entry.memoryEffect=effect;}
     return entry;
   });
   return { schemaVersion: 'readonly-metadata@1', replayable: false, entries };

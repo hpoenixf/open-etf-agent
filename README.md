@@ -1,58 +1,61 @@
-# Open ETF Agent — v0.5 offline candidate
+# Open ETF Agent — v0.6 candidate
 
-v0.5 adds derived working notes and an explicitly selected Memory library. Original-source truth, preferences, derived notes and execution observations remain separate. Live validation is prepared but blocked on the exact reviewed configuration and this public project’s provider/data/cost grant.
+A small, incrementally developed research Runtime using original synthetic documents. v0.6 adds immutable report artifacts, deterministic CSV attachments, a **loopback-only read service** and actual HTTP byte/source checks. Refreshing or downloading a saved result does not run a model.
 
-An independently runnable local stage, not a release. The inherited v0.4 ResultStore, bounded Context projection, exact reread and scoped lexical retrieval remain available without enabling Memory or compaction. Earlier phase branches stay frozen; v0.2 has a separate maintenance patch preserving its old evidence. Provider/data/cost authorization, live/model-child semantics, project license and public publication remain open gates.
+The project acceptance scope is Runtime correctness: faithful inputs and sources, bounded lawful execution or refusal, explicit partial effects and real saved bytes. Model-answer quality is not an acceptance gate. Earlier frozen phases and their real-model observations remain separate; a basic live T1 does not prove every later mechanism. Source branches are public backups, not license selection, tags or formal releases.
 
-## Run
+## Run independently
 
-Node 26.11.1–26.x. Installation scripts are unnecessary; the official SDK dependency closure remains locked:
+Use Node 26.11.1–26.x. The pinned SDK is the only runtime dependency family; installation hooks are unnecessary.
 
 ```sh
 npm ci --ignore-scripts --no-audit --no-fund
 npm run build
 npm test
 npm run demo -- --case document-compare
+npm run demo -- --case artifact-table
+```
+
+With a populated official registry cache, `npm ci --offline --ignore-scripts --no-audit --no-fund` also works. Installation may require network; default demos/tests do not require a provider, key or private service. Build output runs as `node dist/src/cli.mjs`.
+
+## Read and check actual files
+
+```sh
+mkdir -p runs
+node src/cli.mjs --case document-compare --output runs > runs/comparison.json
+npm run evaluate -- --input runs/comparison.json
+# Select one actual directory printed in comparison.json:
+npm run serve -- --run runs/run-YOUR_ID
+```
+
+`serve` prints its `http://127.0.0.1:PORT` origin and stops on Ctrl-C. It only reads the selected Run's already registered artifacts. The index links stable revision and report IDs; source windows, attachment metadata and downloads are revision-bound. No authentication or public-network hosting is promised. HTML/SVG are **downloads only**, not executed in the reader page. Treat downloaded active documents as untrusted when opening them elsewhere.
+
+`evaluate` starts and closes its own short loopback readers and retains the four-case denominator, including not-run or failed rows. It checks report hashes/media types, complete original-source identities and bytes, and unique attachment identities/bytes through real HTTP. It does not judge prose or recover an unfinished Run.
+
+## Existing optional mechanisms
+
+```sh
 npm run demo -- --case skill-mcp
 npm run demo -- --case batch-read
 npm run demo -- --case fixture-child
 npm run demo -- --case retrieve-reread --query "offline editing"
-npm run demo -- --case retrieve-reread --query "Markdown"
 npm run demo -- --case compact-and-reread
 npm run demo -- --case explicit-memory --memory-library runs/selected-synthetic-library
-node src/cli.mjs --observe runs/<run-id>
+node src/cli.mjs --observe runs/run-YOUR_ID
 ```
 
-Cached `npm ci --offline --ignore-scripts --no-audit --no-fund` works. Installation may access the registry; demos run offline after installation. The native-ESM build copies all source/fixtures and runs as `node dist/src/cli.mjs`. `--live` and `--case model-child` remain blocked before Run creation; a scripted fixture-child is not independent live model reasoning.
+Skill and MCP, Hook/Child budgets, immutable original ResultRefs, bounded Context projection, derived notes and explicit one-use Memory intents remain opt-in. A fixture-child is not live independent reasoning. A derived note is not an original source. Forgetting changes future typed inputs, not historical reports. No plugin lifecycle, database, background worker, Web Chat or cold recovery is implemented in this phase.
 
-## v0.5 additions
+## Artifact boundaries
 
-- **Derived notes, not sources:** complete older successful groups can become a persisted `note:sha256:…` record after a bounded summary call, shared root reservation, exact basis/Memory-revision checks and actual net-byte reduction. Question/latest group and permission/failure facts remain. `read_note` is enabled only with explicit compaction; `read_result` still returns immutable original bytes. Projection-only call/result pairs are labeled `projectionOnly`, `status: projected`, `dispatched: false`, not fictitious tool executions.
-- **Explicit Memory:** only `--case explicit-memory --memory-library PATH` opens the demonstrated library. Save/revise/forget require operator-bound, content/revision/library-scoped intents outside model arguments. A one-use intent is durably reserved before mutation. Partial consumption/publication facts reach Runtime output/logs without exposing arbitrary paths or text. A failed write is not silently retried.
-- **Forget is a future-input boundary:** current recall hides a tombstone; typed old entries/search results, settled write arguments (including Hook copies) and dependent note text are removed from subsequent Gateway input. Historical revisions, execution history and existing reports remain intact. This is not general phrase erasure or anonymization.
-- **Honest demonstrations:** the Memory case uses explicit original synthetic intents and three Runs, returning actual save/revise/forget receipts and a source-cited report. It does not record a real user's permanent preferences. The compaction case uses a scripted summarizer, persisted notes and actual original reread, not evidence of live summary quality or model adoption.
-- **No silent scope expansion:** no global Memory path, vector store, automatic learning, database, scheduler or recovery manager. A local writer lock is not stolen; missing/corrupt state fails closed. Sensitive-pattern refusal is narrow defense in depth, not a comprehensive classifier.
+The ordinary `save_report` Host binding delegates to one Report/Artifact owner; it does not maintain an alternate publishing engine. The legacy `report.md`/manifest remain readable. Artifact IDs bind bytes and format; revisions bind report, attachments and validated original snapshots. A later revision never overwrites an older ID. `create_csv` uses bounded structured strings, correct CSV quoting and an apostrophe display transform for formula-leading cells. It is not arbitrary file execution or an agent shell.
 
-## Retained v0.4 foundation
+Markdown is the normal report format. The local Artifact API also accepts a declared bounded HTML/SVG subset for attachment-only delivery; it is not a general HTML/XML parser or sanitizer. The optional standalone Python exercise from the roadmap is not implemented and is not needed for this phase's Node-only demos.
 
-- **One original-source owner:** Host's source Map is removed. ResultStore owns immutable source records, typed calculation records and `content-index.json`. The index is a content lookup, not an execution checkpoint. Reports embed delivery copies read from the stored records plus exact ResultRefs, safe relative record paths and record hashes.
-- **Identity is not just text:** the same sourceId cannot be rebound to another document/version/page/name even when text hashes match. A same-document newer version gets its own ref. Reopening the store reads the old bytes without fetching latest material. Unknown/corrupt refs and missing indexes over existing records fail explicitly.
-- **Current observation versus stored provenance:** repeated acquisition of the same page keeps the original record/ref while returning that call's adapter receipt. `read_result` returns the stored acquisition's provenance, not a new MCP request. Raw `sourceAcquisition` on such a reread is historical provenance, not a fresh transport effect.
-- **Context is a working view:** original history remains unchanged. Only complete settled call/result groups may be projected, preserving IDs/status/errors and the original question/latest group. Replacement requires a Host ResultRef, matching actual text hash and full intrinsic identity; lookalike tool objects are not promoted to sources. Exact reread remains an ordinary tool. The optional v0.5 note layer is separately derived and does not replace stored originals.
-- **Local byte limits:** Context and final Chat request encoding have explicit UTF-8 byte bounds, including final schemas/wrappers. These are not Provider token-window claims. If mandatory material cannot fit, the request fails instead of silently dropping requirements.
-- **Real candidate-driven reads:** query tokens rank only allowed synthetic pages with deterministic ties. The fixture then issues ordinary read_page calls from those candidates and read_result from the acquired ref. Markdown selects B page 1; offline editing selects page 2. Hits are not sources until read. One-sided results admit the gap; zero hits fail the required-report contract without reading or saving.
-- **Citations:** numbered original-source citations and separately typed numeric derivations resolve to actual stored records. `[C1]` retains calculation inputs/units/current-versus-baseline convention/code identity; it is not a document page. Invalid markers reject before save.
+## Real-model and evidence boundaries
 
-## Retained mechanisms and boundaries
+The default CLI's `--live` remains closed; use the separate [explicit bounded live entry](docs/live-validation.md), with your own reviewed provider/data/cost scope and budget. `.env.example` contains only placeholders. Never commit a real key or copy unrelated app configuration.
 
-The four original questions retain denominator four, actual saved-file readback and semanticStatus unreviewed. Skills are bounded explicitly loaded data, not permission or executable scripts. Official SDK 1.32.2 uses verified protocol 2025-11-25, not the latest protocol; [dependency evidence](docs/dependencies/sdk-selection.md) records the rejected v2 behavior and maintenance boundary. MCP is a trusted original fixture process, not a sandbox.
+[Five frozen versions' real first-batch evidence](docs/verification/live-v01-v05-first-batch.md) records lawful outcomes, file receipts and actual subscription billing separately. Those runs used their original adapters and are not new v0.6 live evidence. [Next Runtime-focused live cases](docs/verification/live-runtime-next-cases.md) remain a plan, not an execution record.
 
-Hook patches are narrow and revalidated; observation errors do not rewrite receipts. Fixed batch workers and one-level fixture-child share root reservations; Main owns the report. Child imports reread only granted original typed refs, not arbitrary paths or derived summaries. A readonly metadata view uses typed fields/token counters rather than raw provider usage objects; it is not general semantic anonymization.
-
-Single-user local roots and one content-index writer are assumed. Static symlinks are rejected; hostile same-user filesystem races and power-loss transactions are not promised. Immutable-record publication and index replacement are separate operations: a failed index update can leave an unacknowledged orphan record, not a successful source receipt. No automatic blind retry or recovery follows. Summary deadlines stop waiting and clean up owned timers/listeners; a trusted callback that ignores cancellation is not forcibly terminated.
-
-No database, Plugin, daemon, HTTP service, vector platform, arbitrary shell or paid calls are introduced. Earlier files remain readable, but none are executable Run checkpoints. Initialization-phase MCP cancellation remains specifically untested; active call/stream cancellation and call timeout have real checks.
-
-## Evidence
-
-[v0.5 observed failures/fixes](docs/verification/v05-observations.md), [artifact hashes](docs/verification/v05-evidence-provenance.json), [live preparation](docs/verification/v05-live-preparation.md) and [article evidence index](docs/evolution/evidence-index.md) distinguish stored receipts, future-input wiring and model semantics. The current source has passed 124 serial tests; independent cached installation/build/124-test regression and all seven demos also passed. The immutable backup freeze recorded Kit as pending; a subsequent documentation-only observation records real plan/apply/status success and correctly refused closure. Live/semantic/license/formal release remains open despite code backup publication. The frozen v0.4 96-test evidence remains historical. No completion.json, formal release or semantic approval is claimed.
+[v0.6 Spec and evidence](openspec/changes/v06-artifact-reader/evidence.md) preserves actual RED/GREEN, review fixes and qualification results. The Evidence Kit's generated view is a structural check, not test execution authentication or license/release approval. The project root remains `UNLICENSED` pending an explicit project-license decision; the separately vendored Kit retains its own license.

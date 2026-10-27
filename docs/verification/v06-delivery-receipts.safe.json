@@ -1,0 +1,259 @@
+{
+  "demos": 8,
+  "runCount": 13,
+  "reportCount": 11,
+  "providerCalls": 0,
+  "runs": [
+    {
+      "demo": "document-compare",
+      "item": "T1",
+      "status": "completed",
+      "receipt": {
+        "artifactId": "artifact:sha256:855d3143bd39da091d835557851703807c29266805e3e79b8aa94c50992c414e",
+        "revisionId": "revision:sha256:5eeb5c527a84365e4769a0df709b0589d3952fc0cffbb115a3dd75ae3fabf3ee",
+        "sha256": "67243fa3c98c7d9015cb7f8148f6d11504a542994a541e279a24b12e50ade2c5",
+        "bytes": 933,
+        "mediaType": "text/markdown; charset=utf-8",
+        "attachmentIds": []
+      },
+      "independentPostExitReadbackMatched": true,
+      "sourceCount": 2,
+      "attachments": []
+    },
+    {
+      "demo": "document-compare",
+      "item": "T2",
+      "status": "completed",
+      "receipt": {
+        "artifactId": "artifact:sha256:a28e55b20f5596b2b9dfb93d3ad2e008d0a6a7f44bbb44c713986feeedb62766",
+        "revisionId": "revision:sha256:c6236dab849bf9606c7122b476cc3f8474f47045cf6683501576b0ea7619784d",
+        "sha256": "291fad0455325edf90fc627fff039f667a8e5740a378ff30d09f0db214f97258",
+        "bytes": 937,
+        "mediaType": "text/markdown; charset=utf-8",
+        "attachmentIds": []
+      },
+      "independentPostExitReadbackMatched": true,
+      "sourceCount": 2,
+      "attachments": []
+    },
+    {
+      "demo": "document-compare",
+      "item": "T3",
+      "status": "completed",
+      "receipt": {
+        "artifactId": "artifact:sha256:b60211f5ad67b050bdbf8201a8907478c7a446da4d4cbe46cf5894aaec0c3f63",
+        "revisionId": "revision:sha256:c461fd4638db19f9c04650c7b8d390e98d33fcdab4183a5a3fdf7af39e981723",
+        "sha256": "3162819a5e8eda1656bbcf089546719796253e2bc3de5a0d240d33355bf65171",
+        "bytes": 1578,
+        "mediaType": "text/markdown; charset=utf-8",
+        "attachmentIds": []
+      },
+      "independentPostExitReadbackMatched": true,
+      "sourceCount": 2,
+      "attachments": []
+    },
+    {
+      "demo": "document-compare",
+      "item": "T4",
+      "status": "completed",
+      "receipt": {
+        "artifactId": "artifact:sha256:9e80fe8af478b3b0ab48e2796f7019e6db87c02d5b4dbaa2a748280761eb7c56",
+        "revisionId": "revision:sha256:3a6c480cb87f14b6a2f827721c99ed875e70b4538b50b8d337e0119fb53604e5",
+        "sha256": "ca0d119ce116be1e13780fd145a9e6f252dfe450a006ce8ce085c474b0f4ea35",
+        "bytes": 933,
+        "mediaType": "text/markdown; charset=utf-8",
+        "attachmentIds": []
+      },
+      "independentPostExitReadbackMatched": true,
+      "sourceCount": 2,
+      "attachments": []
+    },
+    {
+      "demo": "skill-mcp",
+      "item": "skill-mcp",
+      "status": "completed",
+      "receipt": {
+        "artifactId": "artifact:sha256:dc6596565d967f09ae5d9dd1b4b11d98c36145450685ab8cdb8a61345a47288c",
+        "revisionId": "revision:sha256:d5184e7c69e69854a296420ac7d025256181dc6ba8e84393df2048ca84b285d8",
+        "sha256": "6422cf85cf33e47f2ada20ae8dd85191b6939a62a754ed53ce3265af9a22493f",
+        "bytes": 953,
+        "mediaType": "text/markdown; charset=utf-8",
+        "attachmentIds": []
+      },
+      "independentPostExitReadbackMatched": true,
+      "sourceCount": 2,
+      "attachments": []
+    },
+    {
+      "demo": "batch-read",
+      "item": "batch-read",
+      "status": "completed",
+      "receipt": {
+        "artifactId": "artifact:sha256:888e2a6fa17e02f07d913ec81c9f7319984ad09ce6bb93626e0b9dd4b45d53bd",
+        "revisionId": "revision:sha256:a742735b312006845da36fcfd80706cc5ce504593399fe373736bfc1561ecf16",
+        "sha256": "64ab2dfa9f08eef9d243c336e307a021c7ef8fffbe4a138bf0303afb7eead4ff",
+        "bytes": 951,
+        "mediaType": "text/markdown; charset=utf-8",
+        "attachmentIds": []
+      },
+      "independentPostExitReadbackMatched": true,
+      "sourceCount": 2,
+      "attachments": []
+    },
+    {
+      "demo": "fixture-child",
+      "item": "fixture-child",
+      "status": "completed",
+      "receipt": {
+        "artifactId": "artifact:sha256:e8a132bbe72a32127df17d2ce42fc3e7c51a7c64d0d9cb6366185b950f889376",
+        "revisionId": "revision:sha256:034471ad560d057769d9501e7188130bb1a47a639c0c62cd757bb979ee25df29",
+        "sha256": "54463149ca42d7bb39104695e17963be61c3203d1069e223e6b05976f66e6004",
+        "bytes": 954,
+        "mediaType": "text/markdown; charset=utf-8",
+        "attachmentIds": []
+      },
+      "independentPostExitReadbackMatched": true,
+      "sourceCount": 2,
+      "attachments": []
+    },
+    {
+      "demo": "retrieve-reread",
+      "item": "retrieve-reread",
+      "status": "completed",
+      "receipt": {
+        "artifactId": "artifact:sha256:320a2cddc681615d7a7ffbe4a3bd0bad780590af763667db6321ca34615358f3",
+        "revisionId": "revision:sha256:5c7cca6944ab2b7617f5f81c5c4fae3e2cb002df52874a0c85a666fcdd6c82ad",
+        "sha256": "009d3f77cf5208b2260e4dde2cbdcd21288b4fd600899eb2b0f7a827f0e3c016",
+        "bytes": 1348,
+        "mediaType": "text/markdown; charset=utf-8",
+        "attachmentIds": []
+      },
+      "independentPostExitReadbackMatched": true,
+      "sourceCount": 2,
+      "attachments": []
+    },
+    {
+      "demo": "compact-and-reread",
+      "item": "compact-and-reread",
+      "status": "completed",
+      "receipt": {
+        "artifactId": "artifact:sha256:c6646a86c62c4628f14ffa578003b920624240bd67db93ba6afe4a643098b00f",
+        "revisionId": "revision:sha256:b4bc56be8cf29fdf7e9cf679dbc913de891d52c5c871eb8e8d0a14fd9d0fb8ee",
+        "sha256": "c8fcdc248076d65c01d9161d95dc18f690bc4f877c307cccd8e983e351a02d26",
+        "bytes": 992,
+        "mediaType": "text/markdown; charset=utf-8",
+        "attachmentIds": []
+      },
+      "independentPostExitReadbackMatched": true,
+      "sourceCount": 2,
+      "attachments": []
+    },
+    {
+      "demo": "artifact-table",
+      "item": "artifact-table",
+      "status": "completed",
+      "receipt": {
+        "artifactId": "artifact:sha256:3295c9dd78c3e46940a79b17cabe671378d47aa9cfc1e224d286bf504d2caa01",
+        "revisionId": "revision:sha256:978d5d29edfa95b0e480cc2686343a814c2bc04cc712297ee3f6da7339661069",
+        "sha256": "514c447cd1ce9e385c638d337e5324c2ceb82e86a4aca691873c46d3f84214c3",
+        "bytes": 855,
+        "mediaType": "text/markdown; charset=utf-8",
+        "attachmentIds": [
+          "artifact:sha256:4f38c9e864a54b1b63787a2c1e0ba2231054e8cd0da91476135ac5c4e40f6943"
+        ]
+      },
+      "independentPostExitReadbackMatched": true,
+      "sourceCount": 2,
+      "attachments": [
+        {
+          "artifactId": "artifact:sha256:4f38c9e864a54b1b63787a2c1e0ba2231054e8cd0da91476135ac5c4e40f6943",
+          "sha256": "e547fbd8bf490b2b2370c5ca6bb453af236a1ba4cf582a7230f938c4b9c6ad0d",
+          "format": "csv",
+          "mediaType": "text/csv; charset=utf-8",
+          "bytes": 110
+        }
+      ]
+    },
+    {
+      "demo": "explicit-memory",
+      "item": 1,
+      "status": "completed",
+      "receipt": null,
+      "reportRequirement": "not required by this explicit Memory lifecycle sub-run"
+    },
+    {
+      "demo": "explicit-memory",
+      "item": 2,
+      "status": "completed",
+      "receipt": null,
+      "reportRequirement": "not required by this explicit Memory lifecycle sub-run"
+    },
+    {
+      "demo": "explicit-memory",
+      "item": 3,
+      "status": "completed",
+      "receipt": {
+        "artifactId": "artifact:sha256:3bf57d2f0dd1a3fa7781a4e23f2da5abd0221e2fd7224f4319b848ddb8d63ed1",
+        "revisionId": "revision:sha256:27c1d28b2e2de4ec7f9e94662461582e01ec25df320cd5abeade89ccc36d7fdc",
+        "sha256": "0f4ea5fdd0dbb4a1f48d1c68331c926fd6f851302600a932c9dcf9ad9fc23e60",
+        "bytes": 884,
+        "mediaType": "text/markdown; charset=utf-8",
+        "attachmentIds": []
+      },
+      "independentPostExitReadbackMatched": true,
+      "sourceCount": 2,
+      "attachments": []
+    }
+  ],
+  "fourCaseHTTP": {
+    "denominator": 4,
+    "transport": "actual-loopback-http",
+    "modelCalls": 0,
+    "cases": [
+      {
+        "caseId": "T1",
+        "status": "passed",
+        "reportBytesVerified": true,
+        "sourceWindowsVerified": 2,
+        "attachmentsVerified": 0,
+        "artifactId": "artifact:sha256:855d3143bd39da091d835557851703807c29266805e3e79b8aa94c50992c414e",
+        "revisionId": "revision:sha256:5eeb5c527a84365e4769a0df709b0589d3952fc0cffbb115a3dd75ae3fabf3ee",
+        "sha256": "67243fa3c98c7d9015cb7f8148f6d11504a542994a541e279a24b12e50ade2c5",
+        "semanticStatus": "unreviewed"
+      },
+      {
+        "caseId": "T2",
+        "status": "passed",
+        "reportBytesVerified": true,
+        "sourceWindowsVerified": 2,
+        "attachmentsVerified": 0,
+        "artifactId": "artifact:sha256:a28e55b20f5596b2b9dfb93d3ad2e008d0a6a7f44bbb44c713986feeedb62766",
+        "revisionId": "revision:sha256:c6236dab849bf9606c7122b476cc3f8474f47045cf6683501576b0ea7619784d",
+        "sha256": "291fad0455325edf90fc627fff039f667a8e5740a378ff30d09f0db214f97258",
+        "semanticStatus": "unreviewed"
+      },
+      {
+        "caseId": "T3",
+        "status": "passed",
+        "reportBytesVerified": true,
+        "sourceWindowsVerified": 2,
+        "attachmentsVerified": 0,
+        "artifactId": "artifact:sha256:b60211f5ad67b050bdbf8201a8907478c7a446da4d4cbe46cf5894aaec0c3f63",
+        "revisionId": "revision:sha256:c461fd4638db19f9c04650c7b8d390e98d33fcdab4183a5a3fdf7af39e981723",
+        "sha256": "3162819a5e8eda1656bbcf089546719796253e2bc3de5a0d240d33355bf65171",
+        "semanticStatus": "unreviewed"
+      },
+      {
+        "caseId": "T4",
+        "status": "passed",
+        "reportBytesVerified": true,
+        "sourceWindowsVerified": 2,
+        "attachmentsVerified": 0,
+        "artifactId": "artifact:sha256:9e80fe8af478b3b0ab48e2796f7019e6db87c02d5b4dbaa2a748280761eb7c56",
+        "revisionId": "revision:sha256:3a6c480cb87f14b6a2f827721c99ed875e70b4538b50b8d337e0119fb53604e5",
+        "sha256": "ca0d119ce116be1e13780fd145a9e6f252dfe450a006ce8ce085c474b0f4ea35",
+        "semanticStatus": "unreviewed"
+      }
+    ]
+  }
+}

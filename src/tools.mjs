@@ -1,7 +1,9 @@
+import {openArtifactStore,encodeCsv,projectArtifactEffects} from './artifacts.mjs';
+import {saveReport} from './report.mjs';
 import { projectMemoryEffect } from './memory-effects.mjs';
 import { readFile } from 'node:fs/promises';
 import { createResultStore } from './results.mjs';
-import { safeDirectory, publishImmutable as publish } from './storage-files.mjs';
+import { safeDirectory } from './storage-files.mjs';
 export { safeDirectory, ensureSafeDirectory } from './storage-files.mjs';
 import { sha256, validateSource, readFixturePage, READ_PAGE_SCHEMA } from './source.mjs';
 export { sha256, validateSource, readFixturePage, READ_PAGE_SCHEMA } from './source.mjs';
@@ -18,6 +20,7 @@ export async function createToolHost({ directory, extensions = [], hooks, allowe
   const documents = new Map(input.documents.filter(d => allowedDocuments === undefined || allowedDocuments.includes(d.id)).map(d => [d.id, d]));
   const results = await createResultStore({ directory, allowedDocuments });
   const methods = new Map();
+  const artifacts = await openArtifactStore({directory});
   let receipt = null;
   let saveAttempted = false;
   const bindings = {
@@ -53,11 +56,19 @@ export async function createToolHost({ directory, extensions = [], hooks, allowe
         const ref = await results.addCalculation(value, { signal }); return { ...value, resultRef: ref.resultRef };
       }
     },
+    create_csv: {
+      artifactEffects:true,description:'Encode bounded structured string rows as CSV, neutralize formula-leading cells, and register a local artifact. No arbitrary paths.',
+      parameters:{type:'object',additionalProperties:false,properties:{rows:{type:'array',minItems:1,maxItems:1000,items:{type:'array',minItems:1,maxItems:32,items:{type:'string'}}}},required:['rows']},
+      validate(args){fields(args,['rows']);encodeCsv(args.rows);},
+      async execute(args,{signal}){return artifacts.put({format:'csv',content:args.rows},{signal});}
+    },
     save_report: {
+      artifactEffects:true,
       description: 'Save definite Markdown using only source IDs returned by read_page. Path is Host-owned. One attempt per run; no automatic retry.',
-      parameters: { type: 'object', additionalProperties: false, properties: { text: { type: 'string', minLength: 1, maxLength: 64000 }, sourceIds: { type: 'array', minItems: 1, uniqueItems: true, items: { type: 'string' } } }, required: ['text', 'sourceIds'] },
+      parameters: { type: 'object', additionalProperties: false, properties: { text: { type: 'string', minLength: 1, maxLength: 64000 }, sourceIds: { type: 'array', minItems: 1, uniqueItems: true, items: { type: 'string' } }, attachmentIds:{type:'array',maxItems:16,uniqueItems:true,items:{type:'string',pattern:'^artifact:sha256:[a-f0-9]{64}$'}} }, required: ['text', 'sourceIds'] },
       async validate(args) {
-        fields(args, ['text', 'sourceIds']);
+        fields(args,Object.hasOwn(args||{},'attachmentIds')?['text','sourceIds','attachmentIds']:['text','sourceIds']);
+        if(args.attachmentIds!==undefined){if(!Array.isArray(args.attachmentIds)||args.attachmentIds.length>16||new Set(args.attachmentIds).size!==args.attachmentIds.length)fail('Invalid attachments');for(const id of args.attachmentIds)await artifacts.read(id);}
         if (typeof args.text !== 'string' || !args.text.trim() || Buffer.byteLength(args.text) > 64000) fail('Report text missing or too large');
         if (!Array.isArray(args.sourceIds) || !args.sourceIds.length || args.sourceIds.length > 64 || new Set(args.sourceIds).size !== args.sourceIds.length || args.sourceIds.some(id => typeof id !== 'string')) fail('Report needs unique sources actually read in this run');
         for (const id of args.sourceIds) await results.resolve(id);
@@ -70,19 +81,7 @@ export async function createToolHost({ directory, extensions = [], hooks, allowe
         const resultRefs = await Promise.all(args.sourceIds.map(id => results.resolve(id)));
         const selected = await Promise.all(resultRefs.map(ref => results.read(ref.resultRef)));
         const calculations = await Promise.all((await results.listCalculations()).map(async ref => ({ ref, value: await results.readCalculation(ref.resultRef) })));
-        const citations = selected.map((s, i) => `- [${i + 1}] ${s.sourceId}: ${s.name}, version ${s.version}, physical page ${s.page}; SHA-256 ${s.sha256}; ResultRef ${resultRefs[i].resultRef}`).join('\n');
-        const numeric = calculations.map((c, i) => `- [C${i + 1}] ${c.value.calculation}: inputs ${JSON.stringify(c.value.inputs)}; difference ${c.value.difference} ${c.value.unit}; current/baseline ${c.value.ratio}; increase/baseline ${c.value.increaseRatio}; ${c.ref.resultRef}`).join('\n');
-        const bytes = Buffer.from(args.text + '\n\n## Acquired sources\n\n' + citations + (numeric ? '\n\n## Actual numeric derivations\n\n' + numeric : '') + '\n', 'utf8');
-        const candidate = { operationId: callId, fileId: 'sha256:' + sha256(bytes), path: 'report.md', sha256: sha256(bytes), bytes: bytes.length, mediaType: 'text/markdown; charset=utf-8' };
-        const manifest = { schemaVersion: 'open-etf-report@1', synthetic: true, semanticStatus: 'unreviewed', receipt: candidate, sources: selected, resultRefs, calculations, methods: [...methods.values()] };
-        const partialPaths = [];
-        try {
-          await publish(directory, 'report.md', bytes, signal); partialPaths.push('report.md');
-          await publish(directory, 'manifest.json', JSON.stringify(manifest, null, 2) + '\n', signal); partialPaths.push('manifest.json');
-          receipt = candidate; return structuredClone(receipt);
-        } catch (error) {
-          error.partialPaths = partialPaths; throw error;
-        }
+        receipt=await saveReport({directory,store:artifacts,text:args.text,selected,resultRefs,calculations,methods:[...methods.values()],attachmentIds:args.attachmentIds||[],callId,signal});return structuredClone(receipt);
       }
     }
   };
@@ -147,7 +146,7 @@ export async function createToolHost({ directory, extensions = [], hooks, allowe
         }
         return finish({ callId, status: 'succeeded', dispatched: true, value });
       } catch (error) {
-        return finish({ callId, status: 'failed', dispatched: true, error: error.code || error.message, partialPaths: error.partialPaths || [], ...(binding.memoryEffect&&projectMemoryEffect(error.memoryEffect)?{memoryEffect:projectMemoryEffect(error.memoryEffect)}:{}) });
+        return finish({ callId, status: 'failed', dispatched: true, error: error.code || error.message, partialPaths: error.partialPaths || [], ...(binding.artifactEffects&&projectArtifactEffects(error.artifactEffects)?{artifactEffects:projectArtifactEffects(error.artifactEffects)}:{}), ...(binding.memoryEffect&&projectMemoryEffect(error.memoryEffect)?{memoryEffect:projectMemoryEffect(error.memoryEffect)}:{}) });
       }
     }
   };

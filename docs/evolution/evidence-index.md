@@ -57,3 +57,7 @@ The initial fourteen assertions now have actual RED→GREEN evidence, followed b
 ## Later stages
 
 v0.6–v1.0 remain the public roadmap, not pre-created implementations. Each future stage should add only its needed requirement, test, code, actual observation and independently runnable fixed point; no ten-version copy or fabricated completion table.
+
+## v0.6: downloading bytes is a separate contract
+
+The saved report became a single immutable Artifact/Revision responsibility, not a second Run owner. Actual HTTP checks revealed why matching text hashes alone is insufficient: source identity can still drift, and duplicate attachment entries can inflate the checked count. Three reviewed negatives reproduced those gaps and derived-source promotion; the final bounded reader/evaluator preserves distinct identity, bytes and Runtime outcomes. The model prose is not the acceptance target. [Actual sequence and receipts](../verification/v06-observations.md) records intermediate failures rather than inventing first-try success.
