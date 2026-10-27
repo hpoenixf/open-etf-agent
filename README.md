@@ -277,7 +277,7 @@ v0.9 的原 Worker 组合先留下 305/305 历史记录；合入既有 CI/版本
 
 这些文章讨论更广的 Agent 工程问题。右侧是本仓库可运行的**最小机制实验**，不是原文全部高级能力的开源实现；具体支持范围以对应快照为准。
 
-**覆盖契约（31 篇模块文章）：** `verified` 只表示表中明确限定的最小 Runtime 切片，不是整篇文章实现、模型质量或生产认证；`无公开对应` 不借相邻机制认领；`draft` 尚未取得资格。表由 [唯一覆盖清单](docs/verification/article-coverage.json)与 [版本血缘](versions.json)生成：`since` 是该最小切片首次公开引入版本；`verifiedAt` 是当前实跑回执绑定的固定代码，不能用后者改写前者。`无公开对应` 不填虚构的引入版本。文章目录固定来自 [book.mjs / modules](https://github.com/hpoenixf/eff-agent-article/blob/fb7c776874e71d689212c6fc3c4f0efde598fa81/book.mjs)。
+**已登记覆盖契约（31 篇，不代表当前全目录）：** `verified` 只表示表中明确限定的最小 Runtime 切片，不是整篇文章实现、模型质量或生产认证；`无公开对应` 不借相邻机制认领；`draft` 尚未取得资格。表由 [唯一覆盖清单](docs/verification/article-coverage.json)与 [版本血缘](versions.json)生成：`since` 是该最小切片首次公开引入版本；`verifiedAt` 是当前实跑回执绑定的固定代码，不能用后者改写前者。`无公开对应` 不填虚构的引入版本。本表的 31 条登记仍保留；截至本次核对，[固定 book.mjs / modules](https://github.com/hpoenixf/eff-agent-article/blob/fc5b8c7147404a1ef17a7c8c1840e440abe8efb6/book.mjs) 实际已有 33 篇。另两篇 [跨 Run 会话压缩](https://github.com/hpoenixf/eff-agent-article/blob/fc5b8c7147404a1ef17a7c8c1840e440abe8efb6/articles/agent-conversation-history-compaction-source-boundaries.md)与[反馈事实](https://github.com/hpoenixf/eff-agent-article/blob/fc5b8c7147404a1ef17a7c8c1840e440abe8efb6/articles/agent-feedback-facts-not-automatic-learning.md)尚未映射，不计入 verified，也不借相邻机制补填 since 或 case。
 
 <!-- article-coverage:start -->
 | 文章 | since · 引入版本 | verifiedAt · 固定 commit + case | 状态 |
