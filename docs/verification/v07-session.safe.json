@@ -1,0 +1,105 @@
+{
+  "schemaVersion": "open-etf-v07-session-evidence@1",
+  "date": "2026-10-27",
+  "scope": "Original synthetic local Session store; no model calls, services, private data or remote changes.",
+  "nodeVersion": "v26.11.1",
+  "nodeHeapMiB": 512,
+  "testConcurrency": 1,
+  "commandTimeoutSeconds": 20,
+  "probe": {
+    "implementation": "node:sqlite DatabaseSync",
+    "actual": "CREATE TABLE; BEGIN IMMEDIATE; prepared INSERT.run(7); COMMIT; prepared SELECT.get returned 7; close",
+    "status": "passed"
+  },
+  "observations": [
+    {
+      "phase": "RED",
+      "command": "node --test --test-concurrency=1 test/session.test.mjs",
+      "tests": 7,
+      "passed": 0,
+      "failed": 7,
+      "exitCode": 1,
+      "reason": "Loadable scaffold returned null; assertions reached behavior, not failed imports.",
+      "inputs": {
+        "src/session.mjs": "463d12645d8f9bf97127d2441921dea749d3a9d598aac86e3f8809de41bb34ba",
+        "test/session.test.mjs": "3acc3a1c1442d9e89757b7d1edc00db56eaae9b13f5021468989cac0980540f0"
+      }
+    },
+    {
+      "phase": "GREEN",
+      "command": "node --test --test-concurrency=1 test/session.test.mjs",
+      "tests": 7,
+      "passed": 7,
+      "failed": 0,
+      "exitCode": 0
+    },
+    {
+      "phase": "REVIEW RED",
+      "command": "node --test --test-concurrency=1 test/session.test.mjs",
+      "tests": 13,
+      "passed": 12,
+      "failed": 1,
+      "exitCode": 1,
+      "reason": "An ordinary orphan journal was wrongly accepted before creating a fresh session.sqlite.",
+      "inputs": {
+        "src/session.mjs": "8ec3360577ff333304c22ff67a4543572814092d83bb36b52807d37a0d35e9a4",
+        "test/session.test.mjs": "8f4ce20f08767270ae80a6956ea657926eb387775d84d301015933361e11b7d9"
+      }
+    },
+    {
+      "phase": "GREEN",
+      "command": "node --test --test-concurrency=1 test/session.test.mjs",
+      "tests": 13,
+      "passed": 13,
+      "failed": 0,
+      "exitCode": 0,
+      "fix": "Refuse every existing SQLite sidecar when no database exists, before creating the new database."
+    },
+    {
+      "phase": "CHILD RED",
+      "command": "node --test --test-concurrency=1 test/session.test.mjs",
+      "tests": 15,
+      "passed": 13,
+      "failed": 2,
+      "exitCode": 1,
+      "reason": "Child admission accepted no/stale parent claim, and exact child relationship lookup was absent.",
+      "inputs": {
+        "src/session.mjs": "8399797798c1daf9d81c12efec5778adc36f22e31142908d52fd64df86b9c2d0",
+        "test/session.test.mjs": "c5fefad14ad3c7a82a127f109661ea6f2deefc45b99b33c76b96521ca9a9b5db"
+      }
+    },
+    {
+      "phase": "GREEN",
+      "command": "node --test --test-concurrency=1 test/session.test.mjs",
+      "tests": 15,
+      "passed": 15,
+      "failed": 0,
+      "exitCode": 0,
+      "durationMs": 294.411908,
+      "fix": "Require current parent owner/fence in child create; preserve unique parent/task binding; read-only exact child lookup. Existing database schema is now admitted with actual readOnly DatabaseSync before opening writer."
+    }
+  ],
+  "finalInputs": {
+    "src/session.mjs": "5979efebc2430878262a9d1b31713e348020d85ad3627db70c5f3946da2daddf",
+    "test/session.test.mjs": "c5fefad14ad3c7a82a127f109661ea6f2deefc45b99b33c76b96521ca9a9b5db"
+  },
+  "verifiedBoundaries": [
+    "Actual SQLite file header and close/reopen preserve immutable definition, phase and root consumption",
+    "Short synchronous transactions; current owner/fence/unexpired lease before every state or budget mutation",
+    "Two independent DB connections share the same last root unit",
+    "Expired takeover invalidates old writer without refunding reservations",
+    "Child same grant, gateway, root pool and no later deadline; narrow tool/document scope; current parent fence at creation",
+    "Monotonic root cancellation rejects late result; failed root retains incomplete child facts and blocks continuation via rootStatus",
+    "Known terminal child result remains independently inspectable",
+    "Unsafe ancestry, symlink file, orphan sidecar, foreign/future schema and malformed persisted JSON fail closed",
+    "Strict binding/config fields exclude credential configuration and endpoints",
+    "Absolute deadline does not refresh; late nonterminal mutation refused, honest failed terminal permitted"
+  ],
+  "limits": [
+    "Only this store suite is qualified by this file; Runtime, cross-process kill/resume, Memory/Artifact and plugin tests have separate evidence.",
+    "No distributed store, network lease service, external exactly-once guarantee or process sandbox.",
+    "File/DB effects are not one transaction; trusted operator-selected local directory, not protection from a malicious process racing filesystem names.",
+    "Generic text is not secret-classified; authorized data scope remains caller responsibility. Credentials are excluded from the declared binding/config schema.",
+    "An old or corrupt active codec is rejected rather than migrated."
+  ]
+}

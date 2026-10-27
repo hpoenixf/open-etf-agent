@@ -70,6 +70,12 @@ export async function createResultStore({directory,allowedDocuments}={}) {
     queue=operation.catch(()=>{}); return operation;
   }
   return {
+    snapshot: () => structuredClone([...byRef.values()]),
+    async verifySnapshot(expected) {
+      if (JSON.stringify(expected) !== JSON.stringify([...byRef.values()])) throw new Error('Host result snapshot changed');
+      for (const entry of expected) await readRecord(entry.resultRef, entry.kind);
+    },
+    async readTyped(resultRef) { const entry=byRef.get(resultRef); if(!entry) throw new Error('Unknown result ref'); return readRecord(resultRef,entry.kind); },
     async addNote(input,{signal}={}){const value=validateNote(input);for(const ref of value.sourceRefs){const owned=byRef.get(ref.resultRef);if(!owned||owned.kind!=='source'||identityKeys.some(key=>owned[key]!==ref[key]))throw new Error('Unknown or mismatched note source ref');await readRecord(ref.resultRef,'source');}return addRecord('note',value,signal);},readNote:ref=>readRecord(ref,'note'),
     async add(input,{signal}={}) { const value=validateSource(input); if(value.derived===true) throw new Error('Derived observation is not an original source'); return addRecord('source',value,signal); },
     async addCalculation(input,{signal}={}) { return addRecord('calculation',validateCalculation(input),signal); },

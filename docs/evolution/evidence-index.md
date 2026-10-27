@@ -15,7 +15,7 @@ Goal: develop independent stages from v0.1 through v1.0, preserving concrete des
 
 ## Gate separation
 
-License/publication and live-provider/data/cost authorization remain pending. They block those effects and a fully closed v0.1 release, not all independent local design or development. Semantics remain unreviewed. No historical snapshot is silently upgraded to a stronger claim.
+At the initial v0.1 snapshot, license/publication and live-provider/data/cost authorization remained pending. Those gates blocked their effects, not independent local development. Later bounded live observations are recorded separately, and the user selected MIT during v0.7; neither change retroactively upgrades an old snapshot to a formal release or semantic-quality pass.
 
 ## v0.2: explicit extensions with shared evidence ownership
 
@@ -56,8 +56,16 @@ The initial fourteen assertions now have actual RED→GREEN evidence, followed b
 
 ## Later stages
 
-v0.6–v1.0 remain the public roadmap, not pre-created implementations. Each future stage should add only its needed requirement, test, code, actual observation and independently runnable fixed point; no ten-version copy or fabricated completion table.
+v0.8–v1.0 remain the public roadmap, not pre-created implementations. Each future stage should add only its needed requirement, test, code, actual observation and independently runnable fixed point; no ten-version copy or fabricated completion table.
 
 ## v0.6: downloading bytes is a separate contract
 
 The saved report became a single immutable Artifact/Revision responsibility, not a second Run owner. Actual HTTP checks revealed why matching text hashes alone is insufficient: source identity can still drift, and duplicate attachment entries can inflate the checked count. Three reviewed negatives reproduced those gaps and derived-source promotion; the final bounded reader/evaluator preserves distinct identity, bytes and Runtime outcomes. The model prose is not the acceptance target. [Actual sequence and receipts](../verification/v06-observations.md) records intermediate failures rather than inventing first-try success.
+
+## v0.7: a restarted process is not a new budget
+
+One optional SQLite adapter now records the same Runtime's immutable request/Grant/bindings/deadline and reserve → seal → dispatch → commit → consume positions. Separate process termination and a different PID establish actual continuation. A sealed proposal is data, a committed result is consumed once, and an unrecorded dispatched effect stays unknown. Completed child handoffs, the exact adopted note input, one-use Memory receipts and saved artifact bytes each need their own recovery proof; a generic snapshot serializer was not enough.
+
+The important failures were not all missing APIs. Independent review found root reservation rejection counted as dispatch, a second unverified terminal outcome, cancelled runs losing known save receipts, corrupt pairing and a rewound cursor permitting replay. Further review showed valid Host originals did not prevent a different historical payload reaching the next model input: successful typed history must be rebound to its original stored facts. The first full suite also exposed rejected unknown tools being incorrectly revalidated as successful recoverable bindings.
+
+[Actual observations](../verification/v07-observations.md), the linked component ledgers and [formal contracts](../../openspec/changes/v07-trusted-recovery/design.md) preserve those failures and their repairs. The examples remain synthetic; no new model call, semantic review, general external exactly-once, Web worker, migration shim or formal release is inferred. The final site article has not been written or published by this phase.
