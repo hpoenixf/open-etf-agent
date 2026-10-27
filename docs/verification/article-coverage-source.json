@@ -1,14 +1,18 @@
 {
   "schemaVersion": 1,
   "repository": "hpoenixf/open-etf-agent",
-  "commit": "62b70d1a512ad97fc560ed0bf84351cc091ae048",
-  "tree": "d2395942c985c01acea302e08beb168ca6133e8b",
-  "retrievedFrom": "https://api.github.com/repos/hpoenixf/open-etf-agent/git/trees/d2395942c985c01acea302e08beb168ca6133e8b?recursive=1",
-  "retrievedAt": "2026-10-27T14:17:57.122966+00:00",
+  "commit": "e442f600891be79625fc78751e2d9f39905920da",
+  "tree": "44de8cb7ceb1a7aba5ed20b262d53feb8f2fafcf",
+  "retrievedFrom": "https://api.github.com/repos/hpoenixf/open-etf-agent/git/trees/44de8cb7ceb1a7aba5ed20b262d53feb8f2fafcf?recursive=1",
+  "retrievedAt": "2026-10-27T16:04:07.199213+00:00",
   "inputs": [
     {
       "path": "fixtures/cases.json",
       "gitBlob": "a4507653663035dd4e2e16dadbc5e97b704ccd49"
+    },
+    {
+      "path": "fixtures/comparison-table.json",
+      "gitBlob": "c7ff764f883f21fa0b6338280c04eaae51da49d3"
     },
     {
       "path": "fixtures/documents.json",
@@ -40,7 +44,7 @@
     },
     {
       "path": "src/calculation.mjs",
-      "gitBlob": "f571717bd7785999a77a11459625d5dddf397dc8"
+      "gitBlob": "3e95cc04cd81b2ec2dc5b11378c97969fafd73bc"
     },
     {
       "path": "src/child-results.mjs",
@@ -52,7 +56,7 @@
     },
     {
       "path": "src/cli.mjs",
-      "gitBlob": "32dcfe350e496f7641673caa1ca15242525753c7"
+      "gitBlob": "5beb92046635ee735d68bc63caec5ecbf8276984"
     },
     {
       "path": "src/compaction.mjs",
@@ -176,11 +180,15 @@
     },
     {
       "path": "src/report.mjs",
-      "gitBlob": "412b6570af0615df88369729bf381634429f427f"
+      "gitBlob": "642dc3d68ff3ba59549d222702d8bdc32f23524c"
+    },
+    {
+      "path": "src/result-consumption-demo.mjs",
+      "gitBlob": "63ccc933be564e010bcddf3ab613767349008626"
     },
     {
       "path": "src/results.mjs",
-      "gitBlob": "90aea02b2ee4e96dba8e02e962671950e442c90b"
+      "gitBlob": "2023951a4f500757f4a6aebd156b33508815de31"
     },
     {
       "path": "src/retrieval-demo.mjs",
@@ -192,7 +200,7 @@
     },
     {
       "path": "src/runtime.mjs",
-      "gitBlob": "6882bd2bc7f7074dc2e253d5a61ae031d21264bd"
+      "gitBlob": "96261a455c2eccbbeb0f1cd77f3d6a9b563e0d7d"
     },
     {
       "path": "src/session-cli.mjs",
@@ -220,7 +228,7 @@
     },
     {
       "path": "src/tools.mjs",
-      "gitBlob": "d7939ba940b250f38b4d17b0550ab4031e19c711"
+      "gitBlob": "31d57e604fb4c3d06a9a43df18df3320ffa70615"
     },
     {
       "path": "src/worker.mjs",
@@ -405,6 +413,18 @@
     {
       "path": "test/research-integration.test.mjs",
       "gitBlob": "f2ab094229a8fa8bb41639105d4635856d5ccfe9"
+    },
+    {
+      "path": "test/result-consumption-cli.test.mjs",
+      "gitBlob": "e05e96d9442ed068b6ecc06e1eb0037fb020951d"
+    },
+    {
+      "path": "test/result-consumption-delivery.test.mjs",
+      "gitBlob": "0aba683057172d6402ae333db88ef85f6beaaa81"
+    },
+    {
+      "path": "test/result-consumption.test.mjs",
+      "gitBlob": "ea3402bced2f628c326b9cd4b10aa33f939c254b"
     },
     {
       "path": "test/results.test.mjs",
