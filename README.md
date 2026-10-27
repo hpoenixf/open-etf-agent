@@ -323,9 +323,11 @@ v0.9 的单 Run Worker 已列入上方固定阶段；以下仍是候选，没有
 
 | 阶段 | 规划方向 |
 | --- | --- |
-| **v0.10（候选）** | CLI 先行；有明确网络消费者时再加最小只读交付适配，不预设 SSE 或浏览器验收 |
+| **v0.10（待证明独立增量）** | 只读交付适配须先证明既有 CLI/Reader 未满足的消费者与缺口；否则取消候选，不改名为 Web |
 | **后续 0.x** | Web 取材、PDF 解析、隔离 Python 分别独立评估；一版一个模块，不赶编号 |
-| **v1.0 / v2.0** | 已完成模块的稳定资格里程碑，不新增一包功能；见[修订路线](docs/plan/v1-to-v2.md) |
+| **v1.0 / v2.0** | 已完成模块的稳定资格里程碑，不计作新增功能版；见[修订路线](docs/plan/v1-to-v2.md) |
+
+Web 取材是原路线中的外网输入候选，仍未编号；Web 读取界面是后置输出消费者，二者不互换。1.1/1.3/1.5 仅扩展既有结果消费、Memory 召回和 Child，不重复认领首次实现；各期前置不具备就延期，不顺带补建另一模块。
 
 [PR #1 原始提案](https://github.com/hpoenixf/open-etf-agent/pull/1) · [完整路线与验收合同](https://github.com/hpoenixf/open-etf-agent/blob/c390eb2dd951b53b1dab2d64a9cd72d216fde8dc/docs/plan/README.md) · [目标能力矩阵](https://github.com/hpoenixf/open-etf-agent/blob/c390eb2dd951b53b1dab2d64a9cd72d216fde8dc/docs/plan/05-coverage-matrix.md)
 
