@@ -1,10 +1,10 @@
 {
   "schemaVersion": 1,
   "repository": "hpoenixf/open-etf-agent",
-  "commit": "dad9c6e64f32c3d7579aea96613776b40917ec6d",
-  "tree": "ed7018acf6ed5dab5d4496bcc7aa7d3bd7fe2702",
-  "retrievedFrom": "https://api.github.com/repos/hpoenixf/open-etf-agent/git/trees/ed7018acf6ed5dab5d4496bcc7aa7d3bd7fe2702?recursive=1",
-  "retrievedAt": "2026-10-27T09:21:53.747180+00:00",
+  "commit": "2ddd44fe5e6546c62d0347916bf11bb5f7cd2a9e",
+  "tree": "c397373cf71a103601313f882834ae1303d8f1ef",
+  "retrievedFrom": "https://api.github.com/repos/hpoenixf/open-etf-agent/git/trees/c397373cf71a103601313f882834ae1303d8f1ef?recursive=1",
+  "retrievedAt": "2026-10-27T10:21:00.637128+00:00",
   "inputs": [
     {
       "path": "fixtures/cases.json",
@@ -480,7 +480,7 @@
     },
     {
       "path": "test/worker.test.mjs",
-      "gitBlob": "55c35716ca65a4470a2593b83acba4096ecf583d"
+      "gitBlob": "7380bc01e0fb2ea6dbc33dbcc6e7837b9309c9ec"
     },
     {
       "path": "test/working-input-integration.test.mjs",
