@@ -1,3 +1,4 @@
+import { validateTaskTime } from './temporal.mjs';
 import { DatabaseSync } from 'node:sqlite';
 import { lstatSync, realpathSync, openSync, closeSync, readSync } from 'node:fs';
 import { resolve, join } from 'node:path';
@@ -51,7 +52,8 @@ function validateBindings(value) {
  }
 }
 function validateConfig(value) {
- fields(value, [], ['requireReport', 'allowedTools', 'allowedDocuments', 'contextBytes', 'taskId', 'workingInput', 'publication']);
+ fields(value, [], ['requireReport', 'allowedTools', 'allowedDocuments', 'contextBytes', 'taskId', 'workingInput', 'publication', 'taskTime']);
+ if (value.taskTime !== undefined) validateTaskTime(value.taskTime);
  if (value.publication !== undefined && value.publication !== 'publication@1') fail('INVALID_DEFINITION');
  if (value.requireReport !== undefined && typeof value.requireReport !== 'boolean') fail('INVALID_DEFINITION');
  for (const key of ['allowedTools', 'allowedDocuments']) if (value[key] !== undefined && (!Array.isArray(value[key]) || !value[key].length || value[key].length > 64 || new Set(value[key]).size !== value[key].length || value[key].some(v => !identifier(v)))) fail('INVALID_DEFINITION');

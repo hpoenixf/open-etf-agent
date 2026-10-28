@@ -148,10 +148,15 @@ test('coverage: historical commit/tree/path/blob are checked against actual loca
   await assert.rejects(confirmVersions(root,{...v,versions:{'0.1':{commit,tree:'0'.repeat(40)}}},gitDir),/tree mismatch/);
   await assert.rejects(confirmVersions(root,{...v,versions:{'0.1':{commit:'0'.repeat(40),tree}}},gitDir),/lacks the fixed commit/);
 });
-test('coverage: CI uses pinned read-only actions and checks receipts without smoke', async () => {
+test('coverage: article verification stays strict but separate from code delivery', async () => {
   const yaml = await readFile(new URL('../.github/workflows/verify.yml', import.meta.url),'utf8');
   assert.match(yaml,/permissions:\n  contents: read/); assert.match(yaml,/persist-credentials: false/);
   assert.match(yaml,/actions\/checkout@[a-f0-9]{40}/);assert.match(yaml,/actions\/setup-node@[a-f0-9]{40}/);
-  assert.match(yaml,/run: node scripts\/check-article-coverage\.mjs --check/); assert.match(yaml,/run: npm test/);
+  const articles = await readFile(new URL('../.github/workflows/articles.yml', import.meta.url),'utf8');
+  assert.match(articles,/run: node scripts\/check-article-coverage\.mjs --check/);
+  assert.match(articles,/workflow_dispatch:/); assert.match(articles,/permissions:\n  contents: read/);
+  assert.match(articles,/actions\/checkout@[a-f0-9]{40}/); assert.match(articles,/actions\/setup-node@[a-f0-9]{40}/);
+  assert.doesNotMatch(yaml,/check-article-(coverage|backlinks)\.mjs/);
+  assert.match(yaml,/run: npm test/); assert.match(yaml,/run: npm run build/);
   assert.doesNotMatch(yaml,/--smoke|secrets\.|pull_request_target|contents: write/);
 });

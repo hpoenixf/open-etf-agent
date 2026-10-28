@@ -1,3 +1,4 @@
+import { createTaskTime, validateTaskTime, projectTaskTime, taskTimeMessage } from './temporal.mjs';
 import { mkdtemp, open } from 'node:fs/promises';
 import { resolve, join, basename } from 'node:path';
 import { randomUUID } from 'node:crypto';
@@ -27,6 +28,10 @@ export function validateRuntimeCheckpoint(state, definition) {
   if(['proposal-sealed','tool-dispatched','result-committed','result-consumed'].includes(state.phase)){validateProposal(state.proposal);if(state.proposal.kind==='calls'&&state.cursor>state.proposal.calls.length)throw failure('INVALID_RUNTIME_CHECKPOINT');}
   if(state.phase==='result-committed'&&state.result?.callId!==state.proposal.calls[state.cursor]?.id)throw failure('INVALID_RUNTIME_CHECKPOINT');
   if(state.working&&state.working.hash!==sha256(JSON.stringify(state.working.messages)))throw failure('INVALID_WORKING_CHECKPOINT');
+  if (definition.config?.taskTime) {
+    validateTaskTime(definition.config.taskTime);
+    if (state.working && JSON.stringify(state.working.messages[1]) !== JSON.stringify(taskTimeMessage(definition.config.taskTime))) throw failure('INVALID_TASK_TIME_CHECKPOINT');
+  }
   const allCalls=new Set();let lastGroup=null;
   for(let i=1;i<state.messages.length;){
     const group=state.messages[i++];if(group.role!=='assistant')throw failure('INVALID_PAIRED_CHECKPOINT');validateProposal({kind:'calls',calls:group.calls});
@@ -45,8 +50,9 @@ export function validateRuntimeCheckpoint(state, definition) {
 
 export function run(options) { return drive(options, false); }
 export function submitRun(options) { return drive(options, true); }
-async function drive({ question, gateway, outputRoot='runs', requireReport=true, signal, hostSignal, limits={}, extensions=[], hooks, plugins, rootBudget, allowedTools, allowedDocuments, taskId=null, contextBytes, workingInput, durable, publication = false, pdfInput }, submitting) {
+async function drive({ question, gateway, outputRoot='runs', requireReport=true, signal, hostSignal, limits={}, extensions=[], hooks, plugins, rootBudget, allowedTools, allowedDocuments, taskId=null, contextBytes, workingInput, durable, publication = false, pdfInput, taskTime }, submitting) {
   if(typeof question!=='string'||!question.trim()||Buffer.byteLength(question)>16000||typeof gateway?.next!=='function')throw failure('INVALID_INPUT');
+  if (taskTime !== undefined && (!taskTime || typeof taskTime !== 'object' || Array.isArray(taskTime) || Object.keys(taskTime).some(key => !['anchorInstant', 'timeZone'].includes(key)))) throw failure('INVALID_TASK_TIME_INPUT');
   const budget={maxRounds:12,maxTools:12,timeoutMs:30000,...limits};
   for(const [key,value] of Object.entries(budget))if(!['maxRounds','maxTools','timeoutMs'].includes(key)||!Number.isSafeInteger(value)||value<1||value>(key==='timeoutMs'?300000:1000))throw failure('INVALID_LIMIT');
   if(contextBytes!==undefined&&(!Number.isSafeInteger(contextBytes)||contextBytes<1||contextBytes>1048576))throw failure('INVALID_CONTEXT_LIMIT');
@@ -77,7 +83,19 @@ async function drive({ question, gateway, outputRoot='runs', requireReport=true,
   } finally { if(selected){const release=await selected.release();if(outcome)outcome.pluginRelease=release;} }
 
   async function execute(){
-    const config={requireReport,...(publication?{publication:PUBLICATION_BINDING.version}:{}),...(allowedTools?{allowedTools}:{}),...(allowedDocuments?{allowedDocuments}:{}),...(contextBytes===undefined?{}:{contextBytes}),taskId,...(workingInput?{workingInput:{...(workingInput.memoryLibrary?{memoryLibraryId:workingInput.memoryLibrary.libraryId}:{}),...(workingInput.compaction?{compaction:{thresholdBytes:workingInput.compaction.thresholdBytes,summaryTimeoutMs:workingInput.compaction.summaryTimeoutMs??2000,version:'working-input@1'}}:{})}}:{})};
+    let temporal, admitted;
+    if (durable?.runId) {
+      try {
+        const saved = durable.store.inspect(durable.runId); admitted = saved;
+        temporal = saved.definition.config.taskTime;
+        if (taskTime !== undefined) {
+          const requested = createTaskTime({ ...taskTime, anchorInstant: taskTime.anchorInstant === undefined ? temporal?.anchorInstant : taskTime.anchorInstant });
+          if (canonical(requested) !== canonical(temporal)) throw failure('RUN_BINDINGS_MISMATCH');
+        }
+      } catch (error) { if (error.code !== 'UNKNOWN_RUN') throw error; }
+    }
+    if (!temporal && taskTime !== undefined) temporal = createTaskTime(taskTime);
+    const config={requireReport,...(temporal?{taskTime:temporal}:{}),...(publication?{publication:PUBLICATION_BINDING.version}:{}),...(allowedTools?{allowedTools}:{}),...(allowedDocuments?{allowedDocuments}:{}),...(contextBytes===undefined?{}:{contextBytes}),taskId,...(workingInput?{workingInput:{...(workingInput.memoryLibrary?{memoryLibraryId:workingInput.memoryLibrary.libraryId}:{}),...(workingInput.compaction?{compaction:{thresholdBytes:workingInput.compaction.thresholdBytes,summaryTimeoutMs:workingInput.compaction.summaryTimeoutMs??2000,version:'working-input@1'}}:{})}}:{})};
     let stored,claim,directory,runId,deadlineAt=Date.now()+budget.timeoutMs;
     let state={schemaVersion:'runtime-checkpoint@1',phase:'ready',messages:[{role:'user',content:question}],usedIds:[],rounds:0,toolsDispatched:0,proposal:null,cursor:0,result:null,host:null,working:null,answer:'',status:'failed',code:null,unknownEffects:[],partialEffects:[],hookErrors:[]};
     function boundToOriginal(saved) {
@@ -87,7 +105,13 @@ async function drive({ question, gateway, outputRoot='runs', requireReport=true,
     }
     if(submitting){
       const original=()=>{
-        const saved=durable.store.inspect(durable.runId);boundToOriginal(saved);
+        const saved=durable.store.inspect(durable.runId);
+        // A concurrent first submit may have won after our preflight read. An omitted
+        // instant means adopt that first admission, never compare a second wall clock.
+        if (taskTime && taskTime.anchorInstant === undefined && saved.definition.config.taskTime?.timeZone === taskTime.timeZone) {
+          temporal = saved.definition.config.taskTime; config.taskTime = temporal;
+        }
+        boundToOriginal(saved);
         if(saved.parentRunId!==null||saved.rootId!==saved.runId||canonical(saved.definition.rootLimits)!==canonical(durable.rootLimits??{model:budget.maxRounds,tool:budget.maxTools})||(durable.deadlineAt!==undefined&&durable.deadlineAt!==saved.definition.deadlineAt))throw failure('RUN_BINDINGS_MISMATCH');
         return saved;
       };
@@ -99,7 +123,7 @@ async function drive({ question, gateway, outputRoot='runs', requireReport=true,
       catch(error){if(error.code==='RUN_EXISTS')return original();throw error;}
     }
     if(durable?.runId){
-      stored=durable.store.inspect(durable.runId);boundToOriginal(stored);
+      stored=admitted ?? durable.store.inspect(durable.runId);boundToOriginal(stored);
       directory=stored.directory;runId=stored.runId;deadlineAt=stored.definition.deadlineAt;state=structuredClone(stored.snapshot);
       if(['completed','failed','cancelled'].includes(stored.status)){
         if(publication){
@@ -172,7 +196,8 @@ async function drive({ question, gateway, outputRoot='runs', requireReport=true,
           if(state.rounds>=budget.maxRounds)throw failure('ROUND_LIMIT');
           if(!state.working){
             const lookupMemory=ref=>{if(ref.libraryId!==workingInput.memoryLibrary.libraryId)throw failure('MEMORY_SCOPE_MISMATCH');return workingInput.memoryLibrary.state(ref.id);};
-            const workingMessages=workingInput?.memoryLibrary?await projectMemory({messages:state.messages,lookupState:lookupMemory}):structuredClone(state.messages);
+            const memoryMessages=workingInput?.memoryLibrary?await projectMemory({messages:state.messages,lookupState:lookupMemory}):structuredClone(state.messages);
+            const workingMessages=projectTaskTime(memoryMessages, temporal);
             let requestMessages=contextBytes===undefined?workingMessages:await projectContext({messages:workingMessages,maxBytes:contextBytes,lookupSource:host.resolveSource});let noteRef=null;
             if(workingInput?.compaction&&Buffer.byteLength(JSON.stringify(requestMessages))>=workingInput.compaction.thresholdBytes){
               // A crash during summary generation keeps its consumed root reservation; no adoption is implied.

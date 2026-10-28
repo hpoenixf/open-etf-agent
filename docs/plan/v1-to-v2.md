@@ -6,6 +6,12 @@
 
 > **Qualification update · 2026-10-28:** [v0.11 fixed code `5f42c33`](https://github.com/hpoenixf/open-etf-agent/tree/5f42c33892d57ed05e8cd09cad48573e6901995b) has the required original Runtime regression evidence plus separate changed-maintenance, fresh locked-install/build and saved-PDF-byte checks. The existing Session hot-journal repair closes the observed code-regression blocker; it adds no new owner or active-PDF recovery profile. [Dated evidence](../../openspec/changes/v011-local-pdf/evidence.md) retains failures and keeps the article/canonical-publication gate open. The 47-owner comparison, dates, infrastructure budget and cloud/live acceptance gates below are unchanged.
 
+## 2026-10-28: next independent module — v0.12 Temporal
+
+Python remains an unnumbered deferred candidate: its isolation probe could not execute successfully. No ordinary subprocess or mock sandbox is shipped. Former candidate **1.2 Temporal** is brought forward as **0.12.0**: explicit zone, one persisted task anchor, original Context/Gateway input and report readback; no market calendar, Scheduler or natural-language date parser. See the [contract](../../openspec/changes/v012-temporal/spec.md) and [actual evidence](../../openspec/changes/v012-temporal/evidence.md). The older order below is historical/remaining scope, not a second allocation of this increment.
+
+Code correctness, independent installation and original-byte readback remain required. Articles and whole-site publication progress independently and do not block qualified code delivery. Older “article publication gate remains open” text records its historical state, not a present code-delivery gate. Fixed article receipts stay strict; unrelated module receipts are not rewritten to claim current article synchronization.
+
 ## Direction: extract from existing practice, complete the smallest end-to-end workflow first
 
 Open ETF Agent builds on the module responsibilities, implementation experience and article motivations already established in ETF Agent: find the original module and contract first, then extract the smallest capability that can run independently. It is not a separate system with the same names and an article attached afterward.

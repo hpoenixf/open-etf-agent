@@ -4,7 +4,7 @@
   <img src="docs/assets/open-etf-agent-hero.svg" alt="Open ETF Agent — Build small. Keep evidence." width="1200" />
 </p>
 
-<p align="center"><small>Historical overview through v0.10; the current v0.11 local PDF module is described below.</small></p>
+<p align="center"><small>Historical overview through v0.10; the v0.11 PDF and v0.12 Temporal modules are described below.</small></p>
 
 <p align="center"><strong>Build a research Agent, one runnable module at a time. Start with a report you can open and trace to its sources.</strong></p>
 <p align="center">
@@ -24,7 +24,7 @@ A small research Agent that grows through independently runnable development sna
 
 The introductory task compares **original synthetic documents**, not real funds. The small synthetic ETF Plugin introduced in v0.7 is also not a live financial-data service. Complete ETF research tools remain on the roadmap. This project does not execute trades or provide investment advice.
 
-> **Start here:** clone `main`; there is no need to switch phase branches. It contains the latest qualified stable development code, **v0.11.0**, adding one local text-layer PDF module. The [fixed v0.11 source is `5f42c33`](https://github.com/hpoenixf/open-etf-agent/tree/5f42c33892d57ed05e8cd09cad48573e6901995b). Earlier `phase/v0.1`–`phase/v0.9` snapshots remain unchanged. Here, **stable means the bounded, provider-free Runtime and delivery checks described below**; it does not mean a formal release, model-quality certification, live-recovery qualification or production readiness. Original project code is [MIT-licensed](LICENSE); third-party licenses remain in force.
+> **Start here:** clone `main`; there is no need to switch phase branches. It contains the current qualified **v0.12.0 Temporal** code described below; the previously qualified **v0.11.0** added one local text-layer PDF module. The [fixed v0.11 source is `5f42c33`](https://github.com/hpoenixf/open-etf-agent/tree/5f42c33892d57ed05e8cd09cad48573e6901995b). Earlier `phase/v0.1`–`phase/v0.9` snapshots remain unchanged. Here, **stable means the bounded, provider-free Runtime and delivery checks described below**; it does not mean a formal release, model-quality certification, live-recovery qualification or production readiness. Original project code is [MIT-licensed](LICENSE); third-party licenses remain in force.
 
 > **Looking for real model calls?** Read the [16 historical HTTP calls across v0.1–v0.5](#live-evidence), then the [separate live runner and its authorization requirements](#live-entry). Those records do not qualify v0.11 live recovery.
 
@@ -35,6 +35,20 @@ The introductory task compares **original synthetic documents**, not real funds.
 - **Explicit evidence boundaries:** failures, fixes and unverified behavior are retained. Runtime correctness, model judgment and release status are separate claims.
 
 Documentation defaults to English. Use the language links at the top of the main entry pages for Chinese. Historical evidence, internal Specs and some detailed design documents remain in their original language; they are not presented as English translations. Article links marked **Chinese original** have no complete English edition.
+
+### v0.12 · Fixed task time
+
+The next stable development module is **0.12.0 Temporal** (formerly roadmap candidate 1.2). A task opts into an explicit time zone and one persisted UTC anchor; midnight, host TZ changes and process restart do not turn its “today” into a different date. Existing execution deadlines and data-cutoff semantics are unchanged. Python remains **unnumbered and deferred** until a qualified isolation environment is available.
+
+```sh
+npm run temporal -- submit --session runs/time --run fixed --time-zone America/Los_Angeles --anchor 2026-10-28T00:30:00.000Z
+npm run temporal -- work --session runs/time --run fixed
+npm run temporal -- read --session runs/time --run fixed
+```
+
+Submit and work within the original 300-second execution deadline. `read` verifies the completed original receipt later without model/tool replay. The report records today `2026-10-27`, yesterday `2026-10-26`, tomorrow `2026-10-28`. Omit `--anchor` only on first admission to capture the current instant once; the explicit zone is still required. Conflicting repeated anchors and invalid/ambiguous instants fail closed. Existing non-Temporal commands remain unchanged.
+
+This is an offline Gateway fixture through real Session/Runtime/Tool Host, not live-model or market-calendar qualification. See [contract](openspec/changes/v012-temporal/spec.md) and [verification](openspec/changes/v012-temporal/evidence.md). **Code delivery and article publication are independent:** historical fixed article receipts stay intact; Temporal article synchronization is pending separately. The strict article checks have their own manually dispatched workflow and are not a Runtime delivery prerequisite.
 
 <a id="quickstart"></a>
 ## Quickstart
@@ -226,6 +240,7 @@ Every link fixes the code, lockfile, examples and evidence from that stage. Reco
 | [v0.9 · Single-Run Worker](https://github.com/hpoenixf/open-etf-agent/tree/dad9c6e64f32c3d7579aea96613776b40917ec6d) | Keep original work after its submitting process exits | Separate submit/work, same Runtime and original lease/fence, durable terminal readback | [309-case combined execution](docs/verification/v09-combined-observations.safe.json) · [Historical delivery equivalence](docs/verification/v09-delivery-equivalence.safe.json) |
 | [v0.10 · Consuming one result throughout](https://github.com/hpoenixf/open-etf-agent/tree/ff5b9273ef0d239e804f61792702cd2e94174be7) | Trace original selections and derived results to actual consumers | Source-bound calculation, next Gateway encoding, same-reference report/CSV, independent readback | [Original 333-case execution](docs/verification/result-consumption-observations.safe.json) · [Narrow version qualification](docs/verification/v010-numbering.safe.json) · [Fresh receipts for 15 original targets](docs/verification/history/article-coverage-receipts-d943dd8452e4.json) |
 | [v0.11 · Local PDF](https://github.com/hpoenixf/open-etf-agent/tree/5f42c33892d57ed05e8cd09cad48573e6901995b) | Select a physical page while retaining the original file | Bounded text extraction, original Result, cited report and exact PDF attachment | [Qualification and preserved failures](openspec/changes/v011-local-pdf/evidence.md) · [Fresh independent delivery](docs/verification/integrated-install-pdf.safe.json) |
+| v0.12 · Temporal | Keep the original task’s “today” | Explicit zone, persisted anchor, original Context/Gateway/report; no market calendar | [Contract and verification](openspec/changes/v012-temporal/evidence.md); article sync separate |
 
 **v0.2 maintenance:** the original snapshot is historical. [Maintenance snapshot `a10d4f1`](https://github.com/hpoenixf/open-etf-agent/tree/a10d4f1bd1ecc39224272156221fe29792b64094) corrects report wording about unread pages. Use `maintenance/v0.2-source-boundary` specifically for the corrected v0.2 experience; the original snapshot was not rewritten.
 
