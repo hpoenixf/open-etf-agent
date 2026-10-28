@@ -95,10 +95,30 @@ export function updateReadmeTable(readme, table) {
   return readme.slice(0, readme.indexOf(BEGIN)) + table + readme.slice(readme.indexOf(END) + END.length);
 }
 
+export function validateReadmeEntry(text, guide) {
+  // Reject legacy embedded tables rather than silently maintaining two owners.
+  if (text.includes(BEGIN) || text.includes(END)) {
+    if (text.includes(BEGIN) && text.includes(END)) ensure(text.indexOf(BEGIN) < text.indexOf(END), 'Generated table markers are reversed; README not modified');
+    throw new Error('README must link to its standalone article guide, not embed a coverage table');
+  }
+  const visible = [];
+  let fence = null;
+  for (const line of text.replace(/<!--[\s\S]*?-->/g, '').split('\n')) {
+    const marker = line.match(/^ {0,3}(`{3,}|~{3,})(.*)$/);
+    if (fence) { if (marker && marker[1][0] === fence[0] && marker[1].length >= fence.length && !marker[2].trim()) fence = null; continue; }
+    if (marker) { fence = marker[1]; continue; }
+    if (!/^( {4}|\t)/.test(line)) visible.push(line.replace(/(`+)[\s\S]*?\1/g, ''));
+  }
+  const links = [...visible.join('\n').matchAll(/(?<![!\\])\[[^\[\]\n]+\]\(([^\s)]+)\)/g)];
+  ensure(links.some(match => match[1] === guide), 'README is missing its visible article-guide link');
+}
+
 export async function readmeViews(root, m, source, versions) {
-  // Preserve marker-error diagnostics before loading optional presentation inputs.
+  // README is the entry; each standalone language guide owns one generated table.
+  const specifications = [['README.md', 'docs/articles-and-code.md', 'en'], ['README.zh-CN.md', 'docs/articles-and-code.zh-CN.md', 'zh']];
+  for (const [entry, path] of specifications) validateReadmeEntry(await readFile(join(root, entry), 'utf8'), path);
   const views = [];
-  for (const [path, language] of [['README.md', 'en'], ['README.zh-CN.md', 'zh']]) {
+  for (const [, path, language] of specifications) {
     const text = await readFile(join(root, path), 'utf8');
     updateReadmeTable(text, ''); // validation only; no write
     views.push({ path, language, text });
@@ -268,7 +288,7 @@ async function main(args) {
   const views = await readmeViews(ROOT, m, source, versions);
   if (mode === '--render') {
     for (const view of views) await writeFile(join(ROOT, view.path), view.expected);
-    console.log('Rendered English and Chinese tables only; no verification claimed.'); return;
+    console.log('Rendered English and Chinese article-guide tables only; README entries checked; no verification claimed.'); return;
   }
   for (const view of views) ensure(view.expected === view.text, `${view.path} table drift; run --render`);
   const identity = await sourceIdentity(ROOT, source);

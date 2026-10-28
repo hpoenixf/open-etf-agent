@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 import { readFile, mkdir, mkdtemp, writeFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { join, resolve } from 'node:path';
-import { validateLocalization, renderTable, updateReadmeTable, readmeViews, validateReceipt } from './check-article-coverage.mjs';
+import { validateLocalization, renderTable, updateReadmeTable, readmeViews, validateReceipt, validateReadmeEntry } from './check-article-coverage.mjs';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
 const load = async path => JSON.parse(await readFile(join(root, path), 'utf8'));
@@ -61,16 +61,16 @@ test('localization: both languages preserve all since, fixed execution pins, cas
 });
 
 test('localization: existing Chinese render API remains unchanged', async () => {
-  const zh = await readFile(join(root, 'README.zh-CN.md'), 'utf8');
+  const zh = await readFile(join(root, 'docs/articles-and-code.zh-CN.md'), 'utf8');
   assert.equal(updateReadmeTable(zh, renderTable(m, m.verifiedAt, versions)), zh);
-  assert.match(zh, /README\.md">English/);
+  assert.match(zh, /\[English\]\(articles-and-code\.md\)/);
   const en = await readFile(join(root, 'README.md'), 'utf8');
   assert.match(en, /README\.zh-CN\.md">简体中文/);
 });
 
-test('localization: both checked README views are current, marker corruption fails closed', async () => {
+test('localization: both checked standalone guide views are current, marker corruption fails closed', async () => {
   const views = await readmeViews(root, m, {commit:m.verifiedAt}, versions);
-  assert.deepEqual(views.map(v => v.path), ['README.md', 'README.zh-CN.md']);
+  assert.deepEqual(views.map(v => v.path), ['docs/articles-and-code.md', 'docs/articles-and-code.zh-CN.md']);
   for (const v of views) {
     assert.equal(v.expected, v.text, v.path);
     assert.throws(() => updateReadmeTable(v.text + '\n<!-- article-coverage:start -->', 'x'), /duplicate/);
@@ -79,12 +79,14 @@ test('localization: both checked README views are current, marker corruption fai
   assert.throws(() => updateReadmeTable('<!-- article-coverage:end --><!-- article-coverage:start -->', 'x'), /reversed/);
 });
 
-test('localization: missing Chinese counterpart is not silently accepted', async () => {
+test('localization: missing Chinese guide counterpart is not silently accepted', async () => {
   await mkdir(join(root, 'test-output'), {recursive:true});
   const temporary = await mkdtemp(join(root, 'test-output', 'localization-'));
   await mkdir(join(temporary, 'docs/verification'), {recursive:true});
   await writeFile(join(temporary, 'docs/verification/article-coverage.en.json'), JSON.stringify(locale));
-  await writeFile(join(temporary, 'README.md'), '<!-- article-coverage:start -->\n<!-- article-coverage:end -->');
+  await writeFile(join(temporary, 'README.md'), '[Guide](docs/articles-and-code.md)');
+  await writeFile(join(temporary, 'README.zh-CN.md'), '[指南](docs/articles-and-code.zh-CN.md)');
+  await writeFile(join(temporary, 'docs/articles-and-code.md'), '<!-- article-coverage:start -->\n<!-- article-coverage:end -->');
   await assert.rejects(readmeViews(temporary, m, {commit:m.verifiedAt}, versions), /ENOENT/);
 });
 
@@ -129,4 +131,22 @@ test('localization: a registered but absent English body cannot fall back silent
 test('localization: unavailable or denied reads remain failures, never empty catalog success', async () => {
   const {display} = syntheticBodies();
   await assert.rejects(verifyLocalizationBodies(display, m, async () => { throw new Error('synthetic read denied'); }), /read denied/);
+});
+
+
+test('localization: README is a visible guide entry, never a second generated-table owner', () => {
+  const path = 'docs/articles-and-code.md', link = '[Read the guide](' + path + ')';
+  assert.doesNotThrow(() => validateReadmeEntry(link, path));
+  for (const invalid of ['[Wrong](docs/other.md)', '<!-- ' + link + ' -->', '```md\n' + link + '\n```', '`' + link + '`', '    ' + link, '!' + link, '\\' + link]) {
+    assert.throws(() => validateReadmeEntry(invalid, path), /visible article-guide link/);
+  }
+  assert.throws(() => validateReadmeEntry(link + '\n<!-- article-coverage:start --><!-- article-coverage:end -->', path), /not embed/);
+});
+test('localization: English and Chinese README entries resolve to their own standalone guides', async () => {
+  for (const [entry, guide] of [['README.md','docs/articles-and-code.md'],['README.zh-CN.md','docs/articles-and-code.zh-CN.md']]) {
+    const text = await readFile(join(root,entry),'utf8');
+    validateReadmeEntry(text,guide);
+    assert.ok(!text.includes('<!-- article-coverage:start -->'));
+    assert.ok((await readFile(join(root,guide),'utf8')).includes('<!-- article-coverage:start -->'));
+  }
 });
