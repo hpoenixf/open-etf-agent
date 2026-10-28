@@ -4,6 +4,7 @@ import { resolve, join } from 'node:path';
 import { randomUUID, createHash } from 'node:crypto';
 import { PUBLICATION_BINDING, validatePublication, validatePublicationReceipt, committedPublicationEvent } from './publication.mjs';
 import { ensureSafeDirectory } from './storage-files.mjs';
+import { prepareSessionRecovery } from './session-recovery.mjs';
 
 const APP_ID = 0x4f455446;
 const SCHEMA_VERSION = 2;
@@ -111,11 +112,15 @@ export async function openSession({ directory, clock = Date.now, leaseMs = 1000 
   const actual = connection.prepare("SELECT sql FROM sqlite_master WHERE name NOT LIKE 'sqlite_%' ORDER BY name").all().map(row => row.sql);
   if (version !== SCHEMA_VERSION || app !== APP_ID || JSON.stringify(actual) !== JSON.stringify([...schemas].sort())) fail('UNSUPPORTED_SESSION_SCHEMA');
  }
- let db; let closed = false; let identity;
+ let db; let closed = false; let identity; let recovery;
  try {
   // An unrelated database must not undergo writable recovery before schema admission.
-  if (!fresh) { const reader = new DatabaseSync(filename, { readOnly: true }); try { validateSchema(reader); } finally { reader.close(); } }
-  db = new DatabaseSync(filename); safeExistingDirectory(directory); identity = safeFile(filename, true);
+  if (!fresh) {
+   try { const reader = new DatabaseSync(filename, { readOnly: true, timeout: 1000 }); try { validateSchema(reader); } finally { reader.close(); } }
+   catch (error) { if (error.errcode !== 776) throw error; recovery = prepareSessionRecovery({ filename, validateSchema }); }
+  }
+  recovery?.assertCurrent(); recovery?.originalStarting();
+  db = new DatabaseSync(filename, { timeout: 1000 }); safeExistingDirectory(directory); identity = safeFile(filename, true);
   if (fresh) {
    db.exec('PRAGMA journal_mode=DELETE; PRAGMA synchronous=FULL; BEGIN IMMEDIATE');
    try { for (const schema of schemas) db.exec(schema); db.exec(`PRAGMA application_id=${APP_ID}; PRAGMA user_version=${SCHEMA_VERSION}; COMMIT`); }
@@ -123,7 +128,8 @@ export async function openSession({ directory, clock = Date.now, leaseMs = 1000 
   }
   validateSchema(db);
   db.exec('PRAGMA foreign_keys=ON; PRAGMA busy_timeout=1000; PRAGMA synchronous=FULL');
- } catch (error) { db?.close(); throw error; }
+  recovery?.complete(); recovery = undefined;
+ } catch (error) { db?.close(); throw recovery ? recovery.failed(error) : error; }
  function ready() { if (closed) fail('SESSION_CLOSED'); safeExistingDirectory(directory); for (const path of paths) safeFile(path, path === filename); const current = safeFile(filename, true); if (current.ino !== identity.ino || current.dev !== identity.dev) fail('SESSION_FILE_REPLACED'); }
  function now() { const value = clock(); if (!Number.isSafeInteger(value) || value < 0) fail('INVALID_CLOCK'); return value; }
  function transaction(operation) {

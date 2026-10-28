@@ -1,146 +1,246 @@
-# 从 v0.8 到 v2.0：CLI 优先，一次做好一个模块
+**English** | [简体中文](v1-to-v2.zh-CN.md)
 
-> **状态：v0.8/v0.9/v0.10 已交付；v0.10 是 Result / Reference 消费模块，固定源码与资格见 README；其余仍按下表。** 以下后续顺序可裁剪，不是发布日期或正式 Release 承诺。实际覆盖以 README 现状表及其引用的统一能力清单为准，本页不另维护一份覆盖表。
+# From v0.8 to v2.0: CLI first, one complete module at a time
 
-## 方向：从已有实践提炼，先完成最小闭环
+> **Status: v0.8/v0.9/v0.10 are delivered; v0.10 is the Result / Reference consumption module. See the README for its pinned source and qualification; the remaining work follows the tables below.** The subsequent sequence can be trimmed; it is not a release-date or formal Release commitment. Actual coverage is governed by the README's current-state table and the unified capability manifest it references. This page does not maintain a separate coverage table.
 
-Open ETF Agent 延续 ETF Agent 已形成的模块职责、实现经验与文章动因：先找原模块和合同，再提取可以独立运行的最小能力。不是另写一套同名系统，再给它配上一篇文章。
+## Direction: extract from existing practice, complete the smallest end-to-end workflow first
 
-- **一个功能版本，一个主模块。** 可以接通既有消费者，但不借“集成”再增加一组 Owner。Owner 指负责该事实的模块，不意味着新服务或 Manager。
-- **CLI 优先，API 按消费者需要增加。** 先用真实文件和独立进程完成闭环，再增加必要 HTTP/SSE 读取适配。浏览器界面不作前置条件，单独取得资格；API 通过不等于界面通过。
-- **先复用，后加依赖。** 优先现有代码、Node 标准能力、SQLite 和已采用的 SDK。通用底座可用成熟轻量开源替代；具体选择时核对官方 API、许可证和维护状况，不为小需求引入整套平台。
-- **只简化部署，不删核心合同。** 身份、授权、预算、来源、局部失败和未知结果不能随之丢失。模型负责语义判断，Runtime 负责合法执行与真实效果。
+Open ETF Agent builds on the module responsibilities, implementation experience and article motivations already established in ETF Agent: find the original module and contract first, then extract the smallest capability that can run independently. It is not a separate system with the same names and an article attached afterward.
 
-[原路线][original-roadmap]中的 Publication、Web、PDF、隔离 Python、合成 ETF、后台执行，应按模块独立完成和验收；可以继续使用 0.10、0.11 等版本，不为一个编号打包交付。既有或已规划的 Decimal、单位、币种、数据截止日与 CSV，不重复算作 1.x 新功能。
+- **One feature version, one primary module.** Existing consumers may be connected, but “integration” must not add another set of Owners. An Owner is the module responsible for a fact, not necessarily a new service or Manager.
+- **CLI first; add APIs as consumers need them.** Complete the workflow using real files and independent processes first, then add necessary HTTP/SSE read adapters. A browser interface is not a prerequisite for an individual CLI module and needs separate qualification; API acceptance is not UI acceptance. The selected November 11 owner-cloud milestone does require the minimal UI defined below.
+- **Reuse first, add dependencies second.** Prefer existing code, Node's standard capabilities, SQLite and SDKs already adopted. Mature, lightweight open source can replace generic infrastructure; check official APIs, licenses and maintenance when selecting it. Do not introduce an entire platform for a small requirement.
+- **Simplify deployment, not core contracts.** Identity, authorization, budgets, provenance, partial failures and unknown outcomes must survive simplification. The model owns semantic judgment; the Runtime owns legal execution and actual effects.
 
-## 2026-10-27 调整：先走完当前单模块闭环
+Publication, Web, PDF, isolated Python, synthetic ETFs and background execution in the [original roadmap][original-roadmap] must each be completed and accepted independently by module. Versions such as 0.10 and 0.11 remain available; do not bundle deliveries to fit a number. Existing or already-planned Decimal, units, currencies, data cutoff dates and CSV are not counted again as new 1.x features.
 
-已交付的 [v0.8 固定代码][v08] 只包含 Publication：稳定块/投递序号、显式修订 CAS、原回执与 CLI 读取。没有顺带交付 Worker 或 Web。随后 [v0.9 固定代码][v09] 单独完成最小 Worker，不把它反写为 v0.8 功能。后续路线继续到 2.0，但每一步都先审原 Owner 与失败合同，再写 Spec、实现和必要验证；已交付事实与后续候选分别标明；版本编号不代替验证。
+## 2026-10-27 adjustment: finish the current single-module workflow first
 
-| 阶段 / 状态 | 唯一主模块与最小 CLI 交付 | 明确不含 |
+The delivered [pinned v0.8 code][v08] contains Publication only: stable blocks/delivery sequence numbers, explicit revision CAS, original receipts and CLI reads. Worker and Web were not bundled into it. The subsequent [pinned v0.9 code][v09] completed the minimal Worker separately; it is not retroactively described as a v0.8 feature. The roadmap continues to 2.0, but each step first reviews the original Owner and failure contract, then develops the Spec, implementation and necessary verification. Delivered facts and future candidates are marked separately; version numbering never replaces verification.
+
+| Stage / status | Single primary module and minimal CLI delivery | Explicit exclusions |
 | --- | --- | --- |
-| **0.9 · 已交付** | **单 Run Worker。** 提交一个有界合成任务，提交进程退出，另一进程以原 Session lease/fence 驱动同一 Runtime；CLI 读回原结果。 | 不建 Task/队列状态机、Scheduler、常驻服务；同 generator 的 background 不是独立 Worker，也不声称前台短问并发。 |
-| **0.10 · 已交付** | **Result / Reference 消费。** 原始选区 → 既有计算器 → 下一 Gateway 实际请求编码 → 同一引用的报告与 CSV → 新进程原字节回读。 | 不新增 ResultStore、公式库、Python、Web、金融 Reviewer 或模型语义门；保留 `tool-host@2` 明示升级边界。 |
-| **后续单独一期** | **PDF 输入。** CLI 读一份许可明确的本地合成 PDF，原页/选区能被现有证据引用并回读。 | 不带 OCR 平台、爬虫或 Web。 |
-| **后续单独一期** | **受控 Python 计算。** CLI 让一个已限定输入的计算得到可回读结果，真实隔离/超时/停止边界单独验收。 | 不把普通子进程称为沙箱，不增权限或为它引入整个平台；环境不具备就延期。 |
-| **可选，后置** | **Web 读取界面。** 只消费已合格接口；有真实浏览器条件时再单独验收。 | 不成为 CLI 的 1.0/2.0 前置门；既有未验 WIP 不自动晋级。 |
+| **0.9 · Delivered** | **Single-Run Worker.** Submit one bounded synthetic task; the submitting process exits, and another process drives the same Runtime using the original Session lease/fence. The CLI reads back the original result. | No Task/queue state machine, Scheduler or resident service. Background execution in the same generator is not an independent Worker; concurrent foreground short questions are not claimed. |
+| **0.10 · Delivered** | **Result / Reference consumption.** Original selection → existing calculator → actual encoding of the next Gateway request → report and CSV with the same reference → original-byte readback in a new process. | No new ResultStore, formula library, Python, Web, financial Reviewer or model-semantic gate. Preserve the explicit `tool-host@2` upgrade boundary. |
+| **Separate future version** | **PDF input.** The CLI reads one local synthetic PDF with clear permission; existing evidence can reference and read back its original pages/selections. | No OCR platform, crawler or Web. |
+| **Separate future version** | **Controlled Python calculation.** The CLI produces a readable result from a calculation with bounded input; actual isolation, timeout and stop boundaries receive separate acceptance. | Do not call an ordinary subprocess a sandbox, expand permissions or add an entire platform for it. Defer if the environment is unavailable. |
+| **Optional, later** | **Web reading interface.** Consume only qualified interfaces; qualify it separately once real-browser conditions are available. | Not a prerequisite for CLI 1.0/2.0; existing unverified WIP is not automatically promoted. |
 
-**旧 0.10 只读适配候选取消，不改名为 Web。** v0.6 已有 Artifact/Revision 与 loopback Reader，v0.8 已有显式 Run 的 Publication CLI 回读；重复暴露这些能力不是新模块。原路线中的 **Web 取材**（外网输入）仍是未编号候选，须另审原 Web 模块及最小取证合同；上表的 **Web 读取界面**是输出消费者，二者不能互换，也不因已有 WIP 自动取得下一期资格。
+**The old 0.10 read-only adapter candidate is canceled, not renamed Web.** v0.6 already has Artifact/Revision and a loopback Reader; v0.8 already has Publication CLI readback for explicit Runs. Exposing these capabilities again is not a new module. **Web sourcing** (external-network input) in the original roadmap remains an unnumbered candidate requiring a separate review of the original Web module and minimal evidence-acquisition contract. The **Web reading interface** above is an output consumer: the two are not interchangeable, and existing WIP does not automatically qualify either for the next version.
 
-**2026-10-27 早期只读核查结论（保留当时的取消建议）：** 在固定 main `4ec2bb54b9747c46e8e95b9d742a50862aae9f75`，显式 Run 的正文/修订/事件已有 Publication CLI；报告、CSV、来源和修订已有 Reader，`evaluate` 已是其真实消费者。当前公开源码、计划与用户请求中未识别额外独立消费者或未满足的读取需求。因此建议取消 0.10 这一重复适配候选，不新增 HTTP 薄壳、不改名 Web；后续若出现真实消费者再单独提案。这不是声称外部永远不存在读取需求，也不以取消候选认定 1.0 已完成。
+**Early read-only finding on 2026-10-27 (the cancellation recommendation at that time is preserved):** At pinned main `4ec2bb54b9747c46e8e95b9d742a50862aae9f75`, Publication CLI already exposes body/revision/events for explicit Runs; Reader already exposes reports, CSV, sources and revisions, with `evaluate` as an actual consumer. No additional independent consumer or unmet reading requirement was identified in the then-current public source, plan or user requests. The recommendation was therefore to cancel this duplicate 0.10 adapter candidate, adding neither a thin HTTP wrapper nor a renamed Web module. A real new consumer could justify a separate proposal later. This does not claim that no external reading need can ever exist, nor does canceling the candidate establish that 1.0 is complete.
 
 
-**2026-10-27 22:35 编号决定：** 接受上述取消建议，不再实现重复读取薄壳。原计划 1.1 的 Result / Reference 最小闭环已在公开 `7dfb61735aa0f96166e16b7197b11b755b86bb35` 完成代码、交付与文章同步；现在按已发布 v0.9 的顺序整理为 **v0.10**，而不是让完整模块长期停在“无编号”。本次只补版本身份与相应资格，不增加功能。原 1.1 的这项最小增量已提前纳入 v0.10，不再重复安排；未实现的其他后续模块保留。1.0 仍是稳定资格里程碑，不能用编号变更宣称已经完成。
+**2026-10-27 22:35 numbering decision:** Accept the cancellation recommendation above; do not implement the duplicate reading wrapper. The minimal Result / Reference workflow originally planned for 1.1 had completed code, delivery and article synchronization at public `7dfb61735aa0f96166e16b7197b11b755b86bb35`. It is now organized as **v0.10**, following the already-published v0.9, rather than leaving a complete module indefinitely “unnumbered.” This change adds version identity and the corresponding qualification only, not functionality. This minimal increment from the original 1.1 has moved forward into v0.10 and will not be scheduled again; other unimplemented future modules remain. 1.0 is still a stability-qualification milestone; a numbering change cannot establish its completion.
 
-0.11、0.12 等编号在各自范围确认时再定，不为填满版本号强塞模块。合成 ETF 继续作为已有工具链的示例输入；只有出现独立 Owner 合同才另立一期，不为重复展示再造模块。v0.9 的 [Spec 与实际证据](../../openspec/changes/v09-single-run-worker/evidence.md)已对应固定单 Run 实现；v0.10 的编号资格单独记录，其他后续模块未因此自动开始或取得资格。
+Numbers such as 0.11 and 0.12 are assigned when each scope is confirmed, not filled by forcing in modules. Synthetic ETFs remain example inputs for the existing toolchain; only an independent Owner contract warrants a separate version, not a duplicate demonstration. The v0.9 [Spec and actual evidence](../../openspec/changes/v09-single-run-worker/evidence.md) correspond to the pinned single-Run implementation. v0.10 numbering qualification is recorded separately; it does not automatically start or qualify other future modules.
 
-## 1.x → 2.0 候选顺序
 
-| 阶段 | 唯一模块与最小可跑结果 | 本期不做 |
+## Product direction: a smaller real research tool, not a permanent demo
+
+**Target:** keep Open ETF Agent independently usable for real, owner-operated research, including a privately accessible cloud deployment. The private ETF Agent remains the fuller self-use research system; Open may progressively approach its core capabilities through public, independently qualified modules, not a wholesale copy or an assumption that private tests qualify public code. A local version remains useful, but local-only examples do not satisfy the cloud milestone. Neither repository's research effectiveness follows from feature count, HTTP success or deployment.
+
+The current baseline is v0.10's **offline-qualified** execution/provenance/delivery chain. Scripted cases explain and test contracts; they are not the target end-user product. The historical v0.1–v0.5 live runner does not make current v0.10 real-input/live-ready. The following stages define outcomes, not new version numbers or permission to reorder approved modules:
+
+| Outcome stage | Real user outcome | Qualification gap and boundary |
 | --- | --- | --- |
-| **1.0** | **资格里程碑，非新增功能版。** 已声明配置能独立安装；沿已声明 CLI 入口创建研究，读回报告和文件；API 仅验收已有或明确消费者所需范围。 | 不赶齐全部候选，不建复杂兼容层。 |
-| **原 1.1 · 已纳入 v0.10，不重复安排** | **结果消费与引用接入。** 保留原计划身份；此最小闭环已经实现，由 v0.10 承载。将来若有新的 Result 增量，须另有具体缺口与 Spec。 | 不把同一功能再算一版；不重做 Decimal/公式库，不加金融 Reviewer。 |
-| **1.2** | **时间解释。** 给定任务锚点和可信时区，跨午夜、夏令时与重启后，原任务日期不漂移；当前时间和数据时点另列。 | 不加 Scheduler，不猜市场交易日，不抓取全市场日历。 |
-| **1.3** | **Memory 按需召回。** 查询显式库，只将当前获准 revision 送入模型；更正、遗忘后旧命中不能复活，临时模式不访问跨会话 Memory。 | 不重做保存/遗忘，不自动学习，不加向量服务或普通 TTL 淘汰显式约束。 |
-| **1.4** | **持久普通回复。** 一个问题经 CLI/API 接收原始回复；重启、重复提交后，原非终态 Run 在合法时限内留下实际采用回执。 | 不加浏览器待办、通用审批、独立 Correction 或长时间 Human Park。 |
-| **1.5** | **单个串行专业 Child。** 一个内置资料核对专长，拥有独立上下文和模型请求，交回原结果供 Main 回读与综合。 | 不加个人 Profile 产品、并行专家、递归网络或 Reviewer。 |
-| **1.6** | **小库撤权 RAG。** 少量本地文档可检索；生成后撤权时，首次发布、历史 API 与附件读取都检查当前资格。 | 不治理 Memory，不加企业 ACL/向量平台，不承诺收回已送达字节。 |
-| **1.7** | **固定路线共享 Admission。** 两个本机进程竞争一个容量组；完整结束、取消和远端未知占用分别可解释。 | 不含 Routing、Failover、多组策略、计费或观测平台。 |
-| **1.8** | **一次性 Schedule。** 显式确认一个时点，重启后沿同一触发身份创建原 Run，报告可读回。 | 不加周期/条件监控、刷新、通知或第二套后台执行器。 |
-| **2.0** | **所选模块的稳定里程碑，非新增功能版。** 安装、停用、必要升级和产物读回与支持声明一致。 | 不为 2.0 赶齐上表，不自动宣称生产就绪。 |
+| **Current foundation: v0.10** | Inspect source-linked calculations, reports and CSV through the existing local consumers. | Offline/synthetic qualification only; not arbitrary real-material intake, current-version live recovery or certified research quality. |
+| **Real-input / real-model workflow** | The owner submits a bounded authorized question and actual text/table material; the original Runtime/Gateway produces a source-linked answer/report with real request, usage and failure evidence. | Review any new material-acquisition contract as its own module and separately qualify the current-version live entry. Do not overwrite historical fixtures or hide new behavior in deployment configuration. Preserve the approved v0.11 PDF scope and its original full-regression gates; PDF completion does not automatically qualify real-model behavior. Assign any additional version only through the existing scope decision process. |
+| **First genuinely usable private-cloud milestone** | The same qualified workflow runs on the selected single backend, with owner-only access, durable original output and repeatable operation across clean restarts and supported upgrades. | Meet the go/no-go contract below. Local-only output, static previews and one successful model call are insufficient. Keep unsolved crash recovery visible; do not call an operator-supervised pilot a reliable unattended service. |
+| **Research capability grows toward private-core needs** | Add only capabilities justified by actual self-use gaps: for example, qualified evidence acquisition, source-bound numerical comparison, bounded recall or a specialist consumer. | Use an evidence-based comparison with the private repository to identify the next gap; do not inherit its tools, credentials, data, tests or completeness. Preserve the approved module sequence and one deliverable module per version; the later candidate table remains a candidate table, not an instruction to implement everything. Review answer usefulness separately from Runtime correctness. |
 
-**1.0 与 2.0 是资格节点，不计作新增模块交付，不通过提升编号替代模块验收。** 原 1.1 已由 v0.10 提前交付；1.3、1.5 分别扩展已有 Memory、Child，不重新宣称这些模块首次实现；1.6 的新增重点是撤权资格而非已有词法检索。
+### First real-cloud milestone: explicit go/no-go
 
-顺序按依赖成本排列：先复用本地底座，再做持久交互，最后考虑跨进程协调与调度；不要求逐项实现。
+Freeze a named version and supported configuration before testing. A **go** requires all of:
 
-**关键依赖保持少：** 1.5 复用 v0.10 已实现的结果身份（原计划 1.1），首期 Main 等 Child 结算后再发模型请求，不以前置共享 Admission 为条件；1.6 需要既有 Publication；1.8 需要时间解释、受管执行入口及相应容量资格。某前置不存在，就延期该模块，不在同版补建整个平台。
+- The real operator entry accepts the declared material types and uses the selected authorized real provider, with evidence that actual acquired sources/results reach the request and original delivered output. Report actual successful, failed and unknown cases; inspect selected answers manually without claiming financial effectiveness is proved.
+- The selected Alibaba Cloud single VM and Cloudflare Access boundary allow only the owner, including API/download/alternate-hostname/origin checks. The actual host, order and configuration must exist and be verified; plans or local templates alone are not cloud qualification.
+- Original Session/Run/artifact identities and completed output remain readable after a clean process/host restart. Validate applicable interrupted-run behavior separately; unresolved hot-journal or unknown-effect cases block claims of safe automatic recovery. Never delete the failing test or reset a budget/deadline to obtain a pass.
+- Each supported upgrade states which stored-data/schema/Host versions are readable, writable or non-resumable. Finish old active Runs where required (including the existing tool-host@1 → @2 boundary), preserve original backups, and test any necessary data upgrade plus artifact readback. A code rollback must not rewind committed effects or replay model/tool calls. Unsupported compatibility is explicitly refused, not silently migrated.
+- A reproducible install/run/stop/restart and backup/restore runbook is exercised on the selected profile. Secrets remain outside published source/builds; failure/usage/cost records are sanitized but retain their denominator and original identities. No alert threshold is represented as a billing hard cap.
+- Prefer long-term average infrastructure cost below CNY 30/month; the owner permits evaluating roughly CNY 60/month if necessary. The final approved infrastructure cap includes hosting, storage/backup, network/domain costs and payment overhead; annual payments are listed separately. Model subscription charges are outside this infrastructure budget under the owner’s latest choice; independently verify provider limits and no-overage behavior before live use. Guest/multiuser traffic stays off.
 
-## 每期最小闭环：只新增一项合同
+Missing any required evidence is **no-go for that support claim**: keep the narrower qualified profile, identify the blocker and retest after the relevant module changes. A limited supervised pilot may precede this milestone but must retain its narrower label. No completion percentage is assigned from version numbers or planned rows; report demonstrably completed outcomes and remaining gates instead.
 
-以下是上表候选的准入边界，不是新增路线或已通过的资格。Owner 沿用 ETF Agent 原模块职责与下节文章动因；实现前仍须核对原合同和公开仓库已有接点。可以接通多个既有消费者，但不能在同一期顺带补建它们的 Owner。未满足前置就延期，不用新平台绕过边界。
+## Deployment qualification alongside module delivery — planned, 2026-10-28
 
-| 候选 | 原模块 / 唯一增量 | 输入 → 最终消费者 | 复用前置 | 失败边界与延期条件 |
+Deployment is a recurring delivery slice for the module being synchronized, not a reason to wait for every 1.x feature or add a parallel platform. No cloud deployment or current-version live qualification is claimed here. The v0.11 PDF WIP is not renumbered or promoted by this plan; its separate Session regression remains a release gate.
+
+### First target: owner-only, one persistent backend, one minimal interactive consumer
+
+- **Alibaba Cloud backend candidate:** first assess an already authorized Linux ECS or Simple Application Server instance with a persistent disk, the repository-supported Node 26 toolchain, an explicit private configuration and a single operator. Keep Session, artifacts and the shared cost ledger outside replaceable source directories. Start through the existing CLI/Runtime; evaluate OS process supervision only around the existing single-Run Worker, not a new scheduler or queue. A supervisor restart must not reissue unknown model/tool effects.
+- **Non-default Vercel consumer option:** a small owner-only static/read-only preview may consume explicitly selected report/artifact revisions; it is not on the selected Aliyun/Cloudflare critical path. Keep model credentials and Session databases off the frontend. That static preview alone is not the selected usable-cloud milestone. The minimum ask/answer, progress/failure and session-switching UI is a separately qualified consumer of the original entry; do not expose the current loopback Reader publicly unchanged.
+- **Do not lift the Runtime into a Vercel Function unchanged.** Current official documentation lists read-only function filesystems with temporary scratch space, finite invocation durations, and Node 22/24 rather than this repository's Node 26 requirement. Temporary files are not durable Session storage. Longer-duration or other Vercel products do not qualify the existing SQLite/Worker contract automatically. See [function runtimes](https://vercel.com/docs/functions/runtimes), [duration configuration](https://vercel.com/docs/functions/configuring-functions/duration), and [supported Node versions](https://vercel.com/docs/functions/runtimes/node-js/node-js-versions).
+- Alibaba Cloud documents [persistent cloud disks](https://www.alibabacloud.com/help/en/ecs/user-guide/quickly-create-and-use-disks/) and [single-server setup](https://www.alibabacloud.com/help/en/simple-application-server/user-guide/create-a-server). These are hosting primitives, not evidence that our application recovers correctly. Verify disk lifecycle, backups and stop/restart behavior on the selected instance.
+- A Vercel preview is not automatically private or isolated from production services. Review the actual target and environment variables before deployment; initial-project and production-promotion behavior matter. Do not publish owner data before access controls are verified; unprotected previews may contain no private material and do not meet the owner-only acceptance gate. See [deployment environments](https://vercel.com/docs/deployments/environments). Recheck plan/runtime limits at execution time; no account, resources, credentials, domains or billable services are created by this roadmap.
+
+### Budget and access revision: CNY 30 target, approximately CNY 60 evaluation ceiling, private by default
+
+**The owner-only profile is the default; guest mode stays off.** Count hosting, persistent storage/backup, domain renewal, network/electricity, taxes and payment fees in the infrastructure budget; model charges are separate. Keep CNY 30/month as the preferred long-term average infrastructure total; the owner subsequently allowed evaluating approximately double that budget if needed. Keep infrastructure spending below the final approved cap with tax/payment headroom, and enforce model-package limits independently; no host or model plan has been purchased by this planning task. Show annual upfront payments separately. Re-screen for a monthly cash-payment ceiling only if the owner separately requests it.
+
+**Selected by the owner: option 2, one small Alibaba Cloud VM + Cloudflare Access, owner-only.** Prefer long-term average infrastructure cost below CNY 30/month, with approximately CNY 60/month now available for infrastructure evaluation rather than an automatic spending approval; guests stay off. Configuration, region, eligibility, renewal terms and the actual CNY 99 upfront order still require verification; nothing has been purchased or deployed and no new credentials have been created. The existing-machine alternative below is a non-default fallback, not a claim that the owner has a suitable host.
+
+Retained comparison options (option 2 is selected), subject to verified account/host availability:
+
+1. **Existing authorized Node host + Cloudflare Free Access/Tunnel; optional private Pages reader.** Retain this only as a non-default fallback if a suitable machine really exists. Keep Node 26, SQLite and original Run files there. Edge hosting/access can remain zero-price within free limits, but the machine, persistent disk, backups, electricity and existing domain renewal are not automatically free. The owner already holds hpoenixf.com; a subdomain may be reused without purchasing another domain, but DNS/Access permissions and configuration are not established by ownership. A stable public-hostname tunnel needs that controlled configuration; otherwise evaluate an authenticated private-network path or keep the pilot local. Quick Tunnel is not the private production solution. Cloudflare currently lists a free Access tier for teams under 50 users, email allow rules and one-time PIN login: allow only the owner's exact address, not every address using OTP. Verify anonymous denial, token validation, all alternate hostnames/downloads and origin bypass. New account enrollment, tunnel credentials or access-policy changes require explicit operational authorization.
+2. **Small Alibaba Cloud VM + the same private access boundary.** Best fit if no machine exists, and a candidate for the preferred CNY 30/month infrastructure average, subject to complete cost checks; assess the next suitable configuration against the approximately CNY 60 evaluation ceiling if necessary. The official 99 program advertises CNY 99 purchase/renewal; annual pricing, eligibility, region, included disk/network and checkout renewal terms must be verified. CNY 99/year averages CNY 8.25/month and is a candidate under this monthly-average budget, with the actual CNY 99 upfront payment displayed separately. Purchasing or renewing still requires authorization; if monthly cash payments are later capped below CNY 30, re-screen this annual option. Do not substitute a first-year teaser: official renewal guidance warns some CNY 38/year Simple Application Server offers renew at roughly CNY 400–500/year. No instance or account is assumed.
+3. **Cloudflare Pages Free or Vercel Hobby as an owner-only read-only consumer, with local/backend execution unchanged.** Useful for previewing delivery, not a standalone deployment of this Agent. Use the existing hpoenixf.com domain or included platform subdomains only where the complete private-access boundary is verified; no new domain purchase is planned, and existing renewal cost remains visible. Cloudflare Pages' preview Access toggle does not by itself protect the production pages.dev/custom domain. Vercel preview URLs likewise are not proof of privacy. If protection is unavailable within the free profile, keep output local rather than publish it.
+
+Cloudflare Workers Paid starts at USD 5/month; Vercel Pro starts at USD 20/month. At the Bank of China 2026-10-28 12:48:43 USD selling quote (CNY 668.40 per USD 100), these are approximately CNY 33.42 and 133.68 before taxes/payment fees: the first exceeds the original CNY 30 target and the second exceeds even the approximately CNY 60 evaluation ceiling. A Workers paid tier fitting a revised budget still would not make the original Runtime compatible. Free serverless hosting is not a reason to port the Runtime: Cloudflare currently lists node:sqlite and node:child_process as non-functional import stubs. D1/Durable Objects are not drop-in replacements for this repository's local SQLite ownership and recovery contract. Do not add that migration to the first cloud milestone.
+
+**Model access is separate from the infrastructure budget.** The current operator has selected an existing OpenCode Go subscription for initial use; this is an operator choice, not a requirement for readers or proof of an established integration. Keep the provider configurable. [Official Go documentation](https://opencode.ai/v2/docs/console/go/) provides direct APIs for coding-agent traffic; this does not establish permission for ETF research/general Q&A or unattended use. Before dispatch, verify that use, the account’s Extra Usage setting and subscription limits, and actual cloud authentication/adapter compatibility. Extra Usage can fall back to metered balance: do not enable or rely on that fallback. No unlimited-use, guest-sharing or already-connected claim is made. Record tokens, duration, attempts and known/unknown usage through the original accounting seams, reserve within the approved allowance and stop at package limits. Do not top up, renew, purchase credits or enable metered overage without separate authorization. Local accounting is not a provider-side billing guarantee; unresolved allowed use/authentication/allowance blocks live activation, not offline work.
+
+**Optional guests are a later, separately accepted slice**, not part of the November 11 milestone. They receive only a separate synthetic/public-data scope: no owner files, history, Memory, uploads, arbitrary URLs or tools. Server-side global monthly/daily budgets, atomic pre-dispatch reservation, small input/output/turn limits, concurrency one and an immediate kill switch are mandatory. Every retry counts; unknown reservations remain held. Identity/session controls and bot checks can supplement this, but IP limits or frontend counters cannot enforce the money ceiling. An exhausted allowance rejects before any provider call; changing browsers/IPs cannot reset the global budget. Provider terms must permit guest use. If the chosen host cannot enforce these boundaries, remain owner-only.
+
+Official sources checked 2026-10-28: [Cloudflare Access pricing](https://www.cloudflare.com/sase/products/access/), [OTP](https://developers.cloudflare.com/cloudflare-one/integrations/identity-providers/one-time-pin/), [email policy rules](https://developers.cloudflare.com/cloudflare-one/access-controls/policies/), [Pages preview protection](https://developers.cloudflare.com/pages/configuration/preview-deployments/), [Workers pricing](https://developers.cloudflare.com/workers/platform/pricing/), [Workers Node compatibility](https://developers.cloudflare.com/workers/runtime-apis/nodejs/), [Vercel pricing](https://vercel.com/pricing), [Alibaba 99 program](https://cn.aliyun.com/activity/ecs/99program?from_alibabacloud=&source=), [renewal cautions](https://help.aliyun.com/zh/user-center/support/renewal-guide-q-a), [Bank of China quote](https://www.boc.cn/sourcedb/whpj/).
+
+### Host sizing: a measured small profile, not all 47 modules at once
+
+The current official [Alibaba 99 program](https://cn.aliyun.com/activity/ecs/99program?from_alibabacloud=&source=) advertises a shared e-family **2 vCPU / 2 GiB**, 3 Mbps fixed bandwidth, 40 GiB ESSD Entry and CNY 99/year, with same-price renewal under the stated campaign through March 31, 2029. This is a campaign statement, not permanent pricing or proof of this account's eligibility/region availability. Recheck the actual order and [renewal conditions](https://help.aliyun.com/zh/user-center/support/renewal-guide-q-a). Shared vCPUs are not dedicated physical cores.
+
+Treat 2 GiB only as a candidate for one owner, one active root Run, Node 26 + SQLite, externally hosted models and small files. Prefer evaluating **2 vCPU / 4 GiB** for margin if the infrastructure budget permits; an annual host price at or below CNY 360 is a screening threshold, **not a verified offer**. Do not cite unverified CNY 199 advertisements as purchasable or renewable. The CNY 60/month envelope is now infrastructure-only: the host, backup/storage, network/domain and payment overhead must fit it, with headroom rather than an automatic instruction to spend the remainder. There is no reserved CNY 20 model pool inside this cap. The CNY 99/year host averages 8.25/month, leaving 21.75 before the preferred CNY 30 infrastructure target for other infrastructure costs. The existing model subscription is tracked separately and is not unlimited.
+
+Proposed initial operating limits—not installed or measured: one active root task shared by all sessions, no parallel model fan-out, and explicit rejection rather than an unbounded waiting queue. For a 2 GiB candidate, start evaluation with a 768 MiB whole-service cap, 512 MiB V8 old-space and at least 512 MiB system headroom; V8 heap is not total process memory. For 4 GiB, evaluate a 1 GiB service and up to 1 GiB controlled worker group while retaining at least 1 GiB system headroom. Any later bounded queue/child work uses the existing admission/Run facts, not a second scheduler. No local LLM/embedding model, full observability stack, parallel browser fleet or repository-wide CI on this small host.
+
+Before declaring the SKU sufficient, test the allowed maximum material/task, session switching, cancellation, clean restart and backup/restore on the fixed profile during a representative personal-use window (proposed: 24 hours). Measure the whole process tree, free memory, disk growth, event-loop/SQLite delays and local UI/API responsiveness. Require no OOM or unexplained restart, process-tree peak below 80% of the proposed hard cap, and at least 25% disk free; these are proposed acceptance thresholds, not existing results. If they fail, reduce admitted workload or choose a larger verified SKU; do not hide failure with unlimited retries or claim all 47 modules fit. Region/provider reachability and applicable hosting requirements are preconditions; Access/Tunnel is not a way around them.
+
+### Slices and acceptance: keep each module independently shippable
+
+| Delivery point | Concrete consumer and bounded deliverable | Required evidence before claiming support |
+| --- | --- | --- |
+| **Next deployment-readiness slice, based on offline-qualified v0.10** | Operator runs one current-version research task on one selected backend; a separately approved read-only preview consumes its original report/CSV. Prepare reproducible install/config templates and an operator runbook; do not reimplement Runtime. | Pin commit/Node/lockfile; independent install; explicitly authorized provider/model/data scope and cumulative budget; actual request/result and original-byte readback; no secrets in traces/builds. Existing historical live runner pins only v0.1–v0.5 and synthetic data: qualify current-version entry and real text/table acquisition explicitly rather than editing old fixtures or passing a synthetic-data grant for real material. |
+| **v0.11 PDF, only after its original release gates pass** | On the same backend, substitute one approved local text-layer PDF; preview reads that Run's qualified source selections and output. | Real-file limits, corrupt/encrypted/textless rejection and source/page identity; same release's full regression and deployment smoke. No OCR or cloud parser added incidentally. A PDF-dependent user task waits; text/table-only testing need not. |
+| **Each later synchronized module** | Extend the same deployment profile only for that module's actual consumer (for example, Memory or a serial Child). | Re-run affected install/config, budgets/cancellation, delivery and upgrade checks; record exact tested commit and unchanged evidence separately. No blanket live qualification from unrelated module tests. |
+| **1.0 / 2.0 qualification** | Consolidate support for the selected backend/consumer profiles already demonstrated. | Safe stop, backup/restore, known upgrade boundaries, old-artifact readback and tested rollback of code/config without rolling back or replaying effects. Do not claim high availability, multitenancy or full financial-research quality. |
+
+### One implementation, two profiles, a 2026-11-11 cloud go/no-go target
+
+The local learning/test profile and private-cloud profile use the same Runtime, tool bindings, persistence contracts and model entry—not two demo engines. They differ only in explicit host paths, process supervision, endpoint access, secret injection and operational settings. Offline fixtures remain available for learning and regression; both profiles must also exercise the same qualified real-input/live path.
+
+**Target date: 2026-11-11, not a promise of a pass.** The goal is the first usable owner-only cloud version, not completion of all 47 private-baseline modules. Further iterations continue toward the fixed 2026-10-28 private snapshot, not a moving private main. The [single 47-capability alignment matrix](private-baseline-alignment.md) fixes the reference at 2026-10-28 snapshot `4bd07ab3a4df41d8f647ea1599aa5ab41ed26c0e` and governs that longer alignment; counts alone do not establish parity.
+
+The pre-cloud UI scope is deliberately small: **ask/answer, basic actual progress/failure display, and switching between the owner's sessions**. Reuse the original Run/Session and delivery consumers; show unknown, cancelled and failed honestly, without invented percentage progress. Browser acceptance includes refresh, switching away/back, a delayed response and duplicate submission: no cross-session answer, duplicated dispatch or lost committed output. This minimal interactive consumer is a real deliverable with its own Spec and acceptance, not the canceled duplicate read-only wrapper. No rich editor, dashboards, multiuser product, guest mode or new execution engine is required.
+
+| Target window | Work and dependency | Local/cloud acceptance and exit decision |
+| --- | --- | --- |
+| **Oct 28–30: freeze the route and unblock prerequisites** | Freeze the private reference and audit all 47 module statuses; choose only cloud-MVP dependencies. Review the separate Session repair and preserve the original PDF gate. Confirm the proposed VM configuration/region/eligibility/renewal/upfront charge, provider/data/price terms, existing domain control and exact Access/tunnel permissions. | Local: baseline reproduction and explicit gaps. Cloud: order and authorization checklist only until approvals exist. Request required account/payment/configuration actions early; record the unresolved owner and impact, not a silent “waiting” status. No resources or credentials are created by this plan. |
+| **Oct 31–Nov 3: real operation through the original chain** | Complete separately scoped current-version live qualification and any reviewed real-material acquisition increment; qualify the minimal UI against the same entry once its dependencies exist. PDF runs only after its original gates pass. | Local: actual authorized material/model task, citations/calculation/report where applicable, budget/failure/unknown records, session switching without cross-session leakage. If core entry or consumer remains unqualified, record a concrete milestone risk and reduce optional scope, not core provenance/access guarantees. |
+| **Nov 4–6: one private cloud profile** | With verified authorization/order, install the pinned candidate on the selected single VM; configure owner-only access and persistent paths using the same implementation. Prefer mature lightweight OSS for process/service/proxy/UI primitives after license, maintenance, resource cost and data-boundary review. | Cloud: fresh install, real task and original output readback; anonymous/alternate-hostname/origin/API/download rejection. Local: same candidate still passes. No backend migration to Workers/D1 and no additional platform merely to save time. |
+| **Nov 7–10: failure, durability and upgrade qualification** | Test stop/restart, permitted recovery, original artifact retention, supported upgrade/backup/restore, costs and bounded repeated use. Re-freeze after fixes and rerun affected gates. Prepare the final operating/support statement. | Compare local and cloud outcomes by original identity/bytes, not look-alike screenshots. Failed crash-recovery cases remain failures; unsupported recovery is explicit. Exercise required operator checks with available scheduling rather than assuming a particular day's manual availability. |
+| **Nov 11: go/no-go** | Review the fixed cloud-MVP evidence denominator and the contract above. | Go only for demonstrated capabilities; publish exact commit/config, passed/partial/open gates and known limitations. If required access, budget, persistence or real-operation gates are open, do not call it the usable cloud release; state the blocker, next bounded action and revised target. |
+| **After the first cloud gate: sustained alignment** | Migrate fixed-baseline modules in stability/dependency order, one independently usable module per version; maintain local and cloud profiles on that same path. Revisit the next batch after each actual qualification. | Near-term batch scopes receive dates only after their prerequisites and evidence are known. Later batches remain ordered ranges/exit gates, not invented delivery dates. Each accepted version updates the single capability matrix, compatibility notes, operational costs and affected dual-profile tests. |
+
+Mature OSS is allowed and preferred where it reduces undifferentiated work: evaluate an existing component before hand-writing one, but retain original authority/provenance/effect contracts. Check license and redistribution obligations, maintained versions, Node/OS compatibility, memory/disk use on the small VM, vulnerabilities and whether data leaves the host. Neither “everything custom” nor copying the whole private stack is the default. No new paid dependency or external data recipient is implied.
+
+## Candidate sequence from 1.x → 2.0
+
+| Stage | Single module and smallest runnable result | Not in this version |
+| --- | --- | --- |
+| **1.0** | **Qualification milestone, not a new feature version.** Declared configurations install independently; declared CLI entry points create research and read back reports and files. API acceptance covers only existing interfaces or the needs of identified consumers. | Do not rush to complete every candidate or build a complex compatibility layer. |
+| **Original 1.1 · Incorporated into v0.10; not rescheduled** | **Result consumption and reference integration.** Preserve the original plan identity; this minimal workflow is implemented and carried by v0.10. Any future Result increment requires a new concrete gap and Spec. | Do not count the same feature as another version; do not rebuild Decimal/formula libraries or add a financial Reviewer. |
+| **1.2** | **Temporal interpretation.** Given a task anchor and trusted timezone, the original task date stays stable across midnight, daylight-saving transitions and restarts; current time and data timestamps are listed separately. | No Scheduler, guessed market trading days or all-market calendar collection. |
+| **1.3** | **On-demand Memory recall.** Query an explicit store and send only currently authorized revisions to the model. Old hits cannot return after correction or forgetting; temporary mode does not access cross-session Memory. | Do not rebuild save/forget, add automatic learning or a vector service, or use ordinary TTL eviction for explicit constraints. |
+| **1.4** | **Durable ordinary responses.** A question receives the original reply through CLI/API; after restart or duplicate submission, the original nonterminal Run records actual adoption within the permitted time window. | No browser inbox, generic approvals, independent Correction or long-lived Human Park. |
+| **1.5** | **One serial specialist Child.** One built-in source-checking specialty has independent context and model requests, returning its original result for Main to read and synthesize. | No personal Profile product, parallel experts, recursive network or Reviewer. |
+| **1.6** | **Small-library RAG with revocation.** A few local documents are searchable. If authorization is revoked after generation, first publication, historical API reads and attachment reads all check current eligibility. | No Memory governance, enterprise ACL/vector platform or promise to retract bytes already delivered. |
+| **1.7** | **Shared Admission for a fixed route.** Two local processes compete for one capacity group; complete termination, cancellation and unknown remote occupancy remain separately explainable. | No Routing, Failover, multi-group policies, billing or observability platform. |
+| **1.8** | **One-shot Schedule.** Explicitly confirm a time; after restart, create the original Run under the same trigger identity and read back its report. | No recurring/conditional monitoring, refresh, notifications or second background executor. |
+| **2.0** | **Stability milestone for the selected modules, not a new feature version.** Installation, deactivation, necessary upgrades and artifact readback match the support claims. | Do not rush to finish the table for 2.0 or automatically claim production readiness. |
+
+**1.0 and 2.0 are qualification points, not new-module deliveries; increasing a version number cannot replace module acceptance.** The original 1.1 was delivered early as v0.10. 1.3 and 1.5 extend existing Memory and Child respectively, rather than claiming their first implementations again. The new focus of 1.6 is revocation eligibility, not existing lexical retrieval.
+
+The sequence follows dependency cost: reuse local foundations first, add durable interaction next, then consider cross-process coordination and scheduling. Implementing every item is not required.
+
+**Keep critical dependencies few:** 1.5 reuses result identity already implemented in v0.10 (originally planned for 1.1). In its first version, Main waits for Child settlement before issuing another model request; shared Admission is not a prerequisite. 1.6 needs existing Publication. 1.8 needs temporal interpretation, a managed execution entry point and the corresponding capacity qualification. If a prerequisite is missing, defer that module rather than building an entire platform in the same version.
+
+## Minimal end-to-end workflow per version: add only one contract
+
+The following are admission boundaries for the candidates above, not a new roadmap or already-passed qualifications. Owners retain ETF Agent's original module responsibilities and the article motivations below. Before implementation, check the original contracts and existing integration points in the public repository. Multiple existing consumers may be connected, but their Owners must not be built as incidental additions in the same version. Defer when prerequisites are unmet; do not bypass the boundary with a new platform.
+
+| Candidate | Original module / single increment | Input → final consumer | Reused prerequisites | Failure boundaries and deferral conditions |
 | --- | --- | --- | --- | --- |
-| **旧 0.10 读取适配 · 已取消** | 未证明独立增量，不创建新模块 | 原消费者继续使用既有 CLI/Reader | v0.6 Reader、v0.8 Publication CLI | 后续出现真实消费者才另提案；不静默转成 Web。 |
-| **PDF，未编号** | 原 PDF 取证；一份本地文本型 PDF 的页/选区引用 | 许可明确的合成 PDF → 既有 ResultRef/Context → CLI 报告与原页回读 | 既有来源、引用与文件交付链；成熟解析器优先 | 损坏、加密、无文本、超限明确失败；需 OCR/多模态平台或新来源系统才能闭环就延期。 |
-| **Python，未编号** | 原 Python 计算；一个限定计算的隔离执行与结果回读 | 限定代码/输入 → 原结果与 Artifact → CLI | 已合格隔离环境、既有工具与结果链 | 超时、停止、unknown 与失败后合法工件分别说明；环境不具备就延期，不把子进程称沙箱。 |
-| **Web 读取界面，后置** | 原 Web Chat 的只读展示切片；不是 Web 取材 | 已合格交付接口 → 浏览器读原正文/文件；CLI 原回读不变 | 既有 Publication/Reader 与真实浏览器验收条件 | 缺失、失效、原修订身份可解释；需新增执行/权限平台就延期，不作 CLI 前置。 |
-| **0.10（原计划 1.1）** | Result/Reference 增量：派生结果与实际模型消费可核对 | 合成计算、原输入/选区 → 下一次真实 Gateway 请求 → CLI 报告/CSV | v0.4 Result/Context、既有计算器、Artifact/CSV 与消费检查点 | 尾行遗漏、混币种/日期、未知分母不被掩盖；坏附件不抹正文。用现有 JS，不暗带 Python/金融 Reviewer。 |
-| **1.2** | Temporal：持久任务锚点与可信时区解释 | 任务锚点/时区 → 原 Run 模型输入 → CLI 报告 | 既有 Run 持久化与 Context | 跨午夜、夏令时、重启不漂移；不明时区须明确处理。需市场日历或 Scheduler 才闭环则缩小或延期。 |
-| **1.3** | Memory 增量：按需召回与采用时资格核对 | 显式库/查询 → 当前合法 revision 的模型输入 → CLI 回复 | v0.5 保存/修订/忘记、既有 Context | 更正/遗忘后旧命中不复活，临时模式不读库；不重新实现生命周期，不引入向量服务。 |
-| **1.4** | Human Interaction：一份普通回复的持久接收与原消费者采用 | 对原问题的 CLI 回复 → 原非终态 Runtime → CLI 采用回执与结果 | 原 Session/lease、恢复入口、Runtime；API 非前置 | 接收/采用/效果分开；重复、迟到、过期、取消、重启有界。若需另造认证平台、Human Park 或恢复器就延期。 |
-| **1.5** | Child 增量：一个真实模型专业 Child，而非重发 fixture-child | Main 的核对任务 → 独立 Child → Main 回读综合 → CLI 报告 | v0.3 Child 边界、v0.10 结果身份、原 Gateway 与根预算 | 失败保留原结果、取消不绕根约束；Main 等 Child 结算。需 Profile、并行调度或共享 Admission 才能完成就缩小或延期。 |
-| **1.6** | Knowledge/RAG：当前文档资格及撤权后的披露边界 | 小库文档/撤权 → 原 Publication、历史 Reader、附件读取 → CLI/已有 HTTP | 既有词法检索、Publication、Artifact/Reader 接点 | 检索后发布前及发布后回读均检查资格；不能收回已送达字节。需新企业 ACL、Memory 治理或发布平台就延期。 |
-| **1.7** | Provider Admission：一个容量组的跨进程共享准入 | 两个本机调用进程 → 原 Gateway → 各 CLI 原结果 | 既有存储、固定 Provider 路线及 Gateway | 完整结束、取消、unknown 分开；unknown 不自动释放/重试/换路。无真实竞争需求就延期，不补 Routing/计费平台。 |
-| **1.8** | Schedule：一个已确认时点的持久触发身份 | 确认时点 → 原 Worker/Runtime 的 Run → CLI 报告 | 时间解释、受管执行入口、相应容量资格 | 重复唤醒、重启、错过时点、取消有明确处理；缺前置就延期，不在同版补 Worker/Admission/通知。 |
+| **Old 0.10 read adapter · Canceled** | No independent increment was demonstrated; create no new module | Original consumers keep using existing CLI/Reader | v0.6 Reader, v0.8 Publication CLI | Propose separately only when a real consumer emerges; do not silently turn it into Web. |
+| **PDF, unnumbered (historical label; now v0.11 WIP)** | Original PDF evidence acquisition; page/selection references for one local text PDF | Synthetic PDF with clear permission → existing ResultRef/Context → CLI report and original-page readback | Existing provenance, reference and file-delivery chain; prefer mature parsers | Corrupt, encrypted, textless and over-limit files fail explicitly. Defer if completion needs an OCR/multimodal platform or a new provenance system. |
+| **Python, unnumbered** | Original Python computation; isolated execution and result readback for one bounded calculation | Bounded code/input → original result and Artifact → CLI | Qualified isolation environment, existing tools and result chain | Explain timeout, stop, unknown and valid post-failure artifacts separately. Defer without the environment; do not call a subprocess a sandbox. |
+| **Web reading interface, later** | Read-only presentation slice of the original Web Chat; not Web sourcing | Qualified delivery interfaces → browser reads original bodies/files; original CLI readback stays unchanged | Existing Publication/Reader and conditions for real-browser acceptance | Explain missing/invalid content and original revision identity. Defer if new execution/permission infrastructure is needed; not a CLI prerequisite. |
+| **0.10 (originally planned for 1.1)** | Result/Reference increment: derived results and actual model consumption can be checked | Synthetic calculation, original input/selection → next actual Gateway request → CLI report/CSV | v0.4 Result/Context, existing calculator, Artifact/CSV and consumption checkpoint | Do not conceal omitted tail rows, mixed currencies/dates or unknown denominators; a bad attachment does not erase body content. Use existing JS, without slipping in Python/financial Reviewer. |
+| **1.2** | Temporal: durable task anchor and trusted-timezone interpretation | Task anchor/timezone → original Run model input → CLI report | Existing Run persistence and Context | No drift across midnight, daylight-saving transitions or restarts; handle unknown timezones explicitly. Narrow or defer if completion requires a market calendar or Scheduler. |
+| **1.3** | Memory increment: on-demand recall and eligibility checks at adoption | Explicit store/query → model input with currently valid revision → CLI response | v0.5 save/revise/forget, existing Context | Old hits cannot return after correction/forgetting; temporary mode does not read the store. Do not reimplement the lifecycle or introduce a vector service. |
+| **1.4** | Human Interaction: durable receipt of one ordinary reply and adoption by its original consumer | CLI reply to original question → original nonterminal Runtime → CLI adoption receipt and result | Original Session/lease, recovery entry point, Runtime; API not a prerequisite | Separate receipt/adoption/effect; bound duplicates, late/expired replies, cancellation and restart. Defer if a new authentication platform, Human Park or recovery engine is needed. |
+| **1.5** | Child increment: one real-model specialist Child, not another fixture-child release | Main's checking task → independent Child → Main readback and synthesis → CLI report | v0.3 Child boundaries, v0.10 result identity, original Gateway and root budget | Preserve original results on failure; cancellation cannot bypass root constraints. Main waits for Child settlement. Narrow or defer if Profile, parallel scheduling or shared Admission is necessary. |
+| **1.6** | Knowledge/RAG: current document eligibility and disclosure boundaries after revocation | Small-library documents/revocation → original Publication, historical Reader, attachment reads → CLI/existing HTTP | Existing lexical retrieval, Publication, Artifact/Reader integration points | Check eligibility after retrieval but before publication, and on post-publication readback. Already-delivered bytes cannot be retracted. Defer if a new enterprise ACL, Memory governance or publication platform is needed. |
+| **1.7** | Provider Admission: cross-process shared admission for one capacity group | Two local calling processes → original Gateway → each CLI's original result | Existing storage, fixed Provider route and Gateway | Separate complete termination, cancellation and unknown; unknown does not automatically release/retry/reroute. Defer without real contention needs; do not add Routing/billing infrastructure. |
+| **1.8** | Schedule: durable trigger identity for one confirmed time | Confirmed time → original Worker/Runtime Run → CLI report | Temporal interpretation, managed execution entry point, corresponding capacity qualification | Handle duplicate wakes, restarts, missed times and cancellation explicitly. Defer when prerequisites are missing; do not add Worker/Admission/notifications in the same version. |
 
-1.0/2.0 不进入上表：它们只核对所选已交付模块的安装、支持声明和产物回读；2.0 再核对声明范围内的停用与必要升级，不以资格验收引入新功能。上述闭环成功与关键反例通过即停，不按文章的全部高级能力扩张首期范围。
+1.0/2.0 are excluded from this table: they only check installation, support claims and artifact readback for selected delivered modules. 2.0 additionally checks deactivation and necessary upgrades within the declared scope; qualification must not introduce new features. Stop when the end-to-end success path and key counterexamples above pass; do not expand the first version to every advanced capability in the articles.
 
-## 原 1.1 的最小闭环：现由 v0.10 承载
+## The original 1.1 minimal workflow: now carried by v0.10
 
-用一个原创合成 ETF 费用或暴露比较作为输入，复用已有确定性计算器：
+Use an original synthetic ETF fee or exposure comparison as input, reusing the existing deterministic calculator:
 
-1. **保留来路：** 原 ResultRef、实际选区、计算输入与派生结果关联起来，不另建金融账本。
-2. **证明消费：** 检查下一次真实 Gateway 输入带着同一结果、单位、截止日与限制，而不只检查工具说“计算成功”。
-3. **完成交付：** 报告中的结构化数字引用和 CSV 指向同一结果；进程退出后从 CLI/文件读回原字节；需要 HTTP 验证时复用已有 Reader，不把新 API 或网络消费者设为本期前置。
+1. **Preserve provenance:** Link the original ResultRef, actual selection, calculation inputs and derived result; do not build another financial ledger.
+2. **Prove consumption:** Check that the next actual Gateway input carries the same result, units, cutoff date and limitations, rather than merely checking that a tool says “calculation succeeded.”
+3. **Complete delivery:** Structured numeric references in the report and CSV point to the same result. After process exit, read back original bytes through CLI/files. Reuse the existing Reader when HTTP verification is needed; a new API or network consumer is not a prerequisite for this version.
 
-验证尾部关键行遗漏、混币种/不同截止日、分母未知三个反例。坏附件不抹掉独立合法正文；确定性数值核对不认证自由文字的投资论证。
+Verify three counterexamples: an omitted critical tail row, mixed currencies/different cutoff dates, and an unknown denominator. A bad attachment must not erase independently valid body content; deterministic numeric checks do not certify free-text investment arguments.
 
-**成功链与关键反例跑通即停。** 如果隔离 Python 尚未独立合格，就先用已有 JavaScript 计算路径，不让本版本再承担一个工作台。
+**Stop once the success chain and key counterexamples pass.** If isolated Python has not been independently qualified, use the existing JavaScript calculation path first; do not make this version deliver an additional workbench.
 
-## 模块与文章：沿同一条设计来源演进
+## Modules and articles: evolve along the same design lineage
 
-下列文章解释原模块为什么形成。公开提炼保留其核心合同，删去本期不需要的配置与平台依赖；不把原系统的验证记录当成本仓库资格。
+These articles explain why the original modules took shape. The public extraction keeps their core contracts while removing configuration and platform dependencies unnecessary for this version. Verification records from the original system are not qualifications for this repository.
 
-| 原模块 | 提炼时保留什么 | 对应文章 |
+| Original module | What the extraction preserves | Related article |
 | --- | --- | --- |
-| Publication | 稳定块与投递位不随修订改变；提交后失败不抹正文。 | [正文发布的提交边界][publication] |
-| ScheduledTaskWorker 的单 Run 切片 | claim / lease / cancel → 同一 Runtime → 原持久事实结算；不照搬 Schedule/Task 平台。 | [定时研究中的有限 Run 与恢复][schedule]；[background 与并发的区别][async-delivery] |
-| Result / Reference | 原结果、选区、派生与实际消费分开；来源可回读。 | [计算结果如何进入报告][result] |
-| Temporal | 原任务时间不被恢复时的“现在”覆盖。 | [Agent 说“今天”时，到底是哪一天][time] |
-| Memory | 命中不等于当前有效或已经采用；更正/遗忘具有持续效果。 | [Memory 的完整生命周期][memory] |
-| Human Interaction | 接收回复、原消费者采用、业务效果是不同事实。 | [持久人机交互][human] |
-| Child | 共享执行底座和根约束，但不共享一团上下文。 | [从隔离到专业化协作][child] |
-| Knowledge / RAG | 检索时允许，不代表首次发布及以后读取仍允许。 | [文档撤权与历史回放][rag] |
-| Provider Admission | Run 预算与 Provider 容量分开；HTTP 200 不证明远端已结束。 | [容量准入的租约与未知占用][admission] |
-| Schedule | 已确认定义、触发机会、Run 与报告各留真实身份。 | [定时研究：会话结束后继续][schedule] |
+| Publication | Stable blocks and delivery positions do not change with revisions; failure after commit does not erase body content. | [The body-publication commit boundary][publication] |
+| Single-Run slice of ScheduledTaskWorker | claim / lease / cancel → same Runtime → settlement of original durable facts; do not copy the Schedule/Task platform wholesale. | [Bounded Runs and recovery in scheduled research][schedule]; [The difference between background delivery and concurrency][async-delivery] |
+| Result / Reference | Separate original results, selections, derivation and actual consumption; provenance can be read back. | [How calculation results enter reports][result] |
+| Temporal | Recovery-time “now” does not overwrite the original task time. | [When an Agent says “today,” which day is it?][time] |
+| Memory | A hit does not imply current validity or adoption; correction/forgetting has durable effects. | [The complete Memory lifecycle][memory] |
+| Human Interaction | Receipt of a reply, adoption by the original consumer and business effects are distinct facts. | [Durable human interaction][human] |
+| Child | Share execution foundations and root constraints, not one tangled context. | [From isolation to specialized collaboration][child] |
+| Knowledge / RAG | Permission at retrieval does not imply permission at first publication or later reads. | [Document revocation and historical replay][rag] |
+| Provider Admission | Separate Run budgets from Provider capacity; HTTP 200 does not prove remote execution has ended. | [Capacity-admission leases and unknown occupancy][admission] |
+| Schedule | Confirmed definitions, trigger opportunities, Runs and reports each retain their actual identities. | [Scheduled research: continuing after a session ends][schedule] |
 
-RAG先用小规模词法检索；Admission和Schedule复用既有存储与执行入口。**库可以提供解析、索引、事务或唤醒，却不能替代来源资格、授权、unknown 和幂等合同。**
+Start RAG with small-scale lexical retrieval; Admission and Schedule reuse existing storage and execution entry points. **Libraries can supply parsing, indexing, transactions or wake-ups, but cannot replace provenance eligibility, authorization, unknown-outcome or idempotency contracts.**
 
-每期完成后，在原文章相关论点旁补一个固定代码版本、一条可跑案例和一个失败反例，保留历史背景与未覆盖范围。目标是文章中的机制能够由公开代码解释和复现，不是全文功能对齐。
+After each version is complete, add a pinned code version, a runnable case and a failing counterexample beside the relevant argument in the original article, preserving historical context and uncovered scope. The goal is for public code to explain and reproduce the article's mechanisms, not to match every feature mentioned in the article.
 
-## 风险、裁剪与验收
+## Risks, scope trimming and acceptance
 
-**最大风险是把共享准入做成控制平台。** 1.7 只允许一个容量组、两个调用进程和有界队列；未知占用保留原身份，不自动释放、重试或换路。没有真实竞争需求，就整期延后。后续是否加入 Provider 目录、Failover、个人 Profile、Human Park、受控刷新或外部观测出口，分别评估，不捆进已有版本。
+**The largest risk is turning shared admission into a control platform.** 1.7 allows only one capacity group, two calling processes and a bounded queue. Unknown occupancy retains its original identity and is not automatically released, retried or rerouted. Defer the entire version without a real contention need. Later additions such as a Provider catalog, Failover, personal Profile, Human Park, controlled refresh or external observability outputs are evaluated separately, not bundled into existing versions.
 
-RAG的难点是撤权与披露提交顺序，不是先搭向量库。先按声明入口验证真实进程与实际交付字节；已有 HTTP 读取同样核验，SSE 仅在确有消费者时纳入；必要时拒绝整个受保护候选，不增加语义分类器来签发权限。
+RAG's challenge is ordering revocation and disclosure commits, not building a vector store first. Verify real processes and actual delivered bytes through the declared entry points first. Existing HTTP reads receive the same checks; include SSE only for an actual consumer. If necessary, reject the entire protected candidate rather than adding a semantic classifier to grant permission.
 
-每个模块完成前，只回答四个问题：
+Before completing each module, answer just four questions:
 
-- 输入是否经过真实运行入口，结果能否从 CLI/API 取得？
-- 最终消费者是否采用原身份与限制，而非只生成了一个中间对象？
-- 取消、重复、重启、局部失败和 unknown 是否在本期范围内可解释？
-- 旧的重复入口是否移除，独立合法成果是否仍能读取？
+- Did the input pass through a real execution entry point, and can its result be retrieved through CLI/API?
+- Did the final consumer adopt the original identity and limitations, rather than merely creating an intermediate object?
+- Are cancellation, duplicates, restart, partial failures and unknown outcomes explainable within this version's scope?
+- Have old duplicate entry points been removed, and can independently valid outputs still be read?
 
-验收聚焦 **Runtime 正确性**；语义状态可保持 `unreviewed`，不另设模型评分门。宣称真实独立模型路径时，仍须有该路径的实际调用证据，不能以 scripted fixture 代替。
+Acceptance focuses on **Runtime correctness**. Semantic status may remain `unreviewed`; no separate model-scoring gate is added. A claimed real independent-model path still requires evidence of actual calls on that path, not scripted fixtures.
 
-历史支持保持窄：固定快照独立可跑、已交付产物可读、必要相邻数据升级保留原备份；失败或未知状态不破坏旧库。旧活跃 Run 默认不跨版恢复。不扩展多租户、交易执行、不可信插件安装、集群容灾或普遍 exactly-once。
+Keep historical support narrow: pinned snapshots run independently, delivered artifacts remain readable, and necessary adjacent data upgrades preserve original backups. Failed or unknown states must not damage the old database. Old active Runs do not resume across versions by default. Do not expand into multi-tenancy, trade execution, untrusted-plugin installation, cluster disaster recovery or universal exactly-once.
 
-原始规划及边界见[原路线][original-roadmap]与[能力矩阵][original-matrix]；不从版本号反推完成状态。
+See the [original roadmap][original-roadmap] and [capability matrix][original-matrix] for the original planning and boundaries; never infer completion from version numbers.
 
-[result]: https://hpoenixf.com/eff-agent-article/articles/financial-agent-python-result-consumption
-[publication]: https://hpoenixf.com/eff-agent-article/articles/019-agent-answer-publication
-[async-delivery]: https://hpoenixf.com/eff-agent-article/articles/agent-asynchronous-research-time-bound-delivery
+[result]: https://hpoenixf.com/eff-agent-article/en/articles/financial-agent-python-result-consumption
+[publication]: https://hpoenixf.com/eff-agent-article/en/articles/019-agent-answer-publication
+[async-delivery]: https://hpoenixf.com/eff-agent-article/en/articles/agent-asynchronous-research-time-bound-delivery
 [v08]: https://github.com/hpoenixf/open-etf-agent/tree/2c096ce47be2161f97531170af07ef255872f8b1
-[time]: https://hpoenixf.com/eff-agent-article/articles/agent-temporal-semantics-market-calendar
-[memory]: https://hpoenixf.com/eff-agent-article/articles/026-agent-memory-forget-durable-effects
-[human]: https://hpoenixf.com/eff-agent-article/articles/agent-durable-human-interaction-response-adoption
-[child]: https://hpoenixf.com/eff-agent-article/articles/agent-subagent-context-specialization
-[rag]: https://hpoenixf.com/eff-agent-article/articles/027-rag-revocation-publish-replay
-[admission]: https://hpoenixf.com/eff-agent-article/articles/agent-provider-admission-capacity-lease
-[schedule]: https://hpoenixf.com/eff-agent-article/articles/agent-autonomous-scheduled-research
+[time]: https://hpoenixf.com/eff-agent-article/en/articles/agent-temporal-semantics-market-calendar
+[memory]: https://hpoenixf.com/eff-agent-article/en/articles/026-agent-memory-forget-durable-effects
+[human]: https://hpoenixf.com/eff-agent-article/en/articles/agent-durable-human-interaction-response-adoption
+[child]: https://hpoenixf.com/eff-agent-article/en/articles/agent-subagent-context-specialization
+[rag]: https://hpoenixf.com/eff-agent-article/en/articles/027-rag-revocation-publish-replay
+[admission]: https://hpoenixf.com/eff-agent-article/en/articles/agent-provider-admission-capacity-lease
+[schedule]: https://hpoenixf.com/eff-agent-article/en/articles/agent-autonomous-scheduled-research
 [original-roadmap]: https://github.com/hpoenixf/open-etf-agent/blob/c390eb2dd951b53b1dab2d64a9cd72d216fde8dc/docs/plan/02-roadmap-research.md
 [original-matrix]: https://github.com/hpoenixf/open-etf-agent/blob/c390eb2dd951b53b1dab2d64a9cd72d216fde8dc/docs/plan/05-coverage-matrix.md
 
 
 [v09]: https://github.com/hpoenixf/open-etf-agent/tree/dad9c6e64f32c3d7579aea96613776b40917ec6d
+
