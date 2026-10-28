@@ -116,6 +116,24 @@ node src/cli.mjs --case result-consumption --output runs/result-consumption
 
 **升级边界：本次使用 `tool-host@2`。升级前应先结束旧版本的活动 Run；`tool-host@1` 检查点不能跨版本续跑。** 拒绝发生在 claim 前，原不可变 Result、Artifact 与 Publication 仍可读取；不迁移旧检查点，也不重新执行旧工具。详见[契约与兼容限制](https://github.com/hpoenixf/open-etf-agent/blob/e442f600891be79625fc78751e2d9f39905920da/openspec/changes/result-reference-consumption/design.md)。
 
+### v0.9：提交退出后，由另一进程继续原 Run
+
+本期只增加单 Run Worker，复用原 Session 的唯一 lease/fence 和同一个 Runtime，不另建 Task、队列或常驻调度服务。
+
+```sh
+node dist/src/session-cli.mjs submit --session runs/worker-demo --run original-example --case durable-publication
+# submit 已退出；下面 work 是另一个进程
+node dist/src/session-cli.mjs work --session runs/worker-demo --run original-example
+node dist/src/session-cli.mjs publication --session runs/worker-demo --run original-example
+```
+
+`submit` 只持久化原身份、请求、绑定、预算与截止时间，不调用模型/工具；`work` 才执行该合成 profile。示例的 30 秒截止时间从提交开始，不在接棒时重置。终态再次 `work` 只回读原事实，不重新研究；再次体验应选择新的测试目录和明确 Run ID。
+
+Worker 的 SIGTERM / 宿主停止不等于用户取消。已封存工作可沿原身份继续；已分派但结果不明的请求不自动重发，已提交正文也不因后续 Run 失败消失。SQLite、独立进程和 SIGTERM/SIGKILL 边界有真实合成测试，模型动作仍是脚本，不是真实模型判断。范围不含 Schedule、通知、前台问答并发或 Web。见 [Worker 谱系](docs/evolution/v09-worker-lineage.md)、[实际进程用例](test/worker-process.test.mjs)及[本版记录](docs/verification/v09-observations.md)。
+
+<details>
+<summary>历史版本</summary>
+
 ### v0.6：阅读、下载与实际 HTTP 验证
 
 ```sh
@@ -169,20 +187,7 @@ node dist/src/session-cli.mjs publication-revisions --session runs/publication-d
 
 这是使用合成回复的真实本地 SQLite/进程闭环，不调用模型。仅支持一个根 Run 的正文块及选定修订读取；不包含后台 Worker、Web Chat、SSE、全局 History 或多租户。行为与反例见 [Publication 谱系和边界](docs/evolution/v08-publication-lineage.md)及[实测记录](docs/verification/v08-observations.md)。
 
-### v0.9：提交退出后，由另一进程继续原 Run
-
-本期只增加单 Run Worker，复用原 Session 的唯一 lease/fence 和同一个 Runtime，不另建 Task、队列或常驻调度服务。
-
-```sh
-node dist/src/session-cli.mjs submit --session runs/worker-demo --run original-example --case durable-publication
-# submit 已退出；下面 work 是另一个进程
-node dist/src/session-cli.mjs work --session runs/worker-demo --run original-example
-node dist/src/session-cli.mjs publication --session runs/worker-demo --run original-example
-```
-
-`submit` 只持久化原身份、请求、绑定、预算与截止时间，不调用模型/工具；`work` 才执行该合成 profile。示例的 30 秒截止时间从提交开始，不在接棒时重置。终态再次 `work` 只回读原事实，不重新研究；再次体验应选择新的测试目录和明确 Run ID。
-
-Worker 的 SIGTERM / 宿主停止不等于用户取消。已封存工作可沿原身份继续；已分派但结果不明的请求不自动重发，已提交正文也不因后续 Run 失败消失。SQLite、独立进程和 SIGTERM/SIGKILL 边界有真实合成测试，模型动作仍是脚本，不是真实模型判断。范围不含 Schedule、通知、前台问答并发或 Web。见 [Worker 谱系](docs/evolution/v09-worker-lineage.md)、[实际进程用例](test/worker-process.test.mjs)及[本版记录](docs/verification/v09-observations.md)。
+</details>
 
 <a id="versions"></a>
 ## 版本演进 · Ten fixed snapshots

@@ -118,6 +118,24 @@ Assigning the version changed only three package/lock version fields: 123 other 
 
 **Upgrade boundary: this module uses `tool-host@2`. Finish active Runs on the old version before upgrading; `tool-host@1` checkpoints cannot resume across versions.** Refusal occurs before claim. Immutable Results, Artifacts and Publications remain readable; old checkpoints are not migrated and old tools are not re-executed. See the [contract and compatibility limits (Chinese)](https://github.com/hpoenixf/open-etf-agent/blob/e442f600891be79625fc78751e2d9f39905920da/openspec/changes/result-reference-consumption/design.md).
 
+### v0.9: another process continues the original Run
+
+This stage adds a single-Run Worker using the original Session lease/fence and the same Runtime. It does not create a Task owner, queue or resident scheduling service.
+
+```sh
+node dist/src/session-cli.mjs submit --session runs/worker-demo --run original-example --case durable-publication
+# submit has exited; work runs in a separate process
+node dist/src/session-cli.mjs work --session runs/worker-demo --run original-example
+node dist/src/session-cli.mjs publication --session runs/worker-demo --run original-example
+```
+
+`submit` only persists original identity, request, bindings, budget and deadline; it calls neither models nor tools. `work` executes the synthetic profile. The example's 30-second deadline starts at submission, not handoff. Another terminal `work` reads the original facts instead of researching again; use a fresh test directory and explicit Run ID for another demonstration.
+
+SIGTERM/host stop is not user cancellation. Sealed work can continue under its original identity; unknown dispatched requests are not automatically resent. Already committed text survives later Run failure. Real synthetic tests exercise SQLite, independent processes and SIGTERM/SIGKILL; model actions remain scripted. Schedule, notifications, concurrent foreground chat and Web are excluded. See [Worker lineage (Chinese)](docs/evolution/v09-worker-lineage.md), [process tests](test/worker-process.test.mjs) and [observations (Chinese)](docs/verification/v09-observations.md).
+
+<details>
+<summary>Earlier versions</summary>
+
 ### v0.6: read, download and verify over real HTTP
 
 ```sh
@@ -171,20 +189,7 @@ node dist/src/session-cli.mjs publication-revisions --session runs/publication-d
 
 This is a real local SQLite/process flow with synthetic replies and no model calls. It supports one root Run's body block and selected revision readback, not background Worker, Web Chat, SSE, global History or multitenancy. See [Publication lineage/boundaries (Chinese)](docs/evolution/v08-publication-lineage.md) and [observations (Chinese)](docs/verification/v08-observations.md).
 
-### v0.9: another process continues the original Run
-
-This stage adds a single-Run Worker using the original Session lease/fence and the same Runtime. It does not create a Task owner, queue or resident scheduling service.
-
-```sh
-node dist/src/session-cli.mjs submit --session runs/worker-demo --run original-example --case durable-publication
-# submit has exited; work runs in a separate process
-node dist/src/session-cli.mjs work --session runs/worker-demo --run original-example
-node dist/src/session-cli.mjs publication --session runs/worker-demo --run original-example
-```
-
-`submit` only persists original identity, request, bindings, budget and deadline; it calls neither models nor tools. `work` executes the synthetic profile. The example's 30-second deadline starts at submission, not handoff. Another terminal `work` reads the original facts instead of researching again; use a fresh test directory and explicit Run ID for another demonstration.
-
-SIGTERM/host stop is not user cancellation. Sealed work can continue under its original identity; unknown dispatched requests are not automatically resent. Already committed text survives later Run failure. Real synthetic tests exercise SQLite, independent processes and SIGTERM/SIGKILL; model actions remain scripted. Schedule, notifications, concurrent foreground chat and Web are excluded. See [Worker lineage (Chinese)](docs/evolution/v09-worker-lineage.md), [process tests](test/worker-process.test.mjs) and [observations (Chinese)](docs/verification/v09-observations.md).
+</details>
 
 <a id="versions"></a>
 ## Version history: ten fixed snapshots
