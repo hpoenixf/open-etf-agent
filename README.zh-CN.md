@@ -8,8 +8,14 @@
 
 <p align="center"><strong>从第一份能打开、能核对来源的报告开始，逐版构建研究 Agent。</strong></p>
 <p align="center">
+  <a href="https://hub.xerj.org/contributors/hpoenixf"><img src="https://hub.xerj.org/contributors/hpoenixf/badge.svg" alt="XERJ 贡献者徽章" height="20" /></a><br />
+  <small>v0.9 独立 CLI Worker 实现收录于 <a href="https://hub.xerj.org/corpus/hpoenixf--open-etf-agent">XERJ Corpus Hub</a>。</small>
+</p>
+<p align="center">
   <a href="#quickstart">快速运行</a> ·
   <a href="#versions">版本演进</a> ·
+  <a href="https://github.com/hpoenixf/open-etf-agent/releases">Releases</a> ·
+  <a href="#反馈与参与">反馈与贡献</a> ·
   <a href="#live-evidence">真实调用记录</a> ·
   <a href="#live-entry">受限 live 入口</a> ·
   <a href="#architecture">架构职责</a> ·

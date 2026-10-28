@@ -8,8 +8,14 @@
 
 <p align="center"><strong>Build a research Agent, one runnable module at a time. Start with a report you can open and trace to its sources.</strong></p>
 <p align="center">
+  <a href="https://hub.xerj.org/contributors/hpoenixf"><img src="https://hub.xerj.org/contributors/hpoenixf/badge.svg" alt="XERJ contributor badge" height="20" /></a><br />
+  <small>The v0.9 standalone CLI Worker implementation was selected for <a href="https://hub.xerj.org/corpus/hpoenixf--open-etf-agent">XERJ Corpus Hub</a>.</small>
+</p>
+<p align="center">
   <a href="#quickstart">Quickstart</a> ·
   <a href="#versions">Versions</a> ·
+  <a href="https://github.com/hpoenixf/open-etf-agent/releases">Releases</a> ·
+  <a href="#feedback-and-contributions">Feedback &amp; contributions</a> ·
   <a href="#live-evidence">Real-call evidence</a> ·
   <a href="#live-entry">Restricted live runner</a> ·
   <a href="#architecture">Architecture</a> ·
