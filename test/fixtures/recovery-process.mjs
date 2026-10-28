@@ -8,7 +8,7 @@ import { openSession } from '../../src/session.mjs';
 const [directory,mode,stop,rawRunId,rawClock,rawStall]=process.argv.slice(2);
 const runId=rawRunId||undefined;
 const leaseClock=rawClock?Number(rawClock):undefined,stallMs=rawStall?Number(rawStall):0;
-if((leaseClock!==undefined&&(mode!=='compaction'||!Number.isSafeInteger(leaseClock)))||!Number.isSafeInteger(stallMs)||stallMs<0||stallMs>1000)throw new Error('Invalid recovery fixture clock');
+if((leaseClock!==undefined&&(!['compaction','memory'].includes(mode)||!Number.isSafeInteger(leaseClock)))||!Number.isSafeInteger(stallMs)||stallMs<0||stallMs>1000)throw new Error('Invalid recovery fixture clock');
 const store=await openSession({directory,leaseMs:150,...(leaseClock===undefined?{}:{clock:()=>leaseClock})});
 const trace=event=>appendFile(join(directory,'attempts.jsonl'),JSON.stringify({pid:process.pid,...event})+'\n');
 const bindings={gateway:{mode:'fixture',provider:'synthetic',protocol:'fixture@1',model:'scripted',version:'1'},plugins:[],adapters:[]};
