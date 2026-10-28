@@ -1,3 +1,4 @@
+import { RESPONSE_TOOL, RESPONSE_PROFILE, validateResponseCall } from './human-response.mjs';
 import {openPdfInput} from './pdf-input.mjs';
 import {openArtifactStore,encodeCsv,projectArtifactEffects} from './artifacts.mjs';
 import {saveReport} from './report.mjs';
@@ -23,7 +24,7 @@ function fields(value, names) {
 export function assertHostSnapshotVersion(snapshot) {
   if (snapshot?.schemaVersion!=='tool-host@2') throw Object.assign(new Error('UNSUPPORTED_HOST_SNAPSHOT_VERSION: finish old Runs before upgrading; stored results and artifacts remain readable'),{code:'UNSUPPORTED_HOST_SNAPSHOT_VERSION'});
 }
-export async function createToolHost({ directory, extensions = [], hooks, allowedTools, allowedDocuments, enableNotes=false, restore, pdfInput }) {
+export async function createToolHost({ directory, extensions = [], hooks, allowedTools, allowedDocuments, enableNotes=false, restore, pdfInput, ordinaryResponse }) {
   if (restore!==undefined) assertHostSnapshotVersion(restore);
   directory = await safeDirectory(directory);
   const input = JSON.parse(await readFile(new URL('../fixtures/documents.json', import.meta.url), 'utf8'));
@@ -155,10 +156,11 @@ export async function createToolHost({ directory, extensions = [], hooks, allowe
   };
   if(pdf)bindings.read_pdf_page={description:'Read one physical text-layer page from the operator-selected local PDF. No paths or URLs; extracted text is not visual inspection.',sourceResult:true,artifactEffects:true,parameters:{type:'object',additionalProperties:false,properties:{page:{type:'integer',minimum:1,maximum:16}},required:['page']},validate(args){fields(args,['page']);if(!Number.isSafeInteger(args.page)||args.page<1||args.page>16)fail('PDF_INVALID_PAGE');},execute:({page},context)=>pdf.readPage(page,context)};
   if(enableNotes)bindings.read_note={description:'Read an acquired derived working note, never original evidence or permission.',parameters:{type:'object',properties:{resultRef:{type:'string',pattern:'^note:sha256:[a-f0-9]{64}$'}},required:['resultRef'],additionalProperties:false},validate(args){fields(args,['resultRef']);if(typeof args.resultRef!=='string'||!/^note:sha256:[a-f0-9]{64}$/.test(args.resultRef))fail('Invalid derived note ref');},async execute(args){return{...await results.readNote(args.resultRef),resultRef:args.resultRef};}};
+  if(ordinaryResponse){if(typeof ordinaryResponse.confirm!=='function')fail('Invalid ordinary response owner');bindings.ask_response={...RESPONSE_TOOL,validate:args=>validateResponseCall({id:'validate',name:'ask_response',arguments:args}),execute:()=>{throw Object.assign(new Error('ORDINARY_RUNTIME_REQUIRED'),{code:'ORDINARY_RUNTIME_REQUIRED'});}};}
   if (!Array.isArray(extensions) || extensions.length > 16) fail('Invalid extension list');
   for (const binding of extensions) {
     if (!binding || typeof binding.name !== 'string' || !/^[a-z][a-z0-9_]{0,63}$/.test(binding.name)) fail('Invalid extension name');
-    if (Object.hasOwn(bindings, binding.name)) fail('Duplicate extension or builtin collision');
+    if (binding.name==='ask_response' || Object.hasOwn(bindings, binding.name)) fail('Duplicate extension or builtin collision');
     if (typeof binding.description !== 'string' || !object(binding.parameters) || typeof binding.validate !== 'function' || typeof binding.execute !== 'function') fail('Invalid extension binding');
     bindings[binding.name] = binding;
   }
@@ -194,6 +196,7 @@ export async function createToolHost({ directory, extensions = [], hooks, allowe
     snapshot: () => ({schemaVersion:'tool-host@2',definitionsHash,results:results.snapshot(),methods:structuredClone([...methods.values()]),saveAttempted,receipt:structuredClone(receipt)}),
     async verifyWorkingInput(working){if(working.noteRef){const value=await results.readNote(working.noteRef);const projected=working.messages.find(m=>m.role==='tool'&&m.result?.value?.resultRef===working.noteRef)?.result.value;if(!projected||JSON.stringify({...value,resultRef:working.noteRef})!==JSON.stringify(projected))recoveryFail('Recovered working note mismatch');}},
     async verifyResult(call,result){
+      if(call?.name==='ask_response'||result?.value?.kind===RESPONSE_PROFILE){if(!ordinaryResponse||call?.name!=='ask_response')recoveryFail('Ordinary response owner required');validateResponseCall(call);await ordinaryResponse.confirm(call,result);return;}
       if(result.status!=='succeeded')return;
       if (result.callId!==call.id) recoveryFail('Recovered call ID mismatch');
       if (result.original!==undefined || result.effective!==undefined) {

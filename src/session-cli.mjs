@@ -2,15 +2,15 @@ import { lstat } from 'node:fs/promises';
 import { resolve, join } from 'node:path';
 import { openSession } from './session.mjs';
 
-const cases = ['durable-report', 'durable-publication', 'durable-child', 'durable-compaction', 'durable-memory', 'trusted-plugins'];
+const cases = ['durable-response', 'durable-report', 'durable-publication', 'durable-child', 'durable-compaction', 'durable-memory', 'trusted-plugins'];
 const fail = code => { throw Object.assign(new Error(code), { code }); };
 function argumentsFor(args) {
  const [action, ...rest] = args;
- if (!['start', 'submit', 'work', 'resume', 'inspect', 'cancel', 'publication', 'publication-revisions', 'publication-event'].includes(action)) fail('INVALID_ARGUMENT');
+ if (!['start', 'submit', 'work', 'resume', 'inspect', 'cancel', 'publication', 'publication-revisions', 'publication-event', 'question', 'respond', 'response-status'].includes(action)) fail('INVALID_ARGUMENT');
  const options = { action }; const seen = new Set();
  for (let i = 0; i < rest.length; i += 2) {
   const key = rest[i]; const value = rest[i + 1];
-  if (!['--session', '--run', '--case', '--revision'].includes(key) || seen.has(key) || typeof value !== 'string' || !value || value.startsWith('--') || value.includes('\0')) fail('INVALID_ARGUMENT');
+  if (!['--session', '--run', '--case', '--revision', '--question', '--response', '--text'].includes(key) || seen.has(key) || typeof value !== 'string' || !value || (key !== '--text' && value.startsWith('--')) || value.includes('\0')) fail('INVALID_ARGUMENT');
   seen.add(key); options[key.slice(2)] = value;
  }
  if (!options.session || options.session.length > 4096 || (action === 'start' ? options.run !== undefined : options.run === undefined)) fail('INVALID_ARGUMENT');
@@ -18,6 +18,9 @@ function argumentsFor(args) {
  if (options.case !== undefined && (!cases.includes(options.case) || !['start', 'submit', 'resume'].includes(action))) fail('INVALID_ARGUMENT');
  if (action === 'submit' && options.case !== 'durable-publication') fail('INVALID_ARGUMENT');
  if (options.revision !== undefined && (action !== 'publication' || !/^[1-3]$/.test(options.revision))) fail('INVALID_ARGUMENT');
+ if(['question','respond'].includes(action)&&!options.question)fail('INVALID_ARGUMENT');
+ if(action==='respond'&&(!options.response||!options.text))fail('INVALID_ARGUMENT');
+ if(options.question!==undefined&&!['question','respond'].includes(action)||options.response!==undefined&&action!=='respond'||options.text!==undefined&&action!=='respond')fail('INVALID_ARGUMENT');
  options.session = resolve(options.session); return options;
 }
 async function existingSession(directory) {
@@ -38,6 +41,10 @@ async function main(args) {
  if (!['start', 'submit'].includes(options.action)) {
   const store = await openSession({ directory: options.session });
   try {
+   if(['question','respond','response-status'].includes(options.action)){
+    const value=options.action==='question'?store.response(options.run,options.question):options.action==='respond'?(store.receiveResponse({runId:options.run,questionId:options.question,responseId:options.response,text:options.text}),store.responseStatus(options.run)):store.responseStatus(options.run);
+    if(!value)fail('UNKNOWN_QUESTION');process.stdout.write(JSON.stringify(value,null,2)+'\n');return;
+   }
    if (options.action.startsWith('publication')) {
     const value = options.action === 'publication' ? store.publication(options.run, options.revision === undefined ? undefined : Number(options.revision)) : options.action === 'publication-revisions' ? store.publicationRevisions(options.run) : store.publicationEvent(options.run);
     if (value === null) fail('PUBLICATION_NOT_FOUND');
@@ -45,7 +52,7 @@ async function main(args) {
    }
    if (options.action === 'inspect' || options.action === 'cancel') {
     const state = options.action === 'inspect' ? store.inspect(options.run) : store.cancel(options.run);
-    process.stdout.write(JSON.stringify(state, null, 2) + '\n'); return;
+    process.stdout.write(JSON.stringify(store.schemaVersion===3?{runId:state.runId,rootId:state.rootId,status:state.status,phase:state.snapshot.phase,rootUsage:state.rootUsage,deadlineAt:state.definition.deadlineAt,response:store.responseStatus(options.run)}:state, null, 2) + '\n'); return;
    }
    caseId = resumeCase(store.inspect(options.run));
    if (options.action === 'work' && caseId !== 'durable-publication') fail('WORKER_PROFILE_REQUIRED');
@@ -60,7 +67,7 @@ async function main(args) {
   const execute = options.action === 'submit' ? submitDurableDemo : options.action === 'work' ? workDurableDemo : runDurableDemo;
   const outcome = await execute({ directory: options.session, caseId, runId: options.run, ...(options.action === 'work' ? { hostSignal: controller.signal } : { signal: controller.signal }) });
   process.stdout.write(JSON.stringify(outcome, null, 2) + '\n');
-  if (options.action === 'work' ? outcome.workerStatus !== 'settled' || outcome.run.status !== 'completed' : options.action !== 'submit' && outcome.status !== 'completed') process.exitCode = 1;
+  if (options.action === 'work' ? outcome.workerStatus !== 'settled' || outcome.run.status !== 'completed' : options.action !== 'submit' && !['completed','awaiting-response'].includes(outcome.status)) process.exitCode = 1;
  } finally { process.off('SIGINT', cancel); process.off('SIGTERM', cancel); }
 }
 try { await main(process.argv.slice(2)); }

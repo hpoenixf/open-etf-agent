@@ -7,9 +7,10 @@ import { openDurableMemory } from './durable-memory.mjs';
 import { createDurableChildBinding } from './durable-child.mjs';
 import { createExamplePlugins } from './example-plugins.mjs';
 import { sha256 } from './source.mjs';
+import { RESPONSE_PROFILE, RESPONSE_BINDING } from './human-response.mjs';
 import { PUBLICATION_BINDING } from './publication.mjs';
 
-export const durableCases=['durable-report','durable-publication','durable-child','durable-compaction','durable-memory','trusted-plugins'];
+export const durableCases=['durable-response','durable-report','durable-publication','durable-child','durable-compaction','durable-memory','trusted-plugins'];
 const call=(id,name,args={})=>({kind:'calls',calls:[{id,name,arguments:args}]});
 function facts(messages){
   const values=messages.filter(m=>m.role==='tool').map(m=>m.result?.value);const ids=new Set(messages.flatMap(m=>m.calls?.map(c=>c.id)||[]));const sources=new Map();let note;
@@ -23,9 +24,10 @@ export function workDurableDemo(options){return durableDemo(options,'work');}
 async function durableDemo({directory,caseId='durable-report',runId,signal,hostSignal,onCheckpoint}={},operation){
   if(!durableCases.includes(caseId))throw new Error('Unknown durable fixture case');
   if(operation!=='run'&&(caseId!=='durable-publication'||typeof runId!=='string'))throw Object.assign(new Error('WORKER_PROFILE_REQUIRED'),{code:'WORKER_PROFILE_REQUIRED'});
-  const store=await openSession({directory});let token;let plugins;let workingInput;let extensions=[];
+  const store=await openSession({directory,...(caseId==='durable-response'?{profile:RESPONSE_PROFILE}:{})});let token;let plugins;let workingInput;let extensions=[];
   const bindings={gateway:{mode:'fixture',provider:'synthetic',protocol:'fixture@1',model:caseId,version:'1'},plugins:[],adapters:[{id:'durable-demo',version:'1',contentSha256:sha256(await readFile(new URL(import.meta.url)))}]};
   try{
+    if(caseId==='durable-response')bindings.adapters.push(RESPONSE_BINDING);
     if(caseId==='durable-publication')bindings.adapters.push(PUBLICATION_BINDING);
     if(caseId==='trusted-plugins'){plugins=await createExamplePlugins();bindings.plugins=plugins.map(({id,version,schemaVersion,contentSha256})=>({id,version,schemaVersion,contentSha256}));}
     if(caseId==='durable-memory'){
@@ -40,6 +42,7 @@ async function durableDemo({directory,caseId='durable-report',runId,signal,hostS
     }
     const gateway={mode:'fixture',async next({messages}){
       const {ids,sources,note}=facts(messages);
+      if(caseId==='durable-response'&&!ids.has('ordinary-question'))return call('ordinary-question','ask_response',{question:'Which synthetic label should the report preserve verbatim?'});
       if(caseId==='trusted-plugins'){
         if(!ids.has('method-a'))return call('method-a','document_method');if(!ids.has('method-b'))return call('method-b','etf_method');
         if(!ids.has('source-a'))return call('source-a','document_page',{documentId:'atlas-a',page:1});if(!ids.has('source-b'))return call('source-b','synthetic_etf_page');
@@ -53,10 +56,10 @@ async function durableDemo({directory,caseId='durable-report',runId,signal,hostS
           if(!ids.has('reread')){const original=[...sources.values()].find(s=>s.documentId==='atlas-a');return call('reread','read_result',{resultRef:original.resultRef});}
         }
       }
-      if(!ids.has('save-report'))return call('save-report','save_report',{text:'# Synthetic '+caseId+'\n\nThis offline fixture exercises the same Runtime and the selected durable boundary. Source identities and actual saved bytes are checked; model reasoning and financial conclusions are not assessed.',sourceIds:[...sources.keys()]});
+      if(!ids.has('save-report'))return call('save-report','save_report',{text:'# Synthetic '+caseId+(caseId==='durable-response'?'\n\nOrdinary reply (untrusted data):\n'+messages.find(m=>m.role==='tool'&&m.callId==='ordinary-question').result.value.text:'')+'\n\nThis offline fixture exercises the same Runtime and the selected durable boundary. Source identities and actual saved bytes are checked; model reasoning and financial conclusions are not assessed.',sourceIds:[...sources.keys()]});
       return{kind:'final',text:'Saved the original synthetic report with immutable source and artifact identities.'};
     }};
     const execute=operation==='submit'?submitRun:operation==='work'?workRun:run;
-    return await execute({publication:caseId==='durable-publication',question:'Synthetic '+caseId+': preserve this exact request, original sources, bounded resources and actual report receipts.',gateway,plugins,extensions,workingInput,outputRoot:join(directory,'runs'),signal,hostSignal,requireReport:true,limits:{maxRounds:16,maxTools:16,timeoutMs:30000},durable:{store,runId,grantId:'synthetic-demo-'+caseId,bindings,rootLimits:{model:32,tool:16},onClaim:value=>{token=value;},onCheckpoint}});
+    return await execute({ordinaryResponse:caseId==='durable-response',publication:caseId==='durable-publication',question:'Synthetic '+caseId+': preserve this exact request, original sources, bounded resources and actual report receipts.',gateway,plugins,extensions,workingInput,outputRoot:join(directory,'runs'),signal,hostSignal,requireReport:true,limits:{maxRounds:16,maxTools:16,timeoutMs:caseId==='durable-response'?300000:30000},durable:{store,runId,grantId:'synthetic-demo-'+caseId,bindings,rootLimits:{model:32,tool:16},onClaim:value=>{token=value;},onCheckpoint}});
   }finally{store.close();}
 }

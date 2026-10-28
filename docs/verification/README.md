@@ -18,6 +18,10 @@ Start with **observations** (what happened, failures and fixes), then inspect **
 - The [historical execution-output extract](v08-full-suite-extract.safe.json) directly checks the 286 cases and summary in retained output, listing inherited execution metadata separately. It is not a new execution or a full-suite rerun under the final 0.8.0 digest.
 - [versions.json](../../versions.json) registers only existing, pinned public code. `since` identifies the introduction of a minimal slice; the coverage manifest's `verifiedAt` identifies the current receipt's verification point. It is neither an implementation-status table for the old plan nor a formal Release registry.
 
+## v0.13 · Ordinary response candidate
+
+[Exact contract](../../openspec/changes/ordinary-response/spec.md) · [Failures and qualification](../../openspec/changes/ordinary-response/evidence.md) · [Structured input/command/readback receipt](v013-ordinary-response.safe.json). This records local provider-free Runtime qualification; independent code review is GO; remote publication remains separately tracked.
+
 ## Browse by stage
 
 ### v0.1 · The first report that can be read back

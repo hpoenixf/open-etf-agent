@@ -20,11 +20,11 @@ export async function readTimeline(directory) {
   const checks = {
     runId: identity, rootId: identity, taskId: value => value === null || identity(value),
     sequence: value => count(value) && value > 0,
-    type: value => ['run_started', 'model_proposal', 'tool_proposal', 'tool_result', 'file_saved', 'run_finished','working_note'].includes(value),
+    type: value => ['run_started', 'run_resumed', 'run_yielded', 'model_proposal', 'tool_proposal', 'tool_result', 'file_saved', 'run_finished','working_note'].includes(value),
     kind: value => ['calls', 'final'].includes(value), callId: identity,
     callIds: value => Array.isArray(value) && value.length <= 16 && value.every(identity),
     name: value => typeof value === 'string' && /^[a-z][a-z0-9_]{0,63}$/.test(value),
-    status: value => ['completed', 'failed', 'cancelled', 'succeeded', 'rejected', 'unknown','applied','no-eligible-group','no-backed-material','budget-exhausted','summary-failed','summary-timeout','stale','memory-stale','invalid-summary','no-net-saving','persistence-failed','invalid-note-receipt'].includes(value),
+    status: value => ['awaiting-response', 'completed', 'failed', 'cancelled', 'succeeded', 'rejected', 'unknown','applied','no-eligible-group','no-backed-material','budget-exhausted','summary-failed','summary-timeout','stale','memory-stale','invalid-summary','no-net-saving','persistence-failed','invalid-note-receipt'].includes(value),
     code: value => value === null || (typeof value === 'string' && /^[A-Z][A-Z0-9_]{0,100}$/.test(value)),
     dispatched: value => typeof value === 'boolean', durationMs: finite, toolsDispatched: count
   };

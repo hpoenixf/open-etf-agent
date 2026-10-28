@@ -30,7 +30,7 @@ A small research Agent that grows through independently runnable development sna
 
 The introductory task compares **original synthetic documents**, not real funds. The small synthetic ETF Plugin introduced in v0.7 is also not a live financial-data service. Complete ETF research tools remain on the roadmap. This project does not execute trades or provide investment advice.
 
-> **Start here:** clone `main`; there is no need to switch phase branches. It contains the current qualified **v0.12.0 Temporal** code described below; the previously qualified **v0.11.0** added one local text-layer PDF module. The [fixed v0.11 source is `5f42c33`](https://github.com/hpoenixf/open-etf-agent/tree/5f42c33892d57ed05e8cd09cad48573e6901995b). Earlier `phase/v0.1`–`phase/v0.9` snapshots remain unchanged. Here, **stable means the bounded, provider-free Runtime and delivery checks described below**; it does not mean a formal release, model-quality certification, live-recovery qualification or production readiness. Original project code is [MIT-licensed](LICENSE); third-party licenses remain in force.
+> **Start here:** clone `main`; there is no need to switch phase branches. It contains the current qualified **v0.13.0 ordinary responses** code described below; the previously qualified **v0.11.0** added one local text-layer PDF module. The [fixed v0.11 source is `5f42c33`](https://github.com/hpoenixf/open-etf-agent/tree/5f42c33892d57ed05e8cd09cad48573e6901995b). Earlier `phase/v0.1`–`phase/v0.9` snapshots remain unchanged. Here, **stable means the bounded, provider-free Runtime and delivery checks described below**; it does not mean a formal release, model-quality certification, live-recovery qualification or production readiness. Original project code is [MIT-licensed](LICENSE); third-party licenses remain in force.
 
 > **Looking for real model calls?** Read the [16 historical HTTP calls across v0.1–v0.5](#live-evidence), then the [separate live runner and its authorization requirements](#live-entry). Those records do not qualify v0.11 live recovery.
 
@@ -42,9 +42,26 @@ The introductory task compares **original synthetic documents**, not real funds.
 
 Documentation defaults to English. Use the language links at the top of the main entry pages for Chinese. Historical evidence, internal Specs and some detailed design documents remain in their original language; they are not presented as English translations. Article links marked **Chinese original** have no complete English edition.
 
+### v0.13 · One durable ordinary reply
+
+An explicit `durable-response` fixture asks one question through the original `ask_response` call, commits it in Session, then **yields the execution lease**. Submitting a reply records receipt only; an explicit resume of the same Run adopts it as the original tool result. The next actual fixture Gateway input contains that exact reply, and the normal Tool Host writes it into the original report.
+
+```sh
+npm run session -- start --session runs/reply --case durable-response
+# Use the runId and questionId returned above; do not create another Run.
+npm run session -- question --session runs/reply --run RUN_ID --question QUESTION_ID
+npm run session -- respond --session runs/reply --run RUN_ID --question QUESTION_ID --response reply-1 --text 'Synthetic label: blue'
+npm run session -- resume --session runs/reply --run RUN_ID
+npm run session -- response-status --session runs/reply --run RUN_ID
+```
+
+The original **300-second deadline** and root budgets keep running while waiting. One question and one accepted reply per Run; no polling, automatic wake-up, deadline reset, permission grant or Memory intent. Receipt, adoption and actual report effect are distinct facts. Same-ID/same-content retry reads the original receipt, even after termination; conflicting or late new replies fail closed. `inspect` and `response-status` expose safe metadata; explicit local `question` reads the question and received text. Local Session write access is the trust boundary, not internet authentication.
+
+New ordinary-response Sessions use exact schema v3; default profiles remain exact v2, with no in-place migration. Finish active old Runs in their fixed original version. Old Artifact/Publication reads remain separate from execution. This is provider-free Runtime qualification, **not real-model understanding**. [Contract](openspec/changes/ordinary-response/spec.md) · [Evidence](openspec/changes/ordinary-response/evidence.md). Articles are independent of code delivery.
+
 ### v0.12 · Fixed task time
 
-The next stable development module is **0.12.0 Temporal** (formerly roadmap candidate 1.2). A task opts into an explicit time zone and one persisted UTC anchor; midnight, host TZ changes and process restart do not turn its “today” into a different date. Existing execution deadlines and data-cutoff semantics are unchanged. Python remains **unnumbered and deferred** until a qualified isolation environment is available.
+The previous stable module is **0.12.0 Temporal** (formerly roadmap candidate 1.2). A task opts into an explicit time zone and one persisted UTC anchor; midnight, host TZ changes and process restart do not turn its “today” into a different date. Existing execution deadlines and data-cutoff semantics are unchanged. Python remains **unnumbered and deferred** until a qualified isolation environment is available.
 
 ```sh
 npm run temporal -- submit --session runs/time --run fixed --time-zone America/Los_Angeles --anchor 2026-10-28T00:30:00.000Z
@@ -247,6 +264,7 @@ Every link fixes the code, lockfile, examples and evidence from that stage. Reco
 | [v0.10 · Consuming one result throughout](https://github.com/hpoenixf/open-etf-agent/tree/ff5b9273ef0d239e804f61792702cd2e94174be7) | Trace original selections and derived results to actual consumers | Source-bound calculation, next Gateway encoding, same-reference report/CSV, independent readback | [Original 333-case execution](docs/verification/result-consumption-observations.safe.json) · [Narrow version qualification](docs/verification/v010-numbering.safe.json) · [Fresh receipts for 15 original targets](docs/verification/history/article-coverage-receipts-d943dd8452e4.json) |
 | [v0.11 · Local PDF](https://github.com/hpoenixf/open-etf-agent/tree/5f42c33892d57ed05e8cd09cad48573e6901995b) | Select a physical page while retaining the original file | Bounded text extraction, original Result, cited report and exact PDF attachment | [Qualification and preserved failures](openspec/changes/v011-local-pdf/evidence.md) · [Fresh independent delivery](docs/verification/integrated-install-pdf.safe.json) |
 | v0.12 · Temporal | Keep the original task’s “today” | Explicit zone, persisted anchor, original Context/Gateway/report; no market calendar | [Contract and verification](openspec/changes/v012-temporal/evidence.md); article sync separate |
+| v0.13 · Ordinary reply | Ask, yield, receive and explicitly resume the same Run | Atomic receipt/adoption, exact v2/v3 isolation; no new authority or executor | [Contract and verification](openspec/changes/ordinary-response/evidence.md) |
 
 **v0.2 maintenance:** the original snapshot is historical. [Maintenance snapshot `a10d4f1`](https://github.com/hpoenixf/open-etf-agent/tree/a10d4f1bd1ecc39224272156221fe29792b64094) corrects report wording about unread pages. Use `maintenance/v0.2-source-boundary` specifically for the corrected v0.2 experience; the original snapshot was not rewritten.
 
