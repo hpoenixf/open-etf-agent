@@ -1,6 +1,6 @@
 # v0.13 ordinary-response verification
 
-Local candidate evidence, not a remote publication claim. Node **26.11.1**, SQLite **3.53.4**, synthetic data only, zero paid/live model calls. The original Runtime and independent processes execute these tests; this is not model-understanding qualification.
+Implementation qualification and separately verified public release evidence. Node **26.11.1**, SQLite **3.53.4**, synthetic data only, zero paid/live model calls. The original Runtime and independent processes execute these tests; this is not model-understanding qualification.
 
 ## Preserved failures and fixes
 
@@ -20,7 +20,7 @@ Local candidate evidence, not a remote publication claim. Node **26.11.1**, SQLi
 - The actual **840-byte** report contains the exact synthetic reply and independently reads back as SHA-256 `319a22541f23dfd68799ab30cd2512c91edcd380e6e8791170d668e2114dd8ee`.
 - An actual original-v2 opener rejects the new v3 database without byte changes. A new synthetic v2 Publication/report was produced by the fixed original implementation, then read by the new Publication and Artifact consumers; no old/private database was accessed.
 
-Structured commands, counts, hashes, input identity and independent readback are in [the qualification receipt](../../../docs/verification/v013-ordinary-response.safe.json). Final independent review is recorded below; remote release verification remains open; article work is an independent track.
+Structured commands, counts, hashes, input identity and independent readback are in [the qualification receipt](../../../docs/verification/v013-ordinary-response.safe.json). Final independent review is recorded below; actual public release is recorded in [release evidence](../../../docs/verification/v013-release.safe.json); article work is independent.
 
 ## Scope / release boundaries
 
@@ -30,7 +30,7 @@ No new scheduler, executor, manager, account/credential, permission model, Memor
 
 Independent code review returned **Standards GO / Spec GO, zero required fixes**. All 140 frozen source/test entries matched; the reviewer read the frozen contract and relevant implementation paths, did not rerun tests, and did not modify files or remote state. Its [safe review record](../../../docs/verification/v013-review.safe.json) separates code-contract GO from publication authority. No executable/test input changed after the 421-case run, independent delivery or review.
 
-The existing public Evidence Kit is used only for structural plan/apply/status checks. Code implementation, qualification and independent review are complete; remote release verification remains open. Article work is outside the code-closure task denominator. No completed release record or archive transition is inferred from local tests; prior public Specs remain in `openspec/changes`.
+The existing public Evidence Kit is used only for structural lint/verify/status checks. Code implementation, qualification, independent review and remote release verification are complete. Article work is outside the code-closure task denominator. Release facts come from actual remote reads, not local tests. Structural completion is recorded separately; no archive transition is inferred and prior public Specs remain in `openspec/changes`.
 
 ## Observation Log
 
@@ -40,3 +40,4 @@ The existing public Evidence Kit is used only for structural plan/apply/status c
 | 2026-10-28 GREEN | EV-1302 | 13.1 | node --test --test-concurrency=1 test/ordinary-response*.test.mjs | passed: 37/37 new cases | docs/verification/v013-ordinary-response.safe.json | frozen 0.13.0 source/test inputs | observed-run |
 | 2026-10-28 CHECK | EV-1303 | 13.2 | node --test --test-concurrency=1 test/*.test.mjs; separate offline npm ci/build and 11-stage process readback | passed: 421/421 plus original840-byte report, oldv2 readback and old-opener v3 refusal | docs/verification/v013-ordinary-response.safe.json | frozen 0.13.0 qualification inputs | observed-run |
 | 2026-10-28 CHECK | EV-1304 | 13.3 | independent read-only Standards/Spec review and 140 SHA-256 input comparison | passed: GO / GO, zero required fixes; no tests rerun by reviewer | docs/verification/v013-review.safe.json | frozen140 source/test inputs | observed-run |
+| 2026-10-28 CHECK | EV-1305 | 13.4 | GitHub exact-commit Verify and ref/tree/24 body/phase/tag/Release readback | passed: public implementation and fixed release identities agree | docs/verification/v013-release.safe.json | 300f78f7066ab76fcc4e9efb54137ff021ecc278 | observed-run |
