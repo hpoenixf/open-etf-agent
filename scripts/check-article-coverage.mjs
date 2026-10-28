@@ -55,7 +55,22 @@ export function validateVersions(v, m) {
   }
 }
 
-export function renderTable(m, commit, versions) {
+// Presentation is deliberately separate from target/status/since/execution facts.
+// A translated title alone does not establish that an English article exists.
+export function validateLocalization(locale, m) {
+  ensure(locale?.schemaVersion === 1 && locale.kind === 'coverage-display-only', 'Invalid coverage localization');
+  ensure(Object.keys(locale).sort().join(',') === 'articles,kind,schemaVersion', 'Localization cannot introduce execution facts');
+  ensure(locale.articles && stable(Object.keys(locale.articles).sort()) === stable(m.articles.map(a => a.slug).sort()), 'Localization must cover exactly the registered articles');
+  for (const a of Object.values(locale.articles)) {
+    ensure(a && Object.keys(a).sort().join(',') === 'articleBlob,englishAvailable,scope,title', 'Localization cannot override status, target or since');
+    ensure(typeof a.title === 'string' && a.title && typeof a.scope === 'string' && a.scope && !/[\n\r|<>\[\]]/.test(a.title + a.scope), 'Invalid localized display text');
+    ensure(typeof a.englishAvailable === 'boolean' && /^[a-f0-9]{40}$/.test(a.articleBlob), 'Missing article-language availability or fixed body identity');
+  }
+}
+
+export function renderTable(m, commit, versions, language = 'zh', locale) {
+  ensure(language === 'zh' || language === 'en', 'Unsupported coverage language');
+  if (language === 'en') validateLocalization(locale, m);
   validateVersions(versions, m);
   ensure(commit === m.verifiedAt, 'verifiedAt differs from fixed verification source');
   const rows = m.articles.map(a => {
@@ -64,9 +79,34 @@ export function renderTable(m, commit, versions) {
     const link = t ? `[${commit.slice(0, 7)}](https://github.com/${REPO}/commit/${commit}) + ${label}` : label;
     const origin = t && versions.targets[a.target];
     const since = origin ? `[v${origin.since}](https://github.com/${REPO}/commit/${versions.versions[origin.since].commit})` : '—';
-    return `| [${a.title}](https://hpoenixf.com/eff-agent-article/articles/${a.slug}) | ${since} | ${link}<br>${a.scope} | ${a.status} |`;
+    const display = language === 'en' ? locale.articles[a.slug] : a;
+    const translated = language === 'en' && display.englishAvailable;
+    const suffix = language === 'en' && !translated ? ' (Chinese original)' : '';
+    const status = language === 'en' && a.status === '无公开对应' ? 'no public counterpart' : a.status;
+    return `| [${display.title}](https://hpoenixf.com/eff-agent-article/${translated ? 'en/' : ''}articles/${a.slug})${suffix} | ${since} | ${link}<br>${display.scope} | ${status} |`;
   });
-  return [BEGIN, '| 文章 | since · 引入版本 | verifiedAt · 固定 commit + case | 状态 |', '| --- | --- | --- | --- |', ...rows, END].join('\n');
+  const header = language === 'en' ? '| Article | since · introduced in | verifiedAt · fixed commit + case | Status |' : '| 文章 | since · 引入版本 | verifiedAt · 固定 commit + case | 状态 |';
+  return [BEGIN, header, '| --- | --- | --- | --- |', ...rows, END].join('\n');
+}
+
+export function updateReadmeTable(readme, table) {
+  ensure(readme.split(BEGIN).length === 2 && readme.split(END).length === 2, 'Missing/duplicate generated table markers');
+  ensure(readme.indexOf(BEGIN) < readme.indexOf(END), 'Generated table markers are reversed; README not modified');
+  return readme.slice(0, readme.indexOf(BEGIN)) + table + readme.slice(readme.indexOf(END) + END.length);
+}
+
+export async function readmeViews(root, m, source, versions) {
+  // Preserve marker-error diagnostics before loading optional presentation inputs.
+  const views = [];
+  for (const [path, language] of [['README.md', 'en'], ['README.zh-CN.md', 'zh']]) {
+    const text = await readFile(join(root, path), 'utf8');
+    updateReadmeTable(text, ''); // validation only; no write
+    views.push({ path, language, text });
+  }
+  const locale = await json(join(root, 'docs/verification/article-coverage.en.json'));
+  validateLocalization(locale, m);
+  return views.map(view => ({ path: view.path, text: view.text,
+    expected: updateReadmeTable(view.text, renderTable(m, source.commit, versions, view.language, locale)) }));
 }
 
 async function assertRegular(root, path) {
@@ -224,13 +264,13 @@ async function main(args) {
   const m = await json(join(ROOT, MANIFEST)); validateManifest(m);
   const source = await json(join(ROOT, m.source));
   const versions = await json(join(ROOT, m.versions)); validateVersions(versions, m);
-  const readmePath = join(ROOT, 'README.md'), readme = await readFile(readmePath, 'utf8');
-  const table = renderTable(m, source.commit, versions);
-  ensure(readme.split(BEGIN).length === 2 && readme.split(END).length === 2, 'Missing/duplicate generated table markers');
-  ensure(readme.indexOf(BEGIN) < readme.indexOf(END), 'Generated table markers are reversed; README not modified');
-  const expected = readme.slice(0, readme.indexOf(BEGIN)) + table + readme.slice(readme.indexOf(END) + END.length);
-  if (mode === '--render') { await writeFile(readmePath, expected); console.log('Rendered table only; no verification claimed.'); return; }
-  ensure(expected === readme, 'README table drift; run --render');
+  // Validate both views before any write so a missing/malformed counterpart fails closed.
+  const views = await readmeViews(ROOT, m, source, versions);
+  if (mode === '--render') {
+    for (const view of views) await writeFile(join(ROOT, view.path), view.expected);
+    console.log('Rendered English and Chinese tables only; no verification claimed.'); return;
+  }
+  for (const view of views) ensure(view.expected === view.text, `${view.path} table drift; run --render`);
   const identity = await sourceIdentity(ROOT, source);
   const confirmation = await confirmCommit(ROOT, source, gitDir);
   const lineageConfirmation = await confirmVersions(ROOT, versions, gitDir);

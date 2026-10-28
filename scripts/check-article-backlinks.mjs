@@ -1,5 +1,6 @@
 // Shared, read-only article/case contract. No downloaded code or Runtime case is executed.
 import { readFile, readdir, lstat, realpath } from 'node:fs/promises';
+import { createHash } from 'node:crypto';
 import { dirname, join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 const CODE = 'hpoenixf/open-etf-agent', ARTICLES = 'hpoenixf/eff-agent-article';
@@ -126,7 +127,33 @@ export async function checkCode(root, remote = publicReader()) {
  const english = parseEnglishCatalog(await article('book.en.mjs'));
  return { mode: 'fixed-article-snapshot', articleCommit, codeClaimCommit: pin, ...await verifyArticles({ contract, english, paths: [], read: article }), scope: 'Fixed published pair; later remote article edits are checked by that repository own working-tree CI.' };
 }
+// The display map is not a second article index: slugs/facts come from the coverage
+// manifest, and all language availability/body identities use its one article pin.
+export async function verifyLocalizationBodies(locale, manifest, read) {
+ const { validateLocalization } = await import('./check-article-coverage.mjs');
+ validateLocalization(locale, manifest);
+ const english = parseEnglishCatalog(await read('book.en.mjs'));
+ let translated = 0;
+ for (const row of manifest.articles) {
+  const display = locale.articles[row.slug], available = english.has(row.slug);
+  ensure(display.englishAvailable === available, `Article language availability drift: ${row.slug}`);
+  const path = `${available ? 'en/' : ''}articles/${row.slug}.md`;
+  const body = Buffer.from(await read(path), 'utf8');
+  const blob = createHash('sha1').update(Buffer.concat([Buffer.from(`blob ${body.length}\0`), body])).digest('hex');
+  ensure(blob === display.articleBlob, `Localized article body identity drift: ${path}`);
+  if (available) translated++;
+ }
+ return { registeredArticles: manifest.articles.length, englishArticles: translated, chineseOriginals: manifest.articles.length - translated };
+}
+export async function checkLocalization(root, remote = publicReader()) {
+ const local = path => localReader(root, path), manifest = JSON.parse(await local(MANIFEST));
+ ensure(manifest.articleCatalog?.repository === ARTICLES && SHA.test(manifest.articleCatalog.commit), 'Missing fixed article source');
+ const locale = JSON.parse(await local('docs/verification/article-coverage.en.json'));
+ return { mode: 'fixed-article-localization', articleCommit: manifest.articleCatalog.commit,
+  ...await verifyLocalizationBodies(locale, manifest, path => remote(ARTICLES, manifest.articleCatalog.commit, path)),
+  scope: 'Catalog registration and exact published body identity only; not translation semantics or Runtime execution.' };
+}
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
- try { ensure(process.argv.length === 3 && ['--article', '--code'].includes(process.argv[2]), 'Usage: node scripts/check-article-backlinks.mjs --article|--code'); const root = dirname(dirname(fileURLToPath(import.meta.url))); console.log(JSON.stringify(await (process.argv[2] === '--article' ? checkArticles(root) : checkCode(root)), null, 2)); }
+ try { ensure(process.argv.length === 3 && ['--article', '--code', '--localization'].includes(process.argv[2]), 'Usage: node scripts/check-article-backlinks.mjs --article|--code|--localization'); const root = dirname(dirname(fileURLToPath(import.meta.url))); console.log(JSON.stringify(await (process.argv[2] === '--article' ? checkArticles(root) : process.argv[2] === '--localization' ? checkLocalization(root) : checkCode(root)), null, 2)); }
  catch (error) { console.error(error.message); process.exitCode = 1; }
 }
