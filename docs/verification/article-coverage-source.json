@@ -1,10 +1,10 @@
 {
   "schemaVersion": 1,
   "repository": "hpoenixf/open-etf-agent",
-  "commit": "ff5b9273ef0d239e804f61792702cd2e94174be7",
-  "tree": "0d8f3c27a08a1da9bce0fe562683d5721d0d7a61",
-  "retrievedFrom": "https://api.github.com/repos/hpoenixf/open-etf-agent/git/trees/0d8f3c27a08a1da9bce0fe562683d5721d0d7a61?recursive=1",
-  "retrievedAt": "2026-10-27T22:44:08.599971+00:00",
+  "commit": "e0a6a29b7474a19c18b169c0e4a7eb0eb614504d",
+  "tree": "85c37fa2922b94cac3a2741197e30dae8defd2d4",
+  "retrievedFrom": "https://api.github.com/repos/hpoenixf/open-etf-agent/git/trees/85c37fa2922b94cac3a2741197e30dae8defd2d4?recursive=1",
+  "retrievedAt": "2026-10-28T10:34:23.271153+00:00",
   "inputs": [
     {
       "path": "fixtures/cases.json",
@@ -19,6 +19,10 @@
       "gitBlob": "b1adb45d573e56908d2e1be82a90419c7985c6c9"
     },
     {
+      "path": "fixtures/local-pdf.json",
+      "gitBlob": "1464a0977bf5f045637db2c65b210a1bdb586b19"
+    },
+    {
       "path": "fixtures/skills/compare/SKILL.md",
       "gitBlob": "d3e63dcc1fab843d1eca08abb342cd0b63e7cc6f"
     },
@@ -28,11 +32,11 @@
     },
     {
       "path": "package-lock.json",
-      "gitBlob": "a5961767adc5d7e1747555b87b4a18784b1d2173"
+      "gitBlob": "f0b81051a802e65ac678168500b93eaf0fd343be"
     },
     {
       "path": "package.json",
-      "gitBlob": "2e37aff38191c8ae4f1f42baba80169e08eedc7e"
+      "gitBlob": "358b5383d3873b11959b1daab8ec0bdfca96481a"
     },
     {
       "path": "src/artifact-demo.mjs",
@@ -40,7 +44,7 @@
     },
     {
       "path": "src/artifacts.mjs",
-      "gitBlob": "0ec6b1334f7e3683b5ab4618e336aea0d3e9bd59"
+      "gitBlob": "46fc0137710796b111605265cff2af5a16ac515b"
     },
     {
       "path": "src/calculation.mjs",
@@ -56,7 +60,7 @@
     },
     {
       "path": "src/cli.mjs",
-      "gitBlob": "5beb92046635ee735d68bc63caec5ecbf8276984"
+      "gitBlob": "58d8d00fee35152528f8409574dc22242e489fad"
     },
     {
       "path": "src/compaction.mjs",
@@ -163,6 +167,18 @@
       "gitBlob": "865301feca5f7f6b3aa98c8443141dfac2898533"
     },
     {
+      "path": "src/pdf-demo.mjs",
+      "gitBlob": "d8cf72f6e60723c3a7b5778085827ae74c40eaf0"
+    },
+    {
+      "path": "src/pdf-input.mjs",
+      "gitBlob": "191e8e51db48cd28b25a1e8813dc5901eda0d350"
+    },
+    {
+      "path": "src/pdf-parser-worker.mjs",
+      "gitBlob": "5a211da75f41f0562bd164f41e1d9f26893168e7"
+    },
+    {
       "path": "src/plugins.mjs",
       "gitBlob": "947b7cc11cb4d7a45a285c4f8f7e382bcf47936f"
     },
@@ -176,11 +192,11 @@
     },
     {
       "path": "src/reader.mjs",
-      "gitBlob": "e1feb0b8e4b67364cb44eb3a49ff6ef3af59daab"
+      "gitBlob": "c73678032652326e5a2fb25fc01d08c799afa366"
     },
     {
       "path": "src/report.mjs",
-      "gitBlob": "642dc3d68ff3ba59549d222702d8bdc32f23524c"
+      "gitBlob": "eb9915ed61fc5af042559c644dc11545577d3adb"
     },
     {
       "path": "src/result-consumption-demo.mjs",
@@ -200,15 +216,19 @@
     },
     {
       "path": "src/runtime.mjs",
-      "gitBlob": "96261a455c2eccbbeb0f1cd77f3d6a9b563e0d7d"
+      "gitBlob": "c960c0f7e2a9840601742e0f7f3f8887949e9fe0"
     },
     {
       "path": "src/session-cli.mjs",
       "gitBlob": "2a2bf6fb896c6a43a0bef06e253c9ae0d1e08052"
     },
     {
+      "path": "src/session-recovery.mjs",
+      "gitBlob": "da082cfa181d4dcced79378704d849b92e98e66e"
+    },
+    {
       "path": "src/session.mjs",
-      "gitBlob": "f12ba8744599005eaf189e261de068f888561bab"
+      "gitBlob": "c998eb64d9f3663861c6f795e5d3e09c13c3ba56"
     },
     {
       "path": "src/skills.mjs",
@@ -216,7 +236,7 @@
     },
     {
       "path": "src/source.mjs",
-      "gitBlob": "81582f4cfc77078155cc3ec1694324f0d2ba6b95"
+      "gitBlob": "7c6c5acf96bea0a1884793f8a91cf181b5ccafdc"
     },
     {
       "path": "src/storage-files.mjs",
@@ -228,7 +248,7 @@
     },
     {
       "path": "src/tools.mjs",
-      "gitBlob": "31d57e604fb4c3d06a9a43df18df3320ffa70615"
+      "gitBlob": "d74dab40af004cc8bbe9a2cd720694e2d71af9b4"
     },
     {
       "path": "src/worker.mjs",
@@ -244,7 +264,7 @@
     },
     {
       "path": "test/article-coverage.test.mjs",
-      "gitBlob": "228ab0bfc64d2d80de12be93d9e6e65aff98c250"
+      "gitBlob": "536310016883a95f58e2a2b4615363599c22b57d"
     },
     {
       "path": "test/artifact-integration.test.mjs",
@@ -299,6 +319,14 @@
       "gitBlob": "945e879e3306aea23da364c386da8527f8fb3dac"
     },
     {
+      "path": "test/fixtures/pdf-empty-worker.mjs",
+      "gitBlob": "55cc29f929a9b767d4540baec1cdc723ccffe11a"
+    },
+    {
+      "path": "test/fixtures/pdf-hang-worker.mjs",
+      "gitBlob": "5190edb443be59d3b8afa0e43695c8f7d69698b2"
+    },
+    {
       "path": "test/fixtures/pinned-v01/PROVENANCE.json",
       "gitBlob": "4603d303838491d95acf78e84b427f46677c08cd"
     },
@@ -337,6 +365,10 @@
     {
       "path": "test/fixtures/recovery-process.mjs",
       "gitBlob": "536d0da54c9904a901e960dfbb9e0fcb6411650c"
+    },
+    {
+      "path": "test/fixtures/session-recovery-process.mjs",
+      "gitBlob": "140257ca75323a5e717229d19dde4807cd8b3c47"
     },
     {
       "path": "test/fixtures/worker-process.mjs",
@@ -389,6 +421,18 @@
     {
       "path": "test/memory.test.mjs",
       "gitBlob": "269719888669583f6ea75fe86037a248d5281998"
+    },
+    {
+      "path": "test/pdf-cli.test.mjs",
+      "gitBlob": "798dddb45495f251e672f5cf79782d4e2c4e8852"
+    },
+    {
+      "path": "test/pdf-delivery.test.mjs",
+      "gitBlob": "c07d1fba4af215633a700be73c7b887a67102a55"
+    },
+    {
+      "path": "test/pdf-input.test.mjs",
+      "gitBlob": "08c6b118982c172b2e8ebd3521368f65e214f32c"
     },
     {
       "path": "test/plugins.test.mjs",
@@ -445,6 +489,10 @@
     {
       "path": "test/session-cli.test.mjs",
       "gitBlob": "1f185366f535183ca93c8f3e46a6f6a6ef143cc6"
+    },
+    {
+      "path": "test/session-recovery.test.mjs",
+      "gitBlob": "488104e946f49093fb49f2a05bbcc5786bc2a5cc"
     },
     {
       "path": "test/session.test.mjs",

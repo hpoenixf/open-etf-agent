@@ -1,6 +1,6 @@
 **English** | [简体中文](README.zh-CN.md)
 
-# Verification evidence index · v0.1–v0.10
+# Verification evidence index · v0.1–v0.11
 
 [Project home](../../README.md) · [Coverage contract for the 31 registered articles](../../README.md#reading)
 
@@ -121,6 +121,15 @@ Pinned source: [`ff5b927`](https://github.com/hpoenixf/open-etf-agent/tree/ff5b9
 - **Qualification for this numbering:** [Exact equivalence and new narrow install/build/CLI/independent byte readback](https://github.com/hpoenixf/open-etf-agent/blob/ff5b9273ef0d239e804f61792702cd2e94174be7/docs/verification/v010-numbering.safe.json): only three version fields changed; 123 non-package execution inputs and 95 dependency records stayed unchanged.
 - **New pinned inputs and actual smoke:** [125 inputs](https://github.com/hpoenixf/open-etf-agent/blob/ae82c26e6511c1dac9d67e864284b55eee6a82c2/docs/verification/article-coverage-source.json) · [Actual new-version receipts for the original 15 targets](https://github.com/hpoenixf/open-etf-agent/blob/ae82c26e6511c1dac9d67e864284b55eee6a82c2/docs/verification/article-coverage-receipts.json). These are bounded Runtime cases, not a full-suite rerun or a model-semantic review.
 - **Upgrade boundary:** [`tool-host@2` contract](https://github.com/hpoenixf/open-etf-agent/blob/ff5b9273ef0d239e804f61792702cd2e94174be7/openspec/changes/result-reference-consumption/design.md): finish old active Runs first; v1 checkpoints cannot resume across versions, while old immutable outputs remain readable. This does not qualify a real Provider, financial semantics, a formal Release or production use.
+
+### v0.11 · Local text-layer PDF input
+
+Pinned execution source: [`5f42c33`](https://github.com/hpoenixf/open-etf-agent/tree/5f42c33892d57ed05e8cd09cad48573e6901995b), including the necessary existing-Session admission repair. This single PDF module does not add OCR, visual parsing, remote acquisition or active-PDF durable resume.
+
+- **Full Runtime regression:** [structured finalRun / 373-case receipt and frozen inputs](https://github.com/hpoenixf/open-etf-agent/blob/5f42c33892d57ed05e8cd09cad48573e6901995b/docs/verification/session-hot-journal-admission.safe.json). Original execution input digest `73148a90…` is preserved; at source `5f42` all 138 runtime/test/fixture/package/build inputs matched. Verification source `e0a6` subsequently changes only the coverage maintenance test; the remaining 137 are exact. It is not another full-suite run.
+- **Maintenance execution:** [Current 16-target receipts](article-coverage-receipts.json), [fixed 137-input inventory](article-coverage-source.json) and [56 affected-consumer tests / preserved 54-of-55 failure](pdf-coverage-qualification.safe.json). The added PDF row qualifies only its stated local text-layer case; OCR, page images, layout and multimodal capabilities remain excluded. The original [15-target maintenance record](integrated-maintenance.safe.json) is retained.
+- **Independent delivery:** [new locked install/build and two fresh-process PDF readbacks](integrated-install-pdf.safe.json) · [345 frozen copied inputs](integrated-install-inputs.safe.json). The operator-selection case uses an original synthetic PDF, not a real user document; original bytes, physical pages and report/source hashes match.
+- **Preserved failures and scope:** [PDF observations, including the original 358/359 failure](v011-observations.safe.json) · [dated Spec evidence / remaining publication gate](../../openspec/changes/v011-local-pdf/evidence.md) · [retained and simplified responsibilities](../evolution/v011-pdf-lineage.md). No live-model, deployment or formal Release claim.
 
 ## v0.7 topic-specific entry points
 

@@ -1,6 +1,6 @@
 [English](README.md) | **简体中文**
 
-# 验证证据索引 · v0.1–v0.10
+# 验证证据索引 · v0.1–v0.11
 
 [返回项目首页](../../README.zh-CN.md) · [已登记 31 篇的覆盖契约](../../README.zh-CN.md#reading)
 
@@ -121,6 +121,15 @@
 - **本次编号资格：** [精确等价与新窄安装/build/CLI/独立字节回读](https://github.com/hpoenixf/open-etf-agent/blob/ff5b9273ef0d239e804f61792702cd2e94174be7/docs/verification/v010-numbering.safe.json)：只改三个版本字段，123 个非 package 执行输入与 95 条依赖记录未变。
 - **新固定输入与实际 smoke：** [125 输入](https://github.com/hpoenixf/open-etf-agent/blob/ae82c26e6511c1dac9d67e864284b55eee6a82c2/docs/verification/article-coverage-source.json) · [原 15 目标的新版实际回执](https://github.com/hpoenixf/open-etf-agent/blob/ae82c26e6511c1dac9d67e864284b55eee6a82c2/docs/verification/article-coverage-receipts.json)。这是限定 Runtime case，不是全套重新执行或模型语义评审。
 - **升级边界：** [`tool-host@2` 契约](https://github.com/hpoenixf/open-etf-agent/blob/ff5b9273ef0d239e804f61792702cd2e94174be7/openspec/changes/result-reference-consumption/design.md)：先结束旧活动 Run；v1 检查点不能跨版本续跑，旧不可变成果仍可读。真实 Provider、金融语义、正式 Release 与生产资格未由此取得。
+
+### v0.11 · 本地文本层 PDF 输入
+
+固定执行源码：[`5f42c33`](https://github.com/hpoenixf/open-etf-agent/tree/5f42c33892d57ed05e8cd09cad48573e6901995b)，包含回归所需的既有 Session 准入修复。本期只新增 PDF 模块，不包含 OCR、视觉解析、远程取材或活跃 PDF 持久恢复。
+
+- **完整 Runtime 回归：** [结构化 finalRun／373 项回执与冻结输入](https://github.com/hpoenixf/open-etf-agent/blob/5f42c33892d57ed05e8cd09cad48573e6901995b/docs/verification/session-hot-journal-admission.safe.json)。保留原执行摘要 `73148a90…`；在5f42时138个 runtime/test/fixture/package/build 输入一致；随后e0a6仅改变覆盖维护测试，剩余137项逐字一致，不重标为再次全套执行。
+- **维护实跑：** [当前16个目标回执](article-coverage-receipts.json)、[固定137输入](article-coverage-source.json)与[56个消费者通过及保留的54/55失败](pdf-coverage-qualification.safe.json)。新增PDF行只认领标明的本地文本层用例，不含OCR、页图、版面或多模态；[原15目标维护记录](integrated-maintenance.safe.json)保留。
+- **独立交付：** [新目录锁定安装/build/两次独立进程 PDF 回读](integrated-install-pdf.safe.json) · [345 个复制输入](integrated-install-inputs.safe.json)。指定文件用例仍使用原创合成 PDF，不是真实用户文档；原始字节、物理页与报告/来源哈希匹配。
+- **保留失败与范围：** [含原 358/359 失败的 PDF 观察](v011-observations.safe.json) · [带日期 Spec 证据与剩余发布门](../../openspec/changes/v011-local-pdf/evidence.md) · [职责保留与公开简化](../evolution/v011-pdf-lineage.md)。不认领真实模型、上云或正式 Release。
 
 ## v0.7 分项入口
 

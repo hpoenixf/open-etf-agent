@@ -4,6 +4,8 @@
   <img src="docs/assets/open-etf-agent-hero.svg" alt="Open ETF Agent — Build small. Keep evidence." width="1200" />
 </p>
 
+<p align="center"><small>Historical overview through v0.10; the current v0.11 local PDF module is described below.</small></p>
+
 <p align="center"><strong>Build a research Agent, one runnable module at a time. Start with a report you can open and trace to its sources.</strong></p>
 <p align="center">
   <a href="#quickstart">Quickstart</a> ·
@@ -22,9 +24,9 @@ A small research Agent that grows through independently runnable development sna
 
 The introductory task compares **original synthetic documents**, not real funds. The small synthetic ETF Plugin introduced in v0.7 is also not a live financial-data service. Complete ETF research tools remain on the roadmap. This project does not execute trades or provide investment advice.
 
-> **Start here:** clone `main`; there is no need to switch phase branches. It contains the latest qualified stable development code, **v0.10.0**, whose Result / Reference module connects an original source selection to a calculation, the next Gateway request, a report and a CSV. The [fixed v0.10 source is `ff5b927`](https://github.com/hpoenixf/open-etf-agent/tree/ff5b9273ef0d239e804f61792702cd2e94174be7). Earlier `phase/v0.1`–`phase/v0.9` snapshots remain unchanged. Here, **stable means the bounded, provider-free Runtime and delivery checks described below**; it does not mean a formal release, model-quality certification, live-recovery qualification or production readiness. Original project code is [MIT-licensed](LICENSE); third-party licenses remain in force.
+> **Start here:** clone `main`; there is no need to switch phase branches. It contains the latest qualified stable development code, **v0.11.0**, adding one local text-layer PDF module. The [fixed v0.11 source is `5f42c33`](https://github.com/hpoenixf/open-etf-agent/tree/5f42c33892d57ed05e8cd09cad48573e6901995b). Earlier `phase/v0.1`–`phase/v0.9` snapshots remain unchanged. Here, **stable means the bounded, provider-free Runtime and delivery checks described below**; it does not mean a formal release, model-quality certification, live-recovery qualification or production readiness. Original project code is [MIT-licensed](LICENSE); third-party licenses remain in force.
 
-> **Looking for real model calls?** Read the [16 historical HTTP calls across v0.1–v0.5](#live-evidence), then the [separate live runner and its authorization requirements](#live-entry). Those records do not qualify v0.10 live recovery.
+> **Looking for real model calls?** Read the [16 historical HTTP calls across v0.1–v0.5](#live-evidence), then the [separate live runner and its authorization requirements](#live-entry). Those records do not qualify v0.11 live recovery.
 
 ### What you can inspect
 
@@ -39,7 +41,7 @@ Documentation defaults to English. Use the language links at the top of the main
 
 Requires **Node.js 26.8.1–26.x** and npm. Default examples need no model key. Dependency installation may access npm; the installed examples run offline.
 
-The Node minimum reflects the APIs used. The narrow v0.10 install/build/CLI qualification ran on **26.11.1**. A successful 26.8.1 run was a user-supplied v0.6 observation, not a fresh v0.10 minimum-version test. See the [v0.6 filesystem-error maintenance record (Chinese)](docs/verification/v06-errno-maintenance.md) and [v0.7 toolchain record (Chinese)](docs/verification/v07-observations.md).
+The Node minimum reflects the APIs used. The narrow v0.11 install/build/CLI qualification ran on **26.11.1**. A successful 26.8.1 run was a user-supplied v0.6 observation, not a fresh v0.11 minimum-version test. See the [v0.6 filesystem-error maintenance record (Chinese)](docs/verification/v06-errno-maintenance.md) and [v0.7 toolchain record (Chinese)](docs/verification/v07-observations.md).
 
 ```sh
 # main already contains the current stable development snapshot
@@ -102,6 +104,21 @@ The [fixed v0.6 instructions](https://github.com/hpoenixf/open-etf-agent/blob/74
 
 </details>
 
+### v0.11: one local PDF, one physical page, original bytes retained
+
+The single new module is **local text-layer PDF input**, from [fixed source `5f42c33`](https://github.com/hpoenixf/open-etf-agent/tree/5f42c33892d57ed05e8cd09cad48573e6901995b). Choose a file outside the model, read a physical page through the existing Host/Result path, then reopen a cited report and the exact original PDF through the existing Artifact reader.
+
+```sh
+# Original synthetic PDF; no model key or external document needed
+node dist/src/cli.mjs --case local-pdf --output runs/local-pdf
+# Optional: explicitly select your own local text-layer PDF and physical page
+node dist/src/cli.mjs --case local-pdf --pdf /path/to/selected.pdf --pdf-page 3 --output runs/selected-pdf
+```
+
+The second path is an operator placeholder, never a model tool argument. Limits: 1 MiB, 16 physical pages, bounded text and parser lifetime. Blank pages retain their physical numbers. `pdf2json@4.1.0` performs actual parsing; scripted Gateway actions are not model judgment. No OCR, visual/table interpretation, remote acquisition or active-PDF durable resume is offered. The parser process is **not a hostile-file security sandbox**.
+
+[Qualification and preserved failures](openspec/changes/v011-local-pdf/evidence.md) distinguish the original Runtime regression, current maintenance checks and [fresh install/build/two-process byte readback](docs/verification/integrated-install-pdf.safe.json). The existing Session owner also receives the bounded hot-journal admission repair exposed by regression; it is necessary reliability maintenance, not a second new module or a PDF-resume promise. See [retained/simplified responsibilities](docs/evolution/v011-pdf-lineage.md).
+
 ### v0.10: one source selection, one result, one report and CSV
 
 This completed Result / Reference module is **v0.10.0**, reproducible from [fixed source `ff5b927`](https://github.com/hpoenixf/open-etf-agent/tree/ff5b9273ef0d239e804f61792702cd2e94174be7). It replaces the old 0.10 reading-adapter proposal that lacked an independent consumer, and delivers the minimal increment originally planned for 1.1. It is not a v1.0 or v1.1 release, nor a second implementation of the same module.
@@ -114,9 +131,12 @@ The example selects explicit rows from an immutable synthetic table and calculat
 
 The [source/delivery counterexamples](https://github.com/hpoenixf/open-etf-agent/blob/e442f600891be79625fc78751e2d9f39905920da/test/result-consumption-delivery.test.mjs), [333-case execution under the original 0.9.0 metadata](https://github.com/hpoenixf/open-etf-agent/blob/e442f600891be79625fc78751e2d9f39905920da/docs/verification/result-consumption-observations.safe.json) and [independent install/build/CLI/new-process byte readback](https://github.com/hpoenixf/open-etf-agent/blob/e442f600891be79625fc78751e2d9f39905920da/docs/verification/result-consumption-independent.safe.json) retain their actual execution scopes. Production Gateway encoding is tested with an injected offline transport. There are no new live-model calls or qualifications for financial semantics or real market data.
 
-Assigning the version changed only three package/lock version fields: 123 other execution inputs and 95 locked dependencies were unchanged. The [fresh narrow install/build/CLI and exact-equivalence record](https://github.com/hpoenixf/open-etf-agent/blob/ff5b9273ef0d239e804f61792702cd2e94174be7/docs/verification/v010-numbering.safe.json) is separate; the historical 333 cases were not relabeled as a new 0.10.0 execution. Current [coverage receipts](docs/verification/article-coverage-receipts.json) bind the original 15 selected targets to the fixed source.
+Assigning the version changed only three package/lock version fields: 123 other execution inputs and 95 locked dependencies were unchanged. The [fresh narrow install/build/CLI and exact-equivalence record](https://github.com/hpoenixf/open-etf-agent/blob/ff5b9273ef0d239e804f61792702cd2e94174be7/docs/verification/v010-numbering.safe.json) is separate; the historical 333 cases were not relabeled as a new 0.10.0 execution. Historical [coverage receipts](docs/verification/history/article-coverage-receipts-d943dd8452e4.json) bind the original 15 selected targets to the fixed source.
 
 **Upgrade boundary: `tool-host@1` snapshots cannot resume or replay through the `tool-host@2` Runtime.** Finish old active Runs on their original version or isolate the old deployment before replacing it; retained outputs have independent readers. See the [upgrade contract and operational checklist](docs/upgrade-guide.md).
+
+<details>
+<summary>Earlier versions</summary>
 
 ### v0.9: another process continues the original Run
 
@@ -132,9 +152,6 @@ node dist/src/session-cli.mjs publication --session runs/worker-demo --run origi
 `submit` only persists original identity, request, bindings, budget and deadline; it calls neither models nor tools. `work` executes the synthetic profile. The example's 30-second deadline starts at submission, not handoff. Another terminal `work` reads the original facts instead of researching again; use a fresh test directory and explicit Run ID for another demonstration.
 
 SIGTERM/host stop is not user cancellation. Sealed work can continue under its original identity; unknown dispatched requests are not automatically resent. Already committed text survives later Run failure. Real synthetic tests exercise SQLite, independent processes and SIGTERM/SIGKILL; model actions remain scripted. Schedule, notifications, concurrent foreground chat and Web are excluded. See [Worker lineage (Chinese)](docs/evolution/v09-worker-lineage.md), [process tests](test/worker-process.test.mjs) and [observations (Chinese)](docs/verification/v09-observations.md).
-
-<details>
-<summary>Earlier versions</summary>
 
 ### v0.6: read, download and verify over real HTTP
 
@@ -207,7 +224,8 @@ Every link fixes the code, lockfile, examples and evidence from that stage. Reco
 | [v0.7 · Trusted contributions and recovery](https://github.com/hpoenixf/open-etf-agent/tree/5f70dc0b4760ad70ef211f4823828ab2fee5c525) | Distinguish package loading or file reopening from same-Run recovery | Trusted Plugin, SQLite, lease/fence, sealed proposal/result-consumption checkpoints | [249](https://github.com/hpoenixf/open-etf-agent/blob/5f70dc0b4760ad70ef211f4823828ab2fee5c525/docs/verification/v07-observations.safe.json) |
 | [v0.8 · Independent body commit](https://github.com/hpoenixf/open-etf-agent/tree/2c096ce47be2161f97531170af07ef255872f8b1) | Do not confuse Run termination or a file report with body publication | Single-block Publication, stable identity/position, revision CAS, original-receipt readback | [Full-suite receipt](docs/verification/v08-observations.safe.json) · [Historical output extract](docs/verification/v08-full-suite-extract.safe.json) |
 | [v0.9 · Single-Run Worker](https://github.com/hpoenixf/open-etf-agent/tree/dad9c6e64f32c3d7579aea96613776b40917ec6d) | Keep original work after its submitting process exits | Separate submit/work, same Runtime and original lease/fence, durable terminal readback | [309-case combined execution](docs/verification/v09-combined-observations.safe.json) · [Historical delivery equivalence](docs/verification/v09-delivery-equivalence.safe.json) |
-| [v0.10 · Consuming one result throughout](https://github.com/hpoenixf/open-etf-agent/tree/ff5b9273ef0d239e804f61792702cd2e94174be7) | Trace original selections and derived results to actual consumers | Source-bound calculation, next Gateway encoding, same-reference report/CSV, independent readback | [Original 333-case execution](docs/verification/result-consumption-observations.safe.json) · [Narrow version qualification](docs/verification/v010-numbering.safe.json) · [Fresh receipts for 15 original targets](docs/verification/article-coverage-receipts.json) |
+| [v0.10 · Consuming one result throughout](https://github.com/hpoenixf/open-etf-agent/tree/ff5b9273ef0d239e804f61792702cd2e94174be7) | Trace original selections and derived results to actual consumers | Source-bound calculation, next Gateway encoding, same-reference report/CSV, independent readback | [Original 333-case execution](docs/verification/result-consumption-observations.safe.json) · [Narrow version qualification](docs/verification/v010-numbering.safe.json) · [Fresh receipts for 15 original targets](docs/verification/history/article-coverage-receipts-d943dd8452e4.json) |
+| [v0.11 · Local PDF](https://github.com/hpoenixf/open-etf-agent/tree/5f42c33892d57ed05e8cd09cad48573e6901995b) | Select a physical page while retaining the original file | Bounded text extraction, original Result, cited report and exact PDF attachment | [Qualification and preserved failures](openspec/changes/v011-local-pdf/evidence.md) · [Fresh independent delivery](docs/verification/integrated-install-pdf.safe.json) |
 
 **v0.2 maintenance:** the original snapshot is historical. [Maintenance snapshot `a10d4f1`](https://github.com/hpoenixf/open-etf-agent/tree/a10d4f1bd1ecc39224272156221fe29792b64094) corrects report wording about unread pages. Use `maintenance/v0.2-source-boundary` specifically for the corrected v0.2 experience; the original snapshot was not rewritten.
 
@@ -243,7 +261,7 @@ Start in [source](src). The [evolution evidence index (Chinese)](docs/evolution/
 
 ## Evidence and its limits
 
-The [v0.1–v0.10 verification index](docs/verification/README.md) links observations, receipts, provenance and qualification by stage. New numbers do not overwrite historical evidence.
+The [v0.1–v0.11 verification index](docs/verification/README.md) links observations, receipts, provenance and qualification by stage. New numbers do not overwrite historical evidence.
 
 <details>
 <summary><strong>Recorded qualification and maintenance history</strong></summary>
@@ -269,7 +287,7 @@ The [first v0.1–v0.5 live-call record, pinned at `d075068`](https://github.com
 
 `npm run demo -- --live` refuses by design. This does not mean real calls have never been made, and replacing the argument with a fixture does not bypass authorization. The separate `scripts/live-validate.mjs` runner has [fixed-version instructions](https://github.com/hpoenixf/open-etf-agent/blob/d075068ac99a6c798d012c46bff4fe0c33eb9979/docs/live-validation.md) and [current instructions](docs/live-validation.md), retained in their original language.
 
-It requires **your own provider, synthetic-data and cost authorization**, an explicit fixed version, private configuration and a budget ledger shared across versions. Unknown outcomes stop execution; they are not automatically retried. Other operators' credentials or budgets are not inherited. Quickstart/demo/session commands above are offline examples. v0.10 adds no new model requests; historical calls are not current live-recovery qualification.
+It requires **your own provider, synthetic-data and cost authorization**, an explicit fixed version, private configuration and a budget ledger shared across versions. Unknown outcomes stop execution; they are not automatically retried. Other operators' credentials or budgets are not inherited. Quickstart/demo/session commands above are offline examples. v0.11 adds no new model requests; historical calls are not current live-recovery qualification.
 
 ## License
 
@@ -294,7 +312,8 @@ v0.9's single-Run Worker is a fixed stage. The completed Result / Reference path
 | Stage | Direction |
 | --- | --- |
 | **v0.10 — delivered** | Source selection → calculation → next Gateway encoding → same-reference report/CSV; the duplicate reading-adapter proposal is retired |
-| **Later 0.x** | Assess Web acquisition, PDF parsing and isolated Python separately: one module per version, without rushing numbers |
+| **v0.11 — local PDF** | Text-layer input through existing Result/Artifact consumers; no OCR, visual parsing or durable active-PDF recovery |
+| **Later 0.x** | Assess Web acquisition, isolated Python and richer PDF capabilities separately: one module per version |
 | **v1.0 / v2.0** | Stability qualification milestones for completed modules, not new-feature bundles; see the [amended roadmap](docs/plan/v1-to-v2.md) |
 
 Web acquisition is an unnumbered external-input candidate on the original roadmap. The Web reading UI is a later output consumer; they are not interchangeable. The original 1.1 Result-consumption increment is already delivered by v0.10 and is not scheduled twice. Planned 1.3/1.5 extend existing Memory recall and Child respectively. Missing prerequisites delay a phase; they are not permission to add another module incidentally.
