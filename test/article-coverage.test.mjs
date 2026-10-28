@@ -114,10 +114,25 @@ test('coverage: newer verification anchors never rewrite since or invent introdu
   assert.ok(table.includes('[v0.2](https://github.com/hpoenixf/open-etf-agent/commit/a79e89bf709d4a2245b5a8652882a591ba467519)'));
   assert.ok(table.includes('[v0.5](https://github.com/hpoenixf/open-etf-agent/commit/05c0dd2dc550f4f7e5da034340ff5c3159768fcf)'));
   assert.match(table, /\[aaaaaaa\].*--case skill-mcp/);
-  assert.ok(table.split('\n').find(line => line.includes('/articles/024-agent-pdf-from-text-to-evidence')).includes('| — | —<br>'));
+  const absent = m.articles.find(a => a.slug === '021-agent-web-research-from-search-to-deep-reading');
+  assert.equal(absent.status, '无公开对应'); assert.equal(absent.target, null);
+  assert.ok(table.split('\n').find(line => line.includes('/articles/' + absent.slug)).includes('| — | —<br>'));
   assert.equal(JSON.stringify(versions), before);
   assert.throws(() => renderTable(m, manifest.verifiedAt, versions), /verifiedAt differs/);
   assert.throws(() => validateManifest(change(x => delete x.verifiedAt)), /verifiedAt/);
+});
+test('coverage: PDF introduction binds only the qualified local text-layer case, not the full article', () => {
+  const pdf = manifest.articles.find(a => a.slug === '024-agent-pdf-from-text-to-evidence');
+  const name = '11.3 PDF CLI exits then a fresh process verifies page report and original binary';
+  assert.equal(pdf.status, 'verified'); assert.equal(pdf.target, 'pdf-local');
+  assert.deepEqual(manifest.targets[pdf.target], {kind:'test', file:'test/pdf-cli.test.mjs', name});
+  assert.deepEqual(versions.targets[pdf.target], {since:'0.11', evidencePath:'test/pdf-cli.test.mjs', evidenceGitBlob:'798dddb45495f251e672f5cf79782d4e2c4e8852', selector:name});
+  assert.deepEqual(versions.versions['0.11'], {commit:'5f42c33892d57ed05e8cd09cad48573e6901995b', tree:'35d3ecef7d66527cad422a25da35766fd73d4463'});
+  assert.equal(pdf.scope, '仅本地文本层 PDF：物理页、原文件与报告独立进程回读；不含 OCR、页图、版面、多模态或活跃解析恢复');
+  const table = renderTable(manifest, manifest.verifiedAt, versions);
+  const row = table.split('\n').find(line => line.includes('/articles/' + pdf.slug));
+  assert.ok(row.includes('[v0.11](https://github.com/hpoenixf/open-etf-agent/commit/5f42c33892d57ed05e8cd09cad48573e6901995b)'));
+  assert.ok(row.includes('`test/pdf-cli.test.mjs` · ' + name)); assert.ok(row.includes(pdf.scope));
 });
 test('coverage: historical commit/tree/path/blob are checked against actual local Git objects', async () => {
   await mkdir('test-output', {recursive:true}); const root = await mkdtemp(resolve('test-output/coverage-history-')); const gitDir = join(root,'objects.git');
