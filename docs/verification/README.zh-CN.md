@@ -178,3 +178,10 @@
 - **发布单独核验：** 通过现有 CI 与固定来源的覆盖、双向回链和本地化检查，再读回实际仓库 ref、tree 与修改的 blob。文章发布还须沿用博客 source lock，核验新域回执与实际正文；源码提交不等于网站已上线。
 
 不另建执行 Owner、发布平台或额度审批流程。
+
+## v0.11 恢复测试维护 · 2026-10-28
+
+后续 [main CI 失败](https://github.com/hpoenixf/open-etf-agent/actions/runs/40690146945)仍是失败观察；前述发布记录属于历史，不能证明这次后续运行通过。Memory 恢复 fixture 现在像既有 compaction fixture 一样持有自己的租约时钟；生产 Runtime/Session 源码和原测试断言没有改变。
+
+- [固定资格记录](https://github.com/hpoenixf/open-etf-agent/blob/1de10d40b69db9a83ff990c32e8e272121052814/docs/verification/memory-recovery-clock.safe.json)：在 `e1b8e4edde724548fab16d8ca4b205379bfa7f30` 实际执行 Runtime 374/374、维护消费者 56/56 与 16 fixture targets。它们独立于原始 373 case 执行，不替换历史，也不是模型语义资格。
+- [恢复发布状态](v011-recovery-publication.safe.json)：新发布的双语文章固定配对已独立核验；最终 main CI 和正式站点发布是另外的门。

@@ -178,3 +178,10 @@ Use the existing checks and evidence paths above. These are requirements for acc
 - **Verify publication separately:** run the existing CI and fixed-source coverage/backlink/localization checks, then read back the actual repository ref, tree and changed blobs. Article publication additionally requires the existing blog source lock and canonical-domain receipt/body readback; a source commit alone is not a live website.
 
 These checks do not introduce another execution owner, release platform or budget-approval process.
+
+## v0.11 recovery-test maintenance · 2026-10-28
+
+The later [main CI failure](https://github.com/hpoenixf/open-etf-agent/actions/runs/40690146945) remains a failed observation; the earlier publication record above is historical, not evidence that this later run passed. The Memory recovery fixture now owns its lease clock, as the compaction fixture already did. Production Runtime/Session source and the original test assertions are unchanged.
+
+- [Fixed qualification record](https://github.com/hpoenixf/open-etf-agent/blob/1de10d40b69db9a83ff990c32e8e272121052814/docs/verification/memory-recovery-clock.safe.json): actual execution at `e1b8e4edde724548fab16d8ca4b205379bfa7f30`, 374/374 Runtime tests, 56/56 maintenance consumers and 16 fixture targets. These are separate from the original 373-case execution, not replacement history or live-model qualification.
+- [Recovery publication status](v011-recovery-publication.safe.json): the newly published bilingual article pair is verified independently; final main CI and canonical site publication are separate gates.

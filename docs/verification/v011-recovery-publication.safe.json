@@ -1,0 +1,46 @@
+{
+  "schemaVersion": 1,
+  "recordedAt": "2026-10-28T14:06:09.077890+00:00",
+  "status": "article-paired-final-ci-and-site-pending",
+  "historicalPublication": "v011-publication.safe.json",
+  "preservedFailure": {
+    "commit": "4f30715bccf91f2c1f539a8a982d60fa7f9d7e41",
+    "runId": 40690146945,
+    "conclusion": "failure"
+  },
+  "qualification": {
+    "sourceCommit": "e1b8e4edde724548fab16d8ca4b205379bfa7f30",
+    "metadataCommit": "1de10d40b69db9a83ff990c32e8e272121052814",
+    "record": "memory-recovery-clock.safe.json",
+    "runtimePassed": 374,
+    "maintenancePassed": 56,
+    "fixtureTargets": 16,
+    "productionSourceUnchanged": true
+  },
+  "articles": {
+    "commit": "178a308e5f800fbfef73b2c8c28b17ca84ce8417",
+    "codeClaimCommit": "1de10d40b69db9a83ff990c32e8e272121052814",
+    "actualChangedFileBytesReadBack": 38,
+    "verifiedCaseBodies": 32,
+    "localizedBodies": 31,
+    "ciRunId": 40701884721,
+    "ciConclusion": "success"
+  },
+  "finalMainCI": {
+    "status": "pending"
+  },
+  "canonicalPublication": {
+    "status": "pending",
+    "articleCommit": "178a308e5f800fbfef73b2c8c28b17ca84ce8417",
+    "blogCommit": "88021ebf4f75eec4d864e2a443f61ae8a0fc4c4a",
+    "articleEditions": 106,
+    "changedBodyPins": 34,
+    "scope": "Existing source lock and unmodified deployment verification; no new workflow or network route."
+  },
+  "limits": [
+    "Provider-free qualification only; no new model/provider calls, OCR, visual/layout, active-parse recovery or financial-quality acceptance.",
+    "Original failures, execution receipts and publication observations are retained.",
+    "No formal GitHub Release or tag claimed.",
+    "Direct canonical-domain network read remains denied; no alternate route attempted."
+  ]
+}
