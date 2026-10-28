@@ -45,7 +45,7 @@ export function validateRuntimeCheckpoint(state, definition) {
 
 export function run(options) { return drive(options, false); }
 export function submitRun(options) { return drive(options, true); }
-async function drive({ question, gateway, outputRoot='runs', requireReport=true, signal, hostSignal, limits={}, extensions=[], hooks, plugins, rootBudget, allowedTools, allowedDocuments, taskId=null, contextBytes, workingInput, durable, publication = false }, submitting) {
+async function drive({ question, gateway, outputRoot='runs', requireReport=true, signal, hostSignal, limits={}, extensions=[], hooks, plugins, rootBudget, allowedTools, allowedDocuments, taskId=null, contextBytes, workingInput, durable, publication = false, pdfInput }, submitting) {
   if(typeof question!=='string'||!question.trim()||Buffer.byteLength(question)>16000||typeof gateway?.next!=='function')throw failure('INVALID_INPUT');
   const budget={maxRounds:12,maxTools:12,timeoutMs:30000,...limits};
   for(const [key,value] of Object.entries(budget))if(!['maxRounds','maxTools','timeoutMs'].includes(key)||!Number.isSafeInteger(value)||value<1||value>(key==='timeoutMs'?300000:1000))throw failure('INVALID_LIMIT');
@@ -54,6 +54,7 @@ async function drive({ question, gateway, outputRoot='runs', requireReport=true,
   if(workingInput?.memoryLibrary&&(typeof workingInput.memoryLibrary.libraryId!=='string'||typeof workingInput.memoryLibrary.state!=='function'))throw failure('INVALID_MEMORY_LIBRARY');
   if(workingInput?.compaction&&(typeof workingInput.compaction.summarize!=='function'||!Number.isSafeInteger(workingInput.compaction.thresholdBytes)||workingInput.compaction.thresholdBytes<1||workingInput.compaction.thresholdBytes>1048576))throw failure('INVALID_COMPACTION');
   if(durable&&(typeof durable.store?.create!=='function'||rootBudget||!durable.bindings||durable.bindings.gateway.mode!==gateway.mode))throw failure('INVALID_DURABLE_CONFIGURATION');
+  if(pdfInput!==undefined&&(durable||submitting||hostSignal!==undefined))throw failure('PDF_ACTIVE_RECOVERY_UNSUPPORTED');
   const publicationBinding = durable?.bindings?.adapters?.find(item => item.id === PUBLICATION_BINDING.id);
   if(typeof publication !== 'boolean' || (publication ? !durable || canonical(publicationBinding) !== canonical(PUBLICATION_BINDING) : publicationBinding !== undefined))throw failure('PUBLICATION_BINDING_MISMATCH');
   if(publication && durable.parentRunId)throw failure('PUBLICATION_SCOPE_MISMATCH');
@@ -153,7 +154,7 @@ async function drive({ question, gateway, outputRoot='runs', requireReport=true,
     try{
       controller.signal.throwIfAborted();
       if(claim&&durable.onClaim)await bounded(Promise.resolve().then(()=>durable.onClaim({runId,rootId:claim.rootId,owner:claim.owner,fence:claim.fence})),controller.signal);
-      host=await effect(createToolHost({directory,extensions,hooks,allowedTools,allowedDocuments,enableNotes:!!workingInput?.compaction,restore:state.host??undefined}));
+      host=await effect(createToolHost({directory,extensions,hooks,allowedTools,allowedDocuments,enableNotes:!!workingInput?.compaction,restore:state.host??undefined,pdfInput}));
       if(durable?.runId)for(const message of state.messages)if(message.role==='tool'){const call=state.messages.flatMap(m=>m.calls||[]).find(c=>c.id===message.callId);await host.verifyResult(call,message.result);}
       if(state.working)await host.verifyWorkingInput(state.working);
       record.sequence=state.logSequence??0;log=await open(join(directory,'run.jsonl'),durable?.runId?'a':'wx',0o600);
@@ -233,6 +234,7 @@ async function drive({ question, gateway, outputRoot='runs', requireReport=true,
     }finally{
       clearTimeout(timer);clearInterval(heartbeat);
       if(interrupted)effectsStopped=await drainStoppedEffect();
+      if(pdfInput!==undefined){try{await host?.close();}catch{state.status='failed';state.code='PDF_CLEANUP_FAILED';}}
       signal?.removeEventListener('abort',cancel);hostSignal?.removeEventListener('abort',stop);
       if(allowedTools&&host){try{sourceSnapshots=await host.getSources();resultRefs=await host.getResultRefs();}catch{state.status='failed';state.code='RESULT_READBACK_FAILED';}}
       if(log){try{await record(interrupted?'worker_interrupted':'run_finished',{status:interrupted?'interrupted':state.status,code:state.code,toolsDispatched:state.toolsDispatched,receipt:host?.receipt,unknownEffects:state.unknownEffects,partialEffects:state.partialEffects});}catch{if(state.status==='completed'){state.status='failed';state.code='LOG_WRITE_FAILED';}}await log.close().catch(()=>logErrors.push('LOG_CLOSE_FAILED'));}

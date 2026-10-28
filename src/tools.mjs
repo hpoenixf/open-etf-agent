@@ -1,3 +1,4 @@
+import {openPdfInput} from './pdf-input.mjs';
 import {openArtifactStore,encodeCsv,projectArtifactEffects} from './artifacts.mjs';
 import {saveReport} from './report.mjs';
 import { projectMemoryEffect } from './memory-effects.mjs';
@@ -22,7 +23,7 @@ function fields(value, names) {
 export function assertHostSnapshotVersion(snapshot) {
   if (snapshot?.schemaVersion!=='tool-host@2') throw Object.assign(new Error('UNSUPPORTED_HOST_SNAPSHOT_VERSION: finish old Runs before upgrading; stored results and artifacts remain readable'),{code:'UNSUPPORTED_HOST_SNAPSHOT_VERSION'});
 }
-export async function createToolHost({ directory, extensions = [], hooks, allowedTools, allowedDocuments, enableNotes=false, restore }) {
+export async function createToolHost({ directory, extensions = [], hooks, allowedTools, allowedDocuments, enableNotes=false, restore, pdfInput }) {
   if (restore!==undefined) assertHostSnapshotVersion(restore);
   directory = await safeDirectory(directory);
   const input = JSON.parse(await readFile(new URL('../fixtures/documents.json', import.meta.url), 'utf8'));
@@ -31,6 +32,9 @@ export async function createToolHost({ directory, extensions = [], hooks, allowe
   const results = await createResultStore({ directory, allowedDocuments });
   const methods = new Map();
   const artifacts = await openArtifactStore({directory});
+  if(pdfInput!==undefined&&restore!==undefined)fail('PDF_ACTIVE_RECOVERY_UNSUPPORTED');
+  const pdf=pdfInput===undefined?null:openPdfInput({input:pdfInput,store:artifacts});
+  async function verifyPdf(source){if(!source.pdf)return;const original=await artifacts.read(source.pdf.originalArtifactId);if(original.format!=='pdf'||original.sha256!==source.pdf.originalSha256||original.bytes.length!==source.pdf.originalBytes)fail('PDF original artifact mismatch');}
   let receipt = null;
   let saveAttempted = false;
   async function calculationValue(args) {
@@ -134,7 +138,8 @@ export async function createToolHost({ directory, extensions = [], hooks, allowe
         if(args.attachmentIds!==undefined){if(!Array.isArray(args.attachmentIds)||args.attachmentIds.length>16||new Set(args.attachmentIds).size!==args.attachmentIds.length)fail('Invalid attachments');for(const id of args.attachmentIds)await artifacts.read(id);}
         if (typeof args.text !== 'string' || !args.text.trim() || Buffer.byteLength(args.text) > 64000) fail('Report text missing or too large');
         if (!Array.isArray(args.sourceIds) || !args.sourceIds.length || args.sourceIds.length > 64 || new Set(args.sourceIds).size !== args.sourceIds.length || args.sourceIds.some(id => typeof id !== 'string')) fail('Report needs unique sources actually read in this run');
-        for (const id of args.sourceIds) await results.resolve(id);
+        const originals=[];for (const id of args.sourceIds){const ref=await results.resolve(id);const source=await results.read(ref.resultRef);await verifyPdf(source);if(source.pdf)originals.push(source.pdf.originalArtifactId);}
+        if(new Set([...(args.attachmentIds||[]),...originals]).size>16)fail('Too many original attachments');
         const calculations = await results.listCalculations();
         for (const marker of args.text.matchAll(/\[(C?)([0-9]+)\]/g)) { const n = Number(marker[2]); if (n < 1 || n > (marker[1] ? calculations.length : args.sourceIds.length)) fail('Unknown numbered acquired-result citation'); }
         if (saveAttempted) fail('Save already attempted; inspect existing artifacts, do not retry');
@@ -144,10 +149,11 @@ export async function createToolHost({ directory, extensions = [], hooks, allowe
         const resultRefs = await Promise.all(args.sourceIds.map(id => results.resolve(id)));
         const selected = await Promise.all(resultRefs.map(ref => results.read(ref.resultRef)));
         const calculations = await Promise.all((await results.listCalculations()).map(async ref => ({ ref, value: await results.readCalculation(ref.resultRef) })));
-        receipt=await saveReport({directory,store:artifacts,text:args.text,selected,resultRefs,calculations,methods:[...methods.values()],attachmentIds:args.attachmentIds||[],callId,signal});return structuredClone(receipt);
+        receipt=await saveReport({directory,store:artifacts,text:args.text,selected,resultRefs,calculations,methods:[...methods.values()],attachmentIds:[...new Set([...(args.attachmentIds||[]),...selected.filter(s=>s.pdf).map(s=>s.pdf.originalArtifactId)])],callId,signal});return structuredClone(receipt);
       }
     }
   };
+  if(pdf)bindings.read_pdf_page={description:'Read one physical text-layer page from the operator-selected local PDF. No paths or URLs; extracted text is not visual inspection.',sourceResult:true,artifactEffects:true,parameters:{type:'object',additionalProperties:false,properties:{page:{type:'integer',minimum:1,maximum:16}},required:['page']},validate(args){fields(args,['page']);if(!Number.isSafeInteger(args.page)||args.page<1||args.page>16)fail('PDF_INVALID_PAGE');},execute:({page},context)=>pdf.readPage(page,context)};
   if(enableNotes)bindings.read_note={description:'Read an acquired derived working note, never original evidence or permission.',parameters:{type:'object',properties:{resultRef:{type:'string',pattern:'^note:sha256:[a-f0-9]{64}$'}},required:['resultRef'],additionalProperties:false},validate(args){fields(args,['resultRef']);if(typeof args.resultRef!=='string'||!/^note:sha256:[a-f0-9]{64}$/.test(args.resultRef))fail('Invalid derived note ref');},async execute(args){return{...await results.readNote(args.resultRef),resultRef:args.resultRef};}};
   if (!Array.isArray(extensions) || extensions.length > 16) fail('Invalid extension list');
   for (const binding of extensions) {
@@ -178,7 +184,7 @@ export async function createToolHost({ directory, extensions = [], hooks, allowe
     if(receipt){if(!saveAttempted)recoveryFail('Recovered receipt without save attempt');await validateReceipt(receipt);}
   }
   async function rememberValue(binding,value,signal){
-    async function remember(source){const current=validateSource(source);const ref=await results.add(current,{signal});return{...current,resultRef:ref.resultRef};}
+    async function remember(source){const current=validateSource(source);await verifyPdf(current);try{const ref=await results.add(current,{signal});return{...current,resultRef:ref.resultRef};}catch(error){if(current.pdf)error.artifactEffects=[...(error.artifactEffects||[]),{kind:'artifact',artifactId:current.pdf.originalArtifactId}];throw error;}}
     if(binding.sourceResult)value=await remember(value);
     if(binding.sourceResults){if(!Array.isArray(value?.sources)||value.sources.length>16)fail('Invalid batch sources');const validated=value.sources.map(validateSource),ids=new Map();for(const source of validated){const id=JSON.stringify(['documentId','name','version','page','sha256','mediaType'].map(key=>source[key]));if(ids.has(source.sourceId)&&ids.get(source.sourceId)!==id)fail('Conflicting batch source identity');ids.set(source.sourceId,id);}const imported=[];for(const source of validated)imported.push(await remember(source));value={...value,sources:imported};}
     if(binding.methodResult){if(!object(value)||!['id','name','text','sha256','version'].every(k=>typeof value[k]==='string')||value.sha256!==sha256(value.text)||Buffer.byteLength(value.text)>65536)fail('Invalid acquired method snapshot');if(methods.has(value.id)&&JSON.stringify(methods.get(value.id))!==JSON.stringify(value))fail('Method identity rebind conflict');methods.set(value.id,structuredClone(value));}
@@ -198,7 +204,7 @@ export async function createToolHost({ directory, extensions = [], hooks, allowe
         if (Boolean(hooks)!==Boolean(result.original) || result.requestHash!==requestIdentity(call,result.effective||call,Boolean(hooks))) recoveryFail('Recovered numeric/export request mismatch');
       }
       if(!binding)recoveryFail('Recovered tool binding mismatch');
-      async function source(current){const stored=await results.read(current?.resultRef);for(const key of ['sourceId','documentId','name','version','page','text','sha256','mediaType'])if(stored[key]!==current[key])recoveryFail('Recovered source payload mismatch');}
+      async function source(current){const stored=await results.read(current?.resultRef);for(const key of ['sourceId','documentId','name','version','page','text','sha256','mediaType'])if(stored[key]!==current[key])recoveryFail('Recovered source payload mismatch');if(!isDeepStrictEqual(stored.pdf,current.pdf))recoveryFail('PDF source provenance mismatch');await verifyPdf(stored);}
       if(binding.sourceResult||name==='read_result')await source(value);
       if(binding.sourceResults){if(!Array.isArray(value?.sources))recoveryFail('Recovered sources mismatch');for(const item of value.sources)await source(item);}
       if(binding.methodResult){const method=methods.get(value?.id);if(!method||JSON.stringify(method)!==JSON.stringify(value))recoveryFail('Recovered method payload mismatch');}
@@ -238,6 +244,7 @@ export async function createToolHost({ directory, extensions = [], hooks, allowe
         ...(hooks?{original:structuredClone(call),effective:structuredClone(effective)}:{}),
         ...(hooks||['calculate_change','create_csv'].includes(call.name)||['calculate_change','create_csv'].includes(effective.name)?{requestHash:requestIdentity(call,effective,Boolean(hooks))}:{})};
     },
+    close:()=>pdf?.close(),
     async getSources() { return Promise.all((await results.list()).map(ref => results.read(ref.resultRef))); },
     getResultRefs: () => results.list(),
     persistWorkingNote: (note,options) => results.addNote(note,options),

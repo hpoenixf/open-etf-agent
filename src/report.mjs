@@ -1,7 +1,7 @@
 import {publishImmutable} from './storage-files.mjs';
 import {sha256} from './source.mjs';
 export async function saveReport({directory,store,text,selected,resultRefs,calculations,methods,attachmentIds=[],callId,signal}){
- const citations=selected.map((s,i)=>`- [${i+1}] ${s.sourceId}: ${s.name}, version ${s.version}, physical page ${s.page}; SHA-256 ${s.sha256}; ResultRef ${resultRefs[i].resultRef}`).join('\n');
+ const citations=selected.map((s,i)=>`- [${i+1}] ${s.sourceId}: ${s.name}, version ${s.version}, physical page ${s.page}; SHA-256 ${s.sha256}; ResultRef ${resultRefs[i].resultRef}${s.pdf?`; original PDF SHA-256 ${s.pdf.originalSha256}; ${s.pdf.originalBytes} bytes; ${s.pdf.originalArtifactId}; parser ${s.pdf.parser}; selected physical page ${s.page}/${s.pdf.pageCount}; text-layer only, visual inspection not performed`:""}`).join('\n');
  const numeric=calculations.map((c,i)=>{
   const b=c.value.binding;
   const provenance=b?`; source ${b.sourceRef}; SHA-256 ${b.contentHash}; selected rows ${b.coverage.rowIndices.join(',')} (${b.coverage.returned}/${b.coverage.total} stored rows); baseline ${b.baseline.rowId} at ${b.baseline.rowIndex}, current ${b.current.rowId} at ${b.current.rowIndex}; window complete ${b.coverage.complete}; stored table complete ${b.coverage.storedTableComplete}; currency ${b.currency}; dataAsOf ${b.dataAsOf}; synthetic same-snapshot comparison, not upstream completeness or semantic review`:'';
@@ -14,7 +14,7 @@ export async function saveReport({directory,store,text,selected,resultRefs,calcu
   const revision=await store.revise({reportId:artifact.artifactId,attachmentIds,sources:selected},{signal});artifactEffects.push({kind:'revision',revisionId:revision.revisionId});
   const receipt={operationId:callId,fileId:'sha256:'+sha256(bytes),path:'report.md',sha256:sha256(bytes),bytes:bytes.length,mediaType:artifact.mediaType,artifactId:artifact.artifactId,revisionId:revision.revisionId,attachmentIds:[...attachmentIds]};
   const attachmentRecords=[];for(const id of attachmentIds){const {bytes,...metadata}=await store.read(id);attachmentRecords.push({...metadata,bytes:bytes.length});}
-  const manifest={artifacts:{report:artifact,attachments:attachmentRecords},schemaVersion:'open-etf-report@1',synthetic:true,semanticStatus:'unreviewed',receipt,sources:selected,resultRefs,calculations,methods};
+  const manifest={artifacts:{report:artifact,attachments:attachmentRecords},schemaVersion:'open-etf-report@1',synthetic:selected.every(source=>!source.pdf||source.pdf.synthetic),semanticStatus:'unreviewed',receipt,sources:selected,resultRefs,calculations,methods};
   await publishImmutable(directory,'report.md',bytes,signal);partialPaths.push('report.md');await publishImmutable(directory,'manifest.json',JSON.stringify(manifest,null,2)+'\n',signal);partialPaths.push('manifest.json');return receipt;
  }catch(error){error.partialPaths=partialPaths;error.artifactEffects=[...artifactEffects,...(error.artifactEffects||[])];throw error;}
 }
