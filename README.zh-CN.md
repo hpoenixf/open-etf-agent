@@ -114,7 +114,7 @@ node src/cli.mjs --case result-consumption --output runs/result-consumption
 
 本次编号只改 package/lock 的三个版本字段，123 个非 package 执行输入与 95 条依赖保持原样；[新的窄安装/build/CLI 回读及精确等价记录](https://github.com/hpoenixf/open-etf-agent/blob/ff5b9273ef0d239e804f61792702cd2e94174be7/docs/verification/v010-numbering.safe.json)单列保存，没有把旧 333 项改称在 0.10.0 下重新执行。当前 [15 个原目标的实跑回执](docs/verification/article-coverage-receipts.json)绑定新版固定源码；旧执行记录保留。
 
-**升级边界：本次使用 `tool-host@2`。升级前应先结束旧版本的活动 Run；`tool-host@1` 检查点不能跨版本续跑。** 拒绝发生在 claim 前，原不可变 Result、Artifact 与 Publication 仍可读取；不迁移旧检查点，也不重新执行旧工具。详见[契约与兼容限制](https://github.com/hpoenixf/open-etf-agent/blob/e442f600891be79625fc78751e2d9f39905920da/openspec/changes/result-reference-consumption/design.md)。
+**升级边界：`tool-host@1` 快照不能经 `tool-host@2` Runtime 续跑或重放。** 替换版本前，先在原版本结束活动 Run，或隔离旧部署；保留输出通过独立接口读取。详见[升级契约与操作清单](docs/upgrade-guide.zh-CN.md)。
 
 ### v0.9：提交退出后，由另一进程继续原 Run
 

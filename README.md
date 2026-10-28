@@ -116,7 +116,7 @@ The [source/delivery counterexamples](https://github.com/hpoenixf/open-etf-agent
 
 Assigning the version changed only three package/lock version fields: 123 other execution inputs and 95 locked dependencies were unchanged. The [fresh narrow install/build/CLI and exact-equivalence record](https://github.com/hpoenixf/open-etf-agent/blob/ff5b9273ef0d239e804f61792702cd2e94174be7/docs/verification/v010-numbering.safe.json) is separate; the historical 333 cases were not relabeled as a new 0.10.0 execution. Current [coverage receipts](docs/verification/article-coverage-receipts.json) bind the original 15 selected targets to the fixed source.
 
-**Upgrade boundary: this module uses `tool-host@2`. Finish active Runs on the old version before upgrading; `tool-host@1` checkpoints cannot resume across versions.** Refusal occurs before claim. Immutable Results, Artifacts and Publications remain readable; old checkpoints are not migrated and old tools are not re-executed. See the [contract and compatibility limits (Chinese)](https://github.com/hpoenixf/open-etf-agent/blob/e442f600891be79625fc78751e2d9f39905920da/openspec/changes/result-reference-consumption/design.md).
+**Upgrade boundary: `tool-host@1` snapshots cannot resume or replay through the `tool-host@2` Runtime.** Finish old active Runs on their original version or isolate the old deployment before replacing it; retained outputs have independent readers. See the [upgrade contract and operational checklist](docs/upgrade-guide.md).
 
 ### v0.9: another process continues the original Run
 
