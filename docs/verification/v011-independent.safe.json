@@ -1,0 +1,139 @@
+{
+  "schemaVersion": "pdf-independent-delivery@1",
+  "startedAt": "2026-10-28T01:21:36.293014+00:00",
+  "inputSha256": "a55f5fc9c675101778ae23b99223e6049f8df9f338a024976d607a8c9b6fbddf",
+  "commands": [
+    {
+      "label": "offline-install",
+      "command": [
+        "node",
+        "<node-install>/lib/node_modules/npm/bin/npm-cli.js",
+        "ci",
+        "--offline",
+        "--ignore-scripts",
+        "--no-audit",
+        "--no-fund",
+        "--cache",
+        "<existing-npm-cache>"
+      ],
+      "exitCode": 0,
+      "durationSeconds": 1.3320067099994048,
+      "outputSha256": "1b7e5c05ebe63f4052cf46924807054da633d57198fd62b4d44c55b145d77e41"
+    },
+    {
+      "label": "independent-build",
+      "command": [
+        "node",
+        "scripts/build.mjs"
+      ],
+      "exitCode": 0,
+      "durationSeconds": 1.2541970779420808,
+      "outputSha256": "0291d9003fadc12598d7e05084574bb1d088ceaba7ca5628dfd25da1322713ff"
+    },
+    {
+      "label": "independent-cli-default",
+      "command": [
+        "node",
+        "dist/src/cli.mjs",
+        "--case",
+        "local-pdf",
+        "--pdf-page",
+        "3",
+        "--output",
+        "<qualification-directory>/independent-install/runs"
+      ],
+      "exitCode": 0,
+      "durationSeconds": 0.20515592803712934,
+      "outputSha256": "b0817118cb56b592aa54784dad635f2da0e644d3f9b1c0cd171ffe950aff77eb"
+    },
+    {
+      "label": "independent-readback-default",
+      "command": [
+        "node",
+        "<qualification-directory>/read-independent.mjs",
+        "<qualification-directory>/independent-install",
+        "<qualification-directory>/independent-default.local.json"
+      ],
+      "exitCode": 0,
+      "durationSeconds": 0.0438091839896515,
+      "outputSha256": "9a2879912ac8ecd95f4b4cbf82b71108fe177a21cd401628800d2a564ec3d3ca"
+    },
+    {
+      "label": "independent-cli-operator",
+      "command": [
+        "node",
+        "dist/src/cli.mjs",
+        "--case",
+        "local-pdf",
+        "--pdf-page",
+        "3",
+        "--output",
+        "<qualification-directory>/independent-install/runs",
+        "--pdf",
+        "<qualification-directory>/independent-install/operator-selected.pdf"
+      ],
+      "exitCode": 0,
+      "durationSeconds": 0.19291572098154575,
+      "outputSha256": "b0abb7afad3023cb224226ff7bc57f88cd67eea739782e2a405b8cbb0b5b27dd"
+    },
+    {
+      "label": "independent-readback-operator",
+      "command": [
+        "node",
+        "<qualification-directory>/read-independent.mjs",
+        "<qualification-directory>/independent-install",
+        "<qualification-directory>/independent-operator.local.json"
+      ],
+      "exitCode": 0,
+      "durationSeconds": 0.04174103296827525,
+      "outputSha256": "5ac9765982f3657f709cf4aa1ba8d0b961923d11b04907771d9d16ef8c843505"
+    }
+  ],
+  "offline": true,
+  "ignoreScripts": true,
+  "providerCalls": 0,
+  "packageVersion": "0.11.0",
+  "heapMiB": 512,
+  "timeoutSeconds": 90,
+  "runtime": "Node v26.11.1",
+  "scope": "production local text parser and binary delivery; scripted decisions, not live/semantic/visual evidence",
+  "completedAt": "2026-10-28T01:21:39.367821+00:00",
+  "durationSeconds": 3.074808974051848,
+  "installedPackages": 96,
+  "builtFilesByteIdentical": 61,
+  "licenseByteIdentical": true,
+  "packageAndLockByteIdentical": true,
+  "sourceInputDrift": [],
+  "installedInputDrift": [],
+  "private": true,
+  "deliveries": [
+    {
+      "synthetic": true,
+      "page": 3,
+      "pageCount": 3,
+      "textHash": "59dfc620c9f01c082075850b2b539ceab640c9f985d60f3074b936ea721d3d10",
+      "pdfHash": "e044fbd56469b1782a312236a8adf76cd776148611dd2322cf57b43695c9ecbf",
+      "pdfBytes": 2423,
+      "reportHash": "635fc13b32b3e55b5a1356349423b69439e7b5bcef9cdc3e7146c9a61ee31df0",
+      "originalBytesExact": true,
+      "freshProcess": true,
+      "privatePathPersisted": false
+    },
+    {
+      "synthetic": false,
+      "page": 3,
+      "pageCount": 3,
+      "textHash": "59dfc620c9f01c082075850b2b539ceab640c9f985d60f3074b936ea721d3d10",
+      "pdfHash": "e044fbd56469b1782a312236a8adf76cd776148611dd2322cf57b43695c9ecbf",
+      "pdfBytes": 2423,
+      "reportHash": "5dbd9fbbb1602c65af5100d8b9767b836f3d7124457ea871fca627cbec38a50b",
+      "originalBytesExact": true,
+      "freshProcess": true,
+      "privatePathPersisted": false
+    }
+  ],
+  "commandPathRedaction": "Only local installation/cache/qualification roots replaced with labelled placeholders; original machine receipt SHA is retained. No command, exit, count or output hash is reconstructed from prose.",
+  "originalMachineReceiptSha256": "2fdc28eff8cf8e39aaef136165219f3de8f38bf20b577ee8be596c0e759ac2ac",
+  "wholeRuntimeQualification": "NOT passed: original full suite remains 358/359; existing Session hot-journal admission failure is not fixed by this PDF-only delivery check.",
+  "wipSource": "cd281771c87342614fc032997cad81ad5b1bb66e"
+}
