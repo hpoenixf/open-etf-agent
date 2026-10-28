@@ -1,0 +1,36 @@
+{
+  "schemaVersion": "spec-evidence-completion@1",
+  "changeName": "v011-local-pdf",
+  "outcome": "passed",
+  "lane": "provider-free",
+  "revision": "b11f70e57121f5c80a15893d6ba5e10d447d4e6c",
+  "observedAt": "2026-10-28T12:35:41Z",
+  "checks": [
+    {
+      "name": "Original parser/delivery RED-GREEN and preserved regression failures",
+      "status": "passed",
+      "artifact": "docs/verification/v011-observations.safe.json"
+    },
+    {
+      "name": "Original final373 Runtime execution and scoped integrated equivalence",
+      "status": "passed",
+      "artifact": "docs/verification/session-hot-journal-admission.safe.json"
+    },
+    {
+      "name": "Independent locked install/build and fresh-process PDF bytes",
+      "status": "passed",
+      "artifact": "docs/verification/integrated-install-pdf.safe.json"
+    },
+    {
+      "name": "Published execution-source-bound16target smoke and56 maintenance consumers",
+      "status": "passed",
+      "artifact": "docs/verification/pdf-coverage-qualification.safe.json"
+    },
+    {
+      "name": "Stable main and final bilingual article/canonical publication chain",
+      "status": "passed",
+      "artifact": "docs/verification/v011-publication.safe.json"
+    }
+  ],
+  "scope": "Single local text-layer PDF module; bounded Session admission repair is necessary existing-owner support. Actual synthetic parser/Runtime/process/delivery qualifications, not new model/provider, OCR/visual, cloud-deployment or investment-quality acceptance. Manual evidence registration in the existing directory, no formal Release/tag or automatic archive."
+}

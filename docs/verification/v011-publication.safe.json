@@ -1,0 +1,70 @@
+{
+  "schemaVersion": 1,
+  "status": "complete",
+  "recordedAt": "2026-10-28T12:29:17.630641+00:00",
+  "code": {
+    "repository": "hpoenixf/open-etf-agent",
+    "stableCommit": "b11f70e57121f5c80a15893d6ba5e10d447d4e6c",
+    "tree": "99e2c8073a9204575403a62a46663a0428cf6ed0",
+    "actualBytesReadBack": true,
+    "unchangedSourceInputs": 137,
+    "ci": {
+      "runId": 40686948932,
+      "url": "https://github.com/hpoenixf/open-etf-agent/actions/runs/40686948932",
+      "conclusion": "success"
+    }
+  },
+  "qualification": {
+    "introductionCommit": "5f42c33892d57ed05e8cd09cad48573e6901995b",
+    "publishedMetadataCommit": "9a00106703233754553acc04e49ead79fbe92cf9",
+    "executionPin": "e0a6a29b7474a19c18b169c0e4a7eb0eb614504d",
+    "runtimeReceipt": "docs/verification/session-hot-journal-admission.safe.json",
+    "coverageReceipt": "docs/verification/article-coverage-receipts.json",
+    "independentInstallReceipt": "docs/verification/integrated-install-pdf.safe.json"
+  },
+  "fixedArticlePair": {
+    "articleCommit": "9ac8372a11c24dd41cae9fa4fe34107603da3f53",
+    "codeClaimCommit": "9a00106703233754553acc04e49ead79fbe92cf9",
+    "verifiedCaseBodies": 32,
+    "localizedBodies": 31,
+    "status": "passed"
+  },
+  "initialCanonicalPublication": {
+    "articleCommit": "9ac8372a11c24dd41cae9fa4fe34107603da3f53",
+    "blogCommit": "102a653473317e4666a24991faa1c02dd5a7b7df",
+    "blogTree": "f5f8f3cfc1e10ed701f82afcb3d6d3c603fa76e3",
+    "runId": 40686700316,
+    "conclusion": "success",
+    "articleEditions": 106,
+    "homepages": 2,
+    "topicPages": 2,
+    "actualCanonicalBodyVerification": true,
+    "verifiedAt": "2026-10-28T12:22:00Z"
+  },
+  "finalReaderStatePublication": {
+    "status": "passed",
+    "articleCommit": "4db842f501d1db39cbfa66548e6de3ad3a3138a9",
+    "articleTree": "ce53772d5c395851c9147882f3e4954e7e67f8cc",
+    "blogCommit": "258c86864fcd3f0000060dbdcd8ae5dc44d0f59f",
+    "blogTree": "80e73e0fd6b45557b3b2137f805833ed2cbba3ac",
+    "runId": 40688375206,
+    "runUrl": "https://github.com/hpoenixf/myblog-v2/actions/runs/40688375206",
+    "conclusion": "success",
+    "deployJob": 122818179908,
+    "canonicalVerificationStep": 7,
+    "articleEditions": 106,
+    "homepages": 2,
+    "topicPages": 2,
+    "actualCanonicalBodyVerification": true,
+    "verifiedAt": "2026-10-28T12:35:41Z",
+    "scope": "Existing bilingual v0.1 intro and shared topic component show actual stable main0.11; unchanged qualified code9a001 and executione0a6. Only two of106 article-body pins changed; 31 module-body locks unchanged."
+  },
+  "limits": [
+    "No new model/provider calls, cloud deployment acceptance, OCR, visual/layout or active-parse recovery qualification",
+    "CI is distinct from original frozen-input execution evidence",
+    "Formal GitHub Release and tag not claimed",
+    "Earlier failures and original evidence remain immutable",
+    "18 unrelated SVG public byte identities not independently verified by this publication receipt"
+  ],
+  "completedAt": "2026-10-28T12:35:41Z"
+}
