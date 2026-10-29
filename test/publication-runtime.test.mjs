@@ -61,8 +61,8 @@ test('8.2 terminal resume refuses a forged Publication receipt rather than echoi
   await assert.rejects(run({ ...f.options, durable: { ...f.options.durable, runId: outcome.runId } }), /PUBLICATION_IDENTITY/); assert.equal(f.calls(), 1);
  } finally { f.store.close(); }
 });
-async function child(directory, stop, runId = '') {
- const process = fork(new URL('./fixtures/publication-process.mjs', import.meta.url), [directory, stop, runId], { stdio: ['ignore', 'pipe', 'pipe', 'ipc'], execArgv: [] });
+async function child(directory, stop, runId = '', leaseTick = Date.now()) {
+ const process = fork(new URL('./fixtures/publication-process.mjs', import.meta.url), [directory, stop, runId, String(leaseTick)], { stdio: ['ignore', 'pipe', 'pipe', 'ipc'], execArgv: [] });
  const messages = []; let stderr = ''; process.stdout.resume(); process.stderr.on('data', x => { stderr += x; }); process.on('message', x => messages.push(x));
  const exited = once(process, 'exit').then(([code, signal]) => ({ code, signal }));
  return { process, exited, async wait(kind) { const end = Date.now() + 7000; while (Date.now() < end) { const message = messages.find(x => x.kind === kind); if (message) return message; if (process.exitCode !== null || process.signalCode) throw new Error('Publication child exited early: ' + stderr); await delay(10); } throw new Error('Publication child timed out: ' + stderr); }, async stop() { if (process.exitCode === null && !process.signalCode) process.kill('SIGKILL'); return exited; } };
@@ -70,8 +70,9 @@ async function child(directory, stop, runId = '') {
 test('8.2 actual process death after body commit resumes original receipt without another model call', async () => {
  await mkdir('test-output', { recursive: true }); const directory = await mkdtemp(resolve('test-output/publication-crash-')); const first = await child(directory, 'after-commit'); let committed;
  try { committed = await first.wait('committed'); } finally { await first.stop(); }
- const store = await openSession({ directory }); try { assert.equal(store.inspect(committed.runId).status, 'active'); assert.deepEqual(store.confirmPublication(committed.receipt).receipt, committed.receipt); } finally { store.close(); }
- await delay(200); const second = await child(directory, '', committed.runId);
+ let expiredLeaseTick; const store = await openSession({ directory }); try { const original=store.inspect(committed.runId);assert.equal(original.status, 'active'); assert.deepEqual(store.confirmPublication(committed.receipt).receipt, committed.receipt);expiredLeaseTick=original.leaseUntil+1; } finally { store.close(); }
+ // The real first process is dead. Advance only the shared fixture lease clock past its persisted lease.
+ const second = await child(directory, '', committed.runId, expiredLeaseTick);
  try {
   const result = await second.wait('outcome'); assert.notEqual(first.process.pid, second.process.pid); assert.equal((await second.exited).code, 0); assert.equal(result.outcome.status, 'completed'); assert.deepEqual(result.outcome.publication, committed.receipt);
   const calls = (await readFile(join(directory, 'synthetic-model-attempts.txt'), 'utf8')).trim().split('\n'); assert.equal(calls.length, 1); assert.equal(result.outcome.rootUsage.model, 1);

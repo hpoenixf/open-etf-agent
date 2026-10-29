@@ -1,0 +1,113 @@
+{
+  "schemaVersion": 1,
+  "status": "test-only fixture repair locally qualified; new-commit CI and publication separate",
+  "baseCommit": "c77eefb950dfdc31a56a7669c5fb4bfc0db90f67",
+  "priorStableCommit": "a3e1059a78cf8a4f70fe89d61563980f3d24bc15",
+  "originalCi": {
+    "runUrl": "https://github.com/hpoenixf/open-etf-agent/actions/runs/40854176035",
+    "jobId": 123380867401,
+    "passed": 445,
+    "failed": 5,
+    "retained": true,
+    "rerun": false
+  },
+  "diagnosis": {
+    "parallelism": "original job explicitly used test-concurrency=1; workflow unchanged",
+    "publicationFailure": "original stack Session.writer -> claim.read -> Runtime.execute before heartbeat; process fixture lease100ms",
+    "otherWorkerFailures": "three STALE_WRITER codes; original internal stacks not retained, exact internal point not asserted",
+    "hostStopFailure": "test injected user cancellation at300ms while asserting non-user interruption; original failing case took461ms and returned cancelled",
+    "scope": "same controlled mechanisms reproduced in stable and current; no demonstrated production logical regression and no precise CI storage-latency claim"
+  },
+  "repair": {
+    "productionChanges": false,
+    "files": [
+      {
+        "path": "test/fixtures/publication-process.mjs",
+        "beforeGitBlob": "8290e2f596e409489afdfeb2e3566e02508f6dc6",
+        "sha256": "14f8eaf7bdbb816f418e9a73b7ee3d080221bb397c39a79d3460efd5eacbde80",
+        "gitBlob": "ade68e78ca30fe96462f520301719dd11c432488",
+        "bytes": 1566
+      },
+      {
+        "path": "test/fixtures/worker-process.mjs",
+        "beforeGitBlob": "485610ed4c0b1df7705658273c7f903a99e7f687",
+        "sha256": "96ee2b33bbc95209e07b3a20fba776c1aabd2152463a2e2617b034db5d663fec",
+        "gitBlob": "a0d8651801fac384f8c6def54eaaa4edbfb24cda",
+        "bytes": 2858
+      },
+      {
+        "path": "test/publication-runtime.test.mjs",
+        "beforeGitBlob": "d431d13ade754a62d63932665afdaeb89f3de183",
+        "sha256": "74c0401ab6403c4a33ec8b52c6e9cd3cde8d689f321004a52bc5ccbe8f97250a",
+        "gitBlob": "6c06772ff43a2a646dc59d3191fb569d1f886c64",
+        "bytes": 8001
+      },
+      {
+        "path": "test/worker-process.test.mjs",
+        "beforeGitBlob": "245e251dde34fec677c6a14a3f2b5d346bdee719",
+        "sha256": "035eb607e3c8c3bcaf82b13d8fd784f0fd165f57f5ecd1296018f3e7f32293fb",
+        "gitBlob": "3c48a442d7f22b981ea1eabcfafb35279b5ea47e",
+        "bytes": 7225
+      },
+      {
+        "path": "test/worker.test.mjs",
+        "beforeGitBlob": "7380bc01e0fb2ea6dbc33dbcc6e7837b9309c9ec",
+        "sha256": "42b13dac21aebe343330527a3083652fe5568d1b303b0121eb3f5497262aed55",
+        "gitBlob": "343b6e1770dac7d0a38cb381c215c9df3553086b",
+        "bytes": 11692
+      }
+    ],
+    "leaseDurationUnchangedMs": 100,
+    "crossProcessClock": "parent explicitly passes same fixture tick; after actual killed-process exit, next process receives persisted leaseUntil+1",
+    "deadline": "original Runtime wall-clock deadline unchanged",
+    "signalsAndAssertions": "actual SIGTERM/SIGKILL, independent process IDs, original receipt/model counts, fence and expired zero-dispatch assertions retained",
+    "hostStopWatchdog": "node:test timeout fails the test without issuing a user cancellation",
+    "clockScope": "fixtures only; not wall-clock heartbeat performance certification"
+  },
+  "verification": {
+    "node": "26.11.1",
+    "heapMiB": 512,
+    "concurrency": 1,
+    "exactFixedBaseLeavesVerified": 416,
+    "controlledStableCurrent": {
+      "pass": 4,
+      "fail": 0,
+      "safeReceiptSha256": "612d5f669580237eb5cdca4eaaf5f07f9734afc37857db5aef13e8e06ea298ee"
+    },
+    "originalFive": {
+      "pass": 5,
+      "fail": 0,
+      "durationMs": 1433.972082,
+      "outputSha256": "2746137ffbe9801188dd521117536579a1b6442db0b12bfbb67bc6474bd7b854"
+    },
+    "finalFull": {
+      "pass": 450,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 0,
+      "durationMs": 53948.802978,
+      "timeoutSeconds": 120,
+      "outputSha256": "248fada5331161a650fa31b8640508c4bf34bed3e1355ea70987645ef596d7d4",
+      "ownedProcessGroupStoppedAndLeaderWaited": true
+    }
+  },
+  "noAdditional": [
+    "model requests",
+    "PG",
+    "dependency installation",
+    "production source changes",
+    "credential or settings changes"
+  ],
+  "excluded": [
+    "raw CI logs",
+    "local databases",
+    "private inputs",
+    "dependencies/caches"
+  ],
+  "pending": [
+    "independent final evidence package review",
+    "sole publisher non-force commit/readback",
+    "new-commit remote CI",
+    "stable tag/Release decision"
+  ]
+}

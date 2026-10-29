@@ -4,9 +4,11 @@ import { submitRun } from '../../src/runtime.mjs';
 import { workRun } from '../../src/worker.mjs';
 import { openSession } from '../../src/session.mjs';
 
-const [directory, action, runId, pause = ''] = process.argv.slice(2);
+const [directory, action, runId, pause = '', tick] = process.argv.slice(2);
 if (!['submit', 'submit-expiring', 'work'].includes(action) || !runId) throw new Error('Invalid synthetic Worker process');
-const store = await openSession({ directory, leaseMs: 100 }); const stop = new AbortController();
+const leaseTick=Number(tick);if(!Number.isSafeInteger(leaseTick)||leaseTick<1)throw new Error('INVALID_FIXTURE_LEASE_CLOCK');
+// Shared test-only lease clock; do not replace Runtime's original wall-clock deadline.
+const store = await openSession({ directory, leaseMs: 100, clock:()=>leaseTick }); const stop = new AbortController();
 const shutdown = () => stop.abort(); process.on('SIGTERM', shutdown); process.on('SIGINT', shutdown);
 const send = value => process.send?.({ ...value, pid: process.pid });
 try {

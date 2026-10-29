@@ -2,8 +2,10 @@ import { appendFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { run } from '../../src/runtime.mjs';
 import { openSession } from '../../src/session.mjs';
-const [directory, stop, runId] = process.argv.slice(2);
-const store = await openSession({ directory, leaseMs: 100 });
+const [directory, stop, runId, tick] = process.argv.slice(2);
+const leaseTick=Number(tick);if(!Number.isSafeInteger(leaseTick)||leaseTick<1)throw new Error('INVALID_FIXTURE_LEASE_CLOCK');
+// Test-only lease time is shared explicitly by the parent; Runtime deadlines remain real.
+const store = await openSession({ directory, leaseMs: 100, clock:()=>leaseTick });
 try {
  const outcome = await run({ question: 'Synthetic crash-boundary answer.', outputRoot: join(directory, 'runs'), requireReport: false, publication: true,
   limits: { maxRounds: 3, maxTools: 3, timeoutMs: 5000 },

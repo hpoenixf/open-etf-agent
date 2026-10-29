@@ -7,12 +7,13 @@ import * as runtime from '../src/runtime.mjs';
 import { openSession } from '../src/session.mjs';
 
 const bindings = { gateway: { mode: 'fixture', provider: 'synthetic', protocol: 'fixture@1', model: 'worker-contract', version: '1' }, plugins: [], adapters: [{ id: 'publication', version: 'publication@1' }] };
-async function fixture({ clock = Date.now } = {}) {
+async function fixture({ clock } = {}) {
+ let leaseTick=Date.now();clock??=()=>leaseTick;
  await mkdir('test-output', { recursive: true }); const directory = await mkdtemp(resolve('test-output/worker-')); const store = await openSession({ directory, leaseMs: 100, clock }); let calls = 0;
  const options = { question: 'Synthetic worker: keep the original Run.', outputRoot: join(directory, 'runs'), requireReport: false, publication: true,
   limits: { maxRounds: 3, maxTools: 3, timeoutMs: 5000 }, gateway: { mode: 'fixture', async next() { calls++; return { kind: 'final', text: 'Original bounded worker answer.' }; } },
   durable: { store, runId: 'selected-worker-run', grantId: 'synthetic-worker-grant', bindings, rootLimits: { model: 3, tool: 3 } } };
- return { directory, store, options, calls: () => calls };
+ return { directory, store, options, calls: () => calls, advanceLease:ms=>{leaseTick+=ms;} };
 }
 async function submit(options) { assert.equal(typeof runtime.submitRun, 'function', 'shared Runtime submission entry is required'); return runtime.submitRun(options); }
 async function work(options) { const { workRun } = await import('../src/worker.mjs'); assert.equal(typeof workRun, 'function'); return workRun(options); }
@@ -42,18 +43,17 @@ test('9.2 non-user host stop preserves a sealed checkpoint instead of writing us
   const resumed = await runtime.run({ ...f.options, durable: { ...f.options.durable, runId } }); assert.equal(resumed.status, 'completed'); assert.equal(f.calls(), 1);
  } finally { f.store.close(); }
 });
-test('9.2 host stop while a model request is pending retains its original unknown reservation', async () => {
- const f = await fixture(); const stop = new AbortController(), fallbackCancel = new AbortController(); let runId, calls = 0, aborted = false;
- const fallback = setTimeout(() => fallbackCancel.abort(), 300);
+test('9.2 host stop while a model request is pending retains its original unknown reservation', {timeout:10000}, async () => {
+ const f = await fixture(); const stop = new AbortController(); let runId, calls = 0, aborted = false;
  try {
-  const outcome = await runtime.run({ ...f.options, hostSignal: stop.signal, signal: fallbackCancel.signal,
+  const outcome = await runtime.run({ ...f.options, hostSignal: stop.signal,
    gateway: { mode: 'fixture', async next({ signal }) { calls++; stop.abort(); if (signal.aborted) { aborted = true; throw signal.reason; } await new Promise((_, reject) => signal.addEventListener('abort', () => { aborted = true; reject(signal.reason); }, { once: true })); } },
    durable: { ...f.options.durable, runId: undefined, onClaim(value) { runId = value.runId; } } });
   assert.equal(outcome.status, 'interrupted'); assert.equal(aborted, true); const state = f.store.inspect(runId);
   assert.equal(state.status, 'active'); assert.equal(state.snapshot.phase, 'model-reserved'); assert.equal(state.rootUsage.model, 1); assert.equal(calls, 1);
   const observed = await work({ ...f.options, durable: { ...f.options.durable, runId } }); assert.equal(observed.run.status, 'failed'); assert.equal(observed.run.snapshot.code, 'MODEL_OUTCOME_UNKNOWN'); assert.equal(f.calls(), 0);
   const again = await work({ ...f.options, durable: { ...f.options.durable, runId } }); assert.equal(again.run.snapshot.code, 'MODEL_OUTCOME_UNKNOWN'); assert.equal(f.calls(), 0); assert.equal(again.run.rootUsage.model, 1);
- } finally { clearTimeout(fallback); f.store.close(); }
+ } finally { f.store.close(); }
 });
 test('9.2 bounded Worker executes the same original Run and terminal repetition only reads its receipt', async () => {
  const f = await fixture(); try {
@@ -99,7 +99,7 @@ test('9.2 an unacknowledged model stop retains the lease and original reservatio
 });
 test('9.2 a stale original token cannot mutate or settle while the Worker holds its newer execution fence', async () => {
  const f = await fixture(); let release, pending; try {
-  const saved = await submit(f.options); const old = f.store.claim(saved.runId, 'expired-owner'); await delay(130);
+  const saved = await submit(f.options); const old = f.store.claim(saved.runId, 'expired-owner'); f.advanceLease(101);
   let enter; const entered = new Promise(resolve => { enter = resolve; }); const held = new Promise(resolve => { release = resolve; });
   pending = work({ ...f.options, durable: { ...f.options.durable, async onCheckpoint(value) { if (value.phase === 'proposal-sealed') { enter(); await held; } } } });
   await Promise.race([entered, pending.then(() => { throw new Error('Worker ended before controlled checkpoint'); })]); const current = f.store.inspect(saved.runId); assert.ok(current.fence > old.fence);
