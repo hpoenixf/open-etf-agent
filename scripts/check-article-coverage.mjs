@@ -19,7 +19,7 @@ const escapeRegex = text => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 const safePath = path => typeof path === 'string' && /^[a-zA-Z0-9_./-]+$/.test(path) && !isAbsolute(path) && !path.split('/').some(part => part === '..' || part === '.' || !part);
 
 export function validateManifest(m) {
-  ensure(m.schemaVersion === 2 && m.repository === REPO, 'Unsupported coverage manifest');
+  ensure([2, 3].includes(m.schemaVersion) && m.repository === REPO, 'Unsupported coverage manifest');
   ensure(m.versions === 'versions.json' && /^[a-f0-9]{40}$/.test(m.verifiedAt), 'Missing fixed verifiedAt or versions registry');
   ensure(m.source === 'docs/verification/article-coverage-source.json' && m.receipt === 'docs/verification/article-coverage-receipts.json', 'Unexpected evidence path');
   ensure(Number.isInteger(m.articleCatalog?.count) && m.articleCatalog.count >= 1 && m.articleCatalog.count <= 256 && m.articles?.length === m.articleCatalog.count, 'Catalog count must be an integer from 1 to 256 matching the article list');
@@ -36,9 +36,11 @@ export function validateManifest(m) {
   for (const [id, t] of Object.entries(m.targets)) {
     ensure(/^[a-z][a-z0-9-]*$/.test(id) && used.has(id), 'Unused or invalid target ID');
     if (t.kind === 'cli') ensure(Object.keys(t).sort().join(',') === 'case,kind' && CLI_CASES.has(t.case), 'Unsupported CLI case or unsafe arguments');
+    else if (m.schemaVersion === 3 && t.kind === 'scenario') ensure(Object.keys(t).sort().join(',') === 'kind,name' && ['temporal', 'ordinary-response'].includes(t.name), 'Unsupported independent scenario');
     else ensure(t.kind === 'test' && Object.keys(t).sort().join(',') === 'file,kind,name' && /^test\/[a-z0-9-]+\.test\.mjs$/.test(t.file) && typeof t.name === 'string' && t.name.length <= 200 && !/[\r\n\0|]/.test(t.name), 'Unsafe test target');
   }
-  ensure(used.size <= 16, 'Smoke target bound exceeded');
+  if (m.schemaVersion === 2) ensure(used.size <= 16, 'Smoke target bound exceeded');
+  else validateQualifications(m);
 }
 
 export function validateVersions(v, m) {
@@ -52,6 +54,7 @@ export function validateVersions(v, m) {
     ensure(entry && typeof entry.since === 'string' && Object.hasOwn(v.versions, entry.since) && Object.keys(entry).sort().join(',') === 'evidenceGitBlob,evidencePath,selector,since', 'Unknown/malformed since version');
     ensure(safePath(entry.evidencePath) && /^(src|test)\//.test(entry.evidencePath) && /^[a-f0-9]{40}$/.test(entry.evidenceGitBlob), 'Invalid historical evidence path/blob');
     ensure(entry.selector === (m.targets[id].case ?? m.targets[id].name), 'Historical selector differs from actual target');
+    if(m.schemaVersion===3 && m.targets[id].kind==='scenario') ensure(v.versions[entry.since].commit===m.qualifications[m.targetEvidence[id]].commit,'Scenario since/source identity mismatch');
   }
 }
 
@@ -75,8 +78,9 @@ export function renderTable(m, commit, versions, language = 'zh', locale) {
   ensure(commit === m.verifiedAt, 'verifiedAt differs from fixed verification source');
   const rows = m.articles.map(a => {
     const t = a.target && m.targets[a.target];
-    const label = !t ? '—' : t.kind === 'cli' ? `\`--case ${t.case}\`` : `\`${t.file}\` · ${t.name}`;
-    const link = t ? `[${commit.slice(0, 7)}](https://github.com/${REPO}/commit/${commit}) + ${label}` : label;
+    const pin = m.schemaVersion === 3 && t ? m.qualifications[m.targetEvidence[a.target]].commit : commit;
+    const label = !t ? '—' : t.kind === 'scenario' ? `independent ${t.name} CLI scenario` : t.kind === 'cli' ? `\`--case ${t.case}\`` : `\`${t.file}\` · ${t.name}`;
+    const link = t ? `[${pin.slice(0, 7)}](https://github.com/${REPO}/commit/${pin}) + ${label}` : label;
     const origin = t && versions.targets[a.target];
     const since = origin ? `[v${origin.since}](https://github.com/${REPO}/commit/${versions.versions[origin.since].commit})` : '—';
     const display = language === 'en' ? locale.articles[a.slug] : a;
@@ -266,6 +270,7 @@ async function smoke(root, m, source, identity, confirmation) {
   return receipt;
 }
 export function validateReceipt(receipt, m, source, inputHash, runnerHash) {
+  if (m.schemaVersion === 3) m = legacyManifest(m);
   ensure(m.verifiedAt === source.commit, 'Stale receipt: verifiedAt differs from fixed source');
   ensure(receipt.schemaVersion === 1 && receipt.kind === 'actual-provider-free-runtime-execution' && receipt.modelCalls === 0 && receipt.semanticStatus === 'unreviewed', 'Missing actual bounded execution receipt');
   ensure(receipt.sourceCommit === source.commit && receipt.inputSha256 === inputHash && receipt.runnerSha256 === runnerHash && receipt.targetsSha256 === sha(stable(m.targets)), 'Stale receipt: source, case or checker changed; re-run smoke or downgrade to draft');
@@ -276,6 +281,103 @@ export function validateReceipt(receipt, m, source, inputHash, runnerHash) {
     else ensure(r.observed.case === r.target.case && r.observed.completedRuns > 0 && r.observed.artifacts?.length > 0, 'Actual saved-byte CLI receipt missing');
   }
 }
+// A qualification owns its execution identity. Historical receipts never inherit main's bytes.
+const HASH40 = /^[a-f0-9]{40}$/, HASH64 = /^[a-f0-9]{64}$/;
+const SCENARIOS = {
+  temporal: { kind:'temporal-provider-free-code-qualification', version:'0.12.0', section:'independentInstall', stages:['independent-install','independent-build','independent-submit','independent-work','independent-read','independent-artifact-read'] },
+  'ordinary-response': { kind:'ordinary-response-code-qualification', version:'0.13.0', section:'independent', stages:['independent-install','independent-build','independent-start','independent-receive','independent-resume','independent-question-read','independent-artifact-read'] }
+};
+export function validateQualifications(m) {
+  ensure(m.qualifications && m.targetEvidence && Object.keys(m.targetEvidence).sort().join(',') === Object.keys(m.targets).sort().join(','), 'Each target requires exactly one evidence binding');
+  const used = new Set(), identities = new Set(); let legacy = 0;
+  for (const [id, q] of Object.entries(m.qualifications)) {
+    ensure(/^[a-z][a-z0-9-]*$/.test(id) && q && HASH40.test(q.commit) && HASH40.test(q.tree) && HASH40.test(q.evidenceCommit) && HASH40.test(q.evidenceTree), 'Invalid qualification identity');
+    ensure(['legacy-runtime','independent-scenario'].includes(q.kind), 'Unknown qualification kind');
+    ensure(q.receipt && safePath(q.receipt.path) && q.receipt.path.startsWith('docs/verification/') && HASH40.test(q.receipt.gitBlob), 'Invalid immutable receipt');
+    const identity = `${q.commit}:${q.receipt.path}`; ensure(!identities.has(identity), 'Duplicate qualification identity'); identities.add(identity);
+    if(q.kind === 'legacy-runtime') {
+      legacy++; ensure(q.commit === m.verifiedAt && q.source?.path === m.source && q.receipt.path === m.receipt && HASH40.test(q.source.gitBlob) && q.runner?.path === 'scripts/check-article-coverage.mjs' && HASH40.test(q.runner.gitBlob), 'Invalid frozen legacy qualification');
+      ensure(Object.keys(q).sort().join(',') === 'commit,evidenceCommit,evidenceTree,kind,receipt,runner,source,tree', 'Unknown legacy qualification property');
+    } else {
+      ensure(Object.hasOwn(SCENARIOS,q.scenario) && Object.keys(q).sort().join(',') === 'commit,evidenceCommit,evidenceTree,kind,receipt,scenario,tree', 'Unknown independent scenario identity');
+      ensure(q.receipt.path === (q.scenario === 'temporal' ? 'docs/verification/v012-temporal.safe.json' : 'docs/verification/v013-ordinary-response.safe.json'), 'Wrong scenario receipt path');
+    }
+  }
+  ensure(legacy === 1, 'Exactly one frozen legacy group required');
+  for(const [id,t] of Object.entries(m.targets)) {
+    const qid=m.targetEvidence[id], q=m.qualifications[qid]; ensure(q, 'Unknown target qualification'); used.add(qid);
+    if(q.kind==='independent-scenario') for(const a of m.articles.filter(a=>a.target===id)) ensure(HASH40.test(a.articleCommit),'Missing fixed scenario article source');
+    ensure(q.kind === 'legacy-runtime' ? t.kind !== 'scenario' : t.kind === 'scenario' && t.name === q.scenario, 'Target/scenario binding mismatch');
+  }
+  ensure(used.size === Object.keys(m.qualifications).length, 'Orphan qualification');
+  ensure(Object.keys(m.targets).length <= m.articleCatalog.count, 'More targets than catalog rows');
+}
+export function legacyManifest(m) {
+  validateQualifications(m);
+  const targets=Object.fromEntries(Object.entries(m.targets).filter(([id])=>m.qualifications[m.targetEvidence[id]].kind==='legacy-runtime'));
+  return {...m,schemaVersion:2,targets,articles:m.articles.filter(a=>a.target && Object.hasOwn(targets,a.target))};
+}
+export function validateScenarioReceipt(receipt, scenario) {
+  const spec=SCENARIOS[scenario], q=receipt?.[spec?.section];
+  ensure(spec && receipt.schemaVersion===1 && receipt.kind===spec.kind && receipt.version===spec.version && receipt.modelCalls===0 && q?.modelCalls===0, 'Wrong scenario qualification receipt');
+  ensure(Array.isArray(q.observations) && q.observations.length<=64 && new Set(q.observations.map(o=>o.stage)).size===q.observations.length, 'Duplicate/missing scenario stages');
+  for(const stage of spec.stages) {
+    const o=q.observations.find(o=>o.stage===stage); ensure(o?.exitCode===0 && HASH64.test(o.stdoutSha256) && HASH64.test(o.stderrSha256), `Missing successful scenario stage: ${stage}`);
+  }
+  ensure(Number.isSafeInteger(q.report?.bytes) && q.report.bytes>0 && HASH64.test(q.report.sha256) && /^revision:sha256:[a-f0-9]{64}$/.test(q.report.revisionId), 'Missing original artifact identity');
+  ensure(Array.isArray(q.inputFiles) && q.inputFiles.length>0 && q.inputFiles.length<=4096 && new Set(q.inputFiles.map(f=>f.path)).size===q.inputFiles.length, 'Invalid scenario input inventory');
+  for(const f of q.inputFiles) ensure(safePath(f.path) && /^(src\/|fixtures\/|package(?:-lock)?\.json$|scripts\/build\.mjs$)/.test(f.path) && HASH64.test(f.sha256), 'Invalid scenario input');
+  if(scenario==='temporal') ensure(stable(q.taskTime)===stable({schemaVersion:'task-time@1',anchorInstant:'2026-10-28T00:30:00.000Z',timeZone:'America/Los_Angeles',taskDate:'2026-10-27',yesterday:'2026-10-26',tomorrow:'2026-10-28'}), 'Temporal original task identity differs');
+  else ensure(typeof q.questionId==='string' && q.questionId && typeof q.responseId==='string' && q.responseId && HASH64.test(q.responseHash) && HASH64.test(q.adoptionCheckpointHash) && q.paidCalls===0, 'Missing question/response/adoption identity');
+  return q;
+}
+export async function checkQualifications(root,m,gitDir) {
+  validateQualifications(m); const cache=new Map(), confirmations=[]; let totalBytes=0;
+  async function fixedBytes(q,path,expected) {
+    const key=expected;
+    if(cache.has(key)) return cache.get(key);
+    const local=git(['show',`${q.commit}:${path}`],root,gitDir);
+    let bytes;
+    if(local.status===0) bytes=Buffer.from(local.stdout,'utf8');
+    else {
+      ensure(!gitDir,'Explicit object store lacks fixed qualification bytes');
+      const response=await fetch(`https://raw.githubusercontent.com/${REPO}/${q.commit}/${path}`,{redirect:'error',signal:AbortSignal.timeout(15000)});
+      ensure(response.ok,`Fixed qualification unavailable: ${path}: HTTP ${response.status}`);bytes=Buffer.from(await response.arrayBuffer());
+    }
+    totalBytes+=bytes.length; ensure(totalBytes<=64*1024*1024,'Qualification read byte budget exceeded');
+    ensure(bytes.length<=1048576 && gitBlob(bytes)===expected,`Fixed qualification blob mismatch: ${path}`);cache.set(key,bytes);return bytes;
+  }
+  for(const [id,q] of Object.entries(m.qualifications)) {
+    const {entries,method}=await committedTree(root,q,gitDir);
+    const publication={commit:q.evidenceCommit,tree:q.evidenceTree};
+    const published=await committedTree(root,publication,gitDir);
+    const evidenceBlobs=new Map(published.entries.filter(e=>e.type==='blob' && e.mode==='100644').map(e=>[e.path,e.sha]));
+    const blobs=new Map(entries.filter(e=>e.type==='blob' && e.mode==='100644').map(e=>[e.path,e.sha]));
+    async function declared(ref,runner=false) {ensure((runner?blobs:evidenceBlobs).get(ref.path)===ref.gitBlob,`Immutable qualification declaration mismatch: ${ref.path}`);return fixedBytes(runner?q:publication,ref.path,ref.gitBlob);}
+    const receiptBytes=await declared(q.receipt), receipt=JSON.parse(receiptBytes);
+    // Local historical files must retain their published identity, not merely a valid-looking shape.
+    ensure((await readFile(join(root,q.receipt.path))).equals(receiptBytes),`Local receipt changed: ${q.receipt.path}`);
+    if(q.kind==='legacy-runtime') {
+      const sourceBytes=await declared(q.source), source=JSON.parse(sourceBytes), runner=await declared(q.runner,true);
+      ensure((await readFile(join(root,q.source.path))).equals(sourceBytes),'Legacy source bytes changed');
+      ensure(source.commit===q.commit && source.tree===q.tree,'Legacy fixed source mismatch');
+      const selected=entries.filter(e=>e.type==='blob' && (/^(src\/|fixtures\/|test\/)/.test(e.path) || ['package.json','package-lock.json'].includes(e.path))).map(e=>({path:e.path,gitBlob:e.sha})).sort((a,b)=>a.path.localeCompare(b.path));
+      ensure(stable(selected)===stable([...source.inputs].sort((a,b)=>a.path.localeCompare(b.path))),'Legacy input inventory differs from fixed tree');
+      validateReceipt(receipt,m,source,sha(stable(source.inputs)),sha(runner));
+    } else {
+      const observed=validateScenarioReceipt(receipt,q.scenario), paths=new Set(observed.inputFiles.map(f=>f.path));
+      for(const e of entries.filter(e=>e.type==='blob' && /^(src\/|fixtures\/)/.test(e.path))) ensure(paths.has(e.path),`Unqualified scenario executable input: ${e.path}`);
+      // Read fixed public bytes only; never import or execute downloaded code. Bounded four-at-a-time reads.
+      for(let start=0;start<observed.inputFiles.length;start+=4) await Promise.all(observed.inputFiles.slice(start,start+4).map(async f=>{
+        ensure(blobs.has(f.path),`Missing fixed scenario input: ${f.path}`);
+        ensure(sha(await fixedBytes(q,f.path,blobs.get(f.path)))===f.sha256,`Scenario input hash mismatch: ${f.path}`);
+      }));
+    }
+    confirmations.push({id,commit:q.commit,evidenceCommit:q.evidenceCommit,method,receiptGitBlob:q.receipt.gitBlob,executedNow:false});
+  }
+  return confirmations;
+}
+
 async function main(args) {
   let mode = '--check', gitDir;
   if (args[0]?.startsWith('--') && ['--check', '--smoke', '--render'].includes(args[0])) mode = args.shift();
@@ -291,6 +393,12 @@ async function main(args) {
     console.log('Rendered English and Chinese article-guide tables only; README entries checked; no verification claimed.'); return;
   }
   for (const view of views) ensure(view.expected === view.text, `${view.path} table drift; run --render`);
+  if (m.schemaVersion === 3) {
+    ensure(mode !== '--smoke', 'Schema 3 preserves immutable per-target receipts; no implicit historical re-execution');
+    const qualifications = await checkQualifications(ROOT, m, gitDir);
+    await confirmVersions(ROOT, versions, gitDir);
+    console.log(JSON.stringify({status:'passed', mode, qualifications, executedOnThisInvocation:false, semanticStatus:'unreviewed'}, null, 2)); return;
+  }
   const identity = await sourceIdentity(ROOT, source);
   const confirmation = await confirmCommit(ROOT, source, gitDir);
   const lineageConfirmation = await confirmVersions(ROOT, versions, gitDir);

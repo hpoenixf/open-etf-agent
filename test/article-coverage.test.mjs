@@ -113,7 +113,9 @@ test('coverage: newer verification anchors never rewrite since or invent introdu
   const table = renderTable(m, m.verifiedAt, versions);
   assert.ok(table.includes('[v0.2](https://github.com/hpoenixf/open-etf-agent/commit/a79e89bf709d4a2245b5a8652882a591ba467519)'));
   assert.ok(table.includes('[v0.5](https://github.com/hpoenixf/open-etf-agent/commit/05c0dd2dc550f4f7e5da034340ff5c3159768fcf)'));
-  assert.match(table, /\[aaaaaaa\].*--case skill-mcp/);
+  // A new display anchor cannot reassign a schema3 target's frozen execution.
+  const execution = m.schemaVersion === 3 ? m.qualifications[m.targetEvidence.mcp].commit : m.verifiedAt;
+  assert.ok(table.includes(`[${execution.slice(0,7)}](https://github.com/hpoenixf/open-etf-agent/commit/${execution}) + ` + '`--case skill-mcp`'));
   const absent = m.articles.find(a => a.slug === '021-agent-web-research-from-search-to-deep-reading');
   assert.equal(absent.status, '无公开对应'); assert.equal(absent.target, null);
   assert.ok(table.split('\n').find(line => line.includes('/articles/' + absent.slug)).includes('| — | —<br>'));

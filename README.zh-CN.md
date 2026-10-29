@@ -6,7 +6,11 @@
 
 这是一个逐模块构建研究 Agent 的开源项目：每个模块讲清一个工程选择，留下能运行、能对照的实现。先跑离线合成文档比较，不需要模型密钥；它不是实时基金研究或交易服务。
 
+适合正在学习 Agent 工程的开发者，以及想把架构文章与可运行代码对照阅读的人；不是面向寻找基金推荐的投资者。
+
 **[快速运行](#quickstart) · [阅读全部文章](https://hpoenixf.com/eff-agent-article/open-etf-agent)**
+
+[最近版本](#versions) · [架构职责](#architecture) · [适用与安全边界](#scope) · [完整资料](#documentation) · [反馈与参与](#反馈与参与)
 
 <a id="reading"></a>
 **最近模块文章**（按模块演进排序，不代表文章发布日期）：
@@ -27,8 +31,6 @@
   <small>v0.9 独立 CLI Worker 实现收录于 <a href="https://hub.xerj.org/corpus/hpoenixf--open-etf-agent">XERJ Corpus Hub</a>。</small>
 </p>
 
-[最近版本](#versions) · [架构职责](#architecture) · [适用与安全边界](#scope) · [完整资料](#documentation) · [反馈与参与](#反馈与参与)
-
 <a id="quickstart"></a>
 ## 快速运行 · Quickstart
 
@@ -46,6 +48,8 @@ npm run demo -- --case document-compare
 ```
 
 `build` 检查并复制原生 ESM 与示例资料，不是 TypeScript 类型检查。默认比较保留四题完整分母；每次 Run 在 `runs/` 下产生独立目录，包含 `report.md`、`manifest.json` 和 `run.jsonl`。CLI 输出实际运行目录；观察某次运行可使用 `node src/cli.mjs --observe runs/<run-id>`，将占位符换成实际 ID。
+
+[另有 7 个机制示例 →](docs/module-guide.zh-CN.md#继续体验另外七类示例)
 
 **交付长什么样？** 以下保留 [v0.5 合成示例回执](https://github.com/hpoenixf/open-etf-agent/blob/05c0dd2dc550f4f7e5da034340ff5c3159768fcf/docs/verification/v05-demo-receipts.json)中 T1 的历史字段节选，不是新的运行结果。v0.6 在此基础上新增不可变 Artifact / Revision ID 与附件身份；完整记录见 [v0.6 交付回读](https://github.com/hpoenixf/open-etf-agent/blob/7480b656b18192e6d6b44aab65255b970d58e6f8/docs/verification/v06-delivery-receipts.safe.json)。
 
@@ -71,7 +75,7 @@ npm run demo -- --case document-compare
 
 | 模块 | 解决什么 | 运行与核对 |
 | --- | --- | --- |
-| v0.13 · 普通回复 | 持久登记问题、释放执行、接收回复，再显式恢复同一 Run | [运行说明](docs/module-guide.zh-CN.md#v013--一个持久普通回复) · [合同与证据](openspec/changes/ordinary-response/evidence.md) |
+| v0.13 · 普通回复 | CLI 保存一个问题；提交回答后，手动继续原来的任务 | [运行说明](docs/module-guide.zh-CN.md#v013--一个持久普通回复) · [合同与证据](openspec/changes/ordinary-response/evidence.md) |
 | v0.12 · Temporal | 跨重启保持显式时区与唯一 UTC 时间锚 | [运行说明](docs/module-guide.zh-CN.md#v012--固定任务时间) · [合同与证据](openspec/changes/v012-temporal/evidence.md) |
 | v0.11 · 本地 PDF | 读取文本层物理页，同时保留原始文件 | [运行说明](docs/module-guide.zh-CN.md#v011一个本地-pdf一张物理页保留原始字节) · [合同与证据](openspec/changes/v011-local-pdf/evidence.md) |
 
@@ -129,6 +133,9 @@ npm run demo -- --case document-compare
 欢迎通过 [Issues](https://github.com/hpoenixf/open-etf-agent/issues) 提交问题或讨论。可复现问题请附**阶段/提交、Node 版本、最小步骤、预期与实际结果**；请勿提交密钥、私人资料、数据库、真实持仓或未经清理的原始日志。改进建议优先说明它解决的具体问题，以及如何验证。
 
 
+
+<details>
+<summary>旧章节精确入口（展开）</summary>
 
 ## 旧章节精确入口
 
@@ -190,3 +197,5 @@ npm run demo -- --case document-compare
 
 <a id="english"></a>
 [English](docs/module-guide.zh-CN.md#english)
+
+</details>

@@ -4,7 +4,6 @@
 
 这里承接原首页的完整命令、固定版本与历史验证解释；[验证索引](verification/README.zh-CN.md)仍是证据目录，本次整理不表示重跑测试或升级资格。首页只展示最近三个模块和首次运行闭环。
 
-<a id="english"></a>
 <a id="node-qualification-history"></a>
 ## Node 历史验证范围
 
@@ -30,6 +29,8 @@ Node 下限按实际 API 使用范围放宽到 26.8.1。当前 v0.11 的窄安�
 
 <a id="v013--一个持久普通回复"></a>
 ### v0.13 · 一个持久普通回复
+
+用人话说：这个 **CLI** 示例先把问题存下来，执行进程随后退出。你在同一本地 Session 中用命令提交回答，再在原截止时间内手动继续原任务，回答才会进入该任务的报告。它不是网页聊天界面，收到回复也不会自动继续工作。
 
 显式 `durable-response` fixture 通过原 `ask_response` 调用提一个问题，在 Session 原子登记后**释放执行 lease 并退出**。回复提交只记 receipt；用户显式 resume 同一 Run，才由原消费者采用为原 tool result。下一次实际 fixture Gateway 输入包含原回复，原 Tool Host 把它保存到原报告。
 
@@ -59,7 +60,7 @@ npm run temporal -- read --session runs/time --run fixed
 
 submit/work 须在原 300 秒执行期限内完成；完成后可稍后 `read` 核验原回执，不重放模型或工具。报告记录 today `2026-10-27`、yesterday `2026-10-26`、tomorrow `2026-10-28`。首次提交省略 `--anchor` 时只采样一次当前瞬间，显式时区仍必填。冲突的重复锚点、无效或歧义时间均拒绝；既有非 Temporal 命令不变。
 
-这是沿真实 Session/Runtime/Tool Host 的离线 Gateway fixture，不是 live 模型或市场日历资格。见[合同](../openspec/changes/v012-temporal/spec.md)和[验证](../openspec/changes/v012-temporal/evidence.md)。**代码交付与文章发布独立：** 历史固定文章回执保留，Temporal 文章另行待同步。严格文章检查拥有独立手动触发工作流，不再作为 Runtime 交付前置。
+这是沿真实 Session/Runtime/Tool Host 的离线 Gateway fixture，不是 live 模型或市场日历资格。见[合同](../openspec/changes/v012-temporal/spec.md)和[验证](../openspec/changes/v012-temporal/evidence.md)。**代码交付与文章发布独立：** 历史固定文章回执保留，当前逐目标对应关系见[文章与代码导读](articles-and-code.zh-CN.md)。严格文章检查拥有独立手动触发工作流，不再作为 Runtime 交付前置。
 
 [快速运行与实际输出](../README.zh-CN.md#quickstart)
 
@@ -223,7 +224,7 @@ node dist/src/session-cli.mjs publication-revisions --session runs/publication-d
 | [v0.9 · 单 Run Worker](https://github.com/hpoenixf/open-etf-agent/tree/dad9c6e64f32c3d7579aea96613776b40917ec6d) | 提交进程退出，不等于原工作丢失或取消 | 独立 submit/work、同 Runtime 与原 lease/fence、持久终态回读 | [309 项组合实跑](../docs/verification/v09-combined-observations.safe.json) · [历史交付等价核对](../docs/verification/v09-delivery-equivalence.safe.json) |
 | [v0.10 · 同一结果贯通消费](https://github.com/hpoenixf/open-etf-agent/tree/ff5b9273ef0d239e804f61792702cd2e94174be7) | 原选区与派生结果能核对到实际消费者 | 来源绑定计算、下一 Gateway 编码、同引用报告/CSV与独立回读 | [原实现 333 项](../docs/verification/result-consumption-observations.safe.json) · [编号窄资格](../docs/verification/v010-numbering.safe.json) · [15 个原目标新回执](../docs/verification/history/article-coverage-receipts-d943dd8452e4.json) |
 | [v0.11 · 本地 PDF](https://github.com/hpoenixf/open-etf-agent/tree/5f42c33892d57ed05e8cd09cad48573e6901995b) | 读取物理页，同时保留原文件 | 有界文本提取、原 Result、引用报告与原始 PDF 附件 | [验收与保留失败](../openspec/changes/v011-local-pdf/evidence.md) · [新目录独立交付](../docs/verification/integrated-install-pdf.safe.json) |
-| v0.12 · Temporal | 固定原任务的“今天” | 显式时区、持久任务锚、原 Context/Gateway/报告；不含市场日历 | [合同与验证](../openspec/changes/v012-temporal/evidence.md)；文章独立待同步 |
+| v0.12 · Temporal | 固定原任务的“今天” | 显式时区、持久任务锚、原 Context/Gateway/报告；不含市场日历 | [合同与验证](../openspec/changes/v012-temporal/evidence.md)；文章独立核验 |
 | v0.13 · 持久普通回复 | 提问、让出、接收，再显式恢复原 Run | 原子 receipt/adoption、精确 v2/v3 隔离；无新权限或执行器 | [合同与验证](../openspec/changes/ordinary-response/evidence.md) |
 
 **v0.2 的维护入口：** 原始阶段保留历史；[独立维护快照 `a10d4f1`](https://github.com/hpoenixf/open-etf-agent/tree/a10d4f1bd1ecc39224272156221fe29792b64094)修正了报告中涉及未读取页面的措辞。若专门体验 v0.2，请使用 `maintenance/v0.2-source-boundary`，不要把旧快照当作已修复版本。

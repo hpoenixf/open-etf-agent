@@ -24,7 +24,7 @@ jobs:
       - name: Install locked dependencies without lifecycle scripts
         run: npm ci --ignore-scripts --no-audit --no-fund
       - name: Check English and Chinese coverage views (no Runtime execution)
-        run: node --test --test-concurrency=1 scripts/article-localization.test.mjs
+        run: node --test --test-concurrency=1 scripts/article-localization.test.mjs scripts/article-per-target.test.mjs
       - name: Check existing fixed-source coverage receipts (no smoke)
         run: node scripts/check-article-coverage.mjs --check
       - name: Check fixed article backlinks (read-only; no Runtime execution)

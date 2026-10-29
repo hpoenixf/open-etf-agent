@@ -33,6 +33,8 @@ Documentation defaults to English. Use the language links at the top of the main
 <a id="v013--one-durable-ordinary-reply"></a>
 ### v0.13 · One durable ordinary reply
 
+In plain language: this **CLI** example saves a question before its process exits. In the same local Session, use another CLI command to submit your answer, then explicitly resume the original task before its deadline. The answer can appear in that task’s report. This is not a web chat interface, and receiving a reply does not automatically restart work.
+
 An explicit `durable-response` fixture asks one question through the original `ask_response` call, commits it in Session, then **yields the execution lease**. Submitting a reply records receipt only; an explicit resume of the same Run adopts it as the original tool result. The next actual fixture Gateway input contains that exact reply, and the normal Tool Host writes it into the original report.
 
 ```sh
@@ -61,7 +63,7 @@ npm run temporal -- read --session runs/time --run fixed
 
 Submit and work within the original 300-second execution deadline. `read` verifies the completed original receipt later without model/tool replay. The report records today `2026-10-27`, yesterday `2026-10-26`, tomorrow `2026-10-28`. Omit `--anchor` only on first admission to capture the current instant once; the explicit zone is still required. Conflicting repeated anchors and invalid/ambiguous instants fail closed. Existing non-Temporal commands remain unchanged.
 
-This is an offline Gateway fixture through real Session/Runtime/Tool Host, not live-model or market-calendar qualification. See [contract](../openspec/changes/v012-temporal/spec.md) and [verification](../openspec/changes/v012-temporal/evidence.md). **Code delivery and article publication are independent:** historical fixed article receipts stay intact; Temporal article synchronization is pending separately. The strict article checks have their own manually dispatched workflow and are not a Runtime delivery prerequisite.
+This is an offline Gateway fixture through real Session/Runtime/Tool Host, not live-model or market-calendar qualification. See [contract](../openspec/changes/v012-temporal/spec.md) and [verification](../openspec/changes/v012-temporal/evidence.md). **Code delivery and article publication are independent:** historical fixed article receipts stay intact; consult the [article-to-code guide](articles-and-code.md) for the current per-target mapping. The strict article checks have their own manually dispatched workflow and are not a Runtime delivery prerequisite.
 
 [Quickstart and the actual output](../README.md#quickstart)
 

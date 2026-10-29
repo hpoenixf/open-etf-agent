@@ -6,7 +6,11 @@
 
 A learning-by-building research Agent: each module explains one engineering decision and keeps a runnable implementation. Start with the offline synthetic-document comparison—no model key required. This is not a live fund-research or trading service.
 
+For developers learning Agent engineering, and readers who want to check an architecture article against runnable code—not investors looking for fund recommendations.
+
 **[Quickstart](#quickstart) · [Read all articles](https://hpoenixf.com/eff-agent-article/en/open-etf-agent)**
+
+[Latest modules](#versions) · [Architecture](#architecture) · [Scope and safety](#scope) · [Full documentation](#documentation) · [Contribute](#feedback-and-contributions)
 
 <a id="reading"></a>
 **Latest module articles** (module order, not publication dates):
@@ -27,8 +31,6 @@ A learning-by-building research Agent: each module explains one engineering deci
   <small>The v0.9 standalone CLI Worker implementation was selected for <a href="https://hub.xerj.org/corpus/hpoenixf--open-etf-agent">XERJ Corpus Hub</a>.</small>
 </p>
 
-[Latest modules](#versions) · [Architecture](#architecture) · [Scope and safety](#scope) · [Full documentation](#documentation) · [Contribute](#feedback-and-contributions)
-
 <a id="quickstart"></a>
 ## Quickstart
 
@@ -46,6 +48,8 @@ npm run demo -- --case document-compare
 ```
 
 `build` checks and copies native ESM and example data; it is not a TypeScript typecheck. The comparison keeps all four questions. Each Run creates a separate directory under `runs/` with `report.md`, `manifest.json` and `run.jsonl`. The CLI prints the actual directory. Inspect a Run with `node src/cli.mjs --observe runs/<run-id>`, replacing the placeholder with that ID.
+
+[Try seven more mechanism examples →](docs/module-guide.md#try-seven-more-kinds-of-example)
 
 **What does delivery look like?** This is a historical T1 excerpt from the [v0.5 synthetic receipts](https://github.com/hpoenixf/open-etf-agent/blob/05c0dd2dc550f4f7e5da034340ff5c3159768fcf/docs/verification/v05-demo-receipts.json), not a new execution. v0.6 adds immutable Artifact / Revision IDs and attachment identity; see its [delivery readback](https://github.com/hpoenixf/open-etf-agent/blob/7480b656b18192e6d6b44aab65255b970d58e6f8/docs/verification/v06-delivery-receipts.safe.json).
 
@@ -71,7 +75,7 @@ npm run demo -- --case document-compare
 
 | Module | What changes | Run and inspect |
 | --- | --- | --- |
-| v0.13 · Ordinary reply | Persist one question, yield execution, record a reply and explicitly resume the same Run | [Commands](docs/module-guide.md#v013--one-durable-ordinary-reply) · [Contract and evidence](openspec/changes/ordinary-response/evidence.md) |
+| v0.13 · Ordinary reply | The CLI saves a question; submit your reply, then explicitly continue the original Run | [Commands](docs/module-guide.md#v013--one-durable-ordinary-reply) · [Contract and evidence](openspec/changes/ordinary-response/evidence.md) |
 | v0.12 · Temporal | Keep one explicit timezone and UTC anchor across restart | [Commands](docs/module-guide.md#v012--fixed-task-time) · [Contract and evidence](openspec/changes/v012-temporal/evidence.md) |
 | v0.11 · Local PDF | Read one physical text-layer page while retaining the original file | [Commands](docs/module-guide.md#v011-one-local-pdf-one-physical-page-original-bytes-retained) · [Contract and evidence](openspec/changes/v011-local-pdf/evidence.md) |
 
@@ -129,6 +133,9 @@ See the [repository maintenance acceptance requirements](docs/verification/READM
 Open an [issue](https://github.com/hpoenixf/open-etf-agent/issues) with the **stage/commit, Node version, minimal reproduction, expected behavior and actual result**. Do not include keys, private material, databases, real holdings or unsanitized logs. For improvements, explain the concrete problem and how the change can be verified.
 
 
+<details>
+<summary>Older section bookmarks (expand)</summary>
+
 ## Moved section links
 
 Existing bookmarks continue to resolve; each link opens its corresponding guide section.
@@ -183,3 +190,5 @@ Existing bookmarks continue to resolve; each link opens its corresponding guide 
 
 <a id="english"></a>
 [English](docs/module-guide.md#english)
+
+</details>
