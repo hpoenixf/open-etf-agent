@@ -105,17 +105,19 @@ const schemas = [
 const responseSchema = `CREATE TABLE ordinary_responses (run_id TEXT PRIMARY KEY REFERENCES runs(run_id), question_id TEXT NOT NULL UNIQUE, response_id TEXT UNIQUE, fact TEXT NOT NULL) STRICT`;
 
 // Synchronous short transactions own facts only. No tool/model callback enters a transaction.
-export async function openSession({ directory, clock = Date.now, leaseMs = 1000, profile } = {}) {
- if (typeof directory !== 'string' || typeof clock !== 'function' || !Number.isSafeInteger(leaseMs) || leaseMs < 20 || leaseMs > 30000) fail('INVALID_SESSION_OPTIONS');
+export async function openSession({ directory, clock = Date.now, leaseMs = 1000, profile, readOnly = false } = {}) {
+ if (typeof readOnly !== 'boolean' || typeof directory !== 'string' || typeof clock !== 'function' || !Number.isSafeInteger(leaseMs) || leaseMs < 20 || leaseMs > 30000) fail('INVALID_SESSION_OPTIONS');
  if (profile !== undefined && profile !== RESPONSE_PROFILE) fail('INVALID_SESSION_PROFILE');
  let ordinary = profile === RESPONSE_PROFILE;
  const encodeDefinition = value => definitionBytes(value, ordinary);
  const encodeCheckpoint = (value, terminal = false) => checkpointBytes(value, terminal, ordinary);
- directory = await ensureSafeDirectory(directory); const filename = join(directory, 'session.sqlite');
+ directory = readOnly ? safeExistingDirectory(directory) : await ensureSafeDirectory(directory); const filename = join(directory, 'session.sqlite');
  const paths = ['', '-journal', '-wal', '-shm'].map(suffix => filename + suffix);
  for (const path of paths) safeFile(path);
+ if(readOnly&&paths.slice(1).some(path=>safeFile(path)))fail('SESSION_READ_SIDECAR_UNSUPPORTED');
  let fresh = false;
  if (!safeFile(filename)) {
+  if(readOnly)fail('SESSION_NOT_FOUND');
   if (paths.slice(1).some(path => safeFile(path))) fail('ORPHAN_SESSION_SIDECAR');
   const handle = openSync(filename, 'wx', 0o600); closeSync(handle); fresh = true;
  }
@@ -150,25 +152,25 @@ export async function openSession({ directory, clock = Date.now, leaseMs = 1000,
  let db; let closed = false; let identity; let recovery;
  try {
   // An unrelated database must not undergo writable recovery before schema admission.
-  if (!fresh) {
+  if (!fresh && !readOnly) {
    try { const reader = new DatabaseSync(filename, { readOnly: true, timeout: 1000 }); try { validateSchema(reader); } finally { reader.close(); } }
    catch (error) { if (error.errcode !== 776) throw error; recovery = prepareSessionRecovery({ filename, validateSchema }); }
   }
   recovery?.assertCurrent(); recovery?.originalStarting();
-  db = new DatabaseSync(filename, { timeout: 1000 }); safeExistingDirectory(directory); identity = safeFile(filename, true);
+  db = new DatabaseSync(filename, { timeout: 1000, readOnly }); safeExistingDirectory(directory); identity = safeFile(filename, true);
   if (fresh) {
    db.exec('PRAGMA journal_mode=DELETE; PRAGMA synchronous=FULL; BEGIN IMMEDIATE');
    try { for (const schema of ordinary ? [...schemas,responseSchema] : schemas) db.exec(schema); db.exec(`PRAGMA application_id=${APP_ID}; PRAGMA user_version=${ordinary ? 3 : SCHEMA_VERSION}; COMMIT`); }
    catch (error) { db.exec('ROLLBACK'); throw error; }
   }
   validateSchema(db);
-  db.exec('PRAGMA foreign_keys=ON; PRAGMA busy_timeout=1000; PRAGMA synchronous=FULL');
+  if(!readOnly)db.exec('PRAGMA foreign_keys=ON; PRAGMA busy_timeout=1000; PRAGMA synchronous=FULL');
   recovery?.complete(); recovery = undefined;
  } catch (error) { db?.close(); throw recovery ? recovery.failed(error) : error; }
- function ready() { if (closed) fail('SESSION_CLOSED'); safeExistingDirectory(directory); for (const path of paths) safeFile(path, path === filename); const current = safeFile(filename, true); if (current.ino !== identity.ino || current.dev !== identity.dev) fail('SESSION_FILE_REPLACED'); }
+ function ready() { if(readOnly&&paths.slice(1).some(path=>safeFile(path)))fail('SESSION_READ_SIDECAR_UNSUPPORTED'); if (closed) fail('SESSION_CLOSED'); safeExistingDirectory(directory); for (const path of paths) safeFile(path, path === filename); const current = safeFile(filename, true); if (current.ino !== identity.ino || current.dev !== identity.dev) fail('SESSION_FILE_REPLACED'); }
  function now() { const value = clock(); if (!Number.isSafeInteger(value) || value < 0) fail('INVALID_CLOCK'); return value; }
  function transaction(operation) {
-  ready(); db.exec('BEGIN IMMEDIATE');
+  ready(); db.exec(readOnly?'BEGIN':'BEGIN IMMEDIATE');
   try { const value = operation(); if (value && typeof value.then === 'function') fail('ASYNC_TRANSACTION_REFUSED'); db.exec('COMMIT'); return value; }
   catch (error) { db.exec('ROLLBACK'); throw error; }
  }
@@ -407,5 +409,6 @@ export async function openSession({ directory, clock = Date.now, leaseMs = 1000,
   },
   close() { if (!closed) { db.close(); closed = true; } }
  };
+ if(readOnly)return Object.freeze({directory,schemaVersion:ordinary?3:2,readOnly:true,inspect:store.inspect,findChild:store.findChild,close:store.close});
  return Object.freeze(store);
 }

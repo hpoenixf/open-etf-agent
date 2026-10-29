@@ -24,15 +24,16 @@ function fields(value, names) {
 export function assertHostSnapshotVersion(snapshot) {
   if (snapshot?.schemaVersion!=='tool-host@2') throw Object.assign(new Error('UNSUPPORTED_HOST_SNAPSHOT_VERSION: finish old Runs before upgrading; stored results and artifacts remain readable'),{code:'UNSUPPORTED_HOST_SNAPSHOT_VERSION'});
 }
-export async function createToolHost({ directory, extensions = [], hooks, allowedTools, allowedDocuments, enableNotes=false, restore, pdfInput, ordinaryResponse }) {
+export async function createToolHost({ directory, extensions = [], hooks, allowedTools, allowedDocuments, enableNotes=false, restore, pdfInput, ordinaryResponse, readOnly=false }) {
+  if(typeof readOnly!=='boolean'||readOnly&&pdfInput!==undefined)fail('Invalid Host read mode');
   if (restore!==undefined) assertHostSnapshotVersion(restore);
   directory = await safeDirectory(directory);
   const input = JSON.parse(await readFile(new URL('../fixtures/documents.json', import.meta.url), 'utf8'));
   if (allowedDocuments !== undefined && (!Array.isArray(allowedDocuments) || !allowedDocuments.length || allowedDocuments.some(id => !input.documents.some(d => d.id === id)))) fail('Invalid document allowlist');
   const documents = new Map(input.documents.filter(d => allowedDocuments === undefined || allowedDocuments.includes(d.id)).map(d => [d.id, d]));
-  const results = await createResultStore({ directory, allowedDocuments });
+  const results = await createResultStore({ directory, allowedDocuments, readOnly });
   const methods = new Map();
-  const artifacts = await openArtifactStore({directory});
+  const artifacts = await openArtifactStore({directory,readOnly});
   if(pdfInput!==undefined&&restore!==undefined)fail('PDF_ACTIVE_RECOVERY_UNSUPPORTED');
   const pdf=pdfInput===undefined?null:openPdfInput({input:pdfInput,store:artifacts});
   async function verifyPdf(source){if(!source.pdf)return;const original=await artifacts.read(source.pdf.originalArtifactId);if(original.format!=='pdf'||original.sha256!==source.pdf.originalSha256||original.bytes.length!==source.pdf.originalBytes)fail('PDF original artifact mismatch');}
@@ -237,6 +238,7 @@ export async function createToolHost({ directory, extensions = [], hooks, allowe
       if(binding.verifyResult)await binding.verifyResult(value);
     },
     async reconcile(call,context){
+      if(readOnly)fail('Read-only tool Host');
       const effective=context.effective||call;
       if (hooks&&!context.effective || !object(effective) || effective.id!==call.id) recoveryFail('Recovered dispatch identity mismatch');
       const binding=bindings[effective.name];
@@ -255,6 +257,7 @@ export async function createToolHost({ directory, extensions = [], hooks, allowe
     definitions,
     get receipt() { return receipt && structuredClone(receipt); },
     async execute(call, { signal, onDispatch = () => {} } = {}) {
+      if(readOnly)fail('Read-only tool Host');
       const callId = typeof call?.id === 'string' ? call.id : null;
       const start = performance.now(); let original; let effective; let binding; let requestHash;
       async function finish(result) {

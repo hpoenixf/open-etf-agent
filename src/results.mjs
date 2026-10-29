@@ -50,12 +50,13 @@ async function writeIndex(directory,entries) {
   try { file=await open(temp,'wx',0o600); await file.writeFile(JSON.stringify({schemaVersion:'content-index@1',entries})+'\n'); await file.sync(); await file.close(); file=null; await rename(temp,target); }
   finally { await file?.close().catch(()=>{}); await unlink(temp).catch(()=>{}); }
 }
-export async function createResultStore({directory,allowedDocuments}={}) {
-  directory=await safeDirectory(directory); const records=await ensureSafeDirectory(join(directory,'results'));
+export async function createResultStore({directory,allowedDocuments,readOnly=false}={}) {
+  if(typeof readOnly!=='boolean')throw new Error('Invalid result read mode');
+  directory=await safeDirectory(directory); const records=await(readOnly?safeDirectory:ensureSafeDirectory)(join(directory,'results'));
   if(allowedDocuments!==undefined&&(!Array.isArray(allowedDocuments)||!allowedDocuments.length||allowedDocuments.some(id=>typeof id!=='string'))) throw new Error('Invalid result document scope');
   const grant=allowedDocuments&&new Set(allowedDocuments); let entries;
   try { const index=parse(await boundedBytes(join(directory,'content-index.json'),131072)); if(index.schemaVersion!=='content-index@1'||!Array.isArray(index.entries)||index.entries.length>64) throw new Error('Corrupt content index'); entries=index.entries; }
-  catch(error) { if(error.code!=='ENOENT') throw error; if((await readdir(records)).length) throw new Error('Missing content index for nonempty original records'); entries=[]; await writeIndex(directory,entries); }
+  catch(error) { if(error.code!=='ENOENT'||readOnly) throw error; if((await readdir(records)).length) throw new Error('Missing content index for nonempty original records'); entries=[]; await writeIndex(directory,entries); }
   const bySource=new Map(),byRef=new Map();
   for(const item of entries) {
     if(!item||!['source','calculation','note'].includes(item.kind)||!refPattern.test(item.resultRef)||item.recordPath!==recordPath(item.resultRef)||!/^[a-f0-9]{64}$/.test(item.recordSha256)||byRef.has(item.resultRef)) throw new Error('Corrupt content index identity');
@@ -114,6 +115,7 @@ export async function createResultStore({directory,allowedDocuments}={}) {
   }
   let queue=Promise.resolve();
   function addRecord(kind,value,signal) {
+    if(readOnly)throw new Error('Read-only result store');
     const operation=queue.then(async()=>{
       signal?.throwIfAborted(); const base=baseDescriptor(kind,value); scope(base); const old=kind==='source'?bySource.get(value.sourceId):byRef.get(base.resultRef);
       if(old) { if(old.resultRef!==base.resultRef) throw new Error('Source identity rebind conflict'); await readRecord(old.resultRef,kind); return structuredClone(old); }
