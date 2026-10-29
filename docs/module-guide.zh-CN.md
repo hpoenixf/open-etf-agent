@@ -27,6 +27,22 @@ Node 下限按实际 API 使用范围放宽到 26.8.1。当前 v0.11 的窄安�
 - **一条逐步增加能力的执行链：** 新机制接回既有 Runtime / Tool Host，不另造一条只供演示的执行流程。
 - **可核对的验证边界：** 保留失败、修复和未验证项，区分程序机制通过、模型判断正确与正式发布。
 
+<a id="v014--只读消费既有memory库"></a>
+### v0.14 候选 · 不写入，只读消费既有 Memory 库
+
+**本地代码资格已通过，远端交付/Release 仍待核验。** 本期扩展原路线 1.3；v0.5 已有保存、更正、遗忘、搜索、读取和当前资格投影。新增 CLI 消费者只读打开操作者显式选择的既有库，只暴露 search/read/list 工具，不建库、不取得 writer lock。
+
+```sh
+node src/cli.mjs --case memory-recall --memory-library /absolute/path/to/existing-library --query "physical" --output runs
+node src/cli.mjs --case memory-recall --memory-library /absolute/path/to/existing-library --query "physical" --temporary --output runs
+```
+
+路径替换为通过原 Memory Owner 授权机制创建的既有库。历史 `explicit-memory` 仍是要求空库的写入/更正/遗忘示例，不要把它用作非空库消费者。新 `memory-recall` 只做本地读取，经原 Gateway 编码接固定合成 transport，**不发网络请求、不调用真实模型**。实际编码请求中的当前 revision ID/hash 驱动可见报告段与 CLI 回执；合成指南比较引用原始合成来源，Memory 只是未受信的偏好上下文，不是来源证据或授权。仅展示身份是此 fixture 的选择，不限制其他消费者合法采用获准 Memory 内容。
+
+`--temporary` 在导入/打开/扫描/读取所选 Memory Owner 前优先生效；即使已配置路径不存在也不访问它，独立合成文档任务照常完成。该选项只属于 `memory-recall`，不与 observe 或其他 case 混用。启用 Memory 时，缺失、损坏或符号链接库明确拒绝，不创建或修复。既有投影检查在后续请求中过滤已更正/遗忘的 typed entry；不能收回已发送字节，也不承诺文件库更改与分派原子化。不增加 schema、自动学习、向量服务或跨版本活跃 Run 恢复。
+
+[合同](../openspec/changes/v014-memory-consumer/spec.md) · [实际资格状态](../openspec/changes/v014-memory-consumer/evidence.md) · [原 Memory 文章](https://hpoenixf.com/eff-agent-article/articles/026-agent-memory-forget-durable-effects)。文章同步独立推进，不由代码测试推断已完成。
+
 <a id="v013--一个持久普通回复"></a>
 ### v0.13 · 一个持久普通回复
 

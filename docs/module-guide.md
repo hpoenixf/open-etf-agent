@@ -30,6 +30,22 @@ The introductory task compares **original synthetic documents**, not real funds.
 
 Documentation defaults to English. Use the language links at the top of the main entry pages for Chinese. Historical evidence, internal Specs and some detailed design documents remain in their original language; they are not presented as English translations. Article links marked **Chinese original** have no complete English edition.
 
+<a id="v014--read-only-existing-memory"></a>
+### v0.14 candidate · Read an existing Memory library without writing it
+
+**Locally qualified candidate; remote publication/release remains pending.** This extends original roadmap 1.3; v0.5 already implements Memory save/revise/forget/search/read and currentness projection. The new CLI consumer opens an operator-selected existing library read-only, exposes only search/read/list tools and never initializes it or acquires a writer lock.
+
+```sh
+node src/cli.mjs --case memory-recall --memory-library /absolute/path/to/existing-library --query "physical" --output runs
+node src/cli.mjs --case memory-recall --memory-library /absolute/path/to/existing-library --query "physical" --temporary --output runs
+```
+
+Replace the path with an existing library created through the original authorized Memory owner. Do not point the historical `explicit-memory` write/revise/forget demonstration at a nonempty library: it remains a separate empty-library fixture. The new `memory-recall` profile reads locally and uses a fixed synthetic transport through the original Gateway encoder; **no network/model call is made**. Current encoded revision IDs/hashes drive a visible report section and CLI receipt. The report's guide comparison cites original synthetic sources; Memory is untrusted preference context, not source evidence or authority. Identity-only disclosure is this fixture's choice, not a general ban on lawful Memory answers.
+
+`--temporary` wins before importing/opening/scanning/reading the selected Memory owner. Even a missing configured path is not accessed; the independent synthetic document task still completes. The option belongs only to `memory-recall`, not observe or the other cases. An enabled missing/corrupt/symlinked library fails closed without creation/repair. Existing projection checks filter superseded/forgotten typed entries before later requests; they cannot retract already sent bytes or make dispatch atomic with file-library mutation. No new schema, learning/vector service or cross-version active-Run recovery is included.
+
+[Contract](../openspec/changes/v014-memory-consumer/spec.md) · [Actual qualification status](../openspec/changes/v014-memory-consumer/evidence.md) · [Original Memory article (Chinese)](https://hpoenixf.com/eff-agent-article/articles/026-agent-memory-forget-durable-effects). Article alignment is independent and is not claimed by these code checks.
+
 <a id="v013--one-durable-ordinary-reply"></a>
 ### v0.13 · One durable ordinary reply
 
