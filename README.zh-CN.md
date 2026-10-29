@@ -71,7 +71,7 @@ npm run demo -- --case document-compare
 <a id="versions"></a>
 ## 最近三个模块
 
-`main` 包含 **v0.15.0 串行来源核对专家 Child**；正式 tag/Release 尚待发布。Main 委派一个有界 Child，再消费其原始结果与派生意见；不是并行专家平台。原离线全套与独立进程验证通过，真实机制第三批通过；前两批失败保留。
+`main` 包含 **v0.15.0 串行来源核对专家 Child**；[v0.15.0 Release](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.15.0) 已发布，实现固定于 `74bd5aa`。Main 委派一个有界 Child，再消费其原始结果与派生意见；不是并行专家平台。原离线全套与独立进程验证通过，真实机制第三批通过；前两批失败保留。
 
 | 模块 | 解决什么 | 运行与核对 |
 | --- | --- | --- |
