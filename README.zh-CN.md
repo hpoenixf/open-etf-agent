@@ -15,7 +15,7 @@
 <a id="reading"></a>
 **最近模块文章**（按模块演进排序，不代表文章发布日期）：
 
-[v0.13 · 人机交互](https://hpoenixf.com/eff-agent-article/articles/agent-durable-human-interaction-response-adoption) · [v0.12 · 任务时间](https://hpoenixf.com/eff-agent-article/articles/agent-temporal-semantics-market-calendar) · [v0.11 · 本地 PDF](https://hpoenixf.com/eff-agent-article/articles/024-agent-pdf-from-text-to-evidence)
+[v0.14 · 只读记忆消费](https://hpoenixf.com/eff-agent-article/articles/026-agent-memory-forget-durable-effects) · [v0.13 · 人机交互](https://hpoenixf.com/eff-agent-article/articles/agent-durable-human-interaction-response-adoption) · [v0.12 · 任务时间](https://hpoenixf.com/eff-agent-article/articles/agent-temporal-semantics-market-calendar)
 
 <p align="center">
   <a href="https://github.com/hpoenixf/open-etf-agent/actions/workflows/verify.yml?query=branch%3Amain"><img src="https://github.com/hpoenixf/open-etf-agent/actions/workflows/verify.yml/badge.svg?branch=main" alt="Verify (main)" height="20" /></a>
@@ -71,13 +71,13 @@ npm run demo -- --case document-compare
 <a id="versions"></a>
 ## 最近三个模块
 
-`main` 当前包含 **v0.13.0** 开发代码。模块的 Runtime 验证、GitHub Release 与模型回答质量是不同的声明。
+`main` 已包含发布的 **v0.14.0** 只读 Memory 消费者；[固定版本与 Release](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.14.0)。原 Runtime CI 与独立离线交付验证已通过，不代表真实模型理解、金融语义或生产认证。
 
 | 模块 | 解决什么 | 运行与核对 |
 | --- | --- | --- |
+| v0.14 · 只读记忆消费 | 显式选已有库，只读召回当前修订；临时模式在访问库前生效 | [运行说明](docs/module-guide.zh-CN.md#v014--只读消费既有memory库) · [合同与证据](openspec/changes/v014-memory-consumer/evidence.md) |
 | v0.13 · 普通回复 | CLI 保存一个问题；提交回答后，手动继续原来的任务 | [运行说明](docs/module-guide.zh-CN.md#v013--一个持久普通回复) · [合同与证据](openspec/changes/ordinary-response/evidence.md) |
 | v0.12 · Temporal | 跨重启保持显式时区与唯一 UTC 时间锚 | [运行说明](docs/module-guide.zh-CN.md#v012--固定任务时间) · [合同与证据](openspec/changes/v012-temporal/evidence.md) |
-| v0.11 · 本地 PDF | 读取文本层物理页，同时保留原始文件 | [运行说明](docs/module-guide.zh-CN.md#v011一个本地-pdf一张物理页保留原始字节) · [合同与证据](openspec/changes/v011-local-pdf/evidence.md) |
 
 [完整固定版本与运行说明](docs/module-guide.zh-CN.md#versions) · [机器可读版本谱系](versions.json) · [GitHub Releases](https://github.com/hpoenixf/open-etf-agent/releases)
 

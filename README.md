@@ -15,7 +15,7 @@ For developers learning Agent engineering, and readers who want to check an arch
 <a id="reading"></a>
 **Latest module articles** (module order, not publication dates):
 
-[v0.13 · Human interaction](https://hpoenixf.com/eff-agent-article/en/articles/agent-durable-human-interaction-response-adoption) · [v0.12 · Task time](https://hpoenixf.com/eff-agent-article/en/articles/agent-temporal-semantics-market-calendar) · [v0.11 · Local PDF](https://hpoenixf.com/eff-agent-article/en/articles/024-agent-pdf-from-text-to-evidence)
+[v0.14 · Read-only Memory](https://hpoenixf.com/eff-agent-article/en/articles/026-agent-memory-forget-durable-effects) · [v0.13 · Human interaction](https://hpoenixf.com/eff-agent-article/en/articles/agent-durable-human-interaction-response-adoption) · [v0.12 · Task time](https://hpoenixf.com/eff-agent-article/en/articles/agent-temporal-semantics-market-calendar)
 
 <p align="center">
   <a href="https://github.com/hpoenixf/open-etf-agent/actions/workflows/verify.yml?query=branch%3Amain"><img src="https://github.com/hpoenixf/open-etf-agent/actions/workflows/verify.yml/badge.svg?branch=main" alt="Verify (main)" height="20" /></a>
@@ -71,13 +71,13 @@ npm run demo -- --case document-compare
 <a id="versions"></a>
 ## Latest three modules
 
-`main` contains **v0.13.0** development code. A module's Runtime qualification, a GitHub Release and model-answer quality are separate claims.
+`main` includes the released **v0.14.0** read-only Memory consumer; see the [fixed version and Release](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.14.0). Original Runtime CI and independent offline delivery checks passed; this is not real-model, financial-semantic or production certification.
 
 | Module | What changes | Run and inspect |
 | --- | --- | --- |
+| v0.14 · Read-only Memory | Select an existing library and consume current revisions; temporary mode takes effect before library access | [Commands](docs/module-guide.md#v014--read-only-existing-memory) · [Contract and evidence](openspec/changes/v014-memory-consumer/evidence.md) |
 | v0.13 · Ordinary reply | The CLI saves a question; submit your reply, then explicitly continue the original Run | [Commands](docs/module-guide.md#v013--one-durable-ordinary-reply) · [Contract and evidence](openspec/changes/ordinary-response/evidence.md) |
 | v0.12 · Temporal | Keep one explicit timezone and UTC anchor across restart | [Commands](docs/module-guide.md#v012--fixed-task-time) · [Contract and evidence](openspec/changes/v012-temporal/evidence.md) |
-| v0.11 · Local PDF | Read one physical text-layer page while retaining the original file | [Commands](docs/module-guide.md#v011-one-local-pdf-one-physical-page-original-bytes-retained) · [Contract and evidence](openspec/changes/v011-local-pdf/evidence.md) |
 
 [All fixed versions and commands](docs/module-guide.md#versions) · [Machine-readable version lineage](versions.json) · [GitHub Releases](https://github.com/hpoenixf/open-etf-agent/releases)
 

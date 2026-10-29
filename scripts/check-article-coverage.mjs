@@ -18,7 +18,12 @@ const json = async path => JSON.parse(await readFile(path, 'utf8'));
 const escapeRegex = text => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 const safePath = path => typeof path === 'string' && /^[a-zA-Z0-9_./-]+$/.test(path) && !isAbsolute(path) && !path.split('/').some(part => part === '..' || part === '.' || !part);
 
+// One catalog article may describe several independently qualified bounded slices.
+export function articleSlices(row) {
+  return [row, ...(row.additionalTargets || []).map(slice=>({...slice,slug:row.slug,title:row.title}))];
+}
 export function validateManifest(m) {
+  ensure(Buffer.byteLength(JSON.stringify(m))<=1048576,'Coverage manifest exceeds existing read budget');
   ensure([2, 3].includes(m.schemaVersion) && m.repository === REPO, 'Unsupported coverage manifest');
   ensure(m.versions === 'versions.json' && /^[a-f0-9]{40}$/.test(m.verifiedAt), 'Missing fixed verifiedAt or versions registry');
   ensure(m.source === 'docs/verification/article-coverage-source.json' && m.receipt === 'docs/verification/article-coverage-receipts.json', 'Unexpected evidence path');
@@ -29,6 +34,16 @@ export function validateManifest(m) {
     ensure(/^[a-z0-9-]+$/.test(a.slug) && !slugs.has(a.slug), 'Invalid or duplicate article slug'); slugs.add(a.slug);
     ensure(typeof a.title === 'string' && a.title && typeof a.scope === 'string' && a.scope && !/[\n|]/.test(a.title + a.scope), 'Invalid title or slice boundary');
     ensure(['verified', '无公开对应', 'draft'].includes(a.status), 'Invalid article status');
+    ensure(a.additionalTargets === undefined || m.schemaVersion===3 && Array.isArray(a.additionalTargets) && a.additionalTargets.length>0, 'Invalid additional article slices');
+    for(const slice of a.additionalTargets || []) ensure(slice && Object.keys(slice).sort().join(',')==='articleCommit,scope,status,target','Unexpected additional slice fields');
+    const ids=new Set();
+    for(const slice of articleSlices(a)) {
+      ensure(!ids.has(slice.target), 'Duplicate target in one article');ids.add(slice.target);
+      if(slice!==a) ensure(Object.keys(slice).sort().join(',')==='articleCommit,scope,slug,status,target,title' && typeof slice.scope==='string' && slice.scope && !/[\n|]/.test(slice.scope) && ['verified','draft'].includes(slice.status) && /^[a-f0-9]{40}$/.test(slice.articleCommit), 'Invalid additional slice');
+      if (slice.target !== null) { ensure(Object.hasOwn(m.targets,slice.target),'Unknown target');used.add(slice.target); }
+      ensure(slice.status!=='verified' || slice.target!==null,'Verified article lacks an executable target');
+      ensure(slice.status!=='无公开对应' || slice.target===null,'No-public-match article cannot claim a target');
+    }
     if (a.target !== null) { ensure(Object.hasOwn(m.targets, a.target), 'Unknown target'); used.add(a.target); }
     ensure(a.status !== 'verified' || a.target !== null, 'Verified article lacks an executable target');
     ensure(a.status !== '无公开对应' || a.target === null, 'No-public-match article cannot claim a target');
@@ -36,7 +51,7 @@ export function validateManifest(m) {
   for (const [id, t] of Object.entries(m.targets)) {
     ensure(/^[a-z][a-z0-9-]*$/.test(id) && used.has(id), 'Unused or invalid target ID');
     if (t.kind === 'cli') ensure(Object.keys(t).sort().join(',') === 'case,kind' && CLI_CASES.has(t.case), 'Unsupported CLI case or unsafe arguments');
-    else if (m.schemaVersion === 3 && t.kind === 'scenario') ensure(Object.keys(t).sort().join(',') === 'kind,name' && ['temporal', 'ordinary-response'].includes(t.name), 'Unsupported independent scenario');
+    else if (m.schemaVersion === 3 && t.kind === 'scenario') ensure(Object.keys(t).sort().join(',') === 'kind,name' && Object.hasOwn(SCENARIOS,t.name), 'Unsupported independent scenario');
     else ensure(t.kind === 'test' && Object.keys(t).sort().join(',') === 'file,kind,name' && /^test\/[a-z0-9-]+\.test\.mjs$/.test(t.file) && typeof t.name === 'string' && t.name.length <= 200 && !/[\r\n\0|]/.test(t.name), 'Unsafe test target');
   }
   if (m.schemaVersion === 2) ensure(used.size <= 16, 'Smoke target bound exceeded');
@@ -64,9 +79,12 @@ export function validateLocalization(locale, m) {
   ensure(locale?.schemaVersion === 1 && locale.kind === 'coverage-display-only', 'Invalid coverage localization');
   ensure(Object.keys(locale).sort().join(',') === 'articles,kind,schemaVersion', 'Localization cannot introduce execution facts');
   ensure(locale.articles && stable(Object.keys(locale.articles).sort()) === stable(m.articles.map(a => a.slug).sort()), 'Localization must cover exactly the registered articles');
-  for (const a of Object.values(locale.articles)) {
-    ensure(a && Object.keys(a).sort().join(',') === 'articleBlob,englishAvailable,scope,title', 'Localization cannot override status, target or since');
+  for (const [slug,a] of Object.entries(locale.articles)) {
+    ensure(a && Object.keys(a).sort().join(',') === (a.additionalScopes ? 'additionalScopes,articleBlob,englishAvailable,scope,title' : 'articleBlob,englishAvailable,scope,title'), 'Localization cannot override status, target or since');
     ensure(typeof a.title === 'string' && a.title && typeof a.scope === 'string' && a.scope && !/[\n\r|<>\[\]]/.test(a.title + a.scope), 'Invalid localized display text');
+    const row=m.articles.find(row=>row.slug===slug), extra=row.additionalTargets || [];
+    ensure(stable(Object.keys(a.additionalScopes || {}).sort())===stable(extra.map(s=>s.target).sort()),'Additional localized scopes differ from article targets');
+    for(const v of Object.values(a.additionalScopes || {})) ensure(v && Object.keys(v).sort().join(',')==='articleBlob,scope' && typeof v.scope==='string' && v.scope && !/[\n\r|<>\[\]]/.test(v.scope) && /^[a-f0-9]{40}$/.test(v.articleBlob),'Invalid additional localized scope');
     ensure(typeof a.englishAvailable === 'boolean' && /^[a-f0-9]{40}$/.test(a.articleBlob), 'Missing article-language availability or fixed body identity');
   }
 }
@@ -77,17 +95,21 @@ export function renderTable(m, commit, versions, language = 'zh', locale) {
   validateVersions(versions, m);
   ensure(commit === m.verifiedAt, 'verifiedAt differs from fixed verification source');
   const rows = m.articles.map(a => {
-    const t = a.target && m.targets[a.target];
-    const pin = m.schemaVersion === 3 && t ? m.qualifications[m.targetEvidence[a.target]].commit : commit;
-    const label = !t ? '—' : t.kind === 'scenario' ? `independent ${t.name} CLI scenario` : t.kind === 'cli' ? `\`--case ${t.case}\`` : `\`${t.file}\` · ${t.name}`;
-    const link = t ? `[${pin.slice(0, 7)}](https://github.com/${REPO}/commit/${pin}) + ${label}` : label;
-    const origin = t && versions.targets[a.target];
-    const since = origin ? `[v${origin.since}](https://github.com/${REPO}/commit/${versions.versions[origin.since].commit})` : '—';
-    const display = language === 'en' ? locale.articles[a.slug] : a;
-    const translated = language === 'en' && display.englishAvailable;
-    const suffix = language === 'en' && !translated ? ' (Chinese original)' : '';
-    const status = language === 'en' && a.status === '无公开对应' ? 'no public counterpart' : a.status;
-    return `| [${display.title}](https://hpoenixf.com/eff-agent-article/${translated ? 'en/' : ''}articles/${a.slug})${suffix} | ${since} | ${link}<br>${display.scope} | ${status} |`;
+    const display=language==='en'?locale.articles[a.slug]:a;
+    const translated=language==='en' && display.englishAvailable;
+    const suffix=language==='en' && !translated?' (Chinese original)':'';
+    const pieces=articleSlices(a).map((slice,index)=>{
+      const t=slice.target && m.targets[slice.target];
+      const pin=m.schemaVersion===3 && t?m.qualifications[m.targetEvidence[slice.target]].commit:commit;
+      const label=!t?'—':t.kind==='scenario'?`independent ${t.name} CLI scenario`:t.kind==='cli'?`\`--case ${t.case}\``:`\`${t.file}\` · ${t.name}`;
+      const link=t?`[${pin.slice(0,7)}](https://github.com/${REPO}/commit/${pin}) + ${label}`:label;
+      const origin=t && versions.targets[slice.target];
+      const since=origin?`[v${origin.since}](https://github.com/${REPO}/commit/${versions.versions[origin.since].commit})`:'—';
+      const scope=language==='en'?(index?display.additionalScopes[slice.target].scope:display.scope):slice.scope;
+      const status=language==='en' && slice.status==='无公开对应'?'no public counterpart':slice.status;
+      return {since,link:link+'<br>'+scope,status};
+    });
+    return `| [${display.title}](https://hpoenixf.com/eff-agent-article/${translated?'en/':''}articles/${a.slug})${suffix} | ${pieces.map(p=>p.since).join('<br>')} | ${pieces.map(p=>p.link).join('<br><br>')} | ${pieces.map(p=>p.status).join('<br>')} |`;
   });
   const header = language === 'en' ? '| Article | since · introduced in | verifiedAt · fixed commit + case | Status |' : '| 文章 | since · 引入版本 | verifiedAt · 固定 commit + case | 状态 |';
   return [BEGIN, header, '| --- | --- | --- | --- |', ...rows, END].join('\n');
@@ -167,11 +189,17 @@ export async function sourceIdentity(root, source) {
 function git(args, root, gitDir) {
   return spawnSync('git', [...(gitDir ? ['--git-dir', resolve(gitDir)] : ['-C', root]), ...args], { encoding: 'utf8', timeout: 10000, maxBuffer: 4 * 1024 * 1024, env: { PATH: process.env.PATH, GIT_CONFIG_NOSYSTEM: '1', GIT_CONFIG_GLOBAL: '/dev/null', GIT_NO_REPLACE_OBJECTS: '1' }, shell: false });
 }
+export async function metadataFailure(response,path) {
+  let message='unavailable';
+  try {const body=await response.json();if(typeof body.message==='string')message=body.message.replace(/\b(?:\d{1,3}\.){3}\d{1,3}\b/g,'[redacted IP]').replace(/\b(?:[a-f0-9]{1,4}:){2,}[a-f0-9:]+\b/gi,'[redacted IP]').slice(0,240);} catch {}
+  const diagnostic={message,remaining:response.headers.get('x-ratelimit-remaining'),reset:response.headers.get('x-ratelimit-reset'),retryAfter:response.headers.get('retry-after')};
+  return `COMMIT_UNCONFIRMED: public metadata HTTP ${response.status} (${path}); ${JSON.stringify(diagnostic)}; not a complete pass`;
+}
 async function github(path) {
   let response;
   try { response = await fetch(`https://api.github.com/repos/${REPO}/${path}`, { headers: { Accept: 'application/vnd.github+json' }, signal: AbortSignal.timeout(15000), redirect: 'error' }); }
   catch { throw new Error('COMMIT_UNCONFIRMED: no local Git object and public GitHub metadata unavailable; not a complete pass'); }
-  ensure(response.ok, `COMMIT_UNCONFIRMED: public metadata HTTP ${response.status}; not a complete pass`);
+  if(!response.ok) throw new Error(await metadataFailure(response,path));
   return response.json();
 }
 async function committedTree(root, source, gitDir) {
@@ -284,6 +312,7 @@ export function validateReceipt(receipt, m, source, inputHash, runnerHash) {
 // A qualification owns its execution identity. Historical receipts never inherit main's bytes.
 const HASH40 = /^[a-f0-9]{40}$/, HASH64 = /^[a-f0-9]{64}$/;
 const SCENARIOS = {
+  'memory-consumer': {kind:'memory-consumer-provider-free-code-qualification',version:'0.14.0',section:'independent',receipt:'docs/verification/v014-memory-consumer.safe.json',stages:['independent-install','independent-build','independent-seed','independent-recall','independent-artifact-read','independent-memory-read','independent-temporary']},
   temporal: { kind:'temporal-provider-free-code-qualification', version:'0.12.0', section:'independentInstall', stages:['independent-install','independent-build','independent-submit','independent-work','independent-read','independent-artifact-read'] },
   'ordinary-response': { kind:'ordinary-response-code-qualification', version:'0.13.0', section:'independent', stages:['independent-install','independent-build','independent-start','independent-receive','independent-resume','independent-question-read','independent-artifact-read'] }
 };
@@ -300,22 +329,25 @@ export function validateQualifications(m) {
       ensure(Object.keys(q).sort().join(',') === 'commit,evidenceCommit,evidenceTree,kind,receipt,runner,source,tree', 'Unknown legacy qualification property');
     } else {
       ensure(Object.hasOwn(SCENARIOS,q.scenario) && Object.keys(q).sort().join(',') === 'commit,evidenceCommit,evidenceTree,kind,receipt,scenario,tree', 'Unknown independent scenario identity');
-      ensure(q.receipt.path === (q.scenario === 'temporal' ? 'docs/verification/v012-temporal.safe.json' : 'docs/verification/v013-ordinary-response.safe.json'), 'Wrong scenario receipt path');
+      ensure(q.receipt.path === (SCENARIOS[q.scenario].receipt || (q.scenario === 'temporal' ? 'docs/verification/v012-temporal.safe.json' : 'docs/verification/v013-ordinary-response.safe.json')), 'Wrong scenario receipt path');
     }
   }
   ensure(legacy === 1, 'Exactly one frozen legacy group required');
   for(const [id,t] of Object.entries(m.targets)) {
     const qid=m.targetEvidence[id], q=m.qualifications[qid]; ensure(q, 'Unknown target qualification'); used.add(qid);
-    if(q.kind==='independent-scenario') for(const a of m.articles.filter(a=>a.target===id)) ensure(HASH40.test(a.articleCommit),'Missing fixed scenario article source');
+    if(q.kind==='independent-scenario') for(const a of m.articles.flatMap(articleSlices).filter(a=>a.target===id)) ensure(HASH40.test(a.articleCommit),'Missing fixed scenario article source');
     ensure(q.kind === 'legacy-runtime' ? t.kind !== 'scenario' : t.kind === 'scenario' && t.name === q.scenario, 'Target/scenario binding mismatch');
   }
   ensure(used.size === Object.keys(m.qualifications).length, 'Orphan qualification');
-  ensure(Object.keys(m.targets).length <= m.articleCatalog.count, 'More targets than catalog rows');
+  const relationships=m.articles.flatMap(articleSlices).filter(a=>a.target!==null);
+  ensure(Object.keys(m.targets).every(id=>relationships.some(a=>a.target===id)), 'Orphan target');
+  const targetSignatures=Object.entries(m.targets).map(([id,t])=>m.targetEvidence[id]+':'+stable(Object.keys(t).sort().map(key=>[key,t[key]])));
+  ensure(new Set(targetSignatures).size===targetSignatures.length,'Duplicate executable target identity');
 }
 export function legacyManifest(m) {
   validateQualifications(m);
   const targets=Object.fromEntries(Object.entries(m.targets).filter(([id])=>m.qualifications[m.targetEvidence[id]].kind==='legacy-runtime'));
-  return {...m,schemaVersion:2,targets,articles:m.articles.filter(a=>a.target && Object.hasOwn(targets,a.target))};
+  return {...m,schemaVersion:2,targets,articles:m.articles.flatMap(articleSlices).filter(a=>a.target && Object.hasOwn(targets,a.target))};
 }
 export function validateScenarioReceipt(receipt, scenario) {
   const spec=SCENARIOS[scenario], q=receipt?.[spec?.section];
@@ -328,6 +360,15 @@ export function validateScenarioReceipt(receipt, scenario) {
   ensure(Array.isArray(q.inputFiles) && q.inputFiles.length>0 && q.inputFiles.length<=4096 && new Set(q.inputFiles.map(f=>f.path)).size===q.inputFiles.length, 'Invalid scenario input inventory');
   for(const f of q.inputFiles) ensure(safePath(f.path) && /^(src\/|fixtures\/|package(?:-lock)?\.json$|scripts\/build\.mjs$)/.test(f.path) && HASH64.test(f.sha256), 'Invalid scenario input');
   if(scenario==='temporal') ensure(stable(q.taskTime)===stable({schemaVersion:'task-time@1',anchorInstant:'2026-10-28T00:30:00.000Z',timeZone:'America/Los_Angeles',taskDate:'2026-10-27',yesterday:'2026-10-26',tomorrow:'2026-10-28'}), 'Temporal original task identity differs');
+  else if(scenario==='memory-consumer') {
+    ensure(q.unchangedLibraryBytes===true && q.paidCalls===0 && q.memory?.mode==='read-only' && typeof q.memory.libraryId==='string','Missing read-only Memory observation');
+    const consumed=q.memory.consumed,requests=q.memory.requests;
+    ensure(Array.isArray(consumed) && consumed.length>0 && Array.isArray(requests) && requests.length>0,'Missing actual Memory consumption');
+    for(const item of consumed) ensure(item.libraryId===q.memory.libraryId && typeof item.id==='string' && Number.isSafeInteger(item.revision) && item.revision>0 && HASH64.test(item.sha256),'Invalid current Memory identity');
+    ensure(requests.some(req=>Array.isArray(req.consumed) && req.consumed.length===0) && requests.some(req=>stable(req.consumed)===stable(consumed)), 'No transition from retrieval to actual request consumption');
+    for(const req of requests) ensure(Number.isSafeInteger(req.sequence) && req.sequence>0 && HASH64.test(req.bodySha256) && Array.isArray(req.consumed) && req.consumed.every(item=>consumed.some(c=>stable(c)===stable(item))), 'Request consumed a different Memory identity');
+    ensure(Array.isArray(q.libraryInventory) && q.libraryInventory.length>0 && q.libraryInventory.every(f=>safePath(f.path) && HASH64.test(f.sha256) && Number.isSafeInteger(f.bytes) && f.bytes>0),'Missing unchanged library inventory');
+  }
   else ensure(typeof q.questionId==='string' && q.questionId && typeof q.responseId==='string' && q.responseId && HASH64.test(q.responseHash) && HASH64.test(q.adoptionCheckpointHash) && q.paidCalls===0, 'Missing question/response/adoption identity');
   return q;
 }

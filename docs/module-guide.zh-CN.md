@@ -16,7 +16,7 @@ Node 下限按实际 API 使用范围放宽到 26.8.1。当前 v0.11 的窄安�
 
 目前的入门案例是**原创合成文档比较**，并非真实基金分析。v0.7 另有小型原创合成 ETF Plugin，仍不是实时基金数据或真实基金分析；完整 ETF 研究工具在后续路线中。本项目不提供交易执行或投资建议。
 
-> **从哪里开始？** 直接克隆 `main`，无需切换阶段分支：当前是下述已验证 **v0.13.0 持久普通回复** 代码；此前已验证 **v0.11.0** 新增唯一模块“本地文本层 PDF 输入”，对应[固定源码 `5f42c33`](https://github.com/hpoenixf/open-etf-agent/tree/5f42c33892d57ed05e8cd09cad48573e6901995b)；此前九个阶段的 `phase/v0.1`—`phase/v0.9` 及 [v0.9 Worker 快照 `dad9c6e`](https://github.com/hpoenixf/open-etf-agent/tree/dad9c6e64f32c3d7579aea96613776b40917ec6d)、 [v0.8 Publication 快照 `2c096ce`](https://github.com/hpoenixf/open-etf-agent/tree/2c096ce47be2161f97531170af07ef255872f8b1)、 [v0.7 固定快照 `5f70dc0`](https://github.com/hpoenixf/open-etf-agent/tree/5f70dc0b4760ad70ef211f4823828ab2fee5c525) 与 [v0.6 固定快照 `7480b65`](https://github.com/hpoenixf/open-etf-agent/tree/7480b656b18192e6d6b44aab65255b970d58e6f8) 不被改写。这里的“稳定”指下文 **provider-free Runtime 回归与交付验证**，**不等于正式 Release、模型能力认证、live 恢复认证或生产就绪**。项目原创代码采用 [MIT 许可证](../LICENSE)，第三方组件保留各自许可。
+> **从哪里开始？** 直接克隆 `main`，当前已发布 **v0.14.0 只读 Memory 消费者**。需要固定复现时使用 [phase/v0.14](https://github.com/hpoenixf/open-etf-agent/tree/phase/v0.14) 或 [v0.14.0 Release](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.14.0)，实现固定于 [`a3e1059`](https://github.com/hpoenixf/open-etf-agent/tree/a3e1059a78cf8a4f70fe89d61563980f3d24bc15)。旧阶段与标签保持不变。原 Runtime CI、独立离线安装与交付读回已通过；这不等于真实模型理解、live 恢复、金融语义或生产就绪认证。项目原创代码采用 [MIT 许可证](../LICENSE)，第三方组件保留各自许可。
 
 > **想看真实模型调用，而不只是 fixture？** 先看 [v0.1–v0.5 的 16 次真实 HTTP 调用记录](#live-evidence)，再看 [独立受限 live runner 的入口与授权条件](#live-entry)。这些是历史证据，不是 v0.11 live 恢复资格。
 
@@ -28,9 +28,9 @@ Node 下限按实际 API 使用范围放宽到 26.8.1。当前 v0.11 的窄安�
 - **可核对的验证边界：** 保留失败、修复和未验证项，区分程序机制通过、模型判断正确与正式发布。
 
 <a id="v014--只读消费既有memory库"></a>
-### v0.14 候选 · 不写入，只读消费既有 Memory 库
+### v0.14 · 不写入，只读消费既有 Memory 库
 
-**本地代码资格已通过，远端交付/Release 仍待核验。** 本期扩展原路线 1.3；v0.5 已有保存、更正、遗忘、搜索、读取和当前资格投影。新增 CLI 消费者只读打开操作者显式选择的既有库，只暴露 search/read/list 工具，不建库、不取得 writer lock。
+**已发布 [v0.14.0](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.14.0)，[原 Runtime CI](https://github.com/hpoenixf/open-etf-agent/actions/runs/40810369725)已通过。** 本期扩展原路线 1.3；v0.5 已有保存、更正、遗忘、搜索、读取和当前资格投影。新增 CLI 消费者只读打开操作者显式选择的既有库，只暴露 search/read/list 工具，不建库、不取得 writer lock。
 
 ```sh
 node src/cli.mjs --case memory-recall --memory-library /absolute/path/to/existing-library --query "physical" --output runs
@@ -41,7 +41,7 @@ node src/cli.mjs --case memory-recall --memory-library /absolute/path/to/existin
 
 `--temporary` 在导入/打开/扫描/读取所选 Memory Owner 前优先生效；即使已配置路径不存在也不访问它，独立合成文档任务照常完成。该选项只属于 `memory-recall`，不与 observe 或其他 case 混用。启用 Memory 时，缺失、损坏或符号链接库明确拒绝，不创建或修复。既有投影检查在后续请求中过滤已更正/遗忘的 typed entry；不能收回已发送字节，也不承诺文件库更改与分派原子化。不增加 schema、自动学习、向量服务或跨版本活跃 Run 恢复。
 
-[合同](../openspec/changes/v014-memory-consumer/spec.md) · [实际资格状态](../openspec/changes/v014-memory-consumer/evidence.md) · [原 Memory 文章](https://hpoenixf.com/eff-agent-article/articles/026-agent-memory-forget-durable-effects)。文章同步独立推进，不由代码测试推断已完成。
+[合同](../openspec/changes/v014-memory-consumer/spec.md) · [实际资格状态](../openspec/changes/v014-memory-consumer/evidence.md) · [Memory 文章与合成库准备步骤](https://hpoenixf.com/eff-agent-article/articles/026-agent-memory-forget-durable-effects)。[双语正文源码已发布](https://github.com/hpoenixf/eff-agent-article/tree/d6a61550e1afc103a03c31a30c51f8be96eb8b8d)，与代码资格及阅读站部署分别核验。
 
 <a id="v013--一个持久普通回复"></a>
 ### v0.13 · 一个持久普通回复
@@ -66,7 +66,7 @@ npm run session -- response-status --session runs/reply --run RUN_ID
 <a id="v012--固定任务时间"></a>
 ### v0.12 · 固定任务时间
 
-上一稳定模块是 **0.12.0 Temporal**（原路线候选 1.2）。任务显式选择时区并保存唯一 UTC 时间锚；跨午夜、宿主时区改变和进程重启都不能把原任务的“今天”改成另一天。执行截止时间和数据截止日仍是不同事实。Python **保留未编号并延期**，直到具备合格隔离环境。
+**0.12.0 Temporal** 模块（原路线候选 1.2）。任务显式选择时区并保存唯一 UTC 时间锚；跨午夜、宿主时区改变和进程重启都不能把原任务的“今天”改成另一天。执行截止时间和数据截止日仍是不同事实。Python **保留未编号并延期**，直到具备合格隔离环境。
 
 ```sh
 npm run temporal -- submit --session runs/time --run fixed --time-zone America/Los_Angeles --anchor 2026-10-28T00:30:00.000Z
@@ -242,6 +242,7 @@ node dist/src/session-cli.mjs publication-revisions --session runs/publication-d
 | [v0.11 · 本地 PDF](https://github.com/hpoenixf/open-etf-agent/tree/5f42c33892d57ed05e8cd09cad48573e6901995b) | 读取物理页，同时保留原文件 | 有界文本提取、原 Result、引用报告与原始 PDF 附件 | [验收与保留失败](../openspec/changes/v011-local-pdf/evidence.md) · [新目录独立交付](../docs/verification/integrated-install-pdf.safe.json) |
 | v0.12 · Temporal | 固定原任务的“今天” | 显式时区、持久任务锚、原 Context/Gateway/报告；不含市场日历 | [合同与验证](../openspec/changes/v012-temporal/evidence.md)；文章独立核验 |
 | v0.13 · 持久普通回复 | 提问、让出、接收，再显式恢复原 Run | 原子 receipt/adoption、精确 v2/v3 隔离；无新权限或执行器 | [合同与验证](../openspec/changes/ordinary-response/evidence.md) |
+| [v0.14 · 只读记忆消费](https://github.com/hpoenixf/open-etf-agent/tree/a3e1059a78cf8a4f70fe89d61563980f3d24bc15) | 让既有库当前修订进入实际请求，而非只停在搜索命中 | 原 Memory 只读消费者；临时模式在访问库前生效，无写锁或新权限 | [固定离线资格与独立交付](verification/v014-memory-consumer.safe.json) · [Release](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.14.0) |
 
 **v0.2 的维护入口：** 原始阶段保留历史；[独立维护快照 `a10d4f1`](https://github.com/hpoenixf/open-etf-agent/tree/a10d4f1bd1ecc39224272156221fe29792b64094)修正了报告中涉及未读取页面的措辞。若专门体验 v0.2，请使用 `maintenance/v0.2-source-boundary`，不要把旧快照当作已修复版本。
 

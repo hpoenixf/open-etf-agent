@@ -105,6 +105,7 @@ const syntheticBodies = () => {
     const body = Buffer.from(text), blob = createHash('sha1').update(Buffer.concat([Buffer.from(`blob ${body.length}\0`), body])).digest('hex');
     display.articles[row.slug].englishAvailable = false;
     display.articles[row.slug].articleBlob = blob;
+    for(const value of Object.values(display.articles[row.slug].additionalScopes || {})) value.articleBlob=blob;
     files.set('articles/' + row.slug + '.md', text);
   }
   const read = async path => { if (!files.has(path)) throw new Error('missing body: ' + path); return files.get(path); };

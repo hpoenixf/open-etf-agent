@@ -17,7 +17,7 @@ A small research Agent that grows through independently runnable development sna
 
 The introductory task compares **original synthetic documents**, not real funds. The small synthetic ETF Plugin introduced in v0.7 is also not a live financial-data service. Complete ETF research tools remain on the roadmap. This project does not execute trades or provide investment advice.
 
-> **Start here:** clone `main`; there is no need to switch phase branches. It contains the current qualified **v0.13.0 ordinary responses** code described below; the previously qualified **v0.11.0** added one local text-layer PDF module. The [fixed v0.11 source is `5f42c33`](https://github.com/hpoenixf/open-etf-agent/tree/5f42c33892d57ed05e8cd09cad48573e6901995b). Earlier `phase/v0.1`–`phase/v0.9` snapshots remain unchanged. Here, **stable means the bounded, provider-free Runtime and delivery checks described below**; it does not mean a formal release, model-quality certification, live-recovery qualification or production readiness. Original project code is [MIT-licensed](../LICENSE); third-party licenses remain in force.
+> **Start here:** clone `main` for the released **v0.14.0 read-only Memory consumer**. For fixed reproduction, use [phase/v0.14](https://github.com/hpoenixf/open-etf-agent/tree/phase/v0.14) or the [v0.14.0 Release](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.14.0), both pinned to [`a3e1059`](https://github.com/hpoenixf/open-etf-agent/tree/a3e1059a78cf8a4f70fe89d61563980f3d24bc15). Earlier phases and tags remain unchanged. Original Runtime CI and independent offline installation/delivery readback passed; this is not real-model, live-recovery, financial-semantic or production certification. Original project code is [MIT-licensed](../LICENSE); third-party licenses remain in force.
 
 > **Looking for real model calls?** Read the [16 historical HTTP calls across v0.1–v0.5](#live-evidence), then the [separate live runner and its authorization requirements](#live-entry). Those records do not qualify v0.11 live recovery.
 
@@ -31,9 +31,9 @@ The introductory task compares **original synthetic documents**, not real funds.
 Documentation defaults to English. Use the language links at the top of the main entry pages for Chinese. Historical evidence, internal Specs and some detailed design documents remain in their original language; they are not presented as English translations. Article links marked **Chinese original** have no complete English edition.
 
 <a id="v014--read-only-existing-memory"></a>
-### v0.14 candidate · Read an existing Memory library without writing it
+### v0.14 · Read an existing Memory library without writing it
 
-**Locally qualified candidate; remote publication/release remains pending.** This extends original roadmap 1.3; v0.5 already implements Memory save/revise/forget/search/read and currentness projection. The new CLI consumer opens an operator-selected existing library read-only, exposes only search/read/list tools and never initializes it or acquires a writer lock.
+**Published as [v0.14.0](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.14.0); [original Runtime CI](https://github.com/hpoenixf/open-etf-agent/actions/runs/40810369725) passed.** This extends original roadmap 1.3; v0.5 already implements Memory save/revise/forget/search/read and currentness projection. The new CLI consumer opens an operator-selected existing library read-only, exposes only search/read/list tools and never initializes it or acquires a writer lock.
 
 ```sh
 node src/cli.mjs --case memory-recall --memory-library /absolute/path/to/existing-library --query "physical" --output runs
@@ -44,7 +44,7 @@ Replace the path with an existing library created through the original authorize
 
 `--temporary` wins before importing/opening/scanning/reading the selected Memory owner. Even a missing configured path is not accessed; the independent synthetic document task still completes. The option belongs only to `memory-recall`, not observe or the other cases. An enabled missing/corrupt/symlinked library fails closed without creation/repair. Existing projection checks filter superseded/forgotten typed entries before later requests; they cannot retract already sent bytes or make dispatch atomic with file-library mutation. No new schema, learning/vector service or cross-version active-Run recovery is included.
 
-[Contract](../openspec/changes/v014-memory-consumer/spec.md) · [Actual qualification status](../openspec/changes/v014-memory-consumer/evidence.md) · [Original Memory article (Chinese)](https://hpoenixf.com/eff-agent-article/articles/026-agent-memory-forget-durable-effects). Article alignment is independent and is not claimed by these code checks.
+[Contract](../openspec/changes/v014-memory-consumer/spec.md) · [Actual qualification status](../openspec/changes/v014-memory-consumer/evidence.md) · [Memory article and synthetic-library preparation](https://hpoenixf.com/eff-agent-article/en/articles/026-agent-memory-forget-durable-effects). The [published bilingual article source](https://github.com/hpoenixf/eff-agent-article/tree/d6a61550e1afc103a03c31a30c51f8be96eb8b8d) is separate from code qualification and the reading-site deployment.
 
 <a id="v013--one-durable-ordinary-reply"></a>
 ### v0.13 · One durable ordinary reply
@@ -69,7 +69,7 @@ New ordinary-response Sessions use exact schema v3; default profiles remain exac
 <a id="v012--fixed-task-time"></a>
 ### v0.12 · Fixed task time
 
-The previous stable module is **0.12.0 Temporal** (formerly roadmap candidate 1.2). A task opts into an explicit time zone and one persisted UTC anchor; midnight, host TZ changes and process restart do not turn its “today” into a different date. Existing execution deadlines and data-cutoff semantics are unchanged. Python remains **unnumbered and deferred** until a qualified isolation environment is available.
+In **0.12.0 Temporal** (formerly roadmap candidate 1.2), a task opts into an explicit time zone and one persisted UTC anchor; midnight, host TZ changes and process restart do not turn its “today” into a different date. Existing execution deadlines and data-cutoff semantics are unchanged. Python remains **unnumbered and deferred** until a qualified isolation environment is available.
 
 ```sh
 npm run temporal -- submit --session runs/time --run fixed --time-zone America/Los_Angeles --anchor 2026-10-28T00:30:00.000Z
@@ -245,6 +245,7 @@ Every link fixes the code, lockfile, examples and evidence from that stage. Reco
 | [v0.11 · Local PDF](https://github.com/hpoenixf/open-etf-agent/tree/5f42c33892d57ed05e8cd09cad48573e6901995b) | Select a physical page while retaining the original file | Bounded text extraction, original Result, cited report and exact PDF attachment | [Qualification and preserved failures](../openspec/changes/v011-local-pdf/evidence.md) · [Fresh independent delivery](../docs/verification/integrated-install-pdf.safe.json) |
 | v0.12 · Temporal | Keep the original task’s “today” | Explicit zone, persisted anchor, original Context/Gateway/report; no market calendar | [Contract and verification](../openspec/changes/v012-temporal/evidence.md); article sync separate |
 | v0.13 · Ordinary reply | Ask, yield, receive and explicitly resume the same Run | Atomic receipt/adoption, exact v2/v3 isolation; no new authority or executor | [Contract and verification](../openspec/changes/ordinary-response/evidence.md) |
+| [v0.14 · Read-only Memory](https://github.com/hpoenixf/open-etf-agent/tree/a3e1059a78cf8a4f70fe89d61563980f3d24bc15) | Bring current revisions from an existing library into actual encoded requests | Existing Memory read-only consumer; temporary mode precedes library IO, without writer locks or new authority | [Fixed offline qualification and independent delivery](verification/v014-memory-consumer.safe.json) · [Release](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.14.0) |
 
 **v0.2 maintenance:** the original snapshot is historical. [Maintenance snapshot `a10d4f1`](https://github.com/hpoenixf/open-etf-agent/tree/a10d4f1bd1ecc39224272156221fe29792b64094) corrects report wording about unread pages. Use `maintenance/v0.2-source-boundary` specifically for the corrected v0.2 experience; the original snapshot was not rewritten.
 
