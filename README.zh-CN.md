@@ -122,6 +122,10 @@ npm run demo -- --case document-compare
 <a id="roadmap"></a>
 [完整路线](docs/plan/v1-to-v2.zh-CN.md)：规划不等于交付。Web 取材、隔离 Python 与更丰富 PDF 能力分别评估，不打包作已实现承诺。
 
+## 作者
+
+**作者 hpoenixf：10 年开发经验，5 年金融业务系统研发经验。** 全栈偏前端，关注 Agent 工程实践，把系统设计、可运行实现与验证证据连接起来。 [个人博客](https://hpoenixf.com/) · [工程文集](https://hpoenixf.com/eff-agent-article/)
+
 ## 许可证
 
 项目原创代码与随附原创文档采用 [MIT](LICENSE)，Copyright © 2026 Huang Pengfei。第三方依赖、随附 Evidence Kit 及其 NOTICE 保留原许可证与归属；本许可不覆盖项目之外的私有源码、书稿或外部内容。`private: true` 仅防止意外发布 npm 包，不限制 MIT 授予的使用权。

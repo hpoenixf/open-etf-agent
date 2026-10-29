@@ -122,6 +122,10 @@ The model proposes; code checks authority and executes. Session, Publication and
 <a id="roadmap"></a>
 [Roadmap](docs/plan/v1-to-v2.md): planned is not shipped. Web acquisition, isolated Python and richer PDF capabilities are separate candidates, not bundled promises.
 
+## Author
+
+**By hpoenixf: 10 years of software development experience, including 5 years building financial business systems.** A frontend-leaning full-stack developer focused on Agent engineering, connecting system design with runnable implementations and verification evidence. [Personal blog](https://hpoenixf.com/) · [Engineering articles](https://hpoenixf.com/eff-agent-article/en/)
+
 ## License
 
 Original code and accompanying original documentation are [MIT](LICENSE), Copyright © 2026 Huang Pengfei. Third-party dependencies, the accompanying Evidence Kit and NOTICE retain their own licenses and attribution. This license does not cover external private source, manuscripts or other outside content. `private: true` prevents accidental npm publication; it does not restrict MIT rights.
