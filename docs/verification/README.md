@@ -189,3 +189,7 @@ The later [main CI failure](https://github.com/hpoenixf/open-etf-agent/actions/r
 
 - [Fixed qualification record](https://github.com/hpoenixf/open-etf-agent/blob/1de10d40b69db9a83ff990c32e8e272121052814/docs/verification/memory-recovery-clock.safe.json): actual execution at `e1b8e4edde724548fab16d8ca4b205379bfa7f30`, 374/374 Runtime tests, 56/56 maintenance consumers and 16 fixture targets. These are separate from the original 373-case execution, not replacement history or live-model qualification.
 - [Recovery publication status](v011-recovery-publication.safe.json): the newly published bilingual article pair is verified independently; final main CI and canonical site publication are separate gates.
+
+## v0.15 · Serial specialist Child
+
+[Contract, failures and boundaries](../../openspec/changes/serial-specialist-child/evidence.md) · [Final source and structured full-suite qualification](../../openspec/changes/serial-specialist-child/final-verification.safe.json) · [Three real-call batch summaries](../../openspec/changes/serial-specialist-child/live-evidence.safe.json). The first two failures remain; the third mechanism and bounded synthetic-source comparison passed. Of 10 attempts, 9 responses explicitly report zero Go balance charge and 1 has unknown usage/cost. This does not upgrade the older Child coverage receipt or certify general semantics or live recovery.

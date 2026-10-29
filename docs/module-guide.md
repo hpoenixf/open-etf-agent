@@ -17,7 +17,7 @@ A small research Agent that grows through independently runnable development sna
 
 The introductory task compares **original synthetic documents**, not real funds. The small synthetic ETF Plugin introduced in v0.7 is also not a live financial-data service. Complete ETF research tools remain on the roadmap. This project does not execute trades or provide investment advice.
 
-> **Start here:** clone `main` for the released **v0.14.0 read-only Memory consumer**. For fixed reproduction, use [phase/v0.14](https://github.com/hpoenixf/open-etf-agent/tree/phase/v0.14) or the [v0.14.0 Release](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.14.0), both pinned to [`a3e1059`](https://github.com/hpoenixf/open-etf-agent/tree/a3e1059a78cf8a4f70fe89d61563980f3d24bc15). Earlier phases and tags remain unchanged. Original Runtime CI and independent offline installation/delivery readback passed; this is not real-model, live-recovery, financial-semantic or production certification. Original project code is [MIT-licensed](../LICENSE); third-party licenses remain in force.
+> **Start here:** `main` provides v0.15.0 serial specialist Child; the formal tag/Release is pending. Existing v0.14 and earlier fixed phases/tags remain unchanged. The public CLI is an offline synthetic example; recorded real calls are not authorization for arbitrary new calls.
 
 > **Looking for real model calls?** Read the [16 historical HTTP calls across v0.1–v0.5](#live-evidence), then the [separate live runner and its authorization requirements](#live-entry). Those records do not qualify v0.11 live recovery.
 
@@ -29,6 +29,20 @@ The introductory task compares **original synthetic documents**, not real funds.
 - **Explicit evidence boundaries:** failures, fixes and unverified behavior are retained. Runtime correctness, model judgment and release status are separate claims.
 
 Documentation defaults to English. Use the language links at the top of the main entry pages for Chinese. Historical evidence, internal Specs and some detailed design documents remain in their original language; they are not presented as English translations. Article links marked **Chinese original** have no complete English edition.
+
+<a id="v015--serial-specialist-child"></a>
+### v0.15 · One serial source-checking specialist Child
+
+Main delegates to one source-checking Child. The Child reads original synthetic pages in an independent context; Main consumes original results plus explicitly derived advice and produces a report that can be reopened. This reuses Runtime/Gateway/Session/Result, not a new executor or parallel expert platform.
+
+```sh
+node src/specialist-cli.mjs run --session runs/specialist-demo
+node src/specialist-cli.mjs read --session runs/specialist-demo --run RUN_ID
+```
+
+Replace `RUN_ID` with the actual output and start in a new owned directory. `read` opens original Session/Result/Artifact storage read-only. Bounded `resume` supports only settled handoffs, not unknown dispatched model requests or cross-template compatibility with older WIP Runs. The public CLI accepts no model key and runs a fixture.
+
+[Contract and retained failures](../openspec/changes/serial-specialist-child/evidence.md) · [Final current-source qualification](../openspec/changes/serial-specialist-child/final-verification.safe.json) · [Three real-mechanism batches](../openspec/changes/serial-specialist-child/live-evidence.safe.json). Two batches failed and one mechanism completed; 10 physical attempts include 9 responses explicitly reporting zero Go balance charge and 1 with unknown usage/cost, not presumed free or refunded. Bounded synthetic-source comparison is not general semantic, investment-quality or live-recovery certification. The older Child article and coverage qualification retain their original sources, not upgraded to this version.
 
 <a id="v014--read-only-existing-memory"></a>
 ### v0.14 · Read an existing Memory library without writing it
@@ -246,6 +260,7 @@ Every link fixes the code, lockfile, examples and evidence from that stage. Reco
 | v0.12 · Temporal | Keep the original task’s “today” | Explicit zone, persisted anchor, original Context/Gateway/report; no market calendar | [Contract and verification](../openspec/changes/v012-temporal/evidence.md); article sync separate |
 | v0.13 · Ordinary reply | Ask, yield, receive and explicitly resume the same Run | Atomic receipt/adoption, exact v2/v3 isolation; no new authority or executor | [Contract and verification](../openspec/changes/ordinary-response/evidence.md) |
 | [v0.14 · Read-only Memory](https://github.com/hpoenixf/open-etf-agent/tree/a3e1059a78cf8a4f70fe89d61563980f3d24bc15) | Bring current revisions from an existing library into actual encoded requests | Existing Memory read-only consumer; temporary mode precedes library IO, without writer locks or new authority | [Fixed offline qualification and independent delivery](verification/v014-memory-consumer.safe.json) · [Release](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.14.0) |
+| v0.15 · Serial specialist Child | Main consumes original results from one source-checking Child | Advice is not original evidence; unknown requests are not retried; public CLI is a fixture | [Final qualification](../openspec/changes/serial-specialist-child/final-verification.safe.json) |
 
 **v0.2 maintenance:** the original snapshot is historical. [Maintenance snapshot `a10d4f1`](https://github.com/hpoenixf/open-etf-agent/tree/a10d4f1bd1ecc39224272156221fe29792b64094) corrects report wording about unread pages. Use `maintenance/v0.2-source-boundary` specifically for the corrected v0.2 experience; the original snapshot was not rewritten.
 

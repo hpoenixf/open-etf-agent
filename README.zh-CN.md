@@ -71,13 +71,13 @@ npm run demo -- --case document-compare
 <a id="versions"></a>
 ## 最近三个模块
 
-`main` 已包含发布的 **v0.14.0** 只读 Memory 消费者；[固定版本与 Release](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.14.0)。原 Runtime CI 与独立离线交付验证已通过，不代表真实模型理解、金融语义或生产认证。
+`main` 包含 **v0.15.0 串行来源核对专家 Child**；正式 tag/Release 尚待发布。Main 委派一个有界 Child，再消费其原始结果与派生意见；不是并行专家平台。原离线全套与独立进程验证通过，真实机制第三批通过；前两批失败保留。
 
 | 模块 | 解决什么 | 运行与核对 |
 | --- | --- | --- |
+| v0.15 · 串行专家 Child | 一个有界来源核对 Child，原始结果回到 Main；派生意见不取得事实权限 | [运行说明](docs/module-guide.zh-CN.md#v015--serial-specialist-child) · [合同与证据](openspec/changes/serial-specialist-child/evidence.md) |
 | v0.14 · 只读记忆消费 | 显式选已有库，只读召回当前修订；临时模式在访问库前生效 | [运行说明](docs/module-guide.zh-CN.md#v014--只读消费既有memory库) · [合同与证据](openspec/changes/v014-memory-consumer/evidence.md) |
 | v0.13 · 普通回复 | CLI 保存一个问题；提交回答后，手动继续原来的任务 | [运行说明](docs/module-guide.zh-CN.md#v013--一个持久普通回复) · [合同与证据](openspec/changes/ordinary-response/evidence.md) |
-| v0.12 · Temporal | 跨重启保持显式时区与唯一 UTC 时间锚 | [运行说明](docs/module-guide.zh-CN.md#v012--固定任务时间) · [合同与证据](openspec/changes/v012-temporal/evidence.md) |
 
 [完整固定版本与运行说明](docs/module-guide.zh-CN.md#versions) · [机器可读版本谱系](versions.json) · [GitHub Releases](https://github.com/hpoenixf/open-etf-agent/releases)
 
@@ -105,6 +105,8 @@ npm run demo -- --case document-compare
 - **按实际资格理解：** `completed` 表示执行完成，模型质量仍未评审。离线测试与 CI 不等于生产、安全、金融语义或 live 恢复认证。
 - **授权必须显式：** 可信 Plugin 是有本地进程权限的 JavaScript，不是沙箱。PDF 解析器也不是恶意文件安全沙箱；不包含 OCR、视觉/表格理解或活跃 PDF 恢复。示例不暗示已具备 Python 隔离或更广泛 Web 能力。
 - **尊重原身份与副作用：** 未知已派发请求不自动重试，宿主停止不等于用户取消；SQLite fence 不提供通用外部恰好一次保证。[升级前完成或隔离不兼容的活跃 Run](docs/upgrade-guide.md)。
+
+**v0.15 真实机制证据：** [三批记录](openspec/changes/serial-specialist-child/live-evidence.safe.json)：共 10 次物理请求，9 个返回明确 Go 余额收费为 0，1 次响应的用量与费用未知，未视为免费或退款。仅合成来源的有界核对通过，不代表通用模型质量、金融语义或 live 恢复认证。未知已派发请求不自动重试；旧 WIP 模板的活动 Run 不承诺跨模板恢复。默认公开 CLI 仍为离线 fixture，不提供模型密钥参数。
 
 <a id="live-evidence"></a>
 **真实模型调用：** [v0.1–v0.5 的 16 次历史 HTTP 请求](docs/module-guide.zh-CN.md#live-evidence)与当前离线演示分开；HTTP 200 或保存报告都不是任务质量认证。

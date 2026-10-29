@@ -1,6 +1,6 @@
 # Candidate v0.15 — one serial source-checking Child
 
-Status: design frozen and implementation code-reviewed; provider-free qualification passed. Actual model qualification and publication remain open. Candidate number is not a release promise.
+Status: design frozen and implementation code-reviewed; provider-free and bounded actual model qualification passed, with earlier failures retained. Publication remains separate. Candidate number is not a release promise.
 
 Base: hpoenixf/open-etf-agent main `d7882908a84b19c68548c6d8857e15ab5c820214` (v0.14 implementation `a3e1059a78cf8a4f70fe89d61563980f3d24bc15`). Re-read current main before any implementation; preserve intervening work.
 

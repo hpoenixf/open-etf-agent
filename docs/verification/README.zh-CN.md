@@ -185,3 +185,7 @@
 
 - [固定资格记录](https://github.com/hpoenixf/open-etf-agent/blob/1de10d40b69db9a83ff990c32e8e272121052814/docs/verification/memory-recovery-clock.safe.json)：在 `e1b8e4edde724548fab16d8ca4b205379bfa7f30` 实际执行 Runtime 374/374、维护消费者 56/56 与 16 fixture targets。它们独立于原始 373 case 执行，不替换历史，也不是模型语义资格。
 - [恢复发布状态](v011-recovery-publication.safe.json)：新发布的双语文章固定配对已独立核验；最终 main CI 和正式站点发布是另外的门。
+
+## v0.15 · 串行专家 Child
+
+[合同、失败与边界](../../openspec/changes/serial-specialist-child/evidence.md) · [最终源码与 full-suite 结构化资格](../../openspec/changes/serial-specialist-child/final-verification.safe.json) · [真实调用三批摘要](../../openspec/changes/serial-specialist-child/live-evidence.safe.json)。前两批失败保留；第三批机制与有界合成来源核对通过。10 次请求中 9 个返回明确 Go 余额收费为 0，1 次费用/用量未知。该证据不是旧 Child coverage 回执的升级，也不代表通用语义或 live 恢复认证。

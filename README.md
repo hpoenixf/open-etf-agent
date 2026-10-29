@@ -71,13 +71,13 @@ npm run demo -- --case document-compare
 <a id="versions"></a>
 ## Latest three modules
 
-`main` includes the released **v0.14.0** read-only Memory consumer; see the [fixed version and Release](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.14.0). Original Runtime CI and independent offline delivery checks passed; this is not real-model, financial-semantic or production certification.
+`main` includes **v0.15.0 serial source-checking specialist Child**; the formal tag/Release is pending. Main delegates to one bounded Child, then consumes its original results and derived advice—not a parallel expert platform. Offline full-suite and independent-process checks passed; the third real-mechanism batch passed, with the two earlier failures retained.
 
 | Module | What changes | Run and inspect |
 | --- | --- | --- |
+| v0.15 · Serial specialist Child | One bounded source-checking Child returns original results to Main; derived advice gains no source authority | [Commands](docs/module-guide.md#v015--serial-specialist-child) · [Contract and evidence](openspec/changes/serial-specialist-child/evidence.md) |
 | v0.14 · Read-only Memory | Select an existing library and consume current revisions; temporary mode takes effect before library access | [Commands](docs/module-guide.md#v014--read-only-existing-memory) · [Contract and evidence](openspec/changes/v014-memory-consumer/evidence.md) |
 | v0.13 · Ordinary reply | The CLI saves a question; submit your reply, then explicitly continue the original Run | [Commands](docs/module-guide.md#v013--one-durable-ordinary-reply) · [Contract and evidence](openspec/changes/ordinary-response/evidence.md) |
-| v0.12 · Temporal | Keep one explicit timezone and UTC anchor across restart | [Commands](docs/module-guide.md#v012--fixed-task-time) · [Contract and evidence](openspec/changes/v012-temporal/evidence.md) |
 
 [All fixed versions and commands](docs/module-guide.md#versions) · [Machine-readable version lineage](versions.json) · [GitHub Releases](https://github.com/hpoenixf/open-etf-agent/releases)
 
@@ -105,6 +105,8 @@ The model proposes; code checks authority and executes. Session, Publication and
 - **Read the qualification literally:** `completed` means execution finished; model quality remains unreviewed. Offline tests and CI are not production, security, financial-semantic or live-recovery certification.
 - **Keep authority explicit:** trusted Plugins run local JavaScript and are not sandboxed. The PDF parser is not a hostile-file security sandbox; no OCR, visual/table interpretation or active-PDF recovery is offered. Python isolation and broader Web capabilities are not implied by the examples.
 - **Respect original identity and effects:** unknown dispatched requests are not automatically retried; host stop is not user cancellation. SQLite fencing does not provide general external exactly-once effects. [Finish or isolate incompatible active Runs before upgrade](docs/upgrade-guide.md).
+
+**v0.15 real-mechanism evidence:** [Three retained batches](openspec/changes/serial-specialist-child/live-evidence.safe.json): 10 physical attempts; 9 responses explicitly report zero Go balance charge, while 1 response has unknown usage and cost—not presumed free or refunded. Only bounded synthetic-source comparison passed, not general model quality, financial semantics or live-recovery certification. Unknown dispatched requests are not automatically retried; active Runs from the older WIP template have no cross-template recovery promise. The public CLI remains an offline fixture with no model-key option.
 
 <a id="live-evidence"></a>
 **Real model calls:** [16 historical HTTP requests across v0.1–v0.5](docs/module-guide.md#live-evidence) are distinct from current offline demos. HTTP 200 or a saved report does not certify task quality.
