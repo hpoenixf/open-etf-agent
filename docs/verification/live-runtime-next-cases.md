@@ -2,6 +2,8 @@
 
 This is a plan, not an execution record. No additional model request was made for these cases. The first five-version batch remains unchanged.
 
+**2026-10-29 qualification amendment:** The Runtime-only paragraph and case table below retain the original 2026-10-27 plan; they are not sufficient release qualification under the [current live-task release gate](../live-validation.md#release-qualification). Rechecking earlier versions must pre-register representative normal cases, fixed inputs and repetitions, preserve every attempt/cost, and assess the normal end-to-end floor separately from abnormal Runtime handling. If a selected case requires the listed mechanism but it is not exercised, keep that coverage status and do not qualify the case as successful; tasks that do not require the mechanism need not invoke it. This dated clarification records no new execution and changes no historical receipt.
+
 The project acceptance policy updated on 2026-10-27 selects Runtime correctness, not model prose quality. Do not tune the prompt, relax validation or repeat a response to obtain a preferred answer. Check actual dispatches, identities, budgets, effects and stored bytes; retain lawful refusal as such. If a model does not select a mechanism, mark it **not exercised**, not failed or passed.
 
 | Stage | Small additional case | Observable Runtime assertions | Not claimed |

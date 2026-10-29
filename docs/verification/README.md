@@ -10,7 +10,7 @@ Start with **observations** (what happened, failures and fixes), then inspect **
 
 - `*.safe.json` and provenance contain portable, sanitized engineering summaries and source hashes. They are neither raw logs nor tamper-proof execution attestations. Databases, credentials, dependency caches and private raw logs are not published.
 - A stage's test count describes that execution against its frozen inputs only; **counts are not added across versions as a measure of maturity**. Earlier candidate / prepared-only / license-pending wording records the state at that time; it does not override the current MIT license and publicly available code stated on the home page.
-- Acceptance covers the Runtime: legal boundaries, original-content identity, durable effects and actual delivery. This index makes no acceptance claim about the semantic quality of model answers.
+- The historical acceptance records cover the Runtime: legal boundaries, original-content identity, durable effects and actual delivery. They make no acceptance claim about the semantic quality of model answers. New normal real-task qualification and earlier-version rechecks follow the [2026-10-29 release amendment](../live-validation.md#release-qualification); this index does not upgrade historical results.
 
 ## Full-suite execution and version lineage
 
@@ -174,6 +174,7 @@ Pinned implementation: [source commit `e442f60`](https://github.com/hpoenixf/ope
 
 Use the existing checks and evidence paths above. These are requirements for accepting a change, not a claim that every planned module has met them.
 
+- **Normal real-task release gate — 2026-10-29:** Follow the [existing live-validation qualification policy](../live-validation.md#release-qualification) for new releases and earlier comparable live validations: pre-register fixed code/provider/model/prompt, representative cases, repetitions, deadlines and budget. The requested recheck uses five independent runs per version and at least 4/5 successes, never pooled across versions or expanded to five per case; 80% observed is not population reliability or full-feature certification. Required capability coverage remains separate. Keep task success, answer quality, mechanism coverage and abnormal Runtime handling separate; all failures/timeouts/unknowns remain counted. Safety/authorization/provenance violations or unintended duplicate effects block release. Changes require a justified new freeze and qualification while preserving all prior attempts/costs. Earlier tags/receipts stay immutable; dated rechecks state insufficient evidence and remediation without retroactively inventing release-time acceptance.
 - **One runnable module per version:** identify its input, processing, observable output and readback; keep supporting adapters within existing responsibilities.
 - **One consistent set of facts:** code, fixed version, amended plan, both language entrypoints and articles must agree on the actual selected case. Introduction history and current verification pins remain distinct.
 - **Honest boundaries:** preserve compatibility limits, failures and unverified behavior. Fixture execution, live-model quality and production readiness are different evidence.
