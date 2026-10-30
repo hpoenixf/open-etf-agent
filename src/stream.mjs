@@ -1,5 +1,15 @@
 import { normalizeChatCompletion } from './gateway.mjs';
 const invalid = () => { throw new Error('INCOMPLETE_OR_UNSUPPORTED_STREAM'); };
+const idDiagnostics = new WeakMap();
+export function projectStreamProtocolDiagnostic(error) {
+  const value = error && typeof error === 'object' ? idDiagnostics.get(error) : null;
+  return value ? { ...value } : null;
+}
+const invalidId = details => {
+  const error = new Error('INCOMPLETE_OR_UNSUPPORTED_STREAM');
+  idDiagnostics.set(error, Object.freeze({ schemaVersion: 'provider-protocol-diagnostic@1', phase: 'stream-event', reason: 'TOOL_FRAGMENT_ID', ...details }));
+  throw error;
+};
 
 export async function readChatStream(body, { signal, maxBytes = 262144 } = {}) {
   if (!Number.isSafeInteger(maxBytes) || maxBytes < 1 || maxBytes > 1048576) throw new Error('Invalid stream size limit');
@@ -21,15 +31,20 @@ export async function readChatStream(body, { signal, maxBytes = 262144 } = {}) {
     if (chunk.choices.length !== 1 || chunk.choices[0].index !== 0 || finish) invalid();
     const choice = chunk.choices[0]; const delta = choice.delta;
     if (!delta || typeof delta !== 'object' || Array.isArray(delta)) invalid();
-    if (delta.role !== undefined && delta.role !== 'assistant') invalid();
+    if (delta.role != null && delta.role !== 'assistant') invalid();
     if (delta.refusal || delta.audio || delta.function_call) invalid();
     if (delta.content != null) { if (typeof delta.content !== 'string') invalid(); content += delta.content; }
-    if (delta.tool_calls !== undefined) {
+    if (delta.tool_calls != null) {
       if (!Array.isArray(delta.tool_calls)) invalid();
       for (const part of delta.tool_calls) {
         if (!Number.isSafeInteger(part.index) || part.index < 0 || part.index >= 16 || (part.type && part.type !== 'function')) invalid();
         const call = calls.get(part.index) || { id: '', type: 'function', function: { name: '', arguments: '' } };
-        if (part.id !== undefined) { if (typeof part.id !== 'string' || (call.id && call.id !== part.id)) invalid(); call.id = part.id; }
+        if (part.id !== undefined && !(part.id === null && call.id)) { if (typeof part.id !== 'string' || (call.id && call.id !== part.id)) invalidId({
+          idFailure:typeof part.id!=='string'?'non-string':'conflicting-string',
+          incomingIdKind:part.id===null?'null':Array.isArray(part.id)?'array':typeof part.id,
+          previousIdPresent:Boolean(call.id),
+          ...(typeof part.id==='string'?{incomingEmpty:part.id.length===0}:{})
+        }); call.id = part.id; }
         for (const key of ['name', 'arguments']) if (part.function?.[key] !== undefined) { if (typeof part.function[key] !== 'string') invalid(); call.function[key] += part.function[key]; }
         calls.set(part.index, call);
       }

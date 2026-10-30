@@ -29,6 +29,7 @@ export async function run({ question, gateway, outputRoot = 'runs', requireRepor
   const messages = [{ role: 'user', content: question }];
   const usedIds = new Set(); const logErrors = [];
   let toolsDispatched = 0; let rounds = 0; let answer = ''; let status = 'failed'; let code = null; let log;
+  let corrections=0;
   let inFlight = null; const unknownEffects = []; const partialEffects = [];
   async function record(type, data = {}) {
     try { await log.write(JSON.stringify({ runId, sequence: ++record.sequence, type, ...data }) + '\n'); }
@@ -63,9 +64,15 @@ export async function run({ question, gateway, outputRoot = 'runs', requireRepor
         const partialPaths = (result.partialPaths || []).filter(path => ['report.md', 'manifest.json'].includes(path));
         if (partialPaths.length) partialEffects.push({ callId: call.id, name: call.name, partialPaths });
         messages.push({ role: 'tool', callId: call.id, result });
-        await record('tool_result', { callId: call.id, name: call.name, status: result.status, dispatched: result.dispatched, partialPaths });
+        await record('tool_result', { callId: call.id, name: call.name, status: result.status, dispatched: result.dispatched, partialPaths, ...(result.status==='rejected'?{rejectionCode:result.error,...(result.validation?{validation:result.validation}:{})}:{}) });
         if (call.name === 'save_report' && result.status === 'succeeded') await record('file_saved', { receipt: result.value });
-        if (result.status !== 'succeeded') throw failure(result.dispatched ? 'TOOL_FAILED' : 'TOOL_REJECTED');
+        if (result.status !== 'succeeded') {
+          controller.signal.throwIfAborted();
+          const correctable=proposal.calls.length===1&&call.name==='calculate_change'&&result.status==='rejected'&&result.dispatched===false&&result.validation?.schemaVersion==='builtin-calculation-validation@1'&&result.validation.repairable===true&&['CALC_REQUIRED_FIELD_MISSING','CALC_NUMBER_TYPE','CALC_UNIT_FORMAT'].includes(result.validation.code)&&!partialEffects.length&&!unknownEffects.length;
+          if(!correctable)throw failure(result.dispatched?'TOOL_FAILED':'TOOL_REJECTED');
+          if(corrections>=1)throw failure('CORRECTION_LIMIT');
+          corrections++;await record('validation_correction_offered',{callId:call.id,code:result.validation.code,remainingRounds:budget.maxRounds-rounds});
+        }
       }
     }
     if (status !== 'completed') throw failure('ROUND_LIMIT');
