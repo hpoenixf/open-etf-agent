@@ -39,6 +39,7 @@ export async function run({ question, gateway, outputRoot = 'runs', requireRepor
   const usedIds = new Set(); const logErrors = []; const hookErrors = [];
   let toolsDispatched = 0; let rounds = 0; let answer = ''; let status = 'failed'; let code = null; let log;
   let sourceSnapshots = []; let resultRefs = [];
+  let corrections = 0;
   let inFlight = null; const unknownEffects = []; const partialEffects = [];
   async function record(type, data = {}) {
     try { await log.write(JSON.stringify({ runId, rootId: rootBudget.rootId, taskId, sequence: ++record.sequence, type, ...data }) + '\n'); }
@@ -52,7 +53,7 @@ export async function run({ question, gateway, outputRoot = 'runs', requireRepor
       controller.signal.throwIfAborted();
       const workingMessages = workingInput?.memoryLibrary ? await projectMemory({messages,lookupState:ref=>{if(ref.libraryId!==workingInput.memoryLibrary.libraryId)throw failure('MEMORY_SCOPE_MISMATCH');return workingInput.memoryLibrary.state(ref.id);}}) : structuredClone(messages);
       let requestMessages = contextBytes === undefined ? workingMessages : await projectContext({ messages:workingMessages, maxBytes: contextBytes, lookupSource: host.resolveSource });
-      if(workingInput?.compaction&&Buffer.byteLength(JSON.stringify(requestMessages))>=workingInput.compaction.thresholdBytes){const compacted=await compactWorkingView({messages:workingMessages,maxBytes:contextBytes??262144,lookupSource:host.resolveSource,lookupMemoryState:workingInput.memoryLibrary?ref=>{if(ref.libraryId!==workingInput.memoryLibrary.libraryId)throw failure('MEMORY_SCOPE_MISMATCH');return workingInput.memoryLibrary.state(ref.id);}:undefined,rootBudget,summarize:workingInput.compaction.summarize,saveNote:host.persistWorkingNote,signal:controller.signal,summaryTimeoutMs:workingInput.compaction.summaryTimeoutMs});requestMessages=compacted.messages;await record('working_note',{...compacted.observation,noteRef:compacted.noteRef});}
+      if(workingInput?.compaction&&Buffer.byteLength(JSON.stringify(requestMessages))>=workingInput.compaction.thresholdBytes){const compacted=await compactWorkingView({messages:workingMessages,maxBytes:contextBytes??262144,lookupSource:host.resolveSource,canCompactHistory:host.canCompactHistory,lookupMemoryState:workingInput.memoryLibrary?ref=>{if(ref.libraryId!==workingInput.memoryLibrary.libraryId)throw failure('MEMORY_SCOPE_MISMATCH');return workingInput.memoryLibrary.state(ref.id);}:undefined,rootBudget,summarize:workingInput.compaction.summarize,saveNote:host.persistWorkingNote,signal:controller.signal,summaryTimeoutMs:workingInput.compaction.summaryTimeoutMs});requestMessages=compacted.messages;await record('working_note',{...compacted.observation,noteRef:compacted.noteRef});}
       rootBudget.claim('model'); rounds++; const modelStart = performance.now();
       const proposal = await bounded(Promise.resolve().then(() => gateway.next({ messages: requestMessages, tools: structuredClone(host.definitions), signal: controller.signal })), controller.signal);
       controller.signal.throwIfAborted(); validateProposal(proposal);
@@ -79,9 +80,15 @@ export async function run({ question, gateway, outputRoot = 'runs', requireRepor
         if(result.artifactEffects)partialEffects.push({callId:call.id,name:effectiveName,artifactEffects:structuredClone(result.artifactEffects)});
         if(result.memoryEffect)partialEffects.push({callId:call.id,name:effectiveName,memoryEffect:structuredClone(result.memoryEffect)});
         messages.push({ role: 'tool', callId: call.id, result });
-        await record('tool_result', { callId: call.id, name: effectiveName, status: result.status, dispatched: result.dispatched, partialPaths, memoryEffect:result.memoryEffect, artifactEffects:result.artifactEffects, artifactId:result.value?.artifactId, durationMs: result.durationMs, resultRef: result.value?.resultRef, sourceAcquisition: result.value?.mcp ? { serverName: result.value.mcp.serverName, protocolVersion: result.value.mcp.protocolVersion, protocolRequestId: result.value.mcp.protocolRequestId, modelCallId: result.value.mcp.modelCallId } : undefined, original: result.original, effective: result.effective, hookErrors: result.hookErrors || [] });
+        await record('tool_result', { callId: call.id, name: effectiveName, status: result.status, dispatched: result.dispatched, partialPaths, memoryEffect:result.memoryEffect, artifactEffects:result.artifactEffects, artifactId:result.value?.artifactId, durationMs: result.durationMs, resultRef: result.value?.resultRef, sourceAcquisition: result.value?.mcp ? { serverName: result.value.mcp.serverName, protocolVersion: result.value.mcp.protocolVersion, protocolRequestId: result.value.mcp.protocolRequestId, modelCallId: result.value.mcp.modelCallId } : undefined, original: result.original, effective: result.effective, hookErrors: result.hookErrors || [], ...(result.status==='rejected'?{rejectionCode:result.error,...(result.validation?{validation:result.validation}:{})}:{}) });
         if (effectiveName === 'save_report' && result.status === 'succeeded') await record('file_saved', { receipt: result.value });
-        if (result.status !== 'succeeded') throw failure(result.dispatched ? 'TOOL_FAILED' : 'TOOL_REJECTED');
+        if (result.status !== 'succeeded') {
+          controller.signal.throwIfAborted();
+          const correctable=!hooks&&effectiveName===call.name&&proposal.calls.length===1&&call.name==='calculate_change'&&result.status==='rejected'&&result.dispatched===false&&result.validation?.schemaVersion==='builtin-calculation-validation@1'&&result.validation.repairable===true&&['CALC_REQUIRED_FIELD_MISSING','CALC_NUMBER_TYPE','CALC_UNIT_FORMAT'].includes(result.validation.code)&&!result.artifactEffects?.length&&!partialEffects.length&&!unknownEffects.length;
+          if(!correctable)throw failure(result.dispatched?'TOOL_FAILED':'TOOL_REJECTED');
+          if(corrections>=1)throw failure('CORRECTION_LIMIT');
+          corrections++;await record('validation_correction_offered',{callId:call.id,code:result.validation.code,remainingRounds:budget.maxRounds-rounds});
+        }
       }
     }
     if (status !== 'completed') throw failure('ROUND_LIMIT');

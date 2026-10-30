@@ -1,18 +1,31 @@
-const reject = () => { throw new Error('INCOMPLETE_OR_UNSUPPORTED_PROTOCOL'); };
+import { createHash } from 'node:crypto';
+// Only rejection sites in this module can mint this diagnostic; provider objects cannot.
+const diagnostics = new WeakMap();
+export function projectProviderProtocolDiagnostic(error) {
+  const value = error && typeof error === 'object' ? diagnostics.get(error) : null;
+  return value ? { ...value } : null;
+}
+const reject = (reason) => {
+  const error = Object.assign(new Error('INCOMPLETE_OR_UNSUPPORTED_PROTOCOL'), { code: 'PROVIDER_PROTOCOL_INVALID' });
+  diagnostics.set(error, Object.freeze({ schemaVersion: 'provider-protocol-diagnostic@1', phase: 'normalization', reason }));
+  throw error;
+};
 const plainObject = x => x !== null && typeof x === 'object' && !Array.isArray(x);
 export function normalizeChatCompletion(response) {
-  if (!Array.isArray(response?.choices) || response.choices.length !== 1) reject();
+  if (!Array.isArray(response?.choices) || response.choices.length !== 1) reject('CHOICE_COUNT');
+  if (!plainObject(response.choices[0])) reject('CHOICE_SHAPE');
   const { message, finish_reason: finish } = response.choices[0];
-  if (!message || message.role !== 'assistant' || message.refusal || message.audio || message.function_call) reject();
+  if (!message || message.role !== 'assistant' || message.refusal || message.audio || message.function_call) reject('MESSAGE_SHAPE_OR_UNSUPPORTED');
   const usage = response.usage ?? null;
   if (finish === 'stop' && typeof message.content === 'string' && !message.tool_calls?.length) return { kind: 'final', text: message.content, usage };
-  if (finish !== 'tool_calls' || !Array.isArray(message.tool_calls) || !message.tool_calls.length || message.tool_calls.length > 16) reject();
+  if (finish !== 'tool_calls' || !Array.isArray(message.tool_calls) || !message.tool_calls.length || message.tool_calls.length > 16) reject('FINISH_OR_CALLS_SHAPE');
   const ids = new Set();
   const calls = message.tool_calls.map(c => {
-    if (c.type !== 'function' || typeof c.id !== 'string' || !c.id || ids.has(c.id) || typeof c.function?.name !== 'string' || typeof c.function.arguments !== 'string' || c.function.arguments.length > 66000) reject();
+    if (!plainObject(c)) reject('CALL_SHAPE');
+    if (c.type !== 'function' || typeof c.id !== 'string' || !c.id || ids.has(c.id) || typeof c.function?.name !== 'string' || typeof c.function.arguments !== 'string' || c.function.arguments.length > 66000) reject('CALL_IDENTITY_OR_ARGUMENTS_TYPE');
     ids.add(c.id);
-    const args = JSON.parse(c.function.arguments);
-    if (!plainObject(args)) reject();
+    let args; try { args = JSON.parse(c.function.arguments); } catch (error) { if (error instanceof SyntaxError) reject('ARGUMENTS_JSON'); throw error; }
+    if (!plainObject(args)) reject('ARGUMENTS_OBJECT');
     return { id: c.id, name: c.function.name, arguments: args };
   });
   return { kind: 'calls', calls, usage };
@@ -47,8 +60,13 @@ export function createChatGateway({ endpoint, model, apiKey, authorization, stre
       if (!response.ok) throw new Error(`PROVIDER_HTTP_${response.status}`);
       if (stream) {
         if (!response.headers.get('content-type')?.startsWith('text/event-stream')) throw new Error('PROVIDER_STREAM_CONTENT_TYPE');
-        const { readChatStream } = await import('./stream.mjs');
-        return readChatStream(response.body, { signal });
+        const { readChatStream, projectStreamProtocolDiagnostic } = await import('./stream.mjs');
+        try { return await readChatStream(response.body, { signal }); }
+        catch (error) {
+          const diagnostic = projectStreamProtocolDiagnostic(error);
+          if (diagnostic) diagnostics.set(error, Object.freeze(diagnostic));
+          throw error;
+        }
       }
       const reader = response.body.getReader(); const parts = []; let size = 0;
       try {
@@ -58,7 +76,15 @@ export function createChatGateway({ endpoint, model, apiKey, authorization, stre
           parts.push(value);
         }
       } finally { reader.releaseLock(); }
-      return normalizeChatCompletion(JSON.parse(Buffer.concat(parts).toString('utf8')));
+      const bytes = Buffer.concat(parts);
+      try {
+        let parsed; try { parsed = JSON.parse(bytes.toString('utf8')); } catch (error) { if (error instanceof SyntaxError) reject('RESPONSE_JSON'); throw error; }
+        return normalizeChatCompletion(parsed);
+      } catch (error) {
+        const diagnostic = projectProviderProtocolDiagnostic(error);
+        if (diagnostic) diagnostics.set(error, Object.freeze({ ...diagnostic, bytes: bytes.length, hashScope: 'complete-body', bodySha256: createHash('sha256').update(bytes).digest('hex') }));
+        throw error;
+      }
     }
   };
 }
