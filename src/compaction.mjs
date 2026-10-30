@@ -9,7 +9,7 @@ async function boundedSummary(summarize,input,parentSignal,timeoutMs){
   finally{clearTimeout(timer);parentSignal?.removeEventListener('abort',abort);if(stop)controller.signal.removeEventListener('abort',stop);}
 }
 const identityKeys=['sourceId','documentId','name','version','page','sha256','mediaType'];
-export async function compactWorkingView({messages,maxBytes,lookupSource,rootBudget,summarize,saveNote,signal,lookupMemoryState,summaryTimeoutMs=2000}={}){
+export async function compactWorkingView({messages,maxBytes,lookupSource,rootBudget,summarize,saveNote,signal,lookupMemoryState,canCompactHistory,summaryTimeoutMs=2000}={}){
   if(!Number.isSafeInteger(summaryTimeoutMs)||summaryTimeoutMs<1||summaryTimeoutMs>30000)throw new Error('Invalid summary timeout');
   if(typeof summarize!=='function'||typeof saveNote!=='function'||typeof rootBudget?.claim!=='function')throw new Error('Invalid compaction configuration');
   const basis=sha256(JSON.stringify(messages));
@@ -19,7 +19,17 @@ export async function compactWorkingView({messages,maxBytes,lookupSource,rootBud
   if(signal?.aborted)return fallback('cancelled');
   const groups=[];
   for(let i=0;i<baseline.length;i++)if(baseline[i].role==='assistant'&&Array.isArray(baseline[i].calls)){const start=i;const count=baseline[i].calls.length;groups.push({start,end:i+count,values:baseline.slice(i+1,i+count+1)});i+=count;}
-  const eligible=groups.slice(0,-1).filter(group=>group.values.every(message=>message.result.status==='succeeded'));
+  const eligible=[];
+  // Unknown or effectful groups remain exact. Eligibility is trusted Host policy,
+  // never inferred from a successful value or a model-provided marker.
+  if(typeof canCompactHistory==='function')for(const group of groups.slice(0,-1)){
+    let allowed=group.values.every(message=>message.result.status==='succeeded');
+    if(allowed)for(let offset=0;offset<baseline[group.start].calls.length;offset++){
+      const call=messages[group.start].calls[offset],result=messages[group.start+offset+1].result;
+      if(await canCompactHistory(structuredClone(call),structuredClone(result))!==true){allowed=false;break;}
+    }
+    if(allowed)eligible.push(group);
+  }
   if(!eligible.length)return fallback('no-eligible-group');
   const sourceRefs=new Map();const memoryRefs=new Map();const callIds=[];
   async function collect(value){

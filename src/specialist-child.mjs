@@ -3,9 +3,13 @@ import {readChildSources} from './child-results.mjs';
 import {validateRuntimeCheckpoint} from './runtime.mjs';
 import {createToolHost} from './tools.mjs';
 import {sha256} from './source.mjs';
+import {PUBLICATION_BINDING} from './publication.mjs';
 const TASK='source-check-v1';
 const fail=code=>{throw Object.assign(new Error(code),{code});};
 const canonical=value=>JSON.stringify(value,(_,v)=>v&&typeof v==='object'&&!Array.isArray(v)?Object.fromEntries(Object.keys(v).sort().map(k=>[k,v[k]])):v);
+// Publication belongs to Main. Child inherits the same gateway and every other
+// binding, but never this exact parent-only capability. Unknown bindings stay bound.
+function childBindings(bindings){return {...bindings,adapters:bindings.adapters.filter(item=>canonical(item)!==canonical(PUBLICATION_BINDING))};}
 function scope(question,documents){
  if(typeof question!=='string'||!question.trim()||Buffer.byteLength(question)>16000||!Array.isArray(documents)||!documents.length||documents.length>2||new Set(documents).size!==documents.length||documents.some(d=>!['atlas-a','atlas-b'].includes(d)))fail('INVALID_SPECIALIST_SCOPE');
  return {question,documents:[...documents]};
@@ -26,7 +30,7 @@ export async function readSpecialistHandoff({store,parentRunId,question,document
  const selected=scope(question,documents),parent=store.inspect(parentRunId);authority(parent,selected);
  const child=store.findChild(parentRunId,TASK);if(!child)fail('SPECIALIST_NOT_FOUND');
  const binding=sourceCheckBinding(selected);
- if(child.parentRunId!==parent.runId||child.rootId!==parent.rootId||child.definition.config.taskId!==TASK||child.definition.grantId!==parent.definition.grantId||canonical(child.definition.bindings)!==canonical(parent.definition.bindings)||child.definition.deadlineAt>parent.definition.deadlineAt||canonical(child.definition.config)!==canonical({requireReport:false,allowedTools:['read_page'],allowedDocuments:selected.documents,taskId:TASK})||canonical(child.definition.limits)!==canonical(SOURCE_CHECK_LIMITS))fail('SPECIALIST_IDENTITY_MISMATCH');
+ if(child.parentRunId!==parent.runId||child.rootId!==parent.rootId||child.definition.config.taskId!==TASK||child.definition.grantId!==parent.definition.grantId||canonical(child.definition.bindings)!==canonical(childBindings(parent.definition.bindings))||child.definition.deadlineAt>parent.definition.deadlineAt||canonical(child.definition.config)!==canonical({requireReport:false,allowedTools:['read_page'],allowedDocuments:selected.documents,taskId:TASK})||canonical(child.definition.limits)!==canonical(SOURCE_CHECK_LIMITS))fail('SPECIALIST_IDENTITY_MISMATCH');
  // The original question canonically binds the delegation call, not whichever call asks now.
  const candidates=parent.snapshot.messages.flatMap(m=>m.calls||[]).filter(c=>c.name==='source_check').filter(c=>{
   try{args(c.arguments);return child.definition.question===sourceCheckQuestion({...selected,localQuestion:c.arguments.question,callId:c.id});}catch{return false;}
@@ -57,7 +61,7 @@ export function createSpecialistChildBinding({store,parentClaim,parentRunId,outp
    if(!token||token.owner!==saved.owner||token.fence!==saved.fence)fail('STALE_SPECIALIST_PARENT');
    if(store.findChild(saved.runId,TASK))fail('SPECIALIST_ALREADY_DELEGATED');
    const gateway=gatewayFactory();if(gateway?.mode!==saved.definition.bindings.gateway.mode||typeof gateway?.next!=='function')fail('SPECIALIST_GATEWAY_BINDING');
-   await runSourceCheckingChild({...selected,localQuestion:value.question,callId,gateway,outputRoot,signal,durable:{store,parentRunId:saved.runId,parentClaim:token,rootId:saved.rootId,grantId:saved.definition.grantId,bindings:saved.definition.bindings,rootLimits:saved.definition.rootLimits,deadlineAt:Math.min(saved.definition.deadlineAt,Date.now()+SOURCE_CHECK_LIMITS.timeoutMs)}});
+   await runSourceCheckingChild({...selected,localQuestion:value.question,callId,gateway,outputRoot,signal,durable:{store,parentRunId:saved.runId,parentClaim:token,rootId:saved.rootId,grantId:saved.definition.grantId,bindings:childBindings(saved.definition.bindings),rootLimits:saved.definition.rootLimits,deadlineAt:Math.min(saved.definition.deadlineAt,Date.now()+SOURCE_CHECK_LIMITS.timeoutMs)}});
    return readSpecialistHandoff({store,parentRunId:saved.runId,...selected,callId});
   },
   async reconcile(value,{callId}){args(value);const {saved}=currentCall(value,callId);const child=store.findChild(saved.runId,TASK);if(!child||child.status==='active')return null;return readSpecialistHandoff({store,parentRunId:saved.runId,...selected,callId});},

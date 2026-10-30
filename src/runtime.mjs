@@ -99,9 +99,22 @@ async function drive({ question, gateway, outputRoot='runs', requireReport=true,
       } catch (error) { if (error.code !== 'UNKNOWN_RUN') throw error; }
     }
     if (!temporal && taskTime !== undefined) temporal = createTaskTime(taskTime);
-    const config={requireReport,...(ordinaryResponse?{ordinaryResponse:RESPONSE_PROFILE}:{}),...(temporal?{taskTime:temporal}:{}),...(publication?{publication:PUBLICATION_BINDING.version}:{}),...(allowedTools?{allowedTools}:{}),...(allowedDocuments?{allowedDocuments}:{}),...(contextBytes===undefined?{}:{contextBytes}),taskId,...(workingInput?{workingInput:{...(workingInput.memoryLibrary?{memoryLibraryId:workingInput.memoryLibrary.libraryId}:{}),...(workingInput.compaction?{compaction:{thresholdBytes:workingInput.compaction.thresholdBytes,summaryTimeoutMs:workingInput.compaction.summaryTimeoutMs??2000,version:'working-input@1'}}:{})}}:{})};
-    let stored,claim,directory,runId,deadlineAt=Date.now()+budget.timeoutMs;
+    const config={requireReport,...(ordinaryResponse?{ordinaryResponse:RESPONSE_PROFILE}:{}),...(temporal?{taskTime:temporal}:{}),...(publication?{publication:PUBLICATION_BINDING.version}:{}),...(allowedTools?{allowedTools}:{}),...(allowedDocuments?{allowedDocuments}:{}),...(contextBytes===undefined?{}:{contextBytes}),taskId,...(workingInput?{workingInput:{...(workingInput.memoryLibrary?{memoryLibraryId:workingInput.memoryLibrary.libraryId}:{}),...(workingInput.compaction?{compaction:{thresholdBytes:workingInput.compaction.thresholdBytes,summaryTimeoutMs:workingInput.compaction.summaryTimeoutMs??2000,version:'history-compaction@1'}}:{})}}:{})};
+    let stored,claim,directory,runId,boundChild=false,deadlineAt=Date.now()+budget.timeoutMs;
     let state={schemaVersion:'runtime-checkpoint@1',phase:'ready',messages:[{role:'user',content:question}],usedIds:[],rounds:0,toolsDispatched:0,proposal:null,cursor:0,result:null,host:null,working:null,answer:'',status:'failed',code:null,unknownEffects:[],partialEffects:[],hookErrors:[]};
+    function verifyCorrectionHistory(host){
+      let count=0,partial=false;
+      for(let i=1;i<state.messages.length;i++){
+        const group=state.messages[i];if(group.role!=='assistant')continue;
+        for(let j=0;j<group.calls.length;j++){
+          const message=state.messages[i+1+j];if(message?.role!=='tool')break;
+          const result=message.result;
+          if((result.partialPaths||[]).some(path=>['report.md','manifest.json'].includes(path))||result.artifactEffects||result.memoryEffect)partial=true;
+          if(!partial&&group.calls.length===1&&message.callId===group.calls[0].id&&host.correctionEligible(group.calls[0],result))count++;
+        }
+      }
+      if(!Number.isSafeInteger(state.corrections??0)||(state.corrections??0)!==Math.min(count,1)||(count>1&&state.failureCode!=='CORRECTION_LIMIT'))throw failure('RECOVERY_CORRECTION_MISMATCH');
+    }
     function boundToOriginal(saved) {
       if (!submitting && saved.snapshot.host!=null) assertHostSnapshotVersion(saved.snapshot.host);
       validateRuntimeCheckpoint(saved.snapshot,saved.definition);
@@ -141,6 +154,7 @@ async function drive({ question, gateway, outputRoot='runs', requireReport=true,
         const restored=state.host?await createToolHost({directory,ordinaryResponse:ordinaryResponse?{confirm:(call,result)=>durable.store.confirmResponse(runId,call,result)}:undefined,extensions,hooks,allowedTools,allowedDocuments,enableNotes:!!workingInput?.compaction,restore:state.host}):null;
         for(const message of state.messages)if(message.role==='tool'){const call=state.messages.flatMap(m=>m.calls||[]).find(c=>c.id===message.callId);if(call)await restored.verifyResult(call,message.result);}
         if(state.result){const call=state.proposal?.calls?.[state.cursor];if(call)await restored.verifyResult(call,state.result);}
+        if(restored)verifyCorrectionHistory(restored);
         if(stored.status!=='cancelled'){
           if(state.outcome?.runId!==runId||state.outcome.rootId!==stored.rootId||state.outcome.directory!==directory)throw failure('INVALID_TERMINAL_OUTCOME');
           return structuredClone({...state.outcome,rootUsage:stored.rootUsage});
@@ -152,9 +166,9 @@ async function drive({ question, gateway, outputRoot='runs', requireReport=true,
       const root=await ensureSafeDirectory(outputRoot);directory=await mkdtemp(join(root,'run-'));runId=basename(directory);
       if(durable){const created=durable.store.create({runId,directory,rootId:durable.rootId,parentRunId:durable.parentRunId,parentClaim:durable.parentClaim,definition:{question,grantId:durable.grantId,bindings:durable.bindings,limits:budget,rootLimits:durable.rootLimits??{model:budget.maxRounds,tool:budget.maxTools},deadlineAt:durable.deadlineAt??deadlineAt,config},snapshot:state});deadlineAt=created.definition.deadlineAt;claim=durable.store.claim(runId,durable.owner??randomUUID());}
     }
-    if(claim){try{const current=claim.read();boundToOriginal(current);state=structuredClone(current.snapshot);deadlineAt=current.definition.deadlineAt;}catch(error){try{claim.release();}catch{}throw error;}}
+    if(claim){try{const current=claim.read();boundToOriginal(current);if(current.runId!==runId)throw failure('RUN_BINDINGS_MISMATCH');state=structuredClone(current.snapshot);directory=current.directory;deadlineAt=current.definition.deadlineAt;boundChild=current.parentRunId!==null;}catch(error){try{claim.release();}catch{}throw error;}}
     rootBudget=claim?.rootBudget??rootBudget??createRootBudget({model:budget.maxRounds,tool:budget.maxTools});
-    const controller=new AbortController();const cancel=()=>{if(claim){try{durable.store.cancel(runId);}catch{}}controller.abort(failure('CANCELLED'));};
+    const controller=new AbortController();const cancel=()=>{if(claim&&!boundChild){try{durable.store.cancel(runId);}catch{}}controller.abort(boundChild?(signal?.reason instanceof Error?signal.reason:failure('INTERRUPTED')):failure('CANCELLED'));};
     let interrupted=false,effectsStopped=true,pendingEffect,awaitingResponse=false;
     const stop=()=>{if(!controller.signal.aborted){interrupted=true;controller.abort(failure('HOST_STOPPED'));}};
     signal?.addEventListener('abort',cancel,{once:true});if(signal?.aborted)cancel();
@@ -185,6 +199,7 @@ async function drive({ question, gateway, outputRoot='runs', requireReport=true,
       if(claim&&durable.onClaim)await bounded(Promise.resolve().then(()=>durable.onClaim({runId,rootId:claim.rootId,owner:claim.owner,fence:claim.fence})),controller.signal);
       host=await effect(createToolHost({directory,ordinaryResponse:ordinaryResponse?{confirm:(call,result)=>durable.store.confirmResponse(runId,call,result)}:undefined,extensions,hooks,allowedTools,allowedDocuments,enableNotes:!!workingInput?.compaction,restore:state.host??undefined,pdfInput}));
       if(durable?.runId)for(const message of state.messages)if(message.role==='tool'){const call=state.messages.flatMap(m=>m.calls||[]).find(c=>c.id===message.callId);await host.verifyResult(call,message.result);}
+      verifyCorrectionHistory(host);
       if(state.working)await host.verifyWorkingInput(state.working);
       record.sequence=state.logSequence??0;log=await open(join(directory,'run.jsonl'),durable?.runId?'a':'wx',0o600);
       await record(durable?.runId?'run_resumed':'run_started',{mode:gateway.mode||'test',...(ordinaryResponse?{}:{question}),limits:budget,...(claim?{fence:claim.fence,deadlineAt}: {})});
@@ -212,7 +227,7 @@ async function drive({ question, gateway, outputRoot='runs', requireReport=true,
             let requestMessages=contextBytes===undefined?workingMessages:await projectContext({messages:workingMessages,maxBytes:contextBytes,lookupSource:host.resolveSource});let noteRef=null;
             if(workingInput?.compaction&&Buffer.byteLength(JSON.stringify(requestMessages))>=workingInput.compaction.thresholdBytes){
               // A crash during summary generation keeps its consumed root reservation; no adoption is implied.
-              const compacted=await compactWorkingView({messages:workingMessages,maxBytes:contextBytes??262144,lookupSource:host.resolveSource,lookupMemoryState:workingInput.memoryLibrary?lookupMemory:undefined,rootBudget:claim?{claim(kind){state.phase='model-reserved';state.purpose='compaction';state.host=host.snapshot();claim.reserve(kind,state);}}:rootBudget,summarize:workingInput.compaction.summarize,saveNote:host.persistWorkingNote,signal:controller.signal,summaryTimeoutMs:workingInput.compaction.summaryTimeoutMs});requestMessages=compacted.messages;noteRef=compacted.noteRef;delete state.purpose;await record('working_note',{...compacted.observation,noteRef});
+              const compacted=await compactWorkingView({messages:workingMessages,maxBytes:contextBytes??262144,lookupSource:host.resolveSource,canCompactHistory:host.canCompactHistory,lookupMemoryState:workingInput.memoryLibrary?lookupMemory:undefined,rootBudget:claim?{claim(kind){state.phase='model-reserved';state.purpose='compaction';state.host=host.snapshot();claim.reserve(kind,state);}}:rootBudget,summarize:workingInput.compaction.summarize,saveNote:host.persistWorkingNote,signal:controller.signal,summaryTimeoutMs:workingInput.compaction.summaryTimeoutMs});requestMessages=compacted.messages;noteRef=compacted.noteRef;delete state.purpose;await record('working_note',{...compacted.observation,noteRef});
             }
             state.working={schemaVersion:'working-input@1',messages:requestMessages,noteRef,hash:sha256(JSON.stringify(requestMessages))};await checkpoint('working-input');
           }
@@ -264,11 +279,18 @@ async function drive({ question, gateway, outputRoot='runs', requireReport=true,
         if(partialPaths.length)state.partialEffects.push({callId:call.id,name:effectiveName,...(effectiveName!==call.name?{originalName:call.name}:{}),partialPaths});
         if(result.artifactEffects)state.partialEffects.push({callId:call.id,name:effectiveName,artifactEffects:structuredClone(result.artifactEffects)});
         if(result.memoryEffect)state.partialEffects.push({callId:call.id,name:effectiveName,memoryEffect:structuredClone(result.memoryEffect)});
-        state.messages.push({role:'tool',callId:call.id,result:structuredClone(result)});state.cursor++;state.result=null;state.failureCode=result.status==='succeeded'?null:(result.dispatched?'TOOL_FAILED':'TOOL_REJECTED');
+        let correctionOffered=false;
+        state.failureCode=result.status==='succeeded'?null:(result.dispatched?'TOOL_FAILED':'TOOL_REJECTED');
+        if(state.failureCode&&!hooks&&state.proposal.calls.length===1&&!state.partialEffects.length&&!state.unknownEffects.length&&host.correctionEligible(call,result)){
+          if((state.corrections??0)>=1)state.failureCode='CORRECTION_LIMIT';
+          else{state.corrections=1;state.failureCode=null;correctionOffered=true;}
+        }
+        state.messages.push({role:'tool',callId:call.id,result:structuredClone(result)});state.cursor++;state.result=null;
         await checkpoint('result-consumed');
         await record('tool_result',{callId:call.id,name:effectiveName,status:result.status,dispatched:result.dispatched,partialPaths,memoryEffect:result.memoryEffect,artifactEffects:result.artifactEffects,artifactId:result.value?.artifactId,durationMs:result.durationMs,resultRef:result.value?.resultRef,sourceAcquisition:result.value?.mcp?{serverName:result.value.mcp.serverName,protocolVersion:result.value.mcp.protocolVersion,protocolRequestId:result.value.mcp.protocolRequestId,modelCallId:result.value.mcp.modelCallId}:undefined,original:result.original,effective:result.effective,hookErrors:result.hookErrors||[]});
         if(effectiveName==='save_report'&&result.status==='succeeded')await record('file_saved',{receipt:result.value});
-        if(result.status!=='succeeded')throw failure(result.dispatched?'TOOL_FAILED':'TOOL_REJECTED');
+        if(correctionOffered)await record('validation_correction_offered',{callId:call.id,code:result.validation.code,remainingRounds:budget.maxRounds-state.rounds});
+        if(state.failureCode)throw failure(state.failureCode);
       }
     }catch(error){
       state.code=error.code||'EXECUTION_FAILED';state.status=state.code==='CANCELLED'||state.code==='RUN_CANCELLED'?'cancelled':'failed';
