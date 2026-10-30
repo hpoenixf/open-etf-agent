@@ -6,6 +6,11 @@ export const sha256 = bytes => createHash('sha256').update(bytes).digest('hex');
 export const READ_PAGE_SCHEMA = { type: 'object', additionalProperties: false, properties: { documentId: { type: 'string', enum: ['atlas-a', 'atlas-b'] }, page: { type: 'integer', minimum: 1, maximum: 2 } }, required: ['documentId', 'page'] };
 const object = value => value !== null && typeof value === 'object' && !Array.isArray(value);
 const fail = message => { throw new Error(message); };
+// Only this original builtin validator can mint a correction-eligible rejection.
+const validationBrand=Symbol('builtin-calculation-validation');
+const correctionCodes=new Set(['CALC_REQUIRED_FIELD_MISSING','CALC_NUMBER_TYPE','CALC_UNIT_FORMAT']);
+const calculationFail=code=>{const error=new Error(code);error[validationBrand]=true;error.validationCode=code;throw error;};
+const unitPattern='^[A-Za-z][A-Za-z0-9 /%_-]{0,39}(?![\\s\\S])';
 function fields(value, names) {
   if (!object(value) || Object.keys(value).length !== names.length || names.some(k => !Object.hasOwn(value, k))) fail('Invalid argument fields');
 }
@@ -81,13 +86,18 @@ export async function createToolHost({ directory, extensions = [], hooks, allowe
       }
     },
     calculate_change: {
-      description: 'Compute current-baseline, current/baseline and increase/baseline for explicit matching units; no financial inference.',
-      parameters: { type: 'object', additionalProperties: false, properties: { baseline: { type: 'number' }, current: { type: 'number' }, baselineUnit: { type: 'string' }, currentUnit: { type: 'string' } }, required: ['baseline', 'current', 'baselineUnit', 'currentUnit'] },
+      description: 'Compute current-baseline, current/baseline and increase/baseline. Supply finite numbers with a nonzero baseline and both explicit identical units. Units start with an ASCII letter and use only ASCII letters, digits, spaces, /, %, _ or -, at most40 characters. No implicit unit conversion or financial inference.',
+      parameters: { type: 'object', additionalProperties: false, properties: { baseline: { type: 'number', not: { const: 0 } }, current: { type: 'number' }, baselineUnit: { type: 'string', pattern: unitPattern, maxLength: 40 }, currentUnit: { type: 'string', pattern: unitPattern, maxLength: 40 } }, required: ['baseline', 'current', 'baselineUnit', 'currentUnit'] },
       validate(args) {
-        fields(args, ['baseline', 'current', 'baselineUnit', 'currentUnit']);
-        if (!Number.isFinite(args.baseline) || !Number.isFinite(args.current) || args.baseline === 0) fail('Finite numbers and nonzero baseline required');
-        if (typeof args.baselineUnit !== 'string' || !/^[A-Za-z][A-Za-z0-9 /%_-]{0,39}$/.test(args.baselineUnit) || args.baselineUnit !== args.currentUnit) fail('Explicit matching units required');
-        if (![args.current - args.baseline, args.current / args.baseline, (args.current - args.baseline) / args.baseline].every(Number.isFinite)) fail('Numeric overflow');
+        const names=['baseline','current','baselineUnit','currentUnit'];
+        if(!object(args)||Object.keys(args).some(k=>!names.includes(k)))calculationFail('CALC_ARGUMENT_FIELDS');
+        if(names.some(k=>!Object.hasOwn(args,k)))calculationFail('CALC_REQUIRED_FIELD_MISSING');
+        if(typeof args.baseline!=='number'||typeof args.current!=='number')calculationFail('CALC_NUMBER_TYPE');
+        if(!Number.isFinite(args.baseline)||!Number.isFinite(args.current))calculationFail('CALC_NUMBER_NONFINITE');
+        if(args.baseline===0)calculationFail('CALC_BASELINE_ZERO');
+        if(typeof args.baselineUnit!=='string'||typeof args.currentUnit!=='string'||!new RegExp(unitPattern).test(args.baselineUnit)||!new RegExp(unitPattern).test(args.currentUnit))calculationFail('CALC_UNIT_FORMAT');
+        if(args.baselineUnit!==args.currentUnit)calculationFail('CALC_UNIT_MISMATCH');
+        if(![args.current-args.baseline,args.current/args.baseline,(args.current-args.baseline)/args.baseline].every(Number.isFinite))calculationFail('CALC_NUMERIC_OVERFLOW');
       },
       async execute(args) {
         return { inputs: structuredClone(args), difference: args.current - args.baseline, unit: args.baselineUnit, ratio: args.current / args.baseline, increaseRatio: (args.current - args.baseline) / args.baseline, calculation: 'calculate_change@1', arithmetic: 'IEEE-754 binary64; no rounding applied' };
@@ -151,7 +161,11 @@ export async function createToolHost({ directory, extensions = [], hooks, allowe
         if (!Object.hasOwn(bindings, call.name)) fail('Unknown tool');
         binding = bindings[call.name]; await binding.validate(call.arguments); checkSignal(signal);
         onDispatch({ original: structuredClone(original || call), effective: structuredClone(call) }); // Root resource reservation precedes the actual handler.
-      } catch (error) { return finish({ callId, status: 'rejected', dispatched: false, error: error.message }); }
+      } catch (error) {
+        // Hooks may transform input or produce effects: never grant correction through that lane.
+        const validation=!hooks&&call?.name==='calculate_change'&&error?.[validationBrand]===true?{schemaVersion:'builtin-calculation-validation@1',code:error.validationCode,repairable:correctionCodes.has(error.validationCode)}:null;
+        return finish({callId,status:'rejected',dispatched:false,error:validation?.code??'TOOL_VALIDATION_REJECTED',...(validation?{validation}:{})});
+      }
       try {
         let value = await binding.execute(call.arguments, { callId, signal });
         function remember(source) {
