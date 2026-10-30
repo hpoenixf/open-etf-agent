@@ -1,0 +1,37 @@
+{
+  "schemaVersion": 1,
+  "kind": "independent-standards-and-spec-code-review",
+  "reviewer": "independent Standards/Spec review",
+  "recordedAt": "2026-10-28T21:58:03.712877+00:00",
+  "standards": "GO",
+  "spec": "GO",
+  "requiredFixes": 0,
+  "sourceTestInputs": 140,
+  "freezeManifestSha256": "261c4e2c5cf86bd5dcb3ccfa2277b99d23c362a4bd66c2155078a0f75c3a094a",
+  "allFrozenInputsMatched": true,
+  "testExecutionByReviewer": false,
+  "modelCallsByReviewer": 0,
+  "remoteWritesByReviewer": 0,
+  "findings": [
+    "Session atomic question/tool debit/wait and adoption/result-committed both revalidate current fence and full snapshot.",
+    "Runtime re-reads after claim; no-receipt resume spends no budget and dispatches nothing; initial yield releases lease.",
+    "Original call/result, receipt hashes, working input and persistent question marker stay bound; text creates no authority or Memory intent.",
+    "Receipt retry/conflict, cross-Run refusal, cancel/reservation order, deadline/root budget, no unknown retry and no terminal revival match frozen contract.",
+    "Exact v2/v3 DDL, semantic profile isolation and hot-journal isolated-copy validation show no bypass."
+  ],
+  "evidenceReviewed": {
+    "full": 421,
+    "passed": 421,
+    "failed": 0,
+    "skipped": 0,
+    "twoAddedSince419": [
+      "v2 ordinary allowlist rejection",
+      "two real resume processes contending"
+    ]
+  },
+  "limits": [
+    "Read-only review; did not rerun tests.",
+    "GO covers the code contract, not remote release verification.",
+    "Final reader-facing documentation is checked separately."
+  ]
+}

@@ -1,0 +1,26 @@
+{
+  "schemaVersion": "spec-evidence-completion@1",
+  "changeName": "result-reference-consumption",
+  "outcome": "passed",
+  "lane": "provider-free",
+  "revision": "ade806a18e0b89c07b929111ea30afbebad93279",
+  "observedAt": "2026-10-27T22:26:49.535843+00:00",
+  "checks": [
+    {
+      "name": "Original final local 333-case suite on frozen Result/Reference inputs",
+      "status": "passed",
+      "artifact": "docs/verification/result-consumption-observations.safe.json"
+    },
+    {
+      "name": "Original independent locked install/build and separate CLI byte readback",
+      "status": "passed",
+      "artifact": "docs/verification/result-consumption-independent.safe.json"
+    },
+    {
+      "name": "Fixed source qualification and actual code/README/article/canonical delivery",
+      "status": "passed",
+      "artifact": "docs/verification/result-consumption-publication.safe.json"
+    }
+  ],
+  "scope": "Single unnumbered Result/Reference increment; explicit tool-host@2 upgrade boundary. Actual synthetic Runtime/SQLite/process/encoding tests, no new live provider or semantic qualification. Package0.9.0 and historical phases retained. Manual evidence registration, not formal Release or automatic archival."
+}

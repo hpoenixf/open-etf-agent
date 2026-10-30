@@ -1,0 +1,105 @@
+{
+  "schemaVersion": "v017-offline-evidence@1",
+  "base": "1d422530b6ea0b1a7359449c60b5a2c21c47c214",
+  "boundary": "Independent v16 snapshot, current-main reconciliation pending; ten target cases passed across batches, not a single integrated full-suite run.",
+  "rounds": [
+    {
+      "name": "target",
+      "counts": {
+        "tests": 10,
+        "pass": 2,
+        "fail": 8,
+        "skipped": 0
+      },
+      "exitCode": 1,
+      "durationSeconds": 20.329925821046345,
+      "ownedGroupStoppedAndLeaderWaited": true,
+      "timedOut": false,
+      "reason": "Fixture omitted original submitRun; production guards unchanged."
+    },
+    {
+      "name": "smoke",
+      "counts": {
+        "tests": 1,
+        "pass": 1,
+        "fail": 0,
+        "skipped": 0
+      },
+      "exitCode": 0,
+      "durationSeconds": 0.4181055589579046,
+      "ownedGroupStoppedAndLeaderWaited": true,
+      "timedOut": false,
+      "reason": "Corrected original submission, two real local workers."
+    },
+    {
+      "name": "remaining",
+      "counts": {
+        "tests": 7,
+        "pass": 6,
+        "fail": 1,
+        "skipped": 0
+      },
+      "exitCode": 1,
+      "durationSeconds": 2.7764097650069743,
+      "ownedGroupStoppedAndLeaderWaited": true,
+      "timedOut": false,
+      "reason": "One reservation-only synthetic Child left active; original ACTIVE_CHILD contract prevented parent completion. Extension fixture subsequently replaced with canonical onClaim path."
+    },
+    {
+      "name": "focused",
+      "counts": {
+        "tests": 2,
+        "pass": 2,
+        "fail": 0,
+        "skipped": 0
+      },
+      "exitCode": 0,
+      "durationSeconds": 0.26562477205879986,
+      "ownedGroupStoppedAndLeaderWaited": true,
+      "timedOut": false,
+      "reason": "Corrected Child fixture termination and canonical extension onClaim; both passed."
+    }
+  ],
+  "demos": [
+    {
+      "scenario": "normal",
+      "qualification": "offline loopback HTTP; not external provider acceptance",
+      "externalModelCalls": 0,
+      "maximumConcurrentHttp": 1,
+      "requests": 2,
+      "originalRootModelDebits": [
+        1,
+        1
+      ],
+      "recovery": "Inspect original tickets. Unknown/dispatched work has no automatic release, refund or resend."
+    },
+    {
+      "scenario": "unknown",
+      "qualification": "offline loopback HTTP; not external provider acceptance",
+      "externalModelCalls": 0,
+      "maximumConcurrentHttp": 1,
+      "requests": 1,
+      "originalRootModelDebits": [
+        1,
+        1
+      ],
+      "recovery": "Inspect original tickets. Unknown/dispatched work has no automatic release, refund or resend."
+    }
+  ],
+  "externalProviderQualification": "not run; paid calls paused",
+  "formalPublication": "not done",
+  "codeSha256": {
+    "src/admission.mjs": "a9e602180531cd422abe3edc1af9488ee3f8739cb4256c5becec1152ed3bec63",
+    "src/runtime.mjs": "d5f885c9fcfe873dbd752210c18b7b287806893b8531732344cd01d664ac5715",
+    "src/admission-demo.mjs": "b86db55625cad861c9b18d992be2380ca8b12857bc0ad2bed368698ac6c63ec6",
+    "src/admission-demo-worker.mjs": "be27559ceb1b2b57a6dd13b5e541e2cd61b1b1b067d2d8fdb6646fb4ba463b48",
+    "test/admission.test.mjs": "02a039207ecf50296604f579f3e9586743c53d0962a4af977d0df601ebb59010",
+    "test/fixtures/admission-worker.mjs": "f60c726a392a00afdf4f057a77436e73aa68282a3becb68e9e894c5869a48dd2"
+  },
+  "workerMoveBoundary": "After targeted batches the fixture imports the shared demo worker; both demos passed, final integrated suite pending.",
+  "independentReview": {
+    "reviewer": "review_capacity_contract",
+    "scope": "Read-only contract review and safe receipts, no independent rerun",
+    "result": "No known blocking defect in current bounded implementation/demo; final main integration and full suite pending."
+  }
+}

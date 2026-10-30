@@ -1,0 +1,62 @@
+{
+  "kind": "unreleased-v017-snapshot",
+  "baseSourceCommit": "1d422530b6ea0b1a7359449c60b5a2c21c47c214",
+  "baseSnapshotTree": "45659b43ad907be192eee2201f16ce8e89568d34",
+  "snapshotTree": "157cd2d23b7db1c0b5c2e56edf918c60448820b2",
+  "mainIntegration": "pending",
+  "fullSuite": "not yet run on integrated candidate",
+  "scope": "Two local processes and one fixed capacity group; ten target cases passed across batches, historical failures retained; demos use loopback HTTP, no external provider calls.",
+  "formalPublication": false,
+  "files": [
+    {
+      "path": "src/admission.mjs",
+      "bytes": 10609,
+      "sha256": "a9e602180531cd422abe3edc1af9488ee3f8739cb4256c5becec1152ed3bec63"
+    },
+    {
+      "path": "src/runtime.mjs",
+      "bytes": 38360,
+      "sha256": "d5f885c9fcfe873dbd752210c18b7b287806893b8531732344cd01d664ac5715"
+    },
+    {
+      "path": "src/admission-demo.mjs",
+      "bytes": 4717,
+      "sha256": "b86db55625cad861c9b18d992be2380ca8b12857bc0ad2bed368698ac6c63ec6"
+    },
+    {
+      "path": "src/admission-demo-worker.mjs",
+      "bytes": 2240,
+      "sha256": "be27559ceb1b2b57a6dd13b5e541e2cd61b1b1b067d2d8fdb6646fb4ba463b48"
+    },
+    {
+      "path": "test/admission.test.mjs",
+      "bytes": 15627,
+      "sha256": "02a039207ecf50296604f579f3e9586743c53d0962a4af977d0df601ebb59010"
+    },
+    {
+      "path": "test/fixtures/admission-worker.mjs",
+      "bytes": 122,
+      "sha256": "f60c726a392a00afdf4f057a77436e73aa68282a3becb68e9e894c5869a48dd2"
+    },
+    {
+      "path": "doc/shared-admission.md",
+      "bytes": 5144,
+      "sha256": "017a06d21b9ac8bc38ff0900f4d0be79af8ba6cdaeceb714b4522c407aae253d"
+    },
+    {
+      "path": "openspec/changes/v017-shared-admission/proposal.md",
+      "bytes": 2862,
+      "sha256": "cee028d30de3fdaa14b9f7463ccde2b28710751fc0f306ae2df8ba6fb1cdcabc"
+    },
+    {
+      "path": "openspec/changes/v017-shared-admission/tasks.md",
+      "bytes": 784,
+      "sha256": "a4dbff1219ff7166f8b85cc12ba794782e5c8379bdb7eea2ef48c228159b7b99"
+    },
+    {
+      "path": "openspec/changes/v017-shared-admission/offline-evidence.safe.json",
+      "bytes": 3808,
+      "sha256": "559c06759275ceacbf6103904e564f4c607a1eec8a0b2d27374dfb7a2e8ec2af"
+    }
+  ]
+}

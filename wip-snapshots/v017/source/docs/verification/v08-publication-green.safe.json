@@ -1,0 +1,59 @@
+{
+  "schemaVersion": 1,
+  "scope": "Original-contract-derived Publication-only focused qualification",
+  "observedAt": "2026-10-27T04:43:41Z",
+  "runtime": "Node v26.11.1",
+  "heapMiB": 512,
+  "testConcurrency": 1,
+  "command": "node --test --test-concurrency=1 test/publication.test.mjs test/publication-runtime.test.mjs test/publication-cli.test.mjs",
+  "exitCode": 0,
+  "tests": 23,
+  "passed": 23,
+  "failed": 0,
+  "skipped": 0,
+  "cancelled": 0,
+  "durationMs": 1951.882336,
+  "originalRedCases": 19,
+  "addedTestsAfterOriginalRed": {
+    "cli": 3,
+    "JSONEncodingBound": 1
+  },
+  "checks": [
+    "stable-block-and-delivery-ordinal",
+    "revision-CAS",
+    "exact-original-receipt-no-op",
+    "changed-protected-binding-is-not-no-op",
+    "real-SQLite-body-event-rollback",
+    "two-change-limit-survives-reopen",
+    "prior-body-survives-failure-cancellation",
+    "foreign-Child-stale-deadline-denial",
+    "active-second-connection-read-without-lease",
+    "same-Runtime-publication-binding",
+    "postcommit-report-required-failure",
+    "actual-process-kill-after-commit-before-checkpoint",
+    "different-process-resume-with-one-model-call-and-one-revision",
+    "local-CLI-read-and-resume",
+    "Artifact-independent-readback"
+  ],
+  "inputs": {
+    "src/publication.mjs": "f6540a9542dd5b621d9133b7528ba50273d90ebf6c6d72489a63b469947cf468",
+    "src/session.mjs": "a43d3aed96463d31d168928d43efa5b5975a16aff941fa7593cfe3f71429177b",
+    "src/runtime.mjs": "0ba60c47fbc701b7d9961022997efaae32c2d6fb4b93a67be100ec819ea08792",
+    "src/durable-demo.mjs": "095c9f50b6708a9493bfa9843bc727aa056722777866439aa43931796076997a",
+    "src/session-cli.mjs": "3c1b944e96eef303d4d1bf59f3239283e2b05b5440eca5878dff5d2f1d2b97c4",
+    "test/publication.test.mjs": "7cf0ca8ce0863ecf550644b3174c35b7bf983165480f7c491e49f15a52539ded",
+    "test/publication-runtime.test.mjs": "d5920d2d6d40adbda70089fe3c074603d35ccfd64162645359b56049395ebf4b",
+    "test/publication-cli.test.mjs": "35402a22905a8220c478cf1c2ab192dd94392238ca3633f69bb173dd8ba13682",
+    "test/fixtures/publication-process.mjs": "1c3003838558e00f26b834cb74af9d28c8c036ce86cb64c88727bf10725f82f8"
+  },
+  "modelCalls": 0,
+  "fixtureGatewayInvocations": "synthetic; assertions count actual local invocations",
+  "semanticStatus": "unreviewed",
+  "remaining": [
+    "final provider-free regression",
+    "independent locked install/build and built delivery",
+    "retained old Artifact read",
+    "Evidence Kit and safe input freeze",
+    "fixed-public-source coverage smoke/check by publisher"
+  ]
+}

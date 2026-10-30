@@ -1,0 +1,412 @@
+{
+  "schemaVersion": "result-consumption-observations@1",
+  "baseCommit": "21c1b9f0cd53487ff9b31fe16db37b97113c2f89",
+  "candidateVersion": "0.9.0 unchanged; not a version release",
+  "evidenceKind": "Structured projection of retained actual subprocess records, not reconstructed from prose",
+  "commandNormalization": "Only environment-specific Node binary paths are displayed as node; arguments/counts/status/timing remain observed",
+  "phases": {
+    "source-red": {
+      "kind": "actual-focused-RED",
+      "base": "21c1b9f0cd53487ff9b31fe16db37b97113c2f89",
+      "command": [
+        "node",
+        "--test",
+        "--test-concurrency=1",
+        "--test-reporter=tap",
+        "test/result-consumption.test.mjs"
+      ],
+      "startedAt": "2026-10-27T14:54:06.619474+00:00",
+      "durationSeconds": 0.1987982620485127,
+      "exitCode": 1,
+      "counts": {
+        "tests": 8,
+        "pass": 1,
+        "fail": 7,
+        "cancelled": 0,
+        "skipped": 0,
+        "todo": 0
+      },
+      "testSha256": "befb5e500114216a6cc5a16c0984035534387fb98385e4337a8d4f20bf9b4027",
+      "outputSha256": "3c9c799398beb1eb314e1cecbf85178b85bc37734b254fc8121a46112b6fe3f2",
+      "productionImplementationChanged": false,
+      "modelCalls": 0,
+      "originalRecordSha256": "65796e8634a296fda7ce3e19d79b2683e12b5bfaf13c81c98ca64595c40becbd"
+    },
+    "source-green": {
+      "kind": "actual-focused-source-binding",
+      "command": [
+        "node",
+        "--test",
+        "--test-concurrency=1",
+        "--test-reporter=tap",
+        "test/result-consumption.test.mjs"
+      ],
+      "startedAt": "2026-10-27T14:57:07.929628+00:00",
+      "durationSeconds": 0.3239200460957363,
+      "exitCode": 0,
+      "counts": {
+        "tests": 8,
+        "pass": 8,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0,
+        "todo": 0
+      },
+      "inputs": {
+        "src/results.mjs": "840cd98e53b7c58e58d6dd7d739ba7db13cfb6da8b6b91ebfc4946f9356280af",
+        "src/calculation.mjs": "5b7b775e7b80c2326db16e8f5d7771cc64b0b112f6430f92afdc78b5d158b43f",
+        "src/tools.mjs": "18079dc5533f07a3be383652938c1f78dccc4ddfabde0e5b3250ef6001d00b96",
+        "test/result-consumption.test.mjs": "141c2211b0fbf8a3f653df35f53f16b33bbd13e876d1069d6b89704818a6dc79"
+      },
+      "zeroDrift": true,
+      "outputSha256": "4640635fc560aa701ab559312c04627c61a7c5db194df31b9eaec1f7ba9e9545",
+      "modelCalls": 0,
+      "testAmendment": "coverage field named storedTableComplete, never upstream/semantic completeness",
+      "originalRecordSha256": "fa9900122b6a7b89def3ced6e99519da8ae9d3c6790b7b4c51a21bd6d7a164dd"
+    },
+    "delivery-red": {
+      "kind": "actual-focused-delivery-RED",
+      "command": [
+        "node",
+        "--test",
+        "--test-concurrency=1",
+        "--test-reporter=tap",
+        "test/result-consumption-delivery.test.mjs"
+      ],
+      "startedAt": "2026-10-27T14:59:38.872569+00:00",
+      "durationSeconds": 0.4381549491081387,
+      "exitCode": 1,
+      "counts": {
+        "tests": 4,
+        "pass": 0,
+        "fail": 4,
+        "cancelled": 0,
+        "skipped": 0,
+        "todo": 0
+      },
+      "testSha256": "f7ebc56ea5376f692690ccec2fbc0f0258dd4f0983dbd7121d5bf1e83b046efb",
+      "outputSha256": "71b5164009715b45e7a4e5981b659a838a2596fcbd0e0c2cf5dde5732944b138",
+      "modelCalls": 0,
+      "transport": "injected synthetic; production Gateway encoding, no provider request",
+      "originalRecordSha256": "32318614efd21842a21ae21288be4fda22570ab9135cc87430dc066ffc6747c5"
+    },
+    "focused18": {
+      "kind": "actual-focused-18",
+      "command": [
+        "node",
+        "--test",
+        "--test-concurrency=1",
+        "--test-reporter=tap",
+        "test/result-consumption.test.mjs",
+        "test/result-consumption-delivery.test.mjs",
+        "test/result-consumption-cli.test.mjs"
+      ],
+      "startedAt": "2026-10-27T15:11:17.598592+00:00",
+      "durationSeconds": 1.1600156179629266,
+      "exitCode": 0,
+      "counts": {
+        "tests": 18,
+        "pass": 18,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0,
+        "todo": 0
+      },
+      "inputManifestSha256": "2de065f7cf7f1d33a7419763c0bda1ee6440cbf12a94ba0baf9dfbeb41b4f8e9",
+      "inputDrift": [],
+      "outputSha256": "b8b5143537d157c123932b0c85f3a9e6ea4215b5f4930d9862f33bb2e7f3fe51",
+      "modelCalls": 0,
+      "transport": "injected synthetic for production Gateway encoding; real local processes and SQLite; no provider request",
+      "originalRecordSha256": "afec3f4d53bc596720923e19c1f38b377963ab1ca2d31c2a7484563af91851aa"
+    },
+    "review-red": {
+      "kind": "actual-review-counterexample-RED",
+      "command": [
+        "node",
+        "--test",
+        "--test-concurrency=1",
+        "--test-reporter=tap",
+        "--test-name-pattern=^RC (malformed optional|recovered no-op Hook|equal unavailable)",
+        "test/result-consumption-delivery.test.mjs"
+      ],
+      "startedAt": "2026-10-27T15:24:10.291901+00:00",
+      "durationSeconds": 0.294743551989086,
+      "exitCode": 1,
+      "counts": {
+        "tests": 3,
+        "pass": 0,
+        "fail": 3,
+        "cancelled": 0,
+        "skipped": 0,
+        "todo": 0
+      },
+      "inputs": {
+        "test/result-consumption-delivery.test.mjs": "15ac28ab9fe10f5d719123972102f67ca6138a4ca707c26706a646eefe279a9b",
+        "src/tools.mjs": "85ad38521230bcc56fd3f0e6bf600f2936ea1f3638b9aae7cc8fa298a92b049b",
+        "src/results.mjs": "30fc0e8228500101125b05b2ee0ab4aaceeed8a3c0b2819c31b55e24058e80b3"
+      },
+      "outputSha256": "aa3fa96b2210cdfef5d42f4611d36e8a9089494ca4ec56b0058baace3e185f1a",
+      "modelCalls": 0,
+      "originalRecordSha256": "32220980a1dc41c51c88a1799ee15cffac91cdb5ee4ba453054e3d2317f92454"
+    },
+    "focused21": {
+      "kind": "actual-focused-21-after-independent-review",
+      "command": [
+        "node",
+        "--test",
+        "--test-concurrency=1",
+        "--test-reporter=tap",
+        "test/result-consumption.test.mjs",
+        "test/result-consumption-delivery.test.mjs",
+        "test/result-consumption-cli.test.mjs"
+      ],
+      "startedAt": "2026-10-27T15:26:38.831948+00:00",
+      "durationSeconds": 1.347113406052813,
+      "exitCode": 0,
+      "counts": {
+        "tests": 21,
+        "pass": 21,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0,
+        "todo": 0
+      },
+      "inputManifestSha256": "c72d3babe171ce24e3976684e4c2406372a35704772471f3888c794fd8879a6f",
+      "inputDrift": [],
+      "outputSha256": "229f6a13c591bb0c90e1a3ed6983c7377a8d9ceda082bb95d0ba5ead9ba0b928",
+      "modelCalls": 0,
+      "originalRecordSha256": "247c3c1ebb2ee30b7fc7d12e14566bf544fcc05104621b2c6aaef2839e22025a"
+    },
+    "alias-red": {
+      "kind": "actual-review-alias-gate-RED",
+      "command": [
+        "node",
+        "--test",
+        "--test-concurrency=1",
+        "--test-reporter=tap",
+        "--test-name-pattern=^RC Hook alias mode",
+        "test/result-consumption-delivery.test.mjs"
+      ],
+      "startedAt": "2026-10-27T15:30:58.372175+00:00",
+      "durationSeconds": 0.21797410503495485,
+      "exitCode": 1,
+      "counts": {
+        "tests": 1,
+        "pass": 0,
+        "fail": 1,
+        "cancelled": 0,
+        "skipped": 0,
+        "todo": 0
+      },
+      "inputs": {
+        "test/result-consumption-delivery.test.mjs": "16d1ef6f9e2a7c658644f6cd9393456791d5907033d4c6e64a8d49dc45fc4663",
+        "src/tools.mjs": "6ab73e4461045398fa2c90d6dd981ee82d523a69cc0b3ac5f6f03d028817c956"
+      },
+      "outputSha256": "911c6608b9b6589682318c2afdbad5f2a5ea4e541c2dd50e721c14f4d588a58c",
+      "modelCalls": 0,
+      "originalRecordSha256": "57e437684ab5b6053f1db8b980c244c17618550076eb012f080bf8633264a05c"
+    },
+    "protocol-red": {
+      "kind": "actual-Host-protocol-boundary-RED",
+      "command": [
+        "node",
+        "--test",
+        "--test-concurrency=1",
+        "--test-reporter=tap",
+        "--test-name-pattern=^RC Host v1 resume",
+        "test/result-consumption-delivery.test.mjs"
+      ],
+      "startedAt": "2026-10-27T15:36:36.860385+00:00",
+      "durationSeconds": 0.2387803529854864,
+      "exitCode": 1,
+      "counts": {
+        "tests": 1,
+        "pass": 0,
+        "fail": 1,
+        "cancelled": 0,
+        "skipped": 0,
+        "todo": 0
+      },
+      "inputs": {
+        "src/tools.mjs": "6ab73e4461045398fa2c90d6dd981ee82d523a69cc0b3ac5f6f03d028817c956",
+        "src/runtime.mjs": "9b740b606d8bab2b9267d660cc7ca15684e64da4f642bb57c00c6e3bb2c878f8",
+        "test/result-consumption-delivery.test.mjs": "1b93b80c889c06b681d47c56414f87701fd748002122c3eaa13f26f285e04613"
+      },
+      "outputSha256": "8a17f6d53f92be475a9f21f198977ca5ca281fd42b45f3361a5cd22acb92f730",
+      "modelCalls": 0,
+      "originalRecordSha256": "53f37cf00ff892762371e3e0e3156457dc462621f898dabb708300ff8ca29e6d"
+    },
+    "reconcile-red": {
+      "kind": "actual-v2-reconcile-RED",
+      "command": [
+        "node",
+        "--test",
+        "--test-concurrency=1",
+        "--test-reporter=tap",
+        "--test-name-pattern=^RC v2 Hook reconciliation",
+        "test/result-consumption-delivery.test.mjs"
+      ],
+      "startedAt": "2026-10-27T15:39:52.344932+00:00",
+      "durationSeconds": 0.2110662889899686,
+      "exitCode": 1,
+      "counts": {
+        "tests": 1,
+        "pass": 0,
+        "fail": 1,
+        "cancelled": 0,
+        "skipped": 0,
+        "todo": 0
+      },
+      "inputs": {
+        "src/tools.mjs": "8bc830579f1da55cee28247c253708fae1b9795a73d553d1c68f4da6b5d3c81b",
+        "src/runtime.mjs": "2e6aab3293caea2720ab856f511fd92a515af4050aeef27bd830b403711b0142",
+        "test/result-consumption-delivery.test.mjs": "4226e75939a55c6efefd513244a998b5b14cc9a1fe049cbc92ef8e649698c982"
+      },
+      "outputSha256": "73b0425b241289483c3564d7bd2b0991c4d2c63d7cd99caa817a309c3040ec44",
+      "modelCalls": 0,
+      "originalRecordSha256": "f295f25c1e4ed62b39cb132cc64870700dcf7cdd3b29139f94464880546d702b"
+    },
+    "focused24": {
+      "kind": "actual-focused-24-v2-protocol",
+      "command": [
+        "node",
+        "--test",
+        "--test-concurrency=1",
+        "--test-reporter=tap",
+        "test/result-consumption.test.mjs",
+        "test/result-consumption-delivery.test.mjs",
+        "test/result-consumption-cli.test.mjs"
+      ],
+      "startedAt": "2026-10-27T15:41:47.842577+00:00",
+      "durationSeconds": 1.370952920988202,
+      "exitCode": 0,
+      "counts": {
+        "tests": 24,
+        "pass": 24,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0,
+        "todo": 0
+      },
+      "inputManifestSha256": "f03e1ead6482e0f597df2252575f181343102634c2176e7762b026b61c5e39ec",
+      "inputDrift": [],
+      "outputSha256": "8bde8a0dc0f4c4ee19b7e35b499e7f1d0bc4bde467b0c55e2491d3b942e7aec7",
+      "modelCalls": 0,
+      "originalRecordSha256": "c253bf35ba8f444329de63830cbdeb4ef810cdf881648c6a28c26cc6d96ac3ff"
+    }
+  },
+  "fullSuite": {
+    "schemaVersion": "result-consumption-full-suite@1",
+    "startedAt": "2026-10-27T15:47:05.051908+00:00",
+    "completedAt": "2026-10-27T15:47:45.984791+00:00",
+    "command": [
+      "node",
+      "--test",
+      "--test-concurrency=1",
+      "--test-reporter=tap",
+      "test/article-coverage.test.mjs",
+      "test/artifact-integration.test.mjs",
+      "test/artifacts.test.mjs",
+      "test/cli.test.mjs",
+      "test/compaction-bounds.test.mjs",
+      "test/compaction.test.mjs",
+      "test/context.test.mjs",
+      "test/cooperation-integration.test.mjs",
+      "test/cooperation.test.mjs",
+      "test/durable-memory.test.mjs",
+      "test/durable-review.test.mjs",
+      "test/durable-runtime.test.mjs",
+      "test/evaluate.test.mjs",
+      "test/extensions.test.mjs",
+      "test/gateway.test.mjs",
+      "test/hooks.test.mjs",
+      "test/live-config.test.mjs",
+      "test/live-options.test.mjs",
+      "test/live-trace.test.mjs",
+      "test/live-transport.test.mjs",
+      "test/live-validation.test.mjs",
+      "test/mcp.test.mjs",
+      "test/memory-bounds.test.mjs",
+      "test/memory-effects.test.mjs",
+      "test/memory-projection.test.mjs",
+      "test/memory.test.mjs",
+      "test/plugins.test.mjs",
+      "test/publication-cli.test.mjs",
+      "test/publication-runtime.test.mjs",
+      "test/publication.test.mjs",
+      "test/reader.test.mjs",
+      "test/research-integration.test.mjs",
+      "test/result-consumption-cli.test.mjs",
+      "test/result-consumption-delivery.test.mjs",
+      "test/result-consumption.test.mjs",
+      "test/results.test.mjs",
+      "test/retrieval.test.mjs",
+      "test/review.test.mjs",
+      "test/runtime.test.mjs",
+      "test/session-cli.test.mjs",
+      "test/session.test.mjs",
+      "test/skills.test.mjs",
+      "test/storage-files-errors.test.mjs",
+      "test/stream-gateway.test.mjs",
+      "test/stream.test.mjs",
+      "test/tools.test.mjs",
+      "test/v02-cli.test.mjs",
+      "test/v03-cli.test.mjs",
+      "test/v04-cli.test.mjs",
+      "test/v05-cli.test.mjs",
+      "test/v06-cli.test.mjs",
+      "test/worker-cli.test.mjs",
+      "test/worker-process.test.mjs",
+      "test/worker.test.mjs",
+      "test/working-input-integration.test.mjs"
+    ],
+    "runtime": "v26.11.1",
+    "heapMiB": 512,
+    "concurrency": 1,
+    "timeoutSeconds": 120,
+    "durationSeconds": 40.93196955998428,
+    "exitCode": 0,
+    "timedOut": false,
+    "counts": {
+      "tests": 333,
+      "pass": 333,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 0,
+      "todo": 0
+    },
+    "inputSha256": "4704f6d92356d125c6d8db56d128492efb0364005bb781439f38e1c50ebf046d",
+    "inputManifestSha256": "539d2477e2c530c79ad4ecb6afbd0a94601e5aa0b83f80abbdae4cf7cf1513c0",
+    "inputDrift": [],
+    "outputSha256": "613c6a8f47b355d2dcc353b4972f58519d525ecca3b795fd447ed44f05f78ee3",
+    "providerCalls": 0,
+    "qualificationScope": "provider-free Runtime full suite; not live model quality or browser acceptance",
+    "originalRecordSha256": "0cae34fb7dde1dee150557fd79fcb81a32b49dff2ed0ada08f747988aab4ba77"
+  },
+  "review": {
+    "final": "independent static PASS",
+    "sourceManifestSha256": "f03e1ead6482e0f597df2252575f181343102634c2176e7762b026b61c5e39ec",
+    "reviewerExecutedTests": false,
+    "priorFindingsRetained": [
+      "Malformed optional reference caused whole-Run rejection",
+      "Original/effective call identity not fully bound",
+      "Effective tool-name gate bypassed digest",
+      "New Host protocol required execute/reconcile parity and explicit version refusal"
+    ]
+  },
+  "qualificationScope": {
+    "providerFree": true,
+    "actualLocalProcesses": true,
+    "actualSQLite": true,
+    "productionGatewayEncoding": "injected synthetic transport; no provider request",
+    "financialSemantics": "unreviewed",
+    "browser": false,
+    "newModelCalls": 0
+  },
+  "remaining": [
+    "sole-publisher fixed source and version decision",
+    "new fixed-source coverage/backlinks qualification",
+    "README/article/publication actual binding",
+    "RC.4 and final Spec maintenance closure"
+  ]
+}

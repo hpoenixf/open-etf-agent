@@ -1,0 +1,27 @@
+{
+  "schemaVersion": "spec-evidence-completion@1",
+  "changeName": "ordinary-response",
+  "outcome": "passed",
+  "lane": "provider-free",
+  "revision": "300f78f7066ab76fcc4e9efb54137ff021ecc278",
+  "observedAt": "2026-10-28T22:12:47Z",
+  "checks": [
+    {
+      "name": "Frozen implementation qualification",
+      "status": "passed",
+      "artifact": "docs/verification/v013-ordinary-response.safe.json"
+    },
+    {
+      "name": "Independent Standards and Spec review",
+      "status": "passed",
+      "artifact": "docs/verification/v013-review.safe.json"
+    },
+    {
+      "name": "Actual public release and exact-commit CI readback",
+      "status": "passed",
+      "artifact": "docs/verification/v013-release.safe.json"
+    }
+  ],
+  "articleTrack": "independent pending",
+  "archive": "not performed; historical changes directory retained"
+}

@@ -1,0 +1,133 @@
+{
+  "scope": "Actual original pinned Evidence Kit commands. Structural only, no test execution authentication or semantic/release certification.",
+  "commands": [
+    {
+      "arguments": [
+        "lint",
+        "--stage",
+        "apply",
+        "--root",
+        ".",
+        "--change",
+        "v07-trusted-recovery"
+      ],
+      "exitCode": 0,
+      "result": {
+        "change": "v07-trusted-recovery",
+        "stage": "apply",
+        "issues": [],
+        "structuralOnly": true,
+        "semanticQuality": "unverified"
+      }
+    },
+    {
+      "arguments": [
+        "verify",
+        "--root",
+        ".",
+        "--change",
+        "v07-trusted-recovery"
+      ],
+      "exitCode": 0,
+      "result": {
+        "status": "written",
+        "rerun": false
+      }
+    },
+    {
+      "arguments": [
+        "verify",
+        "--check",
+        "--root",
+        ".",
+        "--change",
+        "v07-trusted-recovery"
+      ],
+      "exitCode": 0,
+      "result": {
+        "status": "current",
+        "generated": true,
+        "rerun": false
+      }
+    },
+    {
+      "arguments": [
+        "lint",
+        "--stage",
+        "verify",
+        "--root",
+        ".",
+        "--change",
+        "v07-trusted-recovery"
+      ],
+      "exitCode": 0,
+      "result": {
+        "change": "v07-trusted-recovery",
+        "stage": "verify",
+        "issues": [],
+        "structuralOnly": true,
+        "semanticQuality": "unverified"
+      }
+    },
+    {
+      "arguments": [
+        "status",
+        "--root",
+        ".",
+        "--change",
+        "v07-trusted-recovery"
+      ],
+      "exitCode": 0,
+      "result": {
+        "change": "v07-trusted-recovery",
+        "tasks": {
+          "total": 6,
+          "completed": 6
+        },
+        "completion": "recorded-complete",
+        "issues": [],
+        "rerun": false,
+        "semanticQuality": "unverified",
+        "release": "not-claimed",
+        "record": {
+          "schemaVersion": "spec-evidence-completion@1",
+          "changeName": "v07-trusted-recovery",
+          "outcome": "passed",
+          "lane": "provider-free",
+          "revision": "sha256:e52d1cefcb87f3466c15adca1145fe1d6e8daba18d9a16f6e80f291cf1ac08c2",
+          "observedAt": "2026-10-27T02:31:57.276844+00:00",
+          "checks": [
+            {
+              "name": "final serial tests 249/249",
+              "status": "passed",
+              "artifact": "docs/verification/v07-observations.safe.json"
+            },
+            {
+              "name": "independent official locked install and build",
+              "status": "passed",
+              "artifact": "docs/verification/v07-observations.safe.json"
+            },
+            {
+              "name": "five built durable profiles and four-case actual HTTP",
+              "status": "passed",
+              "artifact": "docs/verification/v07-delivery-receipts.safe.json"
+            },
+            {
+              "name": "retained v0.6 artifact readback",
+              "status": "passed",
+              "artifact": "docs/verification/v07-old-artifact.safe.json"
+            },
+            {
+              "name": "original Evidence Kit verify/check",
+              "status": "passed",
+              "artifact": "openspec/changes/v07-trusted-recovery/verify.md"
+            }
+          ],
+          "scope": "Qualified original synthetic/provider-free Runtime candidate only; semantic quality unreviewed, live recovery unqualified, release and remote publication not claimed."
+        }
+      }
+    }
+  ],
+  "executableInputDigest": "sha256:e52d1cefcb87f3466c15adca1145fe1d6e8daba18d9a16f6e80f291cf1ac08c2",
+  "providerCalls": 0
+}

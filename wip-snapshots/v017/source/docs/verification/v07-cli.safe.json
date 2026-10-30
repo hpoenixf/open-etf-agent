@@ -1,0 +1,69 @@
+{
+  "schemaVersion": "open-etf-v07-cli-evidence@1",
+  "date": "2026-10-27",
+  "scope": "Independent Node CLI commands with original synthetic fixtures. No live Gateway, network provider, model billing, private data or remote publication.",
+  "nodeVersion": "v26.11.1",
+  "nodeHeapMiB": 512,
+  "testConcurrency": 1,
+  "suiteTimeoutSeconds": 60,
+  "childCommandTimeoutSeconds": 15,
+  "observations": [
+    {
+      "phase": "RED",
+      "command": "node --test --test-concurrency=1 test/session-cli.test.mjs",
+      "tests": 7,
+      "passed": 0,
+      "failed": 7,
+      "exitCode": 1,
+      "durationMs": 543.892492,
+      "reason": "Loadable CLI scaffold returned SESSION_CLI_NOT_IMPLEMENTED; no missing-module or import failure.",
+      "inputs": {
+        "src/session-cli.mjs": "0609e7c9f2b7b40e07586e2aada5fa13bbd3f7325ccbbb585cbbdc8d3d337af8",
+        "test/session-cli.test.mjs": "ed414cc47d69e6aa6230e878ef3c80691d49d3cd552782723a9a4316335475ef"
+      }
+    },
+    {
+      "phase": "GREEN",
+      "command": "node --test --test-concurrency=1 test/session-cli.test.mjs",
+      "tests": 7,
+      "passed": 7,
+      "failed": 0,
+      "exitCode": 0,
+      "durationMs": 3699.696535
+    }
+  ],
+  "testedInputs": {
+    "src/session-cli.mjs": "a70d88e0b9319f74ce6d6ee38685f75df1db239bdf7bc72aeb28fccfb5065855",
+    "test/session-cli.test.mjs": "ed414cc47d69e6aa6230e878ef3c80691d49d3cd552782723a9a4316335475ef",
+    "src/durable-demo.mjs": "0fd28a41ca96d80d6bc0a91c9ce2c59163e70bd9476b320e1ca8ac5761710dea",
+    "src/session.mjs": "5979efebc2430878262a9d1b31713e348020d85ad3627db70c5f3946da2daddf",
+    "src/runtime.mjs": "cd6c7f1fbfda8951e2ab094e8cef96ca59c0a9cba49c4927d3f070cbe342e3c9",
+    "src/tools.mjs": "80101bffd191de694bd97d6c529d768b2b7f8b73037d9e664f506fd2171d9c89",
+    "src/durable-child.mjs": "de64718a6c17654ee0cc11633022fbe26e834d75b597e74c788b53bd45516ffe",
+    "src/durable-memory.mjs": "5448f1306cb8da43dc3651c6d312742f2dd9d27dd25080b681308f66b8101f72",
+    "src/plugins.mjs": "188d109ad808661a9b0219619c74696560931d25e557f361718a2d0f2fa511f8",
+    "src/example-plugins.mjs": "05dc97f843e14f3fe4224dd35b0c57d5232b97240a3bd25115d3abdea537f0eb"
+  },
+  "checkedProfiles": [
+    "durable-report",
+    "durable-child",
+    "durable-compaction",
+    "durable-memory",
+    "trusted-plugins"
+  ],
+  "verifiedBoundaries": [
+    "Default start produces a real saved report; independent inspect returns persisted original question, binding and root usage.",
+    "Completed resume keeps the exact Run, directory, receipt, report mtime and cumulative root usage.",
+    "Each of five supported fixtures starts in an independent CLI process; inspect and resume retain that exact case and fixture binding version.",
+    "Cancel updates only durable cancellation state and zero tool/model usage in its control-only fixture; repeated cancel is monotonic.",
+    "Live, unknown fixture or unsupported gateway version is refused before any substitute Gateway executes.",
+    "Resume --case mismatch refuses instead of changing the stored Run identity.",
+    "Unknown, duplicate, missing and action-incompatible arguments fail before creating a database.",
+    "Inspect, cancel and resume require an existing session.sqlite and do not initialize missing directories."
+  ],
+  "boundariesNotClaimed": [
+    "These CLI tests restore settled results, not forced termination at every Runtime boundary; actual interruption/resume evidence is separately owned by the Runtime suite.",
+    "SIGINT/SIGTERM forwarding is implemented but no dedicated CLI signal-race qualification is claimed by this suite.",
+    "No Web Chat, background Worker, public network server, sandbox, model semantics or external exactly-once guarantee."
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "provenance": "Original synthetic documents authored for this public-project task; not real products, fund data or investment advice.",
+  "documents": [
+    {
+      "id": "atlas-a",
+      "name": "Atlas Notes synthetic guide",
+      "version": "A-2026-01",
+      "pages": [
+        "SYNTHETIC. Atlas Notes version A. Free edition exports CSV only, with at most 120 rows per export. All exports require an online connection. Enterprise edition adds PDF export; it does not remove the online-export requirement.",
+        "SYNTHETIC. Version A free edition can view previously downloaded notes offline but cannot edit them offline. Enterprise edition permits offline editing. Initial download and all synchronization require an online connection. These conditions apply only to this synthetic guide."
+      ]
+    },
+    {
+      "id": "atlas-b",
+      "name": "Atlas Notes synthetic guide",
+      "version": "B-2026-02",
+      "pages": [
+        "SYNTHETIC. Atlas Notes version B. Free edition exports CSV and Markdown, with at most 300 rows per export. All exports require an online connection. Enterprise edition adds PDF export; it does not remove the online-export requirement.",
+        "SYNTHETIC. Version B free edition can view previously downloaded notes offline but cannot edit them offline. Enterprise edition permits offline editing. Initial download and all synchronization require an online connection. These conditions apply only to this synthetic guide."
+      ]
+    }
+  ]
+}

@@ -1,0 +1,66 @@
+{
+  "schemaVersion": "open-etf-verification@1",
+  "date": "2026-10-27",
+  "scope": "v0.7 operation-scoped Memory adapter and immutable settled-receipt verification",
+  "runtime": "Node v26.11.1",
+  "resources": { "nodeMaxHeapMiB": 512, "testConcurrency": 1, "commandTimeoutSeconds": 30, "temporaryFiles": "owned workspace engineering TMPDIR and ignored test-output only" },
+  "data": "original synthetic preference strings and owned disposable local libraries; no production database, credentials, provider or network",
+  "observations": [
+    {
+      "phase": "RED",
+      "command": "node --test --test-concurrency=1 test/durable-memory.test.mjs",
+      "exitCode": 1,
+      "tests": 7,
+      "passed": 0,
+      "failed": 7,
+      "durationMs": 420.690789,
+      "basis": "loadable scaffold delegated real writes to the existing Memory owner but returned null for verification and opened a writer during preparation",
+      "failures": ["original receipt was not verified", "stale writer lock prevented read-only preparation", "corrupt, foreign and orphan receipts lacked rejection"],
+      "sourceSha256": "4628116e704029892b352607ee60348837302615030a27997c9945a2df3e2cc2",
+      "testSha256": "0197371fb32a73577e5e798c7b2869ef8b765a0fdf0f17b3f08ef491c41afae9",
+      "rawOutput": "ignored local test-output/v07-memory/red.tap; not a publication artifact"
+    },
+    {
+      "phase": "GREEN",
+      "command": "node --test --test-concurrency=1 test/durable-memory.test.mjs test/memory.test.mjs test/memory-effects.test.mjs",
+      "exitCode": 0,
+      "tests": 14,
+      "passed": 14,
+      "failed": 0,
+      "durationMs": 564.597176,
+      "basis": "seven new adapter tests plus six existing Memory tests and one existing partial-effect integration test",
+      "sourceSha256": "5448f1306cb8da43dc3651c6d312742f2dd9d27dd25080b681308f66b8101f72",
+      "testSha256": "0197371fb32a73577e5e798c7b2869ef8b765a0fdf0f17b3f08ef491c41afae9",
+      "rawOutput": "ignored local test-output/v07-memory/green.tap; not a publication artifact"
+    },
+    {
+      "phase": "CHECK",
+      "command": "node --test --test-concurrency=1 test/durable-memory.test.mjs",
+      "exitCode": 0,
+      "tests": 8,
+      "passed": 8,
+      "failed": 0,
+      "durationMs": 426.536664,
+      "basis": "strengthened actual process test starts a fresh writer, waits for its exit, then starts a distinct fresh reader; added authority digest ordering, immutable selection and verifyResult linkage checks",
+      "sourceSha256": "5448f1306cb8da43dc3651c6d312742f2dd9d27dd25080b681308f66b8101f72",
+      "testSha256": "6f96b0c716e23c6d6510e25e97332d3a6ac0983c8edae0001a216899268dde07",
+      "rawOutput": "ignored local test-output/v07-memory/final.tap; not a publication artifact"
+    }
+  ],
+  "established": [
+    "The adapter delegates to the original Memory owner rather than duplicating mutation logic.",
+    "Each write opens and closes its own original Memory owner before returning; successful and rejected duplicate writes leave no owned live writer lock.",
+    "A settled receipt verifies immutable original revision bytes, record hash, reserved one-use intent, exact operation/library/entry/revision identities and committed-index reachability.",
+    "Known save/revise receipts remain verifiable after forgetting; verification returns only acknowledgement metadata, not historical text.",
+    "An unknown existing writer lock is not stolen or removed; read-only verification of a previously settled receipt remains possible.",
+    "Write bindings expose verifyResult; selected intentDigest binds exact immutable authority descriptors independently of input order."
+  ],
+  "boundaries": [
+    "These are adapter tests, not proof that the Runtime resumed an unfinished Run; the Runtime fault-injection qualification is separate.",
+    "No reconciliation of an unknown mid-write operation is implemented. A file or intent reservation alone is not a successful Runtime receipt.",
+    "File publication and SQLite checkpoints are separate systems, not one transaction or a generic exactly-once guarantee.",
+    "No lock theft, new grant creation, raw-log publication, model call, remote change or formal release occurred."
+  ],
+  "semanticStatus": "unreviewed",
+  "release": "not-claimed"
+}

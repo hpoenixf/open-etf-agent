@@ -1,0 +1,149 @@
+{
+  "schemaVersion": "open-etf-v09-combined-kit@1",
+  "completedAt": "2026-10-27T09:07:53.846354+00:00",
+  "kitCommit": "db6ac2f43cc0319fa0f10b4f73d67521d5209c88",
+  "runtime": "Node v26.11.1",
+  "heapMiB": 512,
+  "perCommandTimeoutSeconds": 30,
+  "inputSha256": "445b5cfd2e2cf792b5d431546c4742f893fc66c38f7d033949e0109bcde5431f",
+  "results": [
+    {
+      "name": "plan",
+      "command": "node tooling/openspec-evidence-kit-db6ac2f/bin/spec-evidence.mjs lint --stage plan --change v09-single-run-worker",
+      "startedAt": "2026-10-27T09:07:53.382048+00:00",
+      "completedAt": "2026-10-27T09:07:53.457393+00:00",
+      "durationSeconds": 0.075352,
+      "exitCode": 0,
+      "outputSha256": "9d3e7b5697abf703d6b4bdaa05e418987cf105a58c9a3aa8859681130d13ed10",
+      "result": {
+        "change": "v09-single-run-worker",
+        "stage": "plan",
+        "issues": [],
+        "structuralOnly": true,
+        "semanticQuality": "unverified"
+      }
+    },
+    {
+      "name": "apply",
+      "command": "node tooling/openspec-evidence-kit-db6ac2f/bin/spec-evidence.mjs lint --stage apply --change v09-single-run-worker",
+      "startedAt": "2026-10-27T09:07:53.457726+00:00",
+      "completedAt": "2026-10-27T09:07:53.535054+00:00",
+      "durationSeconds": 0.077494,
+      "exitCode": 0,
+      "outputSha256": "9c5624646673bdc23d3158e7082f4cc92345a4d2c1fe4241700da5eb9071e89e",
+      "result": {
+        "change": "v09-single-run-worker",
+        "stage": "apply",
+        "issues": [],
+        "structuralOnly": true,
+        "semanticQuality": "unverified"
+      }
+    },
+    {
+      "name": "verify",
+      "command": "node tooling/openspec-evidence-kit-db6ac2f/bin/spec-evidence.mjs verify --change v09-single-run-worker",
+      "startedAt": "2026-10-27T09:07:53.535465+00:00",
+      "completedAt": "2026-10-27T09:07:53.615724+00:00",
+      "durationSeconds": 0.08027,
+      "exitCode": 0,
+      "outputSha256": "c92d1da0fd4a95ec23628000b15875ca13e7d323a47f2e168212f5e95841d0d1",
+      "result": {
+        "status": "written",
+        "rerun": false
+      }
+    },
+    {
+      "name": "verify-check",
+      "command": "node tooling/openspec-evidence-kit-db6ac2f/bin/spec-evidence.mjs verify --check --change v09-single-run-worker",
+      "startedAt": "2026-10-27T09:07:53.616200+00:00",
+      "completedAt": "2026-10-27T09:07:53.700498+00:00",
+      "durationSeconds": 0.084309,
+      "exitCode": 0,
+      "outputSha256": "ed3c44cde7364d748d85106e381b55d502c75cba52321f2e35261bfeb90a987e",
+      "result": {
+        "status": "current",
+        "generated": true,
+        "rerun": false
+      }
+    },
+    {
+      "name": "lint-verify",
+      "command": "node tooling/openspec-evidence-kit-db6ac2f/bin/spec-evidence.mjs lint --stage verify --change v09-single-run-worker",
+      "startedAt": "2026-10-27T09:07:53.700777+00:00",
+      "completedAt": "2026-10-27T09:07:53.775368+00:00",
+      "durationSeconds": 0.074599,
+      "exitCode": 0,
+      "outputSha256": "f4c8979dc72c632800e3a04623c1a68b62511c6f68f8d24941ef14c5e5cf9922",
+      "result": {
+        "change": "v09-single-run-worker",
+        "stage": "verify",
+        "issues": [],
+        "structuralOnly": true,
+        "semanticQuality": "unverified"
+      }
+    },
+    {
+      "name": "status",
+      "command": "node tooling/openspec-evidence-kit-db6ac2f/bin/spec-evidence.mjs status --change v09-single-run-worker",
+      "startedAt": "2026-10-27T09:07:53.775871+00:00",
+      "completedAt": "2026-10-27T09:07:53.845827+00:00",
+      "durationSeconds": 0.069968,
+      "exitCode": 0,
+      "outputSha256": "41df967441ebb0c6b8eaca7a0b8218efda41459eb99ba41785f4f7721c00efa3",
+      "result": {
+        "change": "v09-single-run-worker",
+        "tasks": {
+          "total": 3,
+          "completed": 3
+        },
+        "completion": "recorded-complete",
+        "issues": [],
+        "rerun": false,
+        "semanticQuality": "unverified",
+        "release": "not-claimed",
+        "record": {
+          "schemaVersion": "spec-evidence-completion@1",
+          "changeName": "v09-single-run-worker",
+          "outcome": "passed",
+          "lane": "provider-free",
+          "revision": "sha256:445b5cfd2e2cf792b5d431546c4742f893fc66c38f7d033949e0109bcde5431f",
+          "observedAt": "2026-10-27T09:07:53.775758+00:00",
+          "checks": [
+            {
+              "name": "new combined serial suite 309/309 on 124 frozen version 0.9.0 inputs",
+              "status": "passed",
+              "artifact": "docs/verification/v09-combined-observations.safe.json"
+            },
+            {
+              "name": "original RED/GREEN and 19 unchanged Worker identity/process boundaries",
+              "status": "passed",
+              "artifact": "docs/verification/v09-worker-green.safe.json"
+            },
+            {
+              "name": "58 delivery inputs and 55 retained built files byte-identical; original install/eight CLI receipts remain historical",
+              "status": "passed",
+              "artifact": "docs/verification/v09-delivery-equivalence.safe.json"
+            },
+            {
+              "name": "original hash-bound Worker review; original Worker source unchanged during main rebind",
+              "status": "passed",
+              "artifact": "docs/verification/v09-review.safe.json"
+            },
+            {
+              "name": "original Kit plan/apply/verify/check/lint verify on current observations",
+              "status": "passed",
+              "artifact": "openspec/changes/v09-single-run-worker/verify.md"
+            }
+          ],
+          "scope": "Local single-Run Worker runtime/delivery qualification only. Same Session/Runtime, no Task/queue/schema/service expansion. Actual process/storage checks use synthetic Gateway input, not a live model. No semantic, browser, foreground concurrency, full scheduling, formal Release, remote publication or entire version-maintenance completion claim. Original v0.8 and expanded WIP evidence is not reused as this qualification. Source, README coverage, article/source and new-domain publication remain separate publisher gates. Current main CI/lineage maintenance is preserved. The new combined suite is separate from historical 305; independent install/eight CLI execution is not rerun or relabeled, and delivery equivalence is explicitly recorded. Fixed v0.9 coverage and remote promotion remain pending."
+        }
+      }
+    }
+  ],
+  "structuralOnly": true,
+  "testsExecutedByKit": false,
+  "semanticQuality": "unverified",
+  "formalRelease": "not-claimed",
+  "formalArchival": false,
+  "maintenanceComplete": false
+}

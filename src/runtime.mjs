@@ -9,13 +9,21 @@ import { compactWorkingView } from './compaction.mjs';
 import { projectMemory } from './memory-projection.mjs';
 import { projectContext } from './context.mjs';
 import { activateTrustedPlugins } from './plugins.mjs';
-import { sha256 } from './source.mjs';
-import { PUBLICATION_BINDING, preparePublication } from './publication.mjs';
+import { sha256, DOCUMENT_REVOCATION_PROFILE } from './source.mjs';
+import { PUBLICATION_BINDING, PUBLICATION_TEXT_MAX_BYTES, preparePublication } from './publication.mjs';
 
 const failure = code => Object.assign(new Error(code), { code });
+const modelReservations = new WeakSet();
+// Only this Runtime's successful durable reserve operation mints a receipt.
+export function projectModelReservation(receipt) { return receipt && modelReservations.has(receipt) ? { ...receipt } : null; }
+function modelReservation(view) {
+  const receipt = Object.freeze({ rootId: view.rootId, runId: view.runId, owner: view.owner, fence: view.fence,
+    modelOrdinal: view.rootUsage.model, round: view.snapshot.rounds, inputHash: view.snapshot.working.hash });
+  modelReservations.add(receipt); return receipt;
+}
 const canonical = value => JSON.stringify(value, (_,v) => v && typeof v==='object'&&!Array.isArray(v)?Object.fromEntries(Object.keys(v).sort().map(k=>[k,v[k]])):v);
 function validateProposal(p) {
-  if (p?.kind === 'final' && typeof p.text === 'string' && p.text.length <= 64000) return;
+  if (p?.kind === 'final' && typeof p.text === 'string' && Buffer.byteLength(p.text) <= PUBLICATION_TEXT_MAX_BYTES) return;
   if (p?.kind !== 'calls' || !Array.isArray(p.calls) || !p.calls.length || p.calls.length > 16) throw failure('INVALID_PROPOSAL');
   for (const c of p.calls) if (!c || typeof c.id !== 'string' || !c.id || c.id.length > 200 || typeof c.name !== 'string' || !c.arguments || typeof c.arguments !== 'object' || Array.isArray(c.arguments)) throw failure('INVALID_CALL');
 }
@@ -52,10 +60,11 @@ export function validateRuntimeCheckpoint(state, definition) {
 
 export function run(options) { return drive(options, false); }
 export function submitRun(options) { return drive(options, true); }
-async function drive({ question, gateway, outputRoot='runs', requireReport=true, signal, hostSignal, limits={}, extensions=[], hooks, plugins, rootBudget, allowedTools, allowedDocuments, taskId=null, contextBytes, workingInput, durable, publication = false, pdfInput, taskTime, ordinaryResponse = false }, submitting) {
+async function drive({ question, gateway, outputRoot='runs', requireReport=false, signal, hostSignal, limits={}, extensions=[], hooks, plugins, rootBudget, allowedTools, allowedDocuments, taskId=null, contextBytes, workingInput, durable, publication = false, pdfInput, taskTime, ordinaryResponse = false, documentProtection = false }, submitting) {
   if(typeof question!=='string'||!question.trim()||Buffer.byteLength(question)>16000||typeof gateway?.next!=='function')throw failure('INVALID_INPUT');
+  if (gateway.admission === 'shared-admission@1' && (!durable || workingInput?.compaction || durable.parentRunId)) throw failure('ADMISSION_EXECUTION_UNSUPPORTED');
   if (taskTime !== undefined && (!taskTime || typeof taskTime !== 'object' || Array.isArray(taskTime) || Object.keys(taskTime).some(key => !['anchorInstant', 'timeZone'].includes(key)))) throw failure('INVALID_TASK_TIME_INPUT');
-  const budget={maxRounds:12,maxTools:12,timeoutMs:30000,...limits};
+  const budget={maxRounds:24,maxTools:64,timeoutMs:120000,...limits};
   for(const [key,value] of Object.entries(budget))if(!['maxRounds','maxTools','timeoutMs'].includes(key)||!Number.isSafeInteger(value)||value<1||value>(key==='timeoutMs'?300000:1000))throw failure('INVALID_LIMIT');
   if(contextBytes!==undefined&&(!Number.isSafeInteger(contextBytes)||contextBytes<1||contextBytes>1048576))throw failure('INVALID_CONTEXT_LIMIT');
   if(workingInput!==undefined&&(!workingInput||typeof workingInput!=='object'||Object.keys(workingInput).some(key=>!['memoryLibrary','compaction'].includes(key))))throw failure('INVALID_WORKING_INPUT');
@@ -63,6 +72,17 @@ async function drive({ question, gateway, outputRoot='runs', requireReport=true,
   if(workingInput?.compaction&&(typeof workingInput.compaction.summarize!=='function'||!Number.isSafeInteger(workingInput.compaction.thresholdBytes)||workingInput.compaction.thresholdBytes<1||workingInput.compaction.thresholdBytes>1048576))throw failure('INVALID_COMPACTION');
   if(durable&&(typeof durable.store?.create!=='function'||rootBudget||!durable.bindings||durable.bindings.gateway.mode!==gateway.mode))throw failure('INVALID_DURABLE_CONFIGURATION');
   if(pdfInput!==undefined&&(durable||submitting||hostSignal!==undefined))throw failure('PDF_ACTIVE_RECOVERY_UNSUPPORTED');
+  const protectedMode=documentProtection===true;
+  if(typeof documentProtection!=='boolean'||!protectedMode&&durable?.store.schemaVersion===4)throw failure('DOCUMENT_PROFILE_REQUIRED');
+  let authority;
+  if(protectedMode){
+    if(!durable||durable.store.schemaVersion!==4||gateway.mode!=='fixture'||plugins||hooks||extensions.length||workingInput||pdfInput!==undefined||ordinaryResponse||submitting||hostSignal!==undefined||durable.parentRunId||!requireReport||!publication)throw failure('PROTECTED_EXECUTION_UNSUPPORTED');
+    const adapters=durable.bindings.adapters;if(adapters.length!==2||!adapters.some(a=>a.id==='document-revocation'&&a.version===DOCUMENT_REVOCATION_PROFILE)||!adapters.some(a=>canonical(a)===canonical(PUBLICATION_BINDING)))throw failure('PROTECTED_BINDINGS_MISMATCH');
+    allowedTools??=['search_pages','read_page','read_result','create_csv','save_report'];allowedDocuments??=['atlas-a','atlas-b'];
+    if(canonical(allowedTools)!==canonical(['search_pages','read_page','read_result','create_csv','save_report']))throw failure('PROTECTED_TOOL_SCOPE');authority=durable.store.documentAuthority();
+  }
+  function protectionFor(saved){if(!protectedMode)return undefined;if(saved.parentRunId!==null||saved.rootId!==saved.runId||canonical(saved.definition.config.documentProtection)!==canonical({authorityId:authority.authorityId,libraryId:authority.libraryId}))throw failure('PROTECTED_BINDINGS_MISMATCH');return{profile:DOCUMENT_REVOCATION_PROFILE,authorityId:authority.authorityId,libraryId:authority.libraryId,rootId:saved.rootId,runId:saved.runId};}
+  function protectedAccess(saved,claim){if(!protectedMode)return undefined;const runId=saved.runId,pending=saved.snapshot.phase==='tool-dispatched'&&saved.snapshot.proposal?.calls?.[saved.snapshot.cursor]?.name==='save_report';return{protection:protectionFor(saved),pendingSave:pending,consume:(source,ref)=>durable.store.consumeProtectedSource(runId,source,ref),dependencies:()=>durable.store.protectedDependencies(runId),output:()=>durable.store.protectedOutput(runId),verifyQuery:(call,value)=>durable.store.verifyProtectedQueryResult(runId,call,value),...(claim?{bind:(source,ref)=>claim.bindProtectedSource(source,ref),register:proof=>claim.registerProtectedOutput(proof),query:(callId,query,documents)=>claim.queryProtectedPages(callId,query,documents)}:{})};}
   const responseBinding=durable?.bindings?.adapters?.find(item=>item.id===RESPONSE_BINDING.id);
   if(typeof ordinaryResponse!=='boolean'||(ordinaryResponse? !durable||durable.store.schemaVersion!==3||canonical(responseBinding)!==canonical(RESPONSE_BINDING)||gateway.mode!=='fixture'||plugins||hooks||extensions.length||workingInput||durable.parentRunId||submitting||hostSignal!==undefined : responseBinding!==undefined))throw failure('ORDINARY_PROFILE_REQUIRED');
   const publicationBinding = durable?.bindings?.adapters?.find(item => item.id === PUBLICATION_BINDING.id);
@@ -77,7 +97,7 @@ async function drive({ question, gateway, outputRoot='runs', requireReport=true,
   // claiming execution. Session/Artifact reads remain separate from resumption.
   if (!submitting && durable?.runId) {
     const prior=durable.store.inspect(durable.runId);
-    if (prior.snapshot.host!=null) assertHostSnapshotVersion(prior.snapshot.host);
+    if (prior.snapshot.host!=null) assertHostSnapshotVersion(prior.snapshot.host,protectionFor(prior));
   }
   let selected, outcome;
   try {
@@ -99,7 +119,7 @@ async function drive({ question, gateway, outputRoot='runs', requireReport=true,
       } catch (error) { if (error.code !== 'UNKNOWN_RUN') throw error; }
     }
     if (!temporal && taskTime !== undefined) temporal = createTaskTime(taskTime);
-    const config={requireReport,...(ordinaryResponse?{ordinaryResponse:RESPONSE_PROFILE}:{}),...(temporal?{taskTime:temporal}:{}),...(publication?{publication:PUBLICATION_BINDING.version}:{}),...(allowedTools?{allowedTools}:{}),...(allowedDocuments?{allowedDocuments}:{}),...(contextBytes===undefined?{}:{contextBytes}),taskId,...(workingInput?{workingInput:{...(workingInput.memoryLibrary?{memoryLibraryId:workingInput.memoryLibrary.libraryId}:{}),...(workingInput.compaction?{compaction:{thresholdBytes:workingInput.compaction.thresholdBytes,summaryTimeoutMs:workingInput.compaction.summaryTimeoutMs??2000,version:'history-compaction@1'}}:{})}}:{})};
+    const config={requireReport,...(protectedMode?{documentProtection:{authorityId:authority.authorityId,libraryId:authority.libraryId}}:{}),...(ordinaryResponse?{ordinaryResponse:RESPONSE_PROFILE}:{}),...(temporal?{taskTime:temporal}:{}),...(publication?{publication:PUBLICATION_BINDING.version}:{}),...(allowedTools?{allowedTools}:{}),...(allowedDocuments?{allowedDocuments}:{}),...(contextBytes===undefined?{}:{contextBytes}),taskId,...(workingInput?{workingInput:{...(workingInput.memoryLibrary?{memoryLibraryId:workingInput.memoryLibrary.libraryId}:{}),...(workingInput.compaction?{compaction:{thresholdBytes:workingInput.compaction.thresholdBytes,summaryTimeoutMs:workingInput.compaction.summaryTimeoutMs??2000,version:'history-compaction@1'}}:{})}}:{})};
     let stored,claim,directory,runId,boundChild=false,deadlineAt=Date.now()+budget.timeoutMs;
     let state={schemaVersion:'runtime-checkpoint@1',phase:'ready',messages:[{role:'user',content:question}],usedIds:[],rounds:0,toolsDispatched:0,proposal:null,cursor:0,result:null,host:null,working:null,answer:'',status:'failed',code:null,unknownEffects:[],partialEffects:[],hookErrors:[]};
     function verifyCorrectionHistory(host){
@@ -116,7 +136,7 @@ async function drive({ question, gateway, outputRoot='runs', requireReport=true,
       if(!Number.isSafeInteger(state.corrections??0)||(state.corrections??0)!==Math.min(count,1)||(count>1&&state.failureCode!=='CORRECTION_LIMIT'))throw failure('RECOVERY_CORRECTION_MISMATCH');
     }
     function boundToOriginal(saved) {
-      if (!submitting && saved.snapshot.host!=null) assertHostSnapshotVersion(saved.snapshot.host);
+      if (!submitting && saved.snapshot.host!=null) assertHostSnapshotVersion(saved.snapshot.host,protectionFor(saved));
       validateRuntimeCheckpoint(saved.snapshot,saved.definition);
       if(canonical(saved.definition.bindings)!==canonical(durable.bindings)||saved.definition.grantId!==durable.grantId||saved.definition.question!==question||canonical(saved.definition.limits)!==canonical(budget)||canonical(saved.definition.config)!==canonical(config))throw failure('RUN_BINDINGS_MISMATCH');
     }
@@ -151,7 +171,7 @@ async function drive({ question, gateway, outputRoot='runs', requireReport=true,
           state.publication=saved?.receipt;
         }
 
-        const restored=state.host?await createToolHost({directory,ordinaryResponse:ordinaryResponse?{confirm:(call,result)=>durable.store.confirmResponse(runId,call,result)}:undefined,extensions,hooks,allowedTools,allowedDocuments,enableNotes:!!workingInput?.compaction,restore:state.host}):null;
+        const restored=state.host?await createToolHost({directory,ordinaryResponse:ordinaryResponse?{confirm:(call,result)=>durable.store.confirmResponse(runId,call,result)}:undefined,extensions,hooks,allowedTools,allowedDocuments,enableNotes:!!workingInput?.compaction,restore:state.host,...(protectedMode?{readOnly:true,documentAccess:protectedAccess(stored)}:{})}):null;
         for(const message of state.messages)if(message.role==='tool'){const call=state.messages.flatMap(m=>m.calls||[]).find(c=>c.id===message.callId);if(call)await restored.verifyResult(call,message.result);}
         if(state.result){const call=state.proposal?.calls?.[state.cursor];if(call)await restored.verifyResult(call,state.result);}
         if(restored)verifyCorrectionHistory(restored);
@@ -192,12 +212,12 @@ async function drive({ question, gateway, outputRoot='runs', requireReport=true,
     record.sequence=0;
     async function checkpoint(phase,{reserve}={}){
       state.phase=phase;state.host=host.snapshot();state.inFlight=inFlight;state.logSequence=record.sequence;
-      if(claim){if(reserve)claim.reserve(reserve,state);else claim.checkpoint(state);if(durable.onCheckpoint)await bounded(Promise.resolve().then(()=>durable.onCheckpoint({phase,runId,directory,cursor:state.cursor,callId:state.proposal?.calls?.[state.cursor]?.id,noteRef:state.working?.noteRef,workingHash:state.working?.hash,fence:claim.fence})),controller.signal);}
+      if(claim){const reservedView=reserve?claim.reserve(reserve,state):(claim.checkpoint(state),undefined);if(durable.onCheckpoint)await bounded(Promise.resolve().then(()=>durable.onCheckpoint({phase,runId,directory,cursor:state.cursor,callId:state.proposal?.calls?.[state.cursor]?.id,noteRef:state.working?.noteRef,workingHash:state.working?.hash,fence:claim.fence})),controller.signal);return reservedView;}
     }
     try{
       controller.signal.throwIfAborted();
       if(claim&&durable.onClaim)await bounded(Promise.resolve().then(()=>durable.onClaim({runId,rootId:claim.rootId,owner:claim.owner,fence:claim.fence})),controller.signal);
-      host=await effect(createToolHost({directory,ordinaryResponse:ordinaryResponse?{confirm:(call,result)=>durable.store.confirmResponse(runId,call,result)}:undefined,extensions,hooks,allowedTools,allowedDocuments,enableNotes:!!workingInput?.compaction,restore:state.host??undefined,pdfInput}));
+      host=await effect(createToolHost({directory,ordinaryResponse:ordinaryResponse?{confirm:(call,result)=>durable.store.confirmResponse(runId,call,result)}:undefined,extensions,hooks,allowedTools,allowedDocuments,enableNotes:!!workingInput?.compaction,restore:state.host??undefined,pdfInput,...(protectedMode?{documentAccess:protectedAccess(claim.read(),claim)}:{})}));
       if(durable?.runId)for(const message of state.messages)if(message.role==='tool'){const call=state.messages.flatMap(m=>m.calls||[]).find(c=>c.id===message.callId);await host.verifyResult(call,message.result);}
       verifyCorrectionHistory(host);
       if(state.working)await host.verifyWorkingInput(state.working);
@@ -233,8 +253,8 @@ async function drive({ question, gateway, outputRoot='runs', requireReport=true,
           }
           // Forgetting after adoption but before dispatch removes old typed Memory from the next actual input.
           if(workingInput?.memoryLibrary){state.working.messages=await projectMemory({messages:state.working.messages,lookupState:ref=>workingInput.memoryLibrary.state(ref.id)});state.working.hash=sha256(JSON.stringify(state.working.messages));}
-          state.rounds++;if(claim)await checkpoint('model-reserved',{reserve:'model'});else rootBudget.claim('model');
-          const start=performance.now();const proposal=await effect(Promise.resolve().then(()=>{controller.signal.throwIfAborted();return gateway.next({messages:structuredClone(state.working.messages),tools:structuredClone(host.definitions),signal:controller.signal});}));
+          state.rounds++;let reservation;if(claim){const reservedView=await checkpoint('model-reserved',{reserve:'model'});if(gateway.admission==='shared-admission@1')reservation=modelReservation(reservedView);}else rootBudget.claim('model');
+          const start=performance.now();const proposal=await effect(Promise.resolve().then(()=>{controller.signal.throwIfAborted();return gateway.next({messages:structuredClone(state.working.messages),tools:structuredClone(host.definitions),signal:controller.signal,...(reservation?{reservation}:{})});}));
           controller.signal.throwIfAborted();validateProposal(proposal);
           if(proposal.kind==='calls'){if(proposal.calls.some(c=>c.name==='ask_response')){if(!ordinaryResponse||proposal.calls.length!==1)throw failure('INVALID_ORDINARY_RESPONSE');validateResponseCall(proposal.calls[0]);if(durable.store.responseStatus(runId))throw failure('QUESTION_LIMIT');}const ids=new Set();for(const c of proposal.calls){if(state.usedIds.includes(c.id)||ids.has(c.id))throw failure('DUPLICATE_CALL_ID');ids.add(c.id);}if(state.toolsDispatched+proposal.calls.length>budget.maxTools)throw failure('TOOL_LIMIT');}
           state.proposal=structuredClone(proposal);state.cursor=0;state.result=null;state.working=null;
@@ -243,6 +263,7 @@ async function drive({ question, gateway, outputRoot='runs', requireReport=true,
         }
         if(state.proposal.kind==='final'){
           state.answer=state.proposal.text;
+          if(protectedMode&&requireReport&&!host.receipt)throw failure('REPORT_REQUIRED');
           if(publication){
             const committed=claim.publish(preparePublication({runId,rootId:claim.rootId,text:state.answer}));
             state.publication=committed.receipt;
@@ -304,6 +325,7 @@ async function drive({ question, gateway, outputRoot='runs', requireReport=true,
       if(log){try{await record(awaitingResponse?'run_yielded':interrupted?'worker_interrupted':'run_finished',{status:awaitingResponse?'awaiting-response':interrupted?'interrupted':state.status,code:state.code,toolsDispatched:state.toolsDispatched,receipt:host?.receipt,unknownEffects:state.unknownEffects,partialEffects:state.partialEffects});}catch{if(state.status==='completed'){state.status='failed';state.code='LOG_WRITE_FAILED';}}await log.close().catch(()=>logErrors.push('LOG_CLOSE_FAILED'));}
       if(hooks)state.hookErrors.push(...await hooks.observe('release',{runId,rootId:rootBudget.rootId,taskId,status:state.status,code:state.code,logErrors:[...logErrors],receipt:host?.receipt}));
     }
+    if(protectedMode&&state.status!=='completed')state.answer='';
     const outcome={runId,rootId:rootBudget.rootId,directory:resolve(directory),status:state.status,code:state.code,answer:state.answer,...(state.publication?{publication:structuredClone(state.publication)}:{}),receipt:host?.receipt??null,toolsDispatched:state.toolsDispatched,rounds:state.rounds,logErrors,unknownEffects:state.unknownEffects,partialEffects:state.partialEffects,hookErrors:state.hookErrors,rootUsage:rootBudget.snapshot(),taskId,...(allowedTools?{sources:sourceSnapshots,resultRefs}:{}),semanticStatus:'unreviewed'};
     if(awaitingResponse){try{claim.release();return{...outcome,status:'awaiting-response',code:null,questionId:state.responseQuestion,deadlineAt};}catch(error){const current=durable.store.inspect(runId);return{...outcome,status:current.status==='cancelled'?'cancelled':'failed',code:current.status==='cancelled'?'CANCELLED':error.code};}}
     if(interrupted){

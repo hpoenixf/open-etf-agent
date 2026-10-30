@@ -1,0 +1,38 @@
+{
+  "schemaVersion": 1,
+  "kind": "standalone-article-guide-maintenance",
+  "baseCommit": "c40ff5b4cb8a76a7bfee2592c6b47db0c04f8ebe",
+  "runtimeSource": "ff5b9273ef0d239e804f61792702cd2e94174be7",
+  "articleCatalogCommit": "ae0f657fccb594716067516fd4f1f4180421160f",
+  "change": "Move complete English/Chinese Articles and code sections into standalone guides; README keeps a visible link and existing reading anchor. Same generated tables and machine facts.",
+  "guidePaths": [
+    "docs/articles-and-code.md",
+    "docs/articles-and-code.zh-CN.md"
+  ],
+  "verification": {
+    "maintenanceCases": 55,
+    "maintenancePassed": 55,
+    "maintenanceFailed": 0,
+    "maintenanceSkipped": 0,
+    "maintenanceOutputSha256": "c7e8b825d5ca275efde1368279da6c0a67ff8f76ff139bb4717faad24058dc72",
+    "runtimeInputCount": 125,
+    "runtimeInputByteChanges": 0,
+    "runtimeTargets": 15,
+    "smokeExecutedAt": "2026-10-28T02:55:58.759Z",
+    "runnerSha256": "4831b75b97ddb484e2fbe2aeac15a6541388711fa8fd6c872f9741ebb0def791",
+    "smokeOutputSha256": "8282fc120f0eff0452f8998338e2c940a42d9e606b2947baf9213131f6af8def",
+    "checkPassed": true,
+    "checkOutputSha256": "b13ce5142c153a1919987120b700d4d48be1e09c093dceb0ac81c50465453926",
+    "modelCalls": 0,
+    "fullSuiteRerun": false
+  },
+  "dependencies": "Reused the prior clean locked offline installation of 95 packages; not a new installation qualification.",
+  "documentationChecks": [
+    "Both README files byte-identical outside requested reading section",
+    "Generated coverage tables byte-identical after relocation",
+    "Relative links rebased and checked against published tree plus candidate files",
+    "Visible correct-language README entry required; hidden/code/image links and embedded tables rejected",
+    "Missing or corrupt language guide fails closed"
+  ],
+  "boundary": "Existing Runtime evidence remains bounded; no new model-quality, browser or website-publication claim. Remote publication and CI belong to the publisher."
+}

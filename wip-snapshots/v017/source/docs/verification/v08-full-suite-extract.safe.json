@@ -1,0 +1,48 @@
+{
+  "schemaVersion": 1,
+  "kind": "historical-execution-extract",
+  "derivedAt": "2026-10-27T08:13:49.675566+00:00",
+  "newExecution": false,
+  "recordedObservation": {
+    "repository": "hpoenixf/open-etf-agent",
+    "commit": "2c096ce47be2161f97531170af07ef255872f8b1",
+    "path": "docs/verification/v08-observations.safe.json",
+    "gitBlob": "18327a6ea3884f2fa568d8582608ed285b4c03e0"
+  },
+  "directlyExtractedFromRetainedOutput": {
+    "originalOutputSha256": "5a6f684dfbaa2e9fd05788891b25bcde2c8e58cd8364c9342774433cc164213f",
+    "bytes": 26970,
+    "lines": 294,
+    "successfulCaseRecords": 286,
+    "caseRecordsWithNameAndDuration": 286,
+    "counts": {
+      "tests": 286,
+      "suites": 0,
+      "pass": 286,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 0,
+      "todo": 0
+    },
+    "durationMs": 32671.990912
+  },
+  "metadataInheritedFromRecordedObservation": {
+    "command": "node --test --test-concurrency=1 test/*.test.mjs",
+    "exitCode": 0,
+    "completedAt": "2026-10-27T04:48:46Z",
+    "runtime": "Node v26.11.1",
+    "heapMiB": 512,
+    "testConcurrency": 1,
+    "version": "0.8.0-dev.0",
+    "inputSha256": "bbef17375feea95e05fa32dd5aa20bc2df102209b9ae048a6aa29f04833c04ee",
+    "inputManifest": "docs/verification/v08-candidate-inputs.json",
+    "inputsUnchangedAfterRun": true
+  },
+  "independentExecutionEnvelopeRecovered": false,
+  "limitations": [
+    "Retained test output directly establishes its case records and final counters, not a separate process-launch/exit envelope.",
+    "Command, exit status, completion time and original input identity are inherited from the contemporaneous public machine-readable observation, not reconstructed from prose.",
+    "The 0.8.0 metadata-only digest caf5be631011562b024d2c4d62f26c4391048625a79ec8dedaea5dfab69a1711 was not used for a repeated 286-case run.",
+    "No raw log, database or current dirty-tree evidence is published here."
+  ]
+}

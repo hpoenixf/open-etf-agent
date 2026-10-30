@@ -56,7 +56,7 @@ test('7.2 unsafe path, sidecar, unknown SQLite schema and secret binding fields 
 });
 test('7.2 unsupported active codec, malformed JSON and oversized snapshots fail closed', async () => {
  const d = await directory(); const store = await openSession({ directory: d, clock: () => 100 }); assert.ok(store, 'Session required');
- try { assert.throws(() => store.create({ directory: d, definition: definition(), snapshot: { schemaVersion: 'runtime-checkpoint@999', phase: 'ready' } }), /CHECKPOINT/); const { runId } = await create(store, d); const c = store.claim(runId, 'a'); assert.throws(() => c.checkpoint(checkpoint('ready', { payload: 'x'.repeat(4 * 1048576) })), /BOUND/); assert.throws(() => c.checkpoint(checkpoint('ready', { invalid: undefined })), /JSON/); assert.equal(c.read().snapshot.phase, 'ready'); }
+ try { assert.throws(() => store.create({ directory: d, definition: definition(), snapshot: { schemaVersion: 'runtime-checkpoint@999', phase: 'ready' } }), /CHECKPOINT/); const { runId } = await create(store, d); const c = store.claim(runId, 'a'); assert.throws(() => c.checkpoint(checkpoint('ready', { payload: 'x'.repeat(13 * 1048576) })), /BOUND/); assert.throws(() => c.checkpoint(checkpoint('ready', { invalid: undefined })), /JSON/); assert.equal(c.read().snapshot.phase, 'ready'); }
  finally { store.close(); }
 });
 test('7.2 independent SQLite connections cannot spend the same last root unit', async () => {

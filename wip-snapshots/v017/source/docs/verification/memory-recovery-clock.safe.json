@@ -1,0 +1,134 @@
+{
+  "schemaVersion": 1,
+  "status": "source-qualified-article-rebind-pending",
+  "sourceCommit": "e1b8e4edde724548fab16d8ca4b205379bfa7f30",
+  "sourceTree": "d2cc34bdfc6fad0c918cade58ece0c817a384789",
+  "actualRemoteReadback": {
+    "exactChangedLeaves": [
+      "test/durable-runtime.test.mjs",
+      "test/fixtures/recovery-process.mjs"
+    ],
+    "bytesMatched": true,
+    "allOtherObjectsUnchanged": true
+  },
+  "priorCiFailure": {
+    "runId": 40690146945,
+    "headSha": "4f30715bccf91f2c1f539a8a982d60fa7f9d7e41",
+    "tests": 374,
+    "passed": 373,
+    "failed": 1,
+    "failure": {
+      "file": "test/durable-runtime.test.mjs",
+      "line": 25,
+      "name": "7.4 committed Memory mutation survives new process with no repeated intent or live writer lock",
+      "error": "Child ended before checkpoint",
+      "lastPhase": "working-input",
+      "outcomeCode": "STALE_WRITER",
+      "durationMs": 256.173764
+    }
+  },
+  "controlledRedGreen": {
+    "baselineAttempt": {
+      "note": "A preparation path error prevented instrumentation; shell continued and original unmodified selected test ran once successfully. Not RED or qualification.",
+      "pass": 1,
+      "durationMs": 532.442315
+    },
+    "red": {
+      "test": "7.4 committed Memory mutation survives new process with no repeated intent or live writer lock",
+      "instrumentation": "Existing onClaim Atomics.wait220ms for memory with original real150ms lease clock",
+      "exitCode": 1,
+      "pass": 0,
+      "fail": 1,
+      "durationMs": 428.441818,
+      "outcomeCode": "STALE_WRITER",
+      "lastPhase": null,
+      "inputSha256": {
+        "test/durable-runtime.test.mjs": "775c037bb5301a182950bcf166cebeca530a6700c058aca7553157e37d561311",
+        "test/fixtures/recovery-process.mjs": "365ea883fd9ff3d065c28dfbd8dfcb9efd64f6b5280e96beae1d949706996bb5"
+      }
+    },
+    "green": {
+      "exitCode": 0,
+      "pass": 1,
+      "fail": 0,
+      "durationMs": 773.57779,
+      "stallMs": 220,
+      "leaseMs": 150,
+      "leaseClock": "fixed first process, second explicitly first+151",
+      "inputSha256": {
+        "test/durable-runtime.test.mjs": "21115353d5a1b92170cd559ef560efd6226a0020a02b395a243bb563bb4f0cb6",
+        "test/fixtures/recovery-process.mjs": "965cee56f17fb19911fd2d32ed9646474fbb92ed8fdfe99634fed6e40f52efa4"
+      }
+    },
+    "unchangedAssertionRegression": {
+      "command": "node --test --test-concurrency=1 test/durable-runtime.test.mjs",
+      "exitCode": 0,
+      "pass": 12,
+      "fail": 0,
+      "skipped": 0,
+      "durationMs": 5859.770827,
+      "originalTestDeclarationsAndAssertionsByteIdentical": true,
+      "wallClockDeadlineCancelAndUnknownCasesRemainUnchanged": true
+    },
+    "limits": [
+      "No production Runtime/Session changes",
+      "CI STALE_WRITER failure retained; controlled stall reproduces the same failure class, not proof of the precise historical scheduler delay",
+      "New source qualification required because both test inputs belong to137-entry source manifest"
+    ]
+  },
+  "finalVerification": {
+    "sourceCommit": "e1b8e4edde724548fab16d8ca4b205379bfa7f30",
+    "sourceTree": "d2cc34bdfc6fad0c918cade58ece0c817a384789",
+    "node": "26.11.1",
+    "startedAt": "2026-10-28T12:56:59.168546+00:00",
+    "runs": [
+      {
+        "name": "maintenance",
+        "exitCode": 0,
+        "durationSeconds": 0.5446504038991407,
+        "stdoutSha256": "682364dcc02c9c9a9ba5f4eaf37b14d5db598f1ad3cb0873680fb4a1da062563",
+        "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "counts": {
+          "tests": 56,
+          "pass": 56,
+          "fail": 0,
+          "cancelled": 0,
+          "skipped": 0
+        }
+      },
+      {
+        "name": "fullSuite",
+        "exitCode": 0,
+        "durationSeconds": 50.502266007009894,
+        "stdoutSha256": "9f3d2cf04e555cfc16d4c85b723798bde0aec4f3528cbc00dfdc04597d416462",
+        "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "counts": {
+          "tests": 374,
+          "pass": 374,
+          "fail": 0,
+          "cancelled": 0,
+          "skipped": 0
+        }
+      },
+      {
+        "name": "coverageCheck",
+        "exitCode": 0,
+        "durationSeconds": 0.17424452700652182,
+        "stdoutSha256": "3233663b7e4ccd920e1617c9ff774a4ffdc96f38da4129f9295c8cc0c63b3efc",
+        "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "counts": {}
+      }
+    ],
+    "unchangedInputs": true,
+    "inputCount": 137,
+    "inputDigest": "b2af2e512cf297c0e04a2c63e1bcbe2bad41bcdec8caa9f529ae15219ea3bc3b",
+    "finishedAt": "2026-10-28T12:57:50.396094+00:00"
+  },
+  "atomicSmoke": {
+    "sourceCommit": "e1b8e4edde724548fab16d8ca4b205379bfa7f30",
+    "executedAt": "2026-10-28T12:56:29.278Z",
+    "targets": 16,
+    "allSucceeded": true
+  },
+  "scope": "Test-only reuse of existing compaction lease-clock control for Memory recovery. Original12test declarations/assertions unchanged; other wall-clock/deadline/competition tests and all production code unchanged. Prior final complete record is a dated pre-failure observation; current article case-block rebind and exact final CI remain pending. No live-model or cloud qualification."
+}

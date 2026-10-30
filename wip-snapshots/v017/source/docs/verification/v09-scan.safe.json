@@ -1,0 +1,22 @@
+{
+  "schemaVersion": "open-etf-v09-safe-input-scan@1",
+  "observedAt": "2026-10-27T06:37:02.372061+00:00",
+  "inputSha256": "80966655766966b504f48055c17d0aafce65263ec019b0bd3f59a80dc128fdea",
+  "frozenInputsVerified": 124,
+  "selectedPublicFiles": 24,
+  "patternHits": [],
+  "sensitiveReview": "Only public original adaptation, synthetic tests and safe receipts; private lineage/source, raw logs, DB, environment bodies, credentials, dependency/cache trees and local Git ancestors excluded. Pattern scan is an aid, not proof by itself.",
+  "metadataDelta": {
+    "files": 2,
+    "versionFields": 3,
+    "oldVersion": "0.8.0",
+    "newVersion": "0.9.0",
+    "privateUnchanged": true,
+    "dependencyEntriesUnchanged": 95
+  },
+  "licenseGitBlob": "3deec194e953e269a10f796ae5658cc34c1c3553",
+  "dependencyChanges": 0,
+  "schemaChanges": 0,
+  "sessionSourceUnchanged": true,
+  "kitPlanApply": "passed; structural-only"
+}

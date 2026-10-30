@@ -1,0 +1,37 @@
+{
+  "name": "openspec-evidence-kit",
+  "version": "0.1.0",
+  "description": "Structural evidence checks and provenance views for spec-driven development",
+  "type": "module",
+  "license": "MIT",
+  "author": "hpoenixf",
+  "engines": {
+    "node": ">=26.11.1 <27"
+  },
+  "bin": {
+    "spec-evidence": "bin/spec-evidence.mjs"
+  },
+  "files": [
+    "bin",
+    "src",
+    "schema",
+    "examples",
+    "docs",
+    "README.md",
+    "README.zh-CN.md",
+    "LICENSE",
+    "NOTICE.md",
+    "CHANGELOG.md"
+  ],
+  "scripts": {
+    "test": "node --test test/*.test.mjs"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/hpoenixf/openspec-evidence-kit.git"
+  },
+  "bugs": {
+    "url": "https://github.com/hpoenixf/openspec-evidence-kit/issues"
+  },
+  "homepage": "https://github.com/hpoenixf/openspec-evidence-kit#readme"
+}

@@ -1,0 +1,12 @@
+const required={read_page:['documentId','page'],read_result:['resultRef'],read_note:['resultRef'],calculate_change:['baseline','current','baselineUnit','currentUnit'],save_report:['text','sourceIds']};
+export function projectProposalTrace(proposal,{allowedTools=[],allowedSourceIds=[],allowedDocuments=[]}={}){
+ if(proposal?.kind==='final')return{kind:'final',textBytes:typeof proposal.text==='string'?Buffer.byteLength(proposal.text):0};
+ if(proposal?.kind!=='calls'||!Array.isArray(proposal.calls))return{kind:'unsupported'};
+ return{kind:'calls',calls:proposal.calls.map((call,index)=>{
+  const known=allowedTools.includes(call.name);const fields=Object.hasOwn(required,call.name)?required[call.name]:[];const args=call.arguments&&typeof call.arguments==='object'&&!Array.isArray(call.arguments)?call.arguments:{};const keys=Object.keys(args);const facts={missingFields:fields.filter(key=>!Object.hasOwn(args,key)),extraFieldCount:keys.filter(key=>!fields.includes(key)).length};
+  if(call.name==='calculate_change')Object.assign(facts,{numericFinite:Number.isFinite(args.baseline)&&Number.isFinite(args.current),zeroBaseline:args.baseline===0,baselineType:typeof args.baseline,currentType:typeof args.current,baselineUnitType:typeof args.baselineUnit,currentUnitType:typeof args.currentUnit,unitsEqual:args.baselineUnit===args.currentUnit,baselineUnitPatternValid:typeof args.baselineUnit==='string'&&/^[A-Za-z][A-Za-z0-9 /%_-]{0,39}$/.test(args.baselineUnit),arithmeticFinite:Number.isFinite(args.baseline)&&Number.isFinite(args.current)&&[args.current-args.baseline,args.current/args.baseline,(args.current-args.baseline)/args.baseline].every(Number.isFinite)});
+  if(call.name==='read_page')Object.assign(facts,{knownDocument:allowedDocuments.includes(args.documentId),pageInRange:Number.isSafeInteger(args.page)&&args.page>=1&&args.page<=2});
+  if(call.name==='save_report')Object.assign(facts,{textType:typeof args.text,textBytes:typeof args.text==='string'?Buffer.byteLength(args.text):0,sourceIdsIsArray:Array.isArray(args.sourceIds),sourceCount:Array.isArray(args.sourceIds)?args.sourceIds.length:0,unknownSourceCount:Array.isArray(args.sourceIds)?args.sourceIds.filter(id=>!allowedSourceIds.includes(id)).length:0});
+  return{index,name:known?call.name:'unsupported-tool',identityAccepted:typeof call.id==='string'&&call.id.length>0&&call.id.length<=200&&!/[\u0000-\u001f]/.test(call.id),facts};
+ })};
+}

@@ -1,3 +1,7 @@
+import { searchPages } from './retrieval.mjs';
+import { validateProtectedHostSnapshot, validateProtectedCsvResult } from './tools.mjs';
+import { validateArtifactProtection, validateProtectedOutputFact, validateProtectedOutputProof, validateProtectedSourcePayload, PROTECTED_OUTPUT_BYTES } from './artifacts.mjs';
+import { DOCUMENT_REVOCATION_PROFILE, validateDocumentManifest, documentManifestHash, validateDocumentAuthority, bindProtectedSource, validateProtectedSourceBinding } from './source.mjs';
 import { validateRuntimeCheckpoint } from './runtime.mjs';
 import { RESPONSE_PROFILE, validateResponseAbsence, hasResponseSemantics, validateResponseProfile, validateResponseCheckpoint, validateResponseFact, validateResponseCall, responseCanonical, responseHash, responseText, responseId, responseResult, adoptionHash } from './human-response.mjs';
 import { validateTaskTime } from './temporal.mjs';
@@ -5,13 +9,16 @@ import { DatabaseSync } from 'node:sqlite';
 import { lstatSync, realpathSync, openSync, closeSync, readSync } from 'node:fs';
 import { resolve, join } from 'node:path';
 import { randomUUID, createHash } from 'node:crypto';
-import { PUBLICATION_BINDING, validatePublication, validatePublicationReceipt, committedPublicationEvent } from './publication.mjs';
+import { PUBLICATION_BINDING, PUBLICATION_TEXT_MAX_BYTES, validatePublication, validatePublicationReceipt, committedPublicationEvent } from './publication.mjs';
 import { ensureSafeDirectory } from './storage-files.mjs';
 import { prepareSessionRecovery } from './session-recovery.mjs';
 
 const APP_ID = 0x4f455446;
 const SCHEMA_VERSION = 2;
 const MAX_JSON = 3 * 1048576;
+// Checkpoints may repeat report, proposal, answer and outcome bodies.
+const MAX_CHECKPOINT_JSON = 12 * 1048576;
+const MAX_PUBLICATION_JSON = 6 * PUBLICATION_TEXT_MAX_BYTES + 8192;
 const phases = new Set(['ready', 'working-input', 'model-reserved', 'proposal-sealed', 'tool-dispatched', 'result-committed', 'result-consumed', 'terminal']);
 const fail = code => { throw Object.assign(new Error(code), { code }); };
 const object = value => value !== null && typeof value === 'object' && !Array.isArray(value);
@@ -53,8 +60,9 @@ function validateBindings(value) {
   }
  }
 }
-function validateConfig(value, ordinary = false) {
- fields(value, [], ['requireReport', 'allowedTools', 'allowedDocuments', 'contextBytes', 'taskId', 'workingInput', 'publication', 'taskTime', ...(ordinary ? ['ordinaryResponse'] : [])]);
+function validateConfig(value, ordinary = false, protectedProfile = false) {
+ fields(value, [], ['requireReport', 'allowedTools', 'allowedDocuments', 'contextBytes', 'taskId', 'workingInput', 'publication', 'taskTime', ...(ordinary ? ['ordinaryResponse'] : []), ...(protectedProfile ? ['documentProtection'] : [])]);
+ if(protectedProfile){fields(value.documentProtection,['authorityId','libraryId']);if(!identifier(value.documentProtection.authorityId)||!identifier(value.documentProtection.libraryId)||!Array.isArray(value.allowedDocuments)||!value.allowedDocuments.length||value.workingInput!==undefined||value.ordinaryResponse!==undefined)fail('INVALID_PROTECTED_PROFILE');}
  if (value.taskTime !== undefined) validateTaskTime(value.taskTime);
  if (value.publication !== undefined && value.publication !== 'publication@1') fail('INVALID_DEFINITION');
  if (value.requireReport !== undefined && typeof value.requireReport !== 'boolean') fail('INVALID_DEFINITION');
@@ -70,18 +78,20 @@ function validateConfig(value, ordinary = false) {
   }
  }
 }
-function definitionBytes(value, ordinary = false) {
+function definitionBytes(value, ordinary = false, protectedProfile = false) {
  fields(value, ['question', 'grantId', 'bindings', 'limits', 'rootLimits', 'deadlineAt', 'config']);
  if (typeof value.question !== 'string' || !value.question.trim() || Buffer.byteLength(value.question) > 16000 || !identifier(value.grantId) || !Number.isSafeInteger(value.deadlineAt) || value.deadlineAt < 1) fail('INVALID_DEFINITION');
  fields(value.limits, ['maxRounds', 'maxTools', 'timeoutMs']); fields(value.rootLimits, ['model', 'tool']);
  for (const [key, n] of Object.entries(value.limits)) if (!Number.isSafeInteger(n) || n < 1 || n > (key === 'timeoutMs' ? 300000 : 1000)) fail('INVALID_DEFINITION');
  for (const n of Object.values(value.rootLimits)) if (!Number.isSafeInteger(n) || n < 1 || n > 1000) fail('INVALID_DEFINITION');
- validateBindings(value.bindings); validateConfig(value.config, ordinary); validateResponseProfile(value, ordinary); return json(value, 65536);
+ if(!protectedProfile&&value.bindings?.adapters?.some(x=>x.id==='document-revocation'||x.version===DOCUMENT_REVOCATION_PROFILE))fail('INVALID_PROTECTED_PROFILE');
+ if(protectedProfile&&(value.bindings?.gateway?.mode==='live'||value.bindings?.plugins?.length||!value.bindings?.adapters?.some(x=>x.id==='document-revocation'&&x.version===DOCUMENT_REVOCATION_PROFILE)))fail('PROTECTED_EXECUTION_DISABLED');
+ validateBindings(value.bindings); validateConfig(value.config, ordinary, protectedProfile); validateResponseProfile(value, ordinary); return json(value, 65536);
 }
 function checkpointBytes(value, terminal = false, ordinary = false) {
  validateResponseCheckpoint(value, ordinary);
  if (!object(value) || value.schemaVersion !== 'runtime-checkpoint@1' || !(phases.has(value.phase) || ordinary && value.phase === 'awaiting-response') || (terminal ? value.phase !== 'terminal' || !['completed', 'failed', 'cancelled'].includes(value.status) : value.phase === 'terminal')) fail('INVALID_CHECKPOINT');
- return json(value);
+ return json(value, MAX_CHECKPOINT_JSON);
 }
 function validateRunRoot(row, root, definition, snapshot) {
  if(!root) fail('CORRUPT_ROOT');
@@ -104,13 +114,38 @@ const schemas = [
 
 const responseSchema = `CREATE TABLE ordinary_responses (run_id TEXT PRIMARY KEY REFERENCES runs(run_id), question_id TEXT NOT NULL UNIQUE, response_id TEXT UNIQUE, fact TEXT NOT NULL) STRICT`;
 
+
+const protectedSchemas = [
+ `CREATE TABLE document_authority (singleton INTEGER PRIMARY KEY CHECK(singleton=1), fact TEXT NOT NULL) STRICT`,
+ `CREATE TABLE document_grants (document_id TEXT PRIMARY KEY, manifest TEXT NOT NULL, manifest_hash TEXT NOT NULL, auth_revision INTEGER NOT NULL, status TEXT NOT NULL) STRICT`,
+ `CREATE TABLE protected_dependencies (run_id TEXT NOT NULL REFERENCES runs(run_id), result_ref TEXT NOT NULL, fact TEXT NOT NULL, PRIMARY KEY(run_id,result_ref)) STRICT`,
+ `CREATE TABLE protected_outputs (run_id TEXT PRIMARY KEY REFERENCES runs(run_id), fact TEXT NOT NULL CHECK(json_valid(fact) AND json_extract(fact,'$.schemaVersion') IS 'protected-output@2')) STRICT`,
+ `CREATE TABLE protected_query_facts (run_id TEXT NOT NULL REFERENCES runs(run_id), call_id TEXT NOT NULL, fact TEXT NOT NULL, PRIMARY KEY(run_id,call_id)) STRICT`
+];
+function hasProtectedSemantics(value) {
+ if(!value||typeof value!=='object')return false;
+ if(value.id==='document-revocation'&&value.version===DOCUMENT_REVOCATION_PROFILE||Object.hasOwn(value,'documentProtection')||['protected-query-fact@1','protected-source-binding@1','document-authority@1','protected-document@1','tool-host-protected@1','protected-output@1','protected-output@2','protected-artifact@1','protected-artifact-root@1','protected-artifact-revision@1','protected-artifact-revision@2'].includes(value.schemaVersion))return true;
+ return Object.values(value).some(hasProtectedSemantics);
+}
+
 // Synchronous short transactions own facts only. No tool/model callback enters a transaction.
 export async function openSession({ directory, clock = Date.now, leaseMs = 1000, profile, readOnly = false } = {}) {
  if (typeof readOnly !== 'boolean' || typeof directory !== 'string' || typeof clock !== 'function' || !Number.isSafeInteger(leaseMs) || leaseMs < 20 || leaseMs > 30000) fail('INVALID_SESSION_OPTIONS');
- if (profile !== undefined && profile !== RESPONSE_PROFILE) fail('INVALID_SESSION_PROFILE');
- let ordinary = profile === RESPONSE_PROFILE;
- const encodeDefinition = value => definitionBytes(value, ordinary);
- const encodeCheckpoint = (value, terminal = false) => checkpointBytes(value, terminal, ordinary);
+ if (profile !== undefined && profile !== RESPONSE_PROFILE && profile !== DOCUMENT_REVOCATION_PROFILE) fail('INVALID_SESSION_PROFILE');
+ let ordinary = profile === RESPONSE_PROFILE; const protectedProfile=profile===DOCUMENT_REVOCATION_PROFILE;
+ const encodeDefinition = value => definitionBytes(value, ordinary, protectedProfile);
+ const encodeCheckpoint = (value, terminal = false) => {let checked=value;if(protectedProfile&&value?.host?.schemaVersion==='tool-host-protected@1'){
+   validateProtectedHostSnapshot(value.host,value.host.protection);checked=structuredClone(value);checked.host=null;const csv=(call,result)=>{validateProtectedCsvResult(call,result,value.host.protection);return {...result,value:null};};
+   if(value.result?.value?.schemaVersion==='protected-artifact@1'){if(value.phase!=='result-committed'&&!(value.phase==='terminal'&&['failed','cancelled'].includes(value.status)))fail('INVALID_PROTECTED_CHECKPOINT');checked.result=csv(value.proposal?.calls?.[value.cursor],value.result);}
+   const pairedCsv=new Map();let pending=[],index=0;
+   for(let i=0;i<(value.messages?.length||0);i++){const message=value.messages[i];if(message.role==='assistant'){pending=message.calls||[];index=0;}else if(message.role==='tool'){if(message.result?.value?.schemaVersion==='protected-artifact@1'){const call=pending[index];if(call?.id!==message.callId||pairedCsv.has(message.callId))fail('INVALID_PROTECTED_CHECKPOINT');checked.messages[i]={...message,result:csv(call,message.result)};pairedCsv.set(message.callId,{call,message});}index++;}}
+   if(value.working){
+    fields(value.working,['schemaVersion','messages','noteRef','hash']);
+    if(value.working.schemaVersion!=='working-input@1'||!Array.isArray(value.working.messages)||value.working.hash!==digest(JSON.stringify(value.working.messages)))fail('INVALID_PROTECTED_CHECKPOINT');
+    pending=[];index=0;const seen=new Set();
+    for(let i=0;i<value.working.messages.length;i++){const message=value.working.messages[i];if(message.role==='assistant'){pending=message.calls||[];index=0;}else if(message.role==='tool'){if(message.result?.value?.schemaVersion==='protected-artifact@1'){const call=pending[index],original=pairedCsv.get(message.callId);if(!original||seen.has(message.callId)||canonical(call)!==canonical(original.call)||canonical(message)!==canonical(original.message))fail('INVALID_PROTECTED_CHECKPOINT');seen.add(message.callId);checked.working.messages[i]={...message,result:csv(call,message.result)};}index++;}}
+   }
+  }if(hasProtectedSemantics(checked))fail('INVALID_PROTECTED_CHECKPOINT');return checkpointBytes(value, terminal, ordinary);};
  directory = readOnly ? safeExistingDirectory(directory) : await ensureSafeDirectory(directory); const filename = join(directory, 'session.sqlite');
  const paths = ['', '-journal', '-wal', '-shm'].map(suffix => filename + suffix);
  for (const path of paths) safeFile(path);
@@ -124,20 +159,60 @@ export async function openSession({ directory, clock = Date.now, leaseMs = 1000,
  else {
   const handle = openSync(filename, 'r'); try { const bytes = Buffer.alloc(16); if (readSync(handle, bytes, 0, 16, 0) !== 16 || bytes.toString() !== 'SQLite format 3\0') fail('UNSUPPORTED_SESSION_SCHEMA'); } finally { closeSync(handle); }
  }
+ function authorityFrom(connection) {
+  const rows=connection.prepare('SELECT * FROM document_authority').all();
+  if(rows.length!==1||rows[0].singleton!==1)fail('DOCUMENT_AUTHORITY_UNAVAILABLE');
+  return validateDocumentAuthority(parsed(rows[0].fact,4096));
+ }
+ function grantFrom(connection, documentId) {
+  const row=connection.prepare('SELECT * FROM document_grants WHERE document_id=?').get(documentId);if(!row)fail('DOCUMENT_GRANT_UNAVAILABLE');
+  const manifest=validateDocumentManifest(parsed(row.manifest,4096));
+  if(row.document_id!==manifest.documentId||row.manifest_hash!==documentManifestHash(manifest)||!['allowed','revoked'].includes(row.status)||row.auth_revision!==(row.status==='allowed'?1:2))fail('CORRUPT_DOCUMENT_GRANT');
+  return {...row,manifest};
+ }
+ function queryHash(query){if(typeof query!=='string'||!query.trim()||Buffer.byteLength(query)>512)fail('INVALID_PROTECTED_QUERY');return digest(JSON.stringify({query,limit:2}));}
+ function queryValue(fact){return {candidates:fact.candidates.map(({documentId,page,score})=>({documentId,page,score})),acquired:false};}
+ function queryFactFrom(connection,item,current=false){
+  const fact=parsed(item.fact,4096);fields(fact,['schemaVersion','authorityId','libraryId','runId','callId','querySha256','limit','candidates'],[],'INVALID_PROTECTED_QUERY_FACT');const authority=authorityFrom(connection),row=connection.prepare('SELECT * FROM runs WHERE run_id=?').get(item.run_id);if(!row)fail('PROTECTED_SCOPE_MISMATCH');const definition=parsed(row.definition,65536);
+  if(fact.schemaVersion!=='protected-query-fact@1'||fact.authorityId!==authority.authorityId||fact.libraryId!==authority.libraryId||fact.runId!==item.run_id||fact.callId!==item.call_id||!identifier(fact.callId)||!hash(fact.querySha256)||fact.limit!==2||!Array.isArray(fact.candidates)||fact.candidates.length>2)fail('INVALID_PROTECTED_QUERY_FACT');
+  const seen=new Set();for(const candidate of fact.candidates){fields(candidate,['documentId','documentVersion','documentManifestHash','page','score'],[],'INVALID_PROTECTED_QUERY_FACT');const grant=grantFrom(connection,candidate.documentId);if(!definition.config.allowedDocuments.includes(candidate.documentId)||candidate.documentVersion!==grant.manifest.version||candidate.documentManifestHash!==grant.manifest_hash||!Number.isSafeInteger(candidate.page)||candidate.page<1||candidate.page>grant.manifest.pages.length||!Number.isSafeInteger(candidate.score)||candidate.score<1||candidate.score>65536)fail('INVALID_PROTECTED_QUERY_FACT');const id=candidate.documentId+':'+candidate.page;if(seen.has(id))fail('INVALID_PROTECTED_QUERY_FACT');seen.add(id);if(current&&grant.status!=='allowed')fail('DOCUMENT_REVOKED');}
+  return fact;
+ }
+ function validateProtectedDatabase(connection) {
+  const rows=connection.prepare('SELECT * FROM document_authority').all();
+  if(!rows.length){if(connection.prepare('SELECT 1 FROM document_grants UNION ALL SELECT 1 FROM protected_dependencies UNION ALL SELECT 1 FROM protected_outputs UNION ALL SELECT 1 FROM protected_query_facts UNION ALL SELECT 1 FROM runs').get())fail('DOCUMENT_AUTHORITY_UNAVAILABLE');return;}
+  const authority=authorityFrom(connection),grants=connection.prepare('SELECT document_id FROM document_grants ORDER BY document_id').all();
+  if(grants.length!==2||grants.map(x=>x.document_id).join(',')!=='atlas-a,atlas-b')fail('CORRUPT_DOCUMENT_GRANT');for(const g of grants)grantFrom(connection,g.document_id);
+  for(const row of connection.prepare('SELECT * FROM runs').all()){
+   const definition=parsed(row.definition,65536),snapshot=parsed(row.snapshot, MAX_CHECKPOINT_JSON);encodeDefinition(definition);encodeCheckpoint(snapshot,row.status!=='active');validateRuntimeCheckpoint(snapshot,definition);validateRunRoot(row,connection.prepare('SELECT * FROM roots WHERE root_id=?').get(row.root_id),definition,snapshot);
+   if(row.parent_run_id!==null||row.root_id!==row.run_id||definition.config.documentProtection.authorityId!==authority.authorityId||definition.config.documentProtection.libraryId!==authority.libraryId)fail('PROTECTED_SCOPE_MISMATCH');if(snapshot.host)validateProtectedHostSnapshot(snapshot.host,{profile:DOCUMENT_REVOCATION_PROFILE,authorityId:authority.authorityId,libraryId:authority.libraryId,rootId:row.root_id,runId:row.run_id});
+  }
+  for(const item of connection.prepare('SELECT * FROM protected_query_facts').all())queryFactFrom(connection,item);
+  for(const output of connection.prepare('SELECT * FROM protected_outputs').all()){
+   const row=connection.prepare('SELECT * FROM runs WHERE run_id=?').get(output.run_id);if(!row)fail('PROTECTED_SCOPE_MISMATCH');
+   validateProtectedOutputFact(parsed(output.fact,PROTECTED_OUTPUT_BYTES),{profile:DOCUMENT_REVOCATION_PROFILE,authorityId:authority.authorityId,libraryId:authority.libraryId,rootId:row.root_id,runId:row.run_id});
+  }
+  for(const row of connection.prepare('SELECT * FROM protected_dependencies').all()){
+   const run=connection.prepare('SELECT * FROM runs WHERE run_id=?').get(row.run_id);if(!run)fail('PROTECTED_SCOPE_MISMATCH');
+   const fact=parsed(row.fact,4096),grant=grantFrom(connection,fact.documentId);validateProtectedSourceBinding(fact,authority,grant.manifest);
+   if(row.result_ref!==fact.resultRef||!parsed(run.definition,65536).config.allowedDocuments.includes(fact.documentId))fail('PROTECTED_SCOPE_MISMATCH');
+  }
+ }
  function validateSchema(connection) {
   const version = connection.prepare('PRAGMA user_version').get().user_version; const app = connection.prepare('PRAGMA application_id').get().application_id;
   const actual = connection.prepare("SELECT sql FROM sqlite_master WHERE name NOT LIKE 'sqlite_%' ORDER BY name").all().map(row => row.sql);
-  if (![2,3].includes(version) || (profile !== undefined && version !== 3) || app !== APP_ID || JSON.stringify(actual) !== JSON.stringify([...(version === 3 ? [...schemas,responseSchema] : schemas)].sort())) fail('UNSUPPORTED_SESSION_SCHEMA');
+  if (!(protectedProfile ? version===4 : [2,3].includes(version)) || (profile === RESPONSE_PROFILE && version !== 3) || app !== APP_ID || JSON.stringify(actual) !== JSON.stringify([...(version===4?[...schemas,...protectedSchemas]:version === 3 ? [...schemas,responseSchema] : schemas)].sort())) fail('UNSUPPORTED_SESSION_SCHEMA');
   ordinary = version === 3;
+  if(protectedProfile)validateProtectedDatabase(connection);
   // Admission (including a hot-journal isolated copy) rejects cross-profile semantics.
   for (const row of connection.prepare('SELECT * FROM runs').iterate()) {
    if(!ordinary){
     // Preserve v2's existing deferred malformed-state rejection; only the new
     // profile's semantic markers are excluded at admission.
-    for(const text of [row.definition,row.snapshot]){let value;try{value=JSON.parse(text);}catch{continue;}if(hasResponseSemantics(value))fail('INVALID_ORDINARY_RESPONSE');}
+    for(const text of [row.definition,row.snapshot]){let value;try{value=JSON.parse(text);}catch{continue;}if(hasResponseSemantics(value))fail('INVALID_ORDINARY_RESPONSE');if(!protectedProfile&&hasProtectedSemantics(value))fail('INVALID_PROTECTED_PROFILE');}
     continue;
    }
-   const definition=parsed(row.definition,65536),snapshot=parsed(row.snapshot);encodeDefinition(definition);encodeCheckpoint(snapshot,snapshot.phase==='terminal');
+   const definition=parsed(row.definition,65536),snapshot=parsed(row.snapshot, MAX_CHECKPOINT_JSON);encodeDefinition(definition);encodeCheckpoint(snapshot,snapshot.phase==='terminal');
    if(ordinary){
     validateRuntimeCheckpoint(snapshot,definition);
     validateRunRoot(row,connection.prepare('SELECT * FROM roots WHERE root_id=?').get(row.root_id),definition,snapshot);
@@ -160,7 +235,7 @@ export async function openSession({ directory, clock = Date.now, leaseMs = 1000,
   db = new DatabaseSync(filename, { timeout: 1000, readOnly }); safeExistingDirectory(directory); identity = safeFile(filename, true);
   if (fresh) {
    db.exec('PRAGMA journal_mode=DELETE; PRAGMA synchronous=FULL; BEGIN IMMEDIATE');
-   try { for (const schema of ordinary ? [...schemas,responseSchema] : schemas) db.exec(schema); db.exec(`PRAGMA application_id=${APP_ID}; PRAGMA user_version=${ordinary ? 3 : SCHEMA_VERSION}; COMMIT`); }
+   try { for (const schema of protectedProfile ? [...schemas,...protectedSchemas] : ordinary ? [...schemas,responseSchema] : schemas) db.exec(schema); db.exec(`PRAGMA application_id=${APP_ID}; PRAGMA user_version=${protectedProfile ? 4 : ordinary ? 3 : SCHEMA_VERSION}; COMMIT`); }
    catch (error) { db.exec('ROLLBACK'); throw error; }
   }
   validateSchema(db);
@@ -177,10 +252,11 @@ export async function openSession({ directory, clock = Date.now, leaseMs = 1000,
  const getRun = runId => { if (!identifier(runId)) fail('INVALID_RUN_ID'); const row = db.prepare('SELECT * FROM runs WHERE run_id=?').get(runId); if (!row) fail('UNKNOWN_RUN'); return row; };
  const getRoot = rootId => { const row = db.prepare('SELECT * FROM roots WHERE root_id=?').get(rootId); if (!row) fail('CORRUPT_ROOT'); return row; };
  function view(row) {
-  const root = getRoot(row.root_id); const definition = parsed(row.definition, 65536); encodeDefinition(definition); const snapshot = parsed(row.snapshot); encodeCheckpoint(snapshot, snapshot.phase === 'terminal');
+  const root = getRoot(row.root_id); const definition = parsed(row.definition, 65536); encodeDefinition(definition); const snapshot = parsed(row.snapshot, MAX_CHECKPOINT_JSON); encodeCheckpoint(snapshot, snapshot.phase === 'terminal');
   validateRunRoot(row, root, definition, snapshot);
   const state = { runId: row.run_id, rootId: row.root_id, parentRunId: row.parent_run_id, directory: row.directory, definition, snapshot, status: row.status, rootStatus: root.status, owner: row.owner, fence: row.fence, leaseUntil: row.lease_until, rootUsage: { model: root.model_used, tool: root.tool_used } };
   if(ordinary){validateRuntimeCheckpoint(snapshot,definition);responseFacts(row,state);}
+  if(protectedProfile){validateRuntimeCheckpoint(snapshot,definition);protectedScope(row);if(snapshot.host)validateProtectedHostSnapshot(snapshot.host,outputProtection(row));}
   return state;
  }
  function responseFacts(row, state) {
@@ -211,8 +287,32 @@ export async function openSession({ directory, clock = Date.now, leaseMs = 1000,
   if (canonical(bound) !== canonical(PUBLICATION_BINDING)) fail('PUBLICATION_BINDING_MISMATCH');
   return state;
  }
+ function protectedScope(row) {
+  if(!protectedProfile)fail('DOCUMENT_PROFILE_REQUIRED');const authority=authorityFrom(db),definition=parsed(row.definition,65536);encodeDefinition(definition);
+  if(row.parent_run_id!==null||row.root_id!==row.run_id||canonical(definition.config.documentProtection)!==canonical({authorityId:authority.authorityId,libraryId:authority.libraryId}))fail('PROTECTED_SCOPE_MISMATCH');
+  return {authority,definition};
+ }
+ function currentDependencies(row) {
+  if(!protectedProfile)return [];
+  const {authority,definition}=protectedScope(row),dependencies=db.prepare('SELECT * FROM protected_dependencies WHERE run_id=? ORDER BY result_ref').all(row.run_id);
+  const hints=db.prepare('SELECT * FROM protected_query_facts WHERE run_id=? ORDER BY call_id').all(row.run_id);if(hints.length>definition.limits.maxTools)fail('PROTECTED_QUERY_LIMIT');for(const hint of hints)queryFactFrom(db,hint,true);
+  if(dependencies.length>4)fail('PROTECTED_DEPENDENCY_LIMIT');
+  return dependencies.map(item=>{const fact=parsed(item.fact,4096),grant=grantFrom(db,fact.documentId);validateProtectedSourceBinding(fact,authority,grant.manifest);if(item.result_ref!==fact.resultRef||!definition.config.allowedDocuments.includes(fact.documentId))fail('PROTECTED_SCOPE_MISMATCH');if(grant.status!=='allowed')fail('DOCUMENT_REVOKED');return fact;});
+ }
+ function outputProtection(row){const {authority}=protectedScope(row);return validateArtifactProtection({profile:DOCUMENT_REVOCATION_PROFILE,authorityId:authority.authorityId,libraryId:authority.libraryId,rootId:row.root_id,runId:row.run_id});}
+ function registeredOutput(row){
+  currentDependencies(row);const item=db.prepare('SELECT fact FROM protected_outputs WHERE run_id=?').get(row.run_id);if(!item)return null;return validateProtectedOutputFact(parsed(item.fact,PROTECTED_OUTPUT_BYTES),outputProtection(row));
+ }
+ function requiredReport(row){
+  const output=registeredOutput(row);if(!output)fail('PROTECTED_REPORT_REQUIRED');const state=parsed(row.snapshot, MAX_CHECKPOINT_JSON),receipt=output.reportReceipt;
+  if(canonical(state.host?.receipt)!==canonical(receipt))fail('PROTECTED_REPORT_REQUIRED');
+  const groupCalls=state.messages.flatMap(m=>m.role==='assistant'?m.calls??[]:[]),call=groupCalls.find(c=>c.id===receipt.operationId);
+  const result=state.messages.find(m=>m.role==='tool'&&m.callId===receipt.operationId)?.result;
+  if(call?.name!=='save_report'||result?.callId!==call.id||result.status!=='succeeded'||result.dispatched!==true||canonical(result.value)!==canonical(receipt)||result.partialPaths?.length||result.artifactEffects?.length||result.memoryEffect||result.error)fail('PROTECTED_REPORT_REQUIRED');
+  return output;
+ }
  function publicationFacts(row) {
-  publicationScope(row);
+  publicationScope(row); currentDependencies(row);
   const versions = db.prepare('SELECT * FROM publication_versions WHERE run_id=? ORDER BY revision').all(row.run_id);
   const slot = db.prepare('SELECT event FROM publication_events WHERE run_id=?').get(row.run_id);
   if (!versions.length) { if (slot) fail('PUBLICATION_IDENTITY_UNAVAILABLE'); return []; }
@@ -220,19 +320,19 @@ export async function openSession({ directory, clock = Date.now, leaseMs = 1000,
    if (versions.length > 3 || !slot) fail('PUBLICATION_IDENTITY_UNAVAILABLE');
    const values = versions.map((version, index) => {
     if (version.root_id !== row.root_id || version.revision !== index + 1) fail('PUBLICATION_IDENTITY_UNAVAILABLE');
-    const content = parsed(version.body, 512000);
+    const content = parsed(version.body, MAX_PUBLICATION_JSON);
     const prepared = validatePublication({ schemaVersion: 'publication@1', runId: row.run_id, rootId: row.root_id, blockId: 'answer', content, payloadHash: version.payload_hash });
-    const binding = parsed(version.binding, 1024); fields(binding, ['definitionHash', 'hostHash']);
+    const binding = parsed(version.binding, 1024); fields(binding, ['definitionHash', 'hostHash',...(protectedProfile?['protectedOutputHash']:[])]);if(protectedProfile){const output=registeredOutput(row);if(!output||binding.protectedOutputHash!==digest(canonical(output)))fail('PUBLICATION_IDENTITY_UNAVAILABLE');}
     if (binding.definitionHash !== digest(row.definition) || !hash(binding.hostHash) || digest(canonical(binding)) !== version.binding_hash) fail('PUBLICATION_IDENTITY_UNAVAILABLE');
     const receipt = validatePublicationReceipt({ schemaVersion: 'publication-receipt@1', runId: row.run_id, rootId: row.root_id, blockId: 'answer', revision: version.revision, deliveryOrdinal: 1, payloadHash: prepared.payloadHash, bindingHash: version.binding_hash });
     return { receipt, content: structuredClone(prepared.content) };
    });
-   if (canonical(parsed(slot.event, 512000)) !== canonical(committedPublicationEvent(values.at(-1)))) fail('PUBLICATION_IDENTITY_UNAVAILABLE');
+   if (canonical(parsed(slot.event, MAX_PUBLICATION_JSON)) !== canonical(committedPublicationEvent(values.at(-1)))) fail('PUBLICATION_IDENTITY_UNAVAILABLE');
    return values;
   } catch { fail('PUBLICATION_IDENTITY_UNAVAILABLE'); }
  }
  function commitPublication(row, proposed, expectedRevision) {
-  publicationScope(row);
+  publicationScope(row); if(protectedProfile&&!currentDependencies(row).length)fail('PROTECTED_DEPENDENCY_REQUIRED');const protectedOutput=protectedProfile?requiredReport(row):null;
   const prepared = validatePublication(proposed);
   if (prepared.runId !== row.run_id || prepared.rootId !== row.root_id) fail('PUBLICATION_SCOPE_MISMATCH');
   const replacing = expectedRevision !== undefined;
@@ -240,33 +340,68 @@ export async function openSession({ directory, clock = Date.now, leaseMs = 1000,
   const versions = publicationFacts(row); const current = versions.at(-1);
   if (replacing && !current) fail('PUBLICATION_NOT_FOUND');
   if (replacing && current.receipt.revision !== expectedRevision) fail('PUBLICATION_REVISION_MISMATCH');
-  const binding = { definitionHash: digest(row.definition), hostHash: digest(canonical(parsed(row.snapshot).host ?? null)) };
+  const binding = { definitionHash: digest(row.definition), hostHash: digest(canonical(parsed(row.snapshot, MAX_CHECKPOINT_JSON).host ?? null)),...(protectedOutput?{protectedOutputHash:digest(canonical(protectedOutput))}:{}) };
   const bindingHash = digest(canonical(binding));
   if (current && current.content.text === prepared.content.text && current.receipt.bindingHash === bindingHash) return { receipt: structuredClone(current.receipt), idempotent: true };
   if (current && !replacing) fail('PUBLICATION_REPLACE_REQUIRED');
   if (current?.receipt.revision >= 3) fail('PUBLICATION_MODIFICATION_LIMIT');
   const receipt = validatePublicationReceipt({ schemaVersion: 'publication-receipt@1', runId: row.run_id, rootId: row.root_id, blockId: 'answer', revision: (current?.receipt.revision ?? 0) + 1, deliveryOrdinal: 1, payloadHash: prepared.payloadHash, bindingHash });
   const event = committedPublicationEvent({ receipt, content: prepared.content });
-  db.prepare('INSERT INTO publication_versions(run_id,root_id,revision,body,payload_hash,binding,binding_hash) VALUES(?,?,?,?,?,?,?)').run(row.run_id, row.root_id, receipt.revision, json(prepared.content, 512000), receipt.payloadHash, json(binding, 1024), bindingHash);
+  db.prepare('INSERT INTO publication_versions(run_id,root_id,revision,body,payload_hash,binding,binding_hash) VALUES(?,?,?,?,?,?,?)').run(row.run_id, row.root_id, receipt.revision, json(prepared.content, MAX_PUBLICATION_JSON), receipt.payloadHash, json(binding, 1024), bindingHash);
   if (current) {
-   const changed = db.prepare('UPDATE publication_events SET event=? WHERE run_id=?').run(json(event, 512000), row.run_id);
+   const changed = db.prepare('UPDATE publication_events SET event=? WHERE run_id=?').run(json(event, MAX_PUBLICATION_JSON), row.run_id);
    if (changed.changes !== 1) fail('PUBLICATION_IDENTITY_UNAVAILABLE');
-  } else db.prepare('INSERT INTO publication_events(run_id,event) VALUES(?,?)').run(row.run_id, json(event, 512000));
+  } else db.prepare('INSERT INTO publication_events(run_id,event) VALUES(?,?)').run(row.run_id, json(event, MAX_PUBLICATION_JSON));
   return { receipt: structuredClone(receipt), idempotent: false };
  }
  function cancelRoot(rootId) {
   const root = getRoot(rootId); if (root.status !== 'active') return;
   for (const row of db.prepare("SELECT * FROM runs WHERE root_id=? AND status='active'").all(rootId)) {
-   const snapshot = parsed(row.snapshot); snapshot.phase = 'terminal'; snapshot.status = 'cancelled'; snapshot.code = 'CANCELLED';
+   const snapshot = parsed(row.snapshot, MAX_CHECKPOINT_JSON); snapshot.phase = 'terminal'; snapshot.status = 'cancelled'; snapshot.code = 'CANCELLED';
    db.prepare("UPDATE runs SET snapshot=?,status='cancelled',owner=NULL,lease_until=0 WHERE run_id=?").run(encodeCheckpoint(snapshot, true), row.run_id);
   }
   db.prepare("UPDATE roots SET status='cancelled' WHERE root_id=?").run(rootId);
  }
  const store = {
-  directory, leaseMs, schemaVersion: ordinary ? 3 : 2,
+  initializeDocumentLibrary(manifests) {
+   return transaction(()=>{if(!protectedProfile)fail('DOCUMENT_PROFILE_REQUIRED');if(!Array.isArray(manifests)||manifests.length!==2)fail('INVALID_DOCUMENT_LIBRARY');const values=manifests.map(validateDocumentManifest).sort((a,b)=>a.documentId.localeCompare(b.documentId));if(values.map(x=>x.documentId).join(',')!=='atlas-a,atlas-b')fail('INVALID_DOCUMENT_LIBRARY');
+    if(db.prepare('SELECT 1 FROM document_authority').get()){const authority=authorityFrom(db);for(const m of values)if(grantFrom(db,m.documentId).manifest_hash!==documentManifestHash(m))fail('DOCUMENT_LIBRARY_ALREADY_INITIALIZED');return authority;}
+    if(db.prepare('SELECT 1 FROM runs UNION ALL SELECT 1 FROM document_grants').get())fail('CORRUPT_DOCUMENT_GRANT');
+    const authority={schemaVersion:'document-authority@1',authorityId:'authority-'+randomUUID(),libraryId:'library-'+randomUUID()};db.prepare('INSERT INTO document_authority VALUES(1,?)').run(json(authority,4096));for(const m of values)db.prepare("INSERT INTO document_grants VALUES(?,?,?,1,'allowed')").run(m.documentId,json(m,4096),documentManifestHash(m));return authority;
+   });
+  },
+  protectedDependencies(runId){return transaction(()=>{if(!protectedProfile)fail('DOCUMENT_PROFILE_REQUIRED');return structuredClone(currentDependencies(getRun(runId)));});},
+  verifyProtectedQueryResult(runId,call,value){return transaction(()=>{if(!protectedProfile)fail('DOCUMENT_PROFILE_REQUIRED');const row=getRun(runId);currentDependencies(row);fields(call,['id','name','arguments'],[],'INVALID_PROTECTED_QUERY');fields(call.arguments,['query'],[],'INVALID_PROTECTED_QUERY');if(call.name!=='search_pages'||!identifier(call.id))fail('INVALID_PROTECTED_QUERY');const item=db.prepare('SELECT * FROM protected_query_facts WHERE run_id=? AND call_id=?').get(runId,call.id);if(!item)fail('PROTECTED_QUERY_UNBOUND');const fact=queryFactFrom(db,item,true);json(value,4096);if(fact.querySha256!==queryHash(call.arguments.query)||canonical(value)!==canonical(queryValue(fact)))fail('PROTECTED_QUERY_MISMATCH');return queryValue(fact);});},
+  readProtectedOutput(runId,request,proof){
+   return transaction(()=>{if(!protectedProfile)fail('DOCUMENT_PROFILE_REQUIRED');const row=getRun(runId),output=registeredOutput(row);if(!output)fail('PROTECTED_OUTPUT_UNREGISTERED');fields(request,['kind'],['artifactId','revisionId','index'],'INVALID_PROTECTED_READ');
+    const keys={report:['kind','artifactId'],attachment:['kind','artifactId'],metadata:['kind','artifactId'],revision:['kind','revisionId'],source:['kind','revisionId','index']}[request.kind];if(!keys)fail('INVALID_PROTECTED_READ');fields(request,keys,[],'INVALID_PROTECTED_READ');
+    const attachmentIndex=output.attachmentDescriptors.findIndex(item=>item.artifactId===request.artifactId),descriptor=request.artifactId===output.reportDescriptor.artifactId?output.reportDescriptor:output.attachmentDescriptors[attachmentIndex];
+    if(request.artifactId!==undefined&&(!descriptor||request.kind==='report'&&descriptor!==output.reportDescriptor||request.kind==='attachment'&&attachmentIndex<0)||request.revisionId!==undefined&&request.revisionId!==output.revisionId)fail('PROTECTED_SCOPE_MISMATCH');
+    if(!proof||canonical(proof.output)!==canonical(output)||!Buffer.isBuffer(proof.revisionBytes)||proof.revisionBytes.length>5242880)fail('INVALID_PROTECTED_READ');let record;try{record=JSON.parse(proof.revisionBytes);}catch{fail('INVALID_PROTECTED_READ');}
+    if(!Array.isArray(record.dependencies)||record.dependencies.length>4)fail('INVALID_PROTECTED_READ');const current=currentDependencies(row);for(const dep of record.dependencies)if(!current.some(item=>canonical(item)===canonical(dep)))fail('PROTECTED_SOURCE_UNBOUND');
+    validateProtectedOutputProof(proof,outputProtection(row),record.dependencies);
+    if(request.kind==='report')return Buffer.from(proof.reportBytes);if(request.kind==='attachment')return Buffer.from(proof.attachmentBytes[attachmentIndex]);if(request.kind==='metadata')return structuredClone(descriptor);if(request.kind==='revision')return structuredClone(record);
+    if(!Number.isSafeInteger(request.index)||request.index<0||request.index>=record.sources.length)fail('INVALID_PROTECTED_READ');return validateProtectedSourcePayload(record.sources[request.index]);
+   });
+  },
+  listProtectedOutputs(runId){return transaction(()=>{if(!protectedProfile)fail('DOCUMENT_PROFILE_REQUIRED');const output=registeredOutput(getRun(runId));return output?[{revisionId:output.revisionId,reportId:output.reportDescriptor.artifactId,attachmentIds:[...output.reportReceipt.attachmentIds]}]:[];});},
+  protectedOutput(runId) {return transaction(()=>{if(!protectedProfile)fail('DOCUMENT_PROFILE_REQUIRED');return registeredOutput(getRun(runId));});},
+  consumeProtectedSource(runId,source,resultRef){
+   return transaction(()=>{if(!protectedProfile)fail('DOCUMENT_PROFILE_REQUIRED');const row=getRun(runId),sourceCopy=validateProtectedSourcePayload(source),dependencies=currentDependencies(row),dep=dependencies.find(d=>d.resultRef===resultRef);if(!dep)fail('PROTECTED_SOURCE_UNBOUND');const {authority}=protectedScope(row),grant=grantFrom(db,dep.documentId);const actual=bindProtectedSource({authority,manifest:grant.manifest,source:sourceCopy,resultRef});if(canonical(actual)!==canonical(dep))fail('PROTECTED_SCOPE_MISMATCH');return sourceCopy;});
+  },
+  documentAuthority() {return transaction(()=>{if(!protectedProfile)fail('DOCUMENT_PROFILE_REQUIRED');return authorityFrom(db);});},
+  revokeDocument(input) {
+   return transaction(()=>{if(!protectedProfile)fail('DOCUMENT_PROFILE_REQUIRED');fields(input,['authorityId','libraryId','documentId','expectedRevision']);const authority=authorityFrom(db);if(input.authorityId!==authority.authorityId||input.libraryId!==authority.libraryId||!Number.isSafeInteger(input.expectedRevision)||input.expectedRevision<1)fail('PROTECTED_SCOPE_MISMATCH');const grant=grantFrom(db,input.documentId);
+    if(grant.status==='revoked')return {documentId:grant.document_id,status:'revoked',authRevision:grant.auth_revision,idempotent:true};
+    if(input.expectedRevision!==grant.auth_revision)fail('DOCUMENT_REVISION_MISMATCH');db.prepare("UPDATE document_grants SET status='revoked',auth_revision=2 WHERE document_id=?").run(grant.document_id);return {documentId:grant.document_id,status:'revoked',authRevision:2,idempotent:false};
+   });
+  },
+
+  directory, leaseMs, schemaVersion: protectedProfile ? 4 : ordinary ? 3 : 2,
   create({ runId = 'run-' + randomUUID(), rootId, parentRunId = null, parentClaim, directory: runDirectory, definition, snapshot }) {
-   const encodedDefinition = encodeDefinition(definition); const encodedSnapshot = encodeCheckpoint(snapshot); if (ordinary && parentRunId !== null) fail('ORDINARY_CHILD_UNSUPPORTED'); if (snapshot.phase !== 'ready' || !identifier(runId)) fail('INVALID_CHECKPOINT'); runDirectory = safeExistingDirectory(runDirectory);
+   const encodedDefinition = encodeDefinition(definition); const encodedSnapshot = encodeCheckpoint(snapshot); if(protectedProfile&&parentRunId!==null)fail('PROTECTED_CHILD_UNSUPPORTED'); if (ordinary && parentRunId !== null) fail('ORDINARY_CHILD_UNSUPPORTED'); if (snapshot.phase !== 'ready' || !identifier(runId)) fail('INVALID_CHECKPOINT'); runDirectory = safeExistingDirectory(runDirectory);
    return transaction(() => {
+    if(protectedProfile){const a=authorityFrom(db);if(canonical(definition.config.documentProtection)!==canonical({authorityId:a.authorityId,libraryId:a.libraryId}))fail('PROTECTED_SCOPE_MISMATCH');for(const documentId of definition.config.allowedDocuments)grantFrom(db,documentId);}
     if (db.prepare('SELECT 1 FROM runs WHERE run_id=?').get(runId)) fail('RUN_EXISTS');
     if (parentRunId !== null) {
      const parent = getRun(parentRunId); const root = active(parent);
@@ -350,12 +485,38 @@ export async function openSession({ directory, clock = Date.now, leaseMs = 1000,
    const reserve = (kind, snapshot) => {
     if (!['model', 'tool'].includes(kind)) fail('INVALID_BUDGET_KIND'); const encoded = snapshot === undefined ? undefined : encodeCheckpoint(snapshot);
     return transaction(() => {
-     const row = writer(runId, owner, fence); const root = getRoot(row.root_id); if (root[kind + '_used'] >= root[kind + '_limit']) fail('ROOT_BUDGET_EXHAUSTED');
+     const row = writer(runId, owner, fence); if(protectedProfile){const dependencies=currentDependencies(row);if(kind==='tool'){
+      const persisted=parsed(row.snapshot, MAX_CHECKPOINT_JSON),call=persisted.proposal?.calls?.[persisted.cursor],incoming=snapshot?.proposal?.calls?.[snapshot?.cursor];
+      if(!['proposal-sealed','result-consumed'].includes(persisted.phase)||snapshot?.phase!=='tool-dispatched'||snapshot.cursor!==persisted.cursor||!call||canonical(incoming)!==canonical(call)||canonical(snapshot.proposal)!==canonical(persisted.proposal))fail('PROTECTED_DISPATCH_MISMATCH');
+      const {definition}=protectedScope(row);if(definition.config.allowedTools&&!definition.config.allowedTools.includes(call.name))fail('PROTECTED_SCOPE_MISMATCH');
+      if(call.name==='read_page'){const grant=grantFrom(db,call.arguments?.documentId);if(!definition.config.allowedDocuments.includes(grant.document_id))fail('PROTECTED_SCOPE_MISMATCH');if(grant.status!=='allowed')fail('DOCUMENT_REVOKED');}
+      else if(call.name==='read_result'){if(!dependencies.some(d=>d.resultRef===call.arguments?.resultRef))fail('PROTECTED_SOURCE_UNBOUND');}
+      else if(call.name==='create_csv'){if(!dependencies.length)fail('PROTECTED_DEPENDENCY_REQUIRED');fields(call.arguments,['rows'],[],'PROTECTED_CSV_SCOPE');}
+      else if(call.name==='search_pages'){fields(call.arguments,['query'],[],'INVALID_PROTECTED_QUERY');queryHash(call.arguments.query);}
+      else if(call.name!=='save_report')fail('PROTECTED_TOOL_UNSUPPORTED');
+     }} const root = getRoot(row.root_id); if (root[kind + '_used'] >= root[kind + '_limit']) fail('ROOT_BUDGET_EXHAUSTED');
      db.prepare(`UPDATE roots SET ${kind}_used=${kind}_used+1 WHERE root_id=?`).run(rootId);
      if (encoded !== undefined) db.prepare('UPDATE runs SET snapshot=? WHERE run_id=?').run(encoded, runId); return view(getRun(runId));
     });
    };
    return Object.freeze({
+    queryProtectedPages(callId,query,documents){return transaction(()=>{
+     if(!protectedProfile)fail('DOCUMENT_PROFILE_REQUIRED');const row=writer(runId,owner,fence),state=view(row).snapshot,call=state.proposal?.calls?.[state.cursor],{authority,definition}=protectedScope(row);currentDependencies(row);const querySha256=queryHash(query);
+     if(!definition.config.allowedTools?.includes('search_pages')||state.phase!=='tool-dispatched'||call?.name!=='search_pages'||call.id!==callId||!identifier(callId))fail('PROTECTED_QUERY_DISPATCH_REQUIRED');fields(call.arguments,['query'],[],'INVALID_PROTECTED_QUERY');if(call.arguments.query!==query)fail('PROTECTED_QUERY_MISMATCH');
+     if(!Array.isArray(documents)||documents.length!==2)fail('INVALID_PROTECTED_QUERY_CORPUS');json(documents,262144);const ids=new Set();for(const doc of documents){fields(doc,['id','name','version','pages'],[],'INVALID_PROTECTED_QUERY_CORPUS');const grant=grantFrom(db,doc.id);if(ids.has(doc.id)||doc.name!==grant.manifest.name||doc.version!==grant.manifest.version||!Array.isArray(doc.pages)||doc.pages.length!==grant.manifest.pages.length)fail('INVALID_PROTECTED_QUERY_CORPUS');ids.add(doc.id);for(let i=0;i<doc.pages.length;i++)if(typeof doc.pages[i]!=='string'||Buffer.byteLength(doc.pages[i])>64000||digest(doc.pages[i])!==grant.manifest.pages[i].sha256)fail('INVALID_PROTECTED_QUERY_CORPUS');}
+     const old=db.prepare('SELECT * FROM protected_query_facts WHERE run_id=? AND call_id=?').get(runId,callId);if(old){const fact=queryFactFrom(db,old,true);if(fact.querySha256!==querySha256)fail('PROTECTED_QUERY_MISMATCH');return queryValue(fact);}
+     const allowedDocuments=definition.config.allowedDocuments.filter(id=>grantFrom(db,id).status==='allowed');const candidates=allowedDocuments.length?searchPages({query,documents,allowedDocuments,limit:2}):[];
+     const fact={schemaVersion:'protected-query-fact@1',authorityId:authority.authorityId,libraryId:authority.libraryId,runId,callId,querySha256,limit:2,candidates:candidates.map(hit=>{const grant=grantFrom(db,hit.documentId);return {documentId:hit.documentId,documentVersion:grant.manifest.version,documentManifestHash:grant.manifest_hash,page:hit.page,score:hit.score};})};
+     if(db.prepare('SELECT COUNT(*) AS n FROM protected_query_facts WHERE run_id=?').get(runId).n>=definition.limits.maxTools)fail('PROTECTED_QUERY_LIMIT');db.prepare('INSERT INTO protected_query_facts VALUES(?,?,?)').run(runId,callId,json(fact,4096));return queryValue(fact);
+    });},
+    registerProtectedOutput(proof){
+     return transaction(()=>{if(!protectedProfile)fail('DOCUMENT_PROFILE_REQUIRED');const row=writer(runId,owner,fence),state=view(row).snapshot,call=state.proposal?.calls?.[state.cursor];
+      if(state.phase!=='tool-dispatched'||call?.name!=='save_report'||typeof call.id!=='string')fail('PROTECTED_OUTPUT_DISPATCH_REQUIRED');
+      const output=validateProtectedOutputProof(proof,outputProtection(row),currentDependencies(row));if(output.reportReceipt.operationId!==call.id)fail('PROTECTED_OUTPUT_CALL_MISMATCH');
+      const old=registeredOutput(row);if(old){if(canonical(old)!==canonical(output))fail('PROTECTED_OUTPUT_CONFLICT');return structuredClone(old.reportReceipt);}
+      db.prepare('INSERT INTO protected_outputs(run_id,fact) VALUES(?,?)').run(runId,json(output,PROTECTED_OUTPUT_BYTES));return structuredClone(output.reportReceipt);
+     });
+    },
     runId, rootId, owner, fence, get leaseUntil() { return store.inspect(runId).leaseUntil; },
     read() { return transaction(() => { writer(runId, owner, fence, false); return view(getRun(runId)); }); },
     renew() { return transaction(() => { writer(runId, owner, fence, false); const until = now() + leaseMs; db.prepare('UPDATE runs SET lease_until=? WHERE run_id=?').run(until, runId); return until; }); },
@@ -388,6 +549,12 @@ export async function openSession({ directory, clock = Date.now, leaseMs = 1000,
       db.prepare('UPDATE runs SET snapshot=? WHERE run_id=?').run(encodeCheckpoint(snapshot),runId);return view(getRun(runId));
      });
     },
+    bindProtectedSource(source, resultRef) {
+     return transaction(()=>{const row=writer(runId,owner,fence);const {authority,definition}=protectedScope(row);const grant=grantFrom(db,source?.documentId);if(!definition.config.allowedDocuments.includes(grant.document_id))fail('PROTECTED_SCOPE_MISMATCH');if(grant.status!=='allowed')fail('DOCUMENT_REVOKED');const fact=bindProtectedSource({authority,manifest:grant.manifest,source,resultRef});
+      const old=db.prepare('SELECT fact FROM protected_dependencies WHERE run_id=? AND result_ref=?').get(runId,resultRef);if(old){if(canonical(parsed(old.fact,4096))!==canonical(fact))fail('PROTECTED_BINDING_MISMATCH');return structuredClone(fact);}
+      if(db.prepare('SELECT COUNT(*) AS n FROM protected_dependencies WHERE run_id=?').get(runId).n>=4)fail('PROTECTED_DEPENDENCY_LIMIT');db.prepare('INSERT INTO protected_dependencies VALUES(?,?,?)').run(runId,resultRef,json(fact,4096));return structuredClone(fact);
+     });
+    },
     reserve,
     publish(prepared) { return transaction(() => commitPublication(writer(runId, owner, fence), prepared)); },
     replacePublication(prepared, expectedRevision) {
@@ -409,6 +576,6 @@ export async function openSession({ directory, clock = Date.now, leaseMs = 1000,
   },
   close() { if (!closed) { db.close(); closed = true; } }
  };
- if(readOnly)return Object.freeze({directory,schemaVersion:ordinary?3:2,readOnly:true,inspect:store.inspect,findChild:store.findChild,close:store.close});
+ if(readOnly)return Object.freeze({directory,schemaVersion:protectedProfile?4:ordinary?3:2,readOnly:true,inspect:store.inspect,findChild:store.findChild,...(protectedProfile?{publication:store.publication,publicationRevisions:store.publicationRevisions,publicationEvent:store.publicationEvent,verifyProtectedQueryResult:store.verifyProtectedQueryResult,protectedOutput:store.protectedOutput,consumeProtectedSource:store.consumeProtectedSource,protectedDependencies:store.protectedDependencies,readProtectedOutput:store.readProtectedOutput,listProtectedOutputs:store.listProtectedOutputs}:{}),close:store.close});
  return Object.freeze(store);
 }

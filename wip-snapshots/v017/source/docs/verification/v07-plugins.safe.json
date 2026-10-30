@@ -1,0 +1,105 @@
+{
+  "schemaVersion": "v07-plugin-observations@1",
+  "date": "2026-10-27",
+  "scope": "Original trusted in-process contribution lifecycle only; not durable recovery qualification.",
+  "runtime": "Node v26.11.1",
+  "temporaryFiles": "Owned ignored test-output and engineering TMPDIR, never /tmp",
+  "providerCalls": 0,
+  "newDependencies": 0,
+  "observations": [
+    {
+      "phase": "RED-initial",
+      "command": "NODE_OPTIONS=--max-old-space-size=512 node --test --test-concurrency=1 test/plugins.test.mjs",
+      "exit": 1,
+      "tests": 9,
+      "passed": 0,
+      "failed": 9,
+      "note": "Loadable empty-session scaffold. Seven assertions reached behavior; the version test first failed on an undefined extension and the grant test first failed in Host allowlist setup. No import failure. These incidental failures are not relabelled direct behavior assertions.",
+      "inputSha256": {
+        "src/plugins.mjs": "f3fdd2187f1749473805b971ac3dd97c538eb14b74006549727e1dfc25f42259",
+        "src/example-plugins.mjs": "05dc97f843e14f3fe4224dd35b0c57d5232b97240a3bd25115d3abdea537f0eb",
+        "test/plugins.test.mjs": "c62ee0a5ebf1f5ba3a891bba6868c6eea993a3368cd59245dcc30e3298eb0fe8"
+      }
+    },
+    {
+      "phase": "RED-tightened",
+      "command": "NODE_OPTIONS=--max-old-space-size=512 node --test --test-concurrency=1 test/plugins.test.mjs",
+      "exit": 1,
+      "tests": 9,
+      "passed": 0,
+      "failed": 9,
+      "note": "Added explicit selected-extension assertions before the two downstream accesses; unchanged empty-session scaffold now fails nine explicit behavior assertions.",
+      "inputSha256": {
+        "src/plugins.mjs": "f3fdd2187f1749473805b971ac3dd97c538eb14b74006549727e1dfc25f42259",
+        "src/example-plugins.mjs": "05dc97f843e14f3fe4224dd35b0c57d5232b97240a3bd25115d3abdea537f0eb",
+        "test/plugins.test.mjs": "6b909cd7e76afef19a9cac4402ce809297354fe45656ace760ad2efb0826aac4"
+      }
+    },
+    {
+      "phase": "GREEN-initial",
+      "command": "NODE_OPTIONS=--max-old-space-size=512 node --test --test-concurrency=1 test/plugins.test.mjs",
+      "exit": 0,
+      "tests": 9,
+      "passed": 9,
+      "failed": 0,
+      "note": "Actual ordinary Runtime and Host integration saved a report containing both plugin source snapshots and both acquired methods."
+    },
+    {
+      "phase": "RED-review",
+      "command": "NODE_OPTIONS=--max-old-space-size=512 node --test --test-concurrency=1 test/plugins.test.mjs",
+      "exit": 1,
+      "tests": 13,
+      "passed": 11,
+      "failed": 2,
+      "note": "Additional negatives reproduced acceptance of malformed advertised object schemas and a synchronously reentrant release running cleanup more than once. Cleanup error visibility and actual Hook timeout already passed.",
+      "inputSha256": {
+        "src/plugins.mjs": "8d429551ff094a7e3c5d18e25dab310ade7723ad17a982376d695f90bbf0fa55",
+        "src/example-plugins.mjs": "05dc97f843e14f3fe4224dd35b0c57d5232b97240a3bd25115d3abdea537f0eb",
+        "test/plugins.test.mjs": "98221c31c488cd148c3e60e3b72868b783c7f29646154053e502e94665cc88dd"
+      }
+    },
+    {
+      "phase": "GREEN-review",
+      "command": "NODE_OPTIONS=--max-old-space-size=512 node --test --test-concurrency=1 test/plugins.test.mjs",
+      "exit": 0,
+      "tests": 13,
+      "passed": 13,
+      "failed": 0,
+      "note": "Closed bounded schema subset validation plus promise assignment before entering release callbacks fixed both regressions.",
+      "inputSha256": {
+        "src/plugins.mjs": "188d109ad808661a9b0219619c74696560931d25e557f361718a2d0f2fa511f8",
+        "src/example-plugins.mjs": "05dc97f843e14f3fe4224dd35b0c57d5232b97240a3bd25115d3abdea537f0eb",
+        "test/plugins.test.mjs": "98221c31c488cd148c3e60e3b72868b783c7f29646154053e502e94665cc88dd"
+      }
+    }
+  ],
+  "interface": {
+    "entry": "activateTrustedPlugins({ plugins, expectedBindings?, signal? })",
+    "returns": [
+      "bindings",
+      "extensions",
+      "skills",
+      "hooks",
+      "release"
+    ],
+    "bindingsFields": [
+      "id",
+      "version",
+      "schemaVersion",
+      "contentSha256"
+    ],
+    "descriptorSchema": "trusted-plugin@1",
+    "examples": "createExamplePlugins() in src/example-plugins.mjs",
+    "cleanup": "deferRelease callbacks run in reverse registration order, once; errors are generic package/code records and all other cleanups continue."
+  },
+  "boundaries": [
+    "Only explicitly already-imported trusted local descriptors are accepted; this function does not import a model-supplied path, install packages, fetch remote code, or grant tool permissions.",
+    "Selected module bytes are reread through a nonsymlink file and checked against contentSha256. The hash is not a signed supply-chain guarantee and does not fingerprint dependency closures or mutable JavaScript closure state.",
+    "Bindings omit sourceUrl and local paths. Resume callers must pass expectedBindings to compare exact ordered package pins before activation.",
+    "Metadata and selected function references are copied/frozen; separate activations select later versions without rebinding earlier Runs. Caller must retain resources until its Run settles, then release. This is not hot-unload or an execution sandbox.",
+    "Activation is atomic with respect to contributions exposed by this API, not arbitrary effects of trusted JavaScript. Resource owners must register cleanup immediately through deferRelease. Synchronous runaway code and noncooperative resource callbacks are not forcibly terminated.",
+    "Skill metadata alone does not mean loaded or adopted. The two authored example packages expose ordinary methodResult tools so actual reads enter the existing acquired-method owner.",
+    "The existing explicit-function extension path remains unchanged. Offline fixtures prove Runtime integration, not market facts or semantic quality.",
+    "The listed hashes pin plugin-owned source/test inputs; final stage evidence must separately pin the complete Runtime/Host dependency closure. These focused checks are not a full candidate regression."
+  ]
+}

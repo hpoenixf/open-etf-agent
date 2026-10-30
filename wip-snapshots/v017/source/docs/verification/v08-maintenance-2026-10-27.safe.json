@@ -1,0 +1,487 @@
+{
+  "schemaVersion": 2,
+  "recordKind": "maintenance",
+  "version": "0.8.0",
+  "qualifiedSource": {
+    "repository": "hpoenixf/open-etf-agent",
+    "branch": "phase/v0.8",
+    "commit": "2c096ce47be2161f97531170af07ef255872f8b1"
+  },
+  "coordination": {
+    "writer": "local runtime implementation owner",
+    "publisher": "designated repository publisher",
+    "authorizationEvidence": "authorization"
+  },
+  "evidence": [
+    {
+      "id": "authorization",
+      "kind": "authorization",
+      "sourceCommit": "2c096ce47be2161f97531170af07ef255872f8b1",
+      "location": "https://github.com/hpoenixf/open-etf-agent/blob/2c096ce47be2161f97531170af07ef255872f8b1/openspec/changes/v08-publication-only/proposal.md",
+      "summary": "Authorized single-module evolution, documented scope amendment and designated sole publisher; no formal Release or new model invocation."
+    },
+    {
+      "id": "spec",
+      "kind": "spec",
+      "sourceCommit": "2c096ce47be2161f97531170af07ef255872f8b1",
+      "location": "https://github.com/hpoenixf/open-etf-agent/blob/2c096ce47be2161f97531170af07ef255872f8b1/openspec/changes/v08-publication-only/completion.json",
+      "summary": "Three recorded-complete tasks; original local qualification and metadata-only promotion remain distinct. Formal maintenance closure is not claimed."
+    },
+    {
+      "id": "provider-free",
+      "kind": "validation",
+      "sourceCommit": "2c096ce47be2161f97531170af07ef255872f8b1",
+      "location": "https://github.com/hpoenixf/open-etf-agent/blob/2c096ce47be2161f97531170af07ef255872f8b1/docs/verification/v08-observations.safe.json",
+      "summary": "286/286 serial Node 26.11.1 on dev digest bbef17375feea95e05fa32dd5aa20bc2df102209b9ae048a6aa29f04833c04ee; final phase has unchanged runtime/test/dependency bytes, not a repeated suite."
+    },
+    {
+      "id": "metadata",
+      "kind": "validation",
+      "sourceCommit": "2c096ce47be2161f97531170af07ef255872f8b1",
+      "location": "https://github.com/hpoenixf/open-etf-agent/blob/2c096ce47be2161f97531170af07ef255872f8b1/docs/verification/v08-metadata-promotion.safe.json",
+      "summary": "Only three version fields in two package files changed to 0.8.0; 117 other qualified inputs and 95 dependency lock records identical. Fresh narrow offline install/build/version checks passed."
+    },
+    {
+      "id": "integration",
+      "kind": "validation",
+      "sourceCommit": "2c096ce47be2161f97531170af07ef255872f8b1",
+      "location": "https://github.com/hpoenixf/open-etf-agent/blob/2c096ce47be2161f97531170af07ef255872f8b1/docs/verification/v08-independent-delivery.safe.json",
+      "summary": "Independent offline locked install/build, five distinct CLI processes and retained v0.6 Artifact exact readback on original dev input; final metadata-only byte equivalence is separate."
+    },
+    {
+      "id": "publication-green",
+      "kind": "validation",
+      "sourceCommit": "2c096ce47be2161f97531170af07ef255872f8b1",
+      "location": "https://github.com/hpoenixf/open-etf-agent/blob/2c096ce47be2161f97531170af07ef255872f8b1/docs/verification/v08-publication-green.safe.json",
+      "summary": "23 focused public cases include actual process death between body commit and checkpoint, original receipt recovery, CAS and body surviving later failure."
+    },
+    {
+      "id": "object-audit",
+      "kind": "object_audit",
+      "sourceCommit": "2c096ce47be2161f97531170af07ef255872f8b1",
+      "location": "https://github.com/hpoenixf/open-etf-agent/blob/2c096ce47be2161f97531170af07ef255872f8b1/docs/verification/v08-publication-scan.safe.json",
+      "summary": "Source/test audit plus publisher final 30-leaf packet review; all unchanged remote objects reused, no local ancestry, private source, database, log, dependency or credential uploaded."
+    },
+    {
+      "id": "phase-readback",
+      "kind": "remote_readback",
+      "sourceCommit": "2c096ce47be2161f97531170af07ef255872f8b1",
+      "location": "https://github.com/hpoenixf/open-etf-agent/commit/2c096ce47be2161f97531170af07ef255872f8b1",
+      "summary": "Publisher read back phase tree 62ead44dcdb89fab9f6f6a38bd26634c94f7f802 and all 30 changed leaf bytes; the four linked public runtime/test/package bodies were also independently read back."
+    },
+    {
+      "id": "main-readback",
+      "kind": "remote_readback",
+      "sourceCommit": "3484c608dc0e7540b145b6484d9601a80f105171",
+      "location": "https://github.com/hpoenixf/open-etf-agent/commit/3484c608dc0e7540b145b6484d9601a80f105171",
+      "summary": "Non-force main promotion; tree 3829ee16003f93bc8c4423992ac96bc8d4e8f413, parent phase; five README/coverage/index leaves byte-matched and every other blob retained."
+    },
+    {
+      "id": "readme-review",
+      "kind": "readme_review",
+      "sourceCommit": "3484c608dc0e7540b145b6484d9601a80f105171",
+      "location": "https://github.com/hpoenixf/open-etf-agent/blob/3484c608dc0e7540b145b6484d9601a80f105171/README.md",
+      "summary": "Actual main README reviewed: stable 0.8.0, built CLI, limits, fixed phase history, original hero/MIT/new-domain/live16 entry, supported engines distinct from Node 26.11.1 actual tests."
+    },
+    {
+      "id": "coverage",
+      "kind": "validation",
+      "sourceCommit": "2c096ce47be2161f97531170af07ef255872f8b1",
+      "location": "https://github.com/hpoenixf/open-etf-agent/blob/3484c608dc0e7540b145b6484d9601a80f105171/docs/verification/article-coverage-receipts.json",
+      "summary": "Actual bounded smoke/check rebind: 14 verified targets of 31, source phase2c096, execution 2026-10-27T05:11:55.324Z. Not another full runtime suite or live-model result."
+    },
+    {
+      "id": "catalog",
+      "kind": "catalog_history",
+      "sourceCommit": "b6933089d87ef2ee0c946d2f088fc099c5b037aa",
+      "location": "https://github.com/hpoenixf/eff-agent-article/tree/b6933089d87ef2ee0c946d2f088fc099c5b037aa",
+      "summary": "Existing article catalog/history and original Publication article reviewed; Chinese 019 exists, no existing EN019 entry/file. No new synonymous or English article."
+    },
+    {
+      "id": "article-review",
+      "kind": "article_review",
+      "sourceCommit": "b6933089d87ef2ee0c946d2f088fc099c5b037aa",
+      "location": "https://github.com/hpoenixf/eff-agent-article/blob/b6933089d87ef2ee0c946d2f088fc099c5b037aa/articles/019-agent-answer-publication.md",
+      "summary": "Three natural additions only: bounded single-block distinction, actual CLI/fixed case, and committed-body recovery/failure. Original sections, six code fences and one Mermaid diagram preserved."
+    },
+    {
+      "id": "article-readback",
+      "kind": "remote_readback",
+      "sourceCommit": "b6933089d87ef2ee0c946d2f088fc099c5b037aa",
+      "location": "https://github.com/hpoenixf/eff-agent-article/blob/b6933089d87ef2ee0c946d2f088fc099c5b037aa/articles/019-agent-answer-publication.md",
+      "summary": "Published article blob 6a2e072732c031866825cc7d154c3f8e0ae93d1c, source SHA-256 6f194e252767b2ad5b8bbb5ebb7aaa701516aa1cdb11bec8686a0b52c9b0ef6d matched reviewed bytes."
+    },
+    {
+      "id": "reader-lock",
+      "kind": "reader_lock",
+      "sourceCommit": "b6933089d87ef2ee0c946d2f088fc099c5b037aa",
+      "location": "https://github.com/hpoenixf/myblog-v2/blob/bc767c2eff6e61b16cfcfb369289fb564011eba2/reader-source.json",
+      "summary": "Actual fixed lock matches article source commit and 019 source hash; this is not by itself HTML proof."
+    },
+    {
+      "id": "deployment",
+      "kind": "deployment",
+      "sourceCommit": "b6933089d87ef2ee0c946d2f088fc099c5b037aa",
+      "location": "https://github.com/hpoenixf/myblog-v2/actions/runs/40454601657",
+      "summary": "Publisher observed success for fixed blog pin and matching reader-release metadata. Saved release lists 21 article files and two homepages; listing is not whole-site verification."
+    },
+    {
+      "id": "html019",
+      "kind": "live_html",
+      "sourceCommit": "b6933089d87ef2ee0c946d2f088fc099c5b037aa",
+      "location": "https://hpoenixf.com/eff-agent-article/articles/019-agent-answer-publication",
+      "summary": "Original downloader verified HTTP 200, final URL and release hash before persistence. Saved 124807-byte HTML independently rehashed offline; new passages, fixed phase links and new-domain canonical verified. No network retry after denial."
+    },
+    {
+      "id": "article-review-current",
+      "kind": "article_review",
+      "sourceCommit": "bc4377f2292758e707f798e104e9b521668f1451",
+      "location": "https://github.com/hpoenixf/eff-agent-article/commit/bc4377f2292758e707f798e104e9b521668f1451",
+      "summary": "019 retains its reviewed bytes; starting ZH/EN versions agree on date, fixed main/phase, implemented Publication, synthetic model versus real SQLite/process boundary, and planned/unimplemented Worker. No added runtime test-count or model-quality claim."
+    },
+    {
+      "id": "article-readback-current",
+      "kind": "remote_readback",
+      "sourceCommit": "bc4377f2292758e707f798e104e9b521668f1451",
+      "location": "https://github.com/hpoenixf/eff-agent-article/commit/bc4377f2292758e707f798e104e9b521668f1451",
+      "summary": "Authoritative article main updated after exact authorization; three selected full bodies independently read back at this commit and match both reviewed bytes and current reader-lock SHA-256 values."
+    },
+    {
+      "id": "reader-lock-current",
+      "kind": "reader_lock",
+      "sourceCommit": "bc4377f2292758e707f798e104e9b521668f1451",
+      "location": "https://github.com/hpoenixf/myblog-v2/blob/8f90afca315520266661aefe4aaf138577be6e45/reader-source.json",
+      "summary": "Actual current lock read back: source bc4377f2292758e707f798e104e9b521668f1451, 40 file entries, with 38 existing entries preserved and the two starting-article languages added. All three selected source hashes match."
+    },
+    {
+      "id": "deployment-current",
+      "kind": "deployment",
+      "sourceCommit": "bc4377f2292758e707f798e104e9b521668f1451",
+      "location": "https://github.com/hpoenixf/myblog-v2/actions/runs/40458798834",
+      "summary": "Sole publisher observed GitHub workflow success for blog 8f90afca315520266661aefe4aaf138577be6e45. No new-domain reader-release or HTML request was made after the explicit read denial; CI is not a publication readback substitute."
+    }
+  ],
+  "code": {
+    "status": "complete",
+    "reason": "Publication-only code and specified runtime qualification are fixed and publicly read back; no formal Release or semantic/live claim.",
+    "requiredValidations": [
+      "provider_free",
+      "integration"
+    ],
+    "validations": [
+      {
+        "kind": "provider_free",
+        "sourceCommit": "2c096ce47be2161f97531170af07ef255872f8b1",
+        "status": "pass",
+        "evidenceIds": [
+          "provider-free",
+          "metadata",
+          "publication-green"
+        ]
+      },
+      {
+        "kind": "integration",
+        "sourceCommit": "2c096ce47be2161f97531170af07ef255872f8b1",
+        "status": "pass",
+        "evidenceIds": [
+          "integration",
+          "metadata",
+          "coverage"
+        ]
+      }
+    ],
+    "claims": {
+      "specComplete": true,
+      "allNewReachableObjectsAudited": true,
+      "nonForce": true,
+      "remoteRefTreeBlobBytesVerified": true
+    },
+    "evidenceIds": [
+      "spec",
+      "object-audit",
+      "phase-readback"
+    ]
+  },
+  "readme": {
+    "status": "complete",
+    "reason": "Current stable main README and fixed public coverage were reviewed and read back.",
+    "commit": "3484c608dc0e7540b145b6484d9601a80f105171",
+    "claims": {
+      "stableVersionAccurate": true,
+      "quickstartVerified": true,
+      "capabilitiesAndLimitsChecked": true,
+      "fixedPhaseLinksPreserved": true,
+      "visualLicenseRealCallPreserved": true,
+      "nodeSupportAndTestedSeparated": true
+    },
+    "evidenceIds": [
+      "readme-review",
+      "main-readback"
+    ]
+  },
+  "articles": {
+    "status": "complete",
+    "reason": "All three in-scope article bodies are on the authoritative source main and were byte-read back. Earlier exact-ref denial was resolved by explicit target authorization and one retry of the same known-not-executed operation; old denial snapshot retained separately.",
+    "catalogEvidenceIds": [
+      "catalog"
+    ],
+    "sourceCommit": "bc4377f2292758e707f798e104e9b521668f1451",
+    "mappings": [
+      {
+        "capability": "Stable block/ordinal, explicit CAS, original receipt and committed body surviving later failure/restart",
+        "decision": "updated",
+        "reason": "Small runnable single-block example beside original identity/commit arguments; not full original Owner parity.",
+        "existingLanguages": [
+          "zh"
+        ],
+        "targets": [
+          {
+            "language": "zh",
+            "slug": "019-agent-answer-publication",
+            "path": "articles/019-agent-answer-publication.md",
+            "status": "updated",
+            "reason": "Only pre-existing Chinese article; preserve original diagram, fences and sections."
+          }
+        ],
+        "sourceLinks": [
+          "https://github.com/hpoenixf/open-etf-agent/blob/2c096ce47be2161f97531170af07ef255872f8b1/src/session.mjs",
+          "https://github.com/hpoenixf/open-etf-agent/blob/2c096ce47be2161f97531170af07ef255872f8b1/src/runtime.mjs"
+        ],
+        "testLinks": [
+          "https://github.com/hpoenixf/open-etf-agent/blob/2c096ce47be2161f97531170af07ef255872f8b1/test/publication-runtime.test.mjs",
+          "https://github.com/hpoenixf/open-etf-agent/blob/2c096ce47be2161f97531170af07ef255872f8b1/test/publication.test.mjs"
+        ],
+        "evidenceIds": [
+          "article-review",
+          "article-readback"
+        ]
+      },
+      {
+        "capability": "Existing bilingual starting article: dated stable code, runnable Publication case and explicitly planned Worker",
+        "decision": "updated",
+        "reason": "Each existing language receives one current-state section dated 2026-10-27 and four new-domain navigation links; all other historical body/fences preserved.",
+        "existingLanguages": [
+          "zh",
+          "en"
+        ],
+        "targets": [
+          {
+            "language": "zh",
+            "slug": "open-etf-agent-v01-first-readable-report",
+            "path": "articles/open-etf-agent-v01-first-readable-report.md",
+            "status": "updated",
+            "sourceStatus": "submitted",
+            "reason": "Existing full article updated on source main and exact bytes read back; no new language/article."
+          },
+          {
+            "language": "en",
+            "slug": "open-etf-agent-v01-first-readable-report",
+            "path": "en/articles/open-etf-agent-v01-first-readable-report.md",
+            "status": "updated",
+            "sourceStatus": "submitted",
+            "reason": "Existing full article updated on source main and exact bytes read back; no new language/article."
+          }
+        ],
+        "sourceLinks": [
+          "https://github.com/hpoenixf/open-etf-agent/blob/2c096ce47be2161f97531170af07ef255872f8b1/src/session-cli.mjs",
+          "https://github.com/hpoenixf/open-etf-agent/blob/3484c608dc0e7540b145b6484d9601a80f105171/README.md"
+        ],
+        "testLinks": [
+          "https://github.com/hpoenixf/open-etf-agent/blob/2c096ce47be2161f97531170af07ef255872f8b1/test/publication-runtime.test.mjs"
+        ],
+        "evidenceIds": [
+          "article-review-current",
+          "article-readback-current"
+        ]
+      }
+    ],
+    "evidenceIds": [
+      "article-review-current",
+      "article-readback-current"
+    ]
+  },
+  "publication": {
+    "status": "blocked",
+    "reason": "All selected article sources are submitted and the current blog build/deploy workflow succeeded. The current source/blog pair has not been read back from the new domain because the explicit read denial remains in force. Prior019 evidence survives at its original b693/bc767 pair; it does not certify the new starting pages or the current whole build.",
+    "sourceCommit": "bc4377f2292758e707f798e104e9b521668f1451",
+    "blogCommit": "8f90afca315520266661aefe4aaf138577be6e45",
+    "claims": {
+      "readerSourceLockVerified": true,
+      "readerReleaseVerified": false,
+      "buildDeployVerified": true,
+      "oldSitePureRedirectsVerified": false
+    },
+    "files": [],
+    "homepages": [],
+    "evidenceIds": [
+      "reader-lock-current",
+      "deployment-current"
+    ],
+    "extendedSweep": {
+      "status": "blocked",
+      "capturedPages": 16,
+      "unverifiedEntries": 7,
+      "unverifiedScope": "Five unchanged English article pages and two homepages; old-site pure redirect review is also not freshly established.",
+      "modifiedArticleVerified": true,
+      "fullSiteVerified": false
+    },
+    "previouslyVerifiedSubsets": [
+      {
+        "status": "public_verified",
+        "scope": "Original019 only, at its earlier verified source/blog pair; not a current-build whole-site claim",
+        "sourceCommit": "b6933089d87ef2ee0c946d2f088fc099c5b037aa",
+        "blogCommit": "bc767c2eff6e61b16cfcfb369289fb564011eba2",
+        "files": [
+          {
+            "language": "zh",
+            "path": "articles/019-agent-answer-publication.md",
+            "htmlPath": "articles/019-agent-answer-publication.html",
+            "sourceSha256": "6f194e252767b2ad5b8bbb5ebb7aaa701516aa1cdb11bec8686a0b52c9b0ef6d",
+            "htmlSha256": "aa35e0aa23be895ad5125082668827f0b69b9c01d55c849b66627cf559401aab",
+            "url": "https://hpoenixf.com/eff-agent-article/articles/019-agent-answer-publication",
+            "newPassageVerified": true,
+            "codeLinksVerified": true,
+            "status": "public_verified",
+            "actualBytes": 124807,
+            "checkedAt": "2026-10-27T05:27:24.455462+00:00",
+            "evidenceIds": [
+              "html019"
+            ]
+          }
+        ],
+        "evidenceIds": [
+          "reader-lock",
+          "deployment",
+          "html019"
+        ]
+      }
+    ],
+    "pendingFiles": [
+      {
+        "language": "zh",
+        "path": "articles/open-etf-agent-v01-first-readable-report.md",
+        "sourceSha256": "dec2bc53fb868db06166fd160da69c06c1bc2856e9e09f618a8dc9f3bf9ee3c2",
+        "sourceStatus": "submitted",
+        "publicationStatus": "blocked",
+        "reason": "Current blog HTML/readback unavailable under explicit network restriction; no HTML hash invented."
+      },
+      {
+        "language": "en",
+        "path": "en/articles/open-etf-agent-v01-first-readable-report.md",
+        "sourceSha256": "f2d29d188dad1c239a8ae2ff62024bf6a047e9a54a734c82d0c54c1b682b0e99",
+        "sourceStatus": "submitted",
+        "publicationStatus": "blocked",
+        "reason": "Current blog HTML/readback unavailable under explicit network restriction; no HTML hash invented."
+      },
+      {
+        "language": "zh",
+        "path": "articles/019-agent-answer-publication.md",
+        "sourceSha256": "6f194e252767b2ad5b8bbb5ebb7aaa701516aa1cdb11bec8686a0b52c9b0ef6d",
+        "sourceStatus": "submitted",
+        "publicationStatus": "blocked",
+        "reason": "Current blog HTML/readback unavailable under explicit network restriction; no HTML hash invented."
+      }
+    ]
+  },
+  "recovery": {
+    "owner": "designated site publisher",
+    "nextAction": "Preserve source/ref/lock/workflow receipts and prior019 captures. Resume actual current-build article/homepage/redirect verification only through a legitimately permitted normal tool/environment after the read boundary is resolved; do not retry by another route.",
+    "checkpoint": "Article source bc4377f2292758e707f798e104e9b521668f1451 and blog 8f90afca315520266661aefe4aaf138577be6e45; workflow 40458798834 success; current source bytes and reader lock read back. Earlier denied ref write was authorized and completed once; no uncertain write remains.",
+    "writeOutcome": "completed",
+    "blocker": "Explicit new-domain network read denial remains; current article HTML, reader-release and extended homepage/redirect verification not obtained.",
+    "uncertainStage": ""
+  },
+  "scope": {
+    "primaryModules": [
+      {
+        "name": "Publication",
+        "owner": "existing Runtime/Session Publication adaptation",
+        "acceptanceBoundary": "synthetic input to independent body/current-event commit to selected-Run CLI readback"
+      }
+    ],
+    "supportingAdaptations": [
+      {
+        "name": "durable publication facts",
+        "existingOwner": "Session",
+        "purpose": "atomic version and current-slot commit plus original receipt confirmation"
+      },
+      {
+        "name": "final proposal commit",
+        "existingOwner": "Runtime",
+        "purpose": "commit before ordinary terminal bookkeeping without a second executor"
+      },
+      {
+        "name": "selected publication reads",
+        "existingOwner": "session CLI",
+        "purpose": "local readback of the selected Run, revision and current delivery slot"
+      }
+    ],
+    "deferredFeatures": [
+      "Worker",
+      "queue",
+      "Web Chat",
+      "HTTP/SSE delivery product",
+      "global History",
+      "multi-block publication"
+    ],
+    "acceptanceSurfaces": [
+      "cli",
+      "real_process",
+      "storage",
+      "library"
+    ],
+    "uiStatus": "none",
+    "datedAmendment": {
+      "date": "2026-10-27",
+      "summary": "One original-contract-derived module per version; browser-heavy expanded candidate preserved separately rather than promoted."
+    },
+    "originalSpecPreserved": true,
+    "priorFailuresPreserved": true,
+    "wipDisposition": "preserved_recoverable"
+  },
+  "originReview": {
+    "restrictedLocalReviewRef": "",
+    "publicSummary": "docs/evolution/v08-publication-lineage.md",
+    "articleMappingSummary": "Existing Chinese article 019 updated and public_verified individually; no whole-site or full original-module equivalence claim.",
+    "retainedContracts": [
+      "stable block identity and delivery ordinal",
+      "explicit revision CAS",
+      "exact body plus protected-binding no-op returns original receipt",
+      "independent commit remains readable after Run failure"
+    ],
+    "simplifiedOrReplaced": [
+      "one text-only Host block",
+      "existing public SQLite instead of original deployment backend",
+      "selected-Run local CLI rather than UI or network stream"
+    ],
+    "dependencyDecision": "Zero new packages or download bytes; reuse existing Node SQLite/crypto/filesystem and locked dependencies. No configuration or platform expansion.",
+    "minimalLoop": {
+      "input": "synthetic sealed final text",
+      "processing": "same Runtime invokes Session independent atomic Publication commit",
+      "readback": "selected Run/revision/current event through existing session CLI",
+      "identityFailureRecovery": "original receipt, protected binding, stale/CAS rejection and real killed-process replay"
+    }
+  },
+  "coverageMaintenance": {
+    "actualMachineManifestRef": "docs/verification/article-coverage.json",
+    "actualCheckCommand": "node scripts/check-article-coverage.mjs --check",
+    "checkReceiptRef": "https://github.com/hpoenixf/open-etf-agent/blob/3484c608dc0e7540b145b6484d9601a80f105171/docs/verification/article-coverage-receipts.json",
+    "actualSmokeCommand": "node scripts/check-article-coverage.mjs --smoke",
+    "smokeReceiptRef": "https://github.com/hpoenixf/open-etf-agent/blob/3484c608dc0e7540b145b6484d9601a80f105171/docs/verification/article-coverage-receipts.json",
+    "publicVerificationIndexRef": "docs/verification/README.md",
+    "notes": "Actual fixed-phase rebind verified 14 of 31 targets; the sole existing checker and navigation index were updated on stable main. No parallel manifest or checker."
+  },
+  "localQualification": {
+    "sourceDigest": "caf5be631011562b024d2c4d62f26c4391048625a79ec8dedaea5dfab69a1711",
+    "fullSuiteDigest": "bbef17375feea95e05fa32dd5aa20bc2df102209b9ae048a6aa29f04833c04ee",
+    "observations": "docs/verification/v08-observations.md",
+    "recordedComplete": "openspec/changes/v08-publication-only/completion.json",
+    "formalArchival": false,
+    "formalRelease": false,
+    "providerCalls": 0,
+    "semanticStatus": "unreviewed"
+  },
+  "observedAt": "2026-10-27T06:12:39.208146+00:00",
+  "supersedesHistoricalSnapshot": "docs/verification/v08-maintenance-state.safe.json",
+  "recordScope": "Canonical v0.8 expanded article scope: Chinese019 plus existing starting article ZH/EN. Source complete; current new-domain publication not verified."
+}

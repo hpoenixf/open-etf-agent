@@ -1,0 +1,266 @@
+{
+  "schemaVersion": "result-consumption-publication@1",
+  "observedAt": "2026-10-27T22:26:49.535843+00:00",
+  "scope": "Unnumbered Result/Reference consumption increment; package remains 0.9.0; no v1.0/v1.1, tag, npm publication or formal Release claim",
+  "code": {
+    "status": "complete",
+    "repository": "hpoenixf/open-etf-agent",
+    "commit": "ade806a18e0b89c07b929111ea30afbebad93279",
+    "tree": "1bc326f761f608c1087e5c3262b004329116da34",
+    "readback": "actual changed bytes, Git blobs, ref and tree match reviewed candidates",
+    "sourceCommit": "e442f600891be79625fc78751e2d9f39905920da",
+    "qualificationCommit": "049c42f9d728b89840b10a492ceaa6b6c7655706",
+    "ci": {
+      "runId": 40591190757,
+      "url": "https://github.com/hpoenixf/open-etf-agent/actions/runs/40591190757",
+      "status": "success",
+      "checks": [
+        "locked install",
+        "fixed-source coverage --check, no smoke",
+        "fixed-article backlinks",
+        "complete Runtime suite"
+      ],
+      "numericCiCaseCount": "not inferred from step name"
+    }
+  },
+  "readme": {
+    "status": "complete",
+    "commit": "ade806a18e0b89c07b929111ea30afbebad93279",
+    "scope": "Fixed candidate command/evidence; explicit tool-host@2 upgrade boundary; registered31 vs actual33 catalog disclosure; all historical stages preserved"
+  },
+  "articles": {
+    "status": "complete",
+    "repository": "hpoenixf/eff-agent-article",
+    "commit": "bbbbe900ee5dacbf4dfc4c95529a4f2d1cb23cde",
+    "tree": "dc1e92cb8eb40aa1b31e45664670281fd07cb11b",
+    "actualReadbackLeaves": 34,
+    "changedEditionBodies": 33,
+    "codeClaimCommit": "049c42f9d728b89840b10a492ceaa6b6c7655706",
+    "executionPin": "e442f600891be79625fc78751e2d9f39905920da",
+    "ci": {
+      "runId": 40590712758,
+      "url": "https://github.com/hpoenixf/eff-agent-article/actions/runs/40590712758",
+      "status": "success",
+      "scope": "Current-working-tree backlinks, catalog/bilingual/build checks; legacy deployment is redirects only"
+    }
+  },
+  "publication": {
+    "status": "complete",
+    "repository": "hpoenixf/myblog-v2",
+    "commit": "a86f36d705d93b57617756e2791ab7af7fd72e5f",
+    "tree": "8bedc0642c49f38d2d3f8a4eb162ad7f2dc30fc8",
+    "sourceCommit": "bbbbe900ee5dacbf4dfc4c95529a4f2d1cb23cde",
+    "lock": {
+      "editionPins": 85,
+      "changedEditionPins": 33,
+      "unchangedEditionPins": 52,
+      "newPins": 0
+    },
+    "ci": {
+      "runId": 40591273970,
+      "url": "https://github.com/hpoenixf/myblog-v2/actions/runs/40591273970",
+      "status": "success",
+      "canonicalJobId": 122497061796,
+      "step": "Verify exact article bodies on the canonical domain"
+    },
+    "canonicalEvidence": {
+      "method": "Existing exact-commit CI deploy step and safe public log excerpt; reviewer made no canonical-domain request.",
+      "scriptPath": "scripts/reader-release.mjs",
+      "scriptGitBlob": "b731df42fcca64377ea3b3fae82b037218b173a0",
+      "verifiedEditionBodies": 85,
+      "verifiedHomepages": 2,
+      "contract": "Fetch canonical reader-release.json, assert sourceCommit/blogCommit and 85 source pins; GET actual clean article URLs and two homepage URLs, compare full response-byte SHA256 to stamped values, verify canonical tags; redirects rejected.",
+      "observedAt": "2026-10-27T22:04:16.236Z"
+    },
+    "boundary": "Evidence is the exact-commit existing CI verifier and its inspected safe public output; this maintainer did not retry the previously denied direct domain request."
+  },
+  "runtimeQualification": {
+    "finalLocalSuite": {
+      "passed": 333,
+      "artifact": "docs/verification/result-consumption-observations.safe.json",
+      "executionInputSha256": "4704f6d92356d125c6d8db56d128492efb0364005bb781439f38e1c50ebf046d"
+    },
+    "independentDelivery": "docs/verification/result-consumption-independent.safe.json",
+    "fixedSourceSmoke": {
+      "targets": 15,
+      "executionCommit": "e442f600891be79625fc78751e2d9f39905920da",
+      "executedAt": "2026-10-27T16:04:33.298Z",
+      "inputCount": 125,
+      "artifact": "docs/verification/article-coverage-receipts.json"
+    },
+    "closureRerunsRuntime": false,
+    "newModelCalls": 0
+  },
+  "catalogGap": {
+    "registeredArticles": 31,
+    "actualModuleArticles": 33,
+    "verifiedArticles": 15,
+    "unmapped": [
+      "agent-conversation-history-compaction-source-boundaries",
+      "agent-feedback-facts-not-automatic-learning"
+    ],
+    "scope": "Unmapped articles are not given fabricated cases, since values or verified status; thinking article remains in its original category."
+  },
+  "compatibility": "tool-host@2 refuses v1 execution resumption before claim; finish old active Runs before upgrade. Immutable Result/Artifact/Publication reading remains available. No migration or missing-hash bypass.",
+  "archive": "Manual dated evidence registration in the existing change directory; Kit generates a structural view only, with no automatic archive/spec:close or execution certification.",
+  "kit": {
+    "observedAt": "2026-10-27T22:26:49.535843+00:00",
+    "structuralOnly": true,
+    "testsExecuted": false,
+    "results": [
+      {
+        "name": "plan",
+        "command": [
+          "node",
+          "tooling/openspec-evidence-kit-db6ac2f/bin/spec-evidence.mjs",
+          "lint",
+          "--stage",
+          "plan",
+          "--change",
+          "result-reference-consumption"
+        ],
+        "exitCode": 0,
+        "durationSeconds": 0.04156699497252703,
+        "outputSha256": "f33f71ac62f8dc5c8b39c32d02d54deb0f2c716c0d52ce807bfd0ad3e86b5c4c",
+        "result": {
+          "change": "result-reference-consumption",
+          "stage": "plan",
+          "issues": [],
+          "structuralOnly": true,
+          "semanticQuality": "unverified"
+        }
+      },
+      {
+        "name": "apply",
+        "command": [
+          "node",
+          "tooling/openspec-evidence-kit-db6ac2f/bin/spec-evidence.mjs",
+          "lint",
+          "--stage",
+          "apply",
+          "--change",
+          "result-reference-consumption"
+        ],
+        "exitCode": 0,
+        "durationSeconds": 0.04030023701488972,
+        "outputSha256": "cf2b8cfa10dfb4c3153e79e29c523ba6cffb8c0956bb8b602bdd7be126711f2e",
+        "result": {
+          "change": "result-reference-consumption",
+          "stage": "apply",
+          "issues": [],
+          "structuralOnly": true,
+          "semanticQuality": "unverified"
+        }
+      },
+      {
+        "name": "verify",
+        "command": [
+          "node",
+          "tooling/openspec-evidence-kit-db6ac2f/bin/spec-evidence.mjs",
+          "verify",
+          "--change",
+          "result-reference-consumption"
+        ],
+        "exitCode": 0,
+        "durationSeconds": 0.04486927902325988,
+        "outputSha256": "c92d1da0fd4a95ec23628000b15875ca13e7d323a47f2e168212f5e95841d0d1",
+        "result": {
+          "status": "written",
+          "rerun": false
+        }
+      },
+      {
+        "name": "verify-check",
+        "command": [
+          "node",
+          "tooling/openspec-evidence-kit-db6ac2f/bin/spec-evidence.mjs",
+          "verify",
+          "--check",
+          "--change",
+          "result-reference-consumption"
+        ],
+        "exitCode": 0,
+        "durationSeconds": 0.03975805395748466,
+        "outputSha256": "ed3c44cde7364d748d85106e381b55d502c75cba52321f2e35261bfeb90a987e",
+        "result": {
+          "status": "current",
+          "generated": true,
+          "rerun": false
+        }
+      },
+      {
+        "name": "lint-verify",
+        "command": [
+          "node",
+          "tooling/openspec-evidence-kit-db6ac2f/bin/spec-evidence.mjs",
+          "lint",
+          "--stage",
+          "verify",
+          "--change",
+          "result-reference-consumption"
+        ],
+        "exitCode": 0,
+        "durationSeconds": 0.04014264000579715,
+        "outputSha256": "caa1d42d31bc8da42b69f87cab5d8090577a7408059ebe494dc8f9328ea19bb2",
+        "result": {
+          "change": "result-reference-consumption",
+          "stage": "verify",
+          "issues": [],
+          "structuralOnly": true,
+          "semanticQuality": "unverified"
+        }
+      },
+      {
+        "name": "status",
+        "command": [
+          "node",
+          "tooling/openspec-evidence-kit-db6ac2f/bin/spec-evidence.mjs",
+          "status",
+          "--change",
+          "result-reference-consumption"
+        ],
+        "exitCode": 0,
+        "durationSeconds": 0.04711172205861658,
+        "outputSha256": "ff1e479ae45994e5c85f2cc73986c76d31a2b9a969a3c1284007f459238d4fd1",
+        "result": {
+          "change": "result-reference-consumption",
+          "tasks": {
+            "total": 4,
+            "completed": 4
+          },
+          "completion": "recorded-complete",
+          "issues": [],
+          "rerun": false,
+          "semanticQuality": "unverified",
+          "release": "not-claimed",
+          "record": {
+            "schemaVersion": "spec-evidence-completion@1",
+            "changeName": "result-reference-consumption",
+            "outcome": "passed",
+            "lane": "provider-free",
+            "revision": "ade806a18e0b89c07b929111ea30afbebad93279",
+            "observedAt": "2026-10-27T22:26:49.535843+00:00",
+            "checks": [
+              {
+                "name": "Original final local 333-case suite on frozen Result/Reference inputs",
+                "status": "passed",
+                "artifact": "docs/verification/result-consumption-observations.safe.json"
+              },
+              {
+                "name": "Original independent locked install/build and separate CLI byte readback",
+                "status": "passed",
+                "artifact": "docs/verification/result-consumption-independent.safe.json"
+              },
+              {
+                "name": "Fixed source qualification and actual code/README/article/canonical delivery",
+                "status": "passed",
+                "artifact": "docs/verification/result-consumption-publication.safe.json"
+              }
+            ],
+            "scope": "Single unnumbered Result/Reference increment; explicit tool-host@2 upgrade boundary. Actual synthetic Runtime/SQLite/process/encoding tests, no new live provider or semantic qualification. Package0.9.0 and historical phases retained. Manual evidence registration, not formal Release or automatic archival."
+          }
+        }
+      }
+    ]
+  }
+}

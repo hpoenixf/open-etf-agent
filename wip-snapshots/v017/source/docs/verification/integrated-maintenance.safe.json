@@ -1,0 +1,58 @@
+{
+  "schemaVersion": 1,
+  "kind": "bounded-integrated-WIP-maintenance-qualification",
+  "sourceCommit": "5f42c33892d57ed05e8cd09cad48573e6901995b",
+  "sourceTree": "35d3ecef7d66527cad422a25da35766fd73d4463",
+  "observedAt": "2026-10-28T07:28:41.753044+00:00",
+  "smoke": {
+    "exitCode": 0,
+    "startedAt": "2026-10-28T07:27:40.912156+00:00",
+    "finishedAt": "2026-10-28T07:27:44.553727+00:00",
+    "receipt": "article-coverage-receipts.json",
+    "originalTargetsExecutedOnce": 15,
+    "targetDefinitionsUnchanged": true,
+    "modelCalls": 0
+  },
+  "consumerTests": {
+    "startedAt": "2026-10-28T07:28:04.297513+00:00",
+    "finishedAt": "2026-10-28T07:28:04.704144+00:00",
+    "exitCode": 0,
+    "files": [
+      "scripts/article-localization.test.mjs",
+      "scripts/check-article-backlinks.test.mjs",
+      "scripts/article-receipt-binding.test.mjs",
+      "test/article-coverage.test.mjs"
+    ],
+    "stdoutSha256": "c61e2fddebf07c93497ff9c5738ab9a7846cf56c4b1bdd38b428655347aec05a",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "summary": [
+      "# tests 55",
+      "# pass 55",
+      "# fail 0",
+      "# cancelled 0",
+      "# skipped 0",
+      "# duration_ms 368.482842"
+    ],
+    "failures": []
+  },
+  "metadata": {
+    "exactRemoteCommit": "5f42c33892d57ed05e8cd09cad48573e6901995b",
+    "exactRemoteTree": "35d3ecef7d66527cad422a25da35766fd73d4463",
+    "newCommitObjectSha1Verified": true,
+    "newTreesSha1Verified": 52,
+    "historicalCommitTreeObjectsVerified": 146,
+    "method": "Exact content-addressed Git object reconstruction from connected remote metadata, accepted only exact matching remote Git SHA; every stored object hash verified;10 public historical pins checked against remote API; no private ancestor/blob/credential copied"
+  },
+  "priorAttempt": {
+    "targetsExecuted": 0,
+    "reason": "ordinary DNS EAI_AGAIN blocked direct public metadata; checker correctly refused incomplete verification",
+    "resolution": "exact content-addressed public commit/tree metadata store verified through connected GitHub; unmodified checker consumed actual Git objects"
+  },
+  "boundaries": [
+    "No 373-test full suite rerun: runtime inputs unchanged from final recorded 373 pass; changed maintenance consumers separately tested55/55.",
+    "Existing locked dependency versions/integrities reused; not an independent install/build qualification.",
+    "No article target/status expansion and no new PDF article mapping claimed.",
+    "No live model, deployment, old Host migration, or stable release claim.",
+    "Original d943 coverage source/manifest/receipt preserved byte-for-byte in history."
+  ]
+}

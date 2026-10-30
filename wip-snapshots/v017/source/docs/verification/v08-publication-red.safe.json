@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "scope": "v08 Publication-only original-contract adaptation",
+  "status": "observed-red",
+  "observedAt": "2026-10-27T04:32:18Z",
+  "runtime": "Node v26.11.1",
+  "heapMiB": 512,
+  "testConcurrency": 1,
+  "command": "node --test --test-concurrency=1 test/publication.test.mjs test/publication-runtime.test.mjs",
+  "exitCode": 1,
+  "tests": 19,
+  "pass": 0,
+  "fail": 19,
+  "cancelled": 0,
+  "skipped": 0,
+  "durationMs": 497.429806,
+  "basis": "Loadable original-contract regression: old candidate lacked stable body/receipt/store and same-Runtime publication seams. Not an environment or syntax failure.",
+  "preImplementationSource": {
+    "src/publication.mjs": "18438b4b28a979be1463ef9b3bd573fdf73863750b1859fa93a382b7fc1b1674",
+    "src/session.mjs": "5979efebc2430878262a9d1b31713e348020d85ad3627db70c5f3946da2daddf",
+    "src/runtime.mjs": "65680576f5f9ccdc44f39f60ef732f9687e87da8a4ea78ec5243d2527b655ef5"
+  },
+  "testInputs": {
+    "test/publication.test.mjs": "0d1f445e9aec7be6bba5962a5d7879fd18d1f2d988bc1dfc2a1d26d62fd74c65",
+    "test/publication-runtime.test.mjs": "780a0b21ac5ba38cd95d40463a76052ce7a8e216268101ab4f653f8c99c81aee",
+    "test/fixtures/publication-process.mjs": "1c3003838558e00f26b834cb74af9d28c8c036ce86cb64c88727bf10725f82f8"
+  },
+  "modelCalls": 0,
+  "semanticStatus": "unreviewed",
+  "browser": "not in this amended scope; historical expanded candidate remains blocked"
+}

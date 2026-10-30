@@ -1,0 +1,407 @@
+{
+  "schemaVersion": "local-pdf-observations@1",
+  "scope": "WIP local text-layer PDF candidate; final Runtime regression NOT passed",
+  "derivedFrom": "machine-captured original local executions; first three counts parsed from original output with matching recorded SHA, not reconstructed from prose",
+  "baseline": "1931d45ddf2c66dc6d015b775e1d21d234345522",
+  "candidateVersion": "0.11.0",
+  "focusedExecutions": [
+    {
+      "stage": "RED before PDF implementation",
+      "startedAt": "2026-10-28T00:22:10.061437+00:00",
+      "command": [
+        "node",
+        "--test",
+        "--test-concurrency=1",
+        "test/pdf-input.test.mjs"
+      ],
+      "exitCode": 1,
+      "durationSeconds": 0.11574287002440542,
+      "outputSha256": "6a7bbfb0106104df5029ed7c103cb298484a9d340cc8677df44972bbd8ff9c4b",
+      "modelCalls": 0,
+      "counts": {
+        "tests": 13,
+        "pass": 0,
+        "fail": 13,
+        "cancelled": 0,
+        "skipped": 0,
+        "todo": 0
+      },
+      "inputSha256": "4099f5dffb18abbbaf6e3988aacf5335d1a15adde298013ddba2174daef6dfb1",
+      "inputCount": 6,
+      "originalMachineReceiptSha256": "265581cc67e94e0788875a937dc62d8ac9f5c4d6c853c1cdd5e6702482d53552"
+    },
+    {
+      "stage": "first PDF parser wholefile GREEN/diagnosis",
+      "startedAt": "2026-10-28T00:25:17.527479+00:00",
+      "command": [
+        "node",
+        "--test",
+        "--test-concurrency=1",
+        "test/pdf-input.test.mjs"
+      ],
+      "exitCode": 1,
+      "durationSeconds": 0.8453270819736645,
+      "outputSha256": "2d24a13440351fcec864c5cc7851cf4bfff6c4dbeaad78d8fd363d391db4a17e",
+      "modelCalls": 0,
+      "counts": {
+        "tests": 13,
+        "pass": 8,
+        "fail": 5,
+        "cancelled": 0,
+        "skipped": 0,
+        "todo": 0
+      },
+      "inputSha256": "2a276171ffbe8426734ba2bbfb7ebfe782662e100cc8db049245f037bedd6fd7",
+      "inputCount": 9,
+      "originalMachineReceiptSha256": "513de6b27bfb27c6f96759a221ecda0c0a5ce00f7c3711fb6be4ed353b5ea52c"
+    },
+    {
+      "stage": "14 parser regressions after exact-backing-buffer fix",
+      "startedAt": "2026-10-28T00:27:12.121301+00:00",
+      "command": [
+        "node",
+        "--test",
+        "--test-concurrency=1",
+        "test/pdf-input.test.mjs"
+      ],
+      "exitCode": 0,
+      "durationSeconds": 1.2169837380060926,
+      "outputSha256": "2dd4932e7dc05c12284322e9cc32677545fa0212ab757e30acacfe36fe0830f5",
+      "modelCalls": 0,
+      "counts": {
+        "tests": 14,
+        "pass": 14,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0,
+        "todo": 0
+      },
+      "inputSha256": "049f9699c4b842260701c174fd0762f84d18b78d9e42db57a676a6205b3a5505",
+      "inputCount": 9,
+      "originalMachineReceiptSha256": "a6007241e94f8fdce62280685489af6664967acbb0a5ca6ada993bdae3597921"
+    },
+    {
+      "stage": "delivery-red",
+      "startedAt": "2026-10-28T00:30:35.971736+00:00",
+      "command": [
+        "node",
+        "--test",
+        "--test-concurrency=1",
+        "test/pdf-delivery.test.mjs",
+        "test/pdf-cli.test.mjs"
+      ],
+      "exitCode": 1,
+      "durationSeconds": 1.0747796470532194,
+      "counts": {
+        "tests": 9,
+        "pass": 5,
+        "fail": 4,
+        "cancelled": 0,
+        "skipped": 0,
+        "todo": 0
+      },
+      "outputSha256": "1fd32a9ddb2b0ad1bd8c0c2638dbba038d96f5b8973debe26ed1f0ca51b3fcfd",
+      "modelCalls": 0,
+      "inputSha256": "509ac1507f680ed3dd0ac80c271d14d2cd9b8a5009397339bf42912967d1847c",
+      "inputCount": 133,
+      "originalMachineReceiptSha256": "edc65aa81a6f4aa8930a15766ce6a97107917729435a958a436d189b31c0801d"
+    },
+    {
+      "stage": "delivery-green",
+      "startedAt": "2026-10-28T00:31:04.932976+00:00",
+      "command": [
+        "node",
+        "--test",
+        "--test-concurrency=1",
+        "test/pdf-input.test.mjs",
+        "test/pdf-delivery.test.mjs",
+        "test/pdf-cli.test.mjs"
+      ],
+      "exitCode": 0,
+      "durationSeconds": 2.7786097589414567,
+      "counts": {
+        "tests": 23,
+        "pass": 23,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0,
+        "todo": 0
+      },
+      "outputSha256": "1ca07d3914d10bc41af13ccd7ff6f13bd5090d0a1869e5ec8c29acef1a8746e0",
+      "modelCalls": 0,
+      "inputSha256": "fcf19266a1e5debdbb32da8ba6fda9e78d036aa2580649748b4fe2b703002431",
+      "inputCount": 134,
+      "originalMachineReceiptSha256": "9fd6ec82eec2ed19fdafad5aae455ba5d6de49ff64f657675b53d4429e7a6745"
+    },
+    {
+      "stage": "postcommit-cancel-red",
+      "startedAt": "2026-10-28T00:36:13.401299+00:00",
+      "command": [
+        "node",
+        "--test",
+        "--test-concurrency=1",
+        "test/pdf-delivery.test.mjs"
+      ],
+      "exitCode": 1,
+      "durationSeconds": 0.9034508920740336,
+      "counts": {
+        "tests": 8,
+        "pass": 7,
+        "fail": 1,
+        "cancelled": 0,
+        "skipped": 0,
+        "todo": 0
+      },
+      "outputSha256": "31084417cc26017cc854f244251cee279a2a50636ef3953d594ad3b659139fc5",
+      "modelCalls": 0,
+      "inputSha256": "1b06ff499075790a2e29e394492909339cec9b71202d1788e3be73f5884604e7",
+      "inputCount": 134,
+      "originalMachineReceiptSha256": "f4a77d0ecf0b76e5de7df454a873b1f5866dab746b06e12cf55edfa3984422fd"
+    },
+    {
+      "stage": "postcommit-cancel-green",
+      "startedAt": "2026-10-28T00:36:27.913947+00:00",
+      "command": [
+        "node",
+        "--test",
+        "--test-concurrency=1",
+        "test/pdf-input.test.mjs",
+        "test/pdf-delivery.test.mjs",
+        "test/pdf-cli.test.mjs"
+      ],
+      "exitCode": 0,
+      "durationSeconds": 2.5532369429711252,
+      "counts": {
+        "tests": 24,
+        "pass": 24,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0,
+        "todo": 0
+      },
+      "outputSha256": "ef2f4341852b12e5574d48bce3e68691f2710fd439fe5050c9e72706f53c5d37",
+      "modelCalls": 0,
+      "inputSha256": "b8786852ab726a58e77a2dade7e156dc0ded0004d14e2b8905a5b728c8dcf95b",
+      "inputCount": 134,
+      "originalMachineReceiptSha256": "b294bb447d22324b6293ce01cae0d762c2188ca57338a7990f9a853f2e005016"
+    },
+    {
+      "stage": "fifo-green",
+      "startedAt": "2026-10-28T00:37:57.991484+00:00",
+      "command": [
+        "node",
+        "--test",
+        "--test-concurrency=1",
+        "test/pdf-input.test.mjs",
+        "test/pdf-delivery.test.mjs",
+        "test/pdf-cli.test.mjs"
+      ],
+      "exitCode": 0,
+      "durationSeconds": 2.539192870957777,
+      "counts": {
+        "tests": 25,
+        "pass": 25,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0,
+        "todo": 0
+      },
+      "outputSha256": "fc6631c6ead8dcb2677e4d8df2bfdf2551627b79acf1ec4d7138aba17d999163",
+      "modelCalls": 0,
+      "inputSha256": "21fc0112822210dee463b4050b5473421d26e6fd67a36d1b910a5bc626c2605f",
+      "inputCount": 134,
+      "originalMachineReceiptSha256": "88175e77f64259392d31d40cdecae5d794ce0931998d32576296f4060b265b11"
+    },
+    {
+      "stage": "citation-demo-red",
+      "startedAt": "2026-10-28T00:38:53.030369+00:00",
+      "command": [
+        "node",
+        "--test",
+        "--test-concurrency=1",
+        "test/pdf-cli.test.mjs"
+      ],
+      "exitCode": 1,
+      "durationSeconds": 0.7486332240514457,
+      "counts": {
+        "tests": 3,
+        "pass": 2,
+        "fail": 1,
+        "cancelled": 0,
+        "skipped": 0,
+        "todo": 0
+      },
+      "outputSha256": "a1439201c3eeb0e26d4d345f70d27b581fdb7d331d7fd0c8f33fa25479780380",
+      "modelCalls": 0,
+      "inputSha256": "5ea89cbce123dd7506a9eb4104cf6f89789b2de3c894f21b7479ef0dd221f4d8",
+      "inputCount": 134,
+      "originalMachineReceiptSha256": "375defc5b588b8ea991300b35cc7e869955970076a9d03591110fb8c5d965946"
+    },
+    {
+      "stage": "citation-demo-green",
+      "startedAt": "2026-10-28T00:39:09.814112+00:00",
+      "command": [
+        "node",
+        "--test",
+        "--test-concurrency=1",
+        "test/pdf-input.test.mjs",
+        "test/pdf-delivery.test.mjs",
+        "test/pdf-cli.test.mjs"
+      ],
+      "exitCode": 0,
+      "durationSeconds": 2.7861161599867046,
+      "counts": {
+        "tests": 26,
+        "pass": 26,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0,
+        "todo": 0
+      },
+      "outputSha256": "aaa7a453b6f9bdf9b589bd0f153e3a3f6949ccdf19a92166974f624b83223468",
+      "modelCalls": 0,
+      "inputSha256": "591942965fa44b97f446395708f856966ad146714f77e885a55eaf802a681f96",
+      "inputCount": 134,
+      "originalMachineReceiptSha256": "8b3e9d9287ce9bc5b7d17a4272da03873811963f099ed8912a50581eaaafbaac"
+    }
+  ],
+  "fullSuite": {
+    "schemaVersion": "pdf-full-suite@1",
+    "startedAt": "2026-10-28T00:43:12.281204+00:00",
+    "completedAt": "2026-10-28T00:43:46.477860+00:00",
+    "command": [
+      "node",
+      "--test",
+      "--test-concurrency=1",
+      "--test-reporter=tap",
+      "test/article-coverage.test.mjs",
+      "test/artifact-integration.test.mjs",
+      "test/artifacts.test.mjs",
+      "test/cli.test.mjs",
+      "test/compaction-bounds.test.mjs",
+      "test/compaction.test.mjs",
+      "test/context.test.mjs",
+      "test/cooperation-integration.test.mjs",
+      "test/cooperation.test.mjs",
+      "test/durable-memory.test.mjs",
+      "test/durable-review.test.mjs",
+      "test/durable-runtime.test.mjs",
+      "test/evaluate.test.mjs",
+      "test/extensions.test.mjs",
+      "test/gateway.test.mjs",
+      "test/hooks.test.mjs",
+      "test/live-config.test.mjs",
+      "test/live-options.test.mjs",
+      "test/live-trace.test.mjs",
+      "test/live-transport.test.mjs",
+      "test/live-validation.test.mjs",
+      "test/mcp.test.mjs",
+      "test/memory-bounds.test.mjs",
+      "test/memory-effects.test.mjs",
+      "test/memory-projection.test.mjs",
+      "test/memory.test.mjs",
+      "test/pdf-cli.test.mjs",
+      "test/pdf-delivery.test.mjs",
+      "test/pdf-input.test.mjs",
+      "test/plugins.test.mjs",
+      "test/publication-cli.test.mjs",
+      "test/publication-runtime.test.mjs",
+      "test/publication.test.mjs",
+      "test/reader.test.mjs",
+      "test/research-integration.test.mjs",
+      "test/result-consumption-cli.test.mjs",
+      "test/result-consumption-delivery.test.mjs",
+      "test/result-consumption.test.mjs",
+      "test/results.test.mjs",
+      "test/retrieval.test.mjs",
+      "test/review.test.mjs",
+      "test/runtime.test.mjs",
+      "test/session-cli.test.mjs",
+      "test/session.test.mjs",
+      "test/skills.test.mjs",
+      "test/storage-files-errors.test.mjs",
+      "test/stream-gateway.test.mjs",
+      "test/stream.test.mjs",
+      "test/tools.test.mjs",
+      "test/v02-cli.test.mjs",
+      "test/v03-cli.test.mjs",
+      "test/v04-cli.test.mjs",
+      "test/v05-cli.test.mjs",
+      "test/v06-cli.test.mjs",
+      "test/worker-cli.test.mjs",
+      "test/worker-process.test.mjs",
+      "test/worker.test.mjs",
+      "test/working-input-integration.test.mjs"
+    ],
+    "runtime": "v26.11.1",
+    "heapMiB": 512,
+    "concurrency": 1,
+    "timeoutSeconds": 120,
+    "durationSeconds": 34.195533909020014,
+    "exitCode": 1,
+    "timedOut": false,
+    "counts": {
+      "tests": 359,
+      "pass": 358,
+      "fail": 1,
+      "cancelled": 0,
+      "skipped": 0,
+      "todo": 0
+    },
+    "inputSha256": "a55f5fc9c675101778ae23b99223e6049f8df9f338a024976d607a8c9b6fbddf",
+    "inputManifestSha256": "3a8c7cb903a99478ca519a4a2050fb842a925450acb1f77853a963faaaf5be6c",
+    "inputDrift": [],
+    "outputSha256": "d94746957eef1cd93306c2358aee0c74bbda05dc440ab69e36c5ee2bed0a4d77",
+    "providerCalls": 0,
+    "qualificationScope": "provider-free Runtime full suite; not live model quality or browser acceptance"
+  },
+  "existingSessionDiagnosis": {
+    "observedAt": "2026-10-28T00:46:33.556057+00:00",
+    "command": [
+      "node",
+      "diagnose-hot-journal.mjs"
+    ],
+    "exitCode": 0,
+    "durationSeconds": 0.056863394915126264,
+    "outputSha256": "2bffbc5126f730e04225d505d431929cb835d7874de9be3350046b0b10e610c7",
+    "facts": {
+      "scope": "only two copies of this run synthetic failed database and its journal",
+      "originalHashes": {
+        "session.sqlite": "39c52cc6977c95432e0c165762dd8d443084a6b8bc55892834941259d7673829",
+        "session.sqlite-journal": "3ddaf4b4662d0aaf601b33697f40622894f18a9bf0a0aa82b82ac3e2ab28f985"
+      },
+      "originalUnchanged": true,
+      "readonlyFailure": {
+        "code": "ERR_SQLITE_ERROR",
+        "errcode": 776,
+        "errstr": "attempt to write a readonly database"
+      },
+      "readonlyCopyUnchanged": true,
+      "nativeRecovery": {
+        "schemaVersion": 2,
+        "applicationId": 1329943622,
+        "runs": [
+          {
+            "status": "active",
+            "phase": "result-committed",
+            "callId": "save-one",
+            "hasArtifactReceipt": true
+          }
+        ]
+      },
+      "copyReopensThroughOriginalSession": true,
+      "journalAfterNativeRecovery": {
+        "exists": false
+      },
+      "manualJournalDeletion": false,
+      "productionChanges": false
+    }
+  },
+  "independentInstallBuild": "not-run-pending-source-stability",
+  "modelCalls": 0,
+  "semanticQuality": "unreviewed",
+  "visualInspection": "not-qualified",
+  "publication": "not-started",
+  "importantBoundary": "26 focused PDF cases passed; whole Runtime suite was 358/359. SQLite error776 is a real existing hot-journal admission failure, not reclassified as a pass or a mere environment issue.",
+  "focusedInputDigestEncoding": "SHA-256 of compact sorted originally captured input-hash map. Some early focused records captured only the affected subset; fullSuite uses its complete frozen input manifest."
+}

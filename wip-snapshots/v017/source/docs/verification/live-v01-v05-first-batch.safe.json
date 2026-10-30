@@ -1,0 +1,549 @@
+{
+  "scope": "One original synthetic T1 per frozen version; manual narrow review is separate from execution and file receipts. No retries. Not all phase mechanisms tested.",
+  "endpoint": "https://opencode.ai/zen/go/v1/chat/completions",
+  "model": "deepseek-v4.1-flash",
+  "requestCount": 16,
+  "retainedConservativeReserveCny": 1600,
+  "observedExtraCashCostUsd": 0,
+  "cashMeaning": "billing_source=go, usage.cost=0: subscription usage, not positive cash debits; list_cost and allowance are separate observations. Reserve is not spending.",
+  "versions": [
+    {
+      "version": "v01",
+      "baselineCommit": "1a787437c2a900c8a9fe27048e81aa86b703305b",
+      "baselineFilesVerified": 7,
+      "runtimeBlob": "a8bdd32ce57c618f9019b08814c237b25e04facc",
+      "gatewayBlob": "d6bf7beab27f309730141a87c258a94c1dca92b4",
+      "caseId": "T1",
+      "status": "failed",
+      "code": "TOOL_REJECTED",
+      "calls": 2,
+      "reservedCny": 200,
+      "receipt": null,
+      "receiptSourceSha256": "eac9bceb850401a28e2a5d7853482191b372dfb9660a71e3b4447afc9ada0bf8",
+      "costObservations": [
+        {
+          "status": "completed",
+          "httpStatus": 200,
+          "costUsd": 0,
+          "listCostUsd": 0.0001701,
+          "allowanceUsd": 0.00012758,
+          "billingSource": "go",
+          "costAnomaly": false,
+          "estimated": false,
+          "tokens": {
+            "prompt_tokens": 682,
+            "completion_tokens": 113,
+            "total_tokens": 795
+          }
+        },
+        {
+          "status": "completed",
+          "httpStatus": 200,
+          "costUsd": 0,
+          "listCostUsd": 0.00030102,
+          "allowanceUsd": 0.00022577,
+          "billingSource": "go",
+          "costAnomaly": false,
+          "estimated": false,
+          "tokens": {
+            "prompt_tokens": 1178,
+            "completion_tokens": 364,
+            "total_tokens": 1542
+          }
+        }
+      ],
+      "observedTools": [
+        {
+          "name": "read_page",
+          "status": "succeeded",
+          "count": 2
+        },
+        {
+          "name": "calculate_change",
+          "status": "rejected",
+          "count": 1
+        }
+      ],
+      "semanticStatus": "unreviewed",
+      "manualT1Review": {
+        "result": "not-assessable",
+        "reason": "No report: calculate_change rejected; exact arguments/reason were not retained."
+      },
+      "adapterInputs": null,
+      "notExercised": [
+        "Skill",
+        "MCP",
+        "SSE",
+        "Child",
+        "retrieval",
+        "read_result",
+        "Memory",
+        "compaction"
+      ]
+    },
+    {
+      "version": "v02",
+      "baselineCommit": "2e5c21166f61f772e9738bc52782d10fbadfb662",
+      "baselineFilesVerified": 14,
+      "runtimeBlob": "709d8c83aee3c0c09bafbc14e9177c73197ee06d",
+      "gatewayBlob": "9522cddad8ba7ec66d41e11f9b086528093e64de",
+      "caseId": "T1",
+      "status": "completed",
+      "code": null,
+      "calls": 3,
+      "reservedCny": 300,
+      "receipt": {
+        "operationId": "chatcmpl-tool-873179cf438cd9ac",
+        "fileId": "sha256:b7cca23705bc8216d17ca4a0de3bb7e8c3788577f1d6f8bcdde9e5d567d03eac",
+        "path": "report.md",
+        "sha256": "b7cca23705bc8216d17ca4a0de3bb7e8c3788577f1d6f8bcdde9e5d567d03eac",
+        "bytes": 2278,
+        "mediaType": "text/markdown; charset=utf-8"
+      },
+      "receiptSourceSha256": "8d774617ca1202382d76a0a3e7f021a993fd1d6ee67711e1d469a84b9691c249",
+      "costObservations": [
+        {
+          "status": "completed",
+          "httpStatus": 200,
+          "costUsd": 0,
+          "listCostUsd": 0.0001719,
+          "allowanceUsd": 0.00012892,
+          "billingSource": "go",
+          "costAnomaly": false,
+          "estimated": false,
+          "tokens": {
+            "prompt_tokens": 682,
+            "completion_tokens": 116,
+            "total_tokens": 798
+          }
+        },
+        {
+          "status": "completed",
+          "httpStatus": 200,
+          "costUsd": 0,
+          "listCostUsd": 0.0006093,
+          "allowanceUsd": 0.00045698,
+          "billingSource": "go",
+          "costAnomaly": false,
+          "estimated": false,
+          "tokens": {
+            "prompt_tokens": 1186,
+            "completion_tokens": 719,
+            "total_tokens": 1905
+          }
+        },
+        {
+          "status": "completed",
+          "httpStatus": 200,
+          "costUsd": 0,
+          "listCostUsd": 0.00047202,
+          "allowanceUsd": 0.00035401,
+          "billingSource": "go",
+          "costAnomaly": false,
+          "estimated": false,
+          "tokens": {
+            "prompt_tokens": 1894,
+            "completion_tokens": 470,
+            "total_tokens": 2364
+          }
+        }
+      ],
+      "observedTools": [
+        {
+          "name": "read_page",
+          "status": "succeeded",
+          "count": 2
+        },
+        {
+          "name": "save_report",
+          "status": "succeeded",
+          "count": 1
+        }
+      ],
+      "semanticStatus": "unreviewed",
+      "manualT1Review": {
+        "result": "narrow-T1-consistent",
+        "reason": "Formats, distinct numeric caps and shared online requirement are supported."
+      },
+      "adapterInputs": {
+        "src/live-config.mjs": "5be48937a4953425b63827b7140b814db1300c4023fa594715cc49d163e8ffd9",
+        "src/live-transport.mjs": "a8912b1157418136e111e2184afe96711443e0e010bdf4e4f4e069524a9fcbc3",
+        "src/live-validation.mjs": "c87ad1fedee9f41952b06ee7f7410621698dac4a8c2aed48e1199ca06bfca4e5",
+        "src/live-trace.mjs": "9f45500caeb8a51c335fc01bc1b2eb05e24c97ecfe9a1d583581a77763e3374f",
+        "scripts/live-validate.mjs": "a83539abfd34d0fa0b0c7cb1adfdc99c536cd7b2d41b0a639910861931f8a2b7",
+        "scripts/live-version-pins.json": "0deb7f5ecb6bf7485f250583161a2b5b61c0870f027b7749375559d95eb495b5"
+      },
+      "notExercised": [
+        "Skill",
+        "MCP",
+        "SSE",
+        "Child",
+        "retrieval",
+        "read_result",
+        "Memory",
+        "compaction"
+      ],
+      "independentReadbackHashMatched": true
+    },
+    {
+      "version": "v03",
+      "baselineCommit": "26731bdd68d3420f80f68ecd848d0f37eb1885ca",
+      "baselineFilesVerified": 19,
+      "runtimeBlob": "0ad0bfcd4c45d35566458c0d147b10f9c292f12c",
+      "gatewayBlob": "9522cddad8ba7ec66d41e11f9b086528093e64de",
+      "caseId": "T1",
+      "status": "completed",
+      "code": null,
+      "calls": 4,
+      "reservedCny": 400,
+      "receipt": {
+        "operationId": "call_3833a739c8f84020ac071c55",
+        "fileId": "sha256:99ab3a206f2f17b8f9b64a175b01f924790366064286a7b53fef051aa5a9f345",
+        "path": "report.md",
+        "sha256": "99ab3a206f2f17b8f9b64a175b01f924790366064286a7b53fef051aa5a9f345",
+        "bytes": 2098,
+        "mediaType": "text/markdown; charset=utf-8"
+      },
+      "receiptSourceSha256": "825826a8944cb33023ba0a782bfd3b2f29dba2b9b2ca48d732e564ba2b6dc05b",
+      "costObservations": [
+        {
+          "status": "completed",
+          "httpStatus": 200,
+          "costUsd": 0,
+          "listCostUsd": 0.0001863,
+          "allowanceUsd": 0.00013973,
+          "billingSource": "go",
+          "costAnomaly": false,
+          "estimated": false,
+          "tokens": {
+            "prompt_tokens": 682,
+            "completion_tokens": 140,
+            "total_tokens": 822
+          }
+        },
+        {
+          "status": "completed",
+          "httpStatus": 200,
+          "costUsd": 0,
+          "listCostUsd": 0.00025992,
+          "allowanceUsd": 0.00019494,
+          "billingSource": "go",
+          "costAnomaly": false,
+          "estimated": false,
+          "tokens": {
+            "prompt_tokens": 1200,
+            "completion_tokens": 290,
+            "total_tokens": 1490
+          }
+        },
+        {
+          "status": "completed",
+          "httpStatus": 200,
+          "costUsd": 0,
+          "listCostUsd": 0.00038101,
+          "allowanceUsd": 0.00028575,
+          "billingSource": "go",
+          "costAnomaly": false,
+          "estimated": false,
+          "tokens": {
+            "prompt_tokens": 1421,
+            "completion_tokens": 562,
+            "total_tokens": 1983
+          }
+        },
+        {
+          "status": "completed",
+          "httpStatus": 200,
+          "costUsd": 0,
+          "listCostUsd": 0.00029372,
+          "allowanceUsd": 0.00022029,
+          "billingSource": "go",
+          "costAnomaly": false,
+          "estimated": false,
+          "tokens": {
+            "prompt_tokens": 2106,
+            "completion_tokens": 308,
+            "total_tokens": 2414
+          }
+        }
+      ],
+      "observedTools": [
+        {
+          "name": "read_page",
+          "status": "succeeded",
+          "count": 2
+        },
+        {
+          "name": "calculate_change",
+          "status": "succeeded",
+          "count": 1
+        },
+        {
+          "name": "save_report",
+          "status": "succeeded",
+          "count": 1
+        }
+      ],
+      "semanticStatus": "unreviewed",
+      "manualT1Review": {
+        "result": "failed",
+        "reason": "Incorrectly says both versions cap exports at 120 rows despite A=120 and B=300. Execution success is not semantic success."
+      },
+      "adapterInputs": {
+        "src/live-config.mjs": "5be48937a4953425b63827b7140b814db1300c4023fa594715cc49d163e8ffd9",
+        "src/live-transport.mjs": "a8912b1157418136e111e2184afe96711443e0e010bdf4e4f4e069524a9fcbc3",
+        "src/live-validation.mjs": "c87ad1fedee9f41952b06ee7f7410621698dac4a8c2aed48e1199ca06bfca4e5",
+        "src/live-trace.mjs": "9f45500caeb8a51c335fc01bc1b2eb05e24c97ecfe9a1d583581a77763e3374f",
+        "scripts/live-validate.mjs": "a83539abfd34d0fa0b0c7cb1adfdc99c536cd7b2d41b0a639910861931f8a2b7",
+        "scripts/live-version-pins.json": "0deb7f5ecb6bf7485f250583161a2b5b61c0870f027b7749375559d95eb495b5"
+      },
+      "notExercised": [
+        "Skill",
+        "MCP",
+        "SSE",
+        "Child",
+        "retrieval",
+        "read_result",
+        "Memory",
+        "compaction"
+      ],
+      "independentReadbackHashMatched": true
+    },
+    {
+      "version": "v04",
+      "baselineCommit": "6e95fb0f6f75d41a695f2fc1e25491c104a8a1db",
+      "baselineFilesVerified": 27,
+      "runtimeBlob": "2018119159adf04987e4a1979536db74711439db",
+      "gatewayBlob": "3a68af8a79383210c78cf07d02687c5caa96bf80",
+      "caseId": "T1",
+      "status": "completed",
+      "code": null,
+      "calls": 3,
+      "reservedCny": 300,
+      "receipt": {
+        "operationId": "call_87de88fa2c0b4a61b3741834",
+        "fileId": "sha256:ef4b52bc536ed108897e8b873a7dca87f27ebb6a51abb52a15576f564f48fc00",
+        "path": "report.md",
+        "sha256": "ef4b52bc536ed108897e8b873a7dca87f27ebb6a51abb52a15576f564f48fc00",
+        "bytes": 1903,
+        "mediaType": "text/markdown; charset=utf-8"
+      },
+      "receiptSourceSha256": "738ac6c64ab02ae6e61040389e6eb768b8067779ef02b504e441d68733180a84",
+      "costObservations": [
+        {
+          "status": "completed",
+          "httpStatus": 200,
+          "costUsd": 0,
+          "listCostUsd": 0.00018465,
+          "allowanceUsd": 0.00013849,
+          "billingSource": "go",
+          "costAnomaly": false,
+          "estimated": false,
+          "tokens": {
+            "prompt_tokens": 763,
+            "completion_tokens": 117,
+            "total_tokens": 880
+          }
+        },
+        {
+          "status": "completed",
+          "httpStatus": 200,
+          "costUsd": 0,
+          "listCostUsd": 0.00047652,
+          "allowanceUsd": 0.00035739,
+          "billingSource": "go",
+          "costAnomaly": false,
+          "estimated": false,
+          "tokens": {
+            "prompt_tokens": 1380,
+            "completion_tokens": 606,
+            "total_tokens": 1986
+          }
+        },
+        {
+          "status": "completed",
+          "httpStatus": 200,
+          "costUsd": 0,
+          "listCostUsd": 0.00028044,
+          "allowanceUsd": 0.00021033,
+          "billingSource": "go",
+          "costAnomaly": false,
+          "estimated": false,
+          "tokens": {
+            "prompt_tokens": 1984,
+            "completion_tokens": 285,
+            "total_tokens": 2269
+          }
+        }
+      ],
+      "observedTools": [
+        {
+          "name": "read_page",
+          "status": "succeeded",
+          "count": 2
+        },
+        {
+          "name": "save_report",
+          "status": "succeeded",
+          "count": 1
+        }
+      ],
+      "semanticStatus": "unreviewed",
+      "manualT1Review": {
+        "result": "narrow-T1-consistent",
+        "reason": "Formats, separate caps and unchanged online requirement are supported; explicitly no common numeric cap."
+      },
+      "adapterInputs": {
+        "src/live-config.mjs": "5be48937a4953425b63827b7140b814db1300c4023fa594715cc49d163e8ffd9",
+        "src/live-transport.mjs": "a8912b1157418136e111e2184afe96711443e0e010bdf4e4f4e069524a9fcbc3",
+        "src/live-validation.mjs": "c87ad1fedee9f41952b06ee7f7410621698dac4a8c2aed48e1199ca06bfca4e5",
+        "src/live-trace.mjs": "9f45500caeb8a51c335fc01bc1b2eb05e24c97ecfe9a1d583581a77763e3374f",
+        "scripts/live-validate.mjs": "a83539abfd34d0fa0b0c7cb1adfdc99c536cd7b2d41b0a639910861931f8a2b7",
+        "scripts/live-version-pins.json": "0deb7f5ecb6bf7485f250583161a2b5b61c0870f027b7749375559d95eb495b5"
+      },
+      "notExercised": [
+        "Skill",
+        "MCP",
+        "SSE",
+        "Child",
+        "retrieval",
+        "read_result",
+        "Memory",
+        "compaction"
+      ],
+      "independentReadbackHashMatched": true
+    },
+    {
+      "version": "v05",
+      "baselineCommit": "d8b5554130fc3d333d0e181edf92a51e9030f20c",
+      "baselineFilesVerified": 34,
+      "runtimeBlob": "bdc693fa2e057362d714b62039065c1694a604b0",
+      "gatewayBlob": "3a68af8a79383210c78cf07d02687c5caa96bf80",
+      "caseId": "T1",
+      "status": "completed",
+      "code": null,
+      "calls": 4,
+      "reservedCny": 400,
+      "receipt": {
+        "operationId": "call_a44d361e2e0d44da9c6a213d",
+        "fileId": "sha256:c43c953a6de4aa66a18eac959e4480ec54cfad22e0264d018b3f3734fb62eda7",
+        "path": "report.md",
+        "sha256": "c43c953a6de4aa66a18eac959e4480ec54cfad22e0264d018b3f3734fb62eda7",
+        "bytes": 2181,
+        "mediaType": "text/markdown; charset=utf-8"
+      },
+      "receiptSourceSha256": "a95496b3cfaefee6997330787611d9e472ffb7f4e4906cf1863295dca05b8da9",
+      "costObservations": [
+        {
+          "status": "completed",
+          "httpStatus": 200,
+          "costUsd": 0,
+          "listCostUsd": 0.00018405,
+          "allowanceUsd": 0.00013804,
+          "billingSource": "go",
+          "costAnomaly": false,
+          "estimated": false,
+          "tokens": {
+            "prompt_tokens": 763,
+            "completion_tokens": 116,
+            "total_tokens": 879
+          }
+        },
+        {
+          "status": "completed",
+          "httpStatus": 200,
+          "costUsd": 0,
+          "listCostUsd": 0.00022257,
+          "allowanceUsd": 0.00016693,
+          "billingSource": "go",
+          "costAnomaly": false,
+          "estimated": false,
+          "tokens": {
+            "prompt_tokens": 1379,
+            "completion_tokens": 183,
+            "total_tokens": 1562
+          }
+        },
+        {
+          "status": "completed",
+          "httpStatus": 200,
+          "costUsd": 0,
+          "listCostUsd": 0.00034419,
+          "allowanceUsd": 0.00025814,
+          "billingSource": "go",
+          "costAnomaly": false,
+          "estimated": false,
+          "tokens": {
+            "prompt_tokens": 1645,
+            "completion_tokens": 476,
+            "total_tokens": 2121
+          }
+        },
+        {
+          "status": "completed",
+          "httpStatus": 200,
+          "costUsd": 0,
+          "listCostUsd": 0.00028271,
+          "allowanceUsd": 0.00021203,
+          "billingSource": "go",
+          "costAnomaly": false,
+          "estimated": false,
+          "tokens": {
+            "prompt_tokens": 2246,
+            "completion_tokens": 286,
+            "total_tokens": 2532
+          }
+        }
+      ],
+      "observedTools": [
+        {
+          "name": "read_page",
+          "status": "succeeded",
+          "count": 2
+        },
+        {
+          "name": "calculate_change",
+          "status": "succeeded",
+          "count": 1
+        },
+        {
+          "name": "save_report",
+          "status": "succeeded",
+          "count": 1
+        }
+      ],
+      "semanticStatus": "unreviewed",
+      "manualT1Review": {
+        "result": "narrow-T1-consistent",
+        "reason": "Separate A=120/B=300 caps, formats and online requirement supported; shared cap existence is not a claim of equal numeric caps."
+      },
+      "adapterInputs": {
+        "src/live-config.mjs": "5be48937a4953425b63827b7140b814db1300c4023fa594715cc49d163e8ffd9",
+        "src/live-transport.mjs": "a8912b1157418136e111e2184afe96711443e0e010bdf4e4f4e069524a9fcbc3",
+        "src/live-validation.mjs": "c87ad1fedee9f41952b06ee7f7410621698dac4a8c2aed48e1199ca06bfca4e5",
+        "src/live-trace.mjs": "9f45500caeb8a51c335fc01bc1b2eb05e24c97ecfe9a1d583581a77763e3374f",
+        "scripts/live-validate.mjs": "a83539abfd34d0fa0b0c7cb1adfdc99c536cd7b2d41b0a639910861931f8a2b7",
+        "scripts/live-version-pins.json": "0deb7f5ecb6bf7485f250583161a2b5b61c0870f027b7749375559d95eb495b5"
+      },
+      "notExercised": [
+        "Skill",
+        "MCP",
+        "SSE",
+        "Child",
+        "retrieval",
+        "read_result",
+        "Memory",
+        "compaction"
+      ],
+      "independentReadbackHashMatched": true
+    }
+  ],
+  "acceptancePolicy": {
+    "updatedAt": "2026-10-27",
+    "scope": "Runtime fidelity, lawful dispatch/rejection, source/receipt integrity, limits and effects. Model prose quality is observation only, not a Runtime blocker.",
+    "v01": "Rejection was terminal and not dispatched; exact rejected input validity cannot be verified retrospectively. Do not infer a Host bug or certify that unrecorded input.",
+    "unexercisedFeatures": "Still unverified by this batch.",
+    "projectPolicy": "Runtime correctness; model prose quality is observational, not an acceptance gate."
+  },
+  "ceilingStatus": "Explicit operator ceiling not exceeded; numeric ceiling retained locally."
+}
