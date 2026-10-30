@@ -10,7 +10,7 @@
 
 **[快速运行](#quickstart) · [阅读全部文章](https://hpoenixf.com/eff-agent-article/open-etf-agent)**
 
-[最近版本](#versions) · [架构职责](#architecture) · [适用与安全边界](#scope) · [完整资料](#documentation) · [反馈与参与](#反馈与参与)
+[最近版本](#versions) · [架构职责](#architecture) · [适用与安全边界](#scope) · [完整资料](#documentation) · [反馈与参与](#反馈与参与) · [微信公众号](#wechat-public-account)
 
 <a id="reading"></a>
 **最近模块文章**（按模块演进排序，不代表文章发布日期）：
@@ -127,6 +127,13 @@ npm run demo -- --case document-compare
 ## 作者
 
 **作者 hpoenixf：10 年开发经验，5 年金融业务系统研发经验。** 全栈偏前端，关注 Agent 工程实践，把系统设计、可运行实现与验证证据连接起来。 [个人博客](https://hpoenixf.com/) · [工程文集](https://hpoenixf.com/eff-agent-article/)
+
+<a id="wechat-public-account"></a>
+### 微信公众号 · 小飞的 AI 投研工坊
+
+扫码关注，在微信里继续阅读 Agent 工程实践。手机端可保存二维码，再在微信中识别。
+
+<a href="docs/assets/wechat-public-account.jpg"><img src="docs/assets/wechat-public-account.jpg" alt="小飞的 AI 投研工坊微信公众号关注二维码，点击查看原图" width="180" height="180" /></a>
 
 ## 许可证
 
