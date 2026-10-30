@@ -1,0 +1,10 @@
+{
+  "version": "synthetic-cases@1",
+  "denominator": 4,
+  "cases": [
+    { "id": "T1", "question": "Compare free-edition export formats between versions A and B, retain their common limit, cite both pages, and save the report.", "expected": { "a": ["CSV"], "b": ["CSV", "Markdown"], "commonCondition": "online", "sources": ["atlas-a:1", "atlas-b:1"] }, "semanticStatus": "unreviewed" },
+    { "id": "T2", "question": "Compare only the free editions' offline viewing and editing. Do not transfer enterprise privileges to free editions. Save a cited report.", "expected": { "viewPreviouslyDownloaded": true, "offlineEdit": false, "initialDownloadOnline": true, "sources": ["atlas-a:2", "atlas-b:2"] }, "semanticStatus": "unreviewed" },
+    { "id": "T3", "question": "Compare the free export caps: retain inputs and units, calculate B minus A, B divided by A, and the increase divided by A. Save a cited report.", "expected": { "baseline": 120, "current": 300, "unit": "rows/export", "difference": 180, "ratio": 2.5, "increaseRatio": 1.5, "sources": ["atlas-a:1", "atlas-b:1"] }, "semanticStatus": "unreviewed" },
+    { "id": "T4", "question": "Save a comparison report with both source versions and page snapshots, then reopen its exact bytes without another model call.", "expected": { "localReadback": true, "httpDownload": "not-applicable" }, "semanticStatus": "unreviewed" }
+  ]
+}

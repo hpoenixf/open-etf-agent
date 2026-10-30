@@ -1,0 +1,42 @@
+{
+  "schemaVersion": "spec-evidence-completion@1",
+  "changeName": "v08-publication-only",
+  "outcome": "passed",
+  "lane": "provider-free",
+  "revision": "sha256:caf5be631011562b024d2c4d62f26c4391048625a79ec8dedaea5dfab69a1711",
+  "observedAt": "2026-10-27T05:04:30.750900+00:00",
+  "checks": [
+    {
+      "name": "final serial runtime suite 286/286",
+      "status": "passed",
+      "artifact": "docs/verification/v08-observations.safe.json"
+    },
+    {
+      "name": "original-contract-derived Publication tests and actual kill/resume",
+      "status": "passed",
+      "artifact": "docs/verification/v08-publication-green.safe.json"
+    },
+    {
+      "name": "independent locked offline install build and five distinct CLI processes",
+      "status": "passed",
+      "artifact": "docs/verification/v08-independent-delivery.safe.json"
+    },
+    {
+      "name": "retained v0.6 immutable Artifact exact readback",
+      "status": "passed",
+      "artifact": "docs/verification/v08-independent-delivery.safe.json"
+    },
+    {
+      "name": "original Evidence Kit verify/check",
+      "status": "passed",
+      "artifact": "openspec/changes/v08-publication-only/verify.md"
+    },
+    {
+      "name": "metadata-only promotion: unchanged runtime/test/dependency bytes plus independent locked install/build",
+      "status": "passed",
+      "artifact": "docs/verification/v08-metadata-promotion.safe.json"
+    }
+  ],
+  "scope": "Publication-only local runtime qualification; excludes preserved expanded Web/Worker candidate. No semantic, live-model, browser, formal release or remote publication claim. Fixed-public-source article coverage rebinding remains the publisher gate. Full-suite and five-process evidence remains bound to original dev digest bbef17375feea95e05fa32dd5aa20bc2df102209b9ae048a6aa29f04833c04ee. Version-only promotion uses explicit byte equivalence and narrow fresh checks, not a repeated full suite. This is local recorded completion only; code publication, coverage, README, article/site and dated closure remain separate gates.",
+  "originalLocalRecordedAt": "2026-10-27T04:52:28.063593+00:00"
+}

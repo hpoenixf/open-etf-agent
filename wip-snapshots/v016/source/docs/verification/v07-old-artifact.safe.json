@@ -1,0 +1,9 @@
+{
+  "scope": "Read an actual retained v0.6 artifact through the v0.7 reader; artifact identity matched published v0.6 safe receipt.",
+  "status": "passed",
+  "httpStatus": 200,
+  "sha256": "67243fa3c98c7d9015cb7f8148f6d11504a542994a541e279a24b12e50ade2c5",
+  "bytes": 933,
+  "artifactId": "artifact:sha256:855d3143bd39da091d835557851703807c29266805e3e79b8aa94c50992c414e",
+  "modelCalls": 0
+}

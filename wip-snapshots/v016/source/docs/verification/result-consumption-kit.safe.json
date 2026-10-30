@@ -1,0 +1,100 @@
+{
+  "schemaVersion": "result-consumption-kit@1",
+  "observedAt": "2026-10-27T15:55:10.659624+00:00",
+  "kitCommit": "db6ac2f43cc0319fa0f10b4f73d67521d5209c88",
+  "structuralOnly": true,
+  "testsExecutedByKit": false,
+  "results": [
+    {
+      "name": "plan",
+      "command": [
+        "node",
+        "tooling/openspec-evidence-kit-db6ac2f/bin/spec-evidence.mjs",
+        "lint",
+        "--stage",
+        "plan",
+        "--change",
+        "result-reference-consumption"
+      ],
+      "exitCode": 0,
+      "durationSeconds": 0.06749252998270094,
+      "outputSha256": "f33f71ac62f8dc5c8b39c32d02d54deb0f2c716c0d52ce807bfd0ad3e86b5c4c",
+      "result": {
+        "change": "result-reference-consumption",
+        "stage": "plan",
+        "issues": [],
+        "structuralOnly": true,
+        "semanticQuality": "unverified"
+      }
+    },
+    {
+      "name": "apply",
+      "command": [
+        "node",
+        "tooling/openspec-evidence-kit-db6ac2f/bin/spec-evidence.mjs",
+        "lint",
+        "--stage",
+        "apply",
+        "--change",
+        "result-reference-consumption"
+      ],
+      "exitCode": 0,
+      "durationSeconds": 0.0924689209787175,
+      "outputSha256": "cf2b8cfa10dfb4c3153e79e29c523ba6cffb8c0956bb8b602bdd7be126711f2e",
+      "result": {
+        "change": "result-reference-consumption",
+        "stage": "apply",
+        "issues": [],
+        "structuralOnly": true,
+        "semanticQuality": "unverified"
+      }
+    },
+    {
+      "name": "status",
+      "command": [
+        "node",
+        "tooling/openspec-evidence-kit-db6ac2f/bin/spec-evidence.mjs",
+        "status",
+        "--change",
+        "result-reference-consumption"
+      ],
+      "exitCode": 0,
+      "durationSeconds": 0.06066494691185653,
+      "outputSha256": "8739ebe20b6c6858b6d3fd70e8545780c229d91a1692474d82be5a4c7ad62d35",
+      "result": {
+        "change": "result-reference-consumption",
+        "tasks": {
+          "total": 4,
+          "completed": 3
+        },
+        "completion": "not-recorded",
+        "issues": [],
+        "rerun": false,
+        "semanticQuality": "unverified",
+        "release": "not-claimed"
+      }
+    },
+    {
+      "name": "verify-check",
+      "command": [
+        "node",
+        "tooling/openspec-evidence-kit-db6ac2f/bin/spec-evidence.mjs",
+        "verify",
+        "--check",
+        "--change",
+        "result-reference-consumption"
+      ],
+      "exitCode": 1,
+      "durationSeconds": 0.06540703889913857,
+      "outputSha256": "d1d64221f9ab2fd3479b5fce9db669a1b96b6afa058e907b0a1983a64cbdca9f",
+      "result": {
+        "status": "refused",
+        "issues": [
+          "incomplete task RC.4"
+        ]
+      }
+    }
+  ],
+  "expectedIncompleteTask": "RC.4 fixed-source publication and README/article binding",
+  "completion": "not-recorded; no fabricated close/release"
+}

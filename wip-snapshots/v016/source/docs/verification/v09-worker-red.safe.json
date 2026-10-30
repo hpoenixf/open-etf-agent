@@ -1,0 +1,77 @@
+{
+  "observedAt": "2026-10-27T05:55:33.178053+00:00",
+  "exitCode": 1,
+  "durationSeconds": 1.076,
+  "node": "26.11.1",
+  "heapMiB": 512,
+  "concurrency": 1,
+  "hardTimeoutSeconds": 60,
+  "rawLocalSha256": "55b1da9f9c04ff67c22555c601008cb87913cbb27896a35a0bed0e5d4f2b0289",
+  "newModelCalls": 0,
+  "source": "v08 original qualified runtime, new v09 tests only",
+  "qualification": "Expected RED, not v09 completion",
+  "counts": {
+    "tests": 11,
+    "pass": 1,
+    "fail": 10,
+    "cancelled": 0,
+    "skipped": 0
+  },
+  "cases": [
+    {
+      "name": "9.1 submit exits before a separate work process drives and reads the original Run",
+      "status": "expected_failure"
+    },
+    {
+      "name": "9.1 repeated CLI submission uses the original explicit ID and does not reset time or grant",
+      "status": "expected_failure"
+    },
+    {
+      "name": "9.1 new worker CLI refuses unsupported profiles and never creates missing read/work sessions",
+      "status": "expected_failure"
+    },
+    {
+      "name": "9.1 submission persists original ready Run without claim or dispatch",
+      "status": "expected_failure"
+    },
+    {
+      "name": "9.1 repeated admission keeps original deadline and changed definition cannot replace it",
+      "status": "expected_failure"
+    },
+    {
+      "name": "9.2 non-user host stop preserves a sealed checkpoint instead of writing user cancel or terminal success",
+      "status": "expected_failure"
+    },
+    {
+      "name": "9.2 host stop while a model request is pending retains its original unknown reservation",
+      "status": "expected_failure"
+    },
+    {
+      "name": "9.2 bounded Worker executes the same original Run and terminal repetition only reads its receipt",
+      "status": "expected_failure"
+    },
+    {
+      "name": "9.2 mismatched admission cannot dispatch and a live claim cannot be displaced",
+      "status": "expected_failure"
+    },
+    {
+      "name": "9.2 explicit cancellation before work is durable and starts no model request",
+      "status": "expected_failure"
+    },
+    {
+      "name": "9.2 explicit cancel wins a host-stop race without erasing an independently committed body",
+      "status": "pass"
+    }
+  ],
+  "outcome": "Expected RED: 10 fail, 1 pre-existing cancellation invariant passes",
+  "qualifiedV08InputSha256": "caf5be631011562b024d2c4d62f26c4391048625a79ec8dedaea5dfab69a1711",
+  "terminal": true,
+  "activeOwnedProcesses": 0,
+  "schemaVersion": "open-etf-v09-red@1",
+  "command": "node --test --test-concurrency=1 test/worker.test.mjs test/worker-cli.test.mjs",
+  "boundaryNotes": [
+    "Missing submit/work exports and CLI are genuine seam failures, not all 10 failures being runtime behavioral defects.",
+    "Host-stop at a sealed checkpoint incorrectly completed in v0.8; pending host-stop reached test safety user-cancel instead of interruption.",
+    "Existing explicit cancellation after Publication already passed; not claimed as a new fix."
+  ]
+}

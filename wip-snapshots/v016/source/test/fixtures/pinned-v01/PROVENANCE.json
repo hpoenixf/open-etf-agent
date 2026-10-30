@@ -1,0 +1,41 @@
+{
+  "purpose": "Immutable original public v01 test fixture only; not a parallel implementation or new Git worktree. Git identity is injected by tests, every runtime input byte still checked by production pinned harness.",
+  "sourceCommit": "1a787437c2a900c8a9fe27048e81aa86b703305b",
+  "files": [
+    {
+      "path": "fixtures/cases.json",
+      "gitBlob": "a4507653663035dd4e2e16dadbc5e97b704ccd49",
+      "sha256": "9f91af7bbf425d20e48d985d3f33e7770ca2aaf1e9fe011c1d35ace31a062ba6"
+    },
+    {
+      "path": "fixtures/documents.json",
+      "gitBlob": "b1adb45d573e56908d2e1be82a90419c7985c6c9",
+      "sha256": "0eed0f1ba7aef916b67eedb397e92e52c68d1ef5d2b7598b4013330c314ea8f1"
+    },
+    {
+      "path": "src/cli.mjs",
+      "gitBlob": "662d91f452531451ce82eb28d504a209a8d64c3e",
+      "sha256": "b15b3f168e66c0a1347973ac8811daed5e169960347f23fe20e6b0362b0e25a6"
+    },
+    {
+      "path": "src/fixture-gateway.mjs",
+      "gitBlob": "530662b69faf65366ab903737caa3a034bb67177",
+      "sha256": "5ba1ae02049188f7b5890aca19df3bfe5e987cd389ef3b103518cbad88c40bcd"
+    },
+    {
+      "path": "src/gateway.mjs",
+      "gitBlob": "d6bf7beab27f309730141a87c258a94c1dca92b4",
+      "sha256": "5b17695a171575f384744b3236fb0468bb8eee96361e52f40e2381360bd052da"
+    },
+    {
+      "path": "src/runtime.mjs",
+      "gitBlob": "a8bdd32ce57c618f9019b08814c237b25e04facc",
+      "sha256": "a54a95cfad7e3d3b4d75e9a0a952016b77da5928936d504dbec5c2dfef5f850c"
+    },
+    {
+      "path": "src/tools.mjs",
+      "gitBlob": "d816a6edbdb8eba83288f1288e58261370ee39b0",
+      "sha256": "07db2562003aa2a829ee1bb30e233ed3e741c57a582c0181cbc2ed6aa9cb455d"
+    }
+  ]
+}

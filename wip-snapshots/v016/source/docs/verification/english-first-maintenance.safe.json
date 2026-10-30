@@ -1,0 +1,65 @@
+{
+  "schemaVersion": 1,
+  "kind": "english-first-maintenance-qualification",
+  "baseCommit": "1931d45ddf2c66dc6d015b775e1d21d234345522",
+  "runtimeSource": "ff5b9273ef0d239e804f61792702cd2e94174be7",
+  "runtimeInputCount": 125,
+  "runtimeInputByteChanges": 0,
+  "node": "v26.11.1",
+  "heapMiB": 512,
+  "dependencies": {
+    "mode": "offline locked install; ignore-scripts/no-audit/no-fund; explicit empty npm configs",
+    "installed": 95,
+    "pdf2json": false,
+    "initialAttempt": "default cache ENOTCACHED; recovered using existing authorized project cache"
+  },
+  "maintenanceTests": {
+    "cases": 53,
+    "passed": 53,
+    "failed": 0,
+    "skipped": 0,
+    "cancelled": 0,
+    "originalFailure": "first 49-case pass found marker diagnostic masked by missing localization; fixed validation order, original tests unchanged",
+    "originalPassed": 48,
+    "originalFailed": 1,
+    "outputSha256": "16a202757ca062f23a54c5ced74ba42eea0fad1e149f921e529fb3007d1b48ef"
+  },
+  "smoke": {
+    "uniqueExecutedTargets": 15,
+    "executedAt": "2026-10-28T02:12:33.524Z",
+    "runnerSha256": "cdeab84425132eff2fd51337c65c869083caea3739642b829a7d9f3883e0838a",
+    "sourceCommit": "ff5b9273ef0d239e804f61792702cd2e94174be7",
+    "outputSha256": "0e4d1c073923dc943bd47bed82ce799dfc88c71a455bf091cfb9a13f165710fe",
+    "modelCalls": 0
+  },
+  "check": {
+    "passed": true,
+    "executedRuntime": false,
+    "outputSha256": "5a36b19c28a235ac3ea035863ee2bdbcb0319ca76e1dcfabe29ff1c23df12060"
+  },
+  "publication": "not performed; final article commit binding, CI and canonical-domain publication readback remain required",
+  "scope": "Maintenance and original 15 provider-free targets only; no full 333 suite rerun, model quality, browser or canonical website claim.",
+  "localization": {
+    "registeredArticles": 31,
+    "englishArticles": 31,
+    "chineseOriginals": 0,
+    "evidence": "independently reviewed local article candidate overlay; exact catalog registration and body Git blobs checked",
+    "fixedPublishedReadback": "pending final article commit; no second article-source pin",
+    "testsAfterFinalDisplayUpdate": {
+      "passed": 11,
+      "failed": 0,
+      "outputSha256": "bd0da323d9bea871401011a95a8a5e057146ac2fbe82053a05a8243b28d90f46"
+    }
+  },
+  "documentation": {
+    "languageSwitch": "prominent English / Simplified Chinese on README and both main guides",
+    "commandsAndJsonSample": "unchanged from fixed README baseline",
+    "chineseOriginal": "retained in full, adding language navigation, localized guide links and short maintenance-acceptance navigation",
+    "maintenanceRequirements": "six concise bilingual requirements in existing verification indexes; not a claim all planned modules are complete",
+    "legacyEnglishAnchor": "preserved",
+    "reviewCorrections": [
+      "v0.8 promotion changed three version fields across two files",
+      "31/33 coverage counts attributed to fixed article catalog snapshot"
+    ]
+  }
+}

@@ -1,0 +1,191 @@
+{
+  "schemaVersion": 1,
+  "baseCommit": "d7882908a84b19c68548c6d8857e15ab5c820214",
+  "status": "provider-free-qualified-only",
+  "runtime": {
+    "node": "26.11.1",
+    "heapMB": 512,
+    "testConcurrency": 1,
+    "commandTimeoutSeconds": 120
+  },
+  "reviewManifestSha256": "e4d7f9052c71f98d9d75b7e9e131ba5a628ce84f05e166f2b4f9f92e573ac376",
+  "codeReview": "R3 GO; final evidence audit pending",
+  "sourceAndTestFiles": [
+    {
+      "path": "src/child-results.mjs",
+      "baseBlob": "3d2031137a35eead2c4a73db7c85207a5cbe6bca",
+      "sha256": "1e1522bf3fce336c03b4781a4fa303ff039986f35c2aa5dbb57b248411ce194c",
+      "gitBlob": "7368e9ac86ac28f03a0595461397bdee7f7f9c39",
+      "bytes": 696
+    },
+    {
+      "path": "src/child.mjs",
+      "baseBlob": "58b71d620e1134ac681ac95d66d01901dc4aecb2",
+      "sha256": "bf21bdabad2e4290f4a0c1a19d1ab49034240d0b5724c040bc0a254a7ee07967",
+      "gitBlob": "7ee6b2c4ab30944d41c7c4107c1af78dc0d9945e",
+      "bytes": 2453
+    },
+    {
+      "path": "src/results.mjs",
+      "baseBlob": "2023951a4f500757f4a6aebd156b33508815de31",
+      "sha256": "012190a3a1380b29b2c83def83ee512efb2f0150c8abbcfef5b4f33567692225",
+      "gitBlob": "fb5ad84e489be4bee4a056ff05b0d0b1bb7bb5fb",
+      "bytes": 14821
+    },
+    {
+      "path": "src/session.mjs",
+      "baseBlob": "37f470d90f7c01fc3edd989ac1feb9f4160941a4",
+      "sha256": "669dcb03c32207c0c92e2626f144fd1dcd121f43f653d12ddd6b120d8fc434ac",
+      "gitBlob": "d1fa6c4e86bd142f9bc08df84071a38441772947",
+      "bytes": 36489
+    },
+    {
+      "path": "src/specialist-child.mjs",
+      "baseBlob": null,
+      "sha256": "afb1fe45b1f5602aa63439d2bb0a0293ed67d7a5970110623edea152f406ea9d",
+      "gitBlob": "41b8c4eff4d0938572eb1d54ebc94eeac8c58eaa",
+      "bytes": 8215
+    },
+    {
+      "path": "src/specialist-cli.mjs",
+      "baseBlob": null,
+      "sha256": "32d02ffc073512d2689aadebad4e18dcb489b9cf6190311113d96b4d8721682a",
+      "gitBlob": "22b7dcdcf6219d8c268edd3702506b5edd11ff9a",
+      "bytes": 1302
+    },
+    {
+      "path": "src/specialist-demo.mjs",
+      "baseBlob": null,
+      "sha256": "462deaa47fc2ea52e7806445ea41a2628396b662e5273de82420e5eef30d51af",
+      "gitBlob": "1a0eabf422d5bda72c7369e63807475d1a143f66",
+      "bytes": 5329
+    },
+    {
+      "path": "src/tools.mjs",
+      "baseBlob": "5121751cb138d0f8ef567c16d7c6f1b7c3b04355",
+      "sha256": "543a1211e877522c9a53720691489cbbcec97c6196e4f766071a1826b19cfd8d",
+      "gitBlob": "5ef7e0e9d51679b85d4f27e9d4eabec254f7eadd",
+      "bytes": 27625
+    },
+    {
+      "path": "test/fixtures/specialist-process.mjs",
+      "baseBlob": null,
+      "sha256": "d82668a819f6ce9a6874205080eaa8b8f3a28b7a06c1c3516c78350adea2c1ae",
+      "gitBlob": "0dfbb4b74712012564a24d1c270e831660e4c924",
+      "bytes": 2971
+    },
+    {
+      "path": "test/specialist-child.test.mjs",
+      "baseBlob": null,
+      "sha256": "893c95e77b06af1ff8ad33271110a3680df3b7547a7d49c2cdd4f7c622662bc6",
+      "gitBlob": "60359902ad7438453c2e9c4f53f0adf0378506ca",
+      "bytes": 9679
+    },
+    {
+      "path": "test/specialist-process.test.mjs",
+      "baseBlob": null,
+      "sha256": "4404b3824086f823e2c496494fd37b40b8dd9fa54dfaf69137826bb026c819fe",
+      "gitBlob": "c7bda6ea6e78c71e188dec658791022bb088c943",
+      "bytes": 5580
+    },
+    {
+      "path": "test/specialist-readonly.test.mjs",
+      "baseBlob": null,
+      "sha256": "d50dbbc71b8fea84819a56448370532140c72c2f2685939d286f23ecf972147a",
+      "gitBlob": "f7e8a297fd8aafbb8dd5656b652f3d77a1c3568c",
+      "bytes": 3961
+    }
+  ],
+  "verification": {
+    "focused": {
+      "tests": 18,
+      "pass": 18,
+      "fail": 0,
+      "logSha256": "2bed25790dd0d85c174522ed2bf87176b8aaf25931d5ca6247c2a9d4eeba533e"
+    },
+    "full": {
+      "tests": 450,
+      "pass": 450,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 0,
+      "durationMs": 64980.78445,
+      "logSha256": "c4a7e56ef83f6b7ff9a940a60a5bce42bbe945bd18408ffe27e800eb57786419"
+    }
+  },
+  "independent": {
+    "baseCommit": "d7882908a84b19c68548c6d8857e15ab5c820214",
+    "status": "provider-free-qualified-only",
+    "node": "26.11.1",
+    "observations": [
+      {
+        "stage": "independent-install",
+        "startedAt": "2026-10-29T07:41:16.200480+00:00",
+        "exitCode": 0,
+        "stdoutSha256": "1b7e5c05ebe63f4052cf46924807054da633d57198fd62b4d44c55b145d77e41",
+        "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "stage": "independent-build",
+        "startedAt": "2026-10-29T07:41:17.642381+00:00",
+        "exitCode": 0,
+        "stdoutSha256": "afedf6039026510502eff985ed041e8e30c5b5a3917ecc1123d44ab4d4243f24",
+        "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "stage": "independent-run",
+        "startedAt": "2026-10-29T07:41:19.164676+00:00",
+        "exitCode": 0,
+        "stdoutSha256": "c19cf78ac2978dc92a6b23bb1712646c70680febe3934250f397bc1639adce9f",
+        "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "stage": "independent-read",
+        "startedAt": "2026-10-29T07:41:19.383618+00:00",
+        "exitCode": 0,
+        "stdoutSha256": "b8dc597c81aea876ab4f45c820f273bd2f98ce58c05e67f42abd0a787f6e8167",
+        "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "stage": "independent-terminal-resume",
+        "startedAt": "2026-10-29T07:41:19.448243+00:00",
+        "exitCode": 0,
+        "stdoutSha256": "c19cf78ac2978dc92a6b23bb1712646c70680febe3934250f397bc1639adce9f",
+        "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    ],
+    "parentRunId": "run-j0NkqJ",
+    "childRunId": "run-cjEjHL",
+    "summarySha256": "f37e35ad96616bb967ed17ad90f143e4af4709b3bc3d9c17d9475277e66977fe",
+    "report": {
+      "sha256": "5e2a9f8e0f91f94c3dddf3002abbc3ae80db7cb5aac5ef37fb73d1f01323b541",
+      "revisionId": "revision:sha256:1d5a422e0aa28cb16e7d898878c22979c31943d9fc13219084ac9c75841419d5"
+    },
+    "sourceRefs": [
+      {
+        "sourceId": "atlas-a@A-2026-01:p1",
+        "resultRef": "result:sha256:d7dd8e8ecb2d6deb3cceff5b10d6ca5694371e061b2af49cd5ec4f0e76da0b0a",
+        "sha256": "948ef1fc240590b97eb97b9f5a9e74eac4136ff14983bc7102dfc91eabad30a0"
+      },
+      {
+        "sourceId": "atlas-b@B-2026-02:p1",
+        "resultRef": "result:sha256:9b093eab344ca1b18ced5ab587c53320ee3289d19c1a8b0232b626c9013a9ea5",
+        "sha256": "a25c6c264eb82e4f4472028726e5c140a3ef9e082ca8ed3427c9e894d5a54f2d"
+      }
+    ],
+    "rootUsage": {
+      "model": 6,
+      "tool": 4
+    },
+    "readAndTerminalResumeUnchangedBytes": true,
+    "actualProviderCalls": 0,
+    "liveMechanism": "unrun; public provider/data/budget authorization pending",
+    "semanticStatus": "unreviewed",
+    "release": "not performed"
+  },
+  "independentInputsSha256": "e19fef66cb09ae007a643402752b2bec186bc47540f8f71ef56077e86b7d86b0",
+  "liveMechanism": "unrun; explicit public provider/data/budget authorization pending",
+  "semanticStatus": "unreviewed",
+  "publication": "not performed; package version not advanced",
+  "sensitiveData": "only original public code and synthetic fixtures; raw logs, databases, credentials, dependencies and caches excluded"
+}

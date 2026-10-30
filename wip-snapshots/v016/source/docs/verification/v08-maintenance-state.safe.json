@@ -1,0 +1,192 @@
+{
+  "schemaVersion": 2,
+  "recordKind": "maintenance",
+  "version": "0.8.0",
+  "qualifiedSource": {
+    "repository": "hpoenixf/open-etf-agent",
+    "branch": "phase/v0.8",
+    "commit": ""
+  },
+  "coordination": {
+    "writer": "local runtime implementation owner",
+    "publisher": "designated repository publisher",
+    "authorizationEvidence": ""
+  },
+  "evidence": [],
+  "code": {
+    "status": "pending",
+    "reason": "Local runtime qualification is complete, but this record has no fixed public v0.8 commit or remote byte-readback yet. Metadata promotion checks are recorded separately.",
+    "requiredValidations": [
+      "provider_free",
+      "integration"
+    ],
+    "validations": [],
+    "claims": {
+      "specComplete": true,
+      "allNewReachableObjectsAudited": false,
+      "nonForce": false,
+      "remoteRefTreeBlobBytesVerified": false
+    },
+    "evidenceIds": []
+  },
+  "readme": {
+    "status": "pending",
+    "reason": "Existing cb735 stable README is preserved byte-for-byte. v0.8 fixed-source coverage rebinding and main README update await the publisher.",
+    "commit": "",
+    "claims": {
+      "stableVersionAccurate": false,
+      "quickstartVerified": false,
+      "capabilitiesAndLimitsChecked": false,
+      "fixedPhaseLinksPreserved": false,
+      "visualLicenseRealCallPreserved": false,
+      "nodeSupportAndTestedSeparated": false
+    },
+    "evidenceIds": []
+  },
+  "articles": {
+    "status": "pending",
+    "reason": "Existing article 019 reviewed; minimal additive draft prepared, not applied to article source.",
+    "catalogEvidenceIds": [],
+    "sourceCommit": "f5fd11184c76ce3007197a08793407021740fe52",
+    "mappings": [],
+    "evidenceIds": []
+  },
+  "publication": {
+    "status": "pending",
+    "reason": "No v0.8 article changes have been published; reader lock/build/new-domain readback have not been attempted.",
+    "sourceCommit": "",
+    "blogCommit": "",
+    "claims": {
+      "readerSourceLockVerified": false,
+      "readerReleaseVerified": false,
+      "buildDeployVerified": false,
+      "oldSitePureRedirectsVerified": false
+    },
+    "files": [],
+    "homepages": [],
+    "evidenceIds": []
+  },
+  "recovery": {
+    "owner": "designated repository publisher",
+    "nextAction": "Audit packet; publish fixed phase source; refresh existing coverage source and run actual smoke/check; update main README; review article 019 draft and independently verify its site publication.",
+    "checkpoint": "docs/verification/v08-publication-inputs.json",
+    "writeOutcome": "not_attempted",
+    "blocker": "",
+    "uncertainStage": ""
+  },
+  "scope": {
+    "primaryModules": [
+      {
+        "name": "Publication",
+        "owner": "existing Runtime/Session Publication adaptation",
+        "acceptanceBoundary": "synthetic input to independent body/current-event commit to selected-Run CLI readback"
+      }
+    ],
+    "supportingAdaptations": [
+      {
+        "name": "durable publication facts",
+        "existingOwner": "Session",
+        "purpose": "atomic version and current-slot commit plus original receipt confirmation"
+      },
+      {
+        "name": "final proposal commit",
+        "existingOwner": "Runtime",
+        "purpose": "commit before ordinary terminal bookkeeping without a second executor"
+      },
+      {
+        "name": "selected publication reads",
+        "existingOwner": "session CLI",
+        "purpose": "local readback of the selected Run, revision and current delivery slot"
+      }
+    ],
+    "deferredFeatures": [
+      "Worker",
+      "queue",
+      "Web Chat",
+      "HTTP/SSE delivery product",
+      "global History",
+      "multi-block publication"
+    ],
+    "acceptanceSurfaces": [
+      "cli",
+      "real_process",
+      "storage",
+      "library"
+    ],
+    "uiStatus": "none",
+    "datedAmendment": {
+      "date": "2026-10-27",
+      "summary": "One original-contract-derived module per version; browser-heavy expanded candidate preserved separately rather than promoted."
+    },
+    "originalSpecPreserved": true,
+    "priorFailuresPreserved": true,
+    "wipDisposition": "preserved_recoverable"
+  },
+  "originReview": {
+    "restrictedLocalReviewRef": "",
+    "publicSummary": "docs/evolution/v08-publication-lineage.md",
+    "articleMappingSummary": "Existing article 019; stable coordinates and commit-before-failure paragraphs only, no new synonymous article.",
+    "retainedContracts": [
+      "stable block identity and delivery ordinal",
+      "explicit revision CAS",
+      "exact body plus protected-binding no-op returns original receipt",
+      "independent commit remains readable after Run failure"
+    ],
+    "simplifiedOrReplaced": [
+      "one text-only Host block",
+      "existing public SQLite instead of original deployment backend",
+      "selected-Run local CLI rather than UI or network stream"
+    ],
+    "dependencyDecision": "Zero new packages or download bytes; reuse existing Node SQLite/crypto/filesystem and locked dependencies. No configuration or platform expansion.",
+    "minimalLoop": {
+      "input": "synthetic sealed final text",
+      "processing": "same Runtime invokes Session independent atomic Publication commit",
+      "readback": "selected Run/revision/current event through existing session CLI",
+      "identityFailureRecovery": "original receipt, protected binding, stale/CAS rejection and real killed-process replay"
+    }
+  },
+  "coverageMaintenance": {
+    "actualMachineManifestRef": "docs/verification/article-coverage.json",
+    "actualCheckCommand": "node scripts/check-article-coverage.mjs --check",
+    "checkReceiptRef": "",
+    "actualSmokeCommand": "node scripts/check-article-coverage.mjs --smoke",
+    "smokeReceiptRef": "",
+    "publicVerificationIndexRef": "docs/verification/README.md",
+    "notes": "Existing v0.7 records remain exact stable-main bytes. They are not valid v0.8 coverage receipts. Rebind only after a fixed public source and actual smoke/check; do not create another checker."
+  },
+  "localQualification": {
+    "sourceDigest": "caf5be631011562b024d2c4d62f26c4391048625a79ec8dedaea5dfab69a1711",
+    "fullSuiteDigest": "bbef17375feea95e05fa32dd5aa20bc2df102209b9ae048a6aa29f04833c04ee",
+    "observations": "docs/verification/v08-observations.md",
+    "recordedComplete": "openspec/changes/v08-publication-only/completion.json",
+    "formalArchival": false,
+    "formalRelease": false,
+    "providerCalls": 0,
+    "semanticStatus": "unreviewed"
+  },
+  "proposedArticleMappings": [
+    {
+      "capability": "stable block/ordinal, CAS and authoritative original receipt",
+      "target": "articles/019-agent-answer-publication.md",
+      "existingLanguages": [
+        "zh"
+      ],
+      "decision": "draft_addition",
+      "sourcePath": "src/session.mjs",
+      "testPath": "test/publication.test.mjs",
+      "reason": "Extend existing three-coordinate discussion with a bounded runnable single-block example."
+    },
+    {
+      "capability": "body survives later failure and fresh-process recovery",
+      "target": "articles/019-agent-answer-publication.md",
+      "existingLanguages": [
+        "zh"
+      ],
+      "decision": "draft_addition",
+      "sourcePath": "src/runtime.mjs",
+      "testPath": "test/publication-runtime.test.mjs",
+      "testName": "8.2 actual process death after body commit resumes original receipt without another model call",
+      "reason": "Natural addition to existing commit-before-journal and later-failure sections. Fixed code links pending publication."
+    }
+  ]
+}

@@ -1,0 +1,305 @@
+{
+  "schemaVersion": 1,
+  "kind": "actual-provider-free-runtime-execution",
+  "executedAt": "2026-10-28T09:46:40.259Z",
+  "node": "v26.11.1",
+  "sourceCommit": "5f42c33892d57ed05e8cd09cad48573e6901995b",
+  "inputSha256": "4da4e1f8b7b9bfcee7b4581f3e932dbf2f13413f8514f41d3dc4672fd1146e09",
+  "runnerSha256": "4831b75b97ddb484e2fbe2aeac15a6541388711fa8fd6c872f9741ebb0def791",
+  "targetsSha256": "ac7017da9d2b6151cb8ac50410134f1211d5f077554021257b1bb7ee0bcf3505",
+  "commitConfirmation": {
+    "commit": "5f42c33892d57ed05e8cd09cad48573e6901995b",
+    "tree": "35d3ecef7d66527cad422a25da35766fd73d4463",
+    "method": "actual-local-git-objects"
+  },
+  "executionBounds": {
+    "nodeHeapMiB": 512,
+    "temporaryDirectory": "owned-smoke-output",
+    "perTargetMs": 30000,
+    "totalMs": 120000
+  },
+  "modelCalls": 0,
+  "semanticStatus": "unreviewed",
+  "results": {
+    "child": {
+      "target": {
+        "kind": "cli",
+        "case": "fixture-child"
+      },
+      "exitCode": 0,
+      "observed": {
+        "case": "fixture-child",
+        "completedRuns": 1,
+        "artifacts": [
+          {
+            "bytes": 954,
+            "sha256": "54463149ca42d7bb39104695e17963be61c3203d1069e223e6b05976f66e6004",
+            "mediaType": "text/markdown; charset=utf-8"
+          }
+        ]
+      },
+      "stdoutSha256": "9ee82efd616bbbe4566bf0f5dc57c7604d1dac6f389b92aa10175bb781f32a87",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "reread": {
+      "target": {
+        "kind": "cli",
+        "case": "retrieve-reread"
+      },
+      "exitCode": 0,
+      "observed": {
+        "case": "retrieve-reread",
+        "completedRuns": 1,
+        "artifacts": [
+          {
+            "bytes": 1348,
+            "sha256": "009d3f77cf5208b2260e4dde2cbdcd21288b4fd600899eb2b0f7a827f0e3c016",
+            "mediaType": "text/markdown; charset=utf-8"
+          }
+        ]
+      },
+      "stdoutSha256": "41f55c04d9344b0cbd74a9f3ca7e0a1010dfe5995e4183a87e9f59b281cf899e",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "compaction": {
+      "target": {
+        "kind": "cli",
+        "case": "compact-and-reread"
+      },
+      "exitCode": 0,
+      "observed": {
+        "case": "compact-and-reread",
+        "completedRuns": 1,
+        "artifacts": [
+          {
+            "bytes": 992,
+            "sha256": "c8fcdc248076d65c01d9161d95dc18f690bc4f877c307cccd8e983e351a02d26",
+            "mediaType": "text/markdown; charset=utf-8"
+          }
+        ]
+      },
+      "stdoutSha256": "411bb0c4ce211c21663ec00cbf855aa416c6d05d83929d142e3e8cc4bfff84df",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "memory": {
+      "target": {
+        "kind": "cli",
+        "case": "explicit-memory"
+      },
+      "exitCode": 0,
+      "observed": {
+        "case": "explicit-memory",
+        "completedRuns": 3,
+        "artifacts": [
+          {
+            "bytes": 884,
+            "sha256": "0f4ea5fdd0dbb4a1f48d1c68331c926fd6f851302600a932c9dcf9ad9fc23e60",
+            "mediaType": "text/markdown; charset=utf-8"
+          }
+        ]
+      },
+      "stdoutSha256": "9e1c3f8675c9678a16db76fdd807d72caf435ff88f73ff5af7aa6ff3535a7c3d",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "mcp": {
+      "target": {
+        "kind": "cli",
+        "case": "skill-mcp"
+      },
+      "exitCode": 0,
+      "observed": {
+        "case": "skill-mcp",
+        "completedRuns": 1,
+        "artifacts": [
+          {
+            "bytes": 953,
+            "sha256": "6422cf85cf33e47f2ada20ae8dd85191b6939a62a754ed53ce3265af9a22493f",
+            "mediaType": "text/markdown; charset=utf-8"
+          }
+        ]
+      },
+      "stdoutSha256": "65fc7dbaa63fc5a3e5f0eeef3a50d3e37577b2d60710522cb2e451483c636313",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "batch": {
+      "target": {
+        "kind": "cli",
+        "case": "batch-read"
+      },
+      "exitCode": 0,
+      "observed": {
+        "case": "batch-read",
+        "completedRuns": 1,
+        "artifacts": [
+          {
+            "bytes": 951,
+            "sha256": "64ab2dfa9f08eef9d243c336e307a021c7ef8fffbe4a138bf0303afb7eead4ff",
+            "mediaType": "text/markdown; charset=utf-8"
+          }
+        ]
+      },
+      "stdoutSha256": "b393cfc01989a3ca46511c9f3aa54627ecced1b9fb73017832aefd7882c52c6a",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "provider": {
+      "target": {
+        "kind": "test",
+        "file": "test/gateway.test.mjs",
+        "name": "1.4 injected offline transport verifies request encoding and matched tool results"
+      },
+      "exitCode": 0,
+      "observed": {
+        "name": "1.4 injected offline transport verifies request encoding and matched tool results",
+        "passed": 1,
+        "failed": 0,
+        "skipped": 0
+      },
+      "stdoutSha256": "4907d113d0cad79ca2e8af26286d02075c8df924fd96f934bc23f9c66691ef99",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "plugins": {
+      "target": {
+        "kind": "test",
+        "file": "test/plugins.test.mjs",
+        "name": "7.1 two trusted packages use the ordinary Host and acquired source/method owners"
+      },
+      "exitCode": 0,
+      "observed": {
+        "name": "7.1 two trusted packages use the ordinary Host and acquired source/method owners",
+        "passed": 1,
+        "failed": 0,
+        "skipped": 0
+      },
+      "stdoutSha256": "1684e5bda1193dc4ba0b3e2d6aad9b524a1319fa1ac4ca7dc50d495a857cd8a4",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "surface": {
+      "target": {
+        "kind": "test",
+        "file": "test/cooperation-integration.test.mjs",
+        "name": "3.4 fixture child shares root counters and advertises only allowed read tool"
+      },
+      "exitCode": 0,
+      "observed": {
+        "name": "3.4 fixture child shares root counters and advertises only allowed read tool",
+        "passed": 1,
+        "failed": 0,
+        "skipped": 0
+      },
+      "stdoutSha256": "7b58c77a47c6d711d0199c1e253390aaaa71c02351056e61ae3a73dd23198268",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "trust": {
+      "target": {
+        "kind": "test",
+        "file": "test/context.test.mjs",
+        "name": "4.2 projection never launders a lookalike or altered payload into an acquired ref"
+      },
+      "exitCode": 0,
+      "observed": {
+        "name": "4.2 projection never launders a lookalike or altered payload into an acquired ref",
+        "passed": 1,
+        "failed": 0,
+        "skipped": 0
+      },
+      "stdoutSha256": "9d21aabcff44378c63350e78b2a6b097c4edc3effeb7b3e454af986e91e3cc03",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "hooks": {
+      "target": {
+        "kind": "test",
+        "file": "test/cooperation-integration.test.mjs",
+        "name": "3.3 Host revalidates effective Hook arguments and preserves original call"
+      },
+      "exitCode": 0,
+      "observed": {
+        "name": "3.3 Host revalidates effective Hook arguments and preserves original call",
+        "passed": 1,
+        "failed": 0,
+        "skipped": 0
+      },
+      "stdoutSha256": "b4f9611355201b26b7a2357e807cbcaf146fb5b2d76e17d7571f32d406650f25",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "budget": {
+      "target": {
+        "kind": "test",
+        "file": "test/cooperation-integration.test.mjs",
+        "name": "3.3 root budget refusal stops before a second model request"
+      },
+      "exitCode": 0,
+      "observed": {
+        "name": "3.3 root budget refusal stops before a second model request",
+        "passed": 1,
+        "failed": 0,
+        "skipped": 0
+      },
+      "stdoutSha256": "9e6a2b4c0a064ea18d7913dbd17a32e9f38c13ae469907628cac9d0446e0e8e8",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "control": {
+      "target": {
+        "kind": "test",
+        "file": "test/durable-runtime.test.mjs",
+        "name": "7.3 cancel during pending model is durable and late proposal cannot dispatch"
+      },
+      "exitCode": 0,
+      "observed": {
+        "name": "7.3 cancel during pending model is durable and late proposal cannot dispatch",
+        "passed": 1,
+        "failed": 0,
+        "skipped": 0
+      },
+      "stdoutSha256": "fd12c5f8e460689cbdcf62a75bdd1d22a124088a305054b9a1ea80430d8ab2bc",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "publication": {
+      "target": {
+        "kind": "test",
+        "file": "test/publication-cli.test.mjs",
+        "name": "8.2 local CLI starts same Runtime and separately reads body, current event and immutable Artifact"
+      },
+      "exitCode": 0,
+      "observed": {
+        "name": "8.2 local CLI starts same Runtime and separately reads body, current event and immutable Artifact",
+        "passed": 1,
+        "failed": 0,
+        "skipped": 0
+      },
+      "stdoutSha256": "c59c0cd6e8a237c942a02c8f040ce434c8d79ebba2b31205ad43f0e69decaeb1",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "worker": {
+      "target": {
+        "kind": "test",
+        "file": "test/worker-cli.test.mjs",
+        "name": "9.1 submit exits before a separate work process drives and reads the original Run"
+      },
+      "exitCode": 0,
+      "observed": {
+        "name": "9.1 submit exits before a separate work process drives and reads the original Run",
+        "passed": 1,
+        "failed": 0,
+        "skipped": 0
+      },
+      "stdoutSha256": "0ba5d26c65b44478f51f0ebf46414d12cf1e82fc64e50c11128368ed87234ebe",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "pdf-local": {
+      "target": {
+        "kind": "test",
+        "file": "test/pdf-cli.test.mjs",
+        "name": "11.3 PDF CLI exits then a fresh process verifies page report and original binary"
+      },
+      "exitCode": 0,
+      "observed": {
+        "name": "11.3 PDF CLI exits then a fresh process verifies page report and original binary",
+        "passed": 1,
+        "failed": 0,
+        "skipped": 0
+      },
+      "stdoutSha256": "f8680a9b35c10cf1d09352d0c8a2a6c40a81713615223d2d19ec75694e0b1a59",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  }
+}

@@ -1,0 +1,38 @@
+{
+  "schemaVersion": 1,
+  "version": "0.13.0",
+  "repository": "hpoenixf/open-etf-agent",
+  "implementationCommit": "300f78f7066ab76fcc4e9efb54137ff021ecc278",
+  "implementationTree": "a09e1c560efec54a0c8e28701f3a38afc3bd1a50",
+  "parent": "26ace789114a9065503f254dbb5bb2a242594e91",
+  "changedLeaves": 24,
+  "newLeaves": 13,
+  "unchangedLeaves": 362,
+  "deletedLeaves": 0,
+  "actualChangedBytesReadback": "matched all24 audited manifest files",
+  "verify": {
+    "run": 40777239564,
+    "job": 123129582961,
+    "conclusion": "success",
+    "url": "https://github.com/hpoenixf/open-etf-agent/actions/runs/40777239564"
+  },
+  "phase": {
+    "name": "phase/v0.13",
+    "commit": "300f78f7066ab76fcc4e9efb54137ff021ecc278"
+  },
+  "tag": {
+    "name": "v0.13.0",
+    "type": "commit",
+    "commit": "300f78f7066ab76fcc4e9efb54137ff021ecc278"
+  },
+  "release": {
+    "id": 427245237,
+    "url": "https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.13.0",
+    "draft": false,
+    "prerelease": false
+  },
+  "observedAt": "2026-10-28T22:12:47Z",
+  "scope": "Provider-free code qualification and verified public release; not live-model quality or production readiness",
+  "articles": "Independent pending track; outside code closure denominator",
+  "specDisposition": "Retained under openspec/changes; no archive command or transition claimed"
+}

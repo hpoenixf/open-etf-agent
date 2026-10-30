@@ -1,0 +1,65 @@
+{
+  "schemaVersion": "open-etf-v08-observations@1",
+  "scope": "Publication-only original-contract adaptation",
+  "basePublicMain": "cb735e40021ecb6916de9bc3e2ec086534baefba",
+  "version": "0.8.0-dev.0",
+  "inputSha256": "bbef17375feea95e05fa32dd5aa20bc2df102209b9ae048a6aa29f04833c04ee",
+  "runtime": "Node v26.11.1",
+  "heapMiB": 512,
+  "testConcurrency": 1,
+  "fullSuite": {
+    "command": "node --test --test-concurrency=1 test/*.test.mjs",
+    "exitCode": 0,
+    "tests": 286,
+    "passed": 286,
+    "failed": 0,
+    "skipped": 0,
+    "cancelled": 0,
+    "durationMs": 32671.990912,
+    "completedAt": "2026-10-27T04:48:46Z",
+    "inputsUnchangedAfterRun": true
+  },
+  "focusedReceipt": "docs/verification/v08-publication-green.safe.json",
+  "redReceipt": "docs/verification/v08-publication-red.safe.json",
+  "independentInstallBuild": {
+    "status": "passed",
+    "installCommand": "npm ci --offline --ignore-scripts --no-audit --no-fund --cache existing-owned-cache",
+    "packagesInstalled": 95,
+    "dependencyGraphChanged": false,
+    "buildCommand": "node scripts/build.mjs",
+    "buildExitCode": 0,
+    "builtSourceHashesMatched": 54,
+    "newPackages": 0,
+    "networkDownloads": 0
+  },
+  "oldArtifactRead": {
+    "status": "passed",
+    "bytes": 933,
+    "artifactId": "artifact:sha256:855d3143bd39da091d835557851703807c29266805e3e79b8aa94c50992c414e",
+    "sha256": "67243fa3c98c7d9015cb7f8148f6d11504a542994a541e279a24b12e50ade2c5",
+    "reader": "actual independently built Artifact owner",
+    "readOnly": true
+  },
+  "kit": {
+    "plan": "passed",
+    "apply": "passed",
+    "verify": "passed",
+    "verifyCheck": "current",
+    "lintVerify": "passed",
+    "structuralOnly": true
+  },
+  "formalRelease": "not-claimed",
+  "providerCalls": 0,
+  "semanticStatus": "unreviewed",
+  "historicalExpandedCandidate": "298 provider-free cases belong only to its archived source; browser acceptance remains blocked and excluded from amended scope",
+  "independentDeliveryReceipt": "docs/verification/v08-independent-delivery.safe.json",
+  "safeScanReceipt": "docs/verification/v08-publication-scan.safe.json",
+  "publicationCandidate": {
+    "version": "0.8.0",
+    "inputSha256": "caf5be631011562b024d2c4d62f26c4391048625a79ec8dedaea5dfab69a1711",
+    "relation": "metadata-only; prior behavioral inputs/dependency entries unchanged",
+    "freshNarrowChecks": "passed",
+    "receipt": "docs/verification/v08-metadata-promotion.safe.json",
+    "fullSuiteRerun": false
+  }
+}

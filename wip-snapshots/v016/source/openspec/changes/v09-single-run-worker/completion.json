@@ -1,0 +1,36 @@
+{
+  "schemaVersion": "spec-evidence-completion@1",
+  "changeName": "v09-single-run-worker",
+  "outcome": "passed",
+  "lane": "provider-free",
+  "revision": "sha256:445b5cfd2e2cf792b5d431546c4742f893fc66c38f7d033949e0109bcde5431f",
+  "observedAt": "2026-10-27T09:07:53.775758+00:00",
+  "checks": [
+    {
+      "name": "new combined serial suite 309/309 on 124 frozen version 0.9.0 inputs",
+      "status": "passed",
+      "artifact": "docs/verification/v09-combined-observations.safe.json"
+    },
+    {
+      "name": "original RED/GREEN and 19 unchanged Worker identity/process boundaries",
+      "status": "passed",
+      "artifact": "docs/verification/v09-worker-green.safe.json"
+    },
+    {
+      "name": "58 delivery inputs and 55 retained built files byte-identical; original install/eight CLI receipts remain historical",
+      "status": "passed",
+      "artifact": "docs/verification/v09-delivery-equivalence.safe.json"
+    },
+    {
+      "name": "original hash-bound Worker review; original Worker source unchanged during main rebind",
+      "status": "passed",
+      "artifact": "docs/verification/v09-review.safe.json"
+    },
+    {
+      "name": "original Kit plan/apply/verify/check/lint verify on current observations",
+      "status": "passed",
+      "artifact": "openspec/changes/v09-single-run-worker/verify.md"
+    }
+  ],
+  "scope": "Local single-Run Worker runtime/delivery qualification only. Same Session/Runtime, no Task/queue/schema/service expansion. Actual process/storage checks use synthetic Gateway input, not a live model. No semantic, browser, foreground concurrency, full scheduling, formal Release, remote publication or entire version-maintenance completion claim. Original v0.8 and expanded WIP evidence is not reused as this qualification. Source, README coverage, article/source and new-domain publication remain separate publisher gates. Current main CI/lineage maintenance is preserved. The new combined suite is separate from historical 305; independent install/eight CLI execution is not rerun or relabeled, and delivery equivalence is explicitly recorded. Fixed v0.9 coverage and remote promotion remain pending."
+}

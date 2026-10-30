@@ -1,0 +1,125 @@
+{
+  "kind": "actual local artifact hashes; raw logs excluded",
+  "artifacts": [
+    {
+      "basename": "core-red.txt",
+      "sha256": "e83c772e258f4c4170c38b2f4c84ccd16dbb7ecec282b268195239f06ff62b82",
+      "summary": "docs/verification/v04-observations.md"
+    },
+    {
+      "basename": "core-green.txt",
+      "sha256": "a459dff65debc35edcc93dce1c7ee6294d5b5a975495c108e91db9a0d217512b",
+      "summary": "docs/verification/v04-observations.md"
+    },
+    {
+      "basename": "acquisition-red.txt",
+      "sha256": "3e1341044869878e54bd2e5ca94b3a37b733c63909ab6a17d1d415b0010a4fbe",
+      "summary": "docs/verification/v04-observations.md"
+    },
+    {
+      "basename": "cli-red.txt",
+      "sha256": "3d915b33151c02a7b9a2dc49eb996d6feb7f4a3375a43033e3359872dfec51f9",
+      "summary": "docs/verification/v04-observations.md"
+    },
+    {
+      "basename": "context-review-red.txt",
+      "sha256": "1ed48553ca575ce720497caa310645315f46cffb67490c316a66000078da3a8f",
+      "summary": "docs/verification/v04-observations.md"
+    },
+    {
+      "basename": "demo-batch-read.txt",
+      "sha256": "0e201ad8fd7738ed13deebf455c90706d8b6f697bbb678ba36ad621e39ac403f",
+      "summary": "docs/verification/v04-observations.md"
+    },
+    {
+      "basename": "demo-document-compare.txt",
+      "sha256": "8b6f93df76f629ae569052b03ea413ee06f5254b57ae129607e939085e635316",
+      "summary": "docs/verification/v04-observations.md"
+    },
+    {
+      "basename": "demo-fixture-child.txt",
+      "sha256": "f70853a09462fc343bcceaa5e895964b5deac47ee84b818412ec2fb923f3e822",
+      "summary": "docs/verification/v04-observations.md"
+    },
+    {
+      "basename": "demo-retrieve-reread.txt",
+      "sha256": "7145599b2394ffa48464b8fa5e580a044110a37ecbb5c81dd786985daa12bf98",
+      "summary": "docs/verification/v04-observations.md"
+    },
+    {
+      "basename": "demo-skill-mcp.txt",
+      "sha256": "9a2176f6566db04a0ab5ac9212d5823d5d86658528459c35315664b74d45edf1",
+      "summary": "docs/verification/v04-observations.md"
+    },
+    {
+      "basename": "integration-green.txt",
+      "sha256": "e43a48572a4e4957fb682830dcdcf6405a309e8780bfa98c2c203c9a322f2b20",
+      "summary": "docs/verification/v04-observations.md"
+    },
+    {
+      "basename": "integration-red.txt",
+      "sha256": "2fbe55c7cd1e28ed27afe2ae4ac499c6f74ba7d8ba6fd0f7b7eaa4fb8c8a956d",
+      "summary": "docs/verification/v04-observations.md"
+    },
+    {
+      "basename": "npm-build.txt",
+      "sha256": "124329065b4aee074c0b9bcbcba1f0caac507b49ddb273e64a7d11c59f983d3e",
+      "summary": "docs/verification/v04-observations.md"
+    },
+    {
+      "basename": "npm-ci.txt",
+      "sha256": "adcf84617f30a9d5375852dcfd3545b1f57ed5c542f33d3cf85987af5dc51189",
+      "summary": "docs/verification/v04-observations.md"
+    },
+    {
+      "basename": "npm-test.txt",
+      "sha256": "e63660f98b1accf8ae8b2c3bb2f49ff08d773f8a8f64da1f20dd52fe6cdc5529",
+      "summary": "docs/verification/v04-observations.md"
+    },
+    {
+      "basename": "related-regression.txt",
+      "sha256": "6fd420938b31da5b89fb3e2c8d974a69ba77f93bc984ba1c800a6091a229a04b",
+      "summary": "docs/verification/v04-observations.md"
+    },
+    {
+      "basename": "review-cli-green.txt",
+      "sha256": "375fafda51d669d60a3f6b8ea085f690ba754f37c01b92652c782327ad4f55df",
+      "summary": "docs/verification/v04-observations.md"
+    },
+    {
+      "basename": "kit-final-lint.json",
+      "sha256": "3ffbf0945ace97191ed2550dbd3a2ca48f196b32b7ac4aeb68270ea937af846c",
+      "summary": "docs/verification/v04-observations.md"
+    },
+    {
+      "basename": "kit-final-status.json",
+      "sha256": "836b93ea74d208eb99d65f0088f18a092dfcf61f4479e61f5efc341f1b64b7ca",
+      "summary": "docs/verification/v04-observations.md"
+    },
+    {
+      "basename": "kit-final-verify.json",
+      "sha256": "812d8070bcc5b2282547a99ed11347cdcf7ae3c5da49d4c22390838837c093a5",
+      "summary": "docs/verification/v04-observations.md"
+    },
+    {
+      "basename": "kit-lint---stage-apply.json",
+      "sha256": "3ffbf0945ace97191ed2550dbd3a2ca48f196b32b7ac4aeb68270ea937af846c",
+      "summary": "docs/verification/v04-observations.md"
+    },
+    {
+      "basename": "kit-lint---stage-plan.json",
+      "sha256": "00d7cdfc4b72736ecfd197e7b05f82c642a00fa83e4b3ac7948170dedd23d4d3",
+      "summary": "docs/verification/v04-observations.md"
+    },
+    {
+      "basename": "kit-status.json",
+      "sha256": "a7b29c591988356eb0ee852f45876c55e0113332f5ffd9664c416a6aeb278518",
+      "summary": "docs/verification/v04-observations.md"
+    },
+    {
+      "basename": "kit-verify---check.json",
+      "sha256": "177f6963e7f3466dcd8895b033391b56c0e93749b9dacb43e30da647bc81eed5",
+      "summary": "docs/verification/v04-observations.md"
+    }
+  ]
+}

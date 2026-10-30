@@ -1,0 +1,190 @@
+{
+  "status": "real mechanism PASS on third batch; final current-overlay full/build also passed",
+  "executionManifestSha256": "264aa0e14178f6a245f31421ab2f2f78dc12c0654482e9a26473af78405e5806",
+  "productOverlay": [
+    {
+      "path": "src/child.mjs",
+      "sha256": "e501292f05e68974bb2dab1692f2de17fd07d1800947cc17323643997cd68414"
+    },
+    {
+      "path": "src/specialist-child.mjs",
+      "sha256": "d043275c22b97391dbbfea82e02d67df9d5a50c7afa835ce765dcf5fa1cc8804"
+    },
+    {
+      "path": "test/specialist-child.test.mjs",
+      "sha256": "daecd03861356c8c2ebcef9f0f9f098e67c12ebdb33cbe9ad8bf83422f9223c6"
+    }
+  ],
+  "batches": [
+    {
+      "number": 1,
+      "requests": 2,
+      "status": "failed",
+      "childCode": "TOOL_LIMIT",
+      "knownZeroChargeGoResponses": 2,
+      "unknownResponses": 0
+    },
+    {
+      "number": 2,
+      "requests": 3,
+      "status": "failed",
+      "childCode": "TIMEOUT",
+      "knownZeroChargeGoResponses": 2,
+      "unknownResponses": 1
+    },
+    {
+      "number": 3,
+      "requests": 5,
+      "status": "completed",
+      "knownZeroChargeGoResponses": 5,
+      "unknownResponses": 0
+    }
+  ],
+  "cumulative": {
+    "physicalAttempts": 10,
+    "knownTokens": 14517,
+    "knownBalanceChargeUSD": 0,
+    "unknownUsageAndCostResponses": 1,
+    "unknownNotRefunded": true
+  },
+  "successfulBatch": {
+    "provider": "opencode-go",
+    "model": "glm-5.3-flash",
+    "roleCalls": {
+      "total": 5,
+      "main": 3,
+      "child": 2
+    },
+    "usage": [
+      {
+        "billingSource": "go",
+        "cost": 0,
+        "promptTokens": 637,
+        "completionTokens": 673,
+        "totalTokens": 1310,
+        "listCost": 0.00043205,
+        "allowance": 0.00043205,
+        "toolCallCount": 1,
+        "toolNames": [
+          "source_check"
+        ]
+      },
+      {
+        "billingSource": "go",
+        "cost": 0,
+        "promptTokens": 695,
+        "completionTokens": 411,
+        "totalTokens": 1106,
+        "listCost": 0.00030975,
+        "allowance": 0.00030975,
+        "toolCallCount": 2,
+        "toolNames": [
+          "read_page",
+          "read_page"
+        ]
+      },
+      {
+        "billingSource": "go",
+        "cost": 0,
+        "promptTokens": 1251,
+        "completionTokens": 1602,
+        "totalTokens": 2853,
+        "listCost": 0.00098865,
+        "allowance": 0.00098865,
+        "toolCallCount": 0,
+        "toolNames": []
+      },
+      {
+        "billingSource": "go",
+        "cost": 0,
+        "promptTokens": 1714,
+        "completionTokens": 679,
+        "totalTokens": 2393,
+        "listCost": 0.0005966,
+        "allowance": 0.0005966,
+        "toolCallCount": 1,
+        "toolNames": [
+          "save_report"
+        ]
+      },
+      {
+        "billingSource": "go",
+        "cost": 0,
+        "promptTokens": 2314,
+        "completionTokens": 189,
+        "totalTokens": 2503,
+        "listCost": 0.0004416,
+        "allowance": 0.0004416,
+        "toolCallCount": 0,
+        "toolNames": []
+      }
+    ],
+    "originalReadback": {
+      "status": "PASS original separate-process readback and actual encoded Main consumption",
+      "runId": "run-dhHEmU",
+      "childRunId": "run-I7L2k9",
+      "unchangedBytes": true,
+      "fileCount": 14,
+      "reportSha256": "0cdf1a721955df7a6221dc0232a99b91d6787d53976b3a715fd60b4f25775b5f",
+      "summarySha256": "bc6d9202de820c50d7de38cc7137b34abb0a0c6f5c0bb4653d537037f1d364b4",
+      "sources": [
+        {
+          "sourceId": "atlas-a@A-2026-01:p1",
+          "resultRef": "result:sha256:d7dd8e8ecb2d6deb3cceff5b10d6ca5694371e061b2af49cd5ec4f0e76da0b0a",
+          "textSha256": "948ef1fc240590b97eb97b9f5a9e74eac4136ff14983bc7102dfc91eabad30a0"
+        },
+        {
+          "sourceId": "atlas-b@B-2026-02:p1",
+          "resultRef": "result:sha256:9b093eab344ca1b18ced5ab587c53320ee3289d19c1a8b0232b626c9013a9ea5",
+          "textSha256": "a25c6c264eb82e4f4472028726e5c140a3ef9e082ca8ed3427c9e894d5a54f2d"
+        }
+      ],
+      "matchingMainRequests": 2,
+      "physicalCallsThisReadback": 0,
+      "semanticStatus": "pending bounded source comparison",
+      "qualificationAttempts": 3,
+      "completedMechanisms": 1,
+      "cumulativePhysicalAttempts": 10,
+      "earlierFailuresPreserved": true
+    },
+    "boundedSourceReview": {
+      "status": "bounded synthetic source comparison PASS, not general semantic qualification",
+      "reviewer": "implementation writer original-source inspection; independent final review pending",
+      "summarySha256": "bc6d9202de820c50d7de38cc7137b34abb0a0c6f5c0bb4653d537037f1d364b4",
+      "reportSha256": "0cdf1a721955df7a6221dc0232a99b91d6787d53976b3a715fd60b4f25775b5f",
+      "checkedClaims": [
+        "atlas-a free CSV only and 120 rows",
+        "atlas-b free CSV plus Markdown and 300 rows",
+        "both all exports require online connection",
+        "both Enterprise adds PDF without removing online requirement",
+        "only page1 scope asserted; other-page facts unverified",
+        "exact source identities and original resultRefs match acquired bytes"
+      ],
+      "lengthObservations": {
+        "childWholeWhitespaceWords": 166,
+        "childAdvisoryTarget": 100,
+        "childAdvisoryFollowed": false,
+        "mainBodyWhitespaceWords": 169,
+        "mainAdvisoryTarget": 200,
+        "mainBodyAdvisoryFollowed": true,
+        "storedWithCitationAppendixWords": 204
+      },
+      "scope": "No investment/model-quality certification; prompt word targets are advisory and not a new product hard limit"
+    }
+  },
+  "excluded": [
+    "credentials",
+    "raw responses and logs",
+    "SQLite databases",
+    "private inputs",
+    "dependencies and caches"
+  ],
+  "notClaimed": [
+    "general semantic quality",
+    "strict advisory word-count compliance",
+    "cross-template older WIP Run compatibility",
+    "stable release or remote publication"
+  ],
+  "finalVerification": "final-verification.safe.json",
+  "independentRealEvidenceReview": "original immutable SQLite/report bytes inspected independently: source/summary/Main consumption hashes and bounded synthetic claims confirmed; no general semantic qualification"
+}

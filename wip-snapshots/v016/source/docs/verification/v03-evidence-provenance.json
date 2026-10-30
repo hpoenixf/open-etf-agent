@@ -1,0 +1,205 @@
+{
+  "kind": "actual local artifact hashes; raw logs excluded",
+  "artifacts": [
+    {
+      "basename": "hooks-workers-red.txt",
+      "sha256": "b21ed326cb6f568dd597e828c11c23ca8a61ff3e9d99025a58bcb7f35c9f2bd1",
+      "summary": "docs/verification/v03-observations.md"
+    },
+    {
+      "basename": "hooks-workers-green.txt",
+      "sha256": "b34df861306a9d7347d1ede0afda7bdfffdba997f80e44b320931febc95137ef",
+      "summary": "docs/verification/v03-observations.md"
+    },
+    {
+      "basename": "integration-red.txt",
+      "sha256": "0ed18a1d6682b514f48b5c9bb0b29383ecb34c1c261d05e5c5c63a9749d93ad3",
+      "summary": "docs/verification/v03-observations.md"
+    },
+    {
+      "basename": "integration-green.txt",
+      "sha256": "4f2ce9818a1dd0eb37675ecd79c5da5047da608ef80c36393245b580b89f2817",
+      "summary": "docs/verification/v03-observations.md"
+    },
+    {
+      "basename": "install.txt",
+      "sha256": "adcf84617f30a9d5375852dcfd3545b1f57ed5c542f33d3cf85987af5dc51189",
+      "summary": "docs/verification/v03-observations.md"
+    },
+    {
+      "basename": "cli-metadata-red.txt",
+      "sha256": "fecd74d5ae82a0f44334009334698bc2ed733fb32313c617467870550a8544f0",
+      "summary": "docs/verification/v03-observations.md"
+    },
+    {
+      "basename": "cli-metadata-green.txt",
+      "sha256": "9aa110640cabb26a82bab52b2903188ce25d4a8498a26d8b81f186b4dcef5769",
+      "summary": "docs/verification/v03-observations.md"
+    },
+    {
+      "basename": "cli-metadata-green-2.txt",
+      "sha256": "95f6ea6b5f61f3f72f00bacbd4a1747a275895fcb6bc918ebe6c18242cd0a7bd",
+      "summary": "docs/verification/v03-observations.md"
+    },
+    {
+      "basename": "release-red.txt",
+      "sha256": "ce24f424397eeffb262b842b801ba7374e8f539287d62d3773085f65376e2c76",
+      "summary": "docs/verification/v03-observations.md"
+    },
+    {
+      "basename": "release-green.txt",
+      "sha256": "a6ecf4875489b740f619c1f354042b8dd7675914f025a110ebe31a4259bd4e3d",
+      "summary": "docs/verification/v03-observations.md"
+    },
+    {
+      "basename": "all-green-1.txt",
+      "sha256": "78d39cae80c7537e695b5b4ce671deb34767bc4f7bea0a93f9b3295fcad4fc49",
+      "summary": "docs/verification/v03-observations.md"
+    },
+    {
+      "basename": "all-green-2.txt",
+      "sha256": "2c235c599cf7a8986806381f2a3fd0eb9a4ab7353a94a818983a3ec719f32178",
+      "summary": "docs/verification/v03-observations.md"
+    },
+    {
+      "basename": "npm-build.txt",
+      "sha256": "37b0867820967cb3f5fe4dd05f86db13b1b688e78ed80a979ff47f1cb57f4aaf",
+      "summary": "docs/verification/v03-observations.md"
+    },
+    {
+      "basename": "npm-test.txt",
+      "sha256": "44388b5b434fb7ef62e18296fb13417a76247e3f8ec9ece3b0910cf8b7ae1358",
+      "summary": "docs/verification/v03-observations.md"
+    },
+    {
+      "basename": "demo-document-compare.txt",
+      "sha256": "c6a2d1c434349ab3928ed3ea36822fbcfa70ac2286d64608700ac42508a114d9",
+      "summary": "docs/verification/v03-observations.md"
+    },
+    {
+      "basename": "demo-skill-mcp.txt",
+      "sha256": "46ff86440e1595ce998679ee5284ddc24cc8b3bbbda57b7a7cdd0ef36e7ea2bf",
+      "summary": "docs/verification/v03-observations.md"
+    },
+    {
+      "basename": "demo-batch-read.txt",
+      "sha256": "c51d563b3d3c83491bd5a619f297cce025ae51aa0ef7e30aa3b1334af50fc02c",
+      "summary": "docs/verification/v03-observations.md"
+    },
+    {
+      "basename": "demo-fixture-child.txt",
+      "sha256": "d14394b856546fd0fc28ca83b4470f1cd21d73e8665a41f4eef507a65c9298f4",
+      "summary": "docs/verification/v03-observations.md"
+    },
+    {
+      "basename": "kit-final-lint.json",
+      "sha256": "f10c30398070e0474752a1fa96d08cc28983cb40b95d90e0c430be51d4b09893",
+      "summary": "docs/verification/v03-observations.md"
+    },
+    {
+      "basename": "kit-final-status.json",
+      "sha256": "4b1536b60a93bf6ed46748ccc6ed6382c2ea91aaecbaa006bd9e0f3330c57ce5",
+      "summary": "docs/verification/v03-observations.md"
+    },
+    {
+      "basename": "kit-final-verify.json",
+      "sha256": "4c82f84d2f4b4471893cb833fcccdceace6a2125c82e90f19f4774cba00076cb",
+      "summary": "docs/verification/v03-observations.md"
+    },
+    {
+      "basename": "kit-lint---stage-apply.json",
+      "sha256": "f10c30398070e0474752a1fa96d08cc28983cb40b95d90e0c430be51d4b09893",
+      "summary": "docs/verification/v03-observations.md"
+    },
+    {
+      "basename": "kit-lint---stage-plan.json",
+      "sha256": "26fa1ee536291ca6623065f3fb487592772092806bcecac1ccd6b8385f880c78",
+      "summary": "docs/verification/v03-observations.md"
+    },
+    {
+      "basename": "kit-status.json",
+      "sha256": "ed68a5353195253fa65bc15097bf957b4a31262c25a5ce5f9658d78f8127c2c9",
+      "summary": "docs/verification/v03-observations.md"
+    },
+    {
+      "basename": "kit-verify---check.json",
+      "sha256": "61f2397643eec11495ba71b6a3886d83b177ea38c7a05c62765114ab69f4abac",
+      "summary": "docs/verification/v03-observations.md"
+    },
+    {
+      "basename": "observe-review-red.txt",
+      "sha256": "2f9388fb6208065044945727af5e9f739225bbb965a5c0ad5bc9f14be57a16bd",
+      "summary": "docs/verification/v03-observations.md"
+    },
+    {
+      "basename": "observe-review-green.txt",
+      "sha256": "4c5abc511abeac7e8509c052887b68219d0da48fac1f10e4370003086c3da715",
+      "summary": "docs/verification/v03-observations.md"
+    },
+    {
+      "basename": "final-build.txt",
+      "sha256": "37b0867820967cb3f5fe4dd05f86db13b1b688e78ed80a979ff47f1cb57f4aaf",
+      "summary": "docs/verification/v03-observations.md"
+    },
+    {
+      "basename": "final-demo-batch-read.txt",
+      "sha256": "80d3fae32785e612a26fec7c8be9ac824a7f7c049e6fc65d8fb1cf5cdcebb4a8",
+      "summary": "docs/verification/v03-observations.md"
+    },
+    {
+      "basename": "final-demo-document-compare.txt",
+      "sha256": "1ad6fe802c7928ddabb9a467a55eef488299ee0837f1dbda12aa09bd0ec570fa",
+      "summary": "docs/verification/v03-observations.md"
+    },
+    {
+      "basename": "final-demo-fixture-child.txt",
+      "sha256": "dd72ac68036d759b36db76d34a587b33fae0702f053a888afdc825b1c416f0de",
+      "summary": "docs/verification/v03-observations.md"
+    },
+    {
+      "basename": "final-demo-skill-mcp.txt",
+      "sha256": "e858619e566831f1c3589d02c10b5184631b379467600e1e7cd83bc8f86cc574",
+      "summary": "docs/verification/v03-observations.md"
+    },
+    {
+      "basename": "final-inputs.sha256",
+      "sha256": "1409cc6aa63d4cc751e6ce113bfdf130077ccffea4a2a21f580b31993765b9ab",
+      "summary": "docs/verification/v03-observations.md"
+    },
+    {
+      "basename": "final-kit-lint---stage-apply.json",
+      "sha256": "f10c30398070e0474752a1fa96d08cc28983cb40b95d90e0c430be51d4b09893",
+      "summary": "docs/verification/v03-observations.md"
+    },
+    {
+      "basename": "final-kit-lint---stage-plan.json",
+      "sha256": "26fa1ee536291ca6623065f3fb487592772092806bcecac1ccd6b8385f880c78",
+      "summary": "docs/verification/v03-observations.md"
+    },
+    {
+      "basename": "final-test.txt",
+      "sha256": "0ece84b2d1759ac63ed885d847cbad14f90865e29353153d9e86f5b8e12ebf1b",
+      "summary": "docs/verification/v03-observations.md"
+    },
+    {
+      "basename": "fixture-source-red.txt",
+      "sha256": "83405151c14fab4e0076f6dde6a519f1ce9b60dc5965fae871b0dfb5298bc828",
+      "summary": "docs/verification/v03-observations.md"
+    },
+    {
+      "basename": "qualified-kit-lint.json",
+      "sha256": "f10c30398070e0474752a1fa96d08cc28983cb40b95d90e0c430be51d4b09893",
+      "summary": "docs/verification/v03-observations.md"
+    },
+    {
+      "basename": "qualified-kit-status.json",
+      "sha256": "4b1536b60a93bf6ed46748ccc6ed6382c2ea91aaecbaa006bd9e0f3330c57ce5",
+      "summary": "docs/verification/v03-observations.md"
+    },
+    {
+      "basename": "qualified-kit-verify.json",
+      "sha256": "4c82f84d2f4b4471893cb833fcccdceace6a2125c82e90f19f4774cba00076cb",
+      "summary": "docs/verification/v03-observations.md"
+    }
+  ]
+}

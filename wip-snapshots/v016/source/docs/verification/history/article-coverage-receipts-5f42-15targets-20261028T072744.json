@@ -1,0 +1,289 @@
+{
+  "schemaVersion": 1,
+  "kind": "actual-provider-free-runtime-execution",
+  "executedAt": "2026-10-28T07:27:44.546Z",
+  "node": "v26.11.1",
+  "sourceCommit": "5f42c33892d57ed05e8cd09cad48573e6901995b",
+  "inputSha256": "4da4e1f8b7b9bfcee7b4581f3e932dbf2f13413f8514f41d3dc4672fd1146e09",
+  "runnerSha256": "4831b75b97ddb484e2fbe2aeac15a6541388711fa8fd6c872f9741ebb0def791",
+  "targetsSha256": "01aff6496a7790607c08ab0118c44d4ed067a49c8cc0e4c6a357c337eb19601b",
+  "commitConfirmation": {
+    "commit": "5f42c33892d57ed05e8cd09cad48573e6901995b",
+    "tree": "35d3ecef7d66527cad422a25da35766fd73d4463",
+    "method": "actual-local-git-objects"
+  },
+  "executionBounds": {
+    "nodeHeapMiB": 512,
+    "temporaryDirectory": "owned-smoke-output",
+    "perTargetMs": 30000,
+    "totalMs": 120000
+  },
+  "modelCalls": 0,
+  "semanticStatus": "unreviewed",
+  "results": {
+    "child": {
+      "target": {
+        "kind": "cli",
+        "case": "fixture-child"
+      },
+      "exitCode": 0,
+      "observed": {
+        "case": "fixture-child",
+        "completedRuns": 1,
+        "artifacts": [
+          {
+            "bytes": 954,
+            "sha256": "54463149ca42d7bb39104695e17963be61c3203d1069e223e6b05976f66e6004",
+            "mediaType": "text/markdown; charset=utf-8"
+          }
+        ]
+      },
+      "stdoutSha256": "fc629074629e4e1e7f2f3e65891e5b47076bf82dbc0ee496d05355a97187f2f7",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "reread": {
+      "target": {
+        "kind": "cli",
+        "case": "retrieve-reread"
+      },
+      "exitCode": 0,
+      "observed": {
+        "case": "retrieve-reread",
+        "completedRuns": 1,
+        "artifacts": [
+          {
+            "bytes": 1348,
+            "sha256": "009d3f77cf5208b2260e4dde2cbdcd21288b4fd600899eb2b0f7a827f0e3c016",
+            "mediaType": "text/markdown; charset=utf-8"
+          }
+        ]
+      },
+      "stdoutSha256": "66469866035b21b0a85b3e973a59cefd9229d15726c1d8b4ca83991f529c36dd",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "compaction": {
+      "target": {
+        "kind": "cli",
+        "case": "compact-and-reread"
+      },
+      "exitCode": 0,
+      "observed": {
+        "case": "compact-and-reread",
+        "completedRuns": 1,
+        "artifacts": [
+          {
+            "bytes": 992,
+            "sha256": "c8fcdc248076d65c01d9161d95dc18f690bc4f877c307cccd8e983e351a02d26",
+            "mediaType": "text/markdown; charset=utf-8"
+          }
+        ]
+      },
+      "stdoutSha256": "53833f18cb91e37dcf65ff9a73aae7f1187333e3a5c1dbdeb225081323a2d4c2",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "memory": {
+      "target": {
+        "kind": "cli",
+        "case": "explicit-memory"
+      },
+      "exitCode": 0,
+      "observed": {
+        "case": "explicit-memory",
+        "completedRuns": 3,
+        "artifacts": [
+          {
+            "bytes": 884,
+            "sha256": "0f4ea5fdd0dbb4a1f48d1c68331c926fd6f851302600a932c9dcf9ad9fc23e60",
+            "mediaType": "text/markdown; charset=utf-8"
+          }
+        ]
+      },
+      "stdoutSha256": "e8841ba88bd11db3cb16a5b496cfe33dd045be0a99595a899474462b0e6e7236",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "mcp": {
+      "target": {
+        "kind": "cli",
+        "case": "skill-mcp"
+      },
+      "exitCode": 0,
+      "observed": {
+        "case": "skill-mcp",
+        "completedRuns": 1,
+        "artifacts": [
+          {
+            "bytes": 953,
+            "sha256": "6422cf85cf33e47f2ada20ae8dd85191b6939a62a754ed53ce3265af9a22493f",
+            "mediaType": "text/markdown; charset=utf-8"
+          }
+        ]
+      },
+      "stdoutSha256": "5909e325119ee25249ce2d09f75cba2192dd6fb9c8a596dbc453bcd0bcb8a521",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "batch": {
+      "target": {
+        "kind": "cli",
+        "case": "batch-read"
+      },
+      "exitCode": 0,
+      "observed": {
+        "case": "batch-read",
+        "completedRuns": 1,
+        "artifacts": [
+          {
+            "bytes": 951,
+            "sha256": "64ab2dfa9f08eef9d243c336e307a021c7ef8fffbe4a138bf0303afb7eead4ff",
+            "mediaType": "text/markdown; charset=utf-8"
+          }
+        ]
+      },
+      "stdoutSha256": "77551a176be0d4cd20ae149c9dd85dfeffb0e29423ab07f57ff66b5c5cc1214f",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "provider": {
+      "target": {
+        "kind": "test",
+        "file": "test/gateway.test.mjs",
+        "name": "1.4 injected offline transport verifies request encoding and matched tool results"
+      },
+      "exitCode": 0,
+      "observed": {
+        "name": "1.4 injected offline transport verifies request encoding and matched tool results",
+        "passed": 1,
+        "failed": 0,
+        "skipped": 0
+      },
+      "stdoutSha256": "a8b1bdec64b11941b1cad962858fbf9cc2449b51ab83e9811e538f36109bdc13",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "plugins": {
+      "target": {
+        "kind": "test",
+        "file": "test/plugins.test.mjs",
+        "name": "7.1 two trusted packages use the ordinary Host and acquired source/method owners"
+      },
+      "exitCode": 0,
+      "observed": {
+        "name": "7.1 two trusted packages use the ordinary Host and acquired source/method owners",
+        "passed": 1,
+        "failed": 0,
+        "skipped": 0
+      },
+      "stdoutSha256": "8964acf6ae6aaf0385396c694039a0b77cc87a424e37322f4ddc7b68d984a5e9",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "surface": {
+      "target": {
+        "kind": "test",
+        "file": "test/cooperation-integration.test.mjs",
+        "name": "3.4 fixture child shares root counters and advertises only allowed read tool"
+      },
+      "exitCode": 0,
+      "observed": {
+        "name": "3.4 fixture child shares root counters and advertises only allowed read tool",
+        "passed": 1,
+        "failed": 0,
+        "skipped": 0
+      },
+      "stdoutSha256": "90137b40321da457a549b7169f87ed2494ed6d361839eebfacb8ae3a82766726",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "trust": {
+      "target": {
+        "kind": "test",
+        "file": "test/context.test.mjs",
+        "name": "4.2 projection never launders a lookalike or altered payload into an acquired ref"
+      },
+      "exitCode": 0,
+      "observed": {
+        "name": "4.2 projection never launders a lookalike or altered payload into an acquired ref",
+        "passed": 1,
+        "failed": 0,
+        "skipped": 0
+      },
+      "stdoutSha256": "ced73e214976d46b8a6b3085df768392e5a2f8bc331537ab54f128cd087bcb79",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "hooks": {
+      "target": {
+        "kind": "test",
+        "file": "test/cooperation-integration.test.mjs",
+        "name": "3.3 Host revalidates effective Hook arguments and preserves original call"
+      },
+      "exitCode": 0,
+      "observed": {
+        "name": "3.3 Host revalidates effective Hook arguments and preserves original call",
+        "passed": 1,
+        "failed": 0,
+        "skipped": 0
+      },
+      "stdoutSha256": "168b420fe8289019d4d601766bbd434c496663ee725d60d675363aa27812b765",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "budget": {
+      "target": {
+        "kind": "test",
+        "file": "test/cooperation-integration.test.mjs",
+        "name": "3.3 root budget refusal stops before a second model request"
+      },
+      "exitCode": 0,
+      "observed": {
+        "name": "3.3 root budget refusal stops before a second model request",
+        "passed": 1,
+        "failed": 0,
+        "skipped": 0
+      },
+      "stdoutSha256": "90aa8d2c883d5785a4b65a03da0caa945c14df40786a63e669231d9bec95dcfc",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "control": {
+      "target": {
+        "kind": "test",
+        "file": "test/durable-runtime.test.mjs",
+        "name": "7.3 cancel during pending model is durable and late proposal cannot dispatch"
+      },
+      "exitCode": 0,
+      "observed": {
+        "name": "7.3 cancel during pending model is durable and late proposal cannot dispatch",
+        "passed": 1,
+        "failed": 0,
+        "skipped": 0
+      },
+      "stdoutSha256": "81eb5d1ad77d7e52511e28ce35c590f65620f6ec890d212a4a17deaa373f50b7",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "publication": {
+      "target": {
+        "kind": "test",
+        "file": "test/publication-cli.test.mjs",
+        "name": "8.2 local CLI starts same Runtime and separately reads body, current event and immutable Artifact"
+      },
+      "exitCode": 0,
+      "observed": {
+        "name": "8.2 local CLI starts same Runtime and separately reads body, current event and immutable Artifact",
+        "passed": 1,
+        "failed": 0,
+        "skipped": 0
+      },
+      "stdoutSha256": "d9f708b94186f75afcd4f2f5bc8292e57390101501e2fa7032415b72633524fa",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "worker": {
+      "target": {
+        "kind": "test",
+        "file": "test/worker-cli.test.mjs",
+        "name": "9.1 submit exits before a separate work process drives and reads the original Run"
+      },
+      "exitCode": 0,
+      "observed": {
+        "name": "9.1 submit exits before a separate work process drives and reads the original Run",
+        "passed": 1,
+        "failed": 0,
+        "skipped": 0
+      },
+      "stdoutSha256": "6cbb007d27af8710c4821a99b1bc0b9faff841880ab5a729033a851dd33586fa",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  }
+}

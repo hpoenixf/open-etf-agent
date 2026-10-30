@@ -1,0 +1,104 @@
+{
+  "kind": "fresh-install-build-and-local-PDF-byte-qualification",
+  "sourceCommit": "5f42c33892d57ed05e8cd09cad48573e6901995b",
+  "maintenanceDocsOverlay": 9,
+  "node": "26.11.1",
+  "inputManifestSha256": "4679d28b69ce1304bda35100b5ec39870d21094a7d72d9b3075a2a4efd7cbc5d",
+  "inputFilesUnchanged": 345,
+  "install": {
+    "startedAt": "2026-10-28T07:30:38.503367+00:00",
+    "finishedAt": "2026-10-28T07:30:39.651019+00:00",
+    "exitCode": 0,
+    "mode": "npm ci --offline --ignore-scripts --no-audit --no-fund",
+    "cache": "existing project-owned official npm cache",
+    "stdoutSha256": "1b7e5c05ebe63f4052cf46924807054da633d57198fd62b4d44c55b145d77e41",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "observations": [
+    {
+      "stage": "integrated-build",
+      "startedAt": "2026-10-28T07:31:26.492673+00:00",
+      "finishedAt": "2026-10-28T07:31:27.932611+00:00",
+      "exitCode": 0,
+      "stdoutSha256": "0d97133487796d86d0572688ae4671cf76be290bdc0e214beb5ae6243e8ed07e",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "stage": "integrated-pdf-default",
+      "startedAt": "2026-10-28T07:31:27.941775+00:00",
+      "finishedAt": "2026-10-28T07:31:28.151814+00:00",
+      "exitCode": 0,
+      "stdoutSha256": "b09551ba29945ee5a4cf981d005d3bce1f64060d15b1f6da8a934c8da2893824",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "stage": "integrated-readback-default",
+      "startedAt": "2026-10-28T07:31:28.151911+00:00",
+      "finishedAt": "2026-10-28T07:31:28.199492+00:00",
+      "exitCode": 0,
+      "stdoutSha256": "7616c2cd874416414d2110fa5eb2fb5f597e105824d38d3bb21fd4bca6d3cf37",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "savedByteObservation": {
+        "status": "matched",
+        "freshReadOnlyProcess": true,
+        "syntheticFixtureOrigin": true,
+        "operatorSelectedMode": false,
+        "page": 1,
+        "originalPdfBytes": 2423,
+        "originalPdfSha256": "e044fbd56469b1782a312236a8adf76cd776148611dd2322cf57b43695c9ecbf",
+        "sourceTextSha256": "839a67c204d42c4ca91c1904f62f111a3f6354033285a130fccf5bd6f2c28651",
+        "reportBytes": 1231,
+        "reportSha256": "fc0a4838b465ded4f0c388a97d5872ccd23ac9aa775ad818a090dc2ce724b0ab",
+        "revisionId": "revision:sha256:f30561b1c8734af7fb77a87c2ab90768908217c2757196df52f9eea6d00ac375",
+        "semantics": "unreviewed text-layer extraction; not OCR/visual/model qualification"
+      }
+    },
+    {
+      "stage": "integrated-pdf-operator",
+      "startedAt": "2026-10-28T07:31:28.199586+00:00",
+      "finishedAt": "2026-10-28T07:31:28.419237+00:00",
+      "exitCode": 0,
+      "stdoutSha256": "16fdee427868f0e7ebff9b0b3d76ccde3d2475b9d4ca0fd23ca9e0863b249622",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "stage": "integrated-readback-operator",
+      "startedAt": "2026-10-28T07:31:28.419390+00:00",
+      "finishedAt": "2026-10-28T07:31:28.460854+00:00",
+      "exitCode": 0,
+      "stdoutSha256": "ed8c9316af61b61d69db844a762e1207f6b5735d4fd91b6cf653e6c28ef089be",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "savedByteObservation": {
+        "status": "matched",
+        "freshReadOnlyProcess": true,
+        "syntheticFixtureOrigin": true,
+        "operatorSelectedMode": true,
+        "page": 3,
+        "originalPdfBytes": 2423,
+        "originalPdfSha256": "e044fbd56469b1782a312236a8adf76cd776148611dd2322cf57b43695c9ecbf",
+        "sourceTextSha256": "59dfc620c9f01c082075850b2b539ceab640c9f985d60f3074b936ea721d3d10",
+        "reportBytes": 1213,
+        "reportSha256": "5dbd9fbbb1602c65af5100d8b9767b836f3d7124457ea871fca627cbec38a50b",
+        "revisionId": "revision:sha256:02ea6443b26646d0f229bc99e7c516c4fcf1b12a48db68223aa9f9a95c00cf11",
+        "semantics": "unreviewed text-layer extraction; not OCR/visual/model qualification"
+      }
+    }
+  ],
+  "modelCalls": 0,
+  "limits": [
+    "Fresh npm ci into ordinary independent directory,96 packages offline from existing official cache, lifecycle scripts disabled.",
+    "No old dist reused: fresh syntax-checked ESM copy built and every src/fixtures file compared.",
+    "Two CLI processes and two separate read-only Artifact processes consumed saved outputs; fixture-derived PDF only, not user/private files.",
+    "No full373 rerun or live model/deployment/visual/OCR qualification."
+  ],
+  "earlierAttempts": [
+    {
+      "stage": "npm argument setup",
+      "result": "Before dependency extraction: npm refused same null file used for both user/global config; resolved with distinct empty per-invocation config."
+    },
+    {
+      "stage": "default-cache offline install",
+      "result": "ENOTCACHED; no network retry. Switched to existing project-owned official npm cache; exact npm ci succeeded."
+    }
+  ]
+}

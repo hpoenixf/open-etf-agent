@@ -1,0 +1,312 @@
+{
+  "schemaVersion": 1,
+  "kind": "unchanged-delivery-input-equivalence-not-new-execution",
+  "historicalInputSha256": "80966655766966b504f48055c17d0aafce65263ec019b0bd3f59a80dc128fdea",
+  "combinedInputSha256": "445b5cfd2e2cf792b5d431546c4742f893fc66c38f7d033949e0109bcde5431f",
+  "inputsCompared": 58,
+  "builtSrcAndFixturesCompared": 55,
+  "retainedIndependentDistMatchesCurrentBytes": true,
+  "packageAndLockAndBuildScriptByteIdentical": true,
+  "newDependencies": 0,
+  "packagesInOriginalInstall": 95,
+  "originalInstallReceipt": "docs/verification/v09-independent-install.safe.json",
+  "originalBuiltDeliveryReceipt": "docs/verification/v09-independent-delivery.safe.json",
+  "newInstallOrBuildOrCliExecution": false,
+  "basis": "Only checker and its unit test changed among 124 qualification inputs. Neither is used by the existing native-ESM build or eight built CLI delivery commands. All actual copied src/fixture bytes, build script and both package metadata files match the original independent qualification.",
+  "files": [
+    {
+      "path": "fixtures/cases.json",
+      "sha256": "9f91af7bbf425d20e48d985d3f33e7770ca2aaf1e9fe011c1d35ace31a062ba6",
+      "bytes": 1383
+    },
+    {
+      "path": "fixtures/documents.json",
+      "sha256": "0eed0f1ba7aef916b67eedb397e92e52c68d1ef5d2b7598b4013330c314ea8f1",
+      "bytes": 1492
+    },
+    {
+      "path": "fixtures/skills/compare/SKILL.md",
+      "sha256": "f5dddc14e6deb9f0308bd1360794f343870cb31f2924f533370b6eb650d77754",
+      "bytes": 480
+    },
+    {
+      "path": "fixtures/skills/compare/checklist.txt",
+      "sha256": "3587d34fc69e1bf1e79a5c1230c32dcd9c588e5a1fc05f52bc26aff7ee318e31",
+      "bytes": 141
+    },
+    {
+      "path": "package-lock.json",
+      "sha256": "453732f9e1bde150f90f45345c9f756d0d6abc511484a39ac75b83c1ad0f0da5",
+      "bytes": 43039
+    },
+    {
+      "path": "package.json",
+      "sha256": "07a9815a74002ee756e6cfdba141c15991aa2deef929215781193e42acf2ad6a",
+      "bytes": 528
+    },
+    {
+      "path": "scripts/build.mjs",
+      "sha256": "99b74ef6e3fa0be2bab927adaeb9a65480dff22f4a6c4e67253622ecbac89344",
+      "bytes": 1500
+    },
+    {
+      "path": "src/artifact-demo.mjs",
+      "sha256": "b56ba56449613dc02754887aeaf3ae3227ff74dcf5d916a86df0d57c79e81ba6",
+      "bytes": 1139
+    },
+    {
+      "path": "src/artifacts.mjs",
+      "sha256": "85d4c708a652e88ff0181c35c1932cbcfc8921326a00c8b0556269ecfcd86b3f",
+      "bytes": 8735
+    },
+    {
+      "path": "src/calculation.mjs",
+      "sha256": "54d65d3f703ebbeae1e1ae0e009617d9f3bcb71f9f34137648c1866a88691b40",
+      "bytes": 1348
+    },
+    {
+      "path": "src/child-results.mjs",
+      "sha256": "31183202453ca914869fa160c21c007f5aedd42be505afa08e5c0705761c99e1",
+      "bytes": 672
+    },
+    {
+      "path": "src/child.mjs",
+      "sha256": "4dd31b48b388dd62d3c3e31457f78ff302b70b1e61d7b0f5f1d6265ca2ae38fc",
+      "bytes": 1282
+    },
+    {
+      "path": "src/cli.mjs",
+      "sha256": "1f0e61472ae1c2b1cfa284fa32c5c3ed81665502030a81e7d5aff654590c57f1",
+      "bytes": 8097
+    },
+    {
+      "path": "src/compaction.mjs",
+      "sha256": "8be9332faeaec7a22d2dd5c4905edfcf70f5fd002df980f0c41e5e0061e712ed",
+      "bytes": 6986
+    },
+    {
+      "path": "src/context.mjs",
+      "sha256": "1fc5612d925cea6458c16663273247897aa48c4424a34d55b613751b0902a75a",
+      "bytes": 2772
+    },
+    {
+      "path": "src/cooperation-demo.mjs",
+      "sha256": "8fe51ff844db362b2687e86fe53dc38cb1148441133ffd04f0f159dc9ea72e5c",
+      "bytes": 5031
+    },
+    {
+      "path": "src/cooperation.mjs",
+      "sha256": "984f63e17a29b03b3bd97a84c363f217f867ae9f2a34af100e7ddf12e12b0c71",
+      "bytes": 2449
+    },
+    {
+      "path": "src/durable-child.mjs",
+      "sha256": "ce37d18ea8542d477c06deb2e8167613a80f2e5b81a9ad9730fd5f70688c7d5b",
+      "bytes": 4543
+    },
+    {
+      "path": "src/durable-demo.mjs",
+      "sha256": "5ad468d1e92d4dcf752f1bde12f720fd57be99dc0c27313c4b059a9a1d71372d",
+      "bytes": 6569
+    },
+    {
+      "path": "src/durable-memory.mjs",
+      "sha256": "5448f1306cb8da43dc3651c6d312742f2dd9d27dd25080b681308f66b8101f72",
+      "bytes": 8396
+    },
+    {
+      "path": "src/evaluate-cli.mjs",
+      "sha256": "306bbad49b7698449421d1a694decbafdb1fdf31841a829edd058e2209ece794",
+      "bytes": 1170
+    },
+    {
+      "path": "src/evaluate.mjs",
+      "sha256": "974e288e0516dcd4098110bbba1e0ee2e868a717d48778ff48295b53e5aae200",
+      "bytes": 5064
+    },
+    {
+      "path": "src/example-plugins.mjs",
+      "sha256": "05dc97f843e14f3fe4224dd35b0c57d5232b97240a3bd25115d3abdea537f0eb",
+      "bytes": 2867
+    },
+    {
+      "path": "src/extensions.mjs",
+      "sha256": "0bc6ab3e24f1b8e51a3373dacca48ba5e6857064ff7aee29675340d57d4711db",
+      "bytes": 3946
+    },
+    {
+      "path": "src/fixture-gateway.mjs",
+      "sha256": "5ba1ae02049188f7b5890aca19df3bfe5e987cd389ef3b103518cbad88c40bcd",
+      "bytes": 3000
+    },
+    {
+      "path": "src/fixture-server.mjs",
+      "sha256": "98830aa62741d054efb969bf717e964790a109f31feef75681ba2ac105fd3738",
+      "bytes": 2947
+    },
+    {
+      "path": "src/gateway.mjs",
+      "sha256": "9272efa6b91d274032badda677ea9f31357c1749fae8c5405400cd4b80b9ffc7",
+      "bytes": 4198
+    },
+    {
+      "path": "src/hooks.mjs",
+      "sha256": "aeedd9bfeaffbd5a23e069817740cfac0574e570c494b717588644f432db06d4",
+      "bytes": 3690
+    },
+    {
+      "path": "src/live-config.mjs",
+      "sha256": "e021eabdce6f4c8b9f52d70669e6be934f1a674197b45739c4ce592c1f21d546",
+      "bytes": 2733
+    },
+    {
+      "path": "src/live-options.mjs",
+      "sha256": "ddd4eba2bac029bd4c06227ad0807d412f2dff8d5b2caae8a471b5e7bcaf3555",
+      "bytes": 1272
+    },
+    {
+      "path": "src/live-trace.mjs",
+      "sha256": "9f45500caeb8a51c335fc01bc1b2eb05e24c97ecfe9a1d583581a77763e3374f",
+      "bytes": 2417
+    },
+    {
+      "path": "src/live-transport.mjs",
+      "sha256": "a8912b1157418136e111e2184afe96711443e0e010bdf4e4f4e069524a9fcbc3",
+      "bytes": 9829
+    },
+    {
+      "path": "src/live-validation.mjs",
+      "sha256": "1e5896f5686cc3d8cf0f6321e6c9dc63e3fb2621919119bff61ca4d1bcc626ef",
+      "bytes": 6257
+    },
+    {
+      "path": "src/mcp.mjs",
+      "sha256": "fbc19a7192bf79ddb142aad1d828bd4f5fc5e183e2def8b7a71ac30431d04d39",
+      "bytes": 6503
+    },
+    {
+      "path": "src/memory-effects.mjs",
+      "sha256": "92b5079e6d0c8c5c40f6cae28de4612fba772b591c61a27092fba9236c148592",
+      "bytes": 813
+    },
+    {
+      "path": "src/memory-projection.mjs",
+      "sha256": "b4c5215c4507b35db0b6c74dc3a6ec2f5cfb2dc62ce3c13f4537d4ef1b34f6fe",
+      "bytes": 3259
+    },
+    {
+      "path": "src/memory-tools.mjs",
+      "sha256": "a570111989bc2f7d102a3c97778d26a16fbdaac48d1ddd10084358b4d25af812",
+      "bytes": 3421
+    },
+    {
+      "path": "src/memory.mjs",
+      "sha256": "78826d5d0bce89e92c97134d5cc497ce835a09dcc12539e668fb4e527f48caae",
+      "bytes": 9143
+    },
+    {
+      "path": "src/observe.mjs",
+      "sha256": "9305becdc64c124e8a0531b03396e2dd96fcaef4ef885638418080ed18895599",
+      "bytes": 4034
+    },
+    {
+      "path": "src/plugins.mjs",
+      "sha256": "188d109ad808661a9b0219619c74696560931d25e557f361718a2d0f2fa511f8",
+      "bytes": 12174
+    },
+    {
+      "path": "src/publication.mjs",
+      "sha256": "f6540a9542dd5b621d9133b7528ba50273d90ebf6c6d72489a63b469947cf468",
+      "bytes": 3120
+    },
+    {
+      "path": "src/reader-cli.mjs",
+      "sha256": "006ebd0f8e0e35ed6d43e533f4802ae4f7ffbe40dca8037219dff6c6cb5ba5e9",
+      "bytes": 1026
+    },
+    {
+      "path": "src/reader.mjs",
+      "sha256": "37c1e56202ed8b67e6ed5b303f51a8a6a333c8c4a718a5833255a0c2f60f5c88",
+      "bytes": 3259
+    },
+    {
+      "path": "src/report.mjs",
+      "sha256": "b153fbbff4d838e25a33028c2c993a43398c4a87911b4b6725d49a94dba7e300",
+      "bytes": 2355
+    },
+    {
+      "path": "src/results.mjs",
+      "sha256": "a99a58b7aaa31c9787fcdff9fdcbba7b819f19ed456946eefdc66d60c2442daa",
+      "bytes": 9308
+    },
+    {
+      "path": "src/retrieval-demo.mjs",
+      "sha256": "d55b579fefdfd43e4797c98191a52786d73d5903981130071de37a6c09adcfac",
+      "bytes": 2897
+    },
+    {
+      "path": "src/retrieval.mjs",
+      "sha256": "23313cf6879fa1b29a80a00a1883fdfa2c3085bdb125eb5cfd8334937bce15de",
+      "bytes": 1376
+    },
+    {
+      "path": "src/runtime.mjs",
+      "sha256": "9b740b606d8bab2b9267d660cc7ca15684e64da4f642bb57c00c6e3bb2c878f8",
+      "bytes": 27269
+    },
+    {
+      "path": "src/session-cli.mjs",
+      "sha256": "5acf1397e58796c384e9b6c7df4b8dbd57b62ed7af270139e9ac20ca7f356f3d",
+      "bytes": 4873
+    },
+    {
+      "path": "src/session.mjs",
+      "sha256": "a43d3aed96463d31d168928d43efa5b5975a16aff941fa7593cfe3f71429177b",
+      "bytes": 26409
+    },
+    {
+      "path": "src/skills.mjs",
+      "sha256": "39da1f37d9686bb93b2e2da406f1b7232b397eed99c0d61f6b4256b1c8e50de1",
+      "bytes": 3456
+    },
+    {
+      "path": "src/source.mjs",
+      "sha256": "246029fd38763f57dd93707d6d4378b9a6dfb0f5ff22f2269f207039937a6666",
+      "bytes": 1750
+    },
+    {
+      "path": "src/storage-files.mjs",
+      "sha256": "44ec8a1efc0c270975b55743e706d6da5f6f967a9722099d51c3e66a278b1ea7",
+      "bytes": 3348
+    },
+    {
+      "path": "src/stream.mjs",
+      "sha256": "d027272fcda569383a0a6bfa1aea6543ee2d66bec05170b59c7b28b126a25880",
+      "bytes": 3782
+    },
+    {
+      "path": "src/tools.mjs",
+      "sha256": "f3db4c59b20b0ac337b5961c1f73d77bab39df008691ff4af11e33b98f3e089c",
+      "bytes": 18026
+    },
+    {
+      "path": "src/worker.mjs",
+      "sha256": "7aba65ed6a16a9561ebae2a6d0831122490606e64379e5d4f8986f1665b478c1",
+      "bytes": 1289
+    },
+    {
+      "path": "src/working-demo.mjs",
+      "sha256": "cd3d8973b54bc141978cc654d33746ea3b02211991394d2f7fd04d8b6f61fa9a",
+      "bytes": 5898
+    },
+    {
+      "path": "src/working-note.mjs",
+      "sha256": "6bc9411849e92afdd8ff5c06d55067e833d7d9a4dcf5fecb778c35b16d1adaa7",
+      "bytes": 1615
+    }
+  ],
+  "limitations": [
+    "Original eight-process CLI and old Artifact readback remain historical execution evidence, not a fresh run on a relabeled digest.",
+    "Full combined Runtime suite and later fixed-source coverage are separately required."
+  ]
+}

@@ -1,0 +1,8 @@
+# Implementation and evidence plan
+
+1. Verify fresh public tree, materialize original files by Git blob identity; inspect original roadmap, owner, projection, tools, Runtime, CLI and Gateway. No root AGENTS.md is present in the recursive baseline tree.
+2. Root reviewed this bounded Spec/PLAN on 2026-10-29, with the metadata-only fixture wording corrected (not a Runtime output ban). Shared validation slot is still pending; do not run tests until released. Add tests demonstrating the missing CLI and temporary-before-access contract; record actual baseline RED without import failure alone.
+3. Add a narrow consumer adapter and fixture Gateway transport, reuse existing owner/bindings/currentness. Extend CLI argument dispatch only; do not modify Memory storage or lifecycle, Session schema or existing Runtime logic unless a concrete failing contract requires separate review.
+4. Verify current encoded input, read-only library byte inventory, temporary zero access, nonempty/miss/currentness/failure/cancellation and independent report readback. Run existing Memory/working-input/Gateway/CLI tests and full suite/build on Node 26.
+5. Independently copy exact candidate executable inputs, locked install without lifecycle scripts, build, seed synthetic Memory through the original explicit owner in a separate preparation process, then CLI run and fresh-process report/Memory byte readback. Keep raw outputs local, publish only sanitized engineering evidence.
+6. Supply root reviewed changed-file manifest, sensitivity audit and exact evidence. Number 0.14.0 only with qualification; no remote push/approve/merge. Sole publisher coordinates phase/v0.14/tag/release, preserving old refs and remote additions.

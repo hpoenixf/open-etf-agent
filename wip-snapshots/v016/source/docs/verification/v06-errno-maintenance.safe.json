@@ -1,0 +1,113 @@
+{
+  "schemaVersion": "open-etf-verification@1",
+  "date": "2026-10-27",
+  "scope": "v0.6 operation-bound EEXIST preservation",
+  "baseline": {
+    "repository": "hpoenixf/open-etf-agent",
+    "mainCommit": "ea84f5b64d56b355c1d058b9f00dd31617250646",
+    "path": "src/storage-files.mjs",
+    "blobSha1": "4b7ef2b410328d991bf9c856971c37c695c44137",
+    "remoteReadback": "matched complete local baseline Git blob identity"
+  },
+  "environment": {
+    "locallyExecutedNode": "26.11.1",
+    "reportedNode": "26.8.1",
+    "reportedNodeOrigin": "user observation, not rerun here",
+    "nodeMaxHeapMiB": 512,
+    "testConcurrency": 1,
+    "commandTimeoutSeconds": 30
+  },
+  "observations": [
+    {
+      "phase": "RED",
+      "kind": "targeted baseline diagnostic with assertions about observed failure",
+      "diagnosticExitCode": 0,
+      "nativeArtifactControl": "passed",
+      "expectedBehaviorFailures": 4,
+      "cases": [
+        "cause-wrapped real link EEXIST",
+        "native-message-rebuilt real link EEXIST",
+        "cause-wrapped real mkdir race EEXIST",
+        "native-message-rebuilt real mkdir race EEXIST"
+      ]
+    },
+    {
+      "phase": "GREEN",
+      "kind": "isolated candidate qualification",
+      "tests": 12,
+      "passed": 12,
+      "failed": 0,
+      "exitCode": 0,
+      "durationMs": 230.711742
+    },
+    {
+      "phase": "CHECK",
+      "kind": "portable publication test before null/undefined review",
+      "command": "node --test --test-concurrency=1 test/storage-files-errors.test.mjs",
+      "tests": 12,
+      "passed": 12,
+      "failed": 0,
+      "exitCode": 0,
+      "durationMs": 197.213953,
+      "sourceSha256": "11a7711fa1311015323a738e233797d52b5e44bbc27eb942e217a36690c20725",
+      "testSha256": "4e927bf6a00b8d525e4d9e53c068bfa5750097718cb556133dcf68fb3f9a07ee"
+    },
+    {
+      "phase": "RED",
+      "kind": "reviewed null rejection preservation assertion",
+      "command": "node --test --test-concurrency=1 --test-name-pattern='unknown null and undefined' test/storage-files-errors.test.mjs",
+      "tests": 1,
+      "passed": 0,
+      "failed": 1,
+      "exitCode": 1,
+      "observation": "actual null rejection was replaced with a TypeError while reading error.code; first assertion failed before the undefined iteration"
+    },
+    {
+      "phase": "GREEN",
+      "kind": "final portable publication test including null/undefined review",
+      "command": "node --test --test-concurrency=1 test/storage-files-errors.test.mjs",
+      "tests": 13,
+      "passed": 13,
+      "failed": 0,
+      "exitCode": 0,
+      "durationMs": 223.169102,
+      "sourceSha256": "44ec8a1efc0c270975b55743e706d6da5f6f967a9722099d51c3e66a278b1ea7",
+      "testSha256": "089833fed329c07c7c25824f9fc21efecc766b9e3df0a36254084c675bfe0f83"
+    },
+    {
+      "phase": "CHECK",
+      "kind": "independent v0.6 aggregate, no v0.7 changes",
+      "command": "node --test --test-concurrency=1 test/*.test.mjs",
+      "tests": 184,
+      "passed": 184,
+      "failed": 0,
+      "exitCode": 0,
+      "durationMs": 18787.371059,
+      "basis": "original v0.6 src/test/fixtures/scripts snapshot plus the exact final storage source and 13-case portable test; existing pinned dependency directory; no new install"
+    }
+  ],
+  "coverage": [
+    "raw/cause/message real link EEXIST",
+    "raw/cause/message real mkdir race EEXIST",
+    "unknown and different errno fail closed",
+    "cause cycles bounded",
+    "immutable bytes mismatch remains collision",
+    "artifact symlink refused",
+    "cancellation not swallowed",
+    "mkdir symlink refused",
+    "mismatched syscall/source/destination refused",
+    "unknown null/undefined rejection reasons preserved"
+  ],
+  "aggregateSuite": {
+    "tests": 184,
+    "passed": 184,
+    "failed": 0,
+    "localNode": "26.11.1",
+    "newTests": 13,
+    "inheritedTests": 171
+  },
+  "data": "original synthetic inputs and owned disposable files only",
+  "providerCalls": 0,
+  "remoteWrites": 0,
+  "release": "not-claimed"
+}

@@ -1,0 +1,55 @@
+{
+  "schemaVersion": "open-etf-v08-metadata-promotion@1",
+  "fromVersion": "0.8.0-dev.0",
+  "toVersion": "0.8.0",
+  "originalQualifiedInputSha256": "bbef17375feea95e05fa32dd5aa20bc2df102209b9ae048a6aa29f04833c04ee",
+  "publicationInputSha256": "caf5be631011562b024d2c4d62f26c4391048625a79ec8dedaea5dfab69a1711",
+  "changedLeaves": [
+    "package-lock.json",
+    "package.json"
+  ],
+  "changedFields": {
+    "package.json": [
+      "version"
+    ],
+    "package-lock.json": [
+      "version",
+      "packages[\"\"].version"
+    ]
+  },
+  "unchangedInputFiles": 117,
+  "dependencyLockEntriesUnchanged": 95,
+  "private": true,
+  "npmReleaseOrTag": false,
+  "fullSuiteRerun": false,
+  "necessaryChecks": {
+    "versionConsistency": "passed",
+    "offlineInstall": "passed",
+    "build": "passed",
+    "builtSourceByteEquality": "passed"
+  },
+  "formalRelease": "not-claimed",
+  "runtime": "Node v26.11.1",
+  "heapMiB": 512,
+  "completedAt": "2026-10-27T05:03:58.872943+00:00",
+  "commands": [
+    {
+      "command": "npm ci --offline --ignore-scripts --no-audit --no-fund --cache existing-owned-cache",
+      "exitCode": 0
+    },
+    {
+      "command": "node scripts/build.mjs",
+      "exitCode": 0
+    },
+    {
+      "command": "version-only JSON equality, independent package equality and built-source byte checks",
+      "exitCode": 0
+    }
+  ],
+  "independentCopyNonTestInputs": 60,
+  "builtFilesByteIdentical": 54,
+  "offlinePackagesInstalled": 95,
+  "networkDownloads": 0,
+  "providerCalls": 0,
+  "deliveryBehaviorEvidenceReuse": "Prior five-process delivery and 286-case runtime suite apply to byte-identical behavior/test/dependency files. Only version metadata differs; those runs were not repeated or retimestamped."
+}

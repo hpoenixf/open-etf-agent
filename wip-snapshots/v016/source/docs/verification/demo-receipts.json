@@ -1,0 +1,152 @@
+{
+  "schemaVersion": "sanitized-demo-receipts@1",
+  "observation": "EV-11",
+  "denominator": 4,
+  "note": "Actual original receipt fields and hashes; run directory absolute paths and raw logs intentionally excluded. Generated reports remain local and can be regenerated with the offline demo.",
+  "cases": [
+    {
+      "caseId": "T1",
+      "status": "completed",
+      "mode": "fixture",
+      "semanticStatus": "unreviewed",
+      "httpDownload": "not-applicable",
+      "receipt": {
+        "operationId": "T1-step-3",
+        "fileId": "sha256:9536de5e068d94646234a682a77721e281f0d20d6595d6c9b04641960f5f083f",
+        "path": "report.md",
+        "sha256": "9536de5e068d94646234a682a77721e281f0d20d6595d6c9b04641960f5f083f",
+        "bytes": 745,
+        "mediaType": "text/markdown; charset=utf-8"
+      },
+      "manifestSha256": "64ee123beaf592405f5272d520ebe866d970bb2368fcfb7348c24f874feda23f",
+      "acquiredSources": [
+        {
+          "sourceId": "atlas-a@A-2026-01:p1",
+          "documentId": "atlas-a",
+          "name": "Atlas Notes synthetic guide",
+          "version": "A-2026-01",
+          "page": 1,
+          "sha256": "948ef1fc240590b97eb97b9f5a9e74eac4136ff14983bc7102dfc91eabad30a0",
+          "mediaType": "text/plain; charset=utf-8"
+        },
+        {
+          "sourceId": "atlas-b@B-2026-02:p1",
+          "documentId": "atlas-b",
+          "name": "Atlas Notes synthetic guide",
+          "version": "B-2026-02",
+          "page": 1,
+          "sha256": "a25c6c264eb82e4f4472028726e5c140a3ef9e082ca8ed3427c9e894d5a54f2d",
+          "mediaType": "text/plain; charset=utf-8"
+        }
+      ]
+    },
+    {
+      "caseId": "T2",
+      "status": "completed",
+      "mode": "fixture",
+      "semanticStatus": "unreviewed",
+      "httpDownload": "not-applicable",
+      "receipt": {
+        "operationId": "T2-step-3",
+        "fileId": "sha256:719c833444c8fb5a6044e37ba0bc7edb327426070b56d15d8c3b4369da77d210",
+        "path": "report.md",
+        "sha256": "719c833444c8fb5a6044e37ba0bc7edb327426070b56d15d8c3b4369da77d210",
+        "bytes": 749,
+        "mediaType": "text/markdown; charset=utf-8"
+      },
+      "manifestSha256": "a931542ca0019a8ba73eea55a3fdb5161de7d20d95f2f9fc639eecf94eb20bce",
+      "acquiredSources": [
+        {
+          "sourceId": "atlas-a@A-2026-01:p2",
+          "documentId": "atlas-a",
+          "name": "Atlas Notes synthetic guide",
+          "version": "A-2026-01",
+          "page": 2,
+          "sha256": "4ffa8621deb9c7706d979191b5a4c73cd51e988a8d838402ee270e4853fbba61",
+          "mediaType": "text/plain; charset=utf-8"
+        },
+        {
+          "sourceId": "atlas-b@B-2026-02:p2",
+          "documentId": "atlas-b",
+          "name": "Atlas Notes synthetic guide",
+          "version": "B-2026-02",
+          "page": 2,
+          "sha256": "3139e7e679bc9bfb2968170747b68933fb3bb8f874326b07b9dc0cfa1f8868e4",
+          "mediaType": "text/plain; charset=utf-8"
+        }
+      ]
+    },
+    {
+      "caseId": "T3",
+      "status": "completed",
+      "mode": "fixture",
+      "semanticStatus": "unreviewed",
+      "httpDownload": "not-applicable",
+      "receipt": {
+        "operationId": "T3-step-4",
+        "fileId": "sha256:a5b1ff689e55b447ee2424ab2e670055ac4cc56817d947157daad74d9f1216b2",
+        "path": "report.md",
+        "sha256": "a5b1ff689e55b447ee2424ab2e670055ac4cc56817d947157daad74d9f1216b2",
+        "bytes": 980,
+        "mediaType": "text/markdown; charset=utf-8"
+      },
+      "manifestSha256": "0b5c159c548ac40009d465a14deae3c6b333c62f1c2ccc826ce216614741d06f",
+      "acquiredSources": [
+        {
+          "sourceId": "atlas-a@A-2026-01:p1",
+          "documentId": "atlas-a",
+          "name": "Atlas Notes synthetic guide",
+          "version": "A-2026-01",
+          "page": 1,
+          "sha256": "948ef1fc240590b97eb97b9f5a9e74eac4136ff14983bc7102dfc91eabad30a0",
+          "mediaType": "text/plain; charset=utf-8"
+        },
+        {
+          "sourceId": "atlas-b@B-2026-02:p1",
+          "documentId": "atlas-b",
+          "name": "Atlas Notes synthetic guide",
+          "version": "B-2026-02",
+          "page": 1,
+          "sha256": "a25c6c264eb82e4f4472028726e5c140a3ef9e082ca8ed3427c9e894d5a54f2d",
+          "mediaType": "text/plain; charset=utf-8"
+        }
+      ]
+    },
+    {
+      "caseId": "T4",
+      "status": "completed",
+      "mode": "fixture",
+      "semanticStatus": "unreviewed",
+      "httpDownload": "not-applicable",
+      "receipt": {
+        "operationId": "T4-step-3",
+        "fileId": "sha256:daf834add31580e5ac2e143b5a88109f0e0f14dc7f934de33092a05b9906d02e",
+        "path": "report.md",
+        "sha256": "daf834add31580e5ac2e143b5a88109f0e0f14dc7f934de33092a05b9906d02e",
+        "bytes": 745,
+        "mediaType": "text/markdown; charset=utf-8"
+      },
+      "manifestSha256": "6f2722347ccdace5979bb1acef0cfcdc8f7562b859e8969898d3b9a543504e9e",
+      "acquiredSources": [
+        {
+          "sourceId": "atlas-a@A-2026-01:p1",
+          "documentId": "atlas-a",
+          "name": "Atlas Notes synthetic guide",
+          "version": "A-2026-01",
+          "page": 1,
+          "sha256": "948ef1fc240590b97eb97b9f5a9e74eac4136ff14983bc7102dfc91eabad30a0",
+          "mediaType": "text/plain; charset=utf-8"
+        },
+        {
+          "sourceId": "atlas-b@B-2026-02:p1",
+          "documentId": "atlas-b",
+          "name": "Atlas Notes synthetic guide",
+          "version": "B-2026-02",
+          "page": 1,
+          "sha256": "a25c6c264eb82e4f4472028726e5c140a3ef9e082ca8ed3427c9e894d5a54f2d",
+          "mediaType": "text/plain; charset=utf-8"
+        }
+      ]
+    }
+  ]
+}

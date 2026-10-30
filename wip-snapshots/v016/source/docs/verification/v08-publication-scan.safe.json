@@ -1,0 +1,15 @@
+{
+  "scope": "Selected Publication-only source/test/docs, no raw logs or expanded Web/Worker candidate",
+  "filesChecked": 22,
+  "inputHashesRechecked": 119,
+  "sensitivePatternHits": 0,
+  "excluded": [
+    ".git and all local ancestry",
+    "private research trace/source",
+    "expanded Web/Worker source/spec/evidence (preserved separately)",
+    "test-output, dependencies, caches, SQLite, raw logs",
+    ".env bodies and credentials"
+  ],
+  "licenseGitBlob": "3deec194e953e269a10f796ae5658cc34c1c3553",
+  "inputSha256": "bbef17375feea95e05fa32dd5aa20bc2df102209b9ae048a6aa29f04833c04ee"
+}

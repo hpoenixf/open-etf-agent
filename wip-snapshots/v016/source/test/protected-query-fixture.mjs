@@ -1,0 +1,2 @@
+import {gateway as originalGateway} from './protected-runtime-fixture.mjs';
+export function queryGateway({query='120',before}={}){const original=originalGateway();let calls=0;return{mode:'fixture',get calls(){return calls;},async next(request){calls++;await before?.(calls,request);if(calls===1)return{kind:'calls',calls:[{id:'query-a',name:'search_pages',arguments:{query}}]};return original.next(request);}};}
