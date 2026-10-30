@@ -48,7 +48,7 @@ export async function readChatStream(body, { signal, maxBytes = 262144 } = {}) {
         if (!part || typeof part !== 'object') invalid('TOOL_FRAGMENT_SHAPE');
         if (!Number.isSafeInteger(part.index) || part.index < 0 || part.index >= 16 || (part.type && part.type !== 'function')) invalid('TOOL_FRAGMENT_INDEX_OR_TYPE');
         const call = calls.get(part.index) || { id: '', type: 'function', function: { name: '', arguments: '' } };
-        if (part.id !== undefined) { if (typeof part.id !== 'string' || (call.id && call.id !== part.id)) invalid('TOOL_FRAGMENT_ID','stream-event',{
+        if (part.id !== undefined && !(part.id === null && call.id)) { if (typeof part.id !== 'string' || (call.id && call.id !== part.id)) invalid('TOOL_FRAGMENT_ID','stream-event',{
           idFailure:typeof part.id!=='string'?'non-string':'conflicting-string',
           incomingIdKind:part.id===null?'null':Array.isArray(part.id)?'array':typeof part.id,
           previousIdPresent:Boolean(call.id),

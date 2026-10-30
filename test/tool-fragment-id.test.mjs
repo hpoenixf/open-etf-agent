@@ -19,6 +19,7 @@ test('valid omitted continuation and identical repeated ID preserve original exa
 test('explicit non-string IDs classify only closed kind without leaking provider values',async()=>{
  for(const [value,kind] of [[null,'null'],[true,'boolean'],[7,'number'],[['RAW_SENTINEL'],'array'],[{raw:'RAW_SENTINEL'},'object']]){
   for(const previous of [false,true]){
+   if(value===null&&previous)continue; // Legal no-update is covered by the portable Runtime and multi-index positives.
    const body=(previous?event(frame([first('RAW_SENTINEL')])):'')+event(frame([{index:0,id:value}],'tool_calls'))+done;
    const d=await rejected(body);
    assert.equal(d.reason,'TOOL_FRAGMENT_ID');assert.equal(d.idFailure,'non-string');assert.equal(d.incomingIdKind,kind);assert.equal(d.previousIdPresent,previous);assert.equal(Object.hasOwn(d,'incomingEmpty'),false);
