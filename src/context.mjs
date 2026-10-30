@@ -34,5 +34,28 @@ export async function projectContext({ messages, maxBytes, lookupSource } = {}) 
     for(const index of group) if(projected[index].result.status==='succeeded') projected[index].result.value=await replace(projected[index].result.value);
     if(size()<=maxBytes) return projected;
   }
-  fail('Context byte budget cannot retain mandatory original question/latest complete group');
+  // Reverse traversal retains the last full body per verified acquired ResultRef.
+  const retained = new Set();
+  async function deduplicate(value) {
+    if (!value || typeof value !== 'object') return value;
+    if (typeof value.sourceId === 'string' && typeof value.text === 'string' && typeof value.resultRef === 'string' && /^result:sha256:[a-f0-9]{64}$/.test(value.resultRef)) {
+      const ref = await replace(value);
+      if (ref === value) return value;
+      if (retained.has(value.resultRef)) return ref;
+      retained.add(value.resultRef);
+      return value;
+    }
+    if (Array.isArray(value.sources)) {
+      const sources = [...value.sources];
+      for (let i = sources.length - 1; i >= 0; i--) sources[i] = await deduplicate(sources[i]);
+      return { ...value, sources };
+    }
+    return value;
+  }
+  for (const index of [...(groups.at(-1) ?? [])].reverse()) {
+    const result = projected[index].result;
+    if (result.status === 'succeeded' && !result.memoryEffect && !result.partialPaths?.length && !Object.hasOwn(result, 'error') && !result.hookErrors?.length && !result.partialEffects?.length && !result.unknownEffects?.length) result.value = await deduplicate(result.value);
+  }
+  if (size() <= maxBytes) return projected;
+  throw Object.assign(new Error('Context byte budget cannot retain mandatory original question/latest complete group'), { code: 'CONTEXT_CAPACITY_EXCEEDED' });
 }
