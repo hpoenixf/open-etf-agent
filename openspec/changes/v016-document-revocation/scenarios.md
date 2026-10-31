@@ -13,6 +13,6 @@ Original test files remain intact. Legacy Session/Publication/Artifact/Reader/re
 
 ## Local teaching-capacity integration
 
-`protected-long-content.test.mjs` adds a 256 KiB UTF-8 control-character body, whose JSON escaping exercises a large complete checkpoint. The original Report and Publication are read back in a separate read-only process with matching bytes and receipt; revocation then denies Publication and Reader GET/HEAD while immutable report bytes remain unchanged. This is a specific bounded combination, not proof that every 64-tool / 2 MiB-argument combination fits, and not overlapping concurrency stress.
+`protected-long-content.test.mjs` adds a 256 KiB UTF-8 control-character body, whose JSON escaping exercises a large complete checkpoint. Publication is read back in a separate read-only process with matching content hash and receipt; Report bytes are checked by the parent process through the file and Reader HTTP paths. Revocation then denies Publication and Reader GET/HEAD while immutable report bytes remain unchanged. This is a specific bounded combination, not proof that every 64-tool / 2 MiB-argument combination fits, and not overlapping concurrency stress.
 
 The shared ordinary-response default no longer requires a report. Protected execution still explicitly requires its report, Publication, original schema-4 authorization and fixture-only Gateway. No live provider route is enabled by these size/default changes.
