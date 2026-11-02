@@ -21,3 +21,7 @@ This document records code and delivery qualification, not proof that a remote r
 ## 中文摘要
 
 本版仅交付 v0.16 可撤销 fixture 文档能力，保留当前 main 的修复，不夹带 v0.17 / v0.18。全量离线测试与构建通过；独立目录使用既有官方缓存按 lockfile 完成全新安装，未声称网络下载成功。独立 CLI 与 Reader 读回原报告，撤销后明确拒绝再读取，历史报告原字节保留。真实模型调用为零；公开 live 限制不变，文章/站点及正式 Release 状态另行核验。
+
+## Published implementation identity
+
+Immutable implementation source: [`35f244f2e06da447c110325d2ac5a5c39f36e842`](https://github.com/hpoenixf/open-etf-agent/tree/35f244f2e06da447c110325d2ac5a5c39f36e842), tree `bc127865a46b172ef0884257e4ad9d5a32a5d862`. The final package commit additionally records this source identity and version lineage; the actual `v0.16.0` tag and Release must identify that final package, not be confused with this implementation snapshot. All executable, fixture and lockfile bytes used for qualification are unchanged by this metadata-only step.
