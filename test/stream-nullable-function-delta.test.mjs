@@ -2,8 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { mkdir, mkdtemp, readFile } from 'node:fs/promises';
 import { resolve, join } from 'node:path';
-import { readChatStream } from '../src/stream.mjs';
-import { createChatGateway } from '../src/gateway.mjs';
+import { readChatStream, projectStreamProtocolDiagnostic } from '../src/stream.mjs';
+import { createChatGateway, projectProviderProtocolDiagnostic } from '../src/gateway.mjs';
 import { run } from '../src/runtime.mjs';
 
 const grant = { providerApproved: true, syntheticDataApproved: true, costApproved: true };
@@ -29,44 +29,27 @@ test('nullable name and arguments are absent increments, preserving string conca
   assert.equal((await viaGateway(extras)).calls[0].name, 'read_page');
 });
 
-test('nullable role and tool_calls are empty placeholders, while only established call IDs accept null continuation', async () => {
-  for (const placeholder of [{ role: null }, { tool_calls: null }, { role: null, tool_calls: null }]) {
-    const text = event(frame(placeholder)) + event(frame({ role: 'assistant', content: 'Synthetic final.' }, 'stop')) + 'data: [DONE]\n\n';
-    assert.equal((await readChatStream(new Response(text).body)).text, 'Synthetic final.');
-  }
-  const original = [[start({ name: 'read_page', arguments: '{}' })], [{ index: 0 }]];
-  const nullable = [[start({ name: 'read_page', arguments: '{}' })], [continuation({ name: null, arguments: null })], [continuation({ name: null, arguments: null })]];
-  assert.deepEqual(await decode(nullable), await decode(original));
-  for (const bad of [null, false, 7, {}, []]) await assert.rejects(decode([[start({ name: 'read_page', arguments: '{}' }, 0, bad)]]), /INCOMPLETE_OR_UNSUPPORTED_STREAM/);
-  await assert.rejects(decode([[start({ name: 'read_page', arguments: '{}' }, 0, '')], [continuation({})]]), /INCOMPLETE_OR_UNSUPPORTED_STREAM/);
-  for (const role of [false, 7, {}, [], 'user']) {
-    const text = event(frame({ role })) + event(frame({ content: 'must not accept' }, 'stop')) + 'data: [DONE]\n\n';
-    await assert.rejects(readChatStream(new Response(text).body), /INCOMPLETE_OR_UNSUPPORTED_STREAM/);
-  }
-  for (const tool_calls of [false, 7, {}, 'bad']) {
-    const text = event(frame({ tool_calls })) + event(frame({ content: 'must not accept' }, 'stop')) + 'data: [DONE]\n\n';
-    await assert.rejects(readChatStream(new Response(text).body), /INCOMPLETE_OR_UNSUPPORTED_STREAM/);
-  }
-});
-
-test('non-null non-string function values retain the original plain-error contract without modern diagnostics', async () => {
-  for (const field of ['name', 'arguments']) for (const value of [{ marker: 'SYNTHETIC_PRIVATE_MARKER' }, ['synthetic'], 12345, false]) {
-    const parts = [[start({ name: 'read_page', arguments: '{}' })], [{ index: 0, function: { [field]: value } }]];
-    for (const invoke of [decode, viaGateway]) await assert.rejects(invoke(parts), error => {
-      assert.equal(error.message, 'INCOMPLETE_OR_UNSUPPORTED_STREAM'); assert.equal(error.code, undefined);
-      return true;
+test('non-null non-string function values retain rejection and mint only bounded branded diagnostics', async () => {
+  for (const field of ['name', 'arguments']) for (const [value, kind] of [[{ marker: 'SYNTHETIC_PRIVATE_MARKER' }, 'object'], [['SYNTHETIC_PRIVATE_MARKER'], 'array'], [12345, 'number'], [false, 'boolean']]) {
+    const parts = [[start({ name: 'read_page', arguments: '{}' })], [continuation({ [field]: value })]];
+    for (const [invoke, project] of [[decode, projectStreamProtocolDiagnostic], [viaGateway, projectProviderProtocolDiagnostic]]) await assert.rejects(invoke(parts), error => {
+      const diagnostic = project(error); assert.equal(diagnostic.reason, 'TOOL_FRAGMENT_VALUE_TYPE'); assert.equal(diagnostic.field, field); assert.equal(diagnostic.incomingValueKind, kind);
+      assert.equal(Object.hasOwn(diagnostic, 'value'), false); assert.equal(Object.hasOwn(diagnostic, 'message'), false); assert.equal(JSON.stringify(diagnostic).includes('SYNTHETIC_PRIVATE_MARKER'), false);
+      diagnostic.field = 'forged'; assert.equal(project(error).field, field); assert.equal(error.code, 'PROVIDER_PROTOCOL_INVALID'); return true;
     });
   }
+  const forged = Object.assign(new Error('synthetic'), { code: 'PROVIDER_PROTOCOL_INVALID', field: 'name', incomingValueKind: 'object' });
+  assert.equal(projectStreamProtocolDiagnostic(forged), null); assert.equal(projectProviderProtocolDiagnostic(forged), null);
 });
 
 test('nullable increments do not weaken final JSON object, identity, index or terminal checks', async () => {
-  for (const argumentsText of ['null', '[]', '1', '"text"']) await assert.rejects(viaGateway([[start({ name: 'read_page', arguments: argumentsText })]]), e => e.message === 'INCOMPLETE_OR_UNSUPPORTED_PROTOCOL');
-  await assert.rejects(viaGateway([[start({ name: 'read_page', arguments: '{' })]]), e => e instanceof SyntaxError);
-  await assert.rejects(viaGateway([[start({ name: 'read_page', arguments: '{}' })], [{ ...continuation({ name: null, arguments: null }), id: 'conflicting' }]]), e => e.message === 'INCOMPLETE_OR_UNSUPPORTED_STREAM');
-  await assert.rejects(viaGateway([[start({ name: 'read_page', arguments: '{}' }, 1)]]), e => e.message === 'INCOMPLETE_OR_UNSUPPORTED_STREAM');
-  await assert.rejects(viaGateway([[start({ name: 'read_page', arguments: '{}' }), start({ name: 'read_page', arguments: '{}' }, 1)]]), e => e.message === 'INCOMPLETE_OR_UNSUPPORTED_PROTOCOL');
+  for (const argumentsText of ['null', '[]', '1', '"text"']) await assert.rejects(viaGateway([[start({ name: 'read_page', arguments: argumentsText })]]), e => projectProviderProtocolDiagnostic(e)?.reason === 'ARGUMENTS_OBJECT');
+  await assert.rejects(viaGateway([[start({ name: 'read_page', arguments: '{' })]]), e => projectProviderProtocolDiagnostic(e)?.reason === 'ARGUMENTS_JSON');
+  await assert.rejects(viaGateway([[start({ name: 'read_page', arguments: '{}' })], [{ ...continuation({ name: null, arguments: null }), id: 'conflicting' }]]), e => projectProviderProtocolDiagnostic(e)?.reason === 'TOOL_FRAGMENT_ID');
+  await assert.rejects(viaGateway([[start({ name: 'read_page', arguments: '{}' }, 1)]]), e => projectProviderProtocolDiagnostic(e)?.reason === 'NONCONTIGUOUS_TOOL_INDEX');
+  await assert.rejects(viaGateway([[start({ name: 'read_page', arguments: '{}' }), start({ name: 'read_page', arguments: '{}' }, 1)]]), e => projectProviderProtocolDiagnostic(e)?.reason === 'CALL_IDENTITY_OR_ARGUMENTS_TYPE');
   const unfinished = wire([[start({ name: 'read_page', arguments: '{}' })]]).replace('data: [DONE]\n\n', '');
-  await assert.rejects(readChatStream(new Response(unfinished).body), e => e.message === 'INCOMPLETE_OR_UNSUPPORTED_STREAM');
+  await assert.rejects(readChatStream(new Response(unfinished).body), e => projectStreamProtocolDiagnostic(e)?.reason === 'INCOMPLETE_TERMINAL');
 });
 
 test('nullable function deltas use the original Gateway Runtime Host path to read and save the same report', async () => {
@@ -81,7 +64,6 @@ test('nullable function deltas use the original Gateway Runtime Host path to rea
       let text;
       if (call) { const args = JSON.stringify(call.arguments), cut = Math.floor(args.length / 2); text = wire([[start({ name: call.name, arguments: nullable ? null : '' }, 0, call.id)], [continuation({ ...(nullable ? { name: null } : {}), arguments: args.slice(0, cut) })], [continuation({ ...(nullable ? { name: null, arguments: null } : {}) })], [continuation({ ...(nullable ? { name: null } : {}), arguments: args.slice(cut) })]]); }
       else text = event(frame({ role: 'assistant', content: 'Synthetic report saved.' }, 'stop')) + 'data: [DONE]\n\n';
-      if (nullable) text = event(frame({ role: null, tool_calls: null })) + text;
       return new Response(text, { headers: { 'content-type': 'text/event-stream' } });
     });
     const result = await run({ question: 'Read atlas-a page1 and save a synthetic report.', gateway: adapter, outputRoot: root, allowedTools: ['read_page', 'save_report'], allowedDocuments: ['atlas-a'], requireReport: true, limits: { maxRounds: 3, maxTools: 2, timeoutMs: 2000 } });

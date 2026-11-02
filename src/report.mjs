@@ -1,3 +1,4 @@
+export const REPORT_TEXT_MAX_BYTES = 256 * 1024;
 import {publishImmutable} from './storage-files.mjs';
 import {sha256} from './source.mjs';
 export async function saveReport({directory,store,text,selected,resultRefs,calculations,methods,attachmentIds=[],callId,signal}){
