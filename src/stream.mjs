@@ -45,7 +45,7 @@ export async function readChatStream(body, { signal, maxBytes = 262144 } = {}) {
           previousIdPresent:Boolean(call.id),
           ...(typeof part.id==='string'?{incomingEmpty:part.id.length===0}:{})
         }); call.id = part.id; }
-        for (const key of ['name', 'arguments']) if (part.function?.[key] !== undefined) { if (typeof part.function[key] !== 'string') invalid(); call.function[key] += part.function[key]; }
+        for (const key of ['name', 'arguments']) if (part.function?.[key] !== undefined && part.function?.[key] !== null) { if (typeof part.function[key] !== 'string') invalid(); call.function[key] += part.function[key]; }
         calls.set(part.index, call);
       }
     }
