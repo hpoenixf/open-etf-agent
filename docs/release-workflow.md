@@ -7,3 +7,7 @@
 5. Independently review required safety, install and original output/readback. Keep real-provider API, fixture CLI, semantic quality and unsupported scope distinct. A fixture-only profile has no live pass and is not a blanket version exemption.
 6. Audit all newly reachable objects. The sole publisher uses authorized non-force writes, preserves remote content and verifies ref/tree/blob/actual bytes plus original CI. Tag/Release points to the actual final package, not merely a local/source hash.
 7. Update README, article mappings and deployment claims only to proved scope. Norm/metadata correction is not a product release. Historical tags and measurements remain unchanged.
+
+## Test completion includes evidence-preserving cleanup
+
+After a test reaches a verified terminal state, follow the [cleanup discipline](live-validation.md#test-completion-and-cleanup-discipline) promptly: preserve original evidence first, retire only owned unused temporary state, and record measured space reclaimed. A test is not operationally finished merely because its assertions passed. Do not change pinned inputs while another cohort is running.

@@ -95,3 +95,14 @@ The [first-batch record](verification/live-v01-v05-first-batch.md) distinguishes
 A genuinely fixture-only profile cannot meet a real-provider gate by removing its guard or inventing calls. Mark that **profile's real-provider qualification not applicable/not supported**, retain its provider-free evidence and state the exact release scope for review; this is not an automatic blanket exemption for a whole version or a claim of 9/10 live acceptance. Historical Releases/tags are not rewritten. Prior versions are audited against their actual supported API and retained ten-task evidence, not today's full implementation.
 
 Superseded five-task/four-success wording and immutable observations are historical records only. The dated [gate correction and outstanding decisions](verification/release-gate-20261102.md) overrides stale candidate release claims without changing their measurements.
+
+## Test completion and cleanup discipline
+
+This applies to paid/real-provider and provider-free tests alike. “Completed” means the original owned process is terminal and its result is known; elapsed time, a detached session or a green partial check is not completion.
+
+1. Verify and preserve immutable execution inputs, locks, plans, all outcomes (including failures/timeouts/unknowns), accounting, original output/readback and necessary recovery evidence **before** cleanup. Never rerun a paid test merely to replace discarded evidence.
+2. Inventory the test's explicitly owned temporary root. Confirm no active writer, reader, sibling cohort or frozen harness depends on it. Retire unused synthetic scratch state and redundant completed install/cache copies promptly within existing authority. Do not follow symlinks, infer ownership from age alone, or delete shared dependencies through a candidate's link.
+3. Preserve source/Git objects, configuration, lockfiles, credentials, original live-cohort databases/reports and required recovery points. Unique or irreversibly deleted databases require exact-scope approval; an apparently temporary filename is not permission. Prefer normal recoverable cleanup where available. If authority or evidence is incomplete, record the specific protected remainder instead of broad deletion.
+4. Record the verified terminal result, preserved evidence/recovery references, exact retired paths, dependency checks and approval where required. Measure filesystem free space before and after; report actual reclaimed bytes separately from estimated directory size. Do not claim cleanup from a deletion command alone.
+
+New tests must use explicit bounded owned temporary roots and reuse validated shared dependencies where safe, rather than creating unbounded install/cache copies. Cleanup must not mutate a running cohort's pinned source, provider configuration, harness inputs or ledger. Failed tests also need prompt evidence-preserving cleanup; keep the failure, not every reproducible scratch database.
