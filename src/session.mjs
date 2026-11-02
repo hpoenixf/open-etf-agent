@@ -82,7 +82,7 @@ function definitionBytes(value, ordinary = false, protectedProfile = false) {
  fields(value, ['question', 'grantId', 'bindings', 'limits', 'rootLimits', 'deadlineAt', 'config']);
  if (typeof value.question !== 'string' || !value.question.trim() || Buffer.byteLength(value.question) > 16000 || !identifier(value.grantId) || !Number.isSafeInteger(value.deadlineAt) || value.deadlineAt < 1) fail('INVALID_DEFINITION');
  fields(value.limits, ['maxRounds', 'maxTools', 'timeoutMs']); fields(value.rootLimits, ['model', 'tool']);
- for (const [key, n] of Object.entries(value.limits)) if (!Number.isSafeInteger(n) || n < 1 || n > (key === 'timeoutMs' ? 300000 : 1000)) fail('INVALID_DEFINITION');
+ for (const [key, n] of Object.entries(value.limits)) if (!Number.isSafeInteger(n) || n < 1 || n > (key === 'timeoutMs' ? 3600000 : 1000)) fail('INVALID_DEFINITION');
  for (const n of Object.values(value.rootLimits)) if (!Number.isSafeInteger(n) || n < 1 || n > 1000) fail('INVALID_DEFINITION');
  if(!protectedProfile&&value.bindings?.adapters?.some(x=>x.id==='document-revocation'||x.version===DOCUMENT_REVOCATION_PROFILE))fail('INVALID_PROTECTED_PROFILE');
  if(protectedProfile&&(value.bindings?.gateway?.mode==='live'||value.bindings?.plugins?.length||!value.bindings?.adapters?.some(x=>x.id==='document-revocation'&&x.version===DOCUMENT_REVOCATION_PROFILE)))fail('PROTECTED_EXECUTION_DISABLED');

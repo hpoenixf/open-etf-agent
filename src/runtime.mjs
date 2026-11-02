@@ -89,7 +89,7 @@ async function drive({ question, gateway, outputRoot='runs', requireReport=false
   if (gateway.admission === 'shared-admission@1' && (!durable || workingInput?.compaction || durable.parentRunId)) throw failure('ADMISSION_EXECUTION_UNSUPPORTED');
   if (taskTime !== undefined && (!taskTime || typeof taskTime !== 'object' || Array.isArray(taskTime) || Object.keys(taskTime).some(key => !['anchorInstant', 'timeZone'].includes(key)))) throw failure('INVALID_TASK_TIME_INPUT');
   const budget={maxRounds:24,maxTools:64,timeoutMs:120000,...limits};
-  for(const [key,value] of Object.entries(budget))if(!['maxRounds','maxTools','timeoutMs'].includes(key)||!Number.isSafeInteger(value)||value<1||value>(key==='timeoutMs'?300000:1000))throw failure('INVALID_LIMIT');
+  for(const [key,value] of Object.entries(budget))if(!['maxRounds','maxTools','timeoutMs'].includes(key)||!Number.isSafeInteger(value)||value<1||value>(key==='timeoutMs'?3600000:1000))throw failure('INVALID_LIMIT');
   if(contextBytes!==undefined&&(!Number.isSafeInteger(contextBytes)||contextBytes<1||contextBytes>1048576))throw failure('INVALID_CONTEXT_LIMIT');
   if(workingInput!==undefined&&(!workingInput||typeof workingInput!=='object'||Object.keys(workingInput).some(key=>!['memoryLibrary','compaction'].includes(key))))throw failure('INVALID_WORKING_INPUT');
   if(workingInput?.memoryLibrary&&(typeof workingInput.memoryLibrary.libraryId!=='string'||typeof workingInput.memoryLibrary.state!=='function'))throw failure('INVALID_MEMORY_LIBRARY');
