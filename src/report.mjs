@@ -1,5 +1,6 @@
 import {publishImmutable} from './storage-files.mjs';
 import {sha256} from './source.mjs';
+export const REPORT_TEXT_MAX_BYTES = 256 * 1024;
 export async function saveReport({directory,store,text,selected,resultRefs,calculations,methods,attachmentIds=[],callId,signal}){
  const citations=selected.map((s,i)=>`- [${i+1}] ${s.sourceId}: ${s.name}, version ${s.version}, physical page ${s.page}; SHA-256 ${s.sha256}; ResultRef ${resultRefs[i].resultRef}${s.pdf?`; original PDF SHA-256 ${s.pdf.originalSha256}; ${s.pdf.originalBytes} bytes; ${s.pdf.originalArtifactId}; parser ${s.pdf.parser}; selected physical page ${s.page}/${s.pdf.pageCount}; text-layer only, visual inspection not performed`:""}`).join('\n');
  const numeric=calculations.map((c,i)=>{

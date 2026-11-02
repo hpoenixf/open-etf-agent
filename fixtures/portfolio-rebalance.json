@@ -1,0 +1,90 @@
+{
+  "schemaVersion": "comparison-table@1",
+  "synthetic": true,
+  "rows": [
+    {
+      "id": "dividend-current",
+      "value": 40000,
+      "unit": "CNY",
+      "currency": "CNY",
+      "dataAsOf": "2026-10-01"
+    },
+    {
+      "id": "dividend-target",
+      "value": 30000,
+      "unit": "CNY",
+      "currency": "CNY",
+      "dataAsOf": "2026-10-01"
+    },
+    {
+      "id": "overseas-current",
+      "value": 20000,
+      "unit": "CNY",
+      "currency": "CNY",
+      "dataAsOf": "2026-10-01"
+    },
+    {
+      "id": "overseas-target",
+      "value": 25000,
+      "unit": "CNY",
+      "currency": "CNY",
+      "dataAsOf": "2026-10-01"
+    },
+    {
+      "id": "bond-current",
+      "value": 20000,
+      "unit": "CNY",
+      "currency": "CNY",
+      "dataAsOf": "2026-10-01"
+    },
+    {
+      "id": "bond-target",
+      "value": 15000,
+      "unit": "CNY",
+      "currency": "CNY",
+      "dataAsOf": "2026-10-01"
+    },
+    {
+      "id": "gold-current",
+      "value": 10000,
+      "unit": "CNY",
+      "currency": "CNY",
+      "dataAsOf": "2026-10-01"
+    },
+    {
+      "id": "gold-target",
+      "value": 10000,
+      "unit": "CNY",
+      "currency": "CNY",
+      "dataAsOf": "2026-10-01"
+    },
+    {
+      "id": "ai-current",
+      "value": 5000,
+      "unit": "CNY",
+      "currency": "CNY",
+      "dataAsOf": "2026-10-01"
+    },
+    {
+      "id": "ai-target",
+      "value": 10000,
+      "unit": "CNY",
+      "currency": "CNY",
+      "dataAsOf": "2026-10-01"
+    },
+    {
+      "id": "cash-current",
+      "value": 5000,
+      "unit": "CNY",
+      "currency": "CNY",
+      "dataAsOf": "2026-10-01"
+    },
+    {
+      "id": "cash-target",
+      "value": 10000,
+      "unit": "CNY",
+      "currency": "CNY",
+      "dataAsOf": "2026-10-01"
+    }
+  ]
+}

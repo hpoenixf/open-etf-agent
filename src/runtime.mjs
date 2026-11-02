@@ -3,19 +3,20 @@ import { createTaskTime, validateTaskTime, projectTaskTime, taskTimeMessage } fr
 import { mkdtemp, open } from 'node:fs/promises';
 import { resolve, join, basename } from 'node:path';
 import { randomUUID } from 'node:crypto';
-import { createToolHost, ensureSafeDirectory, assertHostSnapshotVersion } from './tools.mjs';
+import { createToolHost, ensureSafeDirectory, assertHostSnapshotVersion, assertWorkingInputToolSelection } from './tools.mjs';
 import { createRootBudget } from './cooperation.mjs';
 import { compactWorkingView } from './compaction.mjs';
 import { projectMemory } from './memory-projection.mjs';
 import { projectContext } from './context.mjs';
 import { activateTrustedPlugins } from './plugins.mjs';
 import { sha256 } from './source.mjs';
-import { PUBLICATION_BINDING, preparePublication } from './publication.mjs';
+import { PUBLICATION_BINDING, PUBLICATION_TEXT_MAX_BYTES, preparePublication } from './publication.mjs';
+import { projectProviderProtocolDiagnostic } from './gateway.mjs';
 
 const failure = code => Object.assign(new Error(code), { code });
 const canonical = value => JSON.stringify(value, (_,v) => v && typeof v==='object'&&!Array.isArray(v)?Object.fromEntries(Object.keys(v).sort().map(k=>[k,v[k]])):v);
 function validateProposal(p) {
-  if (p?.kind === 'final' && typeof p.text === 'string' && p.text.length <= 64000) return;
+  if (p?.kind === 'final' && typeof p.text === 'string' && Buffer.byteLength(p.text) <= PUBLICATION_TEXT_MAX_BYTES) return;
   if (p?.kind !== 'calls' || !Array.isArray(p.calls) || !p.calls.length || p.calls.length > 16) throw failure('INVALID_PROPOSAL');
   for (const c of p.calls) if (!c || typeof c.id !== 'string' || !c.id || c.id.length > 200 || typeof c.name !== 'string' || !c.arguments || typeof c.arguments !== 'object' || Array.isArray(c.arguments)) throw failure('INVALID_CALL');
 }
@@ -24,8 +25,31 @@ async function bounded(promise, signal) {
   const stopped = new Promise((_,reject)=>{cancel=()=>reject(signal.reason);signal.addEventListener('abort',cancel,{once:true});});
   try{return await Promise.race([promise,stopped]);}finally{signal.removeEventListener('abort',cancel);}
 }
+// The checkpoint phase, not a lingering dispatch pointer, decides whether a
+// receipt was committed. Session uses this same transition inside its cancel transaction.
+function retainUnknownDispatch(state, dispatch = state.inFlight) {
+  if (state.phase !== 'tool-dispatched' || !dispatch) return;
+  state.unknownEffects??=[];
+  if (!Array.isArray(state.unknownEffects)) throw failure('INVALID_RUNTIME_CHECKPOINT');
+  if (!state.unknownEffects.some(effect => effect?.callId === dispatch.callId)) state.unknownEffects.push({...structuredClone(dispatch),status:'unknown',dispatched:true});
+}
+export function cancelRuntimeCheckpoint(state) {
+  const cancelled=structuredClone(state);retainUnknownDispatch(cancelled);
+  // Terminal readers use unknownEffects; retaining the dispatch pointer as well
+  // duplicates its full arguments and can overflow an otherwise valid checkpoint.
+  delete cancelled.inFlight;
+  if(cancelled.phase==='model-reserved')cancelled.gatewayOutcome='unknown';
+  cancelled.phase='terminal';cancelled.status='cancelled';cancelled.code='CANCELLED';return cancelled;
+}
+
+// Optional additive checkpoint fact. Absence is a legacy record, never a newly
+// inferred settlement. This codec is shared with Session's minimal checkpoint parser.
+export function validateGatewayOutcomeCheckpoint(state) {
+  if((state?.gatewayOutcome!==undefined&&!['settled','unknown'].includes(state.gatewayOutcome))||(state?.status==='completed'&&state.gatewayOutcome==='unknown'))throw failure('INVALID_GATEWAY_OUTCOME');
+}
 export function validateRuntimeCheckpoint(state, definition) {
   validateResponseCheckpoint(state,definition.config?.ordinaryResponse===RESPONSE_PROFILE);
+  validateGatewayOutcomeCheckpoint(state);
   if(state?.schemaVersion!=='runtime-checkpoint@1'||!Array.isArray(state.messages)||state.messages[0]?.role!=='user'||state.messages[0]?.content!==definition.question||!Array.isArray(state.usedIds)||new Set(state.usedIds).size!==state.usedIds.length||state.usedIds.some(id=>typeof id!=='string')||!Number.isSafeInteger(state.rounds)||state.rounds<0||state.rounds>definition.limits.maxRounds||!Number.isSafeInteger(state.toolsDispatched)||state.toolsDispatched<0||state.toolsDispatched>definition.limits.maxTools||!Number.isSafeInteger(state.cursor)||state.cursor<0||!Array.isArray(state.partialEffects)||!Array.isArray(state.unknownEffects)||!Array.isArray(state.hookErrors))throw failure('INVALID_RUNTIME_CHECKPOINT');
   if(['proposal-sealed','awaiting-response','tool-dispatched','result-committed','result-consumed'].includes(state.phase)){validateProposal(state.proposal);if(state.proposal.kind==='calls'&&state.cursor>state.proposal.calls.length)throw failure('INVALID_RUNTIME_CHECKPOINT');}
   if(state.phase==='result-committed'&&state.result?.callId!==state.proposal.calls[state.cursor]?.id)throw failure('INVALID_RUNTIME_CHECKPOINT');
@@ -46,17 +70,17 @@ export function validateRuntimeCheckpoint(state, definition) {
   if(state.usedIds.some(id=>!allCalls.has(id)))throw failure('INVALID_PAIRED_CHECKPOINT');
   if(state.proposal?.kind==='calls'&&(!lastGroup||canonical(lastGroup.group.calls)!==canonical(state.proposal.calls)||state.cursor!==lastGroup.settled))throw failure('INVALID_PAIRED_CHECKPOINT');
   if(lastGroup&&lastGroup.settled<lastGroup.group.calls.length&&state.proposal?.kind!=='calls')throw failure('INVALID_PAIRED_CHECKPOINT');
-  if(state.phase==='terminal'&&state.outcome){for(const key of ['answer','status','code','rounds','toolsDispatched','unknownEffects','partialEffects','hookErrors'])if(canonical(state.outcome[key])!==canonical(state[key]))throw failure('INVALID_TERMINAL_OUTCOME');if(canonical(state.outcome.receipt)!==canonical(state.host?.receipt))throw failure('INVALID_TERMINAL_OUTCOME');}
+  if(state.phase==='terminal'&&state.outcome){for(const key of ['answer','status','code','rounds','toolsDispatched','unknownEffects','partialEffects','hookErrors','gatewayOutcome'])if(canonical(state.outcome[key])!==canonical(state[key]))throw failure('INVALID_TERMINAL_OUTCOME');if(canonical(state.outcome.receipt)!==canonical(state.host?.receipt))throw failure('INVALID_TERMINAL_OUTCOME');}
 
 }
 
 export function run(options) { return drive(options, false); }
 export function submitRun(options) { return drive(options, true); }
-async function drive({ question, gateway, outputRoot='runs', requireReport=true, signal, hostSignal, limits={}, extensions=[], hooks, plugins, rootBudget, allowedTools, allowedDocuments, taskId=null, contextBytes, workingInput, durable, publication = false, pdfInput, taskTime, ordinaryResponse = false }, submitting) {
+async function drive({ question, gateway, outputRoot='runs', requireReport=false, signal, hostSignal, limits={}, extensions=[], hooks, plugins, rootBudget, allowedTools, allowedDocuments, taskId=null, contextBytes, workingInput, durable, publication = false, pdfInput, taskTime, ordinaryResponse = false }, submitting) {
   if(typeof question!=='string'||!question.trim()||Buffer.byteLength(question)>16000||typeof gateway?.next!=='function')throw failure('INVALID_INPUT');
   if (taskTime !== undefined && (!taskTime || typeof taskTime !== 'object' || Array.isArray(taskTime) || Object.keys(taskTime).some(key => !['anchorInstant', 'timeZone'].includes(key)))) throw failure('INVALID_TASK_TIME_INPUT');
-  const budget={maxRounds:12,maxTools:12,timeoutMs:30000,...limits};
-  for(const [key,value] of Object.entries(budget))if(!['maxRounds','maxTools','timeoutMs'].includes(key)||!Number.isSafeInteger(value)||value<1||value>(key==='timeoutMs'?300000:1000))throw failure('INVALID_LIMIT');
+  const budget={maxRounds:24,maxTools:64,timeoutMs:120000,...limits};
+  for(const [key,value] of Object.entries(budget))if(!['maxRounds','maxTools','timeoutMs'].includes(key)||!Number.isSafeInteger(value)||value<1||value>(key==='timeoutMs'?3600000:1000))throw failure('INVALID_LIMIT');
   if(contextBytes!==undefined&&(!Number.isSafeInteger(contextBytes)||contextBytes<1||contextBytes>1048576))throw failure('INVALID_CONTEXT_LIMIT');
   if(workingInput!==undefined&&(!workingInput||typeof workingInput!=='object'||Object.keys(workingInput).some(key=>!['memoryLibrary','compaction'].includes(key))))throw failure('INVALID_WORKING_INPUT');
   if(workingInput?.memoryLibrary&&(typeof workingInput.memoryLibrary.libraryId!=='string'||typeof workingInput.memoryLibrary.state!=='function'))throw failure('INVALID_MEMORY_LIBRARY');
@@ -73,12 +97,20 @@ async function drive({ question, gateway, outputRoot='runs', requireReport=true,
   if(hostSignal!==undefined&&(typeof hostSignal?.aborted!=='boolean'||typeof hostSignal.addEventListener!=='function'||typeof hostSignal.removeEventListener!=='function'))throw failure('INVALID_HOST_SIGNAL');
   if(submitting&&typeof durable.runId!=='string')throw failure('SUBMISSION_ID_REQUIRED');
   if(submitting&&durable.rootId!==undefined&&durable.rootId!==durable.runId)throw failure('ROOT_SCOPE_MISMATCH');
-  // Refuse an unsupported persisted Host protocol before plugin activation or
-  // claiming execution. Session/Artifact reads remain separate from resumption.
-  if (!submitting && durable?.runId) {
-    const prior=durable.store.inspect(durable.runId);
-    if (prior.snapshot.host!=null) assertHostSnapshotVersion(prior.snapshot.host);
+  // Reuse the original Host-version preflight view: no extra inspect between
+  // protocol admission and the existing binding-checked execution read.
+  // Existing terminal reads need no newly selected working-input consumer.
+  let terminalRead=false;
+  if (durable?.runId) {
+    let prior;
+    try { prior=durable.store.inspect(durable.runId); }
+    catch(error) { if(!submitting||error.code!=='UNKNOWN_RUN')throw error; }
+    if(prior){
+      if(!submitting&&prior.snapshot.host!=null)assertHostSnapshotVersion(prior.snapshot.host);
+      terminalRead=['completed','failed','cancelled'].includes(prior.status);
+    }
   }
+  if(!terminalRead)assertWorkingInputToolSelection({allowedTools,contextBytes,compaction:Boolean(workingInput?.compaction)});
   let selected, outcome;
   try {
     if(!submitting&&plugins){selected=await activateTrustedPlugins({plugins,expectedBindings:durable?.bindings.plugins,signal});if(hooks&&selected.hooks)throw failure('AMBIGUOUS_HOOK_CONFIGURATION');extensions=[...extensions,...selected.extensions];hooks??=selected.hooks;}
@@ -99,9 +131,22 @@ async function drive({ question, gateway, outputRoot='runs', requireReport=true,
       } catch (error) { if (error.code !== 'UNKNOWN_RUN') throw error; }
     }
     if (!temporal && taskTime !== undefined) temporal = createTaskTime(taskTime);
-    const config={requireReport,...(ordinaryResponse?{ordinaryResponse:RESPONSE_PROFILE}:{}),...(temporal?{taskTime:temporal}:{}),...(publication?{publication:PUBLICATION_BINDING.version}:{}),...(allowedTools?{allowedTools}:{}),...(allowedDocuments?{allowedDocuments}:{}),...(contextBytes===undefined?{}:{contextBytes}),taskId,...(workingInput?{workingInput:{...(workingInput.memoryLibrary?{memoryLibraryId:workingInput.memoryLibrary.libraryId}:{}),...(workingInput.compaction?{compaction:{thresholdBytes:workingInput.compaction.thresholdBytes,summaryTimeoutMs:workingInput.compaction.summaryTimeoutMs??2000,version:'working-input@1'}}:{})}}:{})};
-    let stored,claim,directory,runId,deadlineAt=Date.now()+budget.timeoutMs;
-    let state={schemaVersion:'runtime-checkpoint@1',phase:'ready',messages:[{role:'user',content:question}],usedIds:[],rounds:0,toolsDispatched:0,proposal:null,cursor:0,result:null,host:null,working:null,answer:'',status:'failed',code:null,unknownEffects:[],partialEffects:[],hookErrors:[]};
+    const config={requireReport,...(ordinaryResponse?{ordinaryResponse:RESPONSE_PROFILE}:{}),...(temporal?{taskTime:temporal}:{}),...(publication?{publication:PUBLICATION_BINDING.version}:{}),...(allowedTools?{allowedTools}:{}),...(allowedDocuments?{allowedDocuments}:{}),...(contextBytes===undefined?{}:{contextBytes}),taskId,...(workingInput?{workingInput:{...(workingInput.memoryLibrary?{memoryLibraryId:workingInput.memoryLibrary.libraryId}:{}),...(workingInput.compaction?{compaction:{thresholdBytes:workingInput.compaction.thresholdBytes,summaryTimeoutMs:workingInput.compaction.summaryTimeoutMs??2000,version:'history-compaction@1'}}:{})}}:{})};
+    let stored,claim,directory,runId,boundChild=false,deadlineAt=Date.now()+budget.timeoutMs;
+    let state={schemaVersion:'runtime-checkpoint@1',phase:'ready',messages:[{role:'user',content:question}],usedIds:[],rounds:0,toolsDispatched:0,proposal:null,cursor:0,result:null,host:null,working:null,gatewayOutcome:'settled',answer:'',status:'failed',code:null,unknownEffects:[],partialEffects:[],hookErrors:[]};
+    function verifyCorrectionHistory(host){
+      let count=0,partial=false;
+      for(let i=1;i<state.messages.length;i++){
+        const group=state.messages[i];if(group.role!=='assistant')continue;
+        for(let j=0;j<group.calls.length;j++){
+          const message=state.messages[i+1+j];if(message?.role!=='tool')break;
+          const result=message.result;
+          if((result.partialPaths||[]).some(path=>['report.md','manifest.json'].includes(path))||result.artifactEffects||result.memoryEffect)partial=true;
+          if(!partial&&group.calls.length===1&&message.callId===group.calls[0].id&&host.correctionEligible(group.calls[0],result))count++;
+        }
+      }
+      if(!Number.isSafeInteger(state.corrections??0)||(state.corrections??0)!==Math.min(count,1)||(count>1&&state.failureCode!=='CORRECTION_LIMIT'))throw failure('RECOVERY_CORRECTION_MISMATCH');
+    }
     function boundToOriginal(saved) {
       if (!submitting && saved.snapshot.host!=null) assertHostSnapshotVersion(saved.snapshot.host);
       validateRuntimeCheckpoint(saved.snapshot,saved.definition);
@@ -141,20 +186,21 @@ async function drive({ question, gateway, outputRoot='runs', requireReport=true,
         const restored=state.host?await createToolHost({directory,ordinaryResponse:ordinaryResponse?{confirm:(call,result)=>durable.store.confirmResponse(runId,call,result)}:undefined,extensions,hooks,allowedTools,allowedDocuments,enableNotes:!!workingInput?.compaction,restore:state.host}):null;
         for(const message of state.messages)if(message.role==='tool'){const call=state.messages.flatMap(m=>m.calls||[]).find(c=>c.id===message.callId);if(call)await restored.verifyResult(call,message.result);}
         if(state.result){const call=state.proposal?.calls?.[state.cursor];if(call)await restored.verifyResult(call,state.result);}
+        if(restored)verifyCorrectionHistory(restored);
         if(stored.status!=='cancelled'){
           if(state.outcome?.runId!==runId||state.outcome.rootId!==stored.rootId||state.outcome.directory!==directory)throw failure('INVALID_TERMINAL_OUTCOME');
           return structuredClone({...state.outcome,rootUsage:stored.rootUsage});
         }
-        return{runId,rootId:stored.rootId,directory,...(state.publication?{publication:state.publication}:{}),status:'cancelled',code:'CANCELLED',answer:state.answer,receipt:restored?.receipt??null,toolsDispatched:state.toolsDispatched,rounds:state.rounds,logErrors:[],unknownEffects:state.unknownEffects,partialEffects:state.partialEffects,hookErrors:state.hookErrors,rootUsage:stored.rootUsage,taskId,...(allowedTools&&restored?{sources:await restored.getSources(),resultRefs:await restored.getResultRefs()}:{}),semanticStatus:'unreviewed'};
+        return{runId,rootId:stored.rootId,directory,...(state.publication?{publication:state.publication}:{}),status:'cancelled',code:'CANCELLED',...(state.gatewayOutcome===undefined?{}:{gatewayOutcome:state.gatewayOutcome}),answer:state.answer,receipt:restored?.receipt??null,toolsDispatched:state.toolsDispatched,rounds:state.rounds,logErrors:[],unknownEffects:state.unknownEffects,partialEffects:state.partialEffects,hookErrors:state.hookErrors,rootUsage:stored.rootUsage,taskId,...(allowedTools&&restored?{sources:await restored.getSources(),resultRefs:await restored.getResultRefs()}:{}),semanticStatus:'unreviewed'};
       }
       claim=durable.store.claim(runId,durable.owner??randomUUID());
     }else{
       const root=await ensureSafeDirectory(outputRoot);directory=await mkdtemp(join(root,'run-'));runId=basename(directory);
       if(durable){const created=durable.store.create({runId,directory,rootId:durable.rootId,parentRunId:durable.parentRunId,parentClaim:durable.parentClaim,definition:{question,grantId:durable.grantId,bindings:durable.bindings,limits:budget,rootLimits:durable.rootLimits??{model:budget.maxRounds,tool:budget.maxTools},deadlineAt:durable.deadlineAt??deadlineAt,config},snapshot:state});deadlineAt=created.definition.deadlineAt;claim=durable.store.claim(runId,durable.owner??randomUUID());}
     }
-    if(claim){try{const current=claim.read();boundToOriginal(current);state=structuredClone(current.snapshot);deadlineAt=current.definition.deadlineAt;}catch(error){try{claim.release();}catch{}throw error;}}
+    if(claim){try{const current=claim.read();boundToOriginal(current);if(current.runId!==runId)throw failure('RUN_BINDINGS_MISMATCH');state=structuredClone(current.snapshot);directory=current.directory;deadlineAt=current.definition.deadlineAt;boundChild=current.parentRunId!==null;}catch(error){try{claim.release();}catch{}throw error;}}
     rootBudget=claim?.rootBudget??rootBudget??createRootBudget({model:budget.maxRounds,tool:budget.maxTools});
-    const controller=new AbortController();const cancel=()=>{if(claim){try{durable.store.cancel(runId);}catch{}}controller.abort(failure('CANCELLED'));};
+    const controller=new AbortController();const cancel=()=>{if(claim&&!boundChild){try{durable.store.cancel(runId);}catch{}}controller.abort(boundChild?(signal?.reason instanceof Error?signal.reason:failure('INTERRUPTED')):failure('CANCELLED'));};
     let interrupted=false,effectsStopped=true,pendingEffect,awaitingResponse=false;
     const stop=()=>{if(!controller.signal.aborted){interrupted=true;controller.abort(failure('HOST_STOPPED'));}};
     signal?.addEventListener('abort',cancel,{once:true});if(signal?.aborted)cancel();
@@ -162,6 +208,7 @@ async function drive({ question, gateway, outputRoot='runs', requireReport=true,
     const timer=setTimeout(()=>controller.abort(failure('TIMEOUT')),Math.max(1,deadlineAt-Date.now()));
     let heartbeat;if(claim)heartbeat=setInterval(()=>{try{claim.renew();}catch(error){controller.abort(failure(error.code==='RUN_CANCELLED'?'CANCELLED':error.code||'LEASE_LOST'));}},Math.max(10,Math.floor(durable.store.leaseMs/3)));
     let host,log,inFlight=state.phase==='tool-dispatched'?state.inFlight:null;
+    let gatewayUnsettled=state.phase==='model-reserved';
     const logErrors=[];let sourceSnapshots=[],resultRefs=[];
     async function effect(promise){
       // Sequential execution has at most one unsettled owned operation.
@@ -177,14 +224,18 @@ async function drive({ question, gateway, outputRoot='runs', requireReport=true,
     async function record(type,data={}){try{await log.write(JSON.stringify({runId,rootId:rootBudget.rootId,taskId,sequence:++record.sequence,type,...data})+'\n');}catch{logErrors.push('LOG_WRITE_FAILED');throw failure('LOG_WRITE_FAILED');}}
     record.sequence=0;
     async function checkpoint(phase,{reserve}={}){
-      state.phase=phase;state.host=host.snapshot();state.inFlight=inFlight;state.logSequence=record.sequence;
-      if(claim){if(reserve)claim.reserve(reserve,state);else claim.checkpoint(state);if(durable.onCheckpoint)await bounded(Promise.resolve().then(()=>durable.onCheckpoint({phase,runId,directory,cursor:state.cursor,callId:state.proposal?.calls?.[state.cursor]?.id,noteRef:state.working?.noteRef,workingHash:state.working?.hash,fence:claim.fence})),controller.signal);}
+      const previousPhase=state.phase;state.phase=phase;state.host=host.snapshot();state.inFlight=inFlight;state.logSequence=record.sequence;
+      if(claim){
+        try{if(reserve){claim.reserve(reserve,state);if(reserve==='model')gatewayUnsettled=true;}else claim.checkpoint(state);}catch(error){state.phase=previousPhase;throw error;}
+        if(durable.onCheckpoint)await bounded(Promise.resolve().then(()=>durable.onCheckpoint({phase,runId,directory,cursor:state.cursor,callId:state.proposal?.calls?.[state.cursor]?.id,noteRef:state.working?.noteRef,workingHash:state.working?.hash,fence:claim.fence})),controller.signal);
+      }
     }
     try{
       controller.signal.throwIfAborted();
       if(claim&&durable.onClaim)await bounded(Promise.resolve().then(()=>durable.onClaim({runId,rootId:claim.rootId,owner:claim.owner,fence:claim.fence})),controller.signal);
       host=await effect(createToolHost({directory,ordinaryResponse:ordinaryResponse?{confirm:(call,result)=>durable.store.confirmResponse(runId,call,result)}:undefined,extensions,hooks,allowedTools,allowedDocuments,enableNotes:!!workingInput?.compaction,restore:state.host??undefined,pdfInput}));
       if(durable?.runId)for(const message of state.messages)if(message.role==='tool'){const call=state.messages.flatMap(m=>m.calls||[]).find(c=>c.id===message.callId);await host.verifyResult(call,message.result);}
+      verifyCorrectionHistory(host);
       if(state.working)await host.verifyWorkingInput(state.working);
       record.sequence=state.logSequence??0;log=await open(join(directory,'run.jsonl'),durable?.runId?'a':'wx',0o600);
       await record(durable?.runId?'run_resumed':'run_started',{mode:gateway.mode||'test',...(ordinaryResponse?{}:{question}),limits:budget,...(claim?{fence:claim.fence,deadlineAt}: {})});
@@ -212,15 +263,25 @@ async function drive({ question, gateway, outputRoot='runs', requireReport=true,
             let requestMessages=contextBytes===undefined?workingMessages:await projectContext({messages:workingMessages,maxBytes:contextBytes,lookupSource:host.resolveSource});let noteRef=null;
             if(workingInput?.compaction&&Buffer.byteLength(JSON.stringify(requestMessages))>=workingInput.compaction.thresholdBytes){
               // A crash during summary generation keeps its consumed root reservation; no adoption is implied.
-              const compacted=await compactWorkingView({messages:workingMessages,maxBytes:contextBytes??262144,lookupSource:host.resolveSource,lookupMemoryState:workingInput.memoryLibrary?lookupMemory:undefined,rootBudget:claim?{claim(kind){state.phase='model-reserved';state.purpose='compaction';state.host=host.snapshot();claim.reserve(kind,state);}}:rootBudget,summarize:workingInput.compaction.summarize,saveNote:host.persistWorkingNote,signal:controller.signal,summaryTimeoutMs:workingInput.compaction.summaryTimeoutMs});requestMessages=compacted.messages;noteRef=compacted.noteRef;delete state.purpose;await record('working_note',{...compacted.observation,noteRef});
+              const compacted=await compactWorkingView({messages:workingMessages,maxBytes:contextBytes??262144,lookupSource:host.resolveSource,canCompactHistory:host.canCompactHistory,lookupMemoryState:workingInput.memoryLibrary?lookupMemory:undefined,rootBudget:claim?{claim(kind){state.phase='model-reserved';state.purpose='compaction';state.host=host.snapshot();claim.reserve(kind,state);}}:rootBudget,summarize:workingInput.compaction.summarize,saveNote:host.persistWorkingNote,signal:controller.signal,summaryTimeoutMs:workingInput.compaction.summaryTimeoutMs});requestMessages=compacted.messages;noteRef=compacted.noteRef;delete state.purpose;await record('working_note',{...compacted.observation,noteRef});
             }
             state.working={schemaVersion:'working-input@1',messages:requestMessages,noteRef,hash:sha256(JSON.stringify(requestMessages))};await checkpoint('working-input');
           }
           // Forgetting after adoption but before dispatch removes old typed Memory from the next actual input.
           if(workingInput?.memoryLibrary){state.working.messages=await projectMemory({messages:state.working.messages,lookupState:ref=>workingInput.memoryLibrary.state(ref.id)});state.working.hash=sha256(JSON.stringify(state.working.messages));}
-          state.rounds++;if(claim)await checkpoint('model-reserved',{reserve:'model'});else rootBudget.claim('model');
-          const start=performance.now();const proposal=await effect(Promise.resolve().then(()=>{controller.signal.throwIfAborted();return gateway.next({messages:structuredClone(state.working.messages),tools:structuredClone(host.definitions),signal:controller.signal});}));
-          controller.signal.throwIfAborted();validateProposal(proposal);
+          state.rounds++;state.gatewayOutcome='unknown';if(claim)await checkpoint('model-reserved',{reserve:'model'});else{rootBudget.claim('model');gatewayUnsettled=true;}
+          const start=performance.now();let proposal;
+          try{
+            proposal=await effect(Promise.resolve().then(()=>{controller.signal.throwIfAborted();gatewayUnsettled=true;return gateway.next({messages:structuredClone(state.working.messages),tools:structuredClone(host.definitions),signal:controller.signal});}));
+            controller.signal.throwIfAborted();gatewayUnsettled=false;
+          }catch(error){
+            // Only the original Gateway can brand a recognized terminal finish.
+            // An arbitrary code, incomplete stream/body or cancelled late reply is not settlement.
+            const diagnostic=projectProviderProtocolDiagnostic(error);
+            if(!controller.signal.aborted&&diagnostic?.reason==='NON_SUCCESS_FINISH'&&diagnostic.hashScope==='complete-body')gatewayUnsettled=false;
+            throw error;
+          }
+          state.gatewayOutcome='settled';validateProposal(proposal);
           if(proposal.kind==='calls'){if(proposal.calls.some(c=>c.name==='ask_response')){if(!ordinaryResponse||proposal.calls.length!==1)throw failure('INVALID_ORDINARY_RESPONSE');validateResponseCall(proposal.calls[0]);if(durable.store.responseStatus(runId))throw failure('QUESTION_LIMIT');}const ids=new Set();for(const c of proposal.calls){if(state.usedIds.includes(c.id)||ids.has(c.id))throw failure('DUPLICATE_CALL_ID');ids.add(c.id);}if(state.toolsDispatched+proposal.calls.length>budget.maxTools)throw failure('TOOL_LIMIT');}
           state.proposal=structuredClone(proposal);state.cursor=0;state.result=null;state.working=null;
           if(proposal.kind==='calls')state.messages.push({role:'assistant',calls:structuredClone(proposal.calls)});
@@ -264,15 +325,22 @@ async function drive({ question, gateway, outputRoot='runs', requireReport=true,
         if(partialPaths.length)state.partialEffects.push({callId:call.id,name:effectiveName,...(effectiveName!==call.name?{originalName:call.name}:{}),partialPaths});
         if(result.artifactEffects)state.partialEffects.push({callId:call.id,name:effectiveName,artifactEffects:structuredClone(result.artifactEffects)});
         if(result.memoryEffect)state.partialEffects.push({callId:call.id,name:effectiveName,memoryEffect:structuredClone(result.memoryEffect)});
-        state.messages.push({role:'tool',callId:call.id,result:structuredClone(result)});state.cursor++;state.result=null;state.failureCode=result.status==='succeeded'?null:(result.dispatched?'TOOL_FAILED':'TOOL_REJECTED');
+        let correctionOffered=false;
+        state.failureCode=result.status==='succeeded'?null:(result.dispatched?'TOOL_FAILED':'TOOL_REJECTED');
+        if(state.failureCode&&!hooks&&state.proposal.calls.length===1&&!state.partialEffects.length&&!state.unknownEffects.length&&host.correctionEligible(call,result)){
+          if((state.corrections??0)>=1)state.failureCode='CORRECTION_LIMIT';
+          else{state.corrections=1;state.failureCode=null;correctionOffered=true;}
+        }
+        state.messages.push({role:'tool',callId:call.id,result:structuredClone(result)});state.cursor++;state.result=null;
         await checkpoint('result-consumed');
         await record('tool_result',{callId:call.id,name:effectiveName,status:result.status,dispatched:result.dispatched,partialPaths,memoryEffect:result.memoryEffect,artifactEffects:result.artifactEffects,artifactId:result.value?.artifactId,durationMs:result.durationMs,resultRef:result.value?.resultRef,sourceAcquisition:result.value?.mcp?{serverName:result.value.mcp.serverName,protocolVersion:result.value.mcp.protocolVersion,protocolRequestId:result.value.mcp.protocolRequestId,modelCallId:result.value.mcp.modelCallId}:undefined,original:result.original,effective:result.effective,hookErrors:result.hookErrors||[]});
         if(effectiveName==='save_report'&&result.status==='succeeded')await record('file_saved',{receipt:result.value});
-        if(result.status!=='succeeded')throw failure(result.dispatched?'TOOL_FAILED':'TOOL_REJECTED');
+        if(correctionOffered)await record('validation_correction_offered',{callId:call.id,code:result.validation.code,remainingRounds:budget.maxRounds-state.rounds});
+        if(state.failureCode)throw failure(state.failureCode);
       }
     }catch(error){
       state.code=error.code||'EXECUTION_FAILED';state.status=state.code==='CANCELLED'||state.code==='RUN_CANCELLED'?'cancelled':'failed';
-      if(inFlight)state.unknownEffects.push({...inFlight,status:'unknown',dispatched:true});
+      retainUnknownDispatch(state,inFlight);
     }finally{
       clearTimeout(timer);clearInterval(heartbeat);
       if(interrupted)effectsStopped=await drainStoppedEffect();
@@ -282,7 +350,8 @@ async function drive({ question, gateway, outputRoot='runs', requireReport=true,
       if(log){try{await record(awaitingResponse?'run_yielded':interrupted?'worker_interrupted':'run_finished',{status:awaitingResponse?'awaiting-response':interrupted?'interrupted':state.status,code:state.code,toolsDispatched:state.toolsDispatched,receipt:host?.receipt,unknownEffects:state.unknownEffects,partialEffects:state.partialEffects});}catch{if(state.status==='completed'){state.status='failed';state.code='LOG_WRITE_FAILED';}}await log.close().catch(()=>logErrors.push('LOG_CLOSE_FAILED'));}
       if(hooks)state.hookErrors.push(...await hooks.observe('release',{runId,rootId:rootBudget.rootId,taskId,status:state.status,code:state.code,logErrors:[...logErrors],receipt:host?.receipt}));
     }
-    const outcome={runId,rootId:rootBudget.rootId,directory:resolve(directory),status:state.status,code:state.code,answer:state.answer,...(state.publication?{publication:structuredClone(state.publication)}:{}),receipt:host?.receipt??null,toolsDispatched:state.toolsDispatched,rounds:state.rounds,logErrors,unknownEffects:state.unknownEffects,partialEffects:state.partialEffects,hookErrors:state.hookErrors,rootUsage:rootBudget.snapshot(),taskId,...(allowedTools?{sources:sourceSnapshots,resultRefs}:{}),semanticStatus:'unreviewed'};
+    state.gatewayOutcome=gatewayUnsettled?'unknown':'settled';
+    const outcome={runId,rootId:rootBudget.rootId,directory:resolve(directory),status:state.status,code:state.code,gatewayOutcome:state.gatewayOutcome,answer:state.answer,...(state.publication?{publication:structuredClone(state.publication)}:{}),receipt:host?.receipt??null,toolsDispatched:state.toolsDispatched,rounds:state.rounds,logErrors,unknownEffects:state.unknownEffects,partialEffects:state.partialEffects,hookErrors:state.hookErrors,rootUsage:rootBudget.snapshot(),taskId,...(allowedTools?{sources:sourceSnapshots,resultRefs}:{}),semanticStatus:'unreviewed'};
     if(awaitingResponse){try{claim.release();return{...outcome,status:'awaiting-response',code:null,questionId:state.responseQuestion,deadlineAt};}catch(error){const current=durable.store.inspect(runId);return{...outcome,status:current.status==='cancelled'?'cancelled':'failed',code:current.status==='cancelled'?'CANCELLED':error.code};}}
     if(interrupted){
       let leaseReleased=false;if(effectsStopped){try{leaseReleased=claim.release();}catch{}}

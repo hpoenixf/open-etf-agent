@@ -26,7 +26,7 @@ test('4.2 no partial assistant/tool group or invalid pairing is accepted', async
   for (const results of [[a[1]], [a[1],a[1]], [a[1],badInner], [b[1],a[1]]]) await assert.rejects(projectContext({ messages:[user,assistant,...results], maxBytes:2000,lookupSource }), /group|pair/i);
 });
 test('4.2 oversized mandatory user and latest group fail instead of truncating', async () => {
-  await assert.rejects(projectContext({ messages: [{ role: 'user', content: 'x'.repeat(3000) }, ...group('last','text')], maxBytes: 1000, lookupSource }), /budget|limit|context/i);
+  await assert.rejects(projectContext({ messages: [{ role: 'user', content: 'x'.repeat(3000) }, ...group('last','text')], maxBytes: 1000, lookupSource }), error => { assert.match(error.message, /budget|limit|context/i); assert.equal(error.code, 'CONTEXT_CAPACITY_EXCEEDED'); return true; });
 });
 test('4.2 failed source results cannot be rewritten into successful reread references', async () => {
   const messages = [user,...group('failed','x'.repeat(2000),'failed'),...group('last','recent')];

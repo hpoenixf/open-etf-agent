@@ -30,7 +30,7 @@ async function main(args) {
   if(options.case==='explicit-memory'&&!options['memory-library'])throw new Error('INVALID_ARGUMENT: explicit Memory library --memory-library is required');
   if (seen.has('--query') && !['retrieve-reread','memory-recall'].includes(options.case)) throw new Error('INVALID_ARGUMENT: query belongs to retrieve-reread or memory-recall only');
   if (options.case === 'model-child') throw new Error('MODEL_CHILD_BLOCKED: no independent live model authorization/evidence; use fixture-child only for offline wiring');
-  if (!['memory-recall','local-pdf','result-consumption','compact-and-reread','explicit-memory','retrieve-reread', 'batch-read', 'fixture-child', 'document-compare', 'artifact-table', 'skill-mcp', 'T1', 'T2', 'T3', 'T4'].includes(options.case)) throw new Error('INVALID_ARGUMENT: unsupported case');
+  if (!['portfolio-rebalance','memory-recall','local-pdf','result-consumption','compact-and-reread','explicit-memory','retrieve-reread', 'batch-read', 'fixture-child', 'document-compare', 'artifact-table', 'skill-mcp', 'T1', 'T2', 'T3', 'T4'].includes(options.case)) throw new Error('INVALID_ARGUMENT: unsupported case');
   const definitions = JSON.parse(await readFile(new URL('../fixtures/cases.json', import.meta.url), 'utf8'));
   const controller = new AbortController(); const cancel = () => controller.abort();
   process.on('SIGINT', cancel); process.on('SIGTERM', cancel);
@@ -49,6 +49,15 @@ async function main(args) {
       const prepared=preparePdfDemo({path:options.pdf,page:Number(options['pdf-page']||1)});
       const result=await run({question:'Read one explicitly selected physical PDF text page, preserve its original identity and save a cited report with the original file.',...prepared,outputRoot:options.output,signal:controller.signal});
       process.stdout.write(JSON.stringify({caseId:'local-pdf',mode:'fixture',...result},null,2)+'\n');
+      if(result.status!=='completed')process.exitCode=1;
+    }finally{process.off('SIGINT',cancel);process.off('SIGTERM',cancel);}
+    return;
+  }
+  if(options.case==='portfolio-rebalance'){
+    try{
+      const {runPortfolioRebalance}=await import('./portfolio-rebalance-demo.mjs');
+      const result=await runPortfolioRebalance({outputRoot:options.output,signal:controller.signal});
+      process.stdout.write(JSON.stringify(result,null,2)+'\n');
       if(result.status!=='completed')process.exitCode=1;
     }finally{process.off('SIGINT',cancel);process.off('SIGTERM',cancel);}
     return;

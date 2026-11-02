@@ -27,7 +27,7 @@ test('8.1 preparation is bounded immutable content, not a committed receipt', ()
  assert.equal(prepared.blockId, 'answer'); assert.equal(prepared.content.text, '  Synthetic body.\n');
  assert.equal(prepared.revision, undefined); assert.equal(prepared.deliveryOrdinal, undefined);
  assert.ok(Object.isFrozen(prepared) && Object.isFrozen(prepared.content));
- for (const text of ['', '  ', 'x'.repeat(64001), 'x\0y', '\ud800']) assert.throws(() => publication.preparePublication({ runId: 'r', rootId: 'r', text }));
+ for (const text of ['', '  ', 'x'.repeat(publication.PUBLICATION_TEXT_MAX_BYTES + 1), 'x\0y', '\ud800']) assert.throws(() => publication.preparePublication({ runId: 'r', rootId: 'r', text }));
  assert.throws(() => publication.preparePublication({ runId: 'r', rootId: 'r', text: 'body', revision: 1 }));
  assert.throws(() => publication.validatePublication({ ...prepared, content: { type: 'text', text: 'tampered' } }));
 });

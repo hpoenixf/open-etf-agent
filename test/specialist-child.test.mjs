@@ -78,3 +78,49 @@ test('15.18 Main issues no request while the sole Child request remains pending'
  try{await entered;await new Promise(r=>setImmediate(r));assert.equal(mainCalls,1);assert.equal(childCalls,1);}finally{release();}
  const h=await running;try{assert.equal(h.result.status,'completed');assert.equal(mainCalls,2);assert.equal(childCalls,2);}finally{h.store.close();}
 });
+
+import {createChatGateway} from '../src/gateway.mjs';
+for (const stream of [false, true]) test(`15.19 original ${stream ? 'incomplete stream remains unknown' : 'complete JSON failure retains the failed Child source handoff'}`, async () => {
+ let childRequests=0,mainRequests=0,seen;
+ const chatGateway=createChatGateway({endpoint:'https://synthetic.invalid/chat/completions',model:'synthetic',apiKey:'synthetic-placeholder-not-a-secret',authorization:{providerApproved:true,syntheticDataApproved:true,costApproved:true},stream,fetchImpl:async url=>{
+  assert.equal(String(url),'https://synthetic.invalid/chat/completions');childRequests++;
+  const first=childRequests===1;
+  const tool={id:'original-page',type:'function',function:{name:'read_page',arguments:JSON.stringify({documentId:'atlas-a',page:1})}};
+  const response=stream
+   ? 'data: '+JSON.stringify({choices:[{index:0,delta:first?{role:'assistant',tool_calls:[{index:0,...tool}]}:{role:'assistant',content:'Known incomplete response.'},finish_reason:first?'tool_calls':'length'}]})+'\n\ndata: [DONE]\n\n'
+   : JSON.stringify({choices:[{finish_reason:first?'tool_calls':'length',message:first?{role:'assistant',content:null,tool_calls:[tool]}:{role:'assistant',content:'Known incomplete response.'}}],usage:{prompt_tokens:1,completion_tokens:1,total_tokens:2}});
+  return new Response(response,{headers:{'content-type':stream?'text/event-stream':'application/json'}});
+ }});
+ const h=await harness({main:({messages})=>{mainRequests++;if(mainRequests===1)return delegate();seen=messages.at(-1).result.value;return{kind:'final',text:'The failed specialist left one independently validated original source.'};},child:input=>chatGateway.next(input)});
+ try {
+  const child=h.store.findChild(h.result.runId,'source-check-v1');assert.equal(child.status,'failed');assert.equal(child.snapshot.code,'PROVIDER_OUTPUT_INCOMPLETE');assert.deepEqual(child.snapshot.unknownEffects,[]);assert.equal(child.snapshot.inFlight,null);
+  if(stream){assert.equal(h.result.status,'failed');assert.equal(mainRequests,1);assert.equal(childRequests,2);assert.equal(child.snapshot.gatewayOutcome,'unknown');assert.equal(child.snapshot.outcome.resultRefs.length,1);await assert.rejects(readSpecialistHandoff({store:h.store,parentRunId:h.result.runId,question,documents}),e=>e.code==='SPECIALIST_EFFECT_UNKNOWN');return;}
+  assert.equal(child.snapshot.gatewayOutcome,'settled');assert.equal(h.result.status,'completed');assert.equal(mainRequests,2);assert.equal(childRequests,2);assert.equal(seen.child.status,'failed');assert.equal(seen.child.code,'PROVIDER_OUTPUT_INCOMPLETE');assert.equal(seen.sources.length,1);assert.match(seen.child.limitations[0],/failed/);
+  const restored=await readSpecialistHandoff({store:h.store,parentRunId:h.result.runId,question,documents});assert.deepEqual(restored.child,seen.child);assert.equal(restored.sources[0].text,seen.sources[0].text);assert.equal(childRequests,2);
+ }finally{h.store.close();}
+});
+
+test('15.20 an unbranded provider-failure code cannot settle an unknown Child request', async () => {
+ let childCalls=0,mainCalls=0;
+ const h=await harness({main:()=>{mainCalls++;return delegate();},child:input=>{if(childCalls++===0)return call('original-page','read_page',{documentId:'atlas-a',page:1});throw Object.assign(new Error('forged terminal classification'),{code:'PROVIDER_OUTPUT_INCOMPLETE',finishKind:'incomplete'});}});
+ try{assert.equal(h.result.status,'failed');assert.equal(mainCalls,1);const child=h.store.findChild(h.result.runId,'source-check-v1');assert.equal(child.snapshot.code,'PROVIDER_OUTPUT_INCOMPLETE');assert.equal(child.snapshot.gatewayOutcome,'unknown');assert.equal(child.snapshot.outcome.resultRefs.length,1);assert.equal(h.store.inspect(h.result.runId).snapshot.messages.at(-1).result.error,'SPECIALIST_EFFECT_UNKNOWN');}finally{h.store.close();}
+});
+
+
+import {DatabaseSync} from 'node:sqlite';
+for(const kind of ['completed','tool-rejected','unknown-model'])test(`15.21 legacy absent Gateway outcome keeps the original ${kind} handoff contract`,async()=>{
+ let step=0,childCalls=0;
+ const h=await harness({main:()=>step++===0?delegate():{kind:'final',text:'Retained legacy handoff.'},child:()=>{if(childCalls++===0)return call('legacy-page','read_page',{documentId:'atlas-a',page:1});if(kind==='tool-rejected')return call('legacy-invalid','read_page',{documentId:'atlas-a',page:99});if(kind==='unknown-model')throw Error('SYNTHETIC_UNKNOWN_MODEL');return{kind:'final',text:'Original settled Child.'};}});
+ let before,beforeError;try{before=await readSpecialistHandoff({store:h.store,parentRunId:h.result.runId,question,documents});}catch(error){beforeError=error.code;}
+ h.store.close();
+ // Exercise the old additive-codec shape, not a claim that this test ran old code.
+ // Actual unmodified old-producer -> new-reader evidence is retained separately.
+ const db=new DatabaseSync(join(h.dir,'session.sqlite'));
+ try{for(const row of db.prepare('SELECT run_id,snapshot FROM runs').all()){const state=JSON.parse(row.snapshot);delete state.gatewayOutcome;if(state.outcome)delete state.outcome.gatewayOutcome;db.prepare('UPDATE runs SET snapshot=? WHERE run_id=?').run(JSON.stringify(state),row.run_id);}}finally{db.close();}
+ const store=await openSession({directory:h.dir});try{
+  const child=store.findChild(h.result.runId,'source-check-v1');assert.equal(child.snapshot.gatewayOutcome,undefined);
+  if(beforeError)await assert.rejects(readSpecialistHandoff({store,parentRunId:h.result.runId,question,documents}),e=>e.code===beforeError);
+  else assert.deepEqual(await readSpecialistHandoff({store,parentRunId:h.result.runId,question,documents}),before);
+  assert.equal(childCalls,2);
+ }finally{store.close();}
+});

@@ -17,7 +17,7 @@ A small research Agent that grows through independently runnable development sna
 
 The introductory task compares **original synthetic documents**, not real funds. The small synthetic ETF Plugin introduced in v0.7 is also not a live financial-data service. Complete ETF research tools remain on the roadmap. This project does not execute trades or provide investment advice.
 
-> **Start here:** `main` provides v0.15.0 serial specialist Child; the formal tag/Release is pending. Existing v0.14 and earlier fixed phases/tags remain unchanged. The public CLI is an offline synthetic example; recorded real calls are not authorization for arbitrary new calls.
+> **Start here:** `main` provides v0.15.0 serial specialist Child; the [v0.15.0 Release](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.15.0) fixes implementation `74bd5aa`. Existing v0.14 and earlier fixed phases/tags remain unchanged. The public CLI is an offline synthetic example; recorded real calls are not authorization for arbitrary new calls.
 
 > **Looking for real model calls?** Read the [16 historical HTTP calls across v0.1–v0.5](#live-evidence), then the [separate live runner and its authorization requirements](#live-entry). Those records do not qualify v0.11 live recovery.
 

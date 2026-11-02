@@ -59,6 +59,10 @@
     "0.14": {
       "commit": "a3e1059a78cf8a4f70fe89d61563980f3d24bc15",
       "tree": "433d3dd224ca9ac4daa6e76044faef2aba1b57a2"
+    },
+    "0.15": {
+      "commit": "74bd5aa455ccaeb2994eb22aa744affde660bfa2",
+      "tree": "b971586f04864809c6544edefd05b3a4719509d5"
     }
   },
   "targets": {
