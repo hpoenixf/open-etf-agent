@@ -1,0 +1,44 @@
+{
+  "schemaVersion": 1,
+  "kind": "cancellation-capacity-followup-provider-free",
+  "baselinePublicCommit": "2ddd22221c899f7bbbc3dc17d927810f5e381e03",
+  "baselineCheckpointCapBytes": 3145728,
+  "productionChange": "Transfer complete dispatch uncertainty to unknownEffects and delete redundant terminal inFlight only.",
+  "unchanged": [
+    "checkpoint capacity and codec",
+    "working/result/history/receipt facts",
+    "budget and stale-writer fencing",
+    "no-retry and unknown accounting",
+    "historical qualification evidence"
+  ],
+  "inputs": {
+    "src/runtime.mjs": "d11bf68f1e6be75b89abad92507e7ae97bd41e7c2d27c9201efbc25c721273f5",
+    "test/session.test.mjs": "f45c74c671c6134627b8d934bd093b943abf16f80fe9833ef07becda6415f384"
+  },
+  "counterexample": {
+    "owner": "original Session minimal checkpoint API; not a claim of a Runtime-produced input",
+    "originalExitCode": 1,
+    "originalErrorCode": "JSON_BOUND",
+    "outputSha256": "62418dbc273125f6f57487736b04298637aca686562b52c782637f22d00aed40",
+    "completeEffectiveArgumentsRetained": true
+  },
+  "focused": {
+    "passed": 31,
+    "failed": 0,
+    "skipped": 0,
+    "exitCode": 0,
+    "tapSha256": "6ebac22937e60093e82c3a2e406a46246763765c45327cb5eaf1e9202554c4a7"
+  },
+  "newProviderRequests": 0,
+  "newPaidQualification": false,
+  "fullSuiteRepeated": false,
+  "knownBoundary": "Pre-existing exact-cap constant terminal-metadata growth is not claimed universally closed; no new admission protocol is introduced.",
+  "additionalCancellationConsumers": {
+    "passed": 9,
+    "failed": 0,
+    "skipped": 0,
+    "exitCode": 0,
+    "tapSha256": "9840b6af05fc8a58386caaa732581f033b2d6b0265bcf6edecbf7a9f8dce9815",
+    "scope": "ordinary response, publication, durable runtime and worker cancellation, including process tests"
+  }
+}

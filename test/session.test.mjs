@@ -123,3 +123,21 @@ test('7.2 optional Gateway outcome codec preserves legacy checkpoints and reject
  const d=await directory(),store=await openSession({directory:d,clock:()=>100});
  try{const {runId}=await create(store,d);const claim=store.claim(runId,'codec-writer');claim.checkpoint(checkpoint('working-input'));assert.equal(claim.read().snapshot.gatewayOutcome,undefined);claim.checkpoint(checkpoint('model-reserved',{gatewayOutcome:'unknown'}));assert.equal(claim.read().snapshot.gatewayOutcome,'unknown');assert.throws(()=>claim.checkpoint(checkpoint('model-reserved',{gatewayOutcome:'invented'})),/INVALID_GATEWAY_OUTCOME/);assert.throws(()=>claim.finish(checkpoint('terminal',{status:'completed',gatewayOutcome:'unknown'})),/INVALID_GATEWAY_OUTCOME/);assert.equal(claim.read().status,'active');}finally{store.close();}
 });
+
+
+test('7.2 cancellation transfers a large admitted dispatch without duplicating it beyond the original cap', async () => {
+ const d=await directory();let store=await openSession({directory:d,clock:()=>100});let runId,expected,definitionBefore;
+ try {
+  ({runId}=await create(store,d));const claim=store.claim(runId,'near-cap-writer');
+  const dispatch={callId:'near-cap-call',name:'synthetic_effect',effective:{id:'near-cap-call',name:'synthetic_effect',arguments:{body:'x'.repeat(256*1024)}}};
+  const snapshot=checkpoint('tool-dispatched',{payload:'p'.repeat(2700*1024),inFlight:dispatch,unknownEffects:[],status:'failed',code:null});
+  assert.ok(Buffer.byteLength(JSON.stringify(snapshot))<3*1048576);
+  assert.ok(Buffer.byteLength(JSON.stringify({...snapshot,unknownEffects:[{...dispatch,status:'unknown',dispatched:true}]}))>3*1048576);
+  claim.reserve('tool',snapshot);const before=store.inspect(runId);definitionBefore=before.definition;
+  const cancelled=store.cancel(runId);expected={...dispatch,status:'unknown',dispatched:true};
+  assert.equal(cancelled.status,'cancelled');assert.deepEqual(cancelled.snapshot.unknownEffects,[expected]);assert.equal(Object.hasOwn(cancelled.snapshot,'inFlight'),false);
+  assert.equal(cancelled.snapshot.payload,snapshot.payload);assert.deepEqual(cancelled.definition,definitionBefore);assert.deepEqual(cancelled.rootUsage,{model:0,tool:1});
+  assert.ok(Buffer.byteLength(JSON.stringify(cancelled.snapshot))<3*1048576);assert.deepEqual(store.cancel(runId),cancelled);
+ }finally{store.close();}
+ store=await openSession({directory:d,clock:()=>100});try{const read=store.inspect(runId);assert.equal(read.status,'cancelled');assert.deepEqual(read.snapshot.unknownEffects,[expected]);assert.deepEqual(read.definition,definitionBefore);assert.deepEqual(read.rootUsage,{model:0,tool:1});}finally{store.close();}
+});
