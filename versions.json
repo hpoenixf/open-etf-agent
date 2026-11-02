@@ -183,6 +183,12 @@
       "evidencePath": "src/memory-consumer.mjs",
       "evidenceGitBlob": "eef897fb20eb5c34dda1b5809f4124799dfd0892",
       "selector": "memory-consumer"
+    },
+    "revocable-rag": {
+      "since": "0.16",
+      "evidencePath": "src/session-cli.mjs",
+      "evidenceGitBlob": "089de8f1244be3b7ea6df395b1b91e6102d56b22",
+      "selector": "revocable-rag"
     }
   },
   "notes": [

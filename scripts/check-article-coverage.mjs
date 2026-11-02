@@ -312,6 +312,7 @@ export function validateReceipt(receipt, m, source, inputHash, runnerHash) {
 // A qualification owns its execution identity. Historical receipts never inherit main's bytes.
 const HASH40 = /^[a-f0-9]{40}$/, HASH64 = /^[a-f0-9]{64}$/;
 const SCENARIOS = {
+  'revocable-rag': {kind:'revocable-rag-provider-free-code-qualification',version:'0.16.0',section:'independent',receipt:'docs/verification/v016-revocable-rag.safe.json',stages:['independent-install','independent-build','independent-init','independent-start','independent-publication','independent-artifact-read','independent-revoke']},
   'memory-consumer': {kind:'memory-consumer-provider-free-code-qualification',version:'0.14.0',section:'independent',receipt:'docs/verification/v014-memory-consumer.safe.json',stages:['independent-install','independent-build','independent-seed','independent-recall','independent-artifact-read','independent-memory-read','independent-temporary']},
   temporal: { kind:'temporal-provider-free-code-qualification', version:'0.12.0', section:'independentInstall', stages:['independent-install','independent-build','independent-submit','independent-work','independent-read','independent-artifact-read'] },
   'ordinary-response': { kind:'ordinary-response-code-qualification', version:'0.13.0', section:'independent', stages:['independent-install','independent-build','independent-start','independent-receive','independent-resume','independent-question-read','independent-artifact-read'] }
@@ -360,6 +361,12 @@ export function validateScenarioReceipt(receipt, scenario) {
   ensure(Array.isArray(q.inputFiles) && q.inputFiles.length>0 && q.inputFiles.length<=4096 && new Set(q.inputFiles.map(f=>f.path)).size===q.inputFiles.length, 'Invalid scenario input inventory');
   for(const f of q.inputFiles) ensure(safePath(f.path) && /^(src\/|fixtures\/|package(?:-lock)?\.json$|scripts\/build\.mjs$)/.test(f.path) && HASH64.test(f.sha256), 'Invalid scenario input');
   if(scenario==='temporal') ensure(stable(q.taskTime)===stable({schemaVersion:'task-time@1',anchorInstant:'2026-10-28T00:30:00.000Z',timeZone:'America/Los_Angeles',taskDate:'2026-10-27',yesterday:'2026-10-26',tomorrow:'2026-10-28'}), 'Temporal original task identity differs');
+  else if(scenario==='revocable-rag') {
+    const read=q.observations.find(o=>o.stage==='independent-artifact-read'), refused=q.observations.find(o=>o.stage==='independent-revoked-read');
+    ensure(q.paidCalls===0 && q.report.protection?.profile==='document-revocation@1' && typeof q.runId==='string' && q.runId.length>0 && q.report.protection.runId===q.runId && q.documentId==='atlas-a','Revocation identity/profile mismatch');
+    ensure(read.httpStatus===200 && read.stdoutSha256===q.report.sha256 && refused?.exitCode===2 && refused.expectedRefusal===true && refused.readerHttpStatus===404 && HASH64.test(refused.stdoutSha256) && HASH64.test(refused.stderrSha256),'Missing expected revoked-read refusal');
+    ensure(q.originalReportBytesRetained===true && q.beforeSha256===q.report.sha256 && q.afterSha256===q.report.sha256,'Revocation must preserve original report bytes');
+  }
   else if(scenario==='memory-consumer') {
     ensure(q.unchangedLibraryBytes===true && q.paidCalls===0 && q.memory?.mode==='read-only' && typeof q.memory.libraryId==='string','Missing read-only Memory observation');
     const consumed=q.memory.consumed,requests=q.memory.requests;

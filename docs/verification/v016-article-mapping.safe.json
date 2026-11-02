@@ -1,0 +1,59 @@
+{
+  "schemaVersion": 1,
+  "scope": "existing coverage contract extension; no Runtime or model execution",
+  "unitTests": {
+    "passed": 50,
+    "failed": 0
+  },
+  "fullCoverageCheck": {
+    "command": "node scripts/check-article-coverage.mjs --check",
+    "exitCode": 0,
+    "status": "passed",
+    "methods": "fresh-public-github-metadata and fixed file bytes for each immutable qualification",
+    "qualifications": [
+      "legacy-runtime",
+      "temporal",
+      "ordinary-response",
+      "memory-consumer",
+      "revocable-rag"
+    ],
+    "executionSource": "35f244f2e06da447c110325d2ac5a5c39f36e842",
+    "receiptGitBlob": "99b6dc614dc42528fd617b04029306dfdea430b6",
+    "executedNow": false,
+    "semanticStatus": "unreviewed"
+  },
+  "inputFiles": {
+    "scripts/check-article-coverage.mjs": "affdf19fbb9f5ecba240e39f9764ae9a8f381877bf51366ca798b29ba05f48b8",
+    "scripts/check-article-backlinks.mjs": "bc909f2d5e412b50073562fbc79dcc7b1480af3398ac086e34c6def4e7ef37b5",
+    "scripts/check-article-backlinks.test.mjs": "aba786075c65235700eae9fae5ad3bdd728abb451f39a53d2b9c0fa366b94e5b",
+    "scripts/article-per-target.test.mjs": "ca4c98c812c124470f42ccad8cd7f867fd0d5c537003144677dc016e546fda51",
+    "docs/verification/article-coverage.json": "d44df8aea8ee34b5ba11f0f43e1324decdddeaa6b78bc3b4413f5080f02d41d3",
+    "docs/verification/article-coverage.en.json": "9c64bb4f8de4dd8bb19b8e3d4675c5c53a91d8ed347353e2426833ea99296867",
+    "docs/articles-and-code.md": "2264df0a179f360a62f6d485918278c88ccd4855c3f3f5471eb48437bab9a19b",
+    "docs/articles-and-code.zh-CN.md": "0616f8c9e49aee6a43a4f2927ed2e749b8335ff6786419b0954baa26c4d837e9",
+    "versions.json": "b261571b71dffba90741bcec6a7b19bd43ffa50add663bcc1d055b3d2a8961e7",
+    "README.md": "41088e55e8fc32bd3ba0aeca8a5de0af13d8842239e831d0014ef2d8f715fe83",
+    "README.zh-CN.md": "8fd7cec349d184640ce4a98d7afefcb49d233b190ea1436d9e42086c8df0ebf3"
+  },
+  "articleCommit": "9bb28b52d7907dee1e34097bbd7bc2beaaacc676",
+  "articleEnglishBlob": "6b103a523117cbc453ed07b3bacd86e6ded6a788",
+  "remoteBacklinks": {
+    "exitCode": 0,
+    "mode": "fixed-article-snapshot",
+    "verifiedArticles": 19,
+    "verifiedSlices": 20,
+    "checkedBodies": 38,
+    "checkedSliceBodies": 40,
+    "newArticleCommit": "9bb28b52d7907dee1e34097bbd7bc2beaaacc676",
+    "historicalCatalogCommit": "178a308e5f800fbfef73b2c8c28b17ca84ce8417",
+    "codeClaimCommit": "1de10d40b69db9a83ff990c32e8e272121052814"
+  },
+  "remoteLocalization": {
+    "exitCode": 0,
+    "registeredArticles": 31,
+    "englishArticles": 31,
+    "chineseOriginals": 0,
+    "scope": "fixed body blob identities, not semantic translation assessment"
+  },
+  "retainedFailure": "Initial visible-link parser incorrectly stripped code-formatted source filename labels in historical Temporal article. Minimal label normalization fixed it; legacy source pins unchanged. Synthetic filename-label regression and original fixed remote bodies passed."
+}

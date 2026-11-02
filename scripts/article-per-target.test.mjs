@@ -6,7 +6,7 @@ import { validateContract, verifyScenarioSnapshot, verifyArticles } from './chec
 const load=async path=>JSON.parse(await readFile(new URL('../'+path,import.meta.url),'utf8'));
 const m=await load('docs/verification/article-coverage.json'), versions=await load('versions.json');
 const old=await load(m.receipt), source=await load(m.source), locale=await load('docs/verification/article-coverage.en.json');
-const extras={'memory-consumer':await load('docs/verification/v014-memory-consumer.safe.json'),'temporal':await load('docs/verification/v012-temporal.safe.json'),'ordinary-response':await load('docs/verification/v013-ordinary-response.safe.json')};
+const extras=Object.fromEntries(await Promise.all(Object.values(m.qualifications).filter(q=>q.kind==='independent-scenario').map(async q=>[q.scenario,await load(q.receipt.path)])));
 const clone=value=>structuredClone(value);
 test('per-target: all targets have unique authoritative evidence bindings',()=>{
  validateManifest(m);validateVersions(versions,m);
@@ -25,7 +25,7 @@ test('per-target: stale legacy target cannot borrow the original receipt',()=>{c
 test('per-target: missing, orphan or wrong-scenario bindings fail',()=>{for(const mutation of [x=>delete x.targetEvidence.temporal,x=>x.targetEvidence.temporal='ordinary-response',x=>x.qualifications.orphan={...x.qualifications.temporal,commit:'a'.repeat(40)}]){const x=clone(m);mutation(x);assert.throws(()=>validateQualifications(x));}});
 test('per-target: malformed source/evidence/article pins fail',()=>{for(const mutation of [x=>x.qualifications.temporal.commit='main',x=>x.qualifications.temporal.evidenceCommit='main',x=>x.articles.find(a=>a.target==='temporal').articleCommit='main']){const x=clone(m);mutation(x);assert.throws(()=>validateQualifications(x));}});
 test('per-target: introduced version must match scenario execution source',()=>{const x=clone(versions);x.targets.temporal.since='0.13';assert.throws(()=>validateVersions(x,m),/identity mismatch/);});
-test('per-target: both independent scenarios reuse successful original observations',()=>{for(const [id,r] of Object.entries(extras))assert.ok(validateScenarioReceipt(r,id).report.sha256);});
+test('per-target: independent scenarios reuse their own successful original observations',()=>{for(const [id,r] of Object.entries(extras))assert.ok(validateScenarioReceipt(r,id).report.sha256);});
 test('per-target: removed, failed or duplicate scenario stage fails',()=>{for(const mutation of [q=>q.observations=q.observations.filter(o=>o.stage!=='independent-work'),q=>q.observations.find(o=>o.stage==='independent-work').exitCode=1,q=>q.observations.push(q.observations[0])]){const x=clone(extras.temporal);mutation(x.independentInstall);assert.throws(()=>validateScenarioReceipt(x,'temporal'));}});
 test('per-target: wrong date, missing input and missing adoption fail',()=>{const time=clone(extras.temporal);time.independentInstall.taskTime.taskDate='2026-10-28';assert.throws(()=>validateScenarioReceipt(time,'temporal'));const inputs=clone(extras.temporal);inputs.independentInstall.inputFiles=[];assert.throws(()=>validateScenarioReceipt(inputs,'temporal'));const reply=clone(extras['ordinary-response']);delete reply.independent.adoptionCheckpointHash;assert.throws(()=>validateScenarioReceipt(reply,'ordinary-response'));});
 test('per-target: scenario receipt cannot be substituted or edited in site snapshot',async()=>{const q=m.qualifications.temporal,text=await readFile(new URL('../'+q.receipt.path,import.meta.url),'utf8');assert.equal(verifyScenarioSnapshot(text,q).version,'0.12.0');assert.throws(()=>verifyScenarioSnapshot(text+' ',q),/differs/);});
@@ -90,4 +90,13 @@ test('metadata diagnostics preserve failed public path and rate fields without a
  const response=new Response(JSON.stringify({message:'API rate limit exceeded for 192.0.2.1'}),{status:403,headers:{'x-ratelimit-remaining':'0','x-ratelimit-reset':'1234567890','retry-after':'60'}});
  const text=await metadataFailure(response,'git/commits/'+'a'.repeat(40));
  assert.match(text,/HTTP 403/);assert.match(text,/git\/commits\/a{40}/);assert.match(text,/"remaining":"0"/);assert.match(text,/"reset":"1234567890"/);assert.match(text,/"retryAfter":"60"/);assert.doesNotMatch(text,/192\.0\.2\.1/);assert.match(text,/not a complete pass/);
+});
+
+const revocableReceipt=JSON.parse(await readFile(new URL('../docs/verification/v016-revocable-rag.safe.json',import.meta.url),'utf8'));
+test('revocable coverage preserves actual independent fixture delivery and refusal',()=>{
+ assert.equal(validateScenarioReceipt(revocableReceipt,'revocable-rag').report.bytes,476);
+});
+test('revocable coverage refuses substituted identity, omitted refusal and changed original bytes',()=>{
+ const mutations=[q=>q.report.protection.profile='live',q=>q.report.protection.runId='another-run',q=>q.documentId='different',q=>q.paidCalls=1,q=>q.observations.find(o=>o.stage==='independent-artifact-read').httpStatus=404,q=>q.observations.find(o=>o.stage==='independent-revoked-read').exitCode=0,q=>q.observations.find(o=>o.stage==='independent-revoked-read').expectedRefusal=false,q=>q.observations.find(o=>o.stage==='independent-revoked-read').readerHttpStatus=200,q=>q.originalReportBytesRetained=false,q=>q.afterSha256='a'.repeat(64),q=>q.observations=q.observations.filter(o=>o.stage!=='independent-revoke')];
+ for(const mutate of mutations){const r=structuredClone(revocableReceipt);mutate(r.independent);assert.throws(()=>validateScenarioReceipt(r,'revocable-rag'));}
 });

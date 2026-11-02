@@ -58,3 +58,42 @@ test('backlinks: a complete case block hidden inside an outer-code fence is reje
 test('backlinks: an indented-code line is not a visible evidence link', async () => { const files = data(); files.set('articles/worker-example.md', block().replace('[Exact case](', '    [Exact case](')); await assert.rejects(verifyArticles(options(files)), /visible|link/i); });
 test('backlinks: image notation cannot stand in for a clickable evidence link', async () => { const files = data(); files.set('articles/worker-example.md', block().replace('[Exact case](', '![Exact case](')); await assert.rejects(verifyArticles(options(files)), /visible|link/i); });
 test('backlinks: an escaped opening bracket cannot stand in for a clickable evidence link', async () => { const files = data(); files.set('articles/worker-example.md', block().replace('[Exact case](', '\\[Exact case](')); await assert.rejects(verifyArticles(options(files)), /visible|link/i); });
+
+test('backlinks: revocable RAG needs each successful bounded stage, not merely a local hash', () => {
+ const t={kind:'scenario',name:'revocable-rag'};
+ const m={schemaVersion:3,repository:manifest.repository,verifiedAt:pin,targets:{'revocable-rag':t},targetEvidence:{'revocable-rag':'v16'},qualifications:{v16:{kind:'independent-scenario',scenario:'revocable-rag',commit:other}},articles:[{slug:'027-rag-revocation-publish-replay',status:'verified',target:'revocable-rag',articleCommit:other}]};
+ const stages=['independent-install','independent-build','independent-init','independent-start','independent-publication','independent-artifact-read','independent-revoke'];
+ const evidence={kind:'revocable-rag-provider-free-code-qualification',version:'0.16.0',modelCalls:0,independent:{modelCalls:0,runId:'synthetic-run',documentId:'atlas-a',originalReportBytesRetained:true,beforeSha256:'a'.repeat(64),afterSha256:'a'.repeat(64),observations:[...stages.map(stage=>({stage,exitCode:0,...(stage==='independent-artifact-read'?{httpStatus:200,stdoutSha256:'a'.repeat(64)}:{})})),{stage:'independent-revoked-read',exitCode:2,expectedRefusal:true,readerHttpStatus:404}],report:{sha256:'a'.repeat(64),protection:{profile:'document-revocation@1',runId:'synthetic-run'}}}};
+ const validate=e=>validateContract(m,{sourceCommit:pin,results:{}},source,{'revocable-rag':e});
+ assert.equal(validate(evidence).pins['revocable-rag'],other);
+ for(const stage of stages){const e=structuredClone(evidence);e.independent.observations=e.independent.observations.filter(o=>o.stage!==stage);assert.throws(()=>validate(e),/receipt/);}
+ for(const mutate of [e=>e.independent.observations.pop(),e=>e.independent.observations.at(-1).exitCode=0,e=>e.independent.observations.at(-1).readerHttpStatus=200,e=>e.independent.report.protection.runId='other',e=>e.independent.afterSha256='b'.repeat(64)]){const e=structuredClone(evidence);mutate(e);assert.throws(()=>validate(e),/refusal|identity|bytes/);}
+ const paid=structuredClone(evidence);paid.modelCalls=1;assert.throws(()=>validate(paid),/receipt/);
+});
+
+test('backlinks: revocable RAG requires visible exact source and both original CLI commands in each language', async () => {
+ const c={verifiedAt:pin,pins:{rag:other},targets:{rag:{kind:'scenario',name:'revocable-rag'}},articles:[{slug:'rag-example',target:'rag',articleCommit:pin}]};
+ const body=`[Original command owner](https://github.com/hpoenixf/open-etf-agent/blob/${other}/src/session-cli.mjs)\n\n\`\`\`bash\nnode src/session-cli.mjs init-documents --session ./test-output/revocable-demo --profile document-revocation@1\nnode src/session-cli.mjs start --session ./test-output/revocable-demo --profile document-revocation@1 --case revocable-rag\nnode src/session-cli.mjs publication --session ./test-output/revocable-demo --profile document-revocation@1 --run RUN_ID\nnode src/session-cli.mjs revoke-document --session ./test-output/revocable-demo --profile document-revocation@1 --document atlas-a --expected-revision 1\nnode src/session-cli.mjs publication --session ./test-output/revocable-demo --profile document-revocation@1 --run RUN_ID\n\`\`\``;
+ const verify=text=>verifyArticles({contract:c,english:new Set(['rag-example']),paths:[],read:async()=>text});
+ assert.equal((await verify(body)).checkedBodies,2);
+ assert.equal((await verify(body.replace('[Original command owner]', '[`session-cli.mjs`]'))).checkedBodies,2);
+ await assert.rejects(verify(body.replace('--case revocable-rag','--case unrelated')),/sequence/);
+ await assert.rejects(verify(body.replace(other,pin)),/source/);
+ const publication='node src/session-cli.mjs publication --session ./test-output/revocable-demo --profile document-revocation@1 --run RUN_ID';
+ await assert.rejects(verify(body.replace(publication,'')),/sequence/);
+ await assert.rejects(verify(body.replace('[Original command owner](', '`[Original command owner](').replace('/src/session-cli.mjs)', '/src/session-cli.mjs)`')),/source/);
+ await assert.rejects(verify('<pre>'+body+'</pre>'),/non-prose/);
+});
+
+// A code-formatted filename is a visible clickable label, unlike an entire code-hidden link.
+test('backlinks: legacy temporal source filename labels stay clickable', async () => {
+ const pin='46c2822be9865b99696bb70fb9e0ff1b5257ff35',slug='temporal-example';
+ const body='[`temporal.mjs`](https://github.com/hpoenixf/open-etf-agent/blob/'+pin+'/src/temporal.mjs)\n\n```sh\n'+[
+  'npm run temporal -- submit --session runs/article-time --run fixed '+String.fromCharCode(92),
+  '--time-zone America/Los_Angeles --anchor 2026-10-28T00:30:00.000Z',
+  'npm run temporal -- work --session runs/article-time --run fixed',
+  'npm run temporal -- read --session runs/article-time --run fixed'
+ ].join('\n')+'\n```';
+ const result=await verifyArticles({contract:{verifiedAt:pin,articles:[{slug,target:'temporal'}],targets:{temporal:{kind:'scenario',name:'temporal'}}},english:new Set([slug]),paths:[],read:async()=>body});
+ assert.equal(result.checkedBodies,2);
+});
