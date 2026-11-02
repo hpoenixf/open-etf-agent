@@ -19,7 +19,7 @@ async function bounded(promise, signal) {
 export async function run({ question, gateway, outputRoot = 'runs', requireReport = true, signal, limits = {}, extensions = [], hooks, rootBudget, allowedTools, allowedDocuments, taskId = null }) {
   if (typeof question !== 'string' || !question.trim() || Buffer.byteLength(question) > 16000 || typeof gateway?.next !== 'function') throw failure('INVALID_INPUT');
   const budget = { maxRounds: 12, maxTools: 12, timeoutMs: 30000, ...limits };
-  for (const [key, value] of Object.entries(budget)) if (!['maxRounds', 'maxTools', 'timeoutMs'].includes(key) || !Number.isSafeInteger(value) || value < 1 || value > (key === 'timeoutMs' ? 300000 : 1000)) throw failure('INVALID_LIMIT');
+  for (const [key, value] of Object.entries(budget)) if (!['maxRounds', 'maxTools', 'timeoutMs'].includes(key) || !Number.isSafeInteger(value) || value < 1 || value > (key === 'timeoutMs' ? 3600000 : 1000)) throw failure('INVALID_LIMIT');
   rootBudget ??= createRootBudget({ model: budget.maxRounds, tool: budget.maxTools });
   const root = await ensureSafeDirectory(outputRoot);
   const directory = await mkdtemp(join(root, 'run-')); const runId = basename(directory);
