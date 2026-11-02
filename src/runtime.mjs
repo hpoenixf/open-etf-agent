@@ -1,19 +1,19 @@
 import { mkdtemp, open } from 'node:fs/promises';
 import { resolve, join, basename } from 'node:path';
 import { randomUUID } from 'node:crypto';
-import { createToolHost, ensureSafeDirectory, assertHostSnapshotVersion } from './tools.mjs';
+import { createToolHost, ensureSafeDirectory, assertHostSnapshotVersion, assertWorkingInputToolSelection } from './tools.mjs';
 import { createRootBudget } from './cooperation.mjs';
 import { compactWorkingView } from './compaction.mjs';
 import { projectMemory } from './memory-projection.mjs';
 import { projectContext } from './context.mjs';
 import { activateTrustedPlugins } from './plugins.mjs';
 import { sha256 } from './source.mjs';
-import { PUBLICATION_BINDING, preparePublication } from './publication.mjs';
+import { PUBLICATION_BINDING, PUBLICATION_TEXT_MAX_BYTES, preparePublication } from './publication.mjs';
 
 const failure = code => Object.assign(new Error(code), { code });
 const canonical = value => JSON.stringify(value, (_,v) => v && typeof v==='object'&&!Array.isArray(v)?Object.fromEntries(Object.keys(v).sort().map(k=>[k,v[k]])):v);
 function validateProposal(p) {
-  if (p?.kind === 'final' && typeof p.text === 'string' && p.text.length <= 64000) return;
+  if (p?.kind === 'final' && typeof p.text === 'string' && Buffer.byteLength(p.text) <= PUBLICATION_TEXT_MAX_BYTES) return;
   if (p?.kind !== 'calls' || !Array.isArray(p.calls) || !p.calls.length || p.calls.length > 16) throw failure('INVALID_PROPOSAL');
   for (const c of p.calls) if (!c || typeof c.id !== 'string' || !c.id || c.id.length > 200 || typeof c.name !== 'string' || !c.arguments || typeof c.arguments !== 'object' || Array.isArray(c.arguments)) throw failure('INVALID_CALL');
 }
@@ -22,6 +22,22 @@ async function bounded(promise, signal) {
   const stopped = new Promise((_,reject)=>{cancel=()=>reject(signal.reason);signal.addEventListener('abort',cancel,{once:true});});
   try{return await Promise.race([promise,stopped]);}finally{signal.removeEventListener('abort',cancel);}
 }
+// The checkpoint phase, not a lingering dispatch pointer, decides whether a
+// receipt was committed. Session uses this same transition inside its cancel transaction.
+function retainUnknownDispatch(state, dispatch = state.inFlight) {
+  if (state.phase !== 'tool-dispatched' || !dispatch) return;
+  state.unknownEffects??=[];
+  if (!Array.isArray(state.unknownEffects)) throw failure('INVALID_RUNTIME_CHECKPOINT');
+  if (!state.unknownEffects.some(effect => effect?.callId === dispatch.callId)) state.unknownEffects.push({...structuredClone(dispatch),status:'unknown',dispatched:true});
+}
+export function cancelRuntimeCheckpoint(state) {
+  const cancelled=structuredClone(state);retainUnknownDispatch(cancelled);
+  // Terminal readers use unknownEffects; retaining the dispatch pointer as well
+  // duplicates its full arguments and can overflow an otherwise valid checkpoint.
+  delete cancelled.inFlight;
+  cancelled.phase='terminal';cancelled.status='cancelled';cancelled.code='CANCELLED';return cancelled;
+}
+
 export function validateRuntimeCheckpoint(state, definition) {
   if(state?.schemaVersion!=='runtime-checkpoint@1'||!Array.isArray(state.messages)||state.messages[0]?.role!=='user'||state.messages[0]?.content!==definition.question||!Array.isArray(state.usedIds)||new Set(state.usedIds).size!==state.usedIds.length||state.usedIds.some(id=>typeof id!=='string')||!Number.isSafeInteger(state.rounds)||state.rounds<0||state.rounds>definition.limits.maxRounds||!Number.isSafeInteger(state.toolsDispatched)||state.toolsDispatched<0||state.toolsDispatched>definition.limits.maxTools||!Number.isSafeInteger(state.cursor)||state.cursor<0||!Array.isArray(state.partialEffects)||!Array.isArray(state.unknownEffects)||!Array.isArray(state.hookErrors))throw failure('INVALID_RUNTIME_CHECKPOINT');
   if(['proposal-sealed','tool-dispatched','result-committed','result-consumed'].includes(state.phase)){validateProposal(state.proposal);if(state.proposal.kind==='calls'&&state.cursor>state.proposal.calls.length)throw failure('INVALID_RUNTIME_CHECKPOINT');}
@@ -45,10 +61,10 @@ export function validateRuntimeCheckpoint(state, definition) {
 
 export function run(options) { return drive(options, false); }
 export function submitRun(options) { return drive(options, true); }
-async function drive({ question, gateway, outputRoot='runs', requireReport=true, signal, hostSignal, limits={}, extensions=[], hooks, plugins, rootBudget, allowedTools, allowedDocuments, taskId=null, contextBytes, workingInput, durable, publication = false, pdfInput }, submitting) {
+async function drive({ question, gateway, outputRoot='runs', requireReport=false, signal, hostSignal, limits={}, extensions=[], hooks, plugins, rootBudget, allowedTools, allowedDocuments, taskId=null, contextBytes, workingInput, durable, publication = false, pdfInput }, submitting) {
   if(typeof question!=='string'||!question.trim()||Buffer.byteLength(question)>16000||typeof gateway?.next!=='function')throw failure('INVALID_INPUT');
-  const budget={maxRounds:12,maxTools:12,timeoutMs:30000,...limits};
-  for(const [key,value] of Object.entries(budget))if(!['maxRounds','maxTools','timeoutMs'].includes(key)||!Number.isSafeInteger(value)||value<1||value>(key==='timeoutMs'?300000:1000))throw failure('INVALID_LIMIT');
+  const budget={maxRounds:24,maxTools:64,timeoutMs:120000,...limits};
+  for(const [key,value] of Object.entries(budget))if(!['maxRounds','maxTools','timeoutMs'].includes(key)||!Number.isSafeInteger(value)||value<1||value>(key==='timeoutMs'?3600000:1000))throw failure('INVALID_LIMIT');
   if(contextBytes!==undefined&&(!Number.isSafeInteger(contextBytes)||contextBytes<1||contextBytes>1048576))throw failure('INVALID_CONTEXT_LIMIT');
   if(workingInput!==undefined&&(!workingInput||typeof workingInput!=='object'||Object.keys(workingInput).some(key=>!['memoryLibrary','compaction'].includes(key))))throw failure('INVALID_WORKING_INPUT');
   if(workingInput?.memoryLibrary&&(typeof workingInput.memoryLibrary.libraryId!=='string'||typeof workingInput.memoryLibrary.state!=='function'))throw failure('INVALID_MEMORY_LIBRARY');
@@ -63,12 +79,20 @@ async function drive({ question, gateway, outputRoot='runs', requireReport=true,
   if(hostSignal!==undefined&&(typeof hostSignal?.aborted!=='boolean'||typeof hostSignal.addEventListener!=='function'||typeof hostSignal.removeEventListener!=='function'))throw failure('INVALID_HOST_SIGNAL');
   if(submitting&&typeof durable.runId!=='string')throw failure('SUBMISSION_ID_REQUIRED');
   if(submitting&&durable.rootId!==undefined&&durable.rootId!==durable.runId)throw failure('ROOT_SCOPE_MISMATCH');
-  // Refuse an unsupported persisted Host protocol before plugin activation or
-  // claiming execution. Session/Artifact reads remain separate from resumption.
-  if (!submitting && durable?.runId) {
-    const prior=durable.store.inspect(durable.runId);
-    if (prior.snapshot.host!=null) assertHostSnapshotVersion(prior.snapshot.host);
+  // Reuse the original Host-version preflight view: no extra inspect between
+  // protocol admission and the existing binding-checked execution read.
+  // Existing terminal reads need no newly selected working-input consumer.
+  let terminalRead=false;
+  if (durable?.runId) {
+    let prior;
+    try { prior=durable.store.inspect(durable.runId); }
+    catch(error) { if(!submitting||error.code!=='UNKNOWN_RUN')throw error; }
+    if(prior){
+      if(!submitting&&prior.snapshot.host!=null)assertHostSnapshotVersion(prior.snapshot.host);
+      terminalRead=['completed','failed','cancelled'].includes(prior.status);
+    }
   }
+  if(!terminalRead)assertWorkingInputToolSelection({allowedTools,contextBytes,compaction:Boolean(workingInput?.compaction)});
   let selected, outcome;
   try {
     if(!submitting&&plugins){selected=await activateTrustedPlugins({plugins,expectedBindings:durable?.bindings.plugins,signal});if(hooks&&selected.hooks)throw failure('AMBIGUOUS_HOOK_CONFIGURATION');extensions=[...extensions,...selected.extensions];hooks??=selected.hooks;}
@@ -77,9 +101,22 @@ async function drive({ question, gateway, outputRoot='runs', requireReport=true,
   } finally { if(selected){const release=await selected.release();if(outcome)outcome.pluginRelease=release;} }
 
   async function execute(){
-    const config={requireReport,...(publication?{publication:PUBLICATION_BINDING.version}:{}),...(allowedTools?{allowedTools}:{}),...(allowedDocuments?{allowedDocuments}:{}),...(contextBytes===undefined?{}:{contextBytes}),taskId,...(workingInput?{workingInput:{...(workingInput.memoryLibrary?{memoryLibraryId:workingInput.memoryLibrary.libraryId}:{}),...(workingInput.compaction?{compaction:{thresholdBytes:workingInput.compaction.thresholdBytes,summaryTimeoutMs:workingInput.compaction.summaryTimeoutMs??2000,version:'working-input@1'}}:{})}}:{})};
-    let stored,claim,directory,runId,deadlineAt=Date.now()+budget.timeoutMs;
+    const config={requireReport,...(publication?{publication:PUBLICATION_BINDING.version}:{}),...(allowedTools?{allowedTools}:{}),...(allowedDocuments?{allowedDocuments}:{}),...(contextBytes===undefined?{}:{contextBytes}),taskId,...(workingInput?{workingInput:{...(workingInput.memoryLibrary?{memoryLibraryId:workingInput.memoryLibrary.libraryId}:{}),...(workingInput.compaction?{compaction:{thresholdBytes:workingInput.compaction.thresholdBytes,summaryTimeoutMs:workingInput.compaction.summaryTimeoutMs??2000,version:'history-compaction@1'}}:{})}}:{})};
+    let stored,claim,directory,runId,boundChild=false,deadlineAt=Date.now()+budget.timeoutMs;
     let state={schemaVersion:'runtime-checkpoint@1',phase:'ready',messages:[{role:'user',content:question}],usedIds:[],rounds:0,toolsDispatched:0,proposal:null,cursor:0,result:null,host:null,working:null,answer:'',status:'failed',code:null,unknownEffects:[],partialEffects:[],hookErrors:[]};
+    function verifyCorrectionHistory(host){
+      let count=0,partial=false;
+      for(let i=1;i<state.messages.length;i++){
+        const group=state.messages[i];if(group.role!=='assistant')continue;
+        for(let j=0;j<group.calls.length;j++){
+          const message=state.messages[i+1+j];if(message?.role!=='tool')break;
+          const result=message.result;
+          if((result.partialPaths||[]).some(path=>['report.md','manifest.json'].includes(path))||result.artifactEffects||result.memoryEffect)partial=true;
+          if(!partial&&group.calls.length===1&&message.callId===group.calls[0].id&&host.correctionEligible(group.calls[0],result))count++;
+        }
+      }
+      if(!Number.isSafeInteger(state.corrections??0)||(state.corrections??0)!==Math.min(count,1)||(count>1&&state.failureCode!=='CORRECTION_LIMIT'))throw failure('RECOVERY_CORRECTION_MISMATCH');
+    }
     function boundToOriginal(saved) {
       if (!submitting && saved.snapshot.host!=null) assertHostSnapshotVersion(saved.snapshot.host);
       validateRuntimeCheckpoint(saved.snapshot,saved.definition);
@@ -113,6 +150,7 @@ async function drive({ question, gateway, outputRoot='runs', requireReport=true,
         const restored=state.host?await createToolHost({directory,extensions,hooks,allowedTools,allowedDocuments,enableNotes:!!workingInput?.compaction,restore:state.host}):null;
         for(const message of state.messages)if(message.role==='tool'){const call=state.messages.flatMap(m=>m.calls||[]).find(c=>c.id===message.callId);if(call)await restored.verifyResult(call,message.result);}
         if(state.result){const call=state.proposal?.calls?.[state.cursor];if(call)await restored.verifyResult(call,state.result);}
+        if(restored)verifyCorrectionHistory(restored);
         if(stored.status!=='cancelled'){
           if(state.outcome?.runId!==runId||state.outcome.rootId!==stored.rootId||state.outcome.directory!==directory)throw failure('INVALID_TERMINAL_OUTCOME');
           return structuredClone({...state.outcome,rootUsage:stored.rootUsage});
@@ -124,8 +162,15 @@ async function drive({ question, gateway, outputRoot='runs', requireReport=true,
       const root=await ensureSafeDirectory(outputRoot);directory=await mkdtemp(join(root,'run-'));runId=basename(directory);
       if(durable){const created=durable.store.create({runId,directory,rootId:durable.rootId,parentRunId:durable.parentRunId,parentClaim:durable.parentClaim,definition:{question,grantId:durable.grantId,bindings:durable.bindings,limits:budget,rootLimits:durable.rootLimits??{model:budget.maxRounds,tool:budget.maxTools},deadlineAt:durable.deadlineAt??deadlineAt,config},snapshot:state});deadlineAt=created.definition.deadlineAt;claim=durable.store.claim(runId,durable.owner??randomUUID());}
     }
+    if(claim){
+      try{
+        const current=claim.read();boundToOriginal(current);
+        if(current.runId!==runId)throw failure('RUN_BINDINGS_MISMATCH');
+        state=structuredClone(current.snapshot);directory=current.directory;deadlineAt=current.definition.deadlineAt;boundChild=current.parentRunId!==null;
+      }catch(error){try{claim.release();}catch{}throw error;}
+    }
     rootBudget=claim?.rootBudget??rootBudget??createRootBudget({model:budget.maxRounds,tool:budget.maxTools});
-    const controller=new AbortController();const cancel=()=>{if(claim){try{durable.store.cancel(runId);}catch{}}controller.abort(failure('CANCELLED'));};
+    const controller=new AbortController();const cancel=()=>{if(claim&&!boundChild){try{durable.store.cancel(runId);}catch{}}controller.abort(boundChild?(signal?.reason instanceof Error?signal.reason:failure('INTERRUPTED')):failure('CANCELLED'));};
     let interrupted=false,effectsStopped=true,pendingEffect;
     const stop=()=>{if(!controller.signal.aborted){interrupted=true;controller.abort(failure('HOST_STOPPED'));}};
     signal?.addEventListener('abort',cancel,{once:true});if(signal?.aborted)cancel();
@@ -148,14 +193,18 @@ async function drive({ question, gateway, outputRoot='runs', requireReport=true,
     async function record(type,data={}){try{await log.write(JSON.stringify({runId,rootId:rootBudget.rootId,taskId,sequence:++record.sequence,type,...data})+'\n');}catch{logErrors.push('LOG_WRITE_FAILED');throw failure('LOG_WRITE_FAILED');}}
     record.sequence=0;
     async function checkpoint(phase,{reserve}={}){
-      state.phase=phase;state.host=host.snapshot();state.inFlight=inFlight;state.logSequence=record.sequence;
-      if(claim){if(reserve)claim.reserve(reserve,state);else claim.checkpoint(state);if(durable.onCheckpoint)await bounded(Promise.resolve().then(()=>durable.onCheckpoint({phase,runId,directory,cursor:state.cursor,callId:state.proposal?.calls?.[state.cursor]?.id,noteRef:state.working?.noteRef,workingHash:state.working?.hash,fence:claim.fence})),controller.signal);}
+      const previousPhase=state.phase;state.phase=phase;state.host=host.snapshot();state.inFlight=inFlight;state.logSequence=record.sequence;
+      if(claim){
+        try{if(reserve)claim.reserve(reserve,state);else claim.checkpoint(state);}catch(error){state.phase=previousPhase;throw error;}
+        if(durable.onCheckpoint)await bounded(Promise.resolve().then(()=>durable.onCheckpoint({phase,runId,directory,cursor:state.cursor,callId:state.proposal?.calls?.[state.cursor]?.id,noteRef:state.working?.noteRef,workingHash:state.working?.hash,fence:claim.fence})),controller.signal);
+      }
     }
     try{
       controller.signal.throwIfAborted();
       if(claim&&durable.onClaim)await bounded(Promise.resolve().then(()=>durable.onClaim({runId,rootId:claim.rootId,owner:claim.owner,fence:claim.fence})),controller.signal);
       host=await effect(createToolHost({directory,extensions,hooks,allowedTools,allowedDocuments,enableNotes:!!workingInput?.compaction,restore:state.host??undefined,pdfInput}));
       if(durable?.runId)for(const message of state.messages)if(message.role==='tool'){const call=state.messages.flatMap(m=>m.calls||[]).find(c=>c.id===message.callId);await host.verifyResult(call,message.result);}
+      verifyCorrectionHistory(host);
       if(state.working)await host.verifyWorkingInput(state.working);
       record.sequence=state.logSequence??0;log=await open(join(directory,'run.jsonl'),durable?.runId?'a':'wx',0o600);
       await record(durable?.runId?'run_resumed':'run_started',{mode:gateway.mode||'test',question,limits:budget,...(claim?{fence:claim.fence,deadlineAt}: {})});
@@ -176,7 +225,7 @@ async function drive({ question, gateway, outputRoot='runs', requireReport=true,
             let requestMessages=contextBytes===undefined?workingMessages:await projectContext({messages:workingMessages,maxBytes:contextBytes,lookupSource:host.resolveSource});let noteRef=null;
             if(workingInput?.compaction&&Buffer.byteLength(JSON.stringify(requestMessages))>=workingInput.compaction.thresholdBytes){
               // A crash during summary generation keeps its consumed root reservation; no adoption is implied.
-              const compacted=await compactWorkingView({messages:workingMessages,maxBytes:contextBytes??262144,lookupSource:host.resolveSource,lookupMemoryState:workingInput.memoryLibrary?lookupMemory:undefined,rootBudget:claim?{claim(kind){state.phase='model-reserved';state.purpose='compaction';state.host=host.snapshot();claim.reserve(kind,state);}}:rootBudget,summarize:workingInput.compaction.summarize,saveNote:host.persistWorkingNote,signal:controller.signal,summaryTimeoutMs:workingInput.compaction.summaryTimeoutMs});requestMessages=compacted.messages;noteRef=compacted.noteRef;delete state.purpose;await record('working_note',{...compacted.observation,noteRef});
+              const compacted=await compactWorkingView({messages:workingMessages,maxBytes:contextBytes??262144,lookupSource:host.resolveSource,canCompactHistory:host.canCompactHistory,lookupMemoryState:workingInput.memoryLibrary?lookupMemory:undefined,rootBudget:claim?{claim(kind){state.phase='model-reserved';state.purpose='compaction';state.host=host.snapshot();claim.reserve(kind,state);}}:rootBudget,summarize:workingInput.compaction.summarize,saveNote:host.persistWorkingNote,signal:controller.signal,summaryTimeoutMs:workingInput.compaction.summaryTimeoutMs});requestMessages=compacted.messages;noteRef=compacted.noteRef;delete state.purpose;await record('working_note',{...compacted.observation,noteRef});
             }
             state.working={schemaVersion:'working-input@1',messages:requestMessages,noteRef,hash:sha256(JSON.stringify(requestMessages))};await checkpoint('working-input');
           }
@@ -222,15 +271,22 @@ async function drive({ question, gateway, outputRoot='runs', requireReport=true,
         if(partialPaths.length)state.partialEffects.push({callId:call.id,name:effectiveName,...(effectiveName!==call.name?{originalName:call.name}:{}),partialPaths});
         if(result.artifactEffects)state.partialEffects.push({callId:call.id,name:effectiveName,artifactEffects:structuredClone(result.artifactEffects)});
         if(result.memoryEffect)state.partialEffects.push({callId:call.id,name:effectiveName,memoryEffect:structuredClone(result.memoryEffect)});
-        state.messages.push({role:'tool',callId:call.id,result:structuredClone(result)});state.cursor++;state.result=null;state.failureCode=result.status==='succeeded'?null:(result.dispatched?'TOOL_FAILED':'TOOL_REJECTED');
+        let correctionOffered=false;
+        state.failureCode=result.status==='succeeded'?null:(result.dispatched?'TOOL_FAILED':'TOOL_REJECTED');
+        if(state.failureCode&&!hooks&&state.proposal.calls.length===1&&!state.partialEffects.length&&!state.unknownEffects.length&&host.correctionEligible(call,result)){
+          if((state.corrections??0)>=1)state.failureCode='CORRECTION_LIMIT';
+          else{state.corrections=1;state.failureCode=null;correctionOffered=true;}
+        }
+        state.messages.push({role:'tool',callId:call.id,result:structuredClone(result)});state.cursor++;state.result=null;
         await checkpoint('result-consumed');
         await record('tool_result',{callId:call.id,name:effectiveName,status:result.status,dispatched:result.dispatched,partialPaths,memoryEffect:result.memoryEffect,artifactEffects:result.artifactEffects,artifactId:result.value?.artifactId,durationMs:result.durationMs,resultRef:result.value?.resultRef,sourceAcquisition:result.value?.mcp?{serverName:result.value.mcp.serverName,protocolVersion:result.value.mcp.protocolVersion,protocolRequestId:result.value.mcp.protocolRequestId,modelCallId:result.value.mcp.modelCallId}:undefined,original:result.original,effective:result.effective,hookErrors:result.hookErrors||[]});
         if(effectiveName==='save_report'&&result.status==='succeeded')await record('file_saved',{receipt:result.value});
-        if(result.status!=='succeeded')throw failure(result.dispatched?'TOOL_FAILED':'TOOL_REJECTED');
+        if(correctionOffered)await record('validation_correction_offered',{callId:call.id,code:result.validation.code,remainingRounds:budget.maxRounds-state.rounds});
+        if(state.failureCode)throw failure(state.failureCode);
       }
     }catch(error){
       state.code=error.code||'EXECUTION_FAILED';state.status=state.code==='CANCELLED'||state.code==='RUN_CANCELLED'?'cancelled':'failed';
-      if(inFlight)state.unknownEffects.push({...inFlight,status:'unknown',dispatched:true});
+      retainUnknownDispatch(state,inFlight);
     }finally{
       clearTimeout(timer);clearInterval(heartbeat);
       if(interrupted)effectsStopped=await drainStoppedEffect();
