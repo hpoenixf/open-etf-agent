@@ -16,7 +16,7 @@ export async function readChatStream(body, { signal, maxBytes = 262144 } = {}) {
   const metrics = () => ({ bytes, frames, toolFragments: fragments, doneObserved: done, hashScope: completeBody ? 'complete-body' : 'consumed-prefix', bodySha256: hash.copy().digest('hex') });
   const invalid = (reason, phase = 'stream-event', idDetails) => {
     const error = Object.assign(new Error('INCOMPLETE_OR_UNSUPPORTED_STREAM'), { code: 'PROVIDER_PROTOCOL_INVALID' });
-    diagnostics.set(error, Object.freeze({ schemaVersion: 'provider-protocol-diagnostic@1', phase, reason, ...metrics(), ...(reason==='TOOL_FRAGMENT_ID'&&idDetails?{idFailure:idDetails.idFailure,incomingIdKind:idDetails.incomingIdKind,previousIdPresent:idDetails.previousIdPresent,...(idDetails.incomingIdKind==='string'?{incomingEmpty:idDetails.incomingEmpty}:{})}:{}) }));
+    diagnostics.set(error, Object.freeze({ schemaVersion: 'provider-protocol-diagnostic@1', phase, reason, ...metrics(), ...(reason==='TOOL_FRAGMENT_ID'&&idDetails?{idFailure:idDetails.idFailure,incomingIdKind:idDetails.incomingIdKind,previousIdPresent:idDetails.previousIdPresent,...(idDetails.incomingIdKind==='string'?{incomingEmpty:idDetails.incomingEmpty}:{})}:{}), ...(reason==='TOOL_FRAGMENT_VALUE_TYPE'&&idDetails?{field:idDetails.field,incomingValueKind:idDetails.incomingValueKind}:{}) }));
     throw error;
   };
   const abort = () => { void reader.cancel(signal.reason).catch(() => {}); };
@@ -54,7 +54,15 @@ export async function readChatStream(body, { signal, maxBytes = 262144 } = {}) {
           previousIdPresent:Boolean(call.id),
           ...(typeof part.id==='string'?{incomingEmpty:part.id.length===0}:{})
         }); call.id = part.id; }
-        for (const key of ['name', 'arguments']) if (part.function?.[key] !== undefined) { if (typeof part.function[key] !== 'string') invalid('TOOL_FRAGMENT_VALUE_TYPE'); call.function[key] += part.function[key]; }
+        for (const key of ['name', 'arguments']) {
+          const value = part.function?.[key];
+          // Nullable optional delta fields carry no increment; strings still concatenate.
+          if (value === undefined || value === null) continue;
+          if (typeof value !== 'string') invalid('TOOL_FRAGMENT_VALUE_TYPE', 'stream-event', {
+            field: key, incomingValueKind: Array.isArray(value) ? 'array' : typeof value
+          });
+          call.function[key] += value;
+        }
         calls.set(part.index, call);
       }
     }
