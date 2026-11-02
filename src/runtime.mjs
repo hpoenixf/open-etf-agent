@@ -1,3 +1,4 @@
+import { validateSchedule, scheduleRunId } from './schedule.mjs';
 import { RESPONSE_PROFILE, RESPONSE_BINDING, validateResponseCheckpoint, validateResponseCall } from './human-response.mjs';
 import { createTaskTime, validateTaskTime, projectTaskTime, taskTimeMessage } from './temporal.mjs';
 import { mkdtemp, open } from 'node:fs/promises';
@@ -84,7 +85,19 @@ export function validateRuntimeCheckpoint(state, definition) {
 
 export function run(options) { return drive(options, false); }
 export function submitRun(options) { return drive(options, true); }
-async function drive({ question, gateway, outputRoot='runs', requireReport=false, signal, hostSignal, limits={}, extensions=[], hooks, plugins, rootBudget, allowedTools, allowedDocuments, taskId=null, contextBytes, workingInput, durable, publication = false, pdfInput, taskTime, ordinaryResponse = false, documentProtection = false }, submitting) {
+export function confirmScheduledRun(options, schedule) { return drive(options, true, {kind:'confirm',schedule}); }
+export function materializeScheduledRun(options, reference) {
+ if(typeof options?.durable?.store?.inspectSchedule!=='function')throw failure('SCHEDULE_PROFILE_REQUIRED');
+ const prior=options.durable.store.inspectSchedule(reference);
+ return drive(options, true, {kind:'materialize',schedule:prior.envelope.schedule,reference});
+}
+async function drive({ question, gateway, outputRoot='runs', requireReport=false, signal, hostSignal, limits={}, extensions=[], hooks, plugins, rootBudget, allowedTools, allowedDocuments, taskId=null, contextBytes, workingInput, durable, publication = false, pdfInput, taskTime, ordinaryResponse = false, documentProtection = false }, submitting, scheduleOperation) {
+  if(scheduleOperation){
+    const schedule=validateSchedule(scheduleOperation.schedule),runId=scheduleRunId(schedule);
+    const expectedTime={anchorInstant:schedule.scheduledInstant,timeZone:schedule.timeZone},expectedDeadline=Date.parse(schedule.scheduledInstant)+(limits.timeoutMs??120000);
+    if(durable?.store?.schemaVersion!==5||durable.runId!==undefined&&durable.runId!==runId||durable.deadlineAt!==undefined&&durable.deadlineAt!==expectedDeadline||taskTime!==undefined&&canonical(taskTime)!==canonical(expectedTime))throw failure('SCHEDULE_BINDING_MISMATCH');
+    durable={...durable,runId,deadlineAt:expectedDeadline};taskTime=expectedTime;
+  }
   if(typeof question!=='string'||!question.trim()||Buffer.byteLength(question)>16000||typeof gateway?.next!=='function')throw failure('INVALID_INPUT');
   if (gateway.admission === 'shared-admission@1' && (!durable || workingInput?.compaction || durable.parentRunId)) throw failure('ADMISSION_EXECUTION_UNSUPPORTED');
   if (taskTime !== undefined && (!taskTime || typeof taskTime !== 'object' || Array.isArray(taskTime) || Object.keys(taskTime).some(key => !['anchorInstant', 'timeZone'].includes(key)))) throw failure('INVALID_TASK_TIME_INPUT');
@@ -96,6 +109,7 @@ async function drive({ question, gateway, outputRoot='runs', requireReport=false
   if(workingInput?.compaction&&(typeof workingInput.compaction.summarize!=='function'||!Number.isSafeInteger(workingInput.compaction.thresholdBytes)||workingInput.compaction.thresholdBytes<1||workingInput.compaction.thresholdBytes>1048576))throw failure('INVALID_COMPACTION');
   if(durable&&(typeof durable.store?.create!=='function'||rootBudget||!durable.bindings||durable.bindings.gateway.mode!==gateway.mode))throw failure('INVALID_DURABLE_CONFIGURATION');
   if(pdfInput!==undefined&&(durable||submitting||hostSignal!==undefined))throw failure('PDF_ACTIVE_RECOVERY_UNSUPPORTED');
+  if(durable?.store.schemaVersion===5&&(durable.parentRunId||plugins||hooks||extensions.length||workingInput||pdfInput!==undefined||ordinaryResponse||documentProtection||!publication||!requireReport||canonical(allowedTools)!==canonical(['read_page','save_report'])||canonical(allowedDocuments)!==canonical(['atlas-a','atlas-b'])))throw failure('SCHEDULE_SCOPE_UNSUPPORTED');
   const protectedMode=documentProtection===true;
   if(typeof documentProtection!=='boolean'||!protectedMode&&durable?.store.schemaVersion===4)throw failure('DOCUMENT_PROFILE_REQUIRED');
   let authority;
@@ -184,6 +198,19 @@ async function drive({ question, gateway, outputRoot='runs', requireReport=false
         return saved;
       };
       if(signal?.aborted)throw failure('CANCELLED');
+      if(scheduleOperation){
+        const definition={question,grantId:durable.grantId,bindings:durable.bindings,limits:budget,rootLimits:durable.rootLimits??{model:budget.maxRounds,tool:budget.maxTools},deadlineAt:durable.deadlineAt,config};
+        if(scheduleOperation.kind==='confirm')return durable.store.confirmSchedule({schedule:scheduleOperation.schedule,definition,snapshot:state});
+        const prior=durable.store.inspectSchedule(scheduleOperation.reference);
+        // Existing links still pass the original full Runtime binding checks.
+        if(prior.runId!==null)original();
+        const checked=durable.store.materializeSchedule({reference:scheduleOperation.reference,definition,snapshot:state});
+        if(checked.state!=='due')return checked;
+        // Directory creation is not a SQL transaction; admission is checked again below.
+        const root=await ensureSafeDirectory(outputRoot);directory=await mkdtemp(join(root,'run-'));
+        if(signal?.aborted)throw failure('CANCELLED');
+        return durable.store.materializeSchedule({reference:scheduleOperation.reference,definition,snapshot:state,directory});
+      }
       try{return original();}catch(error){if(error.code!=='UNKNOWN_RUN')throw error;}
       const root=await ensureSafeDirectory(outputRoot);directory=await mkdtemp(join(root,'run-'));runId=durable.runId;
       if(signal?.aborted)throw failure('CANCELLED');

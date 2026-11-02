@@ -1,3 +1,4 @@
+import { SCHEDULE_PROFILE } from './schedule.mjs';
 import { lstat } from 'node:fs/promises';
 import { resolve, join } from 'node:path';
 import { openSession } from './session.mjs';
@@ -43,7 +44,38 @@ function resumeCase(state) {
  if (!binding || binding.mode !== 'fixture' || binding.provider !== 'synthetic' || binding.protocol !== 'fixture@1' || binding.version !== '1' || !cases.includes(binding.model) || Object.keys(binding).sort().join(',') !== 'mode,model,protocol,provider,version') fail('FIXTURE_BINDING_REQUIRED');
  return binding.model;
 }
+async function scheduleCommand(args) {
+ const [action,...rest]=args;const allowed={
+  'schedule-confirm':['session','schedule','revision','instant','zone','lateness'],
+  'schedule-wake':['session','schedule','hash'],
+  'schedule-inspect':['session','schedule','hash'],
+  'schedule-cancel':['session','schedule','hash'],
+  'schedule-revoke':['session','schedule','hash'],
+  'schedule-publication':['session','schedule','hash']
+ }[action];
+ if(!allowed)fail('INVALID_ARGUMENT');const values={};
+ for(let i=0;i<rest.length;i+=2){const key=rest[i]?.slice(2),value=rest[i+1];if(!rest[i]?.startsWith('--')||!allowed.includes(key)||Object.hasOwn(values,key)||typeof value!=='string'||!value||value.includes('\0'))fail('INVALID_ARGUMENT');values[key]=value;}
+ if(allowed.some(key=>!Object.hasOwn(values,key)))fail('INVALID_ARGUMENT');const directory=resolve(values.session);
+ let result;
+ if(action==='schedule-confirm'){
+  if(!/^[1-9][0-9]*$/.test(values.revision)||!/^[1-9][0-9]*$/.test(values.lateness))fail('INVALID_ARGUMENT');
+  const {confirmScheduleDemo}=await import('./schedule-demo.mjs');
+  result=await confirmScheduleDemo({directory,schedule:{scheduleId:values.schedule,definitionRevision:Number(values.revision),scheduledInstant:values.instant,timeZone:values.zone,maxLatenessMs:Number(values.lateness)}});
+ }else{
+  await existingSession(directory);
+  const reference={schemaVersion:SCHEDULE_PROFILE,scheduleId:values.schedule,confirmationHash:values.hash};
+  if(action==='schedule-wake'){
+   const controller=new AbortController(),stop=()=>controller.abort();process.on('SIGINT',stop);process.on('SIGTERM',stop);
+   try{const {wakeScheduleDemo}=await import('./schedule-demo.mjs');result=await wakeScheduleDemo({directory,reference,hostSignal:controller.signal});}finally{process.off('SIGINT',stop);process.off('SIGTERM',stop);}
+  }else{
+   const readonly=['schedule-inspect','schedule-publication'].includes(action),store=await openSession({directory,profile:SCHEDULE_PROFILE,readOnly:readonly});
+   try{result=action==='schedule-cancel'||action==='schedule-revoke'?store.cancelSchedule(reference,{revoke:action==='schedule-revoke'}):store.inspectSchedule(reference);if(action==='schedule-publication'){if(!result.runId)fail('PUBLICATION_NOT_FOUND');result=store.publication(result.runId);if(!result)fail('PUBLICATION_NOT_FOUND');}}finally{store.close();}
+  }
+ }
+ process.stdout.write(JSON.stringify(result,null,2)+'\n');
+}
 async function main(args) {
+ if(args[0]?.startsWith('schedule-'))return scheduleCommand(args);
  const options = argumentsFor(args);
  const protectedMode=options.profile===DOCUMENT_REVOCATION_PROFILE;
  if(options.action==='init-documents'){const {initializeRevocableDemo}=await import('./durable-demo.mjs');const authority=await initializeRevocableDemo({directory:options.session});process.stdout.write(JSON.stringify({profile:options.profile,...authority})+'\n');return;}
