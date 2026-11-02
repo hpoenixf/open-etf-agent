@@ -3,7 +3,7 @@ import { createTaskTime, validateTaskTime, projectTaskTime, taskTimeMessage } fr
 import { mkdtemp, open } from 'node:fs/promises';
 import { resolve, join, basename } from 'node:path';
 import { randomUUID } from 'node:crypto';
-import { createToolHost, ensureSafeDirectory, assertHostSnapshotVersion } from './tools.mjs';
+import { createToolHost, ensureSafeDirectory, assertHostSnapshotVersion, assertWorkingInputToolSelection } from './tools.mjs';
 import { createRootBudget } from './cooperation.mjs';
 import { compactWorkingView } from './compaction.mjs';
 import { projectMemory } from './memory-projection.mjs';
@@ -11,6 +11,7 @@ import { projectContext } from './context.mjs';
 import { activateTrustedPlugins } from './plugins.mjs';
 import { sha256 } from './source.mjs';
 import { PUBLICATION_BINDING, preparePublication } from './publication.mjs';
+import { projectProviderProtocolDiagnostic } from './gateway.mjs';
 
 const failure = code => Object.assign(new Error(code), { code });
 const canonical = value => JSON.stringify(value, (_,v) => v && typeof v==='object'&&!Array.isArray(v)?Object.fromEntries(Object.keys(v).sort().map(k=>[k,v[k]])):v);
@@ -24,8 +25,28 @@ async function bounded(promise, signal) {
   const stopped = new Promise((_,reject)=>{cancel=()=>reject(signal.reason);signal.addEventListener('abort',cancel,{once:true});});
   try{return await Promise.race([promise,stopped]);}finally{signal.removeEventListener('abort',cancel);}
 }
+// The checkpoint phase, not a lingering dispatch pointer, decides whether a
+// receipt was committed. Session uses this same transition inside its cancel transaction.
+function retainUnknownDispatch(state, dispatch = state.inFlight) {
+  if (state.phase !== 'tool-dispatched' || !dispatch) return;
+  state.unknownEffects??=[];
+  if (!Array.isArray(state.unknownEffects)) throw failure('INVALID_RUNTIME_CHECKPOINT');
+  if (!state.unknownEffects.some(effect => effect?.callId === dispatch.callId)) state.unknownEffects.push({...structuredClone(dispatch),status:'unknown',dispatched:true});
+}
+export function cancelRuntimeCheckpoint(state) {
+  const cancelled=structuredClone(state);retainUnknownDispatch(cancelled);
+  if(cancelled.phase==='model-reserved')cancelled.gatewayOutcome='unknown';
+  cancelled.phase='terminal';cancelled.status='cancelled';cancelled.code='CANCELLED';return cancelled;
+}
+
+// Optional additive checkpoint fact. Absence is a legacy record, never a newly
+// inferred settlement. This codec is shared with Session's minimal checkpoint parser.
+export function validateGatewayOutcomeCheckpoint(state) {
+  if((state?.gatewayOutcome!==undefined&&!['settled','unknown'].includes(state.gatewayOutcome))||(state?.status==='completed'&&state.gatewayOutcome==='unknown'))throw failure('INVALID_GATEWAY_OUTCOME');
+}
 export function validateRuntimeCheckpoint(state, definition) {
   validateResponseCheckpoint(state,definition.config?.ordinaryResponse===RESPONSE_PROFILE);
+  validateGatewayOutcomeCheckpoint(state);
   if(state?.schemaVersion!=='runtime-checkpoint@1'||!Array.isArray(state.messages)||state.messages[0]?.role!=='user'||state.messages[0]?.content!==definition.question||!Array.isArray(state.usedIds)||new Set(state.usedIds).size!==state.usedIds.length||state.usedIds.some(id=>typeof id!=='string')||!Number.isSafeInteger(state.rounds)||state.rounds<0||state.rounds>definition.limits.maxRounds||!Number.isSafeInteger(state.toolsDispatched)||state.toolsDispatched<0||state.toolsDispatched>definition.limits.maxTools||!Number.isSafeInteger(state.cursor)||state.cursor<0||!Array.isArray(state.partialEffects)||!Array.isArray(state.unknownEffects)||!Array.isArray(state.hookErrors))throw failure('INVALID_RUNTIME_CHECKPOINT');
   if(['proposal-sealed','awaiting-response','tool-dispatched','result-committed','result-consumed'].includes(state.phase)){validateProposal(state.proposal);if(state.proposal.kind==='calls'&&state.cursor>state.proposal.calls.length)throw failure('INVALID_RUNTIME_CHECKPOINT');}
   if(state.phase==='result-committed'&&state.result?.callId!==state.proposal.calls[state.cursor]?.id)throw failure('INVALID_RUNTIME_CHECKPOINT');
@@ -46,7 +67,7 @@ export function validateRuntimeCheckpoint(state, definition) {
   if(state.usedIds.some(id=>!allCalls.has(id)))throw failure('INVALID_PAIRED_CHECKPOINT');
   if(state.proposal?.kind==='calls'&&(!lastGroup||canonical(lastGroup.group.calls)!==canonical(state.proposal.calls)||state.cursor!==lastGroup.settled))throw failure('INVALID_PAIRED_CHECKPOINT');
   if(lastGroup&&lastGroup.settled<lastGroup.group.calls.length&&state.proposal?.kind!=='calls')throw failure('INVALID_PAIRED_CHECKPOINT');
-  if(state.phase==='terminal'&&state.outcome){for(const key of ['answer','status','code','rounds','toolsDispatched','unknownEffects','partialEffects','hookErrors'])if(canonical(state.outcome[key])!==canonical(state[key]))throw failure('INVALID_TERMINAL_OUTCOME');if(canonical(state.outcome.receipt)!==canonical(state.host?.receipt))throw failure('INVALID_TERMINAL_OUTCOME');}
+  if(state.phase==='terminal'&&state.outcome){for(const key of ['answer','status','code','rounds','toolsDispatched','unknownEffects','partialEffects','hookErrors','gatewayOutcome'])if(canonical(state.outcome[key])!==canonical(state[key]))throw failure('INVALID_TERMINAL_OUTCOME');if(canonical(state.outcome.receipt)!==canonical(state.host?.receipt))throw failure('INVALID_TERMINAL_OUTCOME');}
 
 }
 
@@ -75,10 +96,17 @@ async function drive({ question, gateway, outputRoot='runs', requireReport=true,
   if(submitting&&durable.rootId!==undefined&&durable.rootId!==durable.runId)throw failure('ROOT_SCOPE_MISMATCH');
   // Refuse an unsupported persisted Host protocol before plugin activation or
   // claiming execution. Session/Artifact reads remain separate from resumption.
-  if (!submitting && durable?.runId) {
-    const prior=durable.store.inspect(durable.runId);
-    if (prior.snapshot.host!=null) assertHostSnapshotVersion(prior.snapshot.host);
+  let terminalRead=false;
+  if (durable?.runId) {
+    try {
+      const prior=durable.store.inspect(durable.runId);
+      if (!submitting && prior.snapshot.host!=null) assertHostSnapshotVersion(prior.snapshot.host);
+      terminalRead=['completed','failed','cancelled'].includes(prior.status);
+    } catch(error) { if(!submitting||error.code!=='UNKNOWN_RUN')throw error; }
   }
+  // Old terminal receipts do not construct another model input. Their original
+  // bindings are still checked below; only new/active execution needs this admission.
+  if(!terminalRead)assertWorkingInputToolSelection({allowedTools,contextBytes,compaction:Boolean(workingInput?.compaction)});
   let selected, outcome;
   try {
     if(!submitting&&plugins){selected=await activateTrustedPlugins({plugins,expectedBindings:durable?.bindings.plugins,signal});if(hooks&&selected.hooks)throw failure('AMBIGUOUS_HOOK_CONFIGURATION');extensions=[...extensions,...selected.extensions];hooks??=selected.hooks;}
@@ -101,7 +129,7 @@ async function drive({ question, gateway, outputRoot='runs', requireReport=true,
     if (!temporal && taskTime !== undefined) temporal = createTaskTime(taskTime);
     const config={requireReport,...(ordinaryResponse?{ordinaryResponse:RESPONSE_PROFILE}:{}),...(temporal?{taskTime:temporal}:{}),...(publication?{publication:PUBLICATION_BINDING.version}:{}),...(allowedTools?{allowedTools}:{}),...(allowedDocuments?{allowedDocuments}:{}),...(contextBytes===undefined?{}:{contextBytes}),taskId,...(workingInput?{workingInput:{...(workingInput.memoryLibrary?{memoryLibraryId:workingInput.memoryLibrary.libraryId}:{}),...(workingInput.compaction?{compaction:{thresholdBytes:workingInput.compaction.thresholdBytes,summaryTimeoutMs:workingInput.compaction.summaryTimeoutMs??2000,version:'history-compaction@1'}}:{})}}:{})};
     let stored,claim,directory,runId,boundChild=false,deadlineAt=Date.now()+budget.timeoutMs;
-    let state={schemaVersion:'runtime-checkpoint@1',phase:'ready',messages:[{role:'user',content:question}],usedIds:[],rounds:0,toolsDispatched:0,proposal:null,cursor:0,result:null,host:null,working:null,answer:'',status:'failed',code:null,unknownEffects:[],partialEffects:[],hookErrors:[]};
+    let state={schemaVersion:'runtime-checkpoint@1',phase:'ready',messages:[{role:'user',content:question}],usedIds:[],rounds:0,toolsDispatched:0,proposal:null,cursor:0,result:null,host:null,working:null,gatewayOutcome:'settled',answer:'',status:'failed',code:null,unknownEffects:[],partialEffects:[],hookErrors:[]};
     function verifyCorrectionHistory(host){
       let count=0,partial=false;
       for(let i=1;i<state.messages.length;i++){
@@ -159,7 +187,7 @@ async function drive({ question, gateway, outputRoot='runs', requireReport=true,
           if(state.outcome?.runId!==runId||state.outcome.rootId!==stored.rootId||state.outcome.directory!==directory)throw failure('INVALID_TERMINAL_OUTCOME');
           return structuredClone({...state.outcome,rootUsage:stored.rootUsage});
         }
-        return{runId,rootId:stored.rootId,directory,...(state.publication?{publication:state.publication}:{}),status:'cancelled',code:'CANCELLED',answer:state.answer,receipt:restored?.receipt??null,toolsDispatched:state.toolsDispatched,rounds:state.rounds,logErrors:[],unknownEffects:state.unknownEffects,partialEffects:state.partialEffects,hookErrors:state.hookErrors,rootUsage:stored.rootUsage,taskId,...(allowedTools&&restored?{sources:await restored.getSources(),resultRefs:await restored.getResultRefs()}:{}),semanticStatus:'unreviewed'};
+        return{runId,rootId:stored.rootId,directory,...(state.publication?{publication:state.publication}:{}),status:'cancelled',code:'CANCELLED',...(state.gatewayOutcome===undefined?{}:{gatewayOutcome:state.gatewayOutcome}),answer:state.answer,receipt:restored?.receipt??null,toolsDispatched:state.toolsDispatched,rounds:state.rounds,logErrors:[],unknownEffects:state.unknownEffects,partialEffects:state.partialEffects,hookErrors:state.hookErrors,rootUsage:stored.rootUsage,taskId,...(allowedTools&&restored?{sources:await restored.getSources(),resultRefs:await restored.getResultRefs()}:{}),semanticStatus:'unreviewed'};
       }
       claim=durable.store.claim(runId,durable.owner??randomUUID());
     }else{
@@ -176,6 +204,7 @@ async function drive({ question, gateway, outputRoot='runs', requireReport=true,
     const timer=setTimeout(()=>controller.abort(failure('TIMEOUT')),Math.max(1,deadlineAt-Date.now()));
     let heartbeat;if(claim)heartbeat=setInterval(()=>{try{claim.renew();}catch(error){controller.abort(failure(error.code==='RUN_CANCELLED'?'CANCELLED':error.code||'LEASE_LOST'));}},Math.max(10,Math.floor(durable.store.leaseMs/3)));
     let host,log,inFlight=state.phase==='tool-dispatched'?state.inFlight:null;
+    let gatewayUnsettled=state.phase==='model-reserved';
     const logErrors=[];let sourceSnapshots=[],resultRefs=[];
     async function effect(promise){
       // Sequential execution has at most one unsettled owned operation.
@@ -191,8 +220,11 @@ async function drive({ question, gateway, outputRoot='runs', requireReport=true,
     async function record(type,data={}){try{await log.write(JSON.stringify({runId,rootId:rootBudget.rootId,taskId,sequence:++record.sequence,type,...data})+'\n');}catch{logErrors.push('LOG_WRITE_FAILED');throw failure('LOG_WRITE_FAILED');}}
     record.sequence=0;
     async function checkpoint(phase,{reserve}={}){
-      state.phase=phase;state.host=host.snapshot();state.inFlight=inFlight;state.logSequence=record.sequence;
-      if(claim){if(reserve)claim.reserve(reserve,state);else claim.checkpoint(state);if(durable.onCheckpoint)await bounded(Promise.resolve().then(()=>durable.onCheckpoint({phase,runId,directory,cursor:state.cursor,callId:state.proposal?.calls?.[state.cursor]?.id,noteRef:state.working?.noteRef,workingHash:state.working?.hash,fence:claim.fence})),controller.signal);}
+      const previousPhase=state.phase;state.phase=phase;state.host=host.snapshot();state.inFlight=inFlight;state.logSequence=record.sequence;
+      if(claim){
+        try{if(reserve){claim.reserve(reserve,state);if(reserve==='model')gatewayUnsettled=true;}else claim.checkpoint(state);}catch(error){state.phase=previousPhase;throw error;}
+        if(durable.onCheckpoint)await bounded(Promise.resolve().then(()=>durable.onCheckpoint({phase,runId,directory,cursor:state.cursor,callId:state.proposal?.calls?.[state.cursor]?.id,noteRef:state.working?.noteRef,workingHash:state.working?.hash,fence:claim.fence})),controller.signal);
+      }
     }
     try{
       controller.signal.throwIfAborted();
@@ -233,9 +265,19 @@ async function drive({ question, gateway, outputRoot='runs', requireReport=true,
           }
           // Forgetting after adoption but before dispatch removes old typed Memory from the next actual input.
           if(workingInput?.memoryLibrary){state.working.messages=await projectMemory({messages:state.working.messages,lookupState:ref=>workingInput.memoryLibrary.state(ref.id)});state.working.hash=sha256(JSON.stringify(state.working.messages));}
-          state.rounds++;if(claim)await checkpoint('model-reserved',{reserve:'model'});else rootBudget.claim('model');
-          const start=performance.now();const proposal=await effect(Promise.resolve().then(()=>{controller.signal.throwIfAborted();return gateway.next({messages:structuredClone(state.working.messages),tools:structuredClone(host.definitions),signal:controller.signal});}));
-          controller.signal.throwIfAborted();validateProposal(proposal);
+          state.rounds++;state.gatewayOutcome='unknown';if(claim)await checkpoint('model-reserved',{reserve:'model'});else{rootBudget.claim('model');gatewayUnsettled=true;}
+          const start=performance.now();let proposal;
+          try{
+            proposal=await effect(Promise.resolve().then(()=>{controller.signal.throwIfAborted();gatewayUnsettled=true;return gateway.next({messages:structuredClone(state.working.messages),tools:structuredClone(host.definitions),signal:controller.signal});}));
+            controller.signal.throwIfAborted();gatewayUnsettled=false;
+          }catch(error){
+            // Only the original Gateway can brand a recognized terminal finish.
+            // An arbitrary code, incomplete stream/body or cancelled late reply is not settlement.
+            const diagnostic=projectProviderProtocolDiagnostic(error);
+            if(!controller.signal.aborted&&diagnostic?.reason==='NON_SUCCESS_FINISH'&&diagnostic.hashScope==='complete-body')gatewayUnsettled=false;
+            throw error;
+          }
+          state.gatewayOutcome='settled';validateProposal(proposal);
           if(proposal.kind==='calls'){if(proposal.calls.some(c=>c.name==='ask_response')){if(!ordinaryResponse||proposal.calls.length!==1)throw failure('INVALID_ORDINARY_RESPONSE');validateResponseCall(proposal.calls[0]);if(durable.store.responseStatus(runId))throw failure('QUESTION_LIMIT');}const ids=new Set();for(const c of proposal.calls){if(state.usedIds.includes(c.id)||ids.has(c.id))throw failure('DUPLICATE_CALL_ID');ids.add(c.id);}if(state.toolsDispatched+proposal.calls.length>budget.maxTools)throw failure('TOOL_LIMIT');}
           state.proposal=structuredClone(proposal);state.cursor=0;state.result=null;state.working=null;
           if(proposal.kind==='calls')state.messages.push({role:'assistant',calls:structuredClone(proposal.calls)});
@@ -294,7 +336,7 @@ async function drive({ question, gateway, outputRoot='runs', requireReport=true,
       }
     }catch(error){
       state.code=error.code||'EXECUTION_FAILED';state.status=state.code==='CANCELLED'||state.code==='RUN_CANCELLED'?'cancelled':'failed';
-      if(inFlight)state.unknownEffects.push({...inFlight,status:'unknown',dispatched:true});
+      retainUnknownDispatch(state,inFlight);
     }finally{
       clearTimeout(timer);clearInterval(heartbeat);
       if(interrupted)effectsStopped=await drainStoppedEffect();
@@ -304,7 +346,8 @@ async function drive({ question, gateway, outputRoot='runs', requireReport=true,
       if(log){try{await record(awaitingResponse?'run_yielded':interrupted?'worker_interrupted':'run_finished',{status:awaitingResponse?'awaiting-response':interrupted?'interrupted':state.status,code:state.code,toolsDispatched:state.toolsDispatched,receipt:host?.receipt,unknownEffects:state.unknownEffects,partialEffects:state.partialEffects});}catch{if(state.status==='completed'){state.status='failed';state.code='LOG_WRITE_FAILED';}}await log.close().catch(()=>logErrors.push('LOG_CLOSE_FAILED'));}
       if(hooks)state.hookErrors.push(...await hooks.observe('release',{runId,rootId:rootBudget.rootId,taskId,status:state.status,code:state.code,logErrors:[...logErrors],receipt:host?.receipt}));
     }
-    const outcome={runId,rootId:rootBudget.rootId,directory:resolve(directory),status:state.status,code:state.code,answer:state.answer,...(state.publication?{publication:structuredClone(state.publication)}:{}),receipt:host?.receipt??null,toolsDispatched:state.toolsDispatched,rounds:state.rounds,logErrors,unknownEffects:state.unknownEffects,partialEffects:state.partialEffects,hookErrors:state.hookErrors,rootUsage:rootBudget.snapshot(),taskId,...(allowedTools?{sources:sourceSnapshots,resultRefs}:{}),semanticStatus:'unreviewed'};
+    state.gatewayOutcome=gatewayUnsettled?'unknown':'settled';
+    const outcome={runId,rootId:rootBudget.rootId,directory:resolve(directory),status:state.status,code:state.code,gatewayOutcome:state.gatewayOutcome,answer:state.answer,...(state.publication?{publication:structuredClone(state.publication)}:{}),receipt:host?.receipt??null,toolsDispatched:state.toolsDispatched,rounds:state.rounds,logErrors,unknownEffects:state.unknownEffects,partialEffects:state.partialEffects,hookErrors:state.hookErrors,rootUsage:rootBudget.snapshot(),taskId,...(allowedTools?{sources:sourceSnapshots,resultRefs}:{}),semanticStatus:'unreviewed'};
     if(awaitingResponse){try{claim.release();return{...outcome,status:'awaiting-response',code:null,questionId:state.responseQuestion,deadlineAt};}catch(error){const current=durable.store.inspect(runId);return{...outcome,status:current.status==='cancelled'?'cancelled':'failed',code:current.status==='cancelled'?'CANCELLED':error.code};}}
     if(interrupted){
       let leaseReleased=false;if(effectsStopped){try{leaseReleased=claim.release();}catch{}}

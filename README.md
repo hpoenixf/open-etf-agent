@@ -73,6 +73,8 @@ npm run demo -- --case document-compare
 
 `main` includes **v0.15.0 serial source-checking specialist Child**; the [v0.15.0 Release](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.15.0) fixes implementation `74bd5aa`. Main delegates to one bounded Child, then consumes its original results and derived advice—not a parallel expert platform. Offline full-suite and independent-process checks passed; the third real-mechanism batch passed, with the two earlier failures retained.
 
+**2026-11-02 foundation repair:** [Working-input admission, cancellation facts, Child settlement and no-saving summary precheck](docs/verification/foundation-repair-20261102.md). Provider-free regressions passed; this is not a new release or live qualification.
+
 | Module | What changes | Run and inspect |
 | --- | --- | --- |
 | v0.15 · Serial specialist Child | One bounded source-checking Child returns original results to Main; derived advice gains no source authority | [Commands](docs/module-guide.md#v015--serial-specialist-child) · [Contract and evidence](openspec/changes/serial-specialist-child/evidence.md) |

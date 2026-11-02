@@ -104,3 +104,22 @@ test('7.2 child relationship lookup is exact and uniquely bound to parent plus t
  try { const root = await create(store, d); assert.equal(typeof store.findChild, 'function', 'Session must expose exact child lookup'); assert.equal(store.findChild(root.runId, 'missing'), null); const child = await create(store, d, { parentRunId: root.runId }); assert.equal(store.findChild(root.runId, 'synthetic-child').runId, child.runId); const parent = store.claim(root.runId, 'parent'); assert.throws(() => store.create({ directory: d, parentRunId: root.runId, parentClaim: { owner: parent.owner, fence: parent.fence }, definition: definition({ config: { taskId: 'synthetic-child' } }), snapshot: checkpoint() }), /CHILD_EXISTS/); const other = await create(store, d); assert.equal(store.findChild(other.runId, 'synthetic-child'), null); }
  finally { store.close(); }
 });
+
+
+test('7.2 cancelling a legacy minimal dispatch checkpoint retains uncertainty without changing scope', async () => {
+ const d=await directory();let store=await openSession({directory:d,clock:()=>100});let runId;
+ try {
+  ({runId}=await create(store,d));const claim=store.claim(runId,'legacy-writer');
+  claim.reserve('tool',checkpoint('tool-dispatched',{inFlight:{callId:'legacy-dispatch',name:'read_page'}}));
+  const before=store.inspect(runId),after=store.cancel(runId);assert.equal(after.status,'cancelled');
+  assert.deepEqual(after.snapshot.unknownEffects,[{callId:'legacy-dispatch',name:'read_page',status:'unknown',dispatched:true}]);
+  assert.deepEqual(after.definition,before.definition);assert.deepEqual(after.rootUsage,{model:0,tool:1});store.cancel(runId);assert.deepEqual(store.inspect(runId),after);
+ }finally{store.close();}
+ store=await openSession({directory:d,clock:()=>100});try{assert.equal(store.inspect(runId).snapshot.unknownEffects.length,1);}finally{store.close();}
+});
+
+
+test('7.2 optional Gateway outcome codec preserves legacy checkpoints and rejects invented markers', async () => {
+ const d=await directory(),store=await openSession({directory:d,clock:()=>100});
+ try{const {runId}=await create(store,d);const claim=store.claim(runId,'codec-writer');claim.checkpoint(checkpoint('working-input'));assert.equal(claim.read().snapshot.gatewayOutcome,undefined);claim.checkpoint(checkpoint('model-reserved',{gatewayOutcome:'unknown'}));assert.equal(claim.read().snapshot.gatewayOutcome,'unknown');assert.throws(()=>claim.checkpoint(checkpoint('model-reserved',{gatewayOutcome:'invented'})),/INVALID_GATEWAY_OUTCOME/);assert.throws(()=>claim.finish(checkpoint('terminal',{status:'completed',gatewayOutcome:'unknown'})),/INVALID_GATEWAY_OUTCOME/);assert.equal(claim.read().status,'active');}finally{store.close();}
+});

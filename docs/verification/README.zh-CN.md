@@ -12,6 +12,10 @@
 - 一个阶段的测试数只说明其当时冻结输入的那次执行；**不跨版本加总为成熟度**。先前 candidate / prepared-only / license-pending 文本是当时状态，不覆盖首页当前 MIT 与已公开代码事实。
 - 历史验收记录范围是 Runtime：合法边界、原文身份、持久效果与实际交付，不构成模型答案语义质量结论。新正常真实任务资格及旧版复审遵循 [2026-10-29 后续 Runtime-only 澄清](../live-validation.md#release-qualification)；此前综合口径分数保留为历史，不暗中替换。
 
+## 2026-11-02 底座修复
+
+[四项有界修复与兼容边界](foundation-repair-20261102.md) · [零真实模型调用的结构化执行回执](foundation-repair-20261102.safe.json)。历史 tag 与付费实测资格不变。
+
 ## 全量执行与版本血缘
 
 - v0.8 的 [原始结构化 observations / fullSuite](v08-observations.safe.json) 已记录完整命令、退出码、耗时、输入摘要及286/286计数，不只存在于散文。

@@ -1,0 +1,140 @@
+{
+  "schemaVersion": "foundation-repair@1",
+  "date": "2026-11-02",
+  "repository": "hpoenixf/open-etf-agent",
+  "baselineCommit": "34124cefc6df289e08518173789210b45a716451",
+  "baselineTree": "f286d2eb710af74724ba9dedf689cbb8ff20f96f",
+  "baselineBlobCount": 433,
+  "packageVersionUnchanged": "0.15.2",
+  "tagWrites": false,
+  "historicalQualificationModified": false,
+  "dispatchAuthorized": false,
+  "sourceInputs": {
+    "path": "foundation-repair-20261102-inputs.sha256",
+    "sha256": "d8b71ab8a1cb7cf742a9cdf390bf5829e41bc7aec6c8649180648681564cdf1c",
+    "files": 191,
+    "scope": "all tracked src, test, scripts, fixtures, vendored tooling, package.json and package-lock.json; README and verification prose added after execution are not runtime input claims"
+  },
+  "environment": {
+    "node": "26.11.1",
+    "testConcurrency": 1,
+    "dependencies": "existing lockfile-aligned installation; no new install",
+    "inheritedEnvironment": "cleared for full suite and build",
+    "providerCalls": 0,
+    "externalProviderRequests": 0,
+    "transport": "injected synthetic transport; original suite includes owned local subprocesses and loopback HTTP"
+  },
+  "fullSuite": {
+    "command": "node --max-old-space-size=256 --test --test-reporter=tap --test-concurrency=1 test/*.test.mjs",
+    "exitCode": 0,
+    "tests": 514,
+    "pass": 514,
+    "fail": 0,
+    "cancelled": 0,
+    "skipped": 0,
+    "todo": 0,
+    "durationMs": 60330.700623,
+    "retainedOutputSha256": "87de233ae465a1fa90f646b60845037dc6230354cbd30cce6b0afe63e9e0d789"
+  },
+  "build": {
+    "command": "node scripts/build.mjs",
+    "exitCode": 0,
+    "kind": "syntax-checked native ESM copy",
+    "typescriptTypecheck": false
+  },
+  "focused": [
+    {
+      "scope": "working-input/compaction five original or new test files",
+      "tests": 17,
+      "pass": 17
+    },
+    {
+      "scope": "Session/durable-review/Specialist/Gateway four original test files",
+      "tests": 52,
+      "pass": 52
+    }
+  ],
+  "focusedCountsOverlapFullSuite": true,
+  "compatibility": {
+    "terminalNarrowContext": {
+      "schemaVersion": "legacy-compat-proof@1",
+      "baselineCommit": "34124cefc6df289e08518173789210b45a716451",
+      "baselineTree": "f286d2eb710af74724ba9dedf689cbb8ff20f96f",
+      "producer": "original fixed 433-blob public Runtime and Session",
+      "consumer": "repair Runtime and Session after SQLite close/reopen",
+      "legacyGatewayOutcomeAbsent": true,
+      "status": "completed",
+      "answerPreserved": true,
+      "rootUsage": {
+        "model": 1,
+        "tool": 0
+      },
+      "grantPreserved": true,
+      "oldSyntheticGatewayCalls": 1,
+      "newSyntheticGatewayCalls": 0,
+      "physicalProviderCalls": 0,
+      "externalFetchCalls": 0
+    },
+    "childActualOldNew": [
+      {
+        "case": "success",
+        "legacyMarkerAbsent": true,
+        "oldChildStatus": "completed",
+        "oldCode": null,
+        "oldHandoffError": null,
+        "newHandoffError": null,
+        "identicalHandoff": true,
+        "unchangedOriginal": true,
+        "mainCalls": 2,
+        "childCalls": 2
+      },
+      {
+        "case": "tool-rejection",
+        "legacyMarkerAbsent": true,
+        "oldChildStatus": "failed",
+        "oldCode": "TOOL_REJECTED",
+        "oldHandoffError": null,
+        "newHandoffError": null,
+        "identicalHandoff": true,
+        "unchangedOriginal": true,
+        "mainCalls": 2,
+        "childCalls": 2
+      },
+      {
+        "case": "unknown-model",
+        "legacyMarkerAbsent": true,
+        "oldChildStatus": "failed",
+        "oldCode": "EXECUTION_FAILED",
+        "oldHandoffError": "SPECIALIST_EFFECT_UNKNOWN",
+        "newHandoffError": "SPECIALIST_EFFECT_UNKNOWN",
+        "identicalHandoff": true,
+        "unchangedOriginal": true,
+        "mainCalls": 1,
+        "childCalls": 2
+      },
+      {
+        "case": "old-reader-new-terminal",
+        "identicalOutcome": true,
+        "noReplay": true
+      }
+    ],
+    "portableFixtureIsActualOldRuntime": false,
+    "newCloseReopenIsProcessCrashProof": false
+  },
+  "independentReview": {
+    "axes": [
+      "Standards",
+      "Spec"
+    ],
+    "outstanding": 0,
+    "coverage": "frozen code/test diff plus existing contracts, author receipts and actual old-producer upgrade scripts; reviewer did not rerun the full suite"
+  },
+  "boundaries": [
+    "not a new release or live qualification",
+    "not semantic-quality acceptance",
+    "gatewayOutcome settlement does not imply billing is known",
+    "incomplete SSE remains unknown",
+    "no allowlist widening or new retry",
+    "historical failed and unknown attempts remain unchanged"
+  ]
+}

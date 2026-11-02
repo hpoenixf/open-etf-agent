@@ -140,3 +140,47 @@ for (const kind of ['source', 'method']) test(`7.review ${kind} history cannot s
     if (rejection) assert.ok(rejection instanceof Error); else assert.equal(result.status, 'failed');
   } finally { store.close(); }
 });
+
+test('7.review cancellation preserves an uncommitted dispatch as unknown across original Session reopen', async () => {
+  const controller = new AbortController(); let modelCalls = 0, toolCalls = 0;
+  const extension = { name: 'pending_effect', description: 'Synthetic unresolved effect', parameters: { type: 'object', properties: {}, additionalProperties: false }, validate() {}, execute() { toolCalls++; controller.abort(); return new Promise(() => {}); } };
+  const prepared = await durableOptions({ mode: 'fixture', next: async () => { modelCalls++; return { kind: 'calls', calls: [{ id: 'pending-one', name: extension.name, arguments: {} }] }; } });
+  prepared.options.extensions = [extension]; prepared.options.signal = controller.signal;
+  let first;
+  try {
+    first = await run(prepared.options); assert.equal(first.status, 'cancelled'); assert.equal(first.unknownEffects.length, 1);
+    const cancelled = prepared.store.inspect(first.runId); assert.deepEqual(cancelled.snapshot.unknownEffects, first.unknownEffects);
+    prepared.store.cancel(first.runId); assert.deepEqual(prepared.store.inspect(first.runId), cancelled, 'repeat cancel must not duplicate the unknown record');
+  } finally { prepared.store.close(); }
+  const store = await openSession({ directory: prepared.d });
+  try {
+    const restored = await run({ ...prepared.options, signal: undefined, durable: { ...prepared.options.durable, store, runId: first.runId } });
+    assert.equal(restored.status, 'cancelled'); assert.deepEqual(restored.unknownEffects, first.unknownEffects);
+    assert.deepEqual(restored.rootUsage, { model: 1, tool: 1 }); assert.equal(modelCalls, 1); assert.equal(toolCalls, 1);
+  } finally { store.close(); }
+});
+
+test('7.review cancellation after result commit does not turn a known receipt into an unknown effect', async () => {
+  const controller = new AbortController(); let modelCalls = 0;
+  const prepared = await durableOptions({ mode: 'fixture', next: async () => { modelCalls++; return { kind: 'calls', calls: [call('committed-read')] }; } });
+  prepared.options.signal = controller.signal;
+  prepared.options.durable.onCheckpoint = ({ phase }) => { if (phase === 'result-committed') controller.abort(); };
+  let first;
+  try {
+    first = await run(prepared.options); assert.equal(first.status, 'cancelled'); assert.deepEqual(first.unknownEffects, []);
+    assert.deepEqual(prepared.store.inspect(first.runId).snapshot.unknownEffects, []);
+  } finally { prepared.store.close(); }
+  const store = await openSession({ directory: prepared.d });
+  try {
+    const restored = await run({ ...prepared.options, signal: undefined, durable: { ...prepared.options.durable, store, runId: first.runId, onCheckpoint: undefined } });
+    assert.equal(restored.status, 'cancelled'); assert.deepEqual(restored.unknownEffects, []); assert.equal(modelCalls, 1);
+  } finally { store.close(); }
+});
+
+
+test('7.review cancellation of an admitted model reservation retains unknown without refund or dispatch', async () => {
+ const controller=new AbortController();let calls=0;
+ const prepared=await durableOptions({mode:'fixture',next:async()=>{calls++;return{kind:'final',text:'Must not execute.'};}});
+ prepared.options.signal=controller.signal;prepared.options.durable.onCheckpoint=({phase})=>{if(phase==='model-reserved')controller.abort();};
+ try{const result=await run(prepared.options);assert.equal(result.status,'cancelled');assert.equal(result.gatewayOutcome,'unknown');assert.equal(prepared.store.inspect(result.runId).snapshot.gatewayOutcome,'unknown');assert.deepEqual(result.rootUsage,{model:1,tool:0});assert.equal(calls,0);}finally{prepared.store.close();}
+});

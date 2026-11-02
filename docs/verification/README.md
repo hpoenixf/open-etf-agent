@@ -12,6 +12,10 @@ Start with **observations** (what happened, failures and fixes), then inspect **
 - A stage's test count describes that execution against its frozen inputs only; **counts are not added across versions as a measure of maturity**. Earlier candidate / prepared-only / license-pending wording records the state at that time; it does not override the current MIT license and publicly available code stated on the home page.
 - The historical acceptance records cover the Runtime: legal boundaries, original-content identity, durable effects and actual delivery. They make no acceptance claim about the semantic quality of model answers. New normal real-task qualification and earlier-version rechecks follow the [later 2026-10-29 Runtime-only clarification](../live-validation.md#release-qualification); earlier combined-criterion scores remain historical, not silently replaced.
 
+## 2026-11-02 foundation repair
+
+[Four bounded repairs and compatibility boundaries](foundation-repair-20261102.md) · [Structured provider-free execution receipt](foundation-repair-20261102.safe.json). Historical tags and live qualifications remain unchanged.
+
 ## Full-suite execution and version lineage
 
 - The v0.8 [original structured observations / fullSuite](v08-observations.safe.json) records the complete command, exit code, duration, input digest and 286/286 count; these do not exist only in prose.

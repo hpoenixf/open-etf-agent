@@ -6,21 +6,25 @@ import {run} from '../src/runtime.mjs';
 import {createRootBudget} from '../src/cooperation.mjs';
 import {sha256} from '../src/source.mjs';
 
-// Real original Host/Report/Runtime, controlled model and summary callbacks only.
+// Real original Host/Report/Runtime, controlled model/summary and a trusted
+// synthetic source adapter. Large read material keeps compaction actually useful
+// after the free lower-bound check; the original receipt assertions stay exact.
 // Receipt preservation is independent from the strict capacity gate.
 test('older successful save receipt remains exact in next Gateway input after compaction',async()=>{
   await mkdir('test-output',{recursive:true});
   const outputRoot=await mkdtemp(resolve('test-output/compaction-receipt-'));
   const reportText='Synthetic immutable report. '.repeat(180);
+  const sourceText='Synthetic receipt-preservation source. '.repeat(120);
+  const extensions=[{name:'receipt_source',historyCompaction:'read-only@1',description:'Read one fixed large synthetic receipt-test source.',parameters:{type:'object',properties:{},additionalProperties:false},validate(args){assert.deepEqual(args,{});},sourceResult:true,execute:async()=>({sourceId:'receipt-fixture@1:p1',documentId:'atlas-a',name:'Large synthetic receipt-test source',version:'receipt-fixture-1',page:1,text:sourceText,sha256:sha256(sourceText),mediaType:'text/plain; charset=utf-8'})}];
   const captured=[];let sourceId;let savedPair;let summaries=0;
   const gateway={async next({messages}){
     captured.push(structuredClone(messages));
-    if(captured.length===1)return{kind:'calls',calls:[{id:'read-one',name:'read_page',arguments:{documentId:'atlas-a',page:1}}]};
+    if(captured.length===1)return{kind:'calls',calls:[{id:'read-one',name:'receipt_source',arguments:{}}]};
     if(captured.length===2){sourceId=messages.at(-1).result.value.sourceId;return{kind:'calls',calls:[{id:'save-once',name:'save_report',arguments:{text:reportText,sourceIds:[sourceId]}}]};}
     if(captured.length===3){const at=messages.findIndex(m=>m.role==='assistant'&&m.calls?.some(c=>c.id==='save-once'));assert.ok(at>=0);savedPair=structuredClone(messages.slice(at,at+2));return{kind:'calls',calls:[{id:'read-latest',name:'read_page',arguments:{documentId:'atlas-a',page:2}}]};}
     assert.equal(captured.length,4);return{kind:'final',text:'The synthetic report has been saved.'};
   }};
-  const result=await run({question:'Read the synthetic page, save exactly once, then read another page. Preserve authoritative operation receipts.',gateway,outputRoot,allowedTools:['read_page','save_report'],allowedDocuments:['atlas-a'],contextBytes:32000,rootBudget:createRootBudget({model:16,tool:3}),limits:{maxRounds:4,maxTools:3},workingInput:{compaction:{thresholdBytes:1000,summarize:async()=>{summaries++;return 'Derived source observation, not an operation receipt.';}}}});
+  const result=await run({question:'Read the synthetic page, save exactly once, then read another page. Preserve authoritative operation receipts.',gateway,extensions,outputRoot,allowedTools:['receipt_source','read_page','read_result','read_note','save_report'],allowedDocuments:['atlas-a'],contextBytes:32000,rootBudget:createRootBudget({model:16,tool:3}),limits:{maxRounds:4,maxTools:3},workingInput:{compaction:{thresholdBytes:1000,summarize:async()=>{summaries++;return 'Derived source observation, not an operation receipt.';}}}});
   assert.equal(result.status,'completed');assert.equal(captured.length,4);assert.ok(summaries>0);
   assert.equal(result.toolsDispatched,3);assert.equal(savedPair[1].result.status,'succeeded');
   const bytes=await readFile(resolve(result.directory,'report.md'));

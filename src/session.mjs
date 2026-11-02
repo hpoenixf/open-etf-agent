@@ -1,4 +1,4 @@
-import { validateRuntimeCheckpoint } from './runtime.mjs';
+import { validateRuntimeCheckpoint, cancelRuntimeCheckpoint, validateGatewayOutcomeCheckpoint } from './runtime.mjs';
 import { RESPONSE_PROFILE, validateResponseAbsence, hasResponseSemantics, validateResponseProfile, validateResponseCheckpoint, validateResponseFact, validateResponseCall, responseCanonical, responseHash, responseText, responseId, responseResult, adoptionHash } from './human-response.mjs';
 import { validateTaskTime } from './temporal.mjs';
 import { DatabaseSync } from 'node:sqlite';
@@ -79,7 +79,7 @@ function definitionBytes(value, ordinary = false) {
  validateBindings(value.bindings); validateConfig(value.config, ordinary); validateResponseProfile(value, ordinary); return json(value, 65536);
 }
 function checkpointBytes(value, terminal = false, ordinary = false) {
- validateResponseCheckpoint(value, ordinary);
+ validateResponseCheckpoint(value, ordinary);validateGatewayOutcomeCheckpoint(value);
  if (!object(value) || value.schemaVersion !== 'runtime-checkpoint@1' || !(phases.has(value.phase) || ordinary && value.phase === 'awaiting-response') || (terminal ? value.phase !== 'terminal' || !['completed', 'failed', 'cancelled'].includes(value.status) : value.phase === 'terminal')) fail('INVALID_CHECKPOINT');
  return json(value);
 }
@@ -257,7 +257,7 @@ export async function openSession({ directory, clock = Date.now, leaseMs = 1000,
  function cancelRoot(rootId) {
   const root = getRoot(rootId); if (root.status !== 'active') return;
   for (const row of db.prepare("SELECT * FROM runs WHERE root_id=? AND status='active'").all(rootId)) {
-   const snapshot = parsed(row.snapshot); snapshot.phase = 'terminal'; snapshot.status = 'cancelled'; snapshot.code = 'CANCELLED';
+   const snapshot = cancelRuntimeCheckpoint(parsed(row.snapshot));
    db.prepare("UPDATE runs SET snapshot=?,status='cancelled',owner=NULL,lease_until=0 WHERE run_id=?").run(encodeCheckpoint(snapshot, true), row.run_id);
   }
   db.prepare("UPDATE roots SET status='cancelled' WHERE root_id=?").run(rootId);

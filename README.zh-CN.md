@@ -73,6 +73,8 @@ npm run demo -- --case document-compare
 
 `main` 包含 **v0.15.0 串行来源核对专家 Child**；[v0.15.0 Release](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.15.0) 已发布，实现固定于 `74bd5aa`。Main 委派一个有界 Child，再消费其原始结果与派生意见；不是并行专家平台。原离线全套与独立进程验证通过，真实机制第三批通过；前两批失败保留。
 
+**2026-11-02 底座修复：**[工作输入准入、取消事实、Child 结算与无收益摘要预检查](docs/verification/foundation-repair-20261102.md)。零真实模型调用的回归已通过；不是新增 Release，也不是新一批实测资格。
+
 | 模块 | 解决什么 | 运行与核对 |
 | --- | --- | --- |
 | v0.15 · 串行专家 Child | 一个有界来源核对 Child，原始结果回到 Main；派生意见不取得事实权限 | [运行说明](docs/module-guide.zh-CN.md#v015--serial-specialist-child) · [合同与证据](openspec/changes/serial-specialist-child/evidence.md) |
