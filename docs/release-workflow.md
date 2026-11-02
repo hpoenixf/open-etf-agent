@@ -1,0 +1,9 @@
+# Publication workflow: ten real tasks, nine successes
+
+1. Confirm version scope, fixed execution inputs, existing writer and sole publisher. Read [current live policy](live-validation.md#release-qualification) and [dated decisions](verification/release-gate-20261102.md), not an older qualification boolean alone.
+2. Inventory original plans, all outcomes, original output/readback and the shared ledger. Reuse valid ten-task evidence with applicable execution inputs. Do not redo history because a later sample has five tasks or a metadata SHA changed.
+3. If genuinely missing, freeze a dated minimal backfill plan within existing authorization and budget. Exactly ten real tasks per version, at least nine successes. Keep failures, timeouts and unknowns; never replace failed samples or retry until green. Provider-free safety is separate.
+4. Derive the current decision from immutable receipts and documented input equivalence. Run `node scripts/release-qualification.mjs DECISION.json`. Rejection/incompleteness blocks formal release. This declaration guard does not fabricate evidence, call models or grant permission.
+5. Independently review required safety, install and original output/readback. Keep real-provider API, fixture CLI, semantic quality and unsupported scope distinct. A fixture-only profile has no live pass and is not a blanket version exemption.
+6. Audit all newly reachable objects. The sole publisher uses authorized non-force writes, preserves remote content and verifies ref/tree/blob/actual bytes plus original CI. Tag/Release points to the actual final package, not merely a local/source hash.
+7. Update README, article mappings and deployment claims only to proved scope. Norm/metadata correction is not a product release. Historical tags and measurements remain unchanged.

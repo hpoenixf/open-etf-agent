@@ -1,0 +1,52 @@
+{
+  "schemaVersion": 1,
+  "policy": "real-ten-min-nine-20261102",
+  "effectiveAt": "2026-11-02T23:32:38Z",
+  "plannedTasksPerVersion": 10,
+  "requiredSuccesses": 9,
+  "threshold": 0.9,
+  "publicationHeld": true,
+  "measurementsRewritten": false,
+  "rerunPolicy": "inventory/reuse valid original ten-task evidence; backfill only genuinely missing or invalidated evidence",
+  "versions": {
+    "0.17.0": {
+      "state": "incomplete-under-current-gate",
+      "eligible": false,
+      "observedRealTasks": 5,
+      "observedSuccesses": 5,
+      "minimumMissingRealTasks": 5,
+      "localExecutionCommit": "7e43ba64f335140533e2ad3eea4ca744aba7157d",
+      "historicalReceiptSha256": "912b99e872a619bf45ffb0458908fbf2face432dfc54dc8e88642f8fd399e801",
+      "historicalPlanSha256": "56a4ac1fcdc00ef8cf2648306706a91f20d6cebbeb9f0cbf9ab716fa0f7e291e",
+      "retainOriginalFiveResults": true,
+      "additionalPlan": "freeze only after original-evidence inventory; never replace failed samples",
+      "separateSafety": "retained, not a substitute for ten real tasks"
+    },
+    "0.18.0": {
+      "state": "incomplete-under-current-gate",
+      "eligible": false,
+      "observedRealTasks": 5,
+      "observedSuccesses": 5,
+      "minimumMissingRealTasks": 5,
+      "localExecutionCommit": "e895197443c70a46d047f72c2bf8ce3a3599907d",
+      "historicalReceiptSha256": "01c7260920fd788011d8490fd2053dfc4ba53f802e6bc9a28870628df23fca22",
+      "historicalPlanSha256": "eed95ab4a0731750b129bcb1727f039fd7c1b136876cf27cc97bff673b550fe1",
+      "retainOriginalFiveResults": true,
+      "additionalPlan": "freeze only after original-evidence inventory; never replace failed samples",
+      "separateSafety": "retained, not a substitute for ten real tasks"
+    },
+    "0.16.0": {
+      "state": "profile-live-not-supported; version-scope-review",
+      "profile": "document-revocation@1",
+      "realProviderGatePassed": false,
+      "fixtureEvidenceRetained": true,
+      "guardRemovalAllowed": false,
+      "blanketVersionExemption": false
+    }
+  },
+  "earlierVersions": {
+    "state": "inventory-in-progress",
+    "rule": "reuse valid ten-task >=9/10 at applicable original execution inputs; a later five-task sample does not erase earlier evidence",
+    "newCallsAuthorizedByThisDocument": false
+  }
+}

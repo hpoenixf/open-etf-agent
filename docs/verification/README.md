@@ -4,6 +4,10 @@
 
 [Project home](../../README.md) · [Coverage contract for the 31 registered articles](../../README.md#reading)
 
+## 2026-11-02 · Current real-task gate / 当前真实测评门槛
+
+**Exactly ten real tasks per version, at least nine successes / 每版恰好10次真实任务，至少9次通过。** Inventory and reuse valid original ten-task evidence first; do not repeat valid measurements. Failures/timeouts/unknowns remain; 5/5 is incomplete. 先盘点原十次证据，不重复有效测评，不改历史结果或标签。[Policy / 规范](../live-validation.md#release-qualification) · [Dated decisions / 当前决策](release-gate-20261102.md).
+
 ## How to read this index
 
 Start with **observations** (what happened, failures and fixes), then inspect **receipts** (actual files, HTTP responses and execution results). Use **provenance / frozen inputs** to align source identity, and finally read the acceptance boundaries in **qualification / evidence**. Every stage link below is pinned to a public commit: updates to `main` do not rewrite history. This page provides navigation only; it neither supplements nor relabels original evidence.

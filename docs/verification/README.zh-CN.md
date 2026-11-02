@@ -4,6 +4,10 @@
 
 [返回项目首页](../../README.zh-CN.md) · [已登记 31 篇的覆盖契约](../../README.zh-CN.md#reading)
 
+## 2026-11-02 · Current real-task gate / 当前真实测评门槛
+
+**Exactly ten real tasks per version, at least nine successes / 每版恰好10次真实任务，至少9次通过。** Inventory and reuse valid original ten-task evidence first; do not repeat valid measurements. Failures/timeouts/unknowns remain; 5/5 is incomplete. 先盘点原十次证据，不重复有效测评，不改历史结果或标签。[Policy / 规范](../live-validation.md#release-qualification) · [Dated decisions / 当前决策](release-gate-20261102.md).
+
 ## 怎样读
 
 先读 **observations**（发生过什么、失败与修复），再查 **receipts**（实际文件/HTTP/运行结果），用 **provenance / frozen inputs** 对齐源码身份，最后读 **qualification / evidence** 的验收边界。下方链接全部固定到各阶段公开 commit，不随 `main` 更新改写历史；本页只导航，不补写或重标原始证据。
