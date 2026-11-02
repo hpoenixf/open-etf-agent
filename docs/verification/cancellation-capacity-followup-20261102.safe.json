@@ -1,0 +1,41 @@
+{
+  "schemaVersion": 1,
+  "kind": "cancellation-capacity-followup-provider-free",
+  "baselinePublicCommit": "a6560c18ef91affd11e45af8781a128af8a3def6",
+  "baselineCheckpointCapBytes": 12582912,
+  "productionChange": "Transfer complete dispatch uncertainty to unknownEffects and delete redundant terminal inFlight only.",
+  "unchanged": [
+    "checkpoint capacity and codec",
+    "working/result/history/receipt facts",
+    "budget and stale-writer fencing",
+    "no-retry and unknown accounting",
+    "historical qualification evidence"
+  ],
+  "inputs": {
+    "src/runtime.mjs": "e97086dec567f482a6ffda983f77c5ece5b05d94d29d29b8a32660587bfe58b1",
+    "test/session.test.mjs": "ce5d79bcc47593b0df3a0aca878a11e8125ebee03936f6811d16fd2c2510593e"
+  },
+  "counterexample": {
+    "owner": "original Session minimal checkpoint API; not a claim of a Runtime-produced input",
+    "originalExitCode": 1,
+    "originalErrorCode": "JSON_BOUND",
+    "outputSha256": "9d06f39f038f501b06dcae781d34eeccf26efa882760d9deef006c3f7e01ad80",
+    "completeEffectiveArgumentsRetained": true
+  },
+  "focused": {
+    "passed": 43,
+    "failed": 0,
+    "skipped": 0,
+    "exitCode": 0,
+    "tapSha256": "661731cf3f78a442714c25f0b87bfab073510c44d5f114216b293be3f74ffd4f"
+  },
+  "newProviderRequests": 0,
+  "newPaidQualification": false,
+  "fullSuiteRepeated": false,
+  "knownBoundary": "Pre-existing exact-cap constant terminal-metadata growth is not claimed universally closed; no new admission protocol is introduced.",
+  "retainedNonTargetFailures": {
+    "firstFixture": "Used 3MiB assumptions against the original 12MiB WIP cap; cancel succeeded and a pointer assertion failed. Not the capacity counterexample.",
+    "secondAttempt": "Preparation path was wrong and the unchanged first fixture ran; not counted as capacity evidence.",
+    "actualCapacityRed": "Third fixture used original 12MiB cap and failed with JSON_BOUND."
+  }
+}

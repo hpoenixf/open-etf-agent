@@ -43,6 +43,9 @@ function retainUnknownDispatch(state, dispatch = state.inFlight) {
 }
 export function cancelRuntimeCheckpoint(state) {
   const cancelled=structuredClone(state);retainUnknownDispatch(cancelled);
+  // Terminal uncertainty is owned by unknownEffects. Keep the complete dispatch
+  // there, not a second large inFlight copy that cannot be resumed after cancel.
+  delete cancelled.inFlight;
   if(cancelled.phase==='model-reserved')cancelled.gatewayOutcome='unknown';
   cancelled.phase='terminal';cancelled.status='cancelled';cancelled.code='CANCELLED';return cancelled;
 }
