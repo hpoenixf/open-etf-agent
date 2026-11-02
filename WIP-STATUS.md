@@ -1,3 +1,7 @@
+> **Current-root addendum — 2026-11-02:** the four original-owner foundation repairs from public main `2ddd22221c899f7bbbc3dc17d927810f5e381e03` have been integrated into the fixed `008b19b6` WIP candidate. Its complete provider-free suite passed **575/575** and its original build passed. See the [new fixed verification and boundaries](docs/verification/wip-foundation-integration-20261102.md).
+>
+> The original record below, including its “current main” reference, 556-test result and `47184c85` input manifest, describes the **earlier** integration and is preserved verbatim as history. `WIP-MANIFEST.safe.json` is that historical input mapping, not the current-root mapping. v0.16 remains fixture-only; v0.17 retains original unknown occupancy and reservation evidence. No real-provider qualification, main promotion, tag, Release or paid continuation is claimed by this addendum.
+
 # v0.16 / v0.17 WIP — runnable branch root, not a release
 
 This WIP integrates current main `34124cefc6df289e08518173789210b45a716451` with document revocation and local shared admission. Main's portfolio-rebalance demo, README, package/lock identity and existing fixes are retained. `package.json` intentionally keeps the main version; it does not advertise a released v0.16/v0.17 package.

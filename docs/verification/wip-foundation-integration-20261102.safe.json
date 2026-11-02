@@ -1,0 +1,174 @@
+{
+  "schemaVersion": "open-wip-foundation-integration@1",
+  "baseWipCommit": "008b19b6f762ae77e6b69d24f6757edeab97d15e",
+  "foundationCommit": "2ddd22221c899f7bbbc3dc17d927810f5e381e03",
+  "executedIdentity": {
+    "kind": "fixed-content manifest, not a new public execution commit",
+    "inputFiles": 208,
+    "inputManifestSha256": "f71db773b9a8ab9472414de8e7788b5abe7479bc401c30d80c0132ee48cf3022",
+    "inputManifestEncoding": "SHA256 of Python json.dumps(pathToSha256Map, sort_keys=True), default separators and ensure_ascii=True; UTF-8",
+    "readableInputHashesFile": "wip-foundation-integration-20261102-inputs.sha256",
+    "readableInputHashesFileSha256": "7bf40775761aa923a921a3efcded6bfb152b6dc9fae439ab07f18678edc879d0",
+    "inputHashesUnchanged": true
+  },
+  "sourceAndTestDelta": [
+    {
+      "path": "src/compaction.mjs",
+      "bytes": 8004,
+      "sha256": "2d11ffd4b71f3418332b72f54e481ea2a669285129baec725b8b4541ae655210",
+      "gitBlob": "ce4547f2288b5af91643cdb020aff1c397d66080"
+    },
+    {
+      "path": "src/runtime.mjs",
+      "bytes": 41372,
+      "sha256": "df1faabe24034be6babfbeaa78c643c8358ae03d4b1b7c4a19e47311f6640639",
+      "gitBlob": "5f89e498cbde9e93e860832ac87c83dff779a772"
+    },
+    {
+      "path": "src/session.mjs",
+      "bytes": 64228,
+      "sha256": "a6db4861de132e12cefe07f62cae16b70f46ac9cf1733ab129fb26b742b262e1",
+      "gitBlob": "20bd30656f38bd10c6c69d7c8ecebaf83983d3d5"
+    },
+    {
+      "path": "src/specialist-child.mjs",
+      "bytes": 8942,
+      "sha256": "77eb103af95f9cd9db0348eab7cc664ee4ee40294a1aa0dadfa4d21fb294cea4",
+      "gitBlob": "c9ea48b729bcf133bbb1e408fa3aa3ce15ff1ef8"
+    },
+    {
+      "path": "src/tools.mjs",
+      "bytes": 39709,
+      "sha256": "9dc071b924bdcce4a714256e2c00df6434652c0ddee03706cf4cca3f0410e83b",
+      "gitBlob": "0476dbdda790ee09015483993c431ad3caf81fb2"
+    },
+    {
+      "path": "test/admission.test.mjs",
+      "bytes": 15796,
+      "sha256": "8eb43b534597dd2c8f613fcd3807276493d13bc91caac43c158a2f818f8847fd",
+      "gitBlob": "2504178972e1ab4228be101e2e07ee9f65e28aaf"
+    },
+    {
+      "path": "test/compaction-lower-bound.test.mjs",
+      "bytes": 3284,
+      "sha256": "d5b582f70dd2a3bc185b0febc8b63e170720bcd415af25d748c1788c1bc300c0",
+      "gitBlob": "c31566a80136812ab67de37dabea21ea57fd122c"
+    },
+    {
+      "path": "test/compaction-receipts.test.mjs",
+      "bytes": 11445,
+      "sha256": "5eb72e0157eb758e46f11a41ecad60bf34a878f79854d338402f32fdf8608885",
+      "gitBlob": "5fc239f87d4e8912778d5d9a3e2b2e5a70194e37"
+    },
+    {
+      "path": "test/context-capability-profile.test.mjs",
+      "bytes": 7525,
+      "sha256": "9208dbf182e8d74ede7b4feedead0f68643a1619a47f63124f1f503f711f5233",
+      "gitBlob": "e621e0e88eea3bb7f5e521c3776a88820f5eb50b"
+    },
+    {
+      "path": "test/durable-review.test.mjs",
+      "bytes": 16095,
+      "sha256": "39282094b5f2266f6e929ab84d9f01e9f9e9b6e6f69b269102dcab8bf92a8752",
+      "gitBlob": "f6f559c116c43688f3879559cc3232b6b1bf5ec1"
+    },
+    {
+      "path": "test/foundation-wip-integration.test.mjs",
+      "bytes": 3032,
+      "sha256": "27e591ff0a609680db5bed6a1928c2bd2f96444bcd25ee967d16fec0a26cb0d0",
+      "gitBlob": "e1c637d09c48f819a1731345b8ee6b2ce27c1386"
+    },
+    {
+      "path": "test/provider-finish-schema.test.mjs",
+      "bytes": 10939,
+      "sha256": "ddf1b74da0ad54e404d9fd66ff204f1d9d848007bbbc903af2a8bb436145f014",
+      "gitBlob": "5511860ef59e490130b9fd1c492dbf855ff39d5b"
+    },
+    {
+      "path": "test/session.test.mjs",
+      "bytes": 17047,
+      "sha256": "d839b31c66e374ce97c138b23534be6ff4c6d4bd049249f738ac994fe2303f39",
+      "gitBlob": "1af3058e994ede95befa81c1c8fc5360ff3aa248"
+    },
+    {
+      "path": "test/specialist-child.test.mjs",
+      "bytes": 15591,
+      "sha256": "05a2c2b8214aacbf369543b5877ef37eac97d9ddc6d56a5e77d07c4de6400836",
+      "gitBlob": "93a60cd7ebbfdb01757cab08852d36628af09097"
+    }
+  ],
+  "fullSuite": {
+    "command": "node --test --test-reporter=tap --test-concurrency=1 test/*.test.mjs",
+    "nodeVersion": "26.11.1",
+    "heapMiB": 512,
+    "testFiles": 93,
+    "tests": 575,
+    "pass": 575,
+    "fail": 0,
+    "cancelled": 0,
+    "skipped": 0,
+    "todo": 0,
+    "exitCode": 0,
+    "durationSeconds": 80.27828444703482,
+    "timedOut": false,
+    "orphanedAfterLeaderExit": false,
+    "leaderWaited": true,
+    "stdoutSha256": "8737d80b334bfab17160b3196ac073c27a1b65f7adf0bf9647d2d84af3ad9392",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "build": {
+    "command": "node scripts/build.mjs",
+    "kind": "syntax-checked native ESM copy",
+    "exitCode": 0,
+    "durationSeconds": 1.9215996388811618,
+    "distSourceAndFixtureBytesMatch": true,
+    "readbackFiles": 76
+  },
+  "focusedGroups": {
+    "foundation": 63,
+    "originalAdmission": 10,
+    "protected": 39,
+    "correctedComposition": 12,
+    "countsOverlapFullSuite": true
+  },
+  "retainedFailure": {
+    "group": "new composition first attempt",
+    "tests": 12,
+    "pass": 10,
+    "fail": 2,
+    "stdoutSha256": "be3d999f9eaf206a17cfbb06eefbc7174e68dfdf4cd4006693fdeb1fb8f488d3",
+    "reason": "Two added assertions expected gatewayOutcome in safe worker IPC result, which intentionally contains only status/code. Corrected assertions inspect the original Session checkpoint; no production worker or permission guard change."
+  },
+  "independentReview": {
+    "mode": "read-only frozen-source and receipt-hash review, no independent rerun",
+    "standardsUnresolvedFindings": 0,
+    "specUnresolvedFindings": 0,
+    "checkedBaseLeaves": 473,
+    "checkedDeltaLeaves": 14,
+    "boundary": "Only this candidate; not a live or release GO."
+  },
+  "postTestDocumentationOnly": [
+    "docs/verification/wip-foundation-integration-20261102.md",
+    "docs/verification/wip-foundation-integration-20261102.safe.json",
+    "docs/verification/wip-foundation-integration-20261102-inputs.sha256",
+    "WIP-STATUS.md"
+  ],
+  "preservedBoundaries": [
+    "v016 fixture-only and protected five-tool defaults, current revocation and original Host/Publication checks",
+    "v017 original Admission owner and branded same-operation reservation view",
+    "unknown occupancy/debits and original-ticket evidence; no automatic resend/refund",
+    "legacy optional gatewayOutcome handling; no historical settlement backfill",
+    "original package version, historical tags, 488/507/556 evidence and remote wip-snapshots objects",
+    "previous WIP-STATUS text remains verbatim beneath a current-root addendum; WIP-MANIFEST remains its historical input mapping"
+  ],
+  "executionScope": "Original provider-free tests with minimal environment, synthetic local state, injected callbacks, loopback and subprocesses only; no external provider dispatch or credential read",
+  "notClaimed": [
+    "real-provider qualification",
+    "paid continuation authorization",
+    "release or tag",
+    "main promotion",
+    "billing settlement",
+    "financial quality",
+    "production readiness"
+  ]
+}

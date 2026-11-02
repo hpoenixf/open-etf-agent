@@ -41,7 +41,12 @@ export async function readSpecialistHandoff({store,parentRunId,question,document
  validateRuntimeCheckpoint(child.snapshot,child.definition);
  const out=child.snapshot.outcome;
  if(!out||out.runId!==child.runId||out.rootId!==child.rootId||out.directory!==child.directory||out.taskId!==TASK||out.status!==child.status||out.code!==child.snapshot.code||!Array.isArray(out.unknownEffects)||!Array.isArray(out.partialEffects)||!['completed','failed'].includes(out.status))fail('SPECIALIST_OUTCOME_UNAVAILABLE');
- if(out.unknownEffects.length||['MODEL_OUTCOME_UNKNOWN','TOOL_OUTCOME_UNKNOWN'].includes(out.code)||(out.status!=='completed'&&child.snapshot.working&&!['ROOT_BUDGET_EXHAUSTED'].includes(out.code)))fail('SPECIALIST_EFFECT_UNKNOWN');
+ // Legacy checkpoints have no explicit Gateway outcome. Preserve their original
+ // conservative read contract; do not backfill a new settlement fact from error text.
+ const unknownGateway=child.snapshot.gatewayOutcome===undefined
+  ? Boolean(child.snapshot.working&&!['ROOT_BUDGET_EXHAUSTED'].includes(out.code))
+  : child.snapshot.gatewayOutcome!=='settled';
+ if(out.unknownEffects.length||['MODEL_OUTCOME_UNKNOWN','TOOL_OUTCOME_UNKNOWN'].includes(out.code)||(out.status!=='completed'&&unknownGateway))fail('SPECIALIST_EFFECT_UNKNOWN');
  if(out.status==='completed'&&out.code!==null)fail('SPECIALIST_OUTCOME_MISMATCH');
  const host=await createToolHost({directory:child.directory,allowedTools:['read_page'],allowedDocuments:selected.documents,restore:child.snapshot.host,readOnly:true});
  const owned=await host.getResultRefs();if(canonical(owned)!==canonical(out.resultRefs))fail('SPECIALIST_SOURCE_IDENTITY');

@@ -43,6 +43,16 @@ export function assertHostSnapshotVersion(snapshot,protection) {
  if(protection!==undefined){validateProtectedHostSnapshot(snapshot,protection);return;}
  if (snapshot?.schemaVersion!=='tool-host@2') throw Object.assign(new Error('UNSUPPORTED_HOST_SNAPSHOT_VERSION: finish old Runs before upgrading; stored results and artifacts remain readable'),{code:'UNSUPPORTED_HOST_SNAPSHOT_VERSION'});
 }
+// These builtin consumers cannot be replaced by extensions. Check their explicit
+// selection before Runtime activates plugins, creates a Run or reserves a model.
+// This validates the grant; it never adds a tool to it. Compaction also uses the
+// original-reference baseline, even when no separate contextBytes was selected.
+export function assertWorkingInputToolSelection({allowedTools,contextBytes,compaction=false}) {
+  const selected=name=>allowedTools===undefined||(Array.isArray(allowedTools)&&allowedTools.includes(name));
+  if (((contextBytes!==undefined||compaction)&&!selected('read_result'))||(compaction&&!selected('read_note'))) {
+    throw Object.assign(new Error('Working input requires selected original/note reread tools'),{code:'WORKING_INPUT_TOOL_UNAVAILABLE'});
+  }
+}
 export async function createToolHost({ directory, extensions = [], hooks, allowedTools, allowedDocuments, enableNotes=false, restore, pdfInput, ordinaryResponse, readOnly=false, documentAccess }) {
   if(typeof readOnly!=='boolean'||readOnly&&pdfInput!==undefined)fail('Invalid Host read mode');
   const protection=documentAccess===undefined?undefined:validateArtifactProtection(documentAccess.protection);

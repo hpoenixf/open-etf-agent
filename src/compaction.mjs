@@ -49,19 +49,25 @@ export async function compactWorkingView({messages,maxBytes,lookupSource,rootBud
   async function memoriesCurrent(){if(!memoryRefs.size)return true;if(typeof lookupMemoryState!=='function')throw new Error('Explicit Memory state unavailable for compaction');for(const ref of memoryRefs.values()){const state=await lookupMemoryState(ref);if(!state||state.libraryId!==ref.libraryId||state.id!==ref.id||state.active!==true||state.revision!==ref.revision||(ref.sha256!==undefined&&state.sha256!==ref.sha256))return false;}return true;}
   if(!await memoriesCurrent())return fallback('memory-stale');
   if(!sourceRefs.size&&!memoryRefs.size)return fallback('no-backed-material');
+  const noteFor=text=>({kind:'derived-working-note',text,sourceRefs:[...sourceRefs.values()],memoryRefs:[...memoryRefs.values()],callIds,basisHash:basis,origin:'derived-summary',semanticStatus:'unreviewed'});
+  const projectedId='projection-'+basis.slice(0,24);const provisional='note:sha256:'+'0'.repeat(64);
+  function view(note,resultRef){const out=[];const replaced=new Map(eligible.map(group=>[group.start,group]));let inserted=false;for(let i=0;i<baseline.length;i++){const group=replaced.get(i);if(!group){out.push(structuredClone(baseline[i]));continue;}if(!inserted){out.push({role:'assistant',projectionOnly:true,calls:[{id:projectedId,name:'read_note',arguments:{resultRef}}]},{role:'tool',projectionOnly:true,callId:projectedId,result:{callId:projectedId,status:'projected',dispatched:false,value:{...note,resultRef}}});inserted=true;}i=group.end;}return out;}
+  // Every valid nonblank summary encodes at least one UTF-8 byte. Use the exact
+  // candidate envelope, not an estimated saving that ignores its provenance.
+  // Passing this bound is not approval: the actual summary is checked below.
+  const minimum=view(noteFor('x'),provisional);
+  if(bytes(minimum)>=bytes(baseline)||bytes(minimum)>maxBytes)return fallback('no-net-saving');
   try{rootBudget.claim('model');}catch{return fallback('budget-exhausted');}
   let text;
   try{text=await boundedSummary(summarize,{groups:structuredClone(eligible.map(group=>baseline.slice(group.start,group.end+1)))},signal,summaryTimeoutMs);}catch(error){return fallback(signal?.aborted?'cancelled':error?.code==='SUMMARY_TIMEOUT'?'summary-timeout':'summary-failed');}
   if(signal?.aborted)return fallback('cancelled');if(sha256(JSON.stringify(messages))!==basis)return fallback('stale');
   if(!await memoriesCurrent())return fallback('memory-stale');
   if(typeof text!=='string'||!text.trim()||Buffer.byteLength(text)>4096)return fallback('invalid-summary');
-  const note={kind:'derived-working-note',text,sourceRefs:[...sourceRefs.values()],memoryRefs:[...memoryRefs.values()],callIds,basisHash:basis,origin:'derived-summary',semanticStatus:'unreviewed'};
-  const projectedId='projection-'+basis.slice(0,24);const provisional='note:sha256:'+'0'.repeat(64);
-  function view(resultRef){const out=[];const replaced=new Map(eligible.map(group=>[group.start,group]));let inserted=false;for(let i=0;i<baseline.length;i++){const group=replaced.get(i);if(!group){out.push(structuredClone(baseline[i]));continue;}if(!inserted){out.push({role:'assistant',projectionOnly:true,calls:[{id:projectedId,name:'read_note',arguments:{resultRef}}]},{role:'tool',projectionOnly:true,callId:projectedId,result:{callId:projectedId,status:'projected',dispatched:false,value:{...note,resultRef}}});inserted=true;}i=group.end;}return out;}
-  const candidate=view(provisional);if(bytes(candidate)>=bytes(baseline)||bytes(candidate)>maxBytes)return fallback('no-net-saving');
+  const note=noteFor(text);
+  const candidate=view(note,provisional);if(bytes(candidate)>=bytes(baseline)||bytes(candidate)>maxBytes)return fallback('no-net-saving');
   let receipt;try{receipt=await saveNote(structuredClone(note),{signal});}catch{return fallback(signal?.aborted?'cancelled':'persistence-failed');}
   if(signal?.aborted)return fallback('cancelled',{persistedNoteRef:receipt?.resultRef});if(sha256(JSON.stringify(messages))!==basis)return fallback('stale',{persistedNoteRef:receipt?.resultRef});
   if(!await memoriesCurrent())return fallback('memory-stale',{persistedNoteRef:receipt?.resultRef});
   if(!/^note:sha256:[a-f0-9]{64}$/.test(receipt?.resultRef))return fallback('invalid-note-receipt');
-  const result=view(receipt.resultRef);return{messages:result,observation:{status:'applied',beforeBytes:bytes(baseline),afterBytes:bytes(result)},noteRef:receipt.resultRef};
+  const result=view(note,receipt.resultRef);return{messages:result,observation:{status:'applied',beforeBytes:bytes(baseline),afterBytes:bytes(result)},noteRef:receipt.resultRef};
 }

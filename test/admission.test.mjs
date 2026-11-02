@@ -50,7 +50,7 @@ test('two original Gateway workers share one slot; settled original ticket survi
     const [ar, br] = await Promise.all([a.done, b.done]); assert.equal(ar.code, 0, ar.stderr); assert.equal(br.code, 0, br.stderr);
     assert.equal(ar.message.result.status, 'completed'); assert.equal(br.message.result.status, 'completed'); assert.equal(f.maximum(), 1);
     const tickets = f.admission.snapshot().requests; assert.deepEqual(tickets.map(x => x.state), ['completed', 'completed']);
-    for (const ticket of tickets) { assert.deepEqual(f.admission.inspect(ticket.ticketId), f.admission.inspectReservation(ticket)); assert.equal(f.session.inspect(ticket.runId).rootUsage.model, 1); }
+    for (const ticket of tickets) { assert.deepEqual(f.admission.inspect(ticket.ticketId), f.admission.inspectReservation(ticket)); assert.equal(f.session.inspect(ticket.runId).rootUsage.model, 1); assert.equal(f.session.inspect(ticket.runId).snapshot.gatewayOutcome, 'settled'); }
     // Deliberately discard worker result and reopen: receipt lookup itself makes no request.
     const reopened = await createSharedAdmission({ directory: join(f.directory, 'capacity'), routeId: 'offline-fixed-route' });
     assert.deepEqual(reopened.inspect(tickets[0].ticketId), tickets[0]); reopened.close(); assert.equal(f.requests.length, 2);
@@ -73,6 +73,7 @@ test('HTTP 200 half stream retains unknown and queue timeout never refunds or re
   const f = await fixture(({ res }) => { res.writeHead(200, { 'content-type': 'text/event-stream' }); res.write('data: {"choices":[{"index":0,"delta":{"content":"partial"},"finish_reason":null}]}\n\n'); setTimeout(() => res.destroy(), 30); });
   try {
     const a = await f.launch('half-stream', { stream: true }).done; assert.equal(a.code, 0, a.stderr);
+    assert.equal(f.session.inspect('half-stream').snapshot.gatewayOutcome, 'unknown');
     assert.equal(f.admission.snapshot().requests[0].state, 'unknown');
     const b = await f.launch('blocked-after-unknown', { queueTimeoutMs: 100 }).done; assert.equal(b.code, 0, b.stderr);
     assert.equal(f.requests.length, 1); assert.equal(f.admission.snapshot().requests[1].state, 'cancelled');
