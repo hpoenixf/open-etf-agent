@@ -71,15 +71,15 @@ npm run demo -- --case document-compare
 <a id="versions"></a>
 ## Latest three modules
 
-`main` includes **v0.15.0 serial source-checking specialist Child**; the [v0.15.0 Release](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.15.0) fixes implementation `74bd5aa`. Main delegates to one bounded Child, then consumes its original results and derived advice—not a parallel expert platform. Offline full-suite and independent-process checks passed; the third real-mechanism batch passed, with the two earlier failures retained.
+**v0.16.0 adds current document-revocation checks** to the original query, acquisition, Report, Publication and Reader path. The explicit local profile uses synthetic fixtures; it does not enable protected live-model input, arbitrary document ingestion or enterprise ACLs. [Release qualification and retained boundaries](docs/verification/v016-release.md).
 
 **2026-11-02 foundation repair:** [Working-input admission, cancellation facts, Child settlement and no-saving summary precheck](docs/verification/foundation-repair-20261102.md). Provider-free regressions passed; this is not a new release or live qualification.
 
 | Module | What changes | Run and inspect |
 | --- | --- | --- |
+| v0.16 · Document revocation | Current permission is rechecked before disclosure and later reads; previously delivered bytes cannot be recalled | [Commands](docs/module-guide.md#v016--revocable-documents) · [Contract and evidence](openspec/changes/v016-document-revocation/evidence.md) |
 | v0.15 · Serial specialist Child | One bounded source-checking Child returns original results to Main; derived advice gains no source authority | [Commands](docs/module-guide.md#v015--serial-specialist-child) · [Contract and evidence](openspec/changes/serial-specialist-child/evidence.md) |
 | v0.14 · Read-only Memory | Select an existing library and consume current revisions; temporary mode takes effect before library access | [Commands](docs/module-guide.md#v014--read-only-existing-memory) · [Contract and evidence](openspec/changes/v014-memory-consumer/evidence.md) |
-| v0.13 · Ordinary reply | The CLI saves a question; submit your reply, then explicitly continue the original Run | [Commands](docs/module-guide.md#v013--one-durable-ordinary-reply) · [Contract and evidence](openspec/changes/ordinary-response/evidence.md) |
 
 [All fixed versions and commands](docs/module-guide.md#versions) · [Machine-readable version lineage](versions.json) · [GitHub Releases](https://github.com/hpoenixf/open-etf-agent/releases)
 

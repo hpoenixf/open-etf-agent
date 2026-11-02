@@ -1,4 +1,7 @@
 import { createHash } from 'node:crypto';
+// Serialized arguments and transport framing are not provider token windows.
+export const MAX_TOOL_ARGUMENT_BYTES = 2 * 1048576;
+export const DEFAULT_PROVIDER_RESPONSE_BYTES = 16 * 1048576;
 // Only rejection sites in this module can mint this diagnostic; provider objects cannot.
 const diagnostics = new WeakMap();
 export function projectProviderProtocolDiagnostic(error) {
@@ -38,7 +41,7 @@ export function normalizeChatCompletion(response) {
   const ids = new Set();
   const calls = message.tool_calls.map(c => {
     if (!plainObject(c)) reject('CALL_SHAPE');
-    if (c.type !== 'function' || typeof c.id !== 'string' || !c.id || ids.has(c.id) || typeof c.function?.name !== 'string' || typeof c.function.arguments !== 'string' || c.function.arguments.length > 66000) reject('CALL_IDENTITY_OR_ARGUMENTS_TYPE');
+    if (c.type !== 'function' || typeof c.id !== 'string' || !c.id || ids.has(c.id) || typeof c.function?.name !== 'string' || typeof c.function.arguments !== 'string' || Buffer.byteLength(c.function.arguments) > MAX_TOOL_ARGUMENT_BYTES) reject('CALL_IDENTITY_OR_ARGUMENTS_TYPE');
     ids.add(c.id);
     let args; try { args = JSON.parse(c.function.arguments); } catch (error) { if (error instanceof SyntaxError) reject('ARGUMENTS_JSON'); throw error; }
     if (!plainObject(args)) reject('ARGUMENTS_OBJECT');
@@ -57,7 +60,7 @@ function encodeMessages(messages) {
 
 // No authorization is implied by importing this adapter. CLI keeps live blocked.
 // The caller must supply an explicit reviewed grant; never derive it from data.
-export function createChatGateway({ endpoint, model, apiKey, authorization, stream = false, maxInputBytes = 262144, fetchImpl = globalThis.fetch }) {
+export function createChatGateway({ endpoint, model, apiKey, authorization, stream = false, maxInputBytes = 1048576, fetchImpl = globalThis.fetch }) {
   if (!authorization?.providerApproved || !authorization?.syntheticDataApproved || !authorization?.costApproved) throw new Error('LIVE_BLOCKED');
   if (!Number.isSafeInteger(maxInputBytes) || maxInputBytes < 1 || maxInputBytes > 1048576) throw new Error('Invalid input byte limit');
   const url = new URL(endpoint);
@@ -88,7 +91,7 @@ export function createChatGateway({ endpoint, model, apiKey, authorization, stre
       try {
         for (;;) {
           const { done, value } = await reader.read(); if (done) break;
-          size += value.length; if (size > 262144) { await reader.cancel(); throw new Error('PROVIDER_RESPONSE_TOO_LARGE'); }
+          size += value.length; if (size > DEFAULT_PROVIDER_RESPONSE_BYTES) { await reader.cancel(); throw new Error('PROVIDER_RESPONSE_TOO_LARGE'); }
           parts.push(value);
         }
       } finally { reader.releaseLock(); }

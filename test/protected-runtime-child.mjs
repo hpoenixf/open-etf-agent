@@ -1,0 +1,5 @@
+// Original Runtime with a test-only pause immediately after original durable fact commits.
+import {writeFileSync} from 'node:fs';import {join} from 'node:path';import {openSession} from '../src/session.mjs';import {DOCUMENT_REVOCATION_PROFILE as profile} from '../src/source.mjs';import {run} from '../src/runtime.mjs';import {initialize,gateway,options} from './protected-runtime-fixture.mjs';
+const [directory,outputRoot,point]=process.argv.slice(2);const store=await openSession({directory,profile,leaseMs:1000});await initialize(store);const original=store.claim.bind(store);
+const facade={...store,claim(...args){const claim=original(...args);const method=point==='acquired'?'bindProtectedSource':'registerProtectedOutput';return{...claim,[method](...values){const result=claim[method](...values);const state=claim.read();writeFileSync(join(directory,'kill-point.safe.json'),JSON.stringify({phase:point,runId:state.runId,directory:state.directory})+'\n');Atomics.wait(new Int32Array(new SharedArrayBuffer(4)),0,0,6000);throw Error('Unreached pause timeout');}};}};
+await run(options(facade,outputRoot,gateway()));store.close();

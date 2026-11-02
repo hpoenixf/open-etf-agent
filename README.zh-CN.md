@@ -71,15 +71,15 @@ npm run demo -- --case document-compare
 <a id="versions"></a>
 ## 最近三个模块
 
-`main` 包含 **v0.15.0 串行来源核对专家 Child**；[v0.15.0 Release](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.15.0) 已发布，实现固定于 `74bd5aa`。Main 委派一个有界 Child，再消费其原始结果与派生意见；不是并行专家平台。原离线全套与独立进程验证通过，真实机制第三批通过；前两批失败保留。
+**v0.16.0 新增文档当前撤权检查**，接入原有查询、获取、报告、Publication 和 Reader 路径。显式本地 profile 使用合成 fixture，不开放受保护资料的真实模型输入、任意文档导入或企业 ACL。[发布资格与保留边界](docs/verification/v016-release.md)。
 
 **2026-11-02 底座修复：**[工作输入准入、取消事实、Child 结算与无收益摘要预检查](docs/verification/foundation-repair-20261102.md)。零真实模型调用的回归已通过；不是新增 Release，也不是新一批实测资格。
 
 | 模块 | 解决什么 | 运行与核对 |
 | --- | --- | --- |
+| v0.16 · 文档撤权 | 披露及后续读取重新检查当前资格；不能撤回已经送出的字节 | [运行说明](docs/module-guide.zh-CN.md#v016--revocable-documents) · [合同与证据](openspec/changes/v016-document-revocation/evidence.md) |
 | v0.15 · 串行专家 Child | 一个有界来源核对 Child，原始结果回到 Main；派生意见不取得事实权限 | [运行说明](docs/module-guide.zh-CN.md#v015--serial-specialist-child) · [合同与证据](openspec/changes/serial-specialist-child/evidence.md) |
 | v0.14 · 只读记忆消费 | 显式选已有库，只读召回当前修订；临时模式在访问库前生效 | [运行说明](docs/module-guide.zh-CN.md#v014--只读消费既有memory库) · [合同与证据](openspec/changes/v014-memory-consumer/evidence.md) |
-| v0.13 · 普通回复 | CLI 保存一个问题；提交回答后，手动继续原来的任务 | [运行说明](docs/module-guide.zh-CN.md#v013--一个持久普通回复) · [合同与证据](openspec/changes/ordinary-response/evidence.md) |
 
 [完整固定版本与运行说明](docs/module-guide.zh-CN.md#versions) · [机器可读版本谱系](versions.json) · [GitHub Releases](https://github.com/hpoenixf/open-etf-agent/releases)
 

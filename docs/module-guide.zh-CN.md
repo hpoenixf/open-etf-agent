@@ -16,7 +16,7 @@ Node 下限按实际 API 使用范围放宽到 26.8.1。当前 v0.11 的窄安�
 
 目前的入门案例是**原创合成文档比较**，并非真实基金分析。v0.7 另有小型原创合成 ETF Plugin，仍不是实时基金数据或真实基金分析；完整 ETF 研究工具在后续路线中。本项目不提供交易执行或投资建议。
 
-> **从哪里开始？** `main` 提供 v0.15.0 串行专家 Child；[v0.15.0 Release](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.15.0) 已发布，实现固定于 `74bd5aa`。原 v0.14 及更早固定阶段/标签保持不变。默认公开 CLI 为离线合成示例，真实调用记录不是可任意复用的调用授权。
+> **从哪里开始？** 本 v0.16 源码在原 Runtime 与交付链中加入可撤销的 fixture 文档。[固定发版资格](verification/v016-release.md) 分别记录源码、交付与安装边界。更早固定阶段与标签继续作为历史证据；源码快照本身不等于 GitHub Release 已发布。默认公开 CLI 为离线合成示例，历史真实调用不是任意新增调用的授权。
 
 > **想看真实模型调用，而不只是 fixture？** 先看 [v0.1–v0.5 的 16 次真实 HTTP 调用记录](#live-evidence)，再看 [独立受限 live runner 的入口与授权条件](#live-entry)。这些是历史证据，不是 v0.11 live 恢复资格。
 
@@ -26,6 +26,22 @@ Node 下限按实际 API 使用范围放宽到 26.8.1。当前 v0.11 的窄安�
 - **一次真实的文件交付：** 报告、来源版本、原文快照、文件哈希和保存回执，而不只有一段“已完成”的回答。
 - **一条逐步增加能力的执行链：** 新机制接回既有 Runtime / Tool Host，不另造一条只供演示的执行流程。
 - **可核对的验证边界：** 保留失败、修复和未验证项，区分程序机制通过、模型判断正确与正式发布。
+
+<a id="v016--revocable-documents"></a>
+### v0.16 · 沿原交付路径检查文档撤权
+
+显式新建的 `document-revocation@1` profile 使用两份公开合成文档，沿原词法查询 → 获取 → ResultRef 回读 → CSV/报告 → Publication 执行，历史 Reader 和 Publication 读取继续核对当前资格。撤回文档或已披露查询提示的资格后，后续读取拒绝；原文件及已消耗预算不被删除或重置。
+
+```sh
+node src/session-cli.mjs init-documents --session runs/revocable-demo --profile document-revocation@1
+node src/session-cli.mjs start --session runs/revocable-demo --profile document-revocation@1 --case revocable-rag
+node src/session-cli.mjs publication --session runs/revocable-demo --profile document-revocation@1 --run RUN_ID
+node src/session-cli.mjs revoke-document --session runs/revocable-demo --profile document-revocation@1 --document atlas-a --expected-revision 1
+```
+
+将 `RUN_ID` 替换为实际返回身份。受保护输入仅支持 fixture，不含真实模型、任意文件、受保护插件/Child/Memory/PDF 或后台执行。撤权单调生效，但不是操作系统安全边界，也无法收回已送出的内容。既有非保护 profile 保持独立；不迁移或降级旧保护开发数据库。
+
+[完整命令与 Reader 路径](revocable-documents.md) · [发布资格](verification/v016-release.md) · [原场景与限制](../openspec/changes/v016-document-revocation/scenarios.md)。
 
 <a id="v015--serial-specialist-child"></a>
 ### v0.15 · 一个串行来源核对专家 Child
@@ -258,6 +274,7 @@ node dist/src/session-cli.mjs publication-revisions --session runs/publication-d
 | v0.13 · 持久普通回复 | 提问、让出、接收，再显式恢复原 Run | 原子 receipt/adoption、精确 v2/v3 隔离；无新权限或执行器 | [合同与验证](../openspec/changes/ordinary-response/evidence.md) |
 | [v0.14 · 只读记忆消费](https://github.com/hpoenixf/open-etf-agent/tree/a3e1059a78cf8a4f70fe89d61563980f3d24bc15) | 让既有库当前修订进入实际请求，而非只停在搜索命中 | 原 Memory 只读消费者；临时模式在访问库前生效，无写锁或新权限 | [固定离线资格与独立交付](verification/v014-memory-consumer.safe.json) · [Release](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.14.0) |
 | v0.15 · 串行专家 Child | 一个来源核对 Child 的原始结果被 Main 消费 | 派生意见非原始事实；未知请求不自动重试；公开 CLI 为 fixture | [最终资格](../openspec/changes/serial-specialist-child/final-verification.safe.json) |
+| v0.16 · 可撤销 fixture 文档 | currentness 贯穿 acquisition、Report、Publication 与 Reader | 仅 fixture；不开放任意 live 导入或扩大 ACL | [固定资格](verification/v016-release.md) |
 
 **v0.2 的维护入口：** 原始阶段保留历史；[独立维护快照 `a10d4f1`](https://github.com/hpoenixf/open-etf-agent/tree/a10d4f1bd1ecc39224272156221fe29792b64094)修正了报告中涉及未读取页面的措辞。若专门体验 v0.2，请使用 `maintenance/v0.2-source-boundary`，不要把旧快照当作已修复版本。
 
@@ -391,6 +408,3 @@ Web 取材是原路线中的外网输入候选，仍未编号；Web 读取界面
 ---
 
 <p align="center">小步演进，保留证据。<br /><sub>Build small. Keep evidence.</sub></p>
-
-
-

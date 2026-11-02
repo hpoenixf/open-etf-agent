@@ -17,7 +17,7 @@ A small research Agent that grows through independently runnable development sna
 
 The introductory task compares **original synthetic documents**, not real funds. The small synthetic ETF Plugin introduced in v0.7 is also not a live financial-data service. Complete ETF research tools remain on the roadmap. This project does not execute trades or provide investment advice.
 
-> **Start here:** `main` provides v0.15.0 serial specialist Child; the [v0.15.0 Release](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.15.0) fixes implementation `74bd5aa`. Existing v0.14 and earlier fixed phases/tags remain unchanged. The public CLI is an offline synthetic example; recorded real calls are not authorization for arbitrary new calls.
+> **Start here:** this v0.16 source adds revocable fixture documents to the existing Runtime and publication path. See the [fixed release qualification](verification/v016-release.md) for source, delivery and installation boundaries. Earlier fixed stages and tags remain historical evidence; a source snapshot is not itself proof of a GitHub Release. The public CLI is an offline synthetic example; recorded real calls are not authorization for arbitrary new calls.
 
 > **Looking for real model calls?** Read the [16 historical HTTP calls across v0.1–v0.5](#live-evidence), then the [separate live runner and its authorization requirements](#live-entry). Those records do not qualify v0.11 live recovery.
 
@@ -29,6 +29,22 @@ The introductory task compares **original synthetic documents**, not real funds.
 - **Explicit evidence boundaries:** failures, fixes and unverified behavior are retained. Runtime correctness, model judgment and release status are separate claims.
 
 Documentation defaults to English. Use the language links at the top of the main entry pages for Chinese. Historical evidence, internal Specs and some detailed design documents remain in their original language; they are not presented as English translations. Article links marked **Chinese original** have no complete English edition.
+
+<a id="v016--revocable-documents"></a>
+### v0.16 · Revocable documents through the original delivery path
+
+An explicit fresh `document-revocation@1` profile uses two public synthetic documents. It runs original lexical query → acquisition → ResultRef reread → CSV/Report → Publication, then rechecks current eligibility on mediated historical Reader and Publication reads. Revoking a document or disclosed query hint denies later reads without deleting original bytes or resetting budgets.
+
+```sh
+node src/session-cli.mjs init-documents --session runs/revocable-demo --profile document-revocation@1
+node src/session-cli.mjs start --session runs/revocable-demo --profile document-revocation@1 --case revocable-rag
+node src/session-cli.mjs publication --session runs/revocable-demo --profile document-revocation@1 --run RUN_ID
+node src/session-cli.mjs revoke-document --session runs/revocable-demo --profile document-revocation@1 --document atlas-a --expected-revision 1
+```
+
+Replace `RUN_ID` with the returned identity. The fixture is the only protected input profile: no external model, arbitrary files, protected plugins/Child/Memory/PDF or background execution. Revocation is monotonic, not an OS security boundary, and cannot physically recall prior disclosures. Existing unprotected profiles remain separate; do not migrate or downgrade a protected development database.
+
+[Complete command and Reader path](revocable-documents.md) · [Release qualification](verification/v016-release.md) · [Original scenarios and limitations](../openspec/changes/v016-document-revocation/scenarios.md).
 
 <a id="v015--serial-specialist-child"></a>
 ### v0.15 · One serial source-checking specialist Child
@@ -261,6 +277,7 @@ Every link fixes the code, lockfile, examples and evidence from that stage. Reco
 | v0.13 · Ordinary reply | Ask, yield, receive and explicitly resume the same Run | Atomic receipt/adoption, exact v2/v3 isolation; no new authority or executor | [Contract and verification](../openspec/changes/ordinary-response/evidence.md) |
 | [v0.14 · Read-only Memory](https://github.com/hpoenixf/open-etf-agent/tree/a3e1059a78cf8a4f70fe89d61563980f3d24bc15) | Bring current revisions from an existing library into actual encoded requests | Existing Memory read-only consumer; temporary mode precedes library IO, without writer locks or new authority | [Fixed offline qualification and independent delivery](verification/v014-memory-consumer.safe.json) · [Release](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.14.0) |
 | v0.15 · Serial specialist Child | Main consumes original results from one source-checking Child | Advice is not original evidence; unknown requests are not retried; public CLI is a fixture | [Final qualification](../openspec/changes/serial-specialist-child/final-verification.safe.json) |
+| v0.16 · Revocable fixture documents | Currentness joins acquisition, Report, Publication and Reader | Fixture-only; no arbitrary live ingest or expanded ACL | [Fixed qualification](verification/v016-release.md) |
 
 **v0.2 maintenance:** the original snapshot is historical. [Maintenance snapshot `a10d4f1`](https://github.com/hpoenixf/open-etf-agent/tree/a10d4f1bd1ecc39224272156221fe29792b64094) corrects report wording about unread pages. Use `maintenance/v0.2-source-boundary` specifically for the corrected v0.2 experience; the original snapshot was not rewritten.
 

@@ -2,6 +2,8 @@ import { createHash } from 'node:crypto';
 
 // Text-only adaptation of the original Publication contract. Not an Artifact receipt.
 export const PUBLICATION_BINDING = Object.freeze({ id: 'publication', version: 'publication@1' });
+// Complete UTF-8 display text, separate from transport and JSON envelope bytes.
+export const PUBLICATION_TEXT_MAX_BYTES = 256 * 1024;
 const fail = code => { throw Object.assign(new Error(code), { code }); };
 const object = value => value !== null && typeof value === 'object' && !Array.isArray(value);
 const id = value => typeof value === 'string' && /^[A-Za-z0-9][A-Za-z0-9_.:@/-]{0,199}$/.test(value) && !value.includes('://');
@@ -13,7 +15,7 @@ function fields(value, names, code = 'INVALID_PUBLICATION') {
 function freeze(value) { for (const child of Object.values(value)) if (object(child)) freeze(child); return Object.freeze(value); }
 export function preparePublication(input) {
  fields(input, ['runId', 'rootId', 'text']);
- if (!id(input.runId) || !id(input.rootId) || typeof input.text !== 'string' || !input.text.trim() || Buffer.byteLength(input.text) > 64000 || input.text.includes('\0') || Buffer.from(input.text).toString('utf8') !== input.text) fail('INVALID_PUBLICATION');
+ if (!id(input.runId) || !id(input.rootId) || typeof input.text !== 'string' || !input.text.trim() || Buffer.byteLength(input.text) > PUBLICATION_TEXT_MAX_BYTES || input.text.includes('\0') || Buffer.from(input.text).toString('utf8') !== input.text) fail('INVALID_PUBLICATION');
  const content = { type: 'text', text: input.text };
  return freeze({ schemaVersion: 'publication@1', runId: input.runId, rootId: input.rootId, blockId: 'answer', content, payloadHash: sha(JSON.stringify(content)) });
 }

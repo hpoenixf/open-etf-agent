@@ -1,0 +1,75 @@
+{
+  "schemaVersion": "open-v016-independent-review@1",
+  "reviewedAt": "2026-10-31",
+  "repository": "hpoenixf/open-etf-agent",
+  "reviewedCommit": "235cb794de5675601eca324ff4c23ff954e3b743",
+  "mainUnchanged": "34124cefc6df289e08518173789210b45a716451",
+  "mode": "read-only-source-and-existing-evidence-review",
+  "scope": [
+    "Session authority and transaction ordering",
+    "Source binding and durable query hints",
+    "Host/Runtime dispatch and unknown recovery",
+    "Result/CSV/Report registration",
+    "Publication and Reader current eligibility",
+    "CLI disclosure boundaries",
+    "six scenario families and teaching-capacity mapping"
+  ],
+  "reviewers": [
+    {
+      "role": "primary",
+      "scope": "Session/Source/query/dispatch/recovery and evidence identity"
+    },
+    {
+      "role": "independent-disclosure-reviewer",
+      "scope": "Result/CSV/Report/Publication/Reader/CLI and associated negative scenarios"
+    }
+  ],
+  "findings": [
+    {
+      "severity": "evidence-wording",
+      "path": "openspec/changes/v016-document-revocation/scenarios.md",
+      "line": 16,
+      "finding": "The teaching test cold-reads Publication in a separate process, not both Report and Publication. Report comparison runs in the parent process through file and Reader HTTP paths.",
+      "resolution": "Correct the scenario description without changing code, tests or historical test results.",
+      "evidence": [
+        "test/protected-long-content.test.mjs:43-62",
+        "test/fixtures/protected-long-content-readback.mjs:6-22"
+      ]
+    }
+  ],
+  "codeReviewConclusion": "No actionable disclosure or dispatch defect identified in the reviewed scope; this is not a proof of absence of defects.",
+  "byteVerification": {
+    "localProductTestFixtureScriptFilesChecked": 205,
+    "executionManifestMismatches": 0,
+    "remoteSourceTestAndV016SpecBlobsChecked": 196,
+    "remoteDifference": "Only teaching-integration.safe.json contains the already documented machine-specific command path sanitization; product and test blobs match."
+  },
+  "existingExecutionEvidence": {
+    "executedBeforeThisReview": true,
+    "inputManifestSha256": "47184c85ef057bd50af9e61978f7305494e41e39e93c6bb4e8186795d931999f",
+    "testFiles": 90,
+    "tests": 556,
+    "passed": 556,
+    "failed": 0,
+    "skipped": 0,
+    "build": "passed",
+    "remoteSummary": "WIP-STATUS.md",
+    "versionSpecificSummary": "openspec/changes/v017-shared-admission/offline-evidence.safe.json",
+    "note": "Historical v0.16 488/507 results keep their original pins. This review does not rerun or replace them."
+  },
+  "currentRun": {
+    "testsExecuted": 0,
+    "modelCalls": 0,
+    "servicesStarted": 0,
+    "productCodeChanged": false
+  },
+  "qualificationBoundaries": [
+    "Provider-free fixture-only qualification, not live acceptance or financial quality.",
+    "The sixteen-attachment bound is a lower-level fixture, not a full CLI sixteen-attachment qualification.",
+    "The long-content case is one source without CSV attachments or concurrent stress.",
+    "Deterministic ordering and kill recovery do not prove arbitrary concurrency or exactly-once effects.",
+    "No physical unsend or direct-filesystem security claim.",
+    "No version tag, main update, release, deployment or Spec archive is authorized by this receipt.",
+    "This receipt does not check off formal tasks or expand existing execution permissions."
+  ]
+}

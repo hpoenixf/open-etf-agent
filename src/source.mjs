@@ -25,3 +25,36 @@ export async function readFixturePage({ documentId, page }) {
   const text = d.pages[page - 1];
   return { sourceId: `${d.id}@${d.version}:p${page}`, documentId, name: d.name, version: d.version, page, text, sha256: sha256(text), mediaType: 'text/plain; charset=utf-8' };
 }
+
+// Opt-in document revocation facts. Hash identity is not current permission.
+export const DOCUMENT_REVOCATION_PROFILE = 'document-revocation@1';
+const protectedFailure = () => { throw Object.assign(new Error('INVALID_PROTECTED_SOURCE_BINDING'), { code: 'INVALID_PROTECTED_SOURCE_BINDING' }); };
+const exactProtected = (value, keys) => object(value) && Object.keys(value).sort().join(',') === [...keys].sort().join(',');
+const protectedId = value => typeof value === 'string' && /^[A-Za-z0-9][A-Za-z0-9_.:@/-]{0,199}$/.test(value) && !value.includes('://');
+const protectedHash = value => typeof value === 'string' && /^[a-f0-9]{64}$/.test(value);
+export function validateDocumentManifest(value) {
+ if (!exactProtected(value,['schemaVersion','documentId','name','version','mediaType','pages']) || value.schemaVersion !== 'protected-document@1'
+  || !['atlas-a','atlas-b'].includes(value.documentId) || !protectedId(value.version) || typeof value.name !== 'string' || !value.name || value.name.length > 200 || /[\u0000-\u001f]/.test(value.name)
+  || value.mediaType !== 'text/plain; charset=utf-8' || !Array.isArray(value.pages) || value.pages.length < 1 || value.pages.length > 2) protectedFailure();
+ const pages=value.pages.map((p,i)=>{if(!exactProtected(p,['page','sha256']) || p.page!==i+1 || !protectedHash(p.sha256))protectedFailure();return {page:p.page,sha256:p.sha256};});
+ return {schemaVersion:'protected-document@1',documentId:value.documentId,name:value.name,version:value.version,mediaType:value.mediaType,pages};
+}
+export function documentManifestHash(value) { return sha256(JSON.stringify(validateDocumentManifest(value))); }
+export function validateDocumentAuthority(value) {
+ if(!exactProtected(value,['schemaVersion','authorityId','libraryId']) || value.schemaVersion!=='document-authority@1' || !protectedId(value.authorityId) || !protectedId(value.libraryId))protectedFailure();
+ return {schemaVersion:value.schemaVersion,authorityId:value.authorityId,libraryId:value.libraryId};
+}
+export function bindProtectedSource({authority,manifest,source,resultRef}={}) {
+ const a=validateDocumentAuthority(authority),m=validateDocumentManifest(manifest),s=validateSource(source);
+ if(s.pdf!==undefined || s.derived===true || s.documentId!==m.documentId || s.name!==m.name || s.version!==m.version || s.mediaType!==m.mediaType || s.sourceId!==`${m.documentId}@${m.version}:p${s.page}` || m.pages[s.page-1]?.sha256!==s.sha256)protectedFailure();
+ const identity=Object.fromEntries(['sourceId','documentId','name','version','page','sha256','mediaType'].map(k=>[k,s[k]]));
+ if(resultRef!=='result:sha256:'+sha256(JSON.stringify(identity)))protectedFailure();
+ return {schemaVersion:'protected-source-binding@1',authorityId:a.authorityId,libraryId:a.libraryId,documentId:m.documentId,documentVersion:m.version,documentManifestHash:documentManifestHash(m),page:s.page,sourceId:s.sourceId,sourceSha256:s.sha256,resultRef};
+}
+export function validateProtectedSourceBinding(value,authority,manifest) {
+ if(!exactProtected(value,['schemaVersion','authorityId','libraryId','documentId','documentVersion','documentManifestHash','page','sourceId','sourceSha256','resultRef']))protectedFailure();
+ const a=validateDocumentAuthority(authority),m=validateDocumentManifest(manifest);
+ if(value.schemaVersion!=='protected-source-binding@1'||value.authorityId!==a.authorityId||value.libraryId!==a.libraryId||value.documentId!==m.documentId||value.documentVersion!==m.version||value.documentManifestHash!==documentManifestHash(m)||!Number.isSafeInteger(value.page)||value.page<1||m.pages[value.page-1]?.sha256!==value.sourceSha256||value.sourceId!==`${m.documentId}@${m.version}:p${value.page}`)protectedFailure();
+ const identity={sourceId:value.sourceId,documentId:m.documentId,name:m.name,version:m.version,page:value.page,sha256:value.sourceSha256,mediaType:m.mediaType};
+ if(value.resultRef!=='result:sha256:'+sha256(JSON.stringify(identity)))protectedFailure();return structuredClone(value);
+}

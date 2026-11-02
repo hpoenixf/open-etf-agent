@@ -32,6 +32,11 @@ function baseDescriptor(kind,value) {
   if(kind==='note')return {kind:'note',resultRef:noteRef(value)};
   return {kind:'calculation',calculation:value.calculation,resultRef:'calculation:sha256:'+sha256(JSON.stringify({kind:'calculation',value}))};
 }
+export function validateSourceDescriptor(item){
+ const keys=[...identityKeys,'kind','resultRef','recordPath','recordSha256'];
+ if(!exact(item,keys)||item.kind!=='source'||['resultRef','recordSha256','sha256'].some(k=>typeof item[k]!=='string')||!/^result:sha256:[a-f0-9]{64}$/.test(item.resultRef)||item.recordPath!==recordPath(item.resultRef)||!/^[a-f0-9]{64}$/.test(item.recordSha256)||!/^[a-f0-9]{64}$/.test(item.sha256)||!Number.isSafeInteger(item.page)||item.page<1||['sourceId','documentId','name','version','mediaType'].some(k=>typeof item[k]!=='string'||!item[k]||item[k].length>200||/[\u0000-\u001f]/.test(item[k]))||item.mediaType!=='text/plain; charset=utf-8'||baseDescriptor('source',item).resultRef!==item.resultRef)throw new Error('Corrupt source index identity');
+ return structuredClone(item);
+}
 function recordPath(ref) { return 'results/'+ref.split(':').at(-1)+'.json'; }
 async function boundedBytes(path,maximum) {
   const file=await open(path,constants.O_RDONLY|constants.O_NOFOLLOW);
@@ -61,8 +66,7 @@ export async function createResultStore({directory,allowedDocuments,readOnly=fal
   for(const item of entries) {
     if(!item||!['source','calculation','note'].includes(item.kind)||!refPattern.test(item.resultRef)||item.recordPath!==recordPath(item.resultRef)||!/^[a-f0-9]{64}$/.test(item.recordSha256)||byRef.has(item.resultRef)) throw new Error('Corrupt content index identity');
     if(item.kind==='source') {
-      if(!/^[a-f0-9]{64}$/.test(item.sha256)||!Number.isSafeInteger(item.page)||item.page<1||['sourceId','documentId','name','version','mediaType'].some(k=>typeof item[k]!=='string'||!item[k]||item[k].length>200||/[\u0000-\u001f]/.test(item[k]))||item.mediaType!=='text/plain; charset=utf-8'||baseDescriptor('source',item).resultRef!==item.resultRef||bySource.has(item.sourceId)) throw new Error('Corrupt source index identity');
-      const keys=[...identityKeys,'kind','resultRef','recordPath','recordSha256'].sort().join(','); if(Object.keys(item).sort().join(',')!==keys) throw new Error('Corrupt index fields');
+      validateSourceDescriptor(item);if(bySource.has(item.sourceId))throw new Error('Corrupt source index identity');
       bySource.set(item.sourceId,structuredClone(item));
     } else if(item.kind==='note'){if(!item.resultRef.startsWith('note:')||Object.keys(item).sort().join(',')!==['kind','resultRef','recordPath','recordSha256'].sort().join(','))throw new Error('Corrupt note index');
     } else if(item.calculation!=='calculate_change@1'||!item.resultRef.startsWith('calculation:')||Object.keys(item).sort().join(',')!==['kind','calculation','resultRef','recordPath','recordSha256'].sort().join(',')) throw new Error('Corrupt calculation index');

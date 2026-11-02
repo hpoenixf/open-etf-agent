@@ -1,4 +1,4 @@
-import { normalizeChatCompletion, projectProviderProtocolDiagnostic, classifyNonSuccessfulFinish } from './gateway.mjs';
+import { normalizeChatCompletion, projectProviderProtocolDiagnostic, classifyNonSuccessfulFinish, DEFAULT_PROVIDER_RESPONSE_BYTES } from './gateway.mjs';
 import { createHash } from 'node:crypto';
 const diagnostics = new WeakMap();
 export function projectStreamProtocolDiagnostic(error) {
@@ -6,8 +6,8 @@ export function projectStreamProtocolDiagnostic(error) {
   return value ? { ...value } : null;
 }
 
-export async function readChatStream(body, { signal, maxBytes = 262144 } = {}) {
-  if (!Number.isSafeInteger(maxBytes) || maxBytes < 1 || maxBytes > 1048576) throw new Error('Invalid stream size limit');
+export async function readChatStream(body, { signal, maxBytes = DEFAULT_PROVIDER_RESPONSE_BYTES } = {}) {
+  if (!Number.isSafeInteger(maxBytes) || maxBytes < 1 || maxBytes > DEFAULT_PROVIDER_RESPONSE_BYTES) throw new Error('Invalid stream size limit');
   signal?.throwIfAborted();
   const reader = body.getReader(); const decoder = new TextDecoder('utf-8', { fatal: true });
   let buffer = ''; let bytes = 0; let done = false; let finish = null; let content = ''; let usage = null;
