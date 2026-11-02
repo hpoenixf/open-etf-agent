@@ -56,7 +56,7 @@ test('7.2 unsafe path, sidecar, unknown SQLite schema and secret binding fields 
 });
 test('7.2 unsupported active codec, malformed JSON and oversized snapshots fail closed', async () => {
  const d = await directory(); const store = await openSession({ directory: d, clock: () => 100 }); assert.ok(store, 'Session required');
- try { assert.throws(() => store.create({ directory: d, definition: definition(), snapshot: { schemaVersion: 'runtime-checkpoint@999', phase: 'ready' } }), /CHECKPOINT/); const { runId } = await create(store, d); const c = store.claim(runId, 'a'); assert.throws(() => c.checkpoint(checkpoint('ready', { payload: 'x'.repeat(4 * 1048576) })), /BOUND/); assert.throws(() => c.checkpoint(checkpoint('ready', { invalid: undefined })), /JSON/); assert.equal(c.read().snapshot.phase, 'ready'); }
+ try { assert.throws(() => store.create({ directory: d, definition: definition(), snapshot: { schemaVersion: 'runtime-checkpoint@999', phase: 'ready' } }), /CHECKPOINT/); const { runId } = await create(store, d); const c = store.claim(runId, 'a'); /* The pinned teaching contract permits 12 MiB checkpoint JSON, not the generic 3 MiB JSON limit. */ c.checkpoint(checkpoint('ready', { payload: 'x'.repeat(4 * 1048576) })); assert.equal(c.read().snapshot.payload.length, 4 * 1048576); assert.throws(() => c.checkpoint(checkpoint('ready', { payload: 'x'.repeat(13 * 1048576) })), /BOUND/); assert.throws(() => c.checkpoint(checkpoint('ready', { invalid: undefined })), /JSON/); assert.equal(c.read().snapshot.phase, 'ready'); }
  finally { store.close(); }
 });
 test('7.2 independent SQLite connections cannot spend the same last root unit', async () => {
@@ -104,3 +104,17 @@ test('7.2 child relationship lookup is exact and uniquely bound to parent plus t
  try { const root = await create(store, d); assert.equal(typeof store.findChild, 'function', 'Session must expose exact child lookup'); assert.equal(store.findChild(root.runId, 'missing'), null); const child = await create(store, d, { parentRunId: root.runId }); assert.equal(store.findChild(root.runId, 'synthetic-child').runId, child.runId); const parent = store.claim(root.runId, 'parent'); assert.throws(() => store.create({ directory: d, parentRunId: root.runId, parentClaim: { owner: parent.owner, fence: parent.fence }, definition: definition({ config: { taskId: 'synthetic-child' } }), snapshot: checkpoint() }), /CHILD_EXISTS/); const other = await create(store, d); assert.equal(store.findChild(other.runId, 'synthetic-child'), null); }
  finally { store.close(); }
 });
+
+test('7.2 cancelling a legacy minimal dispatch checkpoint retains uncertainty without changing scope', async () => {
+ const d=await directory();let store=await openSession({directory:d,clock:()=>100});let runId;
+ try {
+  ({runId}=await create(store,d));const claim=store.claim(runId,'legacy-writer');
+  claim.reserve('tool',checkpoint('tool-dispatched',{inFlight:{callId:'legacy-dispatch',name:'read_page'}}));
+  const before=store.inspect(runId),after=store.cancel(runId);assert.equal(after.status,'cancelled');
+  assert.deepEqual(after.snapshot.unknownEffects,[{callId:'legacy-dispatch',name:'read_page',status:'unknown',dispatched:true}]);
+  assert.deepEqual(after.definition,before.definition);assert.deepEqual(after.rootUsage,{model:0,tool:1});store.cancel(runId);assert.deepEqual(store.inspect(runId),after);
+ }finally{store.close();}
+ store=await openSession({directory:d,clock:()=>100});try{assert.equal(store.inspect(runId).snapshot.unknownEffects.length,1);}finally{store.close();}
+});
+
+

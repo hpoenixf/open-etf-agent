@@ -1,3 +1,4 @@
+export const PUBLICATION_TEXT_MAX_BYTES = 256 * 1024;
 import { createHash } from 'node:crypto';
 
 // Text-only adaptation of the original Publication contract. Not an Artifact receipt.
@@ -13,7 +14,7 @@ function fields(value, names, code = 'INVALID_PUBLICATION') {
 function freeze(value) { for (const child of Object.values(value)) if (object(child)) freeze(child); return Object.freeze(value); }
 export function preparePublication(input) {
  fields(input, ['runId', 'rootId', 'text']);
- if (!id(input.runId) || !id(input.rootId) || typeof input.text !== 'string' || !input.text.trim() || Buffer.byteLength(input.text) > 64000 || input.text.includes('\0') || Buffer.from(input.text).toString('utf8') !== input.text) fail('INVALID_PUBLICATION');
+ if (!id(input.runId) || !id(input.rootId) || typeof input.text !== 'string' || !input.text.trim() || Buffer.byteLength(input.text) > PUBLICATION_TEXT_MAX_BYTES || input.text.includes('\0') || Buffer.from(input.text).toString('utf8') !== input.text) fail('INVALID_PUBLICATION');
  const content = { type: 'text', text: input.text };
  return freeze({ schemaVersion: 'publication@1', runId: input.runId, rootId: input.rootId, blockId: 'answer', content, payloadHash: sha(JSON.stringify(content)) });
 }

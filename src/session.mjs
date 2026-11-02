@@ -1,15 +1,18 @@
+import { cancelRuntimeCheckpoint } from './runtime.mjs';
 import { validateTaskTime } from './temporal.mjs';
 import { DatabaseSync } from 'node:sqlite';
 import { lstatSync, realpathSync, openSync, closeSync, readSync } from 'node:fs';
 import { resolve, join } from 'node:path';
 import { randomUUID, createHash } from 'node:crypto';
-import { PUBLICATION_BINDING, validatePublication, validatePublicationReceipt, committedPublicationEvent } from './publication.mjs';
+import { PUBLICATION_BINDING, PUBLICATION_TEXT_MAX_BYTES, validatePublication, validatePublicationReceipt, committedPublicationEvent } from './publication.mjs';
 import { ensureSafeDirectory } from './storage-files.mjs';
 import { prepareSessionRecovery } from './session-recovery.mjs';
 
 const APP_ID = 0x4f455446;
 const SCHEMA_VERSION = 2;
 const MAX_JSON = 3 * 1048576;
+const MAX_CHECKPOINT_JSON = 12 * 1048576;
+const MAX_PUBLICATION_JSON = 6 * PUBLICATION_TEXT_MAX_BYTES + 8192;
 const phases = new Set(['ready', 'working-input', 'model-reserved', 'proposal-sealed', 'tool-dispatched', 'result-committed', 'result-consumed', 'terminal']);
 const fail = code => { throw Object.assign(new Error(code), { code }); };
 const object = value => value !== null && typeof value === 'object' && !Array.isArray(value);
@@ -72,13 +75,13 @@ function definitionBytes(value) {
  fields(value, ['question', 'grantId', 'bindings', 'limits', 'rootLimits', 'deadlineAt', 'config']);
  if (typeof value.question !== 'string' || !value.question.trim() || Buffer.byteLength(value.question) > 16000 || !identifier(value.grantId) || !Number.isSafeInteger(value.deadlineAt) || value.deadlineAt < 1) fail('INVALID_DEFINITION');
  fields(value.limits, ['maxRounds', 'maxTools', 'timeoutMs']); fields(value.rootLimits, ['model', 'tool']);
- for (const [key, n] of Object.entries(value.limits)) if (!Number.isSafeInteger(n) || n < 1 || n > (key === 'timeoutMs' ? 300000 : 1000)) fail('INVALID_DEFINITION');
+ for (const [key, n] of Object.entries(value.limits)) if (!Number.isSafeInteger(n) || n < 1 || n > (key === 'timeoutMs' ? 3600000 : 1000)) fail('INVALID_DEFINITION');
  for (const n of Object.values(value.rootLimits)) if (!Number.isSafeInteger(n) || n < 1 || n > 1000) fail('INVALID_DEFINITION');
  validateBindings(value.bindings); validateConfig(value.config); return json(value, 65536);
 }
 function checkpointBytes(value, terminal = false) {
  if (!object(value) || value.schemaVersion !== 'runtime-checkpoint@1' || !phases.has(value.phase) || (terminal ? value.phase !== 'terminal' || !['completed', 'failed', 'cancelled'].includes(value.status) : value.phase === 'terminal')) fail('INVALID_CHECKPOINT');
- return json(value);
+ return json(value, MAX_CHECKPOINT_JSON);
 }
 function safeExistingDirectory(directory) {
  const path = resolve(directory); const stat = lstatSync(path);
@@ -142,7 +145,7 @@ export async function openSession({ directory, clock = Date.now, leaseMs = 1000 
  const getRun = runId => { if (!identifier(runId)) fail('INVALID_RUN_ID'); const row = db.prepare('SELECT * FROM runs WHERE run_id=?').get(runId); if (!row) fail('UNKNOWN_RUN'); return row; };
  const getRoot = rootId => { const row = db.prepare('SELECT * FROM roots WHERE root_id=?').get(rootId); if (!row) fail('CORRUPT_ROOT'); return row; };
  function view(row) {
-  const root = getRoot(row.root_id); const definition = parsed(row.definition, 65536); definitionBytes(definition); const snapshot = parsed(row.snapshot); checkpointBytes(snapshot, snapshot.phase === 'terminal');
+  const root = getRoot(row.root_id); const definition = parsed(row.definition, 65536); definitionBytes(definition); const snapshot = parsed(row.snapshot, MAX_CHECKPOINT_JSON); checkpointBytes(snapshot, snapshot.phase === 'terminal');
   if (!['active', 'completed', 'failed', 'cancelled'].includes(row.status) || !['active', 'completed', 'failed', 'cancelled'].includes(root.status) || (row.status === 'active') === (snapshot.phase === 'terminal') || (snapshot.phase === 'terminal' && snapshot.status !== row.status) || definition.grantId !== root.grant_id || definition.deadlineAt > root.deadline_at || definition.rootLimits.model !== root.model_limit || definition.rootLimits.tool !== root.tool_limit || !Number.isSafeInteger(root.model_used) || !Number.isSafeInteger(root.tool_used) || root.model_used < 0 || root.tool_used < 0 || root.model_used > root.model_limit || root.tool_used > root.tool_limit) fail('CORRUPT_SESSION_STATE');
   return { runId: row.run_id, rootId: row.root_id, parentRunId: row.parent_run_id, directory: row.directory, definition, snapshot, status: row.status, rootStatus: root.status, owner: row.owner, fence: row.fence, leaseUntil: row.lease_until, rootUsage: { model: root.model_used, tool: root.tool_used } };
  }
@@ -169,14 +172,14 @@ export async function openSession({ directory, clock = Date.now, leaseMs = 1000 
    if (versions.length > 3 || !slot) fail('PUBLICATION_IDENTITY_UNAVAILABLE');
    const values = versions.map((version, index) => {
     if (version.root_id !== row.root_id || version.revision !== index + 1) fail('PUBLICATION_IDENTITY_UNAVAILABLE');
-    const content = parsed(version.body, 512000);
+    const content = parsed(version.body, MAX_PUBLICATION_JSON);
     const prepared = validatePublication({ schemaVersion: 'publication@1', runId: row.run_id, rootId: row.root_id, blockId: 'answer', content, payloadHash: version.payload_hash });
     const binding = parsed(version.binding, 1024); fields(binding, ['definitionHash', 'hostHash']);
     if (binding.definitionHash !== digest(row.definition) || !hash(binding.hostHash) || digest(canonical(binding)) !== version.binding_hash) fail('PUBLICATION_IDENTITY_UNAVAILABLE');
     const receipt = validatePublicationReceipt({ schemaVersion: 'publication-receipt@1', runId: row.run_id, rootId: row.root_id, blockId: 'answer', revision: version.revision, deliveryOrdinal: 1, payloadHash: prepared.payloadHash, bindingHash: version.binding_hash });
     return { receipt, content: structuredClone(prepared.content) };
    });
-   if (canonical(parsed(slot.event, 512000)) !== canonical(committedPublicationEvent(values.at(-1)))) fail('PUBLICATION_IDENTITY_UNAVAILABLE');
+   if (canonical(parsed(slot.event, MAX_PUBLICATION_JSON)) !== canonical(committedPublicationEvent(values.at(-1)))) fail('PUBLICATION_IDENTITY_UNAVAILABLE');
    return values;
   } catch { fail('PUBLICATION_IDENTITY_UNAVAILABLE'); }
  }
@@ -189,24 +192,24 @@ export async function openSession({ directory, clock = Date.now, leaseMs = 1000 
   const versions = publicationFacts(row); const current = versions.at(-1);
   if (replacing && !current) fail('PUBLICATION_NOT_FOUND');
   if (replacing && current.receipt.revision !== expectedRevision) fail('PUBLICATION_REVISION_MISMATCH');
-  const binding = { definitionHash: digest(row.definition), hostHash: digest(canonical(parsed(row.snapshot).host ?? null)) };
+  const binding = { definitionHash: digest(row.definition), hostHash: digest(canonical(parsed(row.snapshot, MAX_CHECKPOINT_JSON).host ?? null)) };
   const bindingHash = digest(canonical(binding));
   if (current && current.content.text === prepared.content.text && current.receipt.bindingHash === bindingHash) return { receipt: structuredClone(current.receipt), idempotent: true };
   if (current && !replacing) fail('PUBLICATION_REPLACE_REQUIRED');
   if (current?.receipt.revision >= 3) fail('PUBLICATION_MODIFICATION_LIMIT');
   const receipt = validatePublicationReceipt({ schemaVersion: 'publication-receipt@1', runId: row.run_id, rootId: row.root_id, blockId: 'answer', revision: (current?.receipt.revision ?? 0) + 1, deliveryOrdinal: 1, payloadHash: prepared.payloadHash, bindingHash });
   const event = committedPublicationEvent({ receipt, content: prepared.content });
-  db.prepare('INSERT INTO publication_versions(run_id,root_id,revision,body,payload_hash,binding,binding_hash) VALUES(?,?,?,?,?,?,?)').run(row.run_id, row.root_id, receipt.revision, json(prepared.content, 512000), receipt.payloadHash, json(binding, 1024), bindingHash);
+  db.prepare('INSERT INTO publication_versions(run_id,root_id,revision,body,payload_hash,binding,binding_hash) VALUES(?,?,?,?,?,?,?)').run(row.run_id, row.root_id, receipt.revision, json(prepared.content, MAX_PUBLICATION_JSON), receipt.payloadHash, json(binding, 1024), bindingHash);
   if (current) {
-   const changed = db.prepare('UPDATE publication_events SET event=? WHERE run_id=?').run(json(event, 512000), row.run_id);
+   const changed = db.prepare('UPDATE publication_events SET event=? WHERE run_id=?').run(json(event, MAX_PUBLICATION_JSON), row.run_id);
    if (changed.changes !== 1) fail('PUBLICATION_IDENTITY_UNAVAILABLE');
-  } else db.prepare('INSERT INTO publication_events(run_id,event) VALUES(?,?)').run(row.run_id, json(event, 512000));
+  } else db.prepare('INSERT INTO publication_events(run_id,event) VALUES(?,?)').run(row.run_id, json(event, MAX_PUBLICATION_JSON));
   return { receipt: structuredClone(receipt), idempotent: false };
  }
  function cancelRoot(rootId) {
   const root = getRoot(rootId); if (root.status !== 'active') return;
   for (const row of db.prepare("SELECT * FROM runs WHERE root_id=? AND status='active'").all(rootId)) {
-   const snapshot = parsed(row.snapshot); snapshot.phase = 'terminal'; snapshot.status = 'cancelled'; snapshot.code = 'CANCELLED';
+   const snapshot = cancelRuntimeCheckpoint(parsed(row.snapshot, MAX_CHECKPOINT_JSON));
    db.prepare("UPDATE runs SET snapshot=?,status='cancelled',owner=NULL,lease_until=0 WHERE run_id=?").run(checkpointBytes(snapshot, true), row.run_id);
   }
   db.prepare("UPDATE roots SET status='cancelled' WHERE root_id=?").run(rootId);
