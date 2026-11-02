@@ -34,5 +34,5 @@ export async function projectContext({ messages, maxBytes, lookupSource } = {}) 
     for(const index of group) if(projected[index].result.status==='succeeded') projected[index].result.value=await replace(projected[index].result.value);
     if(size()<=maxBytes) return projected;
   }
-  fail('Context byte budget cannot retain mandatory original question/latest complete group');
+  throw Object.assign(new Error('Context byte budget cannot retain mandatory original question/latest complete group'),{code:'CONTEXT_CAPACITY_EXCEEDED'});
 }
