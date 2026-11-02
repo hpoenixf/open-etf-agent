@@ -66,7 +66,7 @@ function definitionBytes(value) {
  fields(value, ['question', 'grantId', 'bindings', 'limits', 'rootLimits', 'deadlineAt', 'config']);
  if (typeof value.question !== 'string' || !value.question.trim() || Buffer.byteLength(value.question) > 16000 || !identifier(value.grantId) || !Number.isSafeInteger(value.deadlineAt) || value.deadlineAt < 1) fail('INVALID_DEFINITION');
  fields(value.limits, ['maxRounds', 'maxTools', 'timeoutMs']); fields(value.rootLimits, ['model', 'tool']);
- for (const [key, n] of Object.entries(value.limits)) if (!Number.isSafeInteger(n) || n < 1 || n > (key === 'timeoutMs' ? 300000 : 1000)) fail('INVALID_DEFINITION');
+ for (const [key, n] of Object.entries(value.limits)) if (!Number.isSafeInteger(n) || n < 1 || n > (key === 'timeoutMs' ? 3600000 : 1000)) fail('INVALID_DEFINITION');
  for (const n of Object.values(value.rootLimits)) if (!Number.isSafeInteger(n) || n < 1 || n > 1000) fail('INVALID_DEFINITION');
  validateBindings(value.bindings); validateConfig(value.config); return json(value, 65536);
 }
@@ -109,8 +109,9 @@ export async function openSession({ directory, clock = Date.now, leaseMs = 1000 
  let db; let closed = false; let identity;
  try {
   // An unrelated database must not undergo writable recovery before schema admission.
-  if (!fresh) { const reader = new DatabaseSync(filename, { readOnly: true }); try { validateSchema(reader); } finally { reader.close(); } }
+  if (!fresh) { const reader = new DatabaseSync(filename, { readOnly: true }); try { reader.exec('PRAGMA busy_timeout=1000'); validateSchema(reader); } finally { reader.close(); } }
   db = new DatabaseSync(filename); safeExistingDirectory(directory); identity = safeFile(filename, true);
+  db.exec('PRAGMA busy_timeout=1000');
   if (fresh) {
    db.exec('PRAGMA journal_mode=DELETE; PRAGMA synchronous=FULL; BEGIN IMMEDIATE');
    try { for (const schema of schemas) db.exec(schema); db.exec(`PRAGMA application_id=${APP_ID}; PRAGMA user_version=${SCHEMA_VERSION}; COMMIT`); }
