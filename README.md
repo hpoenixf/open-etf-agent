@@ -71,7 +71,7 @@ npm run demo -- --case document-compare
 <a id="versions"></a>
 ## Latest three modules
 
-**v0.20 candidate adds local research projects**: import your selected text, Markdown or PDF, submit a natural task, work or resume the original Run and read its persisted report. Memory, Child and trusted tools stay behind original permission and budget owners. [Public CLI/API](docs/research-project.md) · [Run control and bounded correction](docs/run-control.md) · [Layered evidence](docs/verification/v020-release.md). Publication remains pending; source evidence is not a release.
+**v0.20 adds local research projects**: import your selected text, Markdown or PDF, submit a natural task, work or resume the original Run and read its persisted report. Memory, Child and trusted tools stay behind original permission and budget owners. [Public CLI/API](docs/research-project.md) · [Run control and bounded correction](docs/run-control.md) · [Layered evidence](docs/verification/v020-release.md). [Fixed public source](https://github.com/hpoenixf/open-etf-agent/tree/a5cef6d5cf1a4597f0f1271025cd6cc16be151e5) is byte-verified. The final package, its CI and release tag are separate from this source pin; layered evidence does not mean every historical gate passed.
 
 **2026-11-02 foundation repair:** [Working-input admission, cancellation facts, Child settlement and no-saving summary precheck](docs/verification/foundation-repair-20261102.md). Provider-free regressions passed; this is not a new release or live qualification.
 

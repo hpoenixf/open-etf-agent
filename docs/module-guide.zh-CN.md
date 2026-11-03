@@ -16,7 +16,7 @@ Node 下限按实际 API 使用范围放宽到 26.8.1。当前 v0.11 的窄安�
 
 目前的入门案例是**原创合成文档比较**，并非真实基金分析。v0.7 另有小型原创合成 ETF Plugin，仍不是实时基金数据或真实基金分析；完整 ETF 研究工具在后续路线中。本项目不提供交易执行或投资建议。
 
-> **从哪里开始？** [v0.20 本地研究项目](research-project.zh-CN.md)提供自选资料的明确CLI/API。[分层证据](verification/v020-release.zh-CN.md)保留原始运行、失败与源码差异。候选不等于已发布版本；历史标签与合成示例继续保留。
+> **从哪里开始？** [v0.20 本地研究项目](research-project.zh-CN.md)提供自选资料的明确CLI/API。[分层证据](verification/v020-release.zh-CN.md)保留原始运行、失败与源码差异。公开源码与最终CI/标签是不同证据；历史标签与合成示例继续保留。
 
 > **想看真实模型调用，而不只是 fixture？** 先看 [v0.1–v0.5 的 16 次真实 HTTP 调用记录](#live-evidence)，再看 [独立受限 live runner 的入口与授权条件](#live-entry)。这些是历史证据，不是 v0.11 live 恢复资格。
 
@@ -426,6 +426,7 @@ Web 取材是原路线中的外网输入候选，仍未编号；Web 读取界面
 [兼容矩阵与原合同运行检查](composition.zh-CN.md) · [逐批真实资格、失败与升级边界](verification/v019-release.zh-CN.md)。[v0.19.0](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.19.0) 对应原 CI 通过后的最终包；资格记录分别保留实现快照与此前失败检查。
 
 <a id="v020-research-project"></a>
-## v0.20 · 本地研究项目（候选）
+<a id="v020--本地研究项目候选"></a>
+## v0.20 · 本地研究项目
 
 [导入、提交、执行、检查与报告读取](research-project.zh-CN.md) · [终结、有界纠错与观察限制](run-control.zh-CN.md) · [分层证据](verification/v020-release.zh-CN.md)。原Run恢复保留原权限和预算，未知效果不重放。

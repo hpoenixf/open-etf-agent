@@ -1,4 +1,5 @@
-# 本地研究项目（v0.20 候选版）
+<a id="本地研究项目v020-候选版"></a>
+# 本地研究项目（v0.20）
 
 [English](research-project.md)
 

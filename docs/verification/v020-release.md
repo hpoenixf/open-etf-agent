@@ -4,7 +4,7 @@
 
 ## Status and decision
 
-This is a locally prepared release candidate, not a published tag or a claim that every historical gate passed. On 2026-11-03 the user accepted **9/10 completed real runs in the additional B cohort plus independent provider-free forget-exclusion evidence** as that group's layered acceptance basis. Its frozen mechanism score remains **8/10**; the earlier B cohort remains **7/10**. Neither was rewritten.
+The fixed public source is reachable and byte-verified; this is not the final package CI result, a published tag or a claim that every historical gate passed. On 2026-11-03 the user accepted **9/10 completed real runs in the additional B cohort plus independent provider-free forget-exclusion evidence** as that group's layered acceptance basis. Its frozen mechanism score remains **8/10**; the earlier B cohort remains **7/10**. Neither was rewritten.
 
 The application imports explicitly selected text, Markdown and PDF, binds natural tasks to original grants/source manifests/configuration, works or resumes the same Run and reads persisted reports independently. It composes existing owners, rather than creating a second execution or authorization system. It is local and single-user, not a financial-data service or unattended research platform.
 
@@ -38,3 +38,7 @@ A/C/D and earlier repairs ran their original pins; they did not run on final214.
 - Response plus Schedule remains unsupported. Historical protected-document profiles retain their restricted scope. No Python process isolation or browser UI qualification is claimed. Provider configuration, data transmission and currency costs remain the operator's responsibility.
 
 Read the [capability and command limits](../research-project.md) before enabling a combination. The evidence supports the declared local project boundary, not every combination, production multi-tenancy, market-data correctness or investment recommendations.
+
+## Fixed public source and release package
+
+Public source: [`a5cef6d5cf1a4597f0f1271025cd6cc16be151e5`](https://github.com/hpoenixf/open-etf-agent/tree/a5cef6d5cf1a4597f0f1271025cd6cc16be151e5), tree `2754193800cea4ed5865d34e986e582444a2528e`. All 607 file objects and 63 changed file bodies were read back; the 83 execution inputs match the local214 implementation above. `versions.json` binds this source, not a later metadata commit or Release tag as if it were the real-run source. The final package must run CI on its own commit before a formal tag is created. Original layered evidence and unknowns remain unchanged.

@@ -1,6 +1,6 @@
 # Run control and termination ownership
 
-This v0.20 candidate concentrates **Runtime decisions**, not authority, in `src/run-control.mjs`. The existing Session `claim.finish` remains the fenced durable terminal writer. Session cancellation, RootBudget reservations, grants, Child identity, and Gateway/Admission uncertainty remain with their original owners. The decision helper cannot execute effects, create authority, return budget, settle tickets, or reopen a terminal Run.
+This v0.20 implementation concentrates **Runtime decisions**, not authority, in `src/run-control.mjs`. The existing Session `claim.finish` remains the fenced durable terminal writer. Session cancellation, RootBudget reservations, grants, Child identity, and Gateway/Admission uncertainty remain with their original owners. The decision helper cannot execute effects, create authority, return budget, settle tickets, or reopen a terminal Run.
 
 ## Facts and decisions
 

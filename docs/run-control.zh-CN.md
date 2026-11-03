@@ -1,6 +1,6 @@
 # Run 控制与终结归属
 
-本 v0.20 候选将 **Runtime 的决策** 收敛到 `src/run-control.mjs`，不迁移授权。原 Session 的 `claim.finish` 仍是带 fence 的持久终态写入者。取消、RootBudget 预约、grant、Child 身份及 Gateway/Admission 未知结果仍由原 owner 管理。决策函数不执行工具、不发授权、不退款、不释放票、不重开终态 Run。
+本 v0.20 实现将 **Runtime 的决策** 收敛到 `src/run-control.mjs`，不迁移授权。原 Session 的 `claim.finish` 仍是带 fence 的持久终态写入者。取消、RootBudget 预约、grant、Child 身份及 Gateway/Admission 未知结果仍由原 owner 管理。决策函数不执行工具、不发授权、不退款、不释放票、不重开终态 Run。
 
 ## 事实和决策
 

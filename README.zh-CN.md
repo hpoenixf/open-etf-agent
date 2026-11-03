@@ -71,7 +71,7 @@ npm run demo -- --case document-compare
 <a id="versions"></a>
 ## 最近三个模块
 
-**v0.20 候选版提供本地研究项目**：导入明确选择的文本、Markdown或PDF，以自然语言提交任务，执行或恢复原Run，并读取持久报告。Memory、Child与可信工具仍受原权限和预算Owner约束。[公开CLI/API](docs/research-project.zh-CN.md) · [终结与有界纠错](docs/run-control.zh-CN.md) · [分层证据](docs/verification/v020-release.zh-CN.md)。正式发布仍待完成，源码证据不等于Release。
+**v0.20 提供本地研究项目**：导入明确选择的文本、Markdown或PDF，以自然语言提交任务，执行或恢复原Run，并读取持久报告。Memory、Child与可信工具仍受原权限和预算Owner约束。[公开CLI/API](docs/research-project.zh-CN.md) · [终结与有界纠错](docs/run-control.zh-CN.md) · [分层证据](docs/verification/v020-release.zh-CN.md)。[固定公开源码](https://github.com/hpoenixf/open-etf-agent/tree/a5cef6d5cf1a4597f0f1271025cd6cc16be151e5)已逐字节核验。最终发布包、其CI与标签另行核验，分层证据不等于历史所有门均通过。
 
 **2026-11-02 底座修复：**[工作输入准入、取消事实、Child 结算与无收益摘要预检查](docs/verification/foundation-repair-20261102.md)。零真实模型调用的回归已通过；不是新增 Release，也不是新一批实测资格。
 

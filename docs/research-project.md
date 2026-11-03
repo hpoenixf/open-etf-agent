@@ -1,4 +1,5 @@
-# Local research projects (v0.20 candidate)
+<a id="local-research-projects-v020-candidate"></a>
+# Local research projects (v0.20)
 
 [简体中文](research-project.zh-CN.md)
 
