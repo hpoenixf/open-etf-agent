@@ -15,7 +15,7 @@ For developers learning Agent engineering, and readers who want to check an arch
 <a id="reading"></a>
 **Latest module articles** (module order, not publication dates):
 
-[v0.16 · Document revocation](https://hpoenixf.com/eff-agent-article/en/articles/027-rag-revocation-publish-replay) · [v0.14 · Read-only Memory](https://hpoenixf.com/eff-agent-article/en/articles/026-agent-memory-forget-durable-effects) · [v0.13 · Human interaction](https://hpoenixf.com/eff-agent-article/en/articles/agent-durable-human-interaction-response-adoption)
+[v0.18 · Scheduled Research Beyond a Conversation](https://hpoenixf.com/eff-agent-article/en/articles/agent-autonomous-scheduled-research) · [v0.17 · Why the Next Model Request Still Queues After HTTP 200](https://hpoenixf.com/eff-agent-article/en/articles/agent-provider-admission-capacity-lease) · [v0.16 · RAG: Revocation and Historical Replay](https://hpoenixf.com/eff-agent-article/en/articles/027-rag-revocation-publish-replay)
 
 <p align="center">
   <a href="https://github.com/hpoenixf/open-etf-agent/actions/workflows/verify.yml?query=branch%3Amain"><img src="https://github.com/hpoenixf/open-etf-agent/actions/workflows/verify.yml/badge.svg?branch=main" alt="Verify (main)" height="20" /></a>

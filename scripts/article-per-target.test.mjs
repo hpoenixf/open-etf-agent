@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
-import { validateManifest, validateQualifications, validateVersions, validateScenarioReceipt, validateReceipt, legacyManifest, renderTable, articleSlices, metadataFailure } from './check-article-coverage.mjs';
-import { validateContract, verifyScenarioSnapshot, verifyArticles } from './check-article-backlinks.mjs';
+import { validateManifest, validateQualifications, validateVersions, validateScenarioReceipt, validateReceipt, legacyManifest, renderTable, articleSlices, metadataFailure, verifyScenarioInput } from './check-article-coverage.mjs';
+import { validateContract, verifyScenarioSnapshot, verifyArticles, verifyRealTenFiles, validateRealTenSafety } from './check-article-backlinks.mjs';
 const load=async path=>JSON.parse(await readFile(new URL('../'+path,import.meta.url),'utf8'));
 const m=await load('docs/verification/article-coverage.json'), versions=await load('versions.json');
 const old=await load(m.receipt), source=await load(m.source), locale=await load('docs/verification/article-coverage.en.json');
@@ -99,4 +99,58 @@ test('revocable coverage preserves actual independent fixture delivery and refus
 test('revocable coverage refuses substituted identity, omitted refusal and changed original bytes',()=>{
  const mutations=[q=>q.report.protection.profile='live',q=>q.report.protection.runId='another-run',q=>q.documentId='different',q=>q.paidCalls=1,q=>q.observations.find(o=>o.stage==='independent-artifact-read').httpStatus=404,q=>q.observations.find(o=>o.stage==='independent-revoked-read').exitCode=0,q=>q.observations.find(o=>o.stage==='independent-revoked-read').expectedRefusal=false,q=>q.observations.find(o=>o.stage==='independent-revoked-read').readerHttpStatus=200,q=>q.originalReportBytesRetained=false,q=>q.afterSha256='a'.repeat(64),q=>q.observations=q.observations.filter(o=>o.stage!=='independent-revoke')];
  for(const mutate of mutations){const r=structuredClone(revocableReceipt);mutate(r.independent);assert.throws(()=>validateScenarioReceipt(r,'revocable-rag'));}
+});
+
+
+const realTen=Object.fromEntries(await Promise.all([['shared-admission','017'],['schedule-occurrence','018']].map(async([scenario,n])=>[scenario,await load(`docs/verification/v${n}-real-ten.safe.json`)])));
+test('real-ten coverage: preserves actual 9/10 with retained unknown and separate 10/10 API cohort',()=>{
+ const admission=validateScenarioReceipt(realTen['shared-admission'],'shared-admission'),schedule=validateScenarioReceipt(realTen['schedule-occurrence'],'schedule-occurrence');
+ assert.equal(admission.reportFiles.length,9);assert.equal(schedule.reportFiles.length,10);
+ assert.equal(realTen['shared-admission'].normalGate.tasks[4].physicalRequests,2);
+ for(const [scenario,r] of Object.entries(realTen)) assert.equal(validateScenarioReceipt(r,scenario).inputFiles.length,scenario==='shared-admission'?79:81);
+});
+test('real-ten coverage: old five and fewer than nine cannot be relabeled as ten qualified tasks',async()=>{
+ for(const [scenario,n] of [['shared-admission','017'],['schedule-occurrence','018']]) {
+  const oldFive=await load(`docs/verification/v${n}-release.safe.json`);assert.throws(()=>validateScenarioReceipt(oldFive,scenario),/receipt/);
+  for(const mutate of [r=>{r.normalGate.planned=5;r.normalGate.attempted=5;r.normalGate.successes=5;r.normalGate.tasks=r.normalGate.tasks.slice(0,5);},r=>{r.normalGate.successes=8;r.normalGate.observedRate=0.8;}]) {
+   const bad=clone(realTen[scenario]);mutate(bad);assert.throws(()=>validateScenarioReceipt(bad,scenario),/denominator/);
+  }
+ }
+});
+test('real-ten coverage: cannot omit unknown, duplicate tasks, change sums or expand execution scope',()=>{
+ const mutations=[r=>r.normalGate.tasks.splice(4,1),r=>r.normalGate.tasks[0]=clone(r.normalGate.tasks[1]),r=>r.normalGate.taskIds[0]=r.normalGate.taskIds[1],r=>r.normalGate.tasks[0].frozenTaskIndex=1,r=>r.physicalRequests++,r=>r.confirmedGoZeroResponses++,r=>r.unknownBillingOrOutcomeReservations=0,r=>r.normalGate.tasks[4].eligibleSuccess=true,r=>r.normalGate.tasks[4].retainedUnknownRequestCount=0,r=>r.interruptionAndContinuation.sameGroupRecoveryClaim=true,r=>r.globalCapacityCertification=true,r=>r.normalGate.tasks[5].cohortPhase='retained-pre-interruption-success',r=>r.historicalFiveTaskReceipt.includedInNewNormalNumerator=true,r=>r.normalGate.tasks[0].sourcePlanSha256='a'.repeat(64)];
+ for(const mutate of mutations){const bad=clone(realTen['shared-admission']);mutate(bad);assert.throws(()=>validateScenarioReceipt(bad,'shared-admission'));}
+ for(const mutate of [r=>r.liveCliClaim=true,r=>r.backgroundOrRecurrence=true,r=>r.admissionReaderReadOnlyApiClaim=true,r=>r.normalGate.tasks[0].scheduleApiOnly=false,r=>r.normalGate.tasks[0].executionIdentity='a'.repeat(64)]){const bad=clone(realTen['schedule-occurrence']);mutate(bad);assert.throws(()=>validateScenarioReceipt(bad,'schedule-occurrence'));}
+});
+test('real-ten coverage: published reports, separate safety and historical receipts retain exact bytes',async()=>{
+ const read=path=>readFile(new URL('../'+path,import.meta.url));
+ for(const [scenario,receipt] of Object.entries(realTen)) {
+  await verifyRealTenFiles(receipt,scenario,read);
+  const changed=clone(receipt);changed.normalGate.tasks[0].report.sha256='a'.repeat(64);
+  await assert.rejects(verifyRealTenFiles(changed,scenario,read),/report bytes\/hash/);
+  const report=receipt.normalGate.tasks[0].report.path;
+  await assert.rejects(verifyRealTenFiles(receipt,scenario,async path=>path===report?Buffer.concat([await read(path),Buffer.from('changed')]):read(path)),/report bytes\/hash/);
+  await assert.rejects(verifyRealTenFiles(receipt,scenario,async path=>path===receipt.historicalFiveTaskReceipt.path?Buffer.concat([await read(path),Buffer.from(' ')]):read(path)),/Historical five-task/);
+  await assert.rejects(verifyRealTenFiles(receipt,scenario,async path=>path===receipt.separateSafetyGate.receipt?Buffer.concat([await read(path),Buffer.from(' ')]):read(path)),/safety receipt bytes/);
+ }
+});
+test('real-ten coverage: fixed source bytes require both receipt SHA256 and actual Git blob',async()=>{
+ const evidence=realTen['schedule-occurrence'];
+ for(const input of evidence.inputFiles){const bytes=await readFile(new URL('../'+input.path,import.meta.url));verifyScenarioInput(bytes,input,input.gitBlob);}
+ const input=evidence.inputFiles.find(f=>f.path==='src/schedule.mjs'),bytes=await readFile(new URL('../'+input.path,import.meta.url));
+ assert.throws(()=>verifyScenarioInput(bytes,{...input,gitBlob:'a'.repeat(40)},input.gitBlob),/Git blob/);
+ assert.throws(()=>verifyScenarioInput(bytes,{...input,sha256:'a'.repeat(64)},input.gitBlob),/input hash/);
+ assert.throws(()=>verifyScenarioInput(Buffer.concat([bytes,Buffer.from(' ')]),input,input.gitBlob),/Git blob/);
+});
+test('real-ten coverage: separate fixture CLI cannot borrow successful API observations',async()=>{
+ const evidence=realTen['schedule-occurrence'],safety=await load(evidence.separateSafetyGate.receipt);
+ assert.equal(validateRealTenSafety(safety,evidence,'schedule-occurrence').modelCalls,0);
+ for(const mutate of [s=>s.independent.observations.pop(),s=>s.independent.replaySameRunAndUsage=false,s=>s.independent.publication.receipt.runId='different',s=>s.independent.report.sha256='a'.repeat(64),s=>s.independent.inputFiles[0].sha256='a'.repeat(64),s=>s.modelCalls=30]){const bad=clone(safety);mutate(bad);assert.throws(()=>validateRealTenSafety(bad,evidence,'schedule-occurrence'));}
+});
+
+test('real-ten coverage: known Runtime issues must be explicitly present and empty',()=>{
+ for(const [scenario,evidence] of Object.entries(realTen)) {
+  assert.deepEqual(evidence.knownRuntimeIssuesObservedWithinStatedScope,[]);
+  for(const value of [true,false,undefined,['observed Runtime problem']]){const bad=clone(evidence);if(value===undefined)delete bad.knownRuntimeIssuesObservedWithinStatedScope;else bad.knownRuntimeIssuesObservedWithinStatedScope=value;assert.throws(()=>validateScenarioReceipt(bad,scenario),/Runtime issues/);}
+ }
 });

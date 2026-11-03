@@ -4,6 +4,7 @@ import { createHash } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
 import { dirname, resolve, relative, join, isAbsolute } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { validateRealTenEvidence } from './real-ten-evidence.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const MANIFEST = 'docs/verification/article-coverage.json';
@@ -101,7 +102,7 @@ export function renderTable(m, commit, versions, language = 'zh', locale) {
     const pieces=articleSlices(a).map((slice,index)=>{
       const t=slice.target && m.targets[slice.target];
       const pin=m.schemaVersion===3 && t?m.qualifications[m.targetEvidence[slice.target]].commit:commit;
-      const label=!t?'—':t.kind==='scenario'?`independent ${t.name} CLI scenario`:t.kind==='cli'?`\`--case ${t.case}\``:`\`${t.file}\` · ${t.name}`;
+      const label=!t?'—':t.kind==='scenario'?(t.name==='shared-admission'?'original Admission scenario; real-provider cohort + separate offline CLI':t.name==='schedule-occurrence'?'original Schedule API cohort + separate provider-free CLI':`independent ${t.name} CLI scenario`):t.kind==='cli'?`\`--case ${t.case}\``:`\`${t.file}\` · ${t.name}`;
       const link=t?`[${pin.slice(0,7)}](https://github.com/${REPO}/commit/${pin}) + ${label}`:label;
       const origin=t && versions.targets[slice.target];
       const since=origin?`[v${origin.since}](https://github.com/${REPO}/commit/${versions.versions[origin.since].commit})`:'—';
@@ -312,6 +313,8 @@ export function validateReceipt(receipt, m, source, inputHash, runnerHash) {
 // A qualification owns its execution identity. Historical receipts never inherit main's bytes.
 const HASH40 = /^[a-f0-9]{40}$/, HASH64 = /^[a-f0-9]{64}$/;
 const SCENARIOS = {
+  'shared-admission': {kind:'v017-real-ten-release-qualification-candidate',version:'0.17.0',section:'normalGate',receipt:'docs/verification/v017-real-ten.safe.json',realTen:true},
+  'schedule-occurrence': {kind:'v018-real-ten-release-qualification-candidate',version:'0.18.0',section:'normalGate',receipt:'docs/verification/v018-real-ten.safe.json',realTen:true},
   'revocable-rag': {kind:'revocable-rag-provider-free-code-qualification',version:'0.16.0',section:'independent',receipt:'docs/verification/v016-revocable-rag.safe.json',stages:['independent-install','independent-build','independent-init','independent-start','independent-publication','independent-artifact-read','independent-revoke']},
   'memory-consumer': {kind:'memory-consumer-provider-free-code-qualification',version:'0.14.0',section:'independent',receipt:'docs/verification/v014-memory-consumer.safe.json',stages:['independent-install','independent-build','independent-seed','independent-recall','independent-artifact-read','independent-memory-read','independent-temporary']},
   temporal: { kind:'temporal-provider-free-code-qualification', version:'0.12.0', section:'independentInstall', stages:['independent-install','independent-build','independent-submit','independent-work','independent-read','independent-artifact-read'] },
@@ -352,6 +355,7 @@ export function legacyManifest(m) {
 }
 export function validateScenarioReceipt(receipt, scenario) {
   const spec=SCENARIOS[scenario], q=receipt?.[spec?.section];
+  if(spec?.realTen) return validateRealTenEvidence(receipt,scenario);
   ensure(spec && receipt.schemaVersion===1 && receipt.kind===spec.kind && receipt.version===spec.version && receipt.modelCalls===0 && q?.modelCalls===0, 'Wrong scenario qualification receipt');
   ensure(Array.isArray(q.observations) && q.observations.length<=64 && new Set(q.observations.map(o=>o.stage)).size===q.observations.length, 'Duplicate/missing scenario stages');
   for(const stage of spec.stages) {
@@ -378,6 +382,10 @@ export function validateScenarioReceipt(receipt, scenario) {
   }
   else ensure(typeof q.questionId==='string' && q.questionId && typeof q.responseId==='string' && q.responseId && HASH64.test(q.responseHash) && HASH64.test(q.adoptionCheckpointHash) && q.paidCalls===0, 'Missing question/response/adoption identity');
   return q;
+}
+export function verifyScenarioInput(bytes,input,expectedBlob) {
+  ensure(gitBlob(bytes)===expectedBlob && (input.gitBlob===undefined || input.gitBlob===expectedBlob),`Scenario input Git blob mismatch: ${input.path}`);
+  ensure(sha(bytes)===input.sha256,`Scenario input hash mismatch: ${input.path}`);
 }
 export async function checkQualifications(root,m,gitDir) {
   validateQualifications(m); const cache=new Map(), confirmations=[]; let totalBytes=0;
@@ -418,8 +426,17 @@ export async function checkQualifications(root,m,gitDir) {
       // Read fixed public bytes only; never import or execute downloaded code. Bounded four-at-a-time reads.
       for(let start=0;start<observed.inputFiles.length;start+=4) await Promise.all(observed.inputFiles.slice(start,start+4).map(async f=>{
         ensure(blobs.has(f.path),`Missing fixed scenario input: ${f.path}`);
-        ensure(sha(await fixedBytes(q,f.path,blobs.get(f.path)))===f.sha256,`Scenario input hash mismatch: ${f.path}`);
+        if(SCENARIOS[q.scenario].realTen) ensure(blobs.get(f.path)===f.gitBlob,`Scenario input Git blob mismatch: ${f.path}`);
+        verifyScenarioInput(await fixedBytes(q,f.path,blobs.get(f.path)),f,blobs.get(f.path));
       }));
+      if(SCENARIOS[q.scenario].realTen) {
+        const { verifyRealTenFiles } = await import('./check-article-backlinks.mjs');
+        await verifyRealTenFiles(receipt,q.scenario,async path=>{
+        ensure(evidenceBlobs.has(path),`Original cohort evidence absent from fixed publication: ${path}`);
+        const bytes=await fixedBytes(publication,path,evidenceBlobs.get(path));
+        ensure((await readFile(await assertRegular(root,path))).equals(bytes),`Local original cohort evidence changed: ${path}`);return bytes;
+        });
+      }
     }
     confirmations.push({id,commit:q.commit,evidenceCommit:q.evidenceCommit,method,receiptGitBlob:q.receipt.gitBlob,executedNow:false});
   }

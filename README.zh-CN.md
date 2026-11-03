@@ -15,7 +15,7 @@
 <a id="reading"></a>
 **最近模块文章**（按模块演进排序，不代表文章发布日期）：
 
-[v0.16 · 文档撤销](https://hpoenixf.com/eff-agent-article/articles/027-rag-revocation-publish-replay) · [v0.14 · 只读记忆消费](https://hpoenixf.com/eff-agent-article/articles/026-agent-memory-forget-durable-effects) · [v0.13 · 人机交互](https://hpoenixf.com/eff-agent-article/articles/agent-durable-human-interaction-response-adoption)
+[v0.18 · 定时研究：会话结束后继续](https://hpoenixf.com/eff-agent-article/articles/agent-autonomous-scheduled-research) · [v0.17 · 模型返回 HTTP 200，为什么下一次还要排队](https://hpoenixf.com/eff-agent-article/articles/agent-provider-admission-capacity-lease) · [v0.16 · RAG：文档撤权与历史回放](https://hpoenixf.com/eff-agent-article/articles/027-rag-revocation-publish-replay)
 
 <p align="center">
   <a href="https://github.com/hpoenixf/open-etf-agent/actions/workflows/verify.yml?query=branch%3Amain"><img src="https://github.com/hpoenixf/open-etf-agent/actions/workflows/verify.yml/badge.svg?branch=main" alt="Verify (main)" height="20" /></a>
