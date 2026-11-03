@@ -430,3 +430,8 @@ Web 取材是原路线中的外网输入候选，仍未编号；Web 读取界面
 ## v0.20 · 本地研究项目
 
 [导入、提交、执行、检查与报告读取](research-project.zh-CN.md) · [终结、有界纠错与观察限制](run-control.zh-CN.md) · [分层证据](verification/v020-release.zh-CN.md)。原Run恢复保留原权限和预算，未知效果不重放。
+
+<a id="v021-human-interaction"></a>
+## v0.21 · 普通人机交互（候选）
+
+[CLI/API](human-interaction.zh-CN.md) · [资格与边界](verification/v021-release.zh-CN.md).

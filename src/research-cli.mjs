@@ -2,7 +2,7 @@ import {open,constants} from 'node:fs/promises';
 import {resolve,dirname,join} from 'node:path';
 import {pathToFileURL} from 'node:url';
 import {safeDirectory} from './storage-files.mjs';
-import {createResearchProject,updateResearchProject,inspectResearchProject,readProjectJson,submitResearchTask,workResearchTask,inspectResearchTask,cancelResearchTask,respondResearchTask,readResearchReport,applyProjectMemoryIntent,approveProjectMemoryIntent} from './research-project.mjs';
+import {createResearchProject,updateResearchProject,inspectResearchProject,readProjectJson,submitResearchTask,workResearchTask,inspectResearchTask,cancelResearchTask,respondResearchTask,readResearchReport,applyProjectMemoryIntent,approveProjectMemoryIntent,listResearchInteractions,inspectResearchInteraction} from './research-project.mjs';
 import {importProjectSources,loadProjectSources} from './project-sources.mjs';
 import {openMemoryLibrary} from './memory.mjs';
 import {startReader} from './reader.mjs';
@@ -19,6 +19,8 @@ Usage: node src/research-cli.mjs <group> <command> [options]
       [--memory-intents JSON_FILE] [--task-time JSON_FILE] [--schedule JSON_FILE]
   run work --project DIR --run ID
   run inspect|cancel --project DIR --run ID
+  interaction list --project DIR [--run ID] [--limit NUMBER] [--after CURSOR]
+  interaction inspect --project DIR --run ID --question-id ID
   run respond --project DIR --run ID --question-id ID --response-id ID --text TEXT_FILE
   run report|serve --project DIR --run ID [--port NUMBER (serve only)]
   report inspect|serve --project DIR --run ID [--port NUMBER (serve only)]
@@ -44,6 +46,8 @@ for submit --memory-intents. Memory mutations require an explicit one-time inten
 All options are single-use. Unknown options and positional arguments are rejected.
 `;
 const specifications={
+ 'interaction list':['project','run?','limit?','after?'],
+ 'interaction inspect':['project','run','question-id'],
  'project update':['project','config','expected-config'],
  'project init':['project','config'], 'project inspect':['project'],
  'source import':['project','files'], 'source list':['project','manifest'],
@@ -78,6 +82,8 @@ export async function runResearchCli(args,{stdout=process.stdout,stderr=process.
  try{
   const parsed=parseResearchArguments(args);if(parsed.help){stdout.write(RESEARCH_HELP);return 0;}
   const {command,options:o}=parsed,projectDir=resolve(o.project),runId=o.run;
+  if(command==='interaction list'){emit(await listResearchInteractions({projectDir,runId,limit:o.limit===undefined?50:integer(o.limit,1,50),after:o.after}));return 0;}
+  if(command==='interaction inspect'){emit(await inspectResearchInteraction({projectDir,runId,questionId:o['question-id']}));return 0;}
   if(command==='project init'){emit(await createResearchProject({directory:projectDir,config:await readProjectJson(o.config)}));return 0;}
   if(command==='project update'){emit(await updateResearchProject({projectDir,config:await readProjectJson(o.config),expectedConfigSha256:o['expected-config']}));return 0;}
   if(command==='project inspect'){emit(await inspectResearchProject({projectDir}));return 0;}

@@ -1,3 +1,4 @@
+import {INTERACTION_PROFILE, validateInteractionConfig, validateInteractionDefinition, validateInteractionCheckpoint, validateInteractionFacts, interactionResult, interactionAdoptionHash} from './human-interaction.mjs';
 import { validateControlObservations } from './run-control.mjs';
 import { SCHEDULE_PROFILE, prepareSchedule, validateScheduleReference, scheduleCanonical } from './schedule.mjs';
 import { searchPages } from './retrieval.mjs';
@@ -62,8 +63,8 @@ function validateBindings(value) {
   }
  }
 }
-function validateConfig(value, ordinary = false, protectedProfile = false) {
- fields(value, [], ['requireReport', 'allowedTools', 'allowedDocuments', 'documentCatalog', 'pdfSnapshot', 'contextBytes', 'taskId', 'workingInput', 'publication', 'taskTime', ...(ordinary ? ['ordinaryResponse'] : []), ...(protectedProfile ? ['documentProtection'] : [])]);
+function validateConfig(value, ordinary = false, protectedProfile = false, interaction = false) {
+ fields(value, [], ['requireReport', 'allowedTools', 'allowedDocuments', 'documentCatalog', 'pdfSnapshot', 'contextBytes', 'taskId', 'workingInput', 'publication', 'taskTime', ...(ordinary ? ['ordinaryResponse'] : []), ...(interaction ? ['interaction'] : []), ...(protectedProfile ? ['documentProtection'] : [])]);
  if(protectedProfile){if(value.documentCatalog!==undefined||value.pdfSnapshot!==undefined)fail('INVALID_PROTECTED_PROFILE');fields(value.documentProtection,['authorityId','libraryId']);if(!identifier(value.documentProtection.authorityId)||!identifier(value.documentProtection.libraryId)||!Array.isArray(value.allowedDocuments)||!value.allowedDocuments.length||value.workingInput!==undefined||value.ordinaryResponse!==undefined)fail('INVALID_PROTECTED_PROFILE');}
  if(value.documentCatalog!==undefined){fields(value.documentCatalog,['schemaVersion','id','sha256']);if(value.documentCatalog.schemaVersion!=='document-catalog@1'||!identifier(value.documentCatalog.id)||!hash(value.documentCatalog.sha256))fail('INVALID_DEFINITION');}
  if(value.pdfSnapshot!==undefined){const p=value.pdfSnapshot;fields(p,['schemaVersion','parser','parserWorkerSha256','originalSha256','originalBytes','snapshotSha256']);if(p.schemaVersion!=='pdf-input-snapshot@1'||p.parser!=='pdf2json@4.1.0'||!hash(p.parserWorkerSha256)||!hash(p.originalSha256)||!hash(p.snapshotSha256)||!Number.isSafeInteger(p.originalBytes)||p.originalBytes<5||p.originalBytes>1048576)fail('INVALID_DEFINITION');}
@@ -83,7 +84,7 @@ function validateConfig(value, ordinary = false, protectedProfile = false) {
   }
  }
 }
-function definitionBytes(value, ordinary = false, protectedProfile = false) {
+function definitionBytes(value, ordinary = false, protectedProfile = false, interaction = false) {
  fields(value, ['question', 'grantId', 'bindings', 'limits', 'rootLimits', 'deadlineAt', 'config']);
  if (typeof value.question !== 'string' || !value.question.trim() || Buffer.byteLength(value.question) > 16000 || !identifier(value.grantId) || !Number.isSafeInteger(value.deadlineAt) || value.deadlineAt < 1) fail('INVALID_DEFINITION');
  fields(value.limits, ['maxRounds', 'maxTools', 'timeoutMs']); fields(value.rootLimits, ['model', 'tool']);
@@ -91,10 +92,10 @@ function definitionBytes(value, ordinary = false, protectedProfile = false) {
  for (const n of Object.values(value.rootLimits)) if (!Number.isSafeInteger(n) || n < 1 || n > 1000) fail('INVALID_DEFINITION');
  if(!protectedProfile&&value.bindings?.adapters?.some(x=>x.id==='document-revocation'||x.version===DOCUMENT_REVOCATION_PROFILE))fail('INVALID_PROTECTED_PROFILE');
  if(protectedProfile&&(value.bindings?.gateway?.mode==='live'||value.bindings?.plugins?.length||!value.bindings?.adapters?.some(x=>x.id==='document-revocation'&&x.version===DOCUMENT_REVOCATION_PROFILE)))fail('PROTECTED_EXECUTION_DISABLED');
- validateBindings(value.bindings); validateConfig(value.config, ordinary, protectedProfile); validateResponseProfile(value, ordinary); return json(value, 65536);
+ validateBindings(value.bindings); validateConfig(value.config, ordinary, protectedProfile, interaction); if(interaction)validateInteractionDefinition(value);else validateResponseProfile(value, ordinary); return json(value, 65536);
 }
-function checkpointBytes(value, terminal = false, ordinary = false) {
- validateResponseCheckpoint(value, ordinary);validateGatewayOutcomeCheckpoint(value);validateControlObservations(value);
+function checkpointBytes(value, terminal = false, ordinary = false, interaction = false) {
+ if(interaction)validateInteractionCheckpoint(value);else validateResponseCheckpoint(value, ordinary);validateGatewayOutcomeCheckpoint(value);validateControlObservations(value);
  if (!object(value) || value.schemaVersion !== 'runtime-checkpoint@1' || !(phases.has(value.phase) || ordinary && value.phase === 'awaiting-response') || (terminal ? value.phase !== 'terminal' || !['completed', 'failed', 'cancelled'].includes(value.status) : value.phase === 'terminal')) fail('INVALID_CHECKPOINT');
  return json(value, MAX_CHECKPOINT_JSON);
 }
@@ -123,6 +124,7 @@ const scheduleSchemas = [
  `CREATE TABLE schedule_occurrences (schedule_id TEXT PRIMARY KEY REFERENCES schedule_definitions(schedule_id), state TEXT NOT NULL, run_id TEXT UNIQUE REFERENCES runs(run_id), decided_at INTEGER, materialized_at INTEGER) STRICT`
 ];
 
+const interactionSchema = `CREATE TABLE human_interactions (run_id TEXT NOT NULL REFERENCES runs(run_id), ordinal INTEGER NOT NULL, question_id TEXT NOT NULL UNIQUE, response_id TEXT UNIQUE, fact TEXT NOT NULL, PRIMARY KEY(run_id,ordinal)) STRICT`;
 const responseSchema = `CREATE TABLE ordinary_responses (run_id TEXT PRIMARY KEY REFERENCES runs(run_id), question_id TEXT NOT NULL UNIQUE, response_id TEXT UNIQUE, fact TEXT NOT NULL) STRICT`;
 
 
@@ -142,9 +144,9 @@ function hasProtectedSemantics(value) {
 // Synchronous short transactions own facts only. No tool/model callback enters a transaction.
 export async function openSession({ directory, clock = Date.now, leaseMs = 1000, profile, readOnly = false } = {}) {
  if (typeof readOnly !== 'boolean' || typeof directory !== 'string' || typeof clock !== 'function' || !Number.isSafeInteger(leaseMs) || leaseMs < 20 || leaseMs > 30000) fail('INVALID_SESSION_OPTIONS');
- if (profile !== undefined && profile !== RESPONSE_PROFILE && profile !== DOCUMENT_REVOCATION_PROFILE && profile !== SCHEDULE_PROFILE) fail('INVALID_SESSION_PROFILE');
- let ordinary = profile === RESPONSE_PROFILE; const protectedProfile=profile===DOCUMENT_REVOCATION_PROFILE; const scheduled=profile===SCHEDULE_PROFILE;
- const encodeDefinition = value => definitionBytes(value, ordinary, protectedProfile);
+ if (profile !== undefined && profile !== RESPONSE_PROFILE && profile !== INTERACTION_PROFILE && profile !== DOCUMENT_REVOCATION_PROFILE && profile !== SCHEDULE_PROFILE) fail('INVALID_SESSION_PROFILE');
+ let interaction = profile === INTERACTION_PROFILE; let ordinary = profile === RESPONSE_PROFILE || interaction; const protectedProfile=profile===DOCUMENT_REVOCATION_PROFILE; const scheduled=profile===SCHEDULE_PROFILE;
+ const encodeDefinition = value => definitionBytes(value, ordinary, protectedProfile, interaction);
  const encodeCheckpoint = (value, terminal = false) => {let checked=value;if(protectedProfile&&value?.host?.schemaVersion==='tool-host-protected@1'){
    validateProtectedHostSnapshot(value.host,value.host.protection);checked=structuredClone(value);checked.host=null;const csv=(call,result)=>{validateProtectedCsvResult(call,result,value.host.protection);return {...result,value:null};};
    if(value.result?.value?.schemaVersion==='protected-artifact@1'){if(value.phase!=='result-committed'&&!(value.phase==='terminal'&&['failed','cancelled'].includes(value.status)))fail('INVALID_PROTECTED_CHECKPOINT');checked.result=csv(value.proposal?.calls?.[value.cursor],value.result);}
@@ -156,7 +158,7 @@ export async function openSession({ directory, clock = Date.now, leaseMs = 1000,
     pending=[];index=0;const seen=new Set();
     for(let i=0;i<value.working.messages.length;i++){const message=value.working.messages[i];if(message.role==='assistant'){pending=message.calls||[];index=0;}else if(message.role==='tool'){if(message.result?.value?.schemaVersion==='protected-artifact@1'){const call=pending[index],original=pairedCsv.get(message.callId);if(!original||seen.has(message.callId)||canonical(call)!==canonical(original.call)||canonical(message)!==canonical(original.message))fail('INVALID_PROTECTED_CHECKPOINT');seen.add(message.callId);checked.working.messages[i]={...message,result:csv(call,message.result)};}index++;}}
    }
-  }if(hasProtectedSemantics(checked))fail('INVALID_PROTECTED_CHECKPOINT');return checkpointBytes(value, terminal, ordinary);};
+  }if(hasProtectedSemantics(checked))fail('INVALID_PROTECTED_CHECKPOINT');return checkpointBytes(value, terminal, ordinary, interaction);};
  directory = readOnly ? safeExistingDirectory(directory) : await ensureSafeDirectory(directory); const filename = join(directory, 'session.sqlite');
  const paths = ['', '-journal', '-wal', '-shm'].map(suffix => filename + suffix);
  for (const path of paths) safeFile(path);
@@ -240,8 +242,8 @@ export async function openSession({ directory, clock = Date.now, leaseMs = 1000,
  function validateSchema(connection) {
   const version = connection.prepare('PRAGMA user_version').get().user_version; const app = connection.prepare('PRAGMA application_id').get().application_id;
   const actual = connection.prepare("SELECT sql FROM sqlite_master WHERE name NOT LIKE 'sqlite_%' ORDER BY name").all().map(row => row.sql);
-  if (!(scheduled ? version===5 : protectedProfile ? version===4 : [2,3].includes(version)) || (profile === RESPONSE_PROFILE && version !== 3) || app !== APP_ID || JSON.stringify(actual) !== JSON.stringify([...(version===5?[...schemas,...scheduleSchemas]:version===4?[...schemas,...protectedSchemas]:version === 3 ? [...schemas,responseSchema] : schemas)].sort())) fail('UNSUPPORTED_SESSION_SCHEMA');
-  ordinary = version === 3;
+  if (!(scheduled ? version===5 : protectedProfile ? version===4 : [2,3,6].includes(version)) || (profile === RESPONSE_PROFILE && version !== 3) || (profile === INTERACTION_PROFILE && version !== 6) || app !== APP_ID || JSON.stringify(actual) !== JSON.stringify([...(version===5?[...schemas,...scheduleSchemas]:version===4?[...schemas,...protectedSchemas]:version === 6 ? [...schemas,interactionSchema] : version === 3 ? [...schemas,responseSchema] : schemas)].sort())) fail('UNSUPPORTED_SESSION_SCHEMA');
+  interaction = version === 6; ordinary = version === 3 || interaction;
   if(protectedProfile)validateProtectedDatabase(connection);
   if(scheduled)validateScheduleDatabase(connection);
   // Admission (including a hot-journal isolated copy) rejects cross-profile semantics.
@@ -257,12 +259,14 @@ export async function openSession({ directory, clock = Date.now, leaseMs = 1000,
     validateRuntimeCheckpoint(snapshot,definition);
     validateRunRoot(row,connection.prepare('SELECT * FROM roots WHERE root_id=?').get(row.root_id),definition,snapshot);
     if(row.parent_run_id!==null||row.root_id!==row.run_id)fail('INVALID_ORDINARY_RESPONSE');
+    if(interaction){const slots=connection.prepare('SELECT * FROM human_interactions WHERE run_id=? ORDER BY ordinal').all(row.run_id);validateInteractionRows(slots,{runId:row.run_id,rootId:row.root_id,parentRunId:row.parent_run_id,definition,snapshot});continue;}
     const slot=connection.prepare('SELECT * FROM ordinary_responses WHERE run_id=?').get(row.run_id);
     if(slot){const fact=parsed(slot.fact);validateResponseFact(fact,{runId:row.run_id,rootId:row.root_id,parentRunId:row.parent_run_id,definition,snapshot});if(slot.question_id!==fact.questionId||slot.response_id!==(fact.receipt?.responseId??null))fail('INVALID_ORDINARY_RESPONSE');}
     else validateResponseAbsence(snapshot);
    }
   }
-  if(ordinary&&connection.prepare('SELECT 1 FROM ordinary_responses o LEFT JOIN runs r ON r.run_id=o.run_id WHERE r.run_id IS NULL').get())fail('INVALID_ORDINARY_RESPONSE');
+  if(interaction&&connection.prepare('SELECT 1 FROM human_interactions o LEFT JOIN runs r ON r.run_id=o.run_id WHERE r.run_id IS NULL').get())fail('INVALID_HUMAN_INTERACTION');
+  if(ordinary&&!interaction&&connection.prepare('SELECT 1 FROM ordinary_responses o LEFT JOIN runs r ON r.run_id=o.run_id WHERE r.run_id IS NULL').get())fail('INVALID_ORDINARY_RESPONSE');
  }
  let db; let closed = false; let identity; let recovery;
  try {
@@ -275,7 +279,7 @@ export async function openSession({ directory, clock = Date.now, leaseMs = 1000,
   db = new DatabaseSync(filename, { timeout: 1000, readOnly }); safeExistingDirectory(directory); identity = safeFile(filename, true);
   if (fresh) {
    db.exec('PRAGMA journal_mode=DELETE; PRAGMA synchronous=FULL; BEGIN IMMEDIATE');
-   try { for (const schema of scheduled ? [...schemas,...scheduleSchemas] : protectedProfile ? [...schemas,...protectedSchemas] : ordinary ? [...schemas,responseSchema] : schemas) db.exec(schema); db.exec(`PRAGMA application_id=${APP_ID}; PRAGMA user_version=${scheduled ? 5 : protectedProfile ? 4 : ordinary ? 3 : SCHEMA_VERSION}; COMMIT`); }
+   try { for (const schema of scheduled ? [...schemas,...scheduleSchemas] : protectedProfile ? [...schemas,...protectedSchemas] : interaction ? [...schemas,interactionSchema] : ordinary ? [...schemas,responseSchema] : schemas) db.exec(schema); db.exec(`PRAGMA application_id=${APP_ID}; PRAGMA user_version=${scheduled ? 5 : protectedProfile ? 4 : interaction ? 6 : ordinary ? 3 : SCHEMA_VERSION}; COMMIT`); }
    catch (error) { db.exec('ROLLBACK'); throw error; }
   }
   validateSchema(db);
@@ -299,8 +303,11 @@ export async function openSession({ directory, clock = Date.now, leaseMs = 1000,
   if(protectedProfile){validateRuntimeCheckpoint(snapshot,definition);protectedScope(row);if(snapshot.host)validateProtectedHostSnapshot(snapshot.host,outputProtection(row));}
   return state;
  }
+ function validateInteractionRows(slots,current){const facts=slots.map(slot=>{const fact=parsed(slot.fact);if(slot.ordinal!==fact.ordinal||slot.question_id!==fact.questionId||slot.response_id!==(fact.receipt?.responseId??null))fail('INVALID_HUMAN_INTERACTION');return fact;});return validateInteractionFacts(facts,current);}
+ function interactionFacts(row,state){return validateInteractionRows(db.prepare('SELECT * FROM human_interactions WHERE run_id=? ORDER BY ordinal').all(row.run_id),state??view(row));}
  function responseFacts(row, state) {
   if(!ordinary) fail('ORDINARY_PROFILE_REQUIRED');
+  if(interaction)return interactionFacts(row,state).at(-1)??null;
   const slot=db.prepare('SELECT * FROM ordinary_responses WHERE run_id=?').get(row.run_id);
   const current=state??view(row);
   if(!slot){validateResponseAbsence(current.snapshot);return null;}
@@ -506,13 +513,14 @@ export async function openSession({ directory, clock = Date.now, leaseMs = 1000,
    });
   },
 
-  directory, leaseMs, schemaVersion: scheduled ? 5 : protectedProfile ? 4 : ordinary ? 3 : 2,
+  directory, leaseMs, schemaVersion: scheduled ? 5 : protectedProfile ? 4 : interaction ? 6 : ordinary ? 3 : 2,
   create(input) { if(scheduled)fail('SCHEDULE_MATERIALIZATION_REQUIRED'); return transaction(() => insertRun(input)); },
   inspect(runId) { return transaction(() => view(getRun(runId))); },
   response(runId, questionId) {
    responseId(questionId);
-   return transaction(()=>{const row=getRun(runId);const fact=responseFacts(row);if(!fact||fact.questionId!==questionId)fail('UNKNOWN_QUESTION');return structuredClone(fact);});
+   return transaction(()=>{const row=getRun(runId);const fact=interaction?interactionFacts(row).find(f=>f.questionId===questionId):responseFacts(row);if(!fact||fact.questionId!==questionId)fail('UNKNOWN_QUESTION');return structuredClone(fact);});
   },
+  responseHistory(runId) {return transaction(()=>{const row=getRun(runId),state=view(row);const facts=interaction?interactionFacts(row,state):[responseFacts(row,state)].filter(Boolean);return facts.map(f=>({...structuredClone(f),state:f.adoption?'adopted':state.status!=='active'||state.rootStatus!=='active'?'unavailable':now()>=f.deadlineAt?'expired':f.receipt?'received-not-adopted':'awaiting-response'}));});},
   responseStatus(runId) {
    return transaction(()=>{const row=getRun(runId),state=view(row),fact=responseFacts(row,state);if(!fact)return null;
     const reason=state.status!=='active'?state.status:state.rootStatus!=='active'?state.rootStatus:now()>=fact.deadlineAt?'deadline-expired':null;
@@ -524,18 +532,18 @@ export async function openSession({ directory, clock = Date.now, leaseMs = 1000,
    for(const key of ['runId','questionId','responseId'])responseId(input[key]);responseText(input.text);
    return transaction(()=>{
     if(!ordinary)fail('ORDINARY_PROFILE_REQUIRED');
-    const existing=db.prepare('SELECT run_id FROM ordinary_responses WHERE response_id=?').get(input.responseId);
-    if(existing&&existing.run_id!==input.runId)fail('RESPONSE_ID_CONFLICT');
-    const row=getRun(input.runId),state=view(row),fact=responseFacts(row,state);
+    const existing=db.prepare(`SELECT run_id,question_id FROM ${interaction?'human_interactions':'ordinary_responses'} WHERE response_id=?`).get(input.responseId);
+    if(existing&&(existing.run_id!==input.runId||existing.question_id!==input.questionId))fail('RESPONSE_ID_CONFLICT');
+    const row=getRun(input.runId),state=view(row),fact=interaction?interactionFacts(row,state).find(f=>f.questionId===input.questionId):responseFacts(row,state);
     if(!fact||fact.questionId!==input.questionId){if(existing)fail('RESPONSE_ID_CONFLICT');fail('UNKNOWN_QUESTION');}
     if(fact.receipt){if(fact.receipt.responseId===input.responseId&&fact.receipt.text===input.text)return structuredClone(fact.receipt);fail(fact.receipt.responseId===input.responseId?'RESPONSE_ID_CONFLICT':'QUESTION_ALREADY_ANSWERED');}
     const root=active(row),time=now();if(Math.min(root.deadline_at,fact.deadlineAt)<=time)fail('DEADLINE_EXPIRED');
-    fact.receipt={responseId:input.responseId,text:input.text,responseHash:responseHash(input.text),receivedAt:time};validateResponseFact(fact,state);
-    db.prepare('UPDATE ordinary_responses SET response_id=?,fact=? WHERE run_id=?').run(input.responseId,json(fact),input.runId);return structuredClone(fact.receipt);
+    fact.receipt={responseId:input.responseId,text:input.text,responseHash:responseHash(input.text),receivedAt:time};if(interaction)validateInteractionFacts(interactionFacts(row,state).map(f=>f.questionId===fact.questionId?fact:f),state);else validateResponseFact(fact,state);
+    db.prepare(`UPDATE ${interaction?'human_interactions':'ordinary_responses'} SET response_id=?,fact=? WHERE run_id=? AND question_id=?`).run(input.responseId,json(fact),input.runId,fact.questionId);return structuredClone(fact.receipt);
    });
   },
   confirmResponse(runId,call,result) {
-   return transaction(()=>{const fact=responseFacts(getRun(runId));if(!fact?.adoption||responseCanonical(call)!==responseCanonical(fact.call)||responseCanonical(result)!==responseCanonical(responseResult(fact)))fail('INVALID_ORDINARY_RESPONSE');return true;});
+   return transaction(()=>{const row=getRun(runId),fact=interaction?interactionFacts(row).find(f=>f.call.id===call.id):responseFacts(row);if(!fact?.adoption||responseCanonical(call)!==responseCanonical(fact.call)||responseCanonical(result)!==responseCanonical(interaction?interactionResult(fact):responseResult(fact)))fail('INVALID_ORDINARY_RESPONSE');return true;});
   },
   publication(runId, revision) {
    if (revision !== undefined && (!Number.isSafeInteger(revision) || revision < 1 || revision > 3)) fail('INVALID_PUBLICATION_REVISION');
@@ -634,16 +642,16 @@ export async function openSession({ directory, clock = Date.now, leaseMs = 1000,
      return transaction(()=>{
       if(!ordinary)fail('ORDINARY_PROFILE_REQUIRED');
       const row=writer(runId,owner,fence),state=originalResponseState(row,expected,'proposal-sealed');
-      if(responseFacts(row,state))fail('QUESTION_LIMIT');
+      const previous=responseFacts(row,state),history=interaction?interactionFacts(row,state):[];if(interaction?(history.length>=state.definition.config.interaction.maxQuestions||previous&&!previous.adoption):previous)fail('QUESTION_LIMIT');
       const snapshot=state.snapshot,proposal=snapshot.proposal;
       if(proposal?.kind!=='calls'||proposal.calls.length!==1||snapshot.cursor!==0)fail('INVALID_ORDINARY_RESPONSE');
       const call=validateResponseCall(proposal.calls[0]);
       if(snapshot.usedIds.includes(call.id)||snapshot.toolsDispatched>=state.definition.limits.maxTools)fail('INVALID_ORDINARY_RESPONSE');
       const root=getRoot(rootId);if(root.tool_used>=root.tool_limit)fail('ROOT_BUDGET_EXHAUSTED');
-      const fact={schemaVersion:RESPONSE_PROFILE,runId,rootId,questionId:'question-'+randomUUID(),call:structuredClone(call),questionHash:responseHash(call.arguments.question),createdAt:now(),deadlineAt:state.definition.deadlineAt,receipt:null,adoption:null};
+      const fact={schemaVersion:interaction?INTERACTION_PROFILE:RESPONSE_PROFILE,...(interaction?{ordinal:history.length+1}:{}),runId,rootId,questionId:'question-'+randomUUID(),call:structuredClone(call),questionHash:responseHash(call.arguments.question),createdAt:now(),deadlineAt:state.definition.deadlineAt,receipt:null,adoption:null};
       snapshot.phase='awaiting-response';snapshot.usedIds.push(call.id);snapshot.toolsDispatched++;snapshot.responseQuestion=fact.questionId;
-      validateResponseFact(fact,{...state,snapshot});
-      db.prepare('INSERT INTO ordinary_responses(run_id,question_id,response_id,fact) VALUES(?,?,NULL,?)').run(runId,fact.questionId,json(fact));
+      if(interaction)validateInteractionFacts([...history,fact],{...state,snapshot});else validateResponseFact(fact,{...state,snapshot});
+      if(interaction)db.prepare('INSERT INTO human_interactions(run_id,ordinal,question_id,response_id,fact) VALUES(?,?,?,NULL,?)').run(runId,fact.ordinal,fact.questionId,json(fact));else db.prepare('INSERT INTO ordinary_responses(run_id,question_id,response_id,fact) VALUES(?,?,NULL,?)').run(runId,fact.questionId,json(fact));
       db.prepare('UPDATE roots SET tool_used=tool_used+1 WHERE root_id=?').run(rootId);
       db.prepare('UPDATE runs SET snapshot=? WHERE run_id=?').run(encodeCheckpoint(snapshot),runId);return view(getRun(runId));
      });
@@ -651,10 +659,10 @@ export async function openSession({ directory, clock = Date.now, leaseMs = 1000,
     adoptResponse(expected) {
      return transaction(()=>{
       const row=writer(runId,owner,fence),state=originalResponseState(row,expected,'awaiting-response'),fact=responseFacts(row,state);
-      if(!fact?.receipt)return null;if(fact.adoption)fail('INVALID_ORDINARY_RESPONSE');
-      const snapshot=state.snapshot;snapshot.phase='result-committed';snapshot.result=responseResult(fact);
-      fact.adoption={adoptedAt:now(),checkpointHash:adoptionHash(fact)};validateResponseFact(fact,{...state,snapshot});
-      db.prepare('UPDATE ordinary_responses SET fact=? WHERE run_id=?').run(json(fact),runId);
+      if(!fact?.receipt)return null;if(fact.adoption)fail('INVALID_ORDINARY_RESPONSE');const history=interaction?interactionFacts(row,state):[];
+      const snapshot=state.snapshot;snapshot.phase='result-committed';snapshot.result=interaction?interactionResult(fact):responseResult(fact);
+      fact.adoption={adoptedAt:now(),checkpointHash:interaction?interactionAdoptionHash(fact):adoptionHash(fact)};if(interaction)validateInteractionFacts(history.map(f=>f.questionId===fact.questionId?fact:f),{...state,snapshot});else validateResponseFact(fact,{...state,snapshot});
+      db.prepare(`UPDATE ${interaction?'human_interactions':'ordinary_responses'} SET fact=? WHERE run_id=? AND question_id=?`).run(json(fact),runId,fact.questionId);
       db.prepare('UPDATE runs SET snapshot=? WHERE run_id=?').run(encodeCheckpoint(snapshot),runId);return view(getRun(runId));
      });
     },
@@ -685,6 +693,6 @@ export async function openSession({ directory, clock = Date.now, leaseMs = 1000,
   },
   close() { if (!closed) { db.close(); closed = true; } }
  };
- if(readOnly)return Object.freeze({directory,schemaVersion:scheduled?5:protectedProfile?4:ordinary?3:2,readOnly:true,inspect:store.inspect,findChild:store.findChild,...(scheduled?{inspectSchedule:store.inspectSchedule,publication:store.publication,publicationRevisions:store.publicationRevisions,publicationEvent:store.publicationEvent}:{}),...(protectedProfile?{publication:store.publication,publicationRevisions:store.publicationRevisions,publicationEvent:store.publicationEvent,verifyProtectedQueryResult:store.verifyProtectedQueryResult,protectedOutput:store.protectedOutput,consumeProtectedSource:store.consumeProtectedSource,protectedDependencies:store.protectedDependencies,readProtectedOutput:store.readProtectedOutput,listProtectedOutputs:store.listProtectedOutputs}:{}),close:store.close});
+ if(readOnly)return Object.freeze({directory,schemaVersion:scheduled?5:protectedProfile?4:interaction?6:ordinary?3:2,readOnly:true,inspect:store.inspect,findChild:store.findChild,...(ordinary?{response:store.response,responseStatus:store.responseStatus,responseHistory:store.responseHistory}:{}),...(scheduled?{inspectSchedule:store.inspectSchedule,publication:store.publication,publicationRevisions:store.publicationRevisions,publicationEvent:store.publicationEvent}:{}),...(protectedProfile?{publication:store.publication,publicationRevisions:store.publicationRevisions,publicationEvent:store.publicationEvent,verifyProtectedQueryResult:store.verifyProtectedQueryResult,protectedOutput:store.protectedOutput,consumeProtectedSource:store.consumeProtectedSource,protectedDependencies:store.protectedDependencies,readProtectedOutput:store.readProtectedOutput,listProtectedOutputs:store.listProtectedOutputs}:{}),close:store.close});
  return Object.freeze(store);
 }

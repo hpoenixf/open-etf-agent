@@ -1,0 +1,743 @@
+{
+  "schemaVersion": "v021-real-ten@1",
+  "version": "0.21.0",
+  "source": {
+    "executionCommit": "dfa372d596e6c1bd8440d7b5ae3000ea05a9255d",
+    "executionTree": "10cf02212fb37d6386e3a4b601c0f8d4b21adbdf",
+    "publicSourcePending": true
+  },
+  "executionIdentity": "ad98a7bbb50cd95a02c20184fc57c75827b7327b3996ff9f9715e5b38266a5db",
+  "planSha256": "05bcfdb1adae1b1104f9c8e768fdb96614df035755736170c20df160835c87e1",
+  "originalStateSha256": "2d36d423140bc5c7748e06f18d13367a7b3136b92998ec559b757d223cbb77bd",
+  "realProviderApplicability": "supported",
+  "normalGate": {
+    "planned": 10,
+    "requiredSuccesses": 9,
+    "threshold": 0.9,
+    "taskIds": [
+      "I01",
+      "I02",
+      "I03",
+      "I04",
+      "I05",
+      "I06",
+      "I07",
+      "I08",
+      "I09",
+      "I10"
+    ],
+    "tasks": [
+      {
+        "id": "I01",
+        "task": "请帮我从选定资料中的A、B服务方案里按月预算选一个，写一份有原资料出处的简短建议。预算还没有告诉你，请先问我，不能替我设定。",
+        "status": "success",
+        "eligibleSuccess": true,
+        "realProvider": true,
+        "runtimeAccepted": true,
+        "workflowCompleted": true,
+        "deliveryReadback": true,
+        "onTime": true,
+        "unknownEffects": false,
+        "physicalRequests": 4,
+        "executionIdentity": "ad98a7bbb50cd95a02c20184fc57c75827b7327b3996ff9f9715e5b38266a5db",
+        "originalCaseSha256": "c126ed560db0562b84a4f3a39479f26087aafe291e67e34f95ebf36a87c426db",
+        "checks": {
+          "runtime": {
+            "originalTerminal": true,
+            "processRequestsKnown": true,
+            "gatewayKnown": true,
+            "deadline": true,
+            "scope": true,
+            "originalRequests": true,
+            "sourceIdentities": true,
+            "coldReport": true,
+            "publicationBytes": true,
+            "coldHistory": true,
+            "terminalZero": true,
+            "aggregate": true,
+            "billing": true
+          },
+          "interaction": {
+            "questionsAtLeastRequired": true,
+            "allReceiptsAdoptedExactlyOnce": true,
+            "wireNoDuplicateAnswers": true,
+            "allRepliesSeenOnWire": true,
+            "distinctClosedProcesses": true
+          }
+        },
+        "report": {
+          "path": "docs/verification/v021-reports/I01.md",
+          "sha256": "d83f7b79fe9e082c9978251697f83b150bb5ca8027d1e1961e4b4f6033ee20c1",
+          "bytes": 3749
+        },
+        "sources": [
+          {
+            "sourceId": "text:379bf1b92980b1b51957987bb8e0d1da6919994de463f34a6fdcb51c6931cca2@utf8-pages-v1:379bf1b92980b1b51957987bb8e0d1da6919994de463f34a6fdcb51c6931cca2:p1",
+            "documentId": "text:379bf1b92980b1b51957987bb8e0d1da6919994de463f34a6fdcb51c6931cca2",
+            "name": "option-a.txt",
+            "version": "utf8-pages-v1:379bf1b92980b1b51957987bb8e0d1da6919994de463f34a6fdcb51c6931cca2",
+            "page": 1,
+            "text": "Option A: fee 30 credits/month; capacity 80 units; no offline mode.",
+            "sha256": "379bf1b92980b1b51957987bb8e0d1da6919994de463f34a6fdcb51c6931cca2",
+            "mediaType": "text/plain; charset=utf-8"
+          },
+          {
+            "sourceId": "pdf:c0fdf2ac084d588abffa6d7f768ef2738cb7267f0bd879f695bed411c355bb69:p1",
+            "documentId": "pdf:c0fdf2ac084d588abffa6d7f768ef2738cb7267f0bd879f695bed411c355bb69",
+            "name": "Operator-selected local PDF",
+            "version": "pdf2json@4.1.0:c0fdf2ac084d588abffa6d7f768ef2738cb7267f0bd879f695bed411c355bb69",
+            "page": 1,
+            "text": "Option B: fee 42 credits/month; capacity 120 units; offline mode included.",
+            "sha256": "0c53059d0dc3e23c93772c200cbe83522a09fa34ca9f63e18065d1e0d7f7b5e0",
+            "mediaType": "text/plain; charset=utf-8",
+            "pdf": {
+              "originalArtifactId": "artifact:sha256:1ebd9e97fbec5879bbbe9013dbd667648e34e9191a226fa930f8dc564825e7e3",
+              "originalSha256": "c0fdf2ac084d588abffa6d7f768ef2738cb7267f0bd879f695bed411c355bb69",
+              "originalBytes": 1425,
+              "parser": "pdf2json@4.1.0",
+              "pageCount": 1,
+              "synthetic": false,
+              "extraction": "text-layer",
+              "visualInspection": "not-performed"
+            }
+          }
+        ],
+        "interactionQuestions": 1
+      },
+      {
+        "id": "I02",
+        "task": "帮我分两步决定选定的A、B方案：先确认每月预算范围，拿到预算后再向我确认是否必须有离线功能；这两个约束都确认后再比较并保存带原资料出处的建议。",
+        "status": "success",
+        "eligibleSuccess": true,
+        "realProvider": true,
+        "runtimeAccepted": true,
+        "workflowCompleted": true,
+        "deliveryReadback": true,
+        "onTime": true,
+        "unknownEffects": false,
+        "physicalRequests": 5,
+        "executionIdentity": "ad98a7bbb50cd95a02c20184fc57c75827b7327b3996ff9f9715e5b38266a5db",
+        "originalCaseSha256": "d8ca0fa48ad6ee0788f7ee471b40d6808b02465f7df117a9463536b510eb4438",
+        "checks": {
+          "runtime": {
+            "originalTerminal": true,
+            "processRequestsKnown": true,
+            "gatewayKnown": true,
+            "deadline": true,
+            "scope": true,
+            "originalRequests": true,
+            "sourceIdentities": true,
+            "coldReport": true,
+            "publicationBytes": true,
+            "coldHistory": true,
+            "terminalZero": true,
+            "aggregate": true,
+            "billing": true
+          },
+          "interaction": {
+            "questionsAtLeastRequired": true,
+            "allReceiptsAdoptedExactlyOnce": true,
+            "wireNoDuplicateAnswers": true,
+            "allRepliesSeenOnWire": true,
+            "distinctClosedProcesses": true
+          }
+        },
+        "report": {
+          "path": "docs/verification/v021-reports/I02.md",
+          "sha256": "988478831ed5471c30dfe820638703dfff7696141257c4ca9847bb5059d3ba72",
+          "bytes": 4697
+        },
+        "sources": [
+          {
+            "sourceId": "text:379bf1b92980b1b51957987bb8e0d1da6919994de463f34a6fdcb51c6931cca2@utf8-pages-v1:379bf1b92980b1b51957987bb8e0d1da6919994de463f34a6fdcb51c6931cca2:p1",
+            "documentId": "text:379bf1b92980b1b51957987bb8e0d1da6919994de463f34a6fdcb51c6931cca2",
+            "name": "option-a.txt",
+            "version": "utf8-pages-v1:379bf1b92980b1b51957987bb8e0d1da6919994de463f34a6fdcb51c6931cca2",
+            "page": 1,
+            "text": "Option A: fee 30 credits/month; capacity 80 units; no offline mode.",
+            "sha256": "379bf1b92980b1b51957987bb8e0d1da6919994de463f34a6fdcb51c6931cca2",
+            "mediaType": "text/plain; charset=utf-8"
+          },
+          {
+            "sourceId": "pdf:c0fdf2ac084d588abffa6d7f768ef2738cb7267f0bd879f695bed411c355bb69:p1",
+            "documentId": "pdf:c0fdf2ac084d588abffa6d7f768ef2738cb7267f0bd879f695bed411c355bb69",
+            "name": "Operator-selected local PDF",
+            "version": "pdf2json@4.1.0:c0fdf2ac084d588abffa6d7f768ef2738cb7267f0bd879f695bed411c355bb69",
+            "page": 1,
+            "text": "Option B: fee 42 credits/month; capacity 120 units; offline mode included.",
+            "sha256": "0c53059d0dc3e23c93772c200cbe83522a09fa34ca9f63e18065d1e0d7f7b5e0",
+            "mediaType": "text/plain; charset=utf-8",
+            "pdf": {
+              "originalArtifactId": "artifact:sha256:1ebd9e97fbec5879bbbe9013dbd667648e34e9191a226fa930f8dc564825e7e3",
+              "originalSha256": "c0fdf2ac084d588abffa6d7f768ef2738cb7267f0bd879f695bed411c355bb69",
+              "originalBytes": 1425,
+              "parser": "pdf2json@4.1.0",
+              "pageCount": 1,
+              "synthetic": false,
+              "extraction": "text-layer",
+              "visualInspection": "not-performed"
+            }
+          }
+        ],
+        "interactionQuestions": 2
+      },
+      {
+        "id": "I03",
+        "task": "我需要选定政策版本的价格、容量和试用条件摘要，用来回答一个当时适用的政策问题，但还没告诉你适用的版本或生效日期。请先确认适用版本，再写有出处的摘要，不要混用两版。",
+        "status": "success",
+        "eligibleSuccess": true,
+        "realProvider": true,
+        "runtimeAccepted": true,
+        "workflowCompleted": true,
+        "deliveryReadback": true,
+        "onTime": true,
+        "unknownEffects": false,
+        "physicalRequests": 4,
+        "executionIdentity": "ad98a7bbb50cd95a02c20184fc57c75827b7327b3996ff9f9715e5b38266a5db",
+        "originalCaseSha256": "0057e73c1184ad8cf67ca06b52013249c08e869047c940b81f250ae1e28e24a5",
+        "checks": {
+          "runtime": {
+            "originalTerminal": true,
+            "processRequestsKnown": true,
+            "gatewayKnown": true,
+            "deadline": true,
+            "scope": true,
+            "originalRequests": true,
+            "sourceIdentities": true,
+            "coldReport": true,
+            "publicationBytes": true,
+            "coldHistory": true,
+            "terminalZero": true,
+            "aggregate": true,
+            "billing": true
+          },
+          "interaction": {
+            "questionsAtLeastRequired": true,
+            "allReceiptsAdoptedExactlyOnce": true,
+            "wireNoDuplicateAnswers": true,
+            "allRepliesSeenOnWire": true,
+            "distinctClosedProcesses": true
+          }
+        },
+        "report": {
+          "path": "docs/verification/v021-reports/I03.md",
+          "sha256": "a0a3250a412782a48acfdd9deee13e504d5b7fc3a21d76d212fcb238e526f7b6",
+          "bytes": 3984
+        },
+        "sources": [
+          {
+            "sourceId": "text:01917ebbbd15b63c863c88f5338c3086b91da67ef5cfa80c14b4523b2ff2c0f1@utf8-pages-v1:01917ebbbd15b63c863c88f5338c3086b91da67ef5cfa80c14b4523b2ff2c0f1:p1",
+            "documentId": "text:01917ebbbd15b63c863c88f5338c3086b91da67ef5cfa80c14b4523b2ff2c0f1",
+            "name": "v2.md",
+            "version": "utf8-pages-v1:01917ebbbd15b63c863c88f5338c3086b91da67ef5cfa80c14b4523b2ff2c0f1",
+            "page": 1,
+            "text": "Version 2, 2026-03-01. Price: 45 credits/month. Storage: 20 GB. Email support included. Trial removed. Audit export added.",
+            "sha256": "01917ebbbd15b63c863c88f5338c3086b91da67ef5cfa80c14b4523b2ff2c0f1",
+            "mediaType": "text/plain; charset=utf-8"
+          }
+        ],
+        "interactionQuestions": 1
+      },
+      {
+        "id": "I04",
+        "task": "请总结选定Cobalt试点资料，先确认这次摘要的受众，再按已有格式偏好写有出处的摘要。受众只是本次任务信息，不是要保存的新长期偏好。",
+        "status": "success",
+        "eligibleSuccess": true,
+        "realProvider": true,
+        "runtimeAccepted": true,
+        "workflowCompleted": true,
+        "deliveryReadback": true,
+        "onTime": true,
+        "unknownEffects": false,
+        "physicalRequests": 6,
+        "executionIdentity": "ad98a7bbb50cd95a02c20184fc57c75827b7327b3996ff9f9715e5b38266a5db",
+        "originalCaseSha256": "fa8563614ed60d3cb210d442e5e87b722fa11971644b4dfc2b41f360e21b445b",
+        "checks": {
+          "runtime": {
+            "originalTerminal": true,
+            "processRequestsKnown": true,
+            "gatewayKnown": true,
+            "deadline": true,
+            "scope": true,
+            "originalRequests": true,
+            "sourceIdentities": true,
+            "coldReport": true,
+            "publicationBytes": true,
+            "coldHistory": true,
+            "terminalZero": true,
+            "aggregate": true,
+            "billing": true
+          },
+          "interaction": {
+            "questionsAtLeastRequired": true,
+            "allReceiptsAdoptedExactlyOnce": true,
+            "wireNoDuplicateAnswers": true,
+            "allRepliesSeenOnWire": true,
+            "distinctClosedProcesses": true,
+            "noUnapprovedMemoryWrite": true
+          }
+        },
+        "report": {
+          "path": "docs/verification/v021-reports/I04.md",
+          "sha256": "a57de377fb160f32456aeba597bde357507e12b3c0f5114093583ccd5f978325",
+          "bytes": 2280
+        },
+        "sources": [
+          {
+            "sourceId": "text:76cf6b50501c44a2f42cbcfb9a83aa559e6cab36be71f4845f997d2598569642@utf8-pages-v1:76cf6b50501c44a2f42cbcfb9a83aa559e6cab36be71f4845f997d2598569642:p1",
+            "documentId": "text:76cf6b50501c44a2f42cbcfb9a83aa559e6cab36be71f4845f997d2598569642",
+            "name": "new-work.md",
+            "version": "utf8-pages-v1:76cf6b50501c44a2f42cbcfb9a83aa559e6cab36be71f4845f997d2598569642",
+            "page": 1,
+            "text": "Cobalt trial budget: 90 credits. Deadline: 2026-07-02. Approval is pending.",
+            "sha256": "76cf6b50501c44a2f42cbcfb9a83aa559e6cab36be71f4845f997d2598569642",
+            "mediaType": "text/plain; charset=utf-8"
+          }
+        ],
+        "interactionQuestions": 1
+      },
+      {
+        "id": "I05",
+        "task": "请解释我选中的方案的费用、容量和离线能力，保留并引用原选定资料。我还没告诉你选A还是B，请先问我，别替我选。",
+        "status": "success",
+        "eligibleSuccess": true,
+        "realProvider": true,
+        "runtimeAccepted": true,
+        "workflowCompleted": true,
+        "deliveryReadback": true,
+        "onTime": true,
+        "unknownEffects": false,
+        "physicalRequests": 4,
+        "executionIdentity": "ad98a7bbb50cd95a02c20184fc57c75827b7327b3996ff9f9715e5b38266a5db",
+        "originalCaseSha256": "4297f4e87e7f35528e0dbfe6bff40ef883ef97eb4fc29c012f762e9d70e4f08b",
+        "checks": {
+          "runtime": {
+            "originalTerminal": true,
+            "processRequestsKnown": true,
+            "gatewayKnown": true,
+            "deadline": true,
+            "scope": true,
+            "originalRequests": true,
+            "sourceIdentities": true,
+            "coldReport": true,
+            "publicationBytes": true,
+            "coldHistory": true,
+            "terminalZero": true,
+            "aggregate": true,
+            "billing": true
+          },
+          "interaction": {
+            "questionsAtLeastRequired": true,
+            "allReceiptsAdoptedExactlyOnce": true,
+            "wireNoDuplicateAnswers": true,
+            "allRepliesSeenOnWire": true,
+            "distinctClosedProcesses": true,
+            "originalPdfBytes": true
+          }
+        },
+        "report": {
+          "path": "docs/verification/v021-reports/I05.md",
+          "sha256": "ff2c0e7a38a64bc1f8fb1be48732818e30d7fd50cfab27982c20873a095340c7",
+          "bytes": 3961
+        },
+        "sources": [
+          {
+            "sourceId": "text:379bf1b92980b1b51957987bb8e0d1da6919994de463f34a6fdcb51c6931cca2@utf8-pages-v1:379bf1b92980b1b51957987bb8e0d1da6919994de463f34a6fdcb51c6931cca2:p1",
+            "documentId": "text:379bf1b92980b1b51957987bb8e0d1da6919994de463f34a6fdcb51c6931cca2",
+            "name": "option-a.txt",
+            "version": "utf8-pages-v1:379bf1b92980b1b51957987bb8e0d1da6919994de463f34a6fdcb51c6931cca2",
+            "page": 1,
+            "text": "Option A: fee 30 credits/month; capacity 80 units; no offline mode.",
+            "sha256": "379bf1b92980b1b51957987bb8e0d1da6919994de463f34a6fdcb51c6931cca2",
+            "mediaType": "text/plain; charset=utf-8"
+          },
+          {
+            "sourceId": "pdf:c0fdf2ac084d588abffa6d7f768ef2738cb7267f0bd879f695bed411c355bb69:p1",
+            "documentId": "pdf:c0fdf2ac084d588abffa6d7f768ef2738cb7267f0bd879f695bed411c355bb69",
+            "name": "Operator-selected local PDF",
+            "version": "pdf2json@4.1.0:c0fdf2ac084d588abffa6d7f768ef2738cb7267f0bd879f695bed411c355bb69",
+            "page": 1,
+            "text": "Option B: fee 42 credits/month; capacity 120 units; offline mode included.",
+            "sha256": "0c53059d0dc3e23c93772c200cbe83522a09fa34ca9f63e18065d1e0d7f7b5e0",
+            "mediaType": "text/plain; charset=utf-8",
+            "pdf": {
+              "originalArtifactId": "artifact:sha256:1ebd9e97fbec5879bbbe9013dbd667648e34e9191a226fa930f8dc564825e7e3",
+              "originalSha256": "c0fdf2ac084d588abffa6d7f768ef2738cb7267f0bd879f695bed411c355bb69",
+              "originalBytes": 1425,
+              "parser": "pdf2json@4.1.0",
+              "pageCount": 1,
+              "synthetic": false,
+              "extraction": "text-layer",
+              "visualInspection": "not-performed"
+            }
+          }
+        ],
+        "interactionQuestions": 1
+      },
+      {
+        "id": "I06",
+        "task": "请根据选定数据比较产量和成本的变化，输出带原数据出处和计算依据的报告。计算基期还没确定，请先确认，不要自定基期，也不要推断原因。",
+        "status": "success",
+        "eligibleSuccess": true,
+        "realProvider": true,
+        "runtimeAccepted": true,
+        "workflowCompleted": true,
+        "deliveryReadback": true,
+        "onTime": true,
+        "unknownEffects": false,
+        "physicalRequests": 6,
+        "executionIdentity": "ad98a7bbb50cd95a02c20184fc57c75827b7327b3996ff9f9715e5b38266a5db",
+        "originalCaseSha256": "3175902c4fa5a9dc3d43d42eb110eb280a566ef37a063a90f77e42598dd86563",
+        "checks": {
+          "runtime": {
+            "originalTerminal": true,
+            "processRequestsKnown": true,
+            "gatewayKnown": true,
+            "deadline": true,
+            "scope": true,
+            "originalRequests": true,
+            "sourceIdentities": true,
+            "coldReport": true,
+            "publicationBytes": true,
+            "coldHistory": true,
+            "terminalZero": true,
+            "aggregate": true,
+            "billing": true
+          },
+          "interaction": {
+            "questionsAtLeastRequired": true,
+            "allReceiptsAdoptedExactlyOnce": true,
+            "wireNoDuplicateAnswers": true,
+            "allRepliesSeenOnWire": true,
+            "distinctClosedProcesses": true,
+            "originalCalculation": true
+          }
+        },
+        "report": {
+          "path": "docs/verification/v021-reports/I06.md",
+          "sha256": "9d71f87140b1398e0976e11a2ab1df96a1630ca2809f52e63e13cb7c74289ee7",
+          "bytes": 5539
+        },
+        "sources": [
+          {
+            "sourceId": "text:e16380b72484b5f438835946d0f1c8167d0a373198a1adc12da25669becbe99c@utf8-pages-v1:e16380b72484b5f438835946d0f1c8167d0a373198a1adc12da25669becbe99c:p1",
+            "documentId": "text:e16380b72484b5f438835946d0f1c8167d0a373198a1adc12da25669becbe99c",
+            "name": "metrics.txt",
+            "version": "utf8-pages-v1:e16380b72484b5f438835946d0f1c8167d0a373198a1adc12da25669becbe99c",
+            "page": 1,
+            "text": "Q1 output: 120 units. Q2 output: 150 units. Q1 cost: 240 credits. Q2 cost: 330 credits. No causal explanation was measured.",
+            "sha256": "e16380b72484b5f438835946d0f1c8167d0a373198a1adc12da25669becbe99c",
+            "mediaType": "text/plain; charset=utf-8"
+          }
+        ],
+        "interactionQuestions": 1
+      },
+      {
+        "id": "I07",
+        "task": "帮我分两步决定选定的A、B方案：先确认每月预算范围，拿到预算后再向我确认是否必须有离线功能；这两个约束都确认后再比较并保存带原资料出处的建议。",
+        "status": "success",
+        "eligibleSuccess": true,
+        "realProvider": true,
+        "runtimeAccepted": true,
+        "workflowCompleted": true,
+        "deliveryReadback": true,
+        "onTime": true,
+        "unknownEffects": false,
+        "physicalRequests": 5,
+        "executionIdentity": "ad98a7bbb50cd95a02c20184fc57c75827b7327b3996ff9f9715e5b38266a5db",
+        "originalCaseSha256": "c96424929a7394c420a0e3c68e013092257325e4fbb88dc195612f0ef629f4be",
+        "checks": {
+          "runtime": {
+            "originalTerminal": true,
+            "processRequestsKnown": true,
+            "gatewayKnown": true,
+            "deadline": true,
+            "scope": true,
+            "originalRequests": true,
+            "sourceIdentities": true,
+            "coldReport": true,
+            "publicationBytes": true,
+            "coldHistory": true,
+            "terminalZero": true,
+            "aggregate": true,
+            "billing": true
+          },
+          "interaction": {
+            "questionsAtLeastRequired": true,
+            "allReceiptsAdoptedExactlyOnce": true,
+            "wireNoDuplicateAnswers": true,
+            "allRepliesSeenOnWire": true,
+            "distinctClosedProcesses": true,
+            "knownStopAfterFirstAdoption": true,
+            "multipleQuestionsSameRun": true
+          }
+        },
+        "report": {
+          "path": "docs/verification/v021-reports/I07.md",
+          "sha256": "19f7f0a36d58a21df3c8dff072afa926fb4bdf855d91fdda599ef26a3451314a",
+          "bytes": 4061
+        },
+        "sources": [
+          {
+            "sourceId": "text:379bf1b92980b1b51957987bb8e0d1da6919994de463f34a6fdcb51c6931cca2@utf8-pages-v1:379bf1b92980b1b51957987bb8e0d1da6919994de463f34a6fdcb51c6931cca2:p1",
+            "documentId": "text:379bf1b92980b1b51957987bb8e0d1da6919994de463f34a6fdcb51c6931cca2",
+            "name": "option-a.txt",
+            "version": "utf8-pages-v1:379bf1b92980b1b51957987bb8e0d1da6919994de463f34a6fdcb51c6931cca2",
+            "page": 1,
+            "text": "Option A: fee 30 credits/month; capacity 80 units; no offline mode.",
+            "sha256": "379bf1b92980b1b51957987bb8e0d1da6919994de463f34a6fdcb51c6931cca2",
+            "mediaType": "text/plain; charset=utf-8"
+          },
+          {
+            "sourceId": "pdf:c0fdf2ac084d588abffa6d7f768ef2738cb7267f0bd879f695bed411c355bb69:p1",
+            "documentId": "pdf:c0fdf2ac084d588abffa6d7f768ef2738cb7267f0bd879f695bed411c355bb69",
+            "name": "Operator-selected local PDF",
+            "version": "pdf2json@4.1.0:c0fdf2ac084d588abffa6d7f768ef2738cb7267f0bd879f695bed411c355bb69",
+            "page": 1,
+            "text": "Option B: fee 42 credits/month; capacity 120 units; offline mode included.",
+            "sha256": "0c53059d0dc3e23c93772c200cbe83522a09fa34ca9f63e18065d1e0d7f7b5e0",
+            "mediaType": "text/plain; charset=utf-8",
+            "pdf": {
+              "originalArtifactId": "artifact:sha256:1ebd9e97fbec5879bbbe9013dbd667648e34e9191a226fa930f8dc564825e7e3",
+              "originalSha256": "c0fdf2ac084d588abffa6d7f768ef2738cb7267f0bd879f695bed411c355bb69",
+              "originalBytes": 1425,
+              "parser": "pdf2json@4.1.0",
+              "pageCount": 1,
+              "synthetic": false,
+              "extraction": "text-layer",
+              "visualInspection": "not-performed"
+            }
+          }
+        ],
+        "interactionQuestions": 2
+      },
+      {
+        "id": "I08",
+        "task": "请根据选定活动费用资料为四位参与者整理所选活动的费用说明并保存有出处的报告。我还没有选短场还是长场，请先问我再继续。",
+        "status": "success",
+        "eligibleSuccess": true,
+        "realProvider": true,
+        "runtimeAccepted": true,
+        "workflowCompleted": true,
+        "deliveryReadback": true,
+        "onTime": true,
+        "unknownEffects": false,
+        "physicalRequests": 4,
+        "executionIdentity": "ad98a7bbb50cd95a02c20184fc57c75827b7327b3996ff9f9715e5b38266a5db",
+        "originalCaseSha256": "5719c54021abc53cf3aceedb8b156b8adbf2fdf8a753a8ecdce6e8e8bbba6c95",
+        "checks": {
+          "runtime": {
+            "originalTerminal": true,
+            "processRequestsKnown": true,
+            "gatewayKnown": true,
+            "deadline": true,
+            "scope": true,
+            "originalRequests": true,
+            "sourceIdentities": true,
+            "coldReport": true,
+            "publicationBytes": true,
+            "coldHistory": true,
+            "terminalZero": true,
+            "aggregate": true,
+            "billing": true
+          },
+          "interaction": {
+            "questionsAtLeastRequired": true,
+            "allReceiptsAdoptedExactlyOnce": true,
+            "wireNoDuplicateAnswers": true,
+            "allRepliesSeenOnWire": true,
+            "distinctClosedProcesses": true,
+            "identicalRetryZeroDebit": true
+          }
+        },
+        "report": {
+          "path": "docs/verification/v021-reports/I08.md",
+          "sha256": "cf30ff5aae5f803cc57d0b73959ff940519fe2ed849d070fc2db3938b3502f68",
+          "bytes": 2427
+        },
+        "sources": [
+          {
+            "sourceId": "text:aa2f8361eb388393f38a3abc7bab2aab3474d3694c05d989050f02e0e1e2bc9d@utf8-pages-v1:aa2f8361eb388393f38a3abc7bab2aab3474d3694c05d989050f02e0e1e2bc9d:p1",
+            "documentId": "text:aa2f8361eb388393f38a3abc7bab2aab3474d3694c05d989050f02e0e1e2bc9d",
+            "name": "question.md",
+            "version": "utf8-pages-v1:aa2f8361eb388393f38a3abc7bab2aab3474d3694c05d989050f02e0e1e2bc9d",
+            "page": 1,
+            "text": "Cost plan: short session costs 5 credits; long session costs 9 credits. User must choose a session type; participant count is 4.",
+            "sha256": "aa2f8361eb388393f38a3abc7bab2aab3474d3694c05d989050f02e0e1e2bc9d",
+            "mediaType": "text/plain; charset=utf-8"
+          }
+        ],
+        "interactionQuestions": 1
+      },
+      {
+        "id": "I09",
+        "task": "请根据所选路线资料为我的包裹选择路线并写有出处的说明。包裹重量尚未给出，请先问我，不得替我猜重量。",
+        "status": "success",
+        "eligibleSuccess": true,
+        "realProvider": true,
+        "runtimeAccepted": true,
+        "workflowCompleted": true,
+        "deliveryReadback": true,
+        "onTime": true,
+        "unknownEffects": false,
+        "physicalRequests": 4,
+        "executionIdentity": "ad98a7bbb50cd95a02c20184fc57c75827b7327b3996ff9f9715e5b38266a5db",
+        "originalCaseSha256": "7fe1f069c3928002568e42e77a5fd7c6bf8d7ee38711154b5f574c731aafce49",
+        "checks": {
+          "runtime": {
+            "originalTerminal": true,
+            "processRequestsKnown": true,
+            "gatewayKnown": true,
+            "deadline": true,
+            "scope": true,
+            "originalRequests": true,
+            "sourceIdentities": true,
+            "coldReport": true,
+            "publicationBytes": true,
+            "coldHistory": true,
+            "terminalZero": true,
+            "aggregate": true,
+            "billing": true
+          },
+          "interaction": {
+            "questionsAtLeastRequired": true,
+            "allReceiptsAdoptedExactlyOnce": true,
+            "wireNoDuplicateAnswers": true,
+            "allRepliesSeenOnWire": true,
+            "distinctClosedProcesses": true,
+            "otherTaskUnchanged": true,
+            "exactInboxTask": true
+          }
+        },
+        "report": {
+          "path": "docs/verification/v021-reports/I09.md",
+          "sha256": "a2a9b29e4fc17fcc353a5d3746dcdd6d80bdf771c310abdd4cdc9b18b907e401",
+          "bytes": 3527
+        },
+        "sources": [
+          {
+            "sourceId": "text:abd2fdd78842d8e8cc227d2902d7ad339502ae43d724abef7b898592db14f5e2@utf8-pages-v1:abd2fdd78842d8e8cc227d2902d7ad339502ae43d724abef7b898592db14f5e2:p1",
+            "documentId": "text:abd2fdd78842d8e8cc227d2902d7ad339502ae43d724abef7b898592db14f5e2",
+            "name": "followup.md",
+            "version": "utf8-pages-v1:abd2fdd78842d8e8cc227d2902d7ad339502ae43d724abef7b898592db14f5e2",
+            "page": 1,
+            "text": "Route H supports up to 30 kg and takes 2 days. Route J supports up to 50 kg and takes 4 days. Package weight is initially unspecified.",
+            "sha256": "abd2fdd78842d8e8cc227d2902d7ad339502ae43d724abef7b898592db14f5e2",
+            "mediaType": "text/plain; charset=utf-8"
+          }
+        ],
+        "interactionQuestions": 1
+      },
+      {
+        "id": "I10",
+        "task": "请根据选定时间资料和本任务明确的UTC时间锚点解释今天、昨天与数据截止日期的关系，写有出处的报告。先问清我需要哪一个比较范围；即使中断后继续也沿用这次任务的时间，不改成机器当前日期。",
+        "status": "success",
+        "eligibleSuccess": true,
+        "realProvider": true,
+        "runtimeAccepted": true,
+        "workflowCompleted": true,
+        "deliveryReadback": true,
+        "onTime": true,
+        "unknownEffects": false,
+        "physicalRequests": 4,
+        "executionIdentity": "ad98a7bbb50cd95a02c20184fc57c75827b7327b3996ff9f9715e5b38266a5db",
+        "originalCaseSha256": "c202ce653e67db47141cb654660d0400293b2655cf930934a0e545f13086e17d",
+        "checks": {
+          "runtime": {
+            "originalTerminal": true,
+            "processRequestsKnown": true,
+            "gatewayKnown": true,
+            "deadline": true,
+            "scope": true,
+            "originalRequests": true,
+            "sourceIdentities": true,
+            "coldReport": true,
+            "publicationBytes": true,
+            "coldHistory": true,
+            "terminalZero": true,
+            "aggregate": true,
+            "billing": true
+          },
+          "interaction": {
+            "questionsAtLeastRequired": true,
+            "allReceiptsAdoptedExactlyOnce": true,
+            "wireNoDuplicateAnswers": true,
+            "allRepliesSeenOnWire": true,
+            "distinctClosedProcesses": true,
+            "originalTemporalAnchor": true
+          }
+        },
+        "report": {
+          "path": "docs/verification/v021-reports/I10.md",
+          "sha256": "641fabb2810e59a65cf3e4decb6ac3d269379ef1a828f371a7adcd7b72007e6e",
+          "bytes": 3433
+        },
+        "sources": [
+          {
+            "sourceId": "text:cb2640a57b73c1718ad979962c3a56a9495001cf179cad058d248b37af378b5b@utf8-pages-v1:cb2640a57b73c1718ad979962c3a56a9495001cf179cad058d248b37af378b5b:p1",
+            "documentId": "text:cb2640a57b73c1718ad979962c3a56a9495001cf179cad058d248b37af378b5b",
+            "name": "time.md",
+            "version": "utf8-pages-v1:cb2640a57b73c1718ad979962c3a56a9495001cf179cad058d248b37af378b5b",
+            "page": 1,
+            "text": "Task anchor: 2026-10-31T23:50:00Z; reporting timezone UTC. Today is 2026-10-31, yesterday is 2026-10-30. Dataset cutoff: 2026-10-29.",
+            "sha256": "cb2640a57b73c1718ad979962c3a56a9495001cf179cad058d248b37af378b5b",
+            "mediaType": "text/plain; charset=utf-8"
+          }
+        ],
+        "interactionQuestions": 1
+      }
+    ],
+    "attempted": 10,
+    "notRun": 0,
+    "successes": 10,
+    "observedRate": 1
+  },
+  "separateSafetyGatePassed": true,
+  "safetyEvidence": {
+    "independentLiveReviewSha256": "8a451e6de2e8b0860981129e77669f19cac29fa72eeca49dbafb186cf21d912f",
+    "independentOfflineReviewSha256": "27b6eb1808ac2c5d2c396e2eaa388fc7bd27ff47eb64c3d273a819978cb258b3",
+    "unknownReplayClaim": false,
+    "oldUnknownPreserved": true,
+    "originalPermissionBudgetFenceGuardsRetained": true
+  },
+  "accounting": {
+    "requests": 46,
+    "goZeroExtraCost": 46,
+    "newUnknown": 0,
+    "priorUnknownLowerBound": 16,
+    "actualCumulative": 1671,
+    "conservativeCumulative": 1727,
+    "authorizedCeiling": 3000,
+    "automaticRetries": 0
+  },
+  "offline": {
+    "fullPassed": 796,
+    "fullTotal": 796,
+    "targetedIncludedInFull": 54,
+    "buildPassed": true,
+    "runtime": "Node.js26.11.1",
+    "fullReceiptSha256": "09fc768b4ee37def88dac512069701813188c7261113395147830f32d80a65dd",
+    "legacySchema6RefusalVerified": true
+  },
+  "scope": [
+    "Ordinary blocking questions through the original local research-project API.",
+    "Twelve original question/receipt/adoption pairs in ten natural synthetic-data tasks.",
+    "I07 is a known Host stop and same-Run continuation, not unknown replay.",
+    "I09 is one pending question plus another zero-model submitted task, not two simultaneous pending questions.",
+    "Human replies are predeclared synthetic task data, not new grants."
+  ],
+  "semanticObservations": [
+    "I04 did not successfully recall the existing English format preference; no automatic Memory write was observed.",
+    "I03 question inferred a policy applicability date interval; final report used the explicitly confirmed Version2 and noted the uncertain boundary."
+  ],
+  "unsupported": [
+    "Child-targeted questions",
+    "Response+Schedule",
+    "external-effect approval",
+    "new permission grants",
+    "non-blocking intervention",
+    "terminal-Run continuation",
+    "remote multi-user authentication"
+  ],
+  "published": false
+}

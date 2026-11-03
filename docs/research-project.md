@@ -163,3 +163,7 @@ Optional API fields are omitted when unused. Live `authorization` requires `prov
 ## Run control ownership
 
 See [Run control and termination ownership](run-control.md) for local refusal, committed notification, cancellation and unknown-effect boundaries.
+
+## Explicit multi-question interaction (v0.21 implementation)
+
+An optional, explicitly versioned `interaction` configuration is being verified for new tasks. It permits bounded sequential questions with original request, receipt and adoption history, and supplies read-only local inbox commands. Existing projects without this option retain their original single-question contract. See [ordinary Human Interaction](human-interaction.md); this addition is not a new release or qualification claim for the historical v0.20 evidence above.
