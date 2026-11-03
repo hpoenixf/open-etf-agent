@@ -42,3 +42,7 @@ Response+Schedule 需要组合持久等待协议，当前不支持。Atlas 历�
 实现及证据快照为 [`9b6ae0adf1df7efd4fd138b8d2957103b8fd9132`](https://github.com/hpoenixf/open-etf-agent/tree/9b6ae0adf1df7efd4fd138b8d2957103b8fd9132)，tree 为 `13739de4e3062df5674710e5a1709dbf28a07f9f`。其中 80 项执行输入摘要与修复执行清单一致；A/B 仍保留原执行来源及单独审查的未受影响合同范围。公开快照包含安全证据，不包含私有执行器状态或本地 Git 祖先。
 
 `versions.json` 记录此固定源码快照。`v0.19.0` tag 与 GitHub Release 必须指向随后完成的最终 metadata 包，并以该包原 CI 通过为前提。metadata 不改变执行输入。实际发布状态以 [GitHub Releases](https://github.com/hpoenixf/open-etf-agent/releases) 和 tag 所指提交的检查为准；本记录本身不证明 Release 或 CI 已完成。
+
+## 保留首个发布 CI 失败
+
+首个最终包 `d47328ad85a52b323f066ee00a59b9978f3be819` 的锁定安装与 build 通过，但原 [CI](https://github.com/hpoenixf/open-etf-agent/actions/runs/41587503119) 为 647/651。四项失败集中在托管摘要测试：30ms Admission 等待或 10ms 摘要窗口可能在合成 Gateway 实际进入之前就到期。修正仅作用于测试，给明确调度余量，并在观察到原摘要实际派发后才推进受控测试计时器；真实 Admission/SQLite 所有权、未知票、晚到拒绝与冷恢复不重放断言均保留，不放宽生产安全边界或源码合同。原失败记录不删除，后续最终包仍须自己的原 CI 通过后才能创建发布 tag。

@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { mkdir, mkdtemp, rm, readFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
+import { setImmediate as nextTurn } from 'node:timers/promises';
 import { createSharedAdmission } from '../src/admission.mjs';
 import { openSession } from '../src/session.mjs';
 import { run, submitRun, confirmScheduledRun, materializeScheduledRun } from '../src/runtime.mjs';
@@ -13,8 +14,8 @@ import { PUBLICATION_BINDING } from '../src/publication.mjs';
 const bindings={gateway:{mode:'live',provider:'offline-fixture',protocol:'chat-completions',model:'synthetic',version:'1'},plugins:[],adapters:[]};
 async function setup(extra={}){
  await mkdir('test-output',{recursive:true});const directory=await mkdtemp(resolve('test-output/admission-composition-'));
- const session=await openSession({directory:join(directory,'session'),leaseMs:5000,...extra});
- const admission=await createSharedAdmission({directory:join(directory,'capacity'),routeId:'composition-offline',pollMs:1,queueTimeoutMs:30});
+ const session=await openSession({directory:join(directory,'session'),leaseMs:30000,...extra});
+ const admission=await createSharedAdmission({directory:join(directory,'capacity'),routeId:'composition-offline',pollMs:1,queueTimeoutMs:5000});
  return {directory,session,admission,async close(){admission.close();session.close();await rm(directory,{recursive:true,force:true});}};
 }
 for(const unknown of [false,true])test(`same-group Child uses its original root reservation; unknown=${unknown}`,async()=>{
@@ -55,8 +56,9 @@ test('bindRun refuses another root and a foreign Session before dispatch',async(
  }finally{await f.close();}
 });
 
-for(const mode of ['normal','unknown','timeout'])test(`managed summary original Admission request: ${mode}`,async()=>{
+for(const mode of ['normal','unknown','timeout'])test(`managed summary original Admission request: ${mode}`,async(t)=>{
  const f=await setup();const seen=[];let mainCalls=0,summaryCalls=0,adopted=false;
+ let entered,releaseLate;const summaryEntered=new Promise(r=>{entered=r;}),lateRelease=new Promise(r=>{releaseLate=r;});
  try{
   const documentCatalog={schemaVersion:'document-catalog@1',id:'summary-fixture',documents:[{id:'evidence',name:'Synthetic compaction evidence',version:'v1',pages:['Original synthetic bounded evidence. '.repeat(150)]}]};
   const raw={mode:'live',async next(input){
@@ -64,7 +66,7 @@ for(const mode of ['normal','unknown','timeout'])test(`managed summary original 
    if(input.reservation.purpose==='compaction'){
     summaryCalls++;assert.deepEqual(input.tools,[]);
     if(mode==='unknown')throw new Error('synthetic summary transport lost');
-    if(mode==='timeout')await new Promise(resolve=>setTimeout(resolve,70));
+    if(mode==='timeout'){entered();await new Promise(resolve=>{if(input.signal.aborted)resolve();else input.signal.addEventListener('abort',resolve,{once:true});});await lateRelease;}
     return{kind:'final',text:'Derived short summary. Exact original remains authoritative.'};
    }
    mainCalls++;
@@ -72,8 +74,8 @@ for(const mode of ['normal','unknown','timeout'])test(`managed summary original 
    adopted=input.messages.some(message=>message.result?.value?.kind==='derived-working-note');
    return{kind:'final',text:'Synthetic final answer.'};
   }};
-  const options={question:'Read synthetic evidence twice, then conclude.',gateway:f.admission.wrap(raw,{session:f.session,runId:'summary-root'}),outputRoot:join(f.directory,'runs'),documentCatalog,contextBytes:32000,workingInput:{compaction:{mode:'gateway',thresholdBytes:1000,summaryTimeoutMs:mode==='timeout'?10:1000}},limits:{maxRounds:5,maxTools:5,timeoutMs:2000},durable:{store:f.session,runId:'summary-root',grantId:'synthetic',bindings,rootLimits:{model:6,tool:5}}};
-  await submitRun(options);const result=await run(options);
+  const options={question:'Read synthetic evidence twice, then conclude.',gateway:f.admission.wrap(raw,{session:f.session,runId:'summary-root'}),outputRoot:join(f.directory,'runs'),documentCatalog,contextBytes:32000,workingInput:{compaction:{mode:'gateway',thresholdBytes:1000,summaryTimeoutMs:mode==='timeout'?10:5000}},limits:{maxRounds:5,maxTools:5,timeoutMs:30000},durable:{store:f.session,runId:'summary-root',grantId:'synthetic',bindings,rootLimits:{model:6,tool:5}}};
+  await submitRun(options);if(mode==='timeout')t.mock.timers.enable({apis:['setTimeout']});const running=run(options);if(mode==='timeout'){await summaryEntered;t.mock.timers.tick(10);}const result=await running;
   assert.equal(summaryCalls,1,JSON.stringify({code:result.code,mainCalls,summaryCalls}));
   assert.equal(result.status,mode==='normal'?'completed':'failed',result.code);
   assert.equal(mainCalls,mode==='normal'?3:2);
@@ -85,12 +87,12 @@ for(const mode of ['normal','unknown','timeout'])test(`managed summary original 
    assert.equal(result.code,'COMPACTION_OUTCOME_UNKNOWN');
    assert.equal(f.session.inspect('summary-root').snapshot.gatewayOutcome,'unknown');
    const before=seen.length;const reread=await run(options);assert.equal(reread.status,'failed');assert.equal(seen.length,before);
-   if(mode==='timeout')await new Promise(resolve=>setTimeout(resolve,100));
+   if(mode==='timeout'){releaseLate();await nextTurn();}
    assert.equal(mainCalls,2);assert.equal(adopted,false);
    assert.equal(f.session.inspect('summary-root').snapshot.gatewayOutcome,'unknown');
    if(mode==='unknown')assert.equal(f.admission.snapshot().requests[2].state,'unknown');
   }
- }finally{await f.close();}
+ }finally{releaseLate();if(mode==='timeout')t.mock.timers.reset();await f.close();}
 });
 
 test('Schedule composition uses same Admission summary and original Publication',async()=>{
