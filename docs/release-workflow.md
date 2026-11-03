@@ -1,5 +1,7 @@
 # Publication workflow: ten real tasks, nine successes
 
+**Current campaign override — 2026-11-03:** v0.7–v0.18 each require ten **fresh** real tasks, at least nine successes, and zero known unresolved applicable Runtime defects before advancing in version order. Old successes do not supply this campaign's numerator. [Scope, fixture-only boundaries and retained history](live-validation.md#fresh-v07-v18-campaign-20261103). The general inventory/reuse steps below apply outside this explicit fresh campaign; inventory still prevents accidental duplicate dispatch and preserves all prior evidence.
+
 1. Confirm version scope, fixed execution inputs, existing writer and sole publisher. Read [current live policy](live-validation.md#release-qualification) and [dated decisions](verification/release-gate-20261102.md), not an older qualification boolean alone.
 2. Inventory original plans, all outcomes, original output/readback and the shared ledger. Reuse valid ten-task evidence with applicable execution inputs. Do not redo history because a later sample has five tasks or a metadata SHA changed.
 3. If genuinely missing, freeze a dated minimal backfill plan within existing authorization and budget. Exactly ten real tasks per version, at least nine successes. Keep failures, timeouts and unknowns; never replace failed samples or retry until green. Provider-free safety is separate.

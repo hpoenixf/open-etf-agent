@@ -4,7 +4,13 @@
 
 [返回项目首页](../../README.zh-CN.md) · [已登记 31 篇的覆盖契约](../../README.zh-CN.md#reading)
 
-## 2026-11-02 · Current real-task gate / 当前真实测评门槛
+## 2026-11-03 · Current campaign / 当前轮次
+
+**v0.7–v0.18：每版重新冻结并完成10次真实任务，至少9次成功；当前版本已知未解决 Runtime 问题清零后，才进入下一版。** 不复用旧成功样本填本轮分子，不替换失败/超时/unknown；每批报告真实进度。fixture增量也要测该版本实际支持的真实调用路径，但不移除fixture guard、不伪称该增量已真实验收。v0.1–v0.6历史资格保留，不重复测。
+
+**Fresh ten real tasks per version, v0.7–v0.18, at least nine successes and no known unresolved applicable Runtime defects before advancing.** Historical outcomes remain unchanged and receive no new-campaign sample credit. [Current policy / 本轮规范](../live-validation.md#fresh-v07-v18-campaign-20261103). The reuse guidance below is general policy outside this explicit fresh campaign; old five/four wording is historical only.
+
+## 2026-11-02 · General gate / 通用门槛（本轮受上方明确重测要求约束）
 
 **Exactly ten real tasks per version, at least nine successes / 每版恰好10次真实任务，至少9次通过。** Inventory and reuse valid original ten-task evidence first; do not repeat valid measurements. Failures/timeouts/unknowns remain; 5/5 is incomplete. 先盘点原十次证据，不重复有效测评，不改历史结果或标签。[Policy / 规范](../live-validation.md#release-qualification) · [Dated decisions / 当前决策](release-gate-20261102.md).
 
@@ -14,7 +20,7 @@
 
 - `*.safe.json` 和 provenance 是可移植、已清理的工程摘要与来源哈希；不是原始日志，也不是防伪执行证明。数据库、凭据、依赖缓存和私有原始日志不公开。
 - 一个阶段的测试数只说明其当时冻结输入的那次执行；**不跨版本加总为成熟度**。先前 candidate / prepared-only / license-pending 文本是当时状态，不覆盖首页当前 MIT 与已公开代码事实。
-- 历史验收记录范围是 Runtime：合法边界、原文身份、持久效果与实际交付，不构成模型答案语义质量结论。新正常真实任务资格及旧版复审遵循 [2026-10-29 后续 Runtime-only 澄清](../live-validation.md#release-qualification)；此前综合口径分数保留为历史，不暗中替换。
+- 历史验收记录范围是 Runtime：合法边界、原文身份、持久效果与实际交付，不构成模型答案语义质量结论。当前资格遵循上方本轮要求与 [当前 Runtime-only 规范](../live-validation.md#release-qualification)；此前综合口径分数保留为历史，不暗中替换。
 
 ## 2026-11-02 底座修复
 
@@ -178,7 +184,7 @@
 
 沿用上方现有检查与证据入口。以下是接受改动的要求，不代表所有规划模块都已满足。
 
-- **Runtime-only 发布门 — 2026-10-29 后续澄清：** 沿用[既有 live-validation 规范](../live-validation.md#release-qualification)：预登记固定代码/provider/model/prompt、基本任务 case、每版独立 5 次、deadline 和预算；至少 4/5 成功收到有效模型返回、走完该版基本 Runtime 流程，并实际发布回答/报告且可回读，不能仅凭 HTTP 200。模型事实与文字质量仅单独观察，不计本次成功率，不增 semantic grader 门。必要机制、权限、真实来源及无重复副作用仍是硬条件，异常处理分开验。按 v0.1 起逐版检查：先测原 tag，证据充分时定位错误引入 commit，再在同版 scope 修订分支上冻结新提交、独立验 5 次；不塞入以后全部功能、不移动旧 tag。失败/超时/unknown、成本、原错误码及旧综合分数全部保留；新 Runtime-only 解读须另加日期，不冒充新执行。不得跨版混分母、扩大成每 case 5 次，也不宣称总体可靠率。
+- **历史门槛，已被替代 — 2026-10-29 Runtime-only 澄清（不是当前执行要求）：** 沿用[既有 live-validation 规范](../live-validation.md#release-qualification)：预登记固定代码/provider/model/prompt、基本任务 case、每版独立 5 次、deadline 和预算；至少 4/5 成功收到有效模型返回、走完该版基本 Runtime 流程，并实际发布回答/报告且可回读，不能仅凭 HTTP 200。模型事实与文字质量仅单独观察，不计本次成功率，不增 semantic grader 门。必要机制、权限、真实来源及无重复副作用仍是硬条件，异常处理分开验。按 v0.1 起逐版检查：先测原 tag，证据充分时定位错误引入 commit，再在同版 scope 修订分支上冻结新提交、独立验 5 次；不塞入以后全部功能、不移动旧 tag。失败/超时/unknown、成本、原错误码及旧综合分数全部保留；新 Runtime-only 解读须另加日期，不冒充新执行。不得跨版混分母、扩大成每 case 5 次，也不宣称总体可靠率。
 - **一版一个可运行模块：** 说清输入、处理、可观察产物与回读；支持适配仍归既有职责。
 - **事实一致：** 代码、固定版本、修订计划、中英文入口与文章实际选定 case 一致；首次引入历史与当前验证 pin 分开保留。
 - **边界诚实：** 保留兼容限制、失败与未验证行为；fixture 执行、真实模型质量和生产就绪分别取证。

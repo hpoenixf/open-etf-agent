@@ -4,7 +4,13 @@
 
 [Project home](../../README.md) · [Coverage contract for the 31 registered articles](../../README.md#reading)
 
-## 2026-11-02 · Current real-task gate / 当前真实测评门槛
+## 2026-11-03 · Current campaign / 当前轮次
+
+**v0.7–v0.18：每版重新冻结并完成10次真实任务，至少9次成功；当前版本已知未解决 Runtime 问题清零后，才进入下一版。** 不复用旧成功样本填本轮分子，不替换失败/超时/unknown；每批报告真实进度。fixture增量也要测该版本实际支持的真实调用路径，但不移除fixture guard、不伪称该增量已真实验收。v0.1–v0.6历史资格保留，不重复测。
+
+**Fresh ten real tasks per version, v0.7–v0.18, at least nine successes and no known unresolved applicable Runtime defects before advancing.** Historical outcomes remain unchanged and receive no new-campaign sample credit. [Current policy / 本轮规范](../live-validation.md#fresh-v07-v18-campaign-20261103). The reuse guidance below is general policy outside this explicit fresh campaign; old five/four wording is historical only.
+
+## 2026-11-02 · General gate / 通用门槛（本轮受上方明确重测要求约束）
 
 **Exactly ten real tasks per version, at least nine successes / 每版恰好10次真实任务，至少9次通过。** Inventory and reuse valid original ten-task evidence first; do not repeat valid measurements. Failures/timeouts/unknowns remain; 5/5 is incomplete. 先盘点原十次证据，不重复有效测评，不改历史结果或标签。[Policy / 规范](../live-validation.md#release-qualification) · [Dated decisions / 当前决策](release-gate-20261102.md).
 
@@ -14,7 +20,7 @@ Start with **observations** (what happened, failures and fixes), then inspect **
 
 - `*.safe.json` and provenance contain portable, sanitized engineering summaries and source hashes. They are neither raw logs nor tamper-proof execution attestations. Databases, credentials, dependency caches and private raw logs are not published.
 - A stage's test count describes that execution against its frozen inputs only; **counts are not added across versions as a measure of maturity**. Earlier candidate / prepared-only / license-pending wording records the state at that time; it does not override the current MIT license and publicly available code stated on the home page.
-- The historical acceptance records cover the Runtime: legal boundaries, original-content identity, durable effects and actual delivery. They make no acceptance claim about the semantic quality of model answers. New normal real-task qualification and earlier-version rechecks follow the [later 2026-10-29 Runtime-only clarification](../live-validation.md#release-qualification); earlier combined-criterion scores remain historical, not silently replaced.
+- The historical acceptance records cover the Runtime: legal boundaries, original-content identity, durable effects and actual delivery. They make no acceptance claim about the semantic quality of model answers. Current qualification follows the dated campaign above and [current Runtime-only policy](../live-validation.md#release-qualification); earlier combined-criterion scores remain historical, not silently replaced.
 
 ## 2026-11-02 foundation repair
 
@@ -182,7 +188,7 @@ Pinned implementation: [source commit `e442f60`](https://github.com/hpoenixf/ope
 
 Use the existing checks and evidence paths above. These are requirements for accepting a change, not a claim that every planned module has met them.
 
-- **Runtime-only release gate — later clarification, 2026-10-29:** Follow the [existing live-validation policy](../live-validation.md#release-qualification): freeze code/provider/model/prompt, basic-task cases, five runs per version, deadlines and budget; at least 4/5 must receive valid model responses, complete that version's basic Runtime workflow, and actually publish answers/reports with readback. HTTP 200 alone is insufficient. Model factual/prose quality is observation-only, not part of this rate or a semantic-grader gate. Required mechanisms, permissions, real provenance and no duplicate effects remain hard requirements; anomaly handling stays separate. Start at v0.1 and proceed in version order: original tag first, locate the introducing commit when evidence permits, then repair within that version's scope and requalify a new frozen revision with five runs. Never import all later features or move an old tag. Retain failures/timeouts/unknowns, costs, original error codes and earlier combined scores; any new Runtime-only interpretation must be separately dated and must not pretend to be a new execution. No cross-version pooling, five-per-case expansion or population-reliability claim follows.
+- **Historical, superseded threshold — Runtime-only clarification, 2026-10-29 (not current instructions):** Follow the [existing live-validation policy](../live-validation.md#release-qualification): freeze code/provider/model/prompt, basic-task cases, five runs per version, deadlines and budget; at least 4/5 must receive valid model responses, complete that version's basic Runtime workflow, and actually publish answers/reports with readback. HTTP 200 alone is insufficient. Model factual/prose quality is observation-only, not part of this rate or a semantic-grader gate. Required mechanisms, permissions, real provenance and no duplicate effects remain hard requirements; anomaly handling stays separate. Start at v0.1 and proceed in version order: original tag first, locate the introducing commit when evidence permits, then repair within that version's scope and requalify a new frozen revision with five runs. Never import all later features or move an old tag. Retain failures/timeouts/unknowns, costs, original error codes and earlier combined scores; any new Runtime-only interpretation must be separately dated and must not pretend to be a new execution. No cross-version pooling, five-per-case expansion or population-reliability claim follows.
 - **One runnable module per version:** identify its input, processing, observable output and readback; keep supporting adapters within existing responsibilities.
 - **One consistent set of facts:** code, fixed version, amended plan, both language entrypoints and articles must agree on the actual selected case. Introduction history and current verification pins remain distinct.
 - **Honest boundaries:** preserve compatibility limits, failures and unverified behavior. Fixture execution, live-model quality and production readiness are different evidence.
