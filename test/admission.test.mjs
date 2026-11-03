@@ -15,7 +15,26 @@ async function run(options) {
   await submitRun(options);
   return executeRun(options);
 }
-async function waitFor(predicate, label, timeout = 4000) { const start = Date.now(); for (;;) { const value = predicate(); if (value) return value; if (Date.now() - start > timeout) throw new Error(`Timed out: ${label}`); await delay(10); } }
+async function waitFor(predicate, label, timeout = 4000, worker) {
+  const start = Date.now();
+  for (;;) {
+    const value = predicate(); if (value) return value;
+    if (worker?.outcome) throw new Error(`Worker exited before ${label}: ${worker.describe()}`);
+    if (Date.now() - start > timeout) throw new Error(`Timed out: ${label}${worker ? `; ${worker.describe()}` : ''}`);
+    await delay(10);
+  }
+}
+async function killWorker(worker) {
+  assert.equal(worker.child.kill('SIGKILL'), true, worker.describe());
+  const result = await worker.done;
+  assert.equal(result.signal, 'SIGKILL', worker.describe());
+  assert.equal(result.code, null, worker.describe());
+}
+async function completedWorker(worker) {
+  const result = await worker.done;
+  assert.equal(result.code, 0, worker.describe());
+  assert.equal(result.message?.result?.status, 'completed', worker.describe());
+}
 async function fixture(handler) {
   await mkdir('test-output', { recursive: true }); const directory = await mkdtemp(resolve('test-output/admission-'));
   const session = await openSession({ directory: join(directory, 'session'), leaseMs: 300 });
@@ -31,9 +50,12 @@ async function fixture(handler) {
   const endpoint = `http://127.0.0.1:${server.address().port}/chat/completions`;
   const launch = (runId, extra = {}) => {
     const child = fork(new URL('./fixtures/admission-worker.mjs', import.meta.url), [JSON.stringify({ directory, endpoint, runId, ...extra })], { stdio: ['ignore', 'pipe', 'pipe', 'ipc'] }); children.push(child);
-    let message; let stderr = ''; child.on('message', value => { message = value; }); child.stderr.on('data', chunk => { stderr += chunk; });
-    const done = new Promise(resolve => child.on('exit', (code, signal) => resolve({ code, signal, message, stderr })));
-    return { child, done };
+    let message, outcome; let stderr = ''; child.on('message', value => { message = value; }); child.stderr.on('data', chunk => { stderr += chunk; });
+    const done = new Promise(resolve => child.on('exit', (code, signal) => { outcome = { code, signal, message, stderr }; resolve(outcome); }));
+    const describe = () => JSON.stringify({ runId, exitCode: outcome?.code, signal: outcome?.signal,
+      result: message?.result, error: message?.error, stderr: stderr.slice(-4096),
+      tickets: admission.snapshot().requests.map(({ runId, state }) => ({ runId, state })) });
+    return { child, done, describe, get outcome() { return outcome; } };
   };
   return { directory, session, admission, requests, launch, endpoint, maximum: () => maximum,
     async close() { for (const child of children) if (child.exitCode === null && child.signalCode === null) child.kill('SIGKILL'); await Promise.all(children.map(child => child.exitCode !== null || child.signalCode !== null ? null : new Promise(resolve => child.once('exit', resolve)))); server.closeAllConnections(); await new Promise(resolve => server.close(resolve)); admission.close(); session.close(); } };
@@ -85,8 +107,8 @@ test('killed dispatched process stays occupied; killed queued process expires wi
   const f = await fixture(() => {});
   try {
     const a = f.launch('killed-dispatched'); await waitFor(() => f.requests.length === 1, 'dispatch');
-    const b = f.launch('killed-queued', { queueTimeoutMs: 150 }); await waitFor(() => f.admission.snapshot().requests.some(x => x.runId === 'killed-queued'), 'queue');
-    b.child.kill('SIGKILL'); await b.done; a.child.kill('SIGKILL'); await a.done; await delay(180);
+    const b = f.launch('killed-queued', { queueTimeoutMs: 150 }); await waitFor(() => f.admission.snapshot().requests.some(x => x.runId === 'killed-queued' && x.state === 'queued'), 'queue', 4000, b);
+    await killWorker(b); await killWorker(a); await delay(180);
     const c = await f.launch('still-blocked', { queueTimeoutMs: 100 }).done; assert.equal(c.code, 0, c.stderr);
     const tickets = f.admission.snapshot().requests; assert.equal(tickets[0].state, 'dispatched'); assert.equal(tickets[1].state, 'cancelled'); assert.equal(f.requests.length, 1);
   } finally { await f.close(); }
@@ -94,10 +116,11 @@ test('killed dispatched process stays occupied; killed queued process expires wi
   try {
     const a = recoveredQueue.launch('queue-recovery-owner'); await waitFor(() => recoveredQueue.requests.length === 1, 'queue recovery owner');
     const b = recoveredQueue.launch('queue-recovery-killed', { queueTimeoutMs: 150 });
-    await waitFor(() => recoveredQueue.admission.snapshot().requests.some(x => x.runId === 'queue-recovery-killed'), 'queue recovery waiter');
-    b.child.kill('SIGKILL'); await b.done; await delay(180); complete(recoveredQueue.requests[0].res); await a.done;
-    const c = recoveredQueue.launch('queue-recovery-next'); await waitFor(() => recoveredQueue.requests.length === 2, 'queue recovered');
-    complete(recoveredQueue.requests[1].res); assert.equal((await c.done).message.result.status, 'completed');
+    await waitFor(() => recoveredQueue.admission.snapshot().requests.some(x => x.runId === 'queue-recovery-killed' && x.state === 'queued'), 'queue recovery waiter', 4000, b);
+    await killWorker(b); await delay(180); complete(recoveredQueue.requests[0].res); await completedWorker(a);
+    assert.equal(recoveredQueue.admission.snapshot().requests.find(x => x.runId === 'queue-recovery-owner')?.state, 'completed', a.describe());
+    const c = recoveredQueue.launch('queue-recovery-next'); await waitFor(() => recoveredQueue.requests.length === 2, 'queue recovered', 4000, c);
+    complete(recoveredQueue.requests[1].res); await completedWorker(c);
     assert.equal(recoveredQueue.admission.snapshot().requests[1].state, 'cancelled');
     assert.equal(recoveredQueue.requests.some(x => x.question === 'queue-recovery-killed'), false);
   } finally { await recoveredQueue.close(); }

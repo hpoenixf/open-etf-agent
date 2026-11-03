@@ -7,7 +7,11 @@ import { openSession } from '../src/session.mjs';
 const entry = resolve('src/session-cli.mjs');
 async function directory() { await mkdir('test-output', { recursive: true }); return mkdtemp(resolve('test-output/session-cli-')); }
 function cli(...args) { return spawnSync(process.execPath, [entry, ...args], { encoding: 'utf8', timeout: 15000, maxBuffer: 8 * 1048576 }); }
-function successful(result) { assert.equal(result.error, undefined); assert.equal(result.status, 0, result.stderr); return JSON.parse(result.stdout); }
+function successful(result, context = 'CLI action') {
+ let value; try { value = JSON.parse(result.stdout); } catch {}
+ const diagnostic = JSON.stringify({ context, exit: result.status, signal: result.signal, status: value?.status, code: value?.code, rounds: value?.rounds, rootUsage: value?.rootUsage, error: result.error?.code });
+ assert.equal(result.error, undefined, diagnostic); assert.equal(result.status, 0, diagnostic); return JSON.parse(result.stdout);
+}
 const gateway = model => ({ mode: 'fixture', provider: 'synthetic', protocol: 'fixture@1', model, version: '1' });
 async function activeSession(d, binding = gateway('durable-report')) {
  const store = await openSession({ directory: d });
@@ -46,7 +50,7 @@ test('7.cli read/resume/cancel on absent sessions do not initialize empty databa
 });
 test('7.cli all named fixture profiles start independently and retain their own resume pin', async () => {
  for (const caseId of ['durable-child', 'durable-compaction', 'durable-memory', 'trusted-plugins']) {
-  const d = await directory(); const original = successful(cli('start', '--session', d, '--case', caseId)); assert.equal(original.status, 'completed', caseId);
+  const d = await directory(); const original = successful(cli('start', '--session', d, '--case', caseId), `${caseId}:start`); assert.equal(original.status, 'completed', caseId);
   const inspected = successful(cli('inspect', '--session', d, '--run', original.runId)); assert.deepEqual(inspected.definition.bindings.gateway, gateway(caseId));
   const resumed = successful(cli('resume', '--session', d, '--run', original.runId)); assert.equal(resumed.status, 'completed'); assert.deepEqual(resumed.rootUsage, original.rootUsage);
   const mismatch = cli('resume', '--session', d, '--run', original.runId, '--case', 'durable-report'); assert.equal(mismatch.status, 2); assert.match(mismatch.stderr, /CASE_MISMATCH/);
