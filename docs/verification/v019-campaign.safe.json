@@ -1,0 +1,691 @@
+{
+  "schemaVersion": "v19-public-real-qualification-index@1",
+  "scope": "Mechanism qualification with synthetic inputs; semantic content remains unreviewed.",
+  "formalReleaseClaim": false,
+  "logicalExecutions": 40,
+  "physicalRequests": 159,
+  "batches": [
+    {
+      "id": "A",
+      "sourceCommit": "c4037c06f90be44662f27b7f5d3c385237aa696d",
+      "planCanonicalSha256": "a11967b3149b5331568eb05f81ea95839c36b9ec68a263ff6a0687d3471e8f89",
+      "stateFileSha256": "941f8d7824e7893d056b652a3690786c8e3eb7ba0da0b7f3e5c87d4e9debf6b3",
+      "planned": 10,
+      "requiredSuccesses": 9,
+      "successes": 10,
+      "normalGatePassed": true,
+      "physicalRequests": 31,
+      "tasks": [
+        {
+          "id": "A01",
+          "status": "completed",
+          "eligibleSuccess": true,
+          "code": null,
+          "physicalRequests": {
+            "total": 3,
+            "main": 3,
+            "child": 0,
+            "summary": 0
+          },
+          "mechanismChecksPassed": 19,
+          "mechanismChecksFailed": [],
+          "coldReadbackPassed": true
+        },
+        {
+          "id": "A02",
+          "status": "completed",
+          "eligibleSuccess": true,
+          "code": null,
+          "physicalRequests": {
+            "total": 2,
+            "main": 2,
+            "child": 0,
+            "summary": 0
+          },
+          "mechanismChecksPassed": 16,
+          "mechanismChecksFailed": [],
+          "coldReadbackPassed": true
+        },
+        {
+          "id": "A03",
+          "status": "completed",
+          "eligibleSuccess": true,
+          "code": null,
+          "physicalRequests": {
+            "total": 4,
+            "main": 4,
+            "child": 0,
+            "summary": 0
+          },
+          "mechanismChecksPassed": 22,
+          "mechanismChecksFailed": [],
+          "coldReadbackPassed": true
+        },
+        {
+          "id": "A04",
+          "status": "completed",
+          "eligibleSuccess": true,
+          "code": null,
+          "physicalRequests": {
+            "total": 4,
+            "main": 4,
+            "child": 0,
+            "summary": 0
+          },
+          "mechanismChecksPassed": 23,
+          "mechanismChecksFailed": [],
+          "coldReadbackPassed": true
+        },
+        {
+          "id": "A05",
+          "status": "completed",
+          "eligibleSuccess": true,
+          "code": null,
+          "physicalRequests": {
+            "total": 3,
+            "main": 3,
+            "child": 0,
+            "summary": 0
+          },
+          "mechanismChecksPassed": 24,
+          "mechanismChecksFailed": [],
+          "coldReadbackPassed": true
+        },
+        {
+          "id": "A06",
+          "status": "completed",
+          "eligibleSuccess": true,
+          "code": null,
+          "physicalRequests": {
+            "total": 2,
+            "main": 2,
+            "child": 0,
+            "summary": 0
+          },
+          "mechanismChecksPassed": 22,
+          "mechanismChecksFailed": [],
+          "coldReadbackPassed": true
+        },
+        {
+          "id": "A07",
+          "status": "completed",
+          "eligibleSuccess": true,
+          "code": null,
+          "physicalRequests": {
+            "total": 4,
+            "main": 4,
+            "child": 0,
+            "summary": 0
+          },
+          "mechanismChecksPassed": 25,
+          "mechanismChecksFailed": [],
+          "coldReadbackPassed": true
+        },
+        {
+          "id": "A08",
+          "status": "completed",
+          "eligibleSuccess": true,
+          "code": null,
+          "physicalRequests": {
+            "total": 4,
+            "main": 4,
+            "child": 0,
+            "summary": 0
+          },
+          "mechanismChecksPassed": 22,
+          "mechanismChecksFailed": [],
+          "coldReadbackPassed": true
+        },
+        {
+          "id": "A09",
+          "status": "completed",
+          "eligibleSuccess": true,
+          "code": null,
+          "physicalRequests": {
+            "total": 3,
+            "main": 3,
+            "child": 0,
+            "summary": 0
+          },
+          "mechanismChecksPassed": 24,
+          "mechanismChecksFailed": [],
+          "coldReadbackPassed": true
+        },
+        {
+          "id": "A10",
+          "status": "completed",
+          "eligibleSuccess": true,
+          "code": null,
+          "physicalRequests": {
+            "total": 2,
+            "main": 2,
+            "child": 0,
+            "summary": 0
+          },
+          "mechanismChecksPassed": 21,
+          "mechanismChecksFailed": [],
+          "coldReadbackPassed": true
+        }
+      ]
+    },
+    {
+      "id": "B",
+      "sourceCommit": "c4037c06f90be44662f27b7f5d3c385237aa696d",
+      "planCanonicalSha256": "f97f6b76b398bd9c333b7d39f273a66d5e717e71e9e205ea7ac62bf1aabe3577",
+      "stateFileSha256": "692736f1ebb1aead687fb3b9e84f0aa331d800481202c3ba203299916feb7aa7",
+      "planned": 10,
+      "requiredSuccesses": 9,
+      "successes": 9,
+      "normalGatePassed": true,
+      "physicalRequests": 36,
+      "tasks": [
+        {
+          "id": "B01",
+          "status": "completed",
+          "eligibleSuccess": true,
+          "code": null,
+          "physicalRequests": {
+            "total": 2,
+            "main": 2,
+            "child": 0,
+            "summary": 0
+          },
+          "mechanismChecksPassed": 24,
+          "mechanismChecksFailed": [],
+          "coldReadbackPassed": true
+        },
+        {
+          "id": "B02",
+          "status": "completed",
+          "eligibleSuccess": true,
+          "code": null,
+          "physicalRequests": {
+            "total": 5,
+            "main": 5,
+            "child": 0,
+            "summary": 0
+          },
+          "mechanismChecksPassed": 29,
+          "mechanismChecksFailed": [],
+          "coldReadbackPassed": true
+        },
+        {
+          "id": "B03",
+          "status": "failed",
+          "eligibleSuccess": false,
+          "code": "REQUIRED_MECHANISM_FAILED",
+          "physicalRequests": {
+            "total": 5,
+            "main": 5,
+            "child": 0,
+            "summary": 0
+          },
+          "mechanismChecksPassed": 27,
+          "mechanismChecksFailed": [
+            "mcp-original-call-result",
+            "mcp-source-persisted"
+          ],
+          "coldReadbackPassed": false
+        },
+        {
+          "id": "B04",
+          "status": "completed",
+          "eligibleSuccess": true,
+          "code": null,
+          "physicalRequests": {
+            "total": 5,
+            "main": 5,
+            "child": 0,
+            "summary": 0
+          },
+          "mechanismChecksPassed": 29,
+          "mechanismChecksFailed": [],
+          "coldReadbackPassed": true
+        },
+        {
+          "id": "B05",
+          "status": "completed",
+          "eligibleSuccess": true,
+          "code": null,
+          "physicalRequests": {
+            "total": 2,
+            "main": 2,
+            "child": 0,
+            "summary": 0
+          },
+          "mechanismChecksPassed": 24,
+          "mechanismChecksFailed": [],
+          "coldReadbackPassed": true
+        },
+        {
+          "id": "B06",
+          "status": "completed",
+          "eligibleSuccess": true,
+          "code": null,
+          "physicalRequests": {
+            "total": 3,
+            "main": 3,
+            "child": 0,
+            "summary": 0
+          },
+          "mechanismChecksPassed": 35,
+          "mechanismChecksFailed": [],
+          "coldReadbackPassed": true
+        },
+        {
+          "id": "B07",
+          "status": "completed",
+          "eligibleSuccess": true,
+          "code": null,
+          "physicalRequests": {
+            "total": 4,
+            "main": 4,
+            "child": 0,
+            "summary": 0
+          },
+          "mechanismChecksPassed": 38,
+          "mechanismChecksFailed": [],
+          "coldReadbackPassed": true
+        },
+        {
+          "id": "B08",
+          "status": "completed",
+          "eligibleSuccess": true,
+          "code": null,
+          "physicalRequests": {
+            "total": 3,
+            "main": 3,
+            "child": 0,
+            "summary": 0
+          },
+          "mechanismChecksPassed": 40,
+          "mechanismChecksFailed": [],
+          "coldReadbackPassed": true
+        },
+        {
+          "id": "B09",
+          "status": "completed",
+          "eligibleSuccess": true,
+          "code": null,
+          "physicalRequests": {
+            "total": 3,
+            "main": 3,
+            "child": 0,
+            "summary": 0
+          },
+          "mechanismChecksPassed": 37,
+          "mechanismChecksFailed": [],
+          "coldReadbackPassed": true
+        },
+        {
+          "id": "B10",
+          "status": "completed",
+          "eligibleSuccess": true,
+          "code": null,
+          "physicalRequests": {
+            "total": 4,
+            "main": 4,
+            "child": 0,
+            "summary": 0
+          },
+          "mechanismChecksPassed": 42,
+          "mechanismChecksFailed": [],
+          "coldReadbackPassed": true
+        }
+      ]
+    },
+    {
+      "id": "C-original",
+      "sourceCommit": "c4037c06f90be44662f27b7f5d3c385237aa696d",
+      "planCanonicalSha256": "3e6c5694e4b7ff8fcc23470ab204f948aa9e69b8ce8262ca6204d4b0608347b0",
+      "stateFileSha256": "c3645cf93e5c50129f019bd9615c033111a2fe309d5f3833edcabf4f182a45bb",
+      "planned": 10,
+      "requiredSuccesses": 9,
+      "successes": 9,
+      "normalGatePassed": false,
+      "physicalRequests": 48,
+      "tasks": [
+        {
+          "id": "C01",
+          "status": "completed",
+          "eligibleSuccess": true,
+          "code": null,
+          "physicalRequests": {
+            "total": 3,
+            "main": 3,
+            "child": 0,
+            "summary": 0
+          },
+          "mechanismChecksPassed": 17,
+          "mechanismChecksFailed": [],
+          "coldReadbackPassed": true
+        },
+        {
+          "id": "C02",
+          "status": "completed",
+          "eligibleSuccess": true,
+          "code": null,
+          "physicalRequests": {
+            "total": 3,
+            "main": 3,
+            "child": 0,
+            "summary": 0
+          },
+          "mechanismChecksPassed": 20,
+          "mechanismChecksFailed": [],
+          "coldReadbackPassed": true
+        },
+        {
+          "id": "C03",
+          "status": "completed",
+          "eligibleSuccess": true,
+          "code": null,
+          "physicalRequests": {
+            "total": 5,
+            "main": 5,
+            "child": 0,
+            "summary": 0
+          },
+          "mechanismChecksPassed": 27,
+          "mechanismChecksFailed": [],
+          "coldReadbackPassed": true
+        },
+        {
+          "id": "C04",
+          "status": "completed",
+          "eligibleSuccess": true,
+          "code": null,
+          "physicalRequests": {
+            "total": 3,
+            "main": 3,
+            "child": 0,
+            "summary": 0
+          },
+          "mechanismChecksPassed": 19,
+          "mechanismChecksFailed": [],
+          "coldReadbackPassed": true
+        },
+        {
+          "id": "C05",
+          "status": "completed",
+          "eligibleSuccess": true,
+          "code": null,
+          "physicalRequests": {
+            "total": 3,
+            "main": 3,
+            "child": 0,
+            "summary": 0
+          },
+          "mechanismChecksPassed": 23,
+          "mechanismChecksFailed": [],
+          "coldReadbackPassed": true
+        },
+        {
+          "id": "C06",
+          "status": "completed",
+          "eligibleSuccess": true,
+          "code": null,
+          "physicalRequests": {
+            "total": 3,
+            "main": 3,
+            "child": 0,
+            "summary": 0
+          },
+          "mechanismChecksPassed": 23,
+          "mechanismChecksFailed": [],
+          "coldReadbackPassed": true
+        },
+        {
+          "id": "C07",
+          "status": "completed",
+          "eligibleSuccess": true,
+          "code": null,
+          "physicalRequests": {
+            "total": 3,
+            "main": 3,
+            "child": 0,
+            "summary": 0
+          },
+          "mechanismChecksPassed": 27,
+          "mechanismChecksFailed": [],
+          "coldReadbackPassed": true
+        },
+        {
+          "id": "C08",
+          "status": "completed",
+          "eligibleSuccess": true,
+          "code": null,
+          "physicalRequests": {
+            "total": 5,
+            "main": 5,
+            "child": 0,
+            "summary": 0
+          },
+          "mechanismChecksPassed": 29,
+          "mechanismChecksFailed": [],
+          "coldReadbackPassed": true
+        },
+        {
+          "id": "C09",
+          "status": "completed",
+          "eligibleSuccess": true,
+          "code": null,
+          "physicalRequests": {
+            "total": 5,
+            "main": 3,
+            "child": 2,
+            "summary": 0
+          },
+          "mechanismChecksPassed": 24,
+          "mechanismChecksFailed": [],
+          "coldReadbackPassed": true
+        },
+        {
+          "id": "C10",
+          "status": "failed",
+          "eligibleSuccess": false,
+          "code": "COMPACTION_OUTCOME_UNKNOWN",
+          "physicalRequests": {
+            "total": 15,
+            "main": 9,
+            "child": 0,
+            "summary": 6
+          },
+          "mechanismChecksPassed": 27,
+          "mechanismChecksFailed": [
+            "completed",
+            "allReservationsCharged",
+            "originalAdmission",
+            "originalPublication"
+          ],
+          "coldReadbackPassed": false
+        }
+      ]
+    },
+    {
+      "id": "C-repair-1",
+      "sourceCommit": "6a52f20ecf1ef7235049859a27f0cd57af4eb523",
+      "planCanonicalSha256": "6b04befd2a826e59b6c493ae637fa2ee68ee96fdca92e228752f0437d9fb9450",
+      "stateFileSha256": "3a9c46dd4a3b6eb84b89a0c4abe5b45797abdcea6b1e414815a260a220f9c392",
+      "planned": 10,
+      "requiredSuccesses": 9,
+      "successes": 10,
+      "normalGatePassed": true,
+      "physicalRequests": 44,
+      "tasks": [
+        {
+          "id": "C01",
+          "status": "completed",
+          "eligibleSuccess": true,
+          "code": null,
+          "physicalRequests": {
+            "total": 3,
+            "main": 3,
+            "child": 0,
+            "summary": 0
+          },
+          "mechanismChecksPassed": 17,
+          "mechanismChecksFailed": [],
+          "coldReadbackPassed": true
+        },
+        {
+          "id": "C02",
+          "status": "completed",
+          "eligibleSuccess": true,
+          "code": null,
+          "physicalRequests": {
+            "total": 3,
+            "main": 3,
+            "child": 0,
+            "summary": 0
+          },
+          "mechanismChecksPassed": 20,
+          "mechanismChecksFailed": [],
+          "coldReadbackPassed": true
+        },
+        {
+          "id": "C03",
+          "status": "completed",
+          "eligibleSuccess": true,
+          "code": null,
+          "physicalRequests": {
+            "total": 5,
+            "main": 5,
+            "child": 0,
+            "summary": 0
+          },
+          "mechanismChecksPassed": 27,
+          "mechanismChecksFailed": [],
+          "coldReadbackPassed": true
+        },
+        {
+          "id": "C04",
+          "status": "completed",
+          "eligibleSuccess": true,
+          "code": null,
+          "physicalRequests": {
+            "total": 3,
+            "main": 3,
+            "child": 0,
+            "summary": 0
+          },
+          "mechanismChecksPassed": 19,
+          "mechanismChecksFailed": [],
+          "coldReadbackPassed": true
+        },
+        {
+          "id": "C05",
+          "status": "completed",
+          "eligibleSuccess": true,
+          "code": null,
+          "physicalRequests": {
+            "total": 3,
+            "main": 3,
+            "child": 0,
+            "summary": 0
+          },
+          "mechanismChecksPassed": 23,
+          "mechanismChecksFailed": [],
+          "coldReadbackPassed": true
+        },
+        {
+          "id": "C06",
+          "status": "completed",
+          "eligibleSuccess": true,
+          "code": null,
+          "physicalRequests": {
+            "total": 3,
+            "main": 3,
+            "child": 0,
+            "summary": 0
+          },
+          "mechanismChecksPassed": 23,
+          "mechanismChecksFailed": [],
+          "coldReadbackPassed": true
+        },
+        {
+          "id": "C07",
+          "status": "completed",
+          "eligibleSuccess": true,
+          "code": null,
+          "physicalRequests": {
+            "total": 3,
+            "main": 3,
+            "child": 0,
+            "summary": 0
+          },
+          "mechanismChecksPassed": 27,
+          "mechanismChecksFailed": [],
+          "coldReadbackPassed": true
+        },
+        {
+          "id": "C08",
+          "status": "completed",
+          "eligibleSuccess": true,
+          "code": null,
+          "physicalRequests": {
+            "total": 5,
+            "main": 5,
+            "child": 0,
+            "summary": 0
+          },
+          "mechanismChecksPassed": 29,
+          "mechanismChecksFailed": [],
+          "coldReadbackPassed": true
+        },
+        {
+          "id": "C09",
+          "status": "completed",
+          "eligibleSuccess": true,
+          "code": null,
+          "physicalRequests": {
+            "total": 6,
+            "main": 4,
+            "child": 2,
+            "summary": 0
+          },
+          "mechanismChecksPassed": 24,
+          "mechanismChecksFailed": [],
+          "coldReadbackPassed": true
+        },
+        {
+          "id": "C10",
+          "status": "completed",
+          "eligibleSuccess": true,
+          "code": null,
+          "physicalRequests": {
+            "total": 10,
+            "main": 8,
+            "child": 0,
+            "summary": 2
+          },
+          "mechanismChecksPassed": 36,
+          "mechanismChecksFailed": [],
+          "coldReadbackPassed": true
+        }
+      ]
+    }
+  ],
+  "historicalFailuresRetained": [
+    "B03: original exactly-one-MCP-call oracle rejected two authorized reads. Original score remains failed; Runtime defect was not observed.",
+    "Original C10: repeated summary exhaustion left an internal Admission unknown ticket after local pre-provider rejection. Actual provider requests were all accounted. Original outcome remains failed."
+  ],
+  "boundaries": [
+    "A/B executed c4037c06; repaired C executed 6a52f20e. These are distinct local source identities, not public release tags.",
+    "A/B qualification is not automatically relabeled as evidence from the repair source.",
+    "No original B task was replayed; the continuation used only B04–B10.",
+    "C repair executed all ten original C scenarios on the repaired source, without changing questions or increasing model-call limits.",
+    "A contains two report artifacts, alongside original Result, Memory and Publication mechanisms.",
+    "The suite does not establish live contention, cross-group global-capacity recovery or unrestricted module combinations."
+  ],
+  "compactionRepair": {
+    "schemaVersion": "gateway-history-compaction@2",
+    "persistedSummaryAttempts": 2,
+    "actualSummaryRequests": 2,
+    "mainRequests": 8,
+    "frontierValidatedByOriginalHost": true,
+    "freshColdReadbackPassed": true,
+    "allOriginalAdmissionRequestsCompleted": true,
+    "oldInternalUnknownTicketUnchanged": true
+  }
+}

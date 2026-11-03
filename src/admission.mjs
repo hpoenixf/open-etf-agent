@@ -16,9 +16,14 @@ function reserved(session, runId, initial = false) {
   if (!value || value.runId !== runId || typeof value.rootId !== 'string' || typeof value.owner !== 'string'
     || !Number.isSafeInteger(value.fence) || value.fence < 1) fail('ADMISSION_RESERVATION_REQUIRED');
   const round = value.snapshot?.rounds;
+  const purpose = value.snapshot?.purpose;
+  const input = purpose === 'compaction' ? value.snapshot.summaryRequest : value.snapshot?.working;
+  if (purpose !== undefined && purpose !== 'compaction') fail('ADMISSION_RESERVATION_REQUIRED');
+  if (purpose === 'compaction' && (input?.schemaVersion !== 'summary-request@1'
+    || !Array.isArray(input.messages) || input.hash !== createHash('sha256').update(JSON.stringify(input.messages)).digest('hex'))) fail('ADMISSION_RESERVATION_MISMATCH');
   if (initial && (value.status !== 'active' || value.rootStatus !== 'active' || value.snapshot?.phase !== 'model-reserved'
-    || value.snapshot.purpose !== undefined || !Number.isSafeInteger(round) || round < 1 || value.rootUsage?.model < 1)) fail('ADMISSION_RESERVATION_REQUIRED');
-  return { rootId: value.rootId, runId, round, owner: value.owner, fence: value.fence, leaseUntil: value.leaseUntil };
+    || !Number.isSafeInteger(round) || round < (purpose === 'compaction' ? 0 : 1) || value.rootUsage?.model < 1)) fail('ADMISSION_RESERVATION_REQUIRED');
+  return { rootId: value.rootId, runId, round, purpose, inputHash: input?.hash, owner: value.owner, fence: value.fence, leaseUntil: value.leaseUntil };
 }
 
 // One local capacity group, not a provider registry or a billing owner.
@@ -90,10 +95,22 @@ export async function createSharedAdmission({ directory, routeId, maxQueue = 8, 
     close() { db.close(); },
     wrap(gateway, { session, runId }) {
       if (typeof gateway?.next !== 'function' || typeof session?.inspect !== 'function') fail('INVALID_ADMISSION_GATEWAY');
-      return {
+      const bind = selectedRunId => ({
         mode: gateway.mode,
         admission: 'shared-admission@1',
+        // Rebind the same route/capacity owner only after Session created the Run.
+        // A Child receives its own Runtime receipt; a parent's ticket is never reusable.
+        bindRun({ session: selectedSession, runId: childRunId } = {}) {
+          if (selectedSession !== session || typeof childRunId !== 'string') fail('ADMISSION_BINDING_MISMATCH');
+          const parent = session.inspect(selectedRunId), child = session.inspect(childRunId);
+          if (!parent || !child || parent.rootStatus !== 'active' || child.rootStatus !== 'active'
+            || parent.status !== 'active' || child.status !== 'active'
+            || child.rootId !== parent.rootId
+            || (childRunId !== selectedRunId && (parent.parentRunId !== null || child.parentRunId !== selectedRunId))) fail('ADMISSION_BINDING_MISMATCH');
+          return childRunId === selectedRunId ? bind(selectedRunId) : bind(childRunId);
+        },
         async next(input) {
+          const runId = selectedRunId;
           const signal = input?.signal;
           signal?.throwIfAborted();
           const reservation = projectModelReservation(input?.reservation);
@@ -101,14 +118,17 @@ export async function createSharedAdmission({ directory, routeId, maxQueue = 8, 
           const original = reserved(session, runId, true);
           if (original.rootId !== reservation.rootId || original.round !== reservation.round
             || original.owner !== reservation.owner || original.fence !== reservation.fence
-            || session.inspect(runId).snapshot.working?.hash !== reservation.inputHash
+            || original.purpose !== reservation.purpose || original.inputHash !== reservation.inputHash
             || createHash('sha256').update(JSON.stringify(input.messages)).digest('hex') !== reservation.inputHash) fail('ADMISSION_RESERVATION_MISMATCH');
+          if (reservation.purpose === 'compaction' && (!Array.isArray(input.tools) || input.tools.length !== 0)) fail('ADMISSION_RESERVATION_MISMATCH');
           const { requestId, deadline } = enqueue(reservation);
           const currentFence = (dispatch = false) => {
             const current = reserved(session, runId, dispatch);
             if (current.owner !== reservation.owner || current.fence !== reservation.fence
               || dispatch && (current.leaseUntil <= Date.now() || current.round !== reservation.round
-                || session.inspect(runId).snapshot.working?.hash !== reservation.inputHash)) fail('ADMISSION_FENCE_STALE');
+                || current.purpose !== reservation.purpose || current.inputHash !== reservation.inputHash
+                || createHash('sha256').update(JSON.stringify(input.messages)).digest('hex') !== reservation.inputHash
+                || reservation.purpose === 'compaction' && (!Array.isArray(input.tools) || input.tools.length !== 0))) fail('ADMISSION_FENCE_STALE');
           };
           try {
             for (;;) {
@@ -137,7 +157,8 @@ export async function createSharedAdmission({ directory, routeId, maxQueue = 8, 
             throw error;
           }
         }
-      };
+      });
+      return bind(runId);
     }
   };
 }

@@ -1,0 +1,288 @@
+{
+  "schemaVersion": "v19-original-mechanical-decision@1",
+  "batch": "A",
+  "executionIdentity": "26557237cabd2df8f2bf1ed8cdafb56d08d5683f7320fc8ae9a35db64fefa19d",
+  "executionIdentityBasis": {
+    "sourceCommit": "c4037c06f90be44662f27b7f5d3c385237aa696d",
+    "executionInventoryFileSha256": "bffa29726672126e14353ef6b711aaf50f23082d74a7e8fa006f79b05136457e",
+    "provider": {
+      "endpoint": "https://opencode.ai/inference/go/openai/v1/chat/completions",
+      "model": "deepseek-v4.1-flash"
+    },
+    "gatewayBinding": {
+      "mode": "live",
+      "provider": "opencode.ai-go",
+      "protocol": "chat-completions",
+      "model": "deepseek-v4.1-flash",
+      "version": "1"
+    },
+    "profile": {
+      "physicalPerTask": 24,
+      "physicalPerBatch": 240,
+      "roles": {
+        "main": 24,
+        "child": 6,
+        "summary": 6
+      },
+      "httpDeadlineMs": 120000,
+      "taskDeadlineMs": 3600000,
+      "readerReadbackDeadlineMs": 20000,
+      "maxResponseBytes": 1000000
+    },
+    "taskIds": [
+      "A01",
+      "A02",
+      "A03",
+      "A04",
+      "A05",
+      "A06",
+      "A07",
+      "A08",
+      "A09",
+      "A10"
+    ],
+    "adapterSha256": "08d7945f176a9a1960c46b110c611160b99de0965dda48d2da2fcb8505c52c81"
+  },
+  "realProviderApplicability": "supported-in-declared-scope",
+  "separateSafetyGatePassed": true,
+  "safetyEvidence": {
+    "independentAcceptanceSha256": "222faee2350a34763a7438f3ddbc760e0df8a0681e240432d3e16c526430d952",
+    "originalStopCode": null,
+    "originalUnknownBillingNew": 0,
+    "sourceBoundaries": "A/B c403 and repaired C6a52 remain separate identities; no automatic transfer.",
+    "fixedProviderFreeReceipts": [
+      {
+        "name": "FINAL-PROVIDER-FREE-VALIDATION.safe.json",
+        "sha256": "f425a1b6228f3734653c8b7e5c9eba6acb484b0ee2b492214b9489ecbff6f1f9"
+      },
+      {
+        "name": "INTEGRATION-REVIEW-FINAL.safe.json",
+        "sha256": "93d9e5a8742eac2149efa78128f6096a21e45a91c003bb4011e229b96ab5b9fd"
+      }
+    ],
+    "fullSuiteBoundary": "See fixed receipt: final targeted validation is distinguished from predecessor full-suite execution; no same-source full-suite claim is fabricated."
+  },
+  "normalGate": {
+    "planned": 10,
+    "requiredSuccesses": 9,
+    "threshold": 0.9,
+    "taskIds": [
+      "A01",
+      "A02",
+      "A03",
+      "A04",
+      "A05",
+      "A06",
+      "A07",
+      "A08",
+      "A09",
+      "A10"
+    ],
+    "tasks": [
+      {
+        "id": "A01",
+        "executionIdentity": "26557237cabd2df8f2bf1ed8cdafb56d08d5683f7320fc8ae9a35db64fefa19d",
+        "realProvider": true,
+        "physicalRequests": 3,
+        "status": "success",
+        "eligibleSuccess": true,
+        "runtimeAccepted": true,
+        "workflowCompleted": true,
+        "deliveryReadback": true,
+        "onTime": true,
+        "unknownEffects": false,
+        "provenance": {
+          "stateFileSha256": "941f8d7824e7893d056b652a3690786c8e3eb7ba0da0b7f3e5c87d4e9debf6b3",
+          "completedAt": 1793681407523,
+          "originalFixtureDeadlineAt": 1793684991056,
+          "code": null,
+          "mechanismChecksPassed": true
+        }
+      },
+      {
+        "id": "A02",
+        "executionIdentity": "26557237cabd2df8f2bf1ed8cdafb56d08d5683f7320fc8ae9a35db64fefa19d",
+        "realProvider": true,
+        "physicalRequests": 2,
+        "status": "success",
+        "eligibleSuccess": true,
+        "runtimeAccepted": true,
+        "workflowCompleted": true,
+        "deliveryReadback": true,
+        "onTime": true,
+        "unknownEffects": false,
+        "provenance": {
+          "stateFileSha256": "941f8d7824e7893d056b652a3690786c8e3eb7ba0da0b7f3e5c87d4e9debf6b3",
+          "completedAt": 1793681416086,
+          "originalFixtureDeadlineAt": 1793685008139,
+          "code": null,
+          "mechanismChecksPassed": true
+        }
+      },
+      {
+        "id": "A03",
+        "executionIdentity": "26557237cabd2df8f2bf1ed8cdafb56d08d5683f7320fc8ae9a35db64fefa19d",
+        "realProvider": true,
+        "physicalRequests": 4,
+        "status": "success",
+        "eligibleSuccess": true,
+        "runtimeAccepted": true,
+        "workflowCompleted": true,
+        "deliveryReadback": true,
+        "onTime": true,
+        "unknownEffects": false,
+        "provenance": {
+          "stateFileSha256": "941f8d7824e7893d056b652a3690786c8e3eb7ba0da0b7f3e5c87d4e9debf6b3",
+          "completedAt": 1793681431166,
+          "originalFixtureDeadlineAt": 1793685016669,
+          "code": null,
+          "mechanismChecksPassed": true
+        }
+      },
+      {
+        "id": "A04",
+        "executionIdentity": "26557237cabd2df8f2bf1ed8cdafb56d08d5683f7320fc8ae9a35db64fefa19d",
+        "realProvider": true,
+        "physicalRequests": 4,
+        "status": "success",
+        "eligibleSuccess": true,
+        "runtimeAccepted": true,
+        "workflowCompleted": true,
+        "deliveryReadback": true,
+        "onTime": true,
+        "unknownEffects": false,
+        "provenance": {
+          "stateFileSha256": "941f8d7824e7893d056b652a3690786c8e3eb7ba0da0b7f3e5c87d4e9debf6b3",
+          "completedAt": 1793681445015,
+          "originalFixtureDeadlineAt": 1793685031749,
+          "code": null,
+          "mechanismChecksPassed": true
+        }
+      },
+      {
+        "id": "A05",
+        "executionIdentity": "26557237cabd2df8f2bf1ed8cdafb56d08d5683f7320fc8ae9a35db64fefa19d",
+        "realProvider": true,
+        "physicalRequests": 3,
+        "status": "success",
+        "eligibleSuccess": true,
+        "runtimeAccepted": true,
+        "workflowCompleted": true,
+        "deliveryReadback": true,
+        "onTime": true,
+        "unknownEffects": false,
+        "provenance": {
+          "stateFileSha256": "941f8d7824e7893d056b652a3690786c8e3eb7ba0da0b7f3e5c87d4e9debf6b3",
+          "completedAt": 1793681461990,
+          "originalFixtureDeadlineAt": 1793685045532,
+          "code": null,
+          "mechanismChecksPassed": true
+        }
+      },
+      {
+        "id": "A06",
+        "executionIdentity": "26557237cabd2df8f2bf1ed8cdafb56d08d5683f7320fc8ae9a35db64fefa19d",
+        "realProvider": true,
+        "physicalRequests": 2,
+        "status": "success",
+        "eligibleSuccess": true,
+        "runtimeAccepted": true,
+        "workflowCompleted": true,
+        "deliveryReadback": true,
+        "onTime": true,
+        "unknownEffects": false,
+        "provenance": {
+          "stateFileSha256": "941f8d7824e7893d056b652a3690786c8e3eb7ba0da0b7f3e5c87d4e9debf6b3",
+          "completedAt": 1793681469518,
+          "originalFixtureDeadlineAt": 1793685062559,
+          "code": null,
+          "mechanismChecksPassed": true
+        }
+      },
+      {
+        "id": "A07",
+        "executionIdentity": "26557237cabd2df8f2bf1ed8cdafb56d08d5683f7320fc8ae9a35db64fefa19d",
+        "realProvider": true,
+        "physicalRequests": 4,
+        "status": "success",
+        "eligibleSuccess": true,
+        "runtimeAccepted": true,
+        "workflowCompleted": true,
+        "deliveryReadback": true,
+        "onTime": true,
+        "unknownEffects": false,
+        "provenance": {
+          "stateFileSha256": "941f8d7824e7893d056b652a3690786c8e3eb7ba0da0b7f3e5c87d4e9debf6b3",
+          "completedAt": 1793681483025,
+          "originalFixtureDeadlineAt": 1793685070228,
+          "code": null,
+          "mechanismChecksPassed": true
+        }
+      },
+      {
+        "id": "A08",
+        "executionIdentity": "26557237cabd2df8f2bf1ed8cdafb56d08d5683f7320fc8ae9a35db64fefa19d",
+        "realProvider": true,
+        "physicalRequests": 4,
+        "status": "success",
+        "eligibleSuccess": true,
+        "runtimeAccepted": true,
+        "workflowCompleted": true,
+        "deliveryReadback": true,
+        "onTime": true,
+        "unknownEffects": false,
+        "provenance": {
+          "stateFileSha256": "941f8d7824e7893d056b652a3690786c8e3eb7ba0da0b7f3e5c87d4e9debf6b3",
+          "completedAt": 1793681497207,
+          "originalFixtureDeadlineAt": 1793685083687,
+          "code": null,
+          "mechanismChecksPassed": true
+        }
+      },
+      {
+        "id": "A09",
+        "executionIdentity": "26557237cabd2df8f2bf1ed8cdafb56d08d5683f7320fc8ae9a35db64fefa19d",
+        "realProvider": true,
+        "physicalRequests": 3,
+        "status": "success",
+        "eligibleSuccess": true,
+        "runtimeAccepted": true,
+        "workflowCompleted": true,
+        "deliveryReadback": true,
+        "onTime": true,
+        "unknownEffects": false,
+        "provenance": {
+          "stateFileSha256": "941f8d7824e7893d056b652a3690786c8e3eb7ba0da0b7f3e5c87d4e9debf6b3",
+          "completedAt": 1793681513239,
+          "originalFixtureDeadlineAt": 1793685097963,
+          "code": null,
+          "mechanismChecksPassed": true
+        }
+      },
+      {
+        "id": "A10",
+        "executionIdentity": "26557237cabd2df8f2bf1ed8cdafb56d08d5683f7320fc8ae9a35db64fefa19d",
+        "realProvider": true,
+        "physicalRequests": 2,
+        "status": "success",
+        "eligibleSuccess": true,
+        "runtimeAccepted": true,
+        "workflowCompleted": true,
+        "deliveryReadback": true,
+        "onTime": true,
+        "unknownEffects": false,
+        "provenance": {
+          "stateFileSha256": "941f8d7824e7893d056b652a3690786c8e3eb7ba0da0b7f3e5c87d4e9debf6b3",
+          "completedAt": 1793681519647,
+          "originalFixtureDeadlineAt": 1793685113789,
+          "code": null,
+          "mechanismChecksPassed": true
+        }
+      }
+    ],
+    "attempted": 10,
+    "notRun": 0,
+    "successes": 10,
+    "observedRate": 1.0
+  }
+}

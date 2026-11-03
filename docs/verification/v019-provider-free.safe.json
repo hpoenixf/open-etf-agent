@@ -1,0 +1,33 @@
+{
+  "schemaVersion": "v019-provider-free-boundaries@1",
+  "executionCommit": "6a52f20ecf1ef7235049859a27f0cd57af4eb523",
+  "fullSuite": {
+    "passed": 650,
+    "total": 651,
+    "retainedFailure": "Existing unknown-effect process-kill test used wall-clock 150ms lease and expired before initial checkpoint.",
+    "receiptSha256": "ca85ab3d8c3e956a1edd15b2034ebcf1ecca67dce5af1ede1dcf4d8e36e31f80"
+  },
+  "finalTestOnlyFix": {
+    "passed": 1,
+    "total": 1,
+    "receiptSha256": "4b3b4714f264835ed3e204dea4b7f785a1c0ced8551d701e6e1752abfc04b9c0",
+    "scope": "Explicit owned lease clock; actual kill/new process and unknown-not-replayed assertions retained. No final full-suite rerun claim."
+  },
+  "buildPassed": true,
+  "buildReceiptSha256": "243c3bf36f88f842bcbdd4360a42b01bd11e8381bbf0d576ec08653def9e73c2",
+  "runtimeCompactionChecks": {
+    "passed": 7,
+    "total": 7,
+    "scope": "Normal, one-attempt bound, host stop/cold recovery, unknown, late result, cancellation and checkpoint tampering."
+  },
+  "compactionHelperChecks": {
+    "passed": 11,
+    "total": 11
+  },
+  "independentIntegrationReviewSha256": "4820bce3b020c914cb869c5dd7eb7ab09b9ad1cc3f22e456d10f12a46182dfb3",
+  "legacyReaderProofSha256": "cf33434a550efcd06ea83e362a5306ae35b1f5ba90e30728163c4656956bd5e0",
+  "legacyReaderResult": "Old fixed c403 readOnly Session rejects @2 with INVALID_DEFINITION; new readOnly reader succeeds; exact files unchanged.",
+  "abContractImpactReviewSha256": "1fc4bde94c53eae08a42b8d0218579a4987b38336021cee95ab84e033dfb9336",
+  "abReuseScope": "Original c403 A/B have no managed compaction or Schedule. Relevant unchanged contracts may be used as regression evidence; neither cohort is relabeled as a 6a52 execution.",
+  "paidCallsForTheseChecks": 0
+}

@@ -2,7 +2,7 @@ import {SOURCE_CHECK_METHOD,SOURCE_CHECK_LIMITS,sourceCheckQuestion,runSourceChe
 import {readChildSources} from './child-results.mjs';
 import {validateRuntimeCheckpoint} from './runtime.mjs';
 import {createToolHost} from './tools.mjs';
-import {sha256} from './source.mjs';
+import {sha256,normalizeDocumentCatalog,documentCatalogBinding} from './source.mjs';
 import {PUBLICATION_BINDING} from './publication.mjs';
 const TASK='source-check-v1';
 const fail=code=>{throw Object.assign(new Error(code),{code});};
@@ -10,15 +10,17 @@ const canonical=value=>JSON.stringify(value,(_,v)=>v&&typeof v==='object'&&!Arra
 // Publication belongs to Main. Child inherits the same gateway and every other
 // binding, but never this exact parent-only capability. Unknown bindings stay bound.
 function childBindings(bindings){return {...bindings,adapters:bindings.adapters.filter(item=>canonical(item)!==canonical(PUBLICATION_BINDING))};}
-function scope(question,documents){
- if(typeof question!=='string'||!question.trim()||Buffer.byteLength(question)>16000||!Array.isArray(documents)||!documents.length||documents.length>2||new Set(documents).size!==documents.length||documents.some(d=>!['atlas-a','atlas-b'].includes(d)))fail('INVALID_SPECIALIST_SCOPE');
- return {question,documents:[...documents]};
+function scope(question,documents,documentCatalog){
+ const catalog=documentCatalog===undefined?undefined:normalizeDocumentCatalog(documentCatalog),allowed=catalog?.documents.map(d=>d.id)??['atlas-a','atlas-b'];
+ if(typeof question!=='string'||!question.trim()||Buffer.byteLength(question)>16000||!Array.isArray(documents)||!documents.length||documents.length>2||new Set(documents).size!==documents.length||documents.some(d=>!allowed.includes(d)))fail('INVALID_SPECIALIST_SCOPE');
+ return {question,documents:[...documents],...(catalog?{documentCatalog:catalog}:{})};
 }
 function args(value){if(!value||Array.isArray(value)||Object.keys(value).join(',')!=='question'||typeof value.question!=='string'||!value.question.trim()||Buffer.byteLength(value.question)>2000)fail('INVALID_SPECIALIST_QUESTION');}
-export function sourceCheckBinding({question,documents}){const selected=scope(question,documents);return Object.freeze({id:'serial-source-check',version:'1',contentSha256:sha256(canonical({method:SOURCE_CHECK_METHOD,...selected}))});}
+export function sourceCheckBinding({question,documents,documentCatalog}){const selected=scope(question,documents,documentCatalog);return Object.freeze({id:'serial-source-check',version:documentCatalog?'2':'1',contentSha256:sha256(canonical({method:SOURCE_CHECK_METHOD,...selected}))});}
 function authority(parent,selected){
  validateRuntimeCheckpoint(parent.snapshot,parent.definition);
  const expected=sourceCheckBinding(selected);
+ if(canonical(parent.definition.config.documentCatalog??null)!==canonical(selected.documentCatalog?documentCatalogBinding(selected.documentCatalog):null))fail('SPECIALIST_BINDING_MISMATCH');
  if(parent.parentRunId!==null||parent.rootId!==parent.runId||parent.definition.question!==selected.question||parent.definition.bindings.plugins.length||!parent.definition.bindings.adapters.some(a=>canonical(a)===canonical(expected)))fail('SPECIALIST_BINDING_MISMATCH');
  return expected;
 }
@@ -26,11 +28,11 @@ function originalCall(parent,callId){
  const calls=parent.snapshot.messages.flatMap(m=>m.calls||[]).filter(c=>c.id===callId);
  if(calls.length!==1||calls[0].name!=='source_check')fail('SPECIALIST_CALL_IDENTITY');args(calls[0].arguments);return calls[0];
 }
-export async function readSpecialistHandoff({store,parentRunId,question,documents,callId}){
- const selected=scope(question,documents),parent=store.inspect(parentRunId);authority(parent,selected);
+export async function readSpecialistHandoff({store,parentRunId,question,documents,callId,documentCatalog}){
+ const selected=scope(question,documents,documentCatalog),parent=store.inspect(parentRunId);authority(parent,selected);
  const child=store.findChild(parentRunId,TASK);if(!child)fail('SPECIALIST_NOT_FOUND');
  const binding=sourceCheckBinding(selected);
- if(child.parentRunId!==parent.runId||child.rootId!==parent.rootId||child.definition.config.taskId!==TASK||child.definition.grantId!==parent.definition.grantId||canonical(child.definition.bindings)!==canonical(childBindings(parent.definition.bindings))||child.definition.deadlineAt>parent.definition.deadlineAt||canonical(child.definition.config)!==canonical({requireReport:false,allowedTools:['read_page'],allowedDocuments:selected.documents,taskId:TASK})||canonical(child.definition.limits)!==canonical(SOURCE_CHECK_LIMITS))fail('SPECIALIST_IDENTITY_MISMATCH');
+ if(child.parentRunId!==parent.runId||child.rootId!==parent.rootId||child.definition.config.taskId!==TASK||child.definition.grantId!==parent.definition.grantId||canonical(child.definition.bindings)!==canonical(childBindings(parent.definition.bindings))||child.definition.deadlineAt>parent.definition.deadlineAt||canonical(child.definition.config)!==canonical({requireReport:false,...(selected.documentCatalog?{documentCatalog:documentCatalogBinding(selected.documentCatalog)}:{}),allowedTools:['read_page'],allowedDocuments:selected.documents,taskId:TASK})||canonical(child.definition.limits)!==canonical(SOURCE_CHECK_LIMITS))fail('SPECIALIST_IDENTITY_MISMATCH');
  // The original question canonically binds the delegation call, not whichever call asks now.
  const candidates=parent.snapshot.messages.flatMap(m=>m.calls||[]).filter(c=>c.name==='source_check').filter(c=>{
   try{args(c.arguments);return child.definition.question===sourceCheckQuestion({...selected,localQuestion:c.arguments.question,callId:c.id});}catch{return false;}
@@ -48,14 +50,14 @@ export async function readSpecialistHandoff({store,parentRunId,question,document
   : child.snapshot.gatewayOutcome!=='settled';
  if(out.unknownEffects.length||['MODEL_OUTCOME_UNKNOWN','TOOL_OUTCOME_UNKNOWN'].includes(out.code)||(out.status!=='completed'&&unknownGateway))fail('SPECIALIST_EFFECT_UNKNOWN');
  if(out.status==='completed'&&out.code!==null)fail('SPECIALIST_OUTCOME_MISMATCH');
- const host=await createToolHost({directory:child.directory,allowedTools:['read_page'],allowedDocuments:selected.documents,restore:child.snapshot.host,readOnly:true});
+ const host=await createToolHost({directory:child.directory,documentCatalog:selected.documentCatalog,allowedTools:['read_page'],allowedDocuments:selected.documents,restore:child.snapshot.host,readOnly:true});
  const owned=await host.getResultRefs();if(canonical(owned)!==canonical(out.resultRefs))fail('SPECIALIST_SOURCE_IDENTITY');
  const originals=await readChildSources({directory:child.directory,refs:owned.map(x=>x.resultRef),allowedDocuments:selected.documents,readOnly:true});
  const sources=originals.map((s,i)=>({...s,resultRef:owned[i].resultRef}));
  return {sources,child:{schemaVersion:'specialist-handoff@1',parentRunId:parent.runId,rootId:child.rootId,runId:child.runId,taskId:TASK,callId:original.id,method:binding,status:out.status,code:out.code,derived:true,summary:out.answer,limitations:out.status==='completed'?['derived and semantically unreviewed']:['child failed; only independently validated original sources may be used'],partialEffects:structuredClone(out.partialEffects),mode:child.definition.bindings.gateway.mode,semanticStatus:'unreviewed'}};
 }
-export function createSpecialistChildBinding({store,parentClaim,parentRunId,outputRoot,gatewayFactory,question,documents}){
- const selected=scope(question,documents);if(typeof parentClaim!=='function'||typeof gatewayFactory!=='function')fail('INVALID_SPECIALIST_ADAPTER');
+export function createSpecialistChildBinding({store,parentClaim,parentRunId,outputRoot,gatewayFactory,question,documents,documentCatalog}){
+ const selected=scope(question,documents,documentCatalog);if(typeof parentClaim!=='function'||typeof gatewayFactory!=='function')fail('INVALID_SPECIALIST_ADAPTER');
  function parent(){const token=parentClaim();const id=token?.runId??parentRunId;if(!id)fail('SPECIALIST_PARENT_REQUIRED');const saved=store.inspect(id);authority(saved,selected);return {token,saved};}
  function currentCall(value,callId){const {token,saved}=parent();const p=saved.snapshot.proposal;if(!p||p.kind!=='calls'||p.calls.length!==1||saved.snapshot.cursor!==0||p.calls[0].name!=='source_check'||(callId!==undefined&&p.calls[0].id!==callId)||canonical(p.calls[0].arguments)!==canonical(value))fail('SPECIALIST_SINGLE_CALL_REQUIRED');return {token,saved,call:p.calls[0]};}
  return {

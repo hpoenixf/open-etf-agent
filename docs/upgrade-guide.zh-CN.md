@@ -24,3 +24,7 @@ v0.10 使用 `tool-host@2`。持久化的 `tool-host@1` 快照会以 `UNSUPPORTE
 [兼容测试](../test/result-consumption-delivery.test.mjs)将当前合成 Host 快照的版本改成 `tool-host@1`，验证执行前拒绝、原 Session 与文件不变、独立 Artifact 回读，以及受支持的 `tool-host@2` 继续执行。两次检查间受控的版本变化也会在 claim 前被拒绝，但这不是原子的跨版本迁移保证。
 
 该测试并非旧 Runtime 实际生成的快照。它没有完成真实旧版本恢复或所有历史输出格式的验收。Runtime 预检保护的是被选中的单个 Run，不会盘点所有已部署 Session，也不能证明操作者保留了可用的旧部署。
+
+## v0.19：显式组合与摘要协议边界
+
+保留每个活跃 Run 原源码、锁文件、配置、数据与权限。不要把旧 schema3/4/5 当作可任意互换：Response+Schedule 合并等待协议尚未实现，旧撤权 profile 保留历史语义。新组合 adapter 及 `gateway-history-compaction@2` 的 `maxSummaryRounds` 是显式持久合同。实际旧读者打开新 @2 Session 会以 `INVALID_DEFINITION` 拒绝，新读者只读打开成功且字节不变；这不是自动迁移支持。旧未知请求/容量票不得因升级退还或重放。已绑定 PDF 恢复必须同时保留原快照正文，而非只有摘要。可信扩展必须仍由 Host 核原身份后激活。

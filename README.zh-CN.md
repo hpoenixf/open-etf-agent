@@ -71,15 +71,15 @@ npm run demo -- --case document-compare
 <a id="versions"></a>
 ## 最近三个模块
 
-**v0.18.0 新增一次明确确认的 Schedule Occurrence**，到时显式唤醒原 Worker、Admission 与 Publication。[固定 API 资格与 fixture CLI 边界](docs/verification/v018-release.md)。不包含后台守护或周期调度。
+**v0.19 候选聚焦既有模块的组合合同**：自定义来源、Worker、Memory、可信扩展、PDF、Response、Child、Admission 与显式 Schedule 的已验证组合。[兼容矩阵与运行入口](docs/composition.zh-CN.md) · [真实测评及修复边界](docs/verification/v019-release.zh-CN.md)。尚未发布；不代表所有模块任意组合或生产基金研究服务。
 
 **2026-11-02 底座修复：**[工作输入准入、取消事实、Child 结算与无收益摘要预检查](docs/verification/foundation-repair-20261102.md)。零真实模型调用的回归已通过；不是新增 Release，也不是新一批实测资格。
 
 | 模块 | 解决什么 | 运行与核对 |
 | --- | --- | --- |
+| v0.19 · 组合合同（候选） | 原Owner的显式输入与组合、可恢复摘要复用 | [合同/边界](docs/composition.zh-CN.md) · [资格](docs/verification/v019-release.zh-CN.md) |
 | v0.18 · Schedule Occurrence | 一次确认、显式唤醒，复用原 Owner | [运行与边界](docs/schedule-occurrence.md) · [资格证据](docs/verification/v018-release.md) |
 | v0.17 · 共享 Admission | 两个本地调用者共享一个容量槽，预算仍由原 Runtime 唯一扣减 | [运行与边界](docs/shared-admission.md) · [资格证据](docs/verification/v017-release.md) |
-| v0.16 · 文档撤权 | 披露及后续读取重新检查当前资格；不能撤回已经送出的字节 | [运行说明](docs/module-guide.zh-CN.md#v016--revocable-documents) · [合同与证据](openspec/changes/v016-document-revocation/evidence.md) |
 
 [完整固定版本与运行说明](docs/module-guide.zh-CN.md#versions) · [机器可读版本谱系](versions.json) · [GitHub Releases](https://github.com/hpoenixf/open-etf-agent/releases)
 

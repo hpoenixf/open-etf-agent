@@ -1,0 +1,16 @@
+import test from 'node:test';import assert from 'node:assert/strict';
+import {mkdir,mkdtemp,rm} from 'node:fs/promises';import {resolve,join} from 'node:path';
+import {openSession} from '../src/session.mjs';import {confirmScheduledRun,materializeScheduledRun} from '../src/runtime.mjs';import {workRun} from '../src/worker.mjs';import {SCHEDULE_PROFILE,SCHEDULE_COMPOSITION_BINDING} from '../src/schedule.mjs';
+test('versioned Schedule composition keeps original confirmation and Worker with custom catalog',async()=>{
+ await mkdir('test-output',{recursive:true});const dir=await mkdtemp(resolve('test-output/schedule-composition-'));let store;let calls=0;
+ try{const due=Date.now()-100;let clock=due-10;store=await openSession({directory:dir,profile:SCHEDULE_PROFILE,clock:()=>clock,leaseMs:5000});
+ const catalog={schemaVersion:'document-catalog@1',id:'schedule-library',documents:[{id:'custom-z',name:'Synthetic Z',version:'1',pages:['Synthetic page one.','Synthetic page two.','Synthetic page three.']}]};
+ const options={question:'Read synthetic third page and save original report.',documentCatalog:catalog,allowedDocuments:['custom-z'],allowedTools:['read_page','read_result','save_report'],requireReport:true,publication:true,outputRoot:join(dir,'runs'),limits:{maxRounds:5,maxTools:4,timeoutMs:120000},gateway:{mode:'fixture',async next({messages}){calls++;if(calls===1)return {kind:'calls',calls:[{id:'read',name:'read_page',arguments:{documentId:'custom-z',page:3}}],usage:null};if(calls===2)return {kind:'calls',calls:[{id:'save',name:'save_report',arguments:{text:'# Synthetic scheduled source',sourceIds:[messages.at(-1).result.value.sourceId]}}],usage:null};return {kind:'final',text:'Synthetic schedule completed.',usage:null};}},durable:{store,grantId:'custom-schedule-grant',bindings:{gateway:{mode:'fixture',provider:'synthetic',protocol:'fixture@1',model:'schedule-composition',version:'1'},plugins:[],adapters:[{id:'publication',version:'publication@1'},SCHEDULE_COMPOSITION_BINDING]}}};
+ const schedule={scheduleId:'custom-composition',definitionRevision:1,scheduledInstant:new Date(due).toISOString(),timeZone:'UTC',maxLatenessMs:60000};
+ const legacy={...options,durable:{...options.durable,bindings:{...options.durable.bindings,adapters:[{id:'publication',version:'publication@1'},{id:'schedule-public-synthetic',version:'1',contentSha256:'a'.repeat(64)}]}}};
+ await assert.rejects(confirmScheduledRun({...legacy,allowedDocuments:['atlas-a','atlas-b'],allowedTools:['read_page','save_report']},schedule),/SCHEDULE_SCOPE_UNSUPPORTED/);assert.equal(calls,0);
+ const confirmed=await confirmScheduledRun(options,schedule);assert.equal(calls,0);assert.equal((await materializeScheduledRun(options,confirmed.reference)).state,'not-due');assert.equal(calls,0);clock=due;
+ const materialized=await materializeScheduledRun(options,confirmed.reference);assert.equal(calls,0);const result=await workRun({...options,durable:{...options.durable,runId:materialized.runId}});assert.equal(result.run.status,'completed');assert.equal(calls,3);assert.ok(result.publication);
+ assert.equal((await materializeScheduledRun(options,confirmed.reference)).runId,materialized.runId);assert.equal(calls,3);
+ }finally{store?.close();await rm(dir,{recursive:true,force:true});}
+});

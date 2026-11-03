@@ -74,11 +74,33 @@ async function selectedBytes(input,signal){
   }catch(e){if(typeof e.code==='string'&&e.code.startsWith('PDF_'))throw e;fail(e.code==='ELOOP'?'PDF_UNSAFE_FILE':'PDF_INPUT_UNAVAILABLE');}
   finally{await handle?.close();}
 }
+// Prepared snapshots are host-owned recovery material, not model-provided parser
+// claims. Admission pins all original and extracted bytes before execution starts.
+export function normalizePdfSnapshot(value) {
+  const invalid=()=>fail('PDF_INVALID_SNAPSHOT');
+  if(!value||typeof value!=='object'||Array.isArray(value)||Object.keys(value).sort().join(',')!=='originalBase64,originalBytes,originalSha256,pages,parser,parserWorkerSha256,schemaVersion,synthetic'||value.schemaVersion!=='pdf-input-snapshot@1'||value.parser!==parser||typeof value.parserWorkerSha256!=='string'||!/^([a-f0-9]{64})$/.test(value.parserWorkerSha256)||typeof value.synthetic!=='boolean'||typeof value.originalBase64!=='string'||value.originalBase64.length>1398104||!Number.isSafeInteger(value.originalBytes)||value.originalBytes<5||value.originalBytes>1048576||!Array.isArray(value.pages)||!value.pages.length||value.pages.length>16)invalid();
+  const bytes=Buffer.from(value.originalBase64,'base64');
+  if(bytes.toString('base64')!==value.originalBase64||bytes.length!==value.originalBytes||sha256(bytes)!==value.originalSha256||!bytes.subarray(0,5).equals(Buffer.from('%PDF-'))||/\/Encrypt\b/.test(bytes.toString('latin1')))invalid();
+  let total=0;const pages=value.pages.map(text=>{if(typeof text!=='string'||text.includes('\0')||Buffer.byteLength(text)>64000)invalid();total+=Buffer.byteLength(text);return text;});if(total>131072)invalid();
+  return Object.freeze({schemaVersion:'pdf-input-snapshot@1',parser,parserWorkerSha256:value.parserWorkerSha256,originalBase64:value.originalBase64,originalSha256:value.originalSha256,originalBytes:value.originalBytes,synthetic:value.synthetic,pages:Object.freeze(pages)});
+}
+export function pdfSnapshotBinding(snapshot) {
+  const value=normalizePdfSnapshot(snapshot);
+  return Object.freeze({schemaVersion:value.schemaVersion,parser:value.parser,parserWorkerSha256:value.parserWorkerSha256,originalSha256:value.originalSha256,originalBytes:value.originalBytes,snapshotSha256:sha256(JSON.stringify(value))});
+}
+export async function preparePdfSnapshot({input={},signal}={}) {
+  if(!input||typeof input!=='object'||Array.isArray(input))fail('PDF_INVALID_INPUT');
+  const original=await selectedBytes(structuredClone(input),signal);
+  const parsed=await parsePdfBytes(original.bytes,{signal});cancelled(signal);
+  return normalizePdfSnapshot({schemaVersion:'pdf-input-snapshot@1',parser:parsed.parser,parserWorkerSha256:sha256(await readFile(new URL('./pdf-parser-worker.mjs',import.meta.url))),originalBase64:original.bytes.toString('base64'),originalSha256:sha256(original.bytes),originalBytes:original.bytes.length,synthetic:original.synthetic,pages:parsed.pages});
+}
 export function openPdfInput({input,store}){
   if(!input||typeof input!=='object'||Array.isArray(input)||!store?.put)fail('PDF_INVALID_INPUT');
-  const configured=structuredClone(input),lifetime=new AbortController();let pending,artifact,cleanupError;
+  const configured=structuredClone(input);
+  const snapshot=Object.hasOwn(configured,'snapshot')?(Object.keys(configured).length===1?normalizePdfSnapshot(configured.snapshot):fail('PDF_INVALID_INPUT')):undefined;
+  const lifetime=new AbortController();let pending,artifact,cleanupError;
   const load=signal=>pending??=(async()=>{
-    try{const snapshot=await selectedBytes(configured,signal);const parsed=await parsePdfBytes(snapshot.bytes,{signal});return{...snapshot,...parsed};}
+    try{if(snapshot){cancelled(signal);return{bytes:Buffer.from(snapshot.originalBase64,'base64'),synthetic:snapshot.synthetic,parser:snapshot.parser,pages:snapshot.pages};}const original=await selectedBytes(configured,signal);const parsed=await parsePdfBytes(original.bytes,{signal});return{...original,...parsed};}
     catch(e){if(e.code==='PDF_CLEANUP_FAILED')cleanupError=e;throw e;}
   })();
   return{

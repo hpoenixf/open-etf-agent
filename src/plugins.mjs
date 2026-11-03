@@ -72,7 +72,7 @@ async function checkContent(sourceUrl, expected) {
  * The content hash verifies the selected module bytes, not its dependency closure or closure state.
  * The caller owns each activation until its Run settles; release is not hot-unload of a live Run.
  */
-export async function activateTrustedPlugins({ plugins, expectedBindings, signal } = {}) {
+async function prepareTrustedPlugins({ plugins, expectedBindings, signal } = {}) {
   if (!Array.isArray(plugins) || plugins.length > 8) fail('PLUGIN_INVALID_SELECTION');
   const packageIds = new Set(); const toolNames = new Set(builtins); const skillIds = new Set(); const skillNames = new Set();
   const hookCounts = Object.fromEntries(phases.map(phase => [phase, 0]));
@@ -113,6 +113,17 @@ export async function activateTrustedPlugins({ plugins, expectedBindings, signal
     try { expected = jsonCopy(expectedBindings); } catch { fail('PLUGIN_BINDINGS_MISMATCH'); }
     if (!Array.isArray(expected) || expected.length !== bindings.length || expected.some((binding, index) => !plain(binding) || Object.keys(binding).sort().join(',') !== 'contentSha256,id,schemaVersion,version' || Object.keys(bindings[index]).some(key => binding[key] !== bindings[index][key]))) fail('PLUGIN_BINDINGS_MISMATCH');
   }
+  signal?.throwIfAborted();
+  return {staged,bindings,extensions,skills};
+}
+// Admission validates the same descriptors and fixed source bytes, without
+// activating trusted code or claiming to have acquired its execution resources.
+export async function inspectTrustedPlugins(options = {}) {
+  const value=await prepareTrustedPlugins(options);
+  return Object.freeze({bindings:freeze(value.bindings),extensions:freeze(value.extensions),skills:freeze(value.skills),hooks:pluginHooks(value.staged),hasHooks:value.staged.some(plugin=>Boolean(plugin.hooks))});
+}
+export async function activateTrustedPlugins({plugins,expectedBindings,signal} = {}) {
+  const {staged,bindings,extensions,skills}=await prepareTrustedPlugins({plugins,expectedBindings,signal});
   const releases = []; let releasing;
   async function release() {
     releasing ??= Promise.resolve().then(async () => {
@@ -140,6 +151,11 @@ export async function activateTrustedPlugins({ plugins, expectedBindings, signal
     const result = await release();
     throw Object.assign(new Error('PLUGIN_ACTIVATION_FAILED'), { code: 'PLUGIN_ACTIVATION_FAILED', releaseErrors: result.errors });
   }
+  const hooks=pluginHooks(staged);
+  return Object.freeze({ bindings: freeze(bindings), extensions: freeze(extensions), skills: freeze(skills), hooks, release });
+}
+
+function pluginHooks(staged){
   const chains = staged.flatMap(plugin => plugin.hooks ? [plugin.hooks] : []);
   const hooks = chains.length ? Object.freeze({
     async before(call, options) {
@@ -151,5 +167,5 @@ export async function activateTrustedPlugins({ plugins, expectedBindings, signal
       const errors = []; for (const chain of chains) errors.push(...await chain.observe(phase, event, options)); return errors;
     }
   }) : undefined;
-  return Object.freeze({ bindings: freeze(bindings), extensions: freeze(extensions), skills: freeze(skills), hooks, release });
+  return hooks;
 }

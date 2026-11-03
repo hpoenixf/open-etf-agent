@@ -1,0 +1,49 @@
+{
+  "evaluatorSha256": "6dcef03dfeb52f8566dd49024fcd860b6f463021630b26c54453f78119c2f9ed",
+  "outputs": {
+    "a": {
+      "inputSha256": "57017f072f8cb1294c15b94a8784a37f1e8a96968305fd0c5a3187a5126a0071",
+      "result": {
+        "policy": "real-ten-min-nine-20261102",
+        "eligible": true,
+        "planned": 10,
+        "attempted": 10,
+        "successes": 10,
+        "observedRate": 1,
+        "scope": "declared receipts only; fixed evidence and publication review still required"
+      }
+    },
+    "b": {
+      "inputSha256": "a9dbafe6f63e8dc400e97a6a0214a736c0a3e2e33de50f4a407aaf0add207f27",
+      "result": {
+        "policy": "real-ten-min-nine-20261102",
+        "eligible": true,
+        "planned": 10,
+        "attempted": 10,
+        "successes": 9,
+        "observedRate": 0.9,
+        "scope": "declared receipts only; fixed evidence and publication review still required"
+      }
+    },
+    "c-original": {
+      "inputSha256": "aee76496ec2586e4d7448e3dda9ef1f5f27b2cf8bcbafd68cce1be9a8c87bfd9",
+      "result": {
+        "policy": "real-ten-min-nine-20261102",
+        "eligible": false,
+        "reason": "separate required safety gate incomplete"
+      }
+    },
+    "c-repair": {
+      "inputSha256": "373140a0fbd8a27447a35e7cf8ea05860046dff4efdc20201ee770479fb5411e",
+      "result": {
+        "policy": "real-ten-min-nine-20261102",
+        "eligible": true,
+        "planned": 10,
+        "attempted": 10,
+        "successes": 10,
+        "observedRate": 1,
+        "scope": "declared receipts only; fixed evidence and publication review still required"
+      }
+    }
+  }
+}

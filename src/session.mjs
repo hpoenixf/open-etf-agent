@@ -62,8 +62,10 @@ function validateBindings(value) {
  }
 }
 function validateConfig(value, ordinary = false, protectedProfile = false) {
- fields(value, [], ['requireReport', 'allowedTools', 'allowedDocuments', 'contextBytes', 'taskId', 'workingInput', 'publication', 'taskTime', ...(ordinary ? ['ordinaryResponse'] : []), ...(protectedProfile ? ['documentProtection'] : [])]);
- if(protectedProfile){fields(value.documentProtection,['authorityId','libraryId']);if(!identifier(value.documentProtection.authorityId)||!identifier(value.documentProtection.libraryId)||!Array.isArray(value.allowedDocuments)||!value.allowedDocuments.length||value.workingInput!==undefined||value.ordinaryResponse!==undefined)fail('INVALID_PROTECTED_PROFILE');}
+ fields(value, [], ['requireReport', 'allowedTools', 'allowedDocuments', 'documentCatalog', 'pdfSnapshot', 'contextBytes', 'taskId', 'workingInput', 'publication', 'taskTime', ...(ordinary ? ['ordinaryResponse'] : []), ...(protectedProfile ? ['documentProtection'] : [])]);
+ if(protectedProfile){if(value.documentCatalog!==undefined||value.pdfSnapshot!==undefined)fail('INVALID_PROTECTED_PROFILE');fields(value.documentProtection,['authorityId','libraryId']);if(!identifier(value.documentProtection.authorityId)||!identifier(value.documentProtection.libraryId)||!Array.isArray(value.allowedDocuments)||!value.allowedDocuments.length||value.workingInput!==undefined||value.ordinaryResponse!==undefined)fail('INVALID_PROTECTED_PROFILE');}
+ if(value.documentCatalog!==undefined){fields(value.documentCatalog,['schemaVersion','id','sha256']);if(value.documentCatalog.schemaVersion!=='document-catalog@1'||!identifier(value.documentCatalog.id)||!hash(value.documentCatalog.sha256))fail('INVALID_DEFINITION');}
+ if(value.pdfSnapshot!==undefined){const p=value.pdfSnapshot;fields(p,['schemaVersion','parser','parserWorkerSha256','originalSha256','originalBytes','snapshotSha256']);if(p.schemaVersion!=='pdf-input-snapshot@1'||p.parser!=='pdf2json@4.1.0'||!hash(p.parserWorkerSha256)||!hash(p.originalSha256)||!hash(p.snapshotSha256)||!Number.isSafeInteger(p.originalBytes)||p.originalBytes<5||p.originalBytes>1048576)fail('INVALID_DEFINITION');}
  if (value.taskTime !== undefined) validateTaskTime(value.taskTime);
  if (value.publication !== undefined && value.publication !== 'publication@1') fail('INVALID_DEFINITION');
  if (value.requireReport !== undefined && typeof value.requireReport !== 'boolean') fail('INVALID_DEFINITION');
@@ -74,8 +76,9 @@ function validateConfig(value, ordinary = false, protectedProfile = false) {
   fields(value.workingInput, [], ['memoryLibraryId', 'compaction']);
   if (value.workingInput.memoryLibraryId !== undefined && !identifier(value.workingInput.memoryLibraryId)) fail('INVALID_DEFINITION');
   if (value.workingInput.compaction !== undefined) {
-   const c = value.workingInput.compaction; fields(c, ['thresholdBytes', 'version'], ['summaryTimeoutMs']);
+   const c = value.workingInput.compaction; fields(c, ['thresholdBytes', 'version'], ['summaryTimeoutMs','maxSummaryRounds']);
    if (!Number.isSafeInteger(c.thresholdBytes) || c.thresholdBytes < 1 || c.thresholdBytes > 1048576 || !identifier(c.version) || (c.summaryTimeoutMs !== undefined && (!Number.isSafeInteger(c.summaryTimeoutMs) || c.summaryTimeoutMs < 1 || c.summaryTimeoutMs > 30000))) fail('INVALID_DEFINITION');
+   if(c.version==='gateway-history-compaction@2'?(!Number.isSafeInteger(c.maxSummaryRounds)||c.maxSummaryRounds<1||c.maxSummaryRounds>24):c.maxSummaryRounds!==undefined)fail('INVALID_DEFINITION');
   }
  }
 }
@@ -412,6 +415,8 @@ export async function openSession({ directory, clock = Date.now, leaseMs = 1000,
      if (parent.parent_run_id !== null) fail('CHILD_DEPTH_LIMIT'); if (rootId !== undefined && rootId !== parent.root_id) fail('ROOT_SCOPE_MISMATCH'); rootId = parent.root_id;
      const previous = parsed(parent.definition, 65536);
      if (definition.grantId !== root.grant_id || definition.deadlineAt > previous.deadlineAt || canonical(definition.bindings.gateway) !== canonical(previous.bindings.gateway) || canonical(definition.rootLimits) !== canonical(previous.rootLimits)) fail('CHILD_SCOPE_MISMATCH');
+     if(canonical(previous.config.documentCatalog??null)!==canonical(definition.config.documentCatalog??null))fail('CHILD_SCOPE_MISMATCH');
+     if(canonical(previous.config.pdfSnapshot??null)!==canonical(definition.config.pdfSnapshot??null))fail('CHILD_SCOPE_MISMATCH');
      for (const key of ['allowedTools', 'allowedDocuments']) if (previous.config[key] && (!definition.config[key] || definition.config[key].some(value => !previous.config[key].includes(value)))) fail('CHILD_SCOPE_MISMATCH');
      for (const kind of ['plugins', 'adapters']) if (definition.bindings[kind].some(item => !previous.bindings[kind].some(old => canonical(old) === canonical(item)))) fail('CHILD_BINDING_MISMATCH');
     } else {

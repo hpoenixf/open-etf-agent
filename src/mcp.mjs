@@ -3,21 +3,40 @@ import { StdioClientTransport, DEFAULT_INHERITED_ENV_VARS } from '@modelcontextp
 import { fileURLToPath } from 'node:url';
 import { dirname } from 'node:path';
 import { isDeepStrictEqual } from 'node:util';
-import { validateSource, READ_PAGE_SCHEMA } from './tools.mjs';
+import { validateSource } from './tools.mjs';
 const modes = ['normal', 'duplicate', 'endless-pages', 'pollution', 'business-error', 'unsupported-content', 'bad-result', 'wrong-page', 'bad-schema', 'stall-call', 'exit-on-call'];
+// Host-owned transport and bounded page scope, never model-supplied configuration.
+export function mcpPageContract(documents) {
+  if (!Array.isArray(documents) || !documents.length || documents.length > 64) throw new Error('Invalid MCP page scope');
+  const limits = new Map();
+  for (const d of documents) {
+    if (!d || Object.keys(d).sort().join(',') !== 'documentId,pages' || typeof d.documentId !== 'string' || !/^[A-Za-z0-9][A-Za-z0-9_.:@/-]{0,199}$/.test(d.documentId) || limits.has(d.documentId) || !Number.isSafeInteger(d.pages) || d.pages < 1 || d.pages > 16) throw new Error('Invalid MCP page scope');
+    limits.set(d.documentId, d.pages);
+  }
+  const inputSchema = { type: 'object', additionalProperties: false, properties: { documentId: { type: 'string', enum: [...limits.keys()] }, page: { type: 'integer', minimum: 1, maximum: Math.max(...limits.values()) } }, required: ['documentId', 'page'] };
+  function validateArguments(args) {
+    if (!args || Array.isArray(args) || Object.keys(args).sort().join(',') !== 'documentId,page' || !limits.has(args.documentId) || !Number.isSafeInteger(args.page) || args.page < 1 || args.page > limits.get(args.documentId)) throw new Error('Invalid MCP arguments');
+  }
+  return { inputSchema, validateArguments };
+}
 export async function connectFixtureMcp({ mode = 'normal', signal, timeoutMs = 2000 } = {}) {
-  if (!modes.includes(mode) || !Number.isSafeInteger(timeoutMs) || timeoutMs < 1 || timeoutMs > 10000) throw new Error('Invalid trusted MCP configuration');
-  signal?.throwIfAborted();
+  if (!modes.includes(mode)) throw new Error('Invalid trusted MCP configuration');
   const server = fileURLToPath(new URL('./fixture-server.mjs', import.meta.url));
-  // Official maintained v1 line retains strict stdout parse-error visibility.
-  const client = new Client({ name: 'open-etf-agent', version: '0.2.0' }, { capabilities: {} });
   const env = Object.fromEntries(DEFAULT_INHERITED_ENV_VARS.map(k => [k, '']));
   env.NODE_OPTIONS = '--max-old-space-size=256';
   const transport = new StdioClientTransport({ command: process.execPath, args: [server, mode], cwd: dirname(server), env, stderr: 'pipe', maxBufferSize: 131072 });
-  transport.stderr?.on('data', () => {}); // Drain, never publish untrusted raw stderr.
+  transport.stderr?.on('data', () => {});
+  return connectTrustedMcp({ transport, serverName: 'open-etf-synthetic-pages', documents: [{documentId:'atlas-a',pages:2},{documentId:'atlas-b',pages:2}], signal, timeoutMs });
+}
+// Takes ownership of the supplied SDK transport until close, including failure.
+export async function connectTrustedMcp({ transport, serverName, documents, signal, timeoutMs = 2000 } = {}) {
+  if (!transport || typeof transport.start !== 'function' || typeof transport.send !== 'function' || typeof transport.close !== 'function' || typeof serverName !== 'string' || !serverName || serverName.length > 200 || !Number.isSafeInteger(timeoutMs) || timeoutMs < 1 || timeoutMs > 10000) throw new Error('Invalid trusted MCP configuration');
+  const contract = mcpPageContract(documents);
+  signal?.throwIfAborted();
+  const client = new Client({ name: 'open-etf-agent', version: '0.2.0' }, { capabilities: {} });
   let pid = null; let closed = false; let closing; let activeCall = null; let protocolRequestId = null; let fatal = false; let initializeRequestId; let protocolVersion;
   const originalStart = transport.start.bind(transport);
-  transport.start = async () => { await originalStart(); pid = transport.pid; };
+  transport.start = async () => { await originalStart(); pid = Number.isInteger(transport.pid) ? transport.pid : null; };
   const originalSend = transport.send.bind(transport);
   transport.send = async message => {
     if (message.method === 'initialize') initializeRequestId = message.id;
@@ -46,7 +65,7 @@ export async function connectFixtureMcp({ mode = 'normal', signal, timeoutMs = 2
   const abort = () => { void close().catch(() => {}); }; signal?.addEventListener('abort', abort, { once: true });
   try {
     await client.connect(transport, { timeout: timeoutMs, signal });
-    if (fatal || protocolVersion !== '2025-11-25') throw new Error('MCP protocol parse failure or unsupported version');
+    if (fatal || protocolVersion !== '2025-11-25' || client.getServerVersion()?.name !== serverName) throw new Error('MCP protocol parse failure or unsupported version');
     const list = { tools: [] }; const seen = new Set(); const cursors = new Set(); let cursor;
     for (let page = 0; ; page++) {
       if (page >= 4) throw new Error('MCP pagination page limit');
@@ -59,13 +78,13 @@ export async function connectFixtureMcp({ mode = 'normal', signal, timeoutMs = 2
       cursor = result.nextCursor; cursors.add(cursor);
     }
     const tools = list.tools.filter(t => t.name === 'read_page');
-    if (tools.length !== 1 || !isDeepStrictEqual(tools[0].inputSchema, READ_PAGE_SCHEMA)) throw new Error('Unsupported MCP input schema');
+    if (tools.length !== 1 || !isDeepStrictEqual(tools[0].inputSchema, contract.inputSchema)) throw new Error('Unsupported MCP input schema');
     return {
-      pid, tools, discoveredCount: list.tools.length, protocolEra: 'legacy', protocolVersion,
+      pid, tools, validateArguments: contract.validateArguments, discoveredCount: list.tools.length, protocolEra: 'legacy', protocolVersion,
       async call(name, args, { modelCallId, signal: callSignal } = {}) {
         if (closed || fatal) throw new Error('MCP connection closed');
         if (name !== 'read_page') throw new Error('Tool not allowlisted');
-        if (!args || Object.keys(args).sort().join(',') !== 'documentId,page' || !['atlas-a', 'atlas-b'].includes(args.documentId) || !Number.isSafeInteger(args.page) || args.page < 1 || args.page > 2) throw new Error('Invalid MCP arguments');
+        contract.validateArguments(args);
         if (typeof modelCallId !== 'string' || !modelCallId || activeCall) throw new Error('Invalid or concurrent model call identity');
         activeCall = modelCallId; protocolRequestId = null;
         try {
@@ -75,7 +94,7 @@ export async function connectFixtureMcp({ mode = 'normal', signal, timeoutMs = 2
           if (value.documentId !== args.documentId || value.page !== args.page) throw new Error('MCP source identity does not match requested page');
           if (result.content.map(c => c.text).join('\n') !== value.text) throw new Error('MCP text/structured result mismatch');
           if (!Number.isInteger(protocolRequestId)) throw new Error('Missing protocol request identity');
-          return { ...value, mcp: { serverName: 'open-etf-synthetic-pages', protocolVersion: '2025-11-25', protocolRequestId, modelCallId } };
+          return { ...value, mcp: { serverName, protocolVersion: '2025-11-25', protocolRequestId, modelCallId } };
         } catch (error) { await close(); throw error; }
         finally { activeCall = null; }
       },

@@ -10,7 +10,7 @@ A feature release must deliver a coherent capability corresponding to an indepen
 
 ### Revised disposition of the remaining plan
 
-These are module work packages, **not implementation claims**. Five packages now have the confirmed v0.19–v0.23 sequence in the next section; the other packages have no newly assigned version. For an already introduced module, merge supporting increments into its coherent completion work rather than presenting each as a new module. Advance one package in the current version at a time, first confirming its scope and prerequisites. Ordinary repairs and internal iterations remain maintenance work, not standalone new-module milestones.
+These are module work packages, **not implementation claims**. The next section preserves an earlier v0.19–v0.23 allocation as history; the later composition amendment supersedes it. No replacement numbers are assigned to the remaining packages. For an already introduced module, merge supporting increments into its coherent completion work rather than presenting each as a new module. Advance one package in the current version at a time, first confirming its scope and prerequisites. Ordinary repairs and internal iterations remain maintenance work, not standalone new-module milestones.
 
 | Previous candidate / disposition | Independent module and core input → processing → output | Bundle into that module; acceptance boundary |
 | --- | --- | --- |
@@ -24,9 +24,17 @@ These are module work packages, **not implementation claims**. Five packages now
 | Web / isolated Python: remain unnumbered, independent candidates | **Web evidence acquisition** or **isolated analysis**, separately: permitted input → bounded acquisition/execution → original evidence or analysis result. | Provider/parser adapters belong inside their module. Require real retrieval/coverage or actual isolation and stop boundaries respectively; unavailable infrastructure remains a deferral, not a mock qualification. |
 | 1.0 / 2.0: retain qualification milestones | Consolidate only the supported modules already delivered. | No new module count, forced feature bundle or release date; installation, recovery, upgrade and artifact readback must match actual support claims. |
 
+### Later 2026-11-03 amendment: v0.19 composition first
+
+The user replaced the not-yet-started Memory allocation with **v0.19 composition and extensibility**: audit hardcodes, retain explicit contracts and safely compose existing modules. See [the actual matrix](../composition.md). The numbered table below is a **historical allocation**, not the current schedule. Memory and subsequent complete-module work are deferred in relative order; their replacement numbers are not assigned here.
+
+There are two stages: first complete the capability series toward 1.0, without automatically claiming equivalence to the private implementation; then begin a real-use series to close module gaps against those standards and validate real business workflows. Composition and extensibility are design gates now, not postponed to stage two. Each proposal examines the actual original implementation, states inputs/outputs/owned facts and failure/recovery boundaries, explains deliberate simplifications and migration paths, and verifies important supported combinations. A fixture or thin adapter is not a complete module; this does not authorize copying all private complexity.
+
 ### Confirmed sequence on 2026-11-03: v0.19–v0.23
 
-The next five versions follow the complete module work-package boundaries above. **This is an approved development sequence, not an implementation, acceptance or release status, and it promises no release dates.** Existing teaching increments are foundations, not slices to release again. A complete module does not mean copying every private feature or bundling unrelated modules.
+**Historical allocation, superseded by the later composition-first amendment above.** Retained version numbers below are not new promises.
+
+The earlier five-version proposal followed the complete module boundaries above. **This was an approved development sequence before the later amendment, not an implementation, acceptance or release status, and it promises no release dates.** Existing teaching increments are foundations, not slices to release again. A complete module does not mean copying every private feature or bundling unrelated modules.
 
 | Order / planned version | Main module | Responsibilities and boundaries to complete together |
 | --- | --- | --- |
@@ -40,7 +48,7 @@ Each version's proposal must state core responsibilities, deliberate simplificat
 
 Existing scope, tags and verification records for v0.17/v0.18 and earlier versions remain intact. Later completion of Scheduled tasks, Web, isolated Python and the 1.0/2.0 qualification milestones are outside these five versions and receive no new version allocation here.
 
-**Current-environment decision · 2026-11-03:** Isolated Python execution is not being implemented in the current environment because the required isolation and stop/recovery boundaries cannot be verified here. Ordinary subprocesses or mocks do not substitute for that evidence. Reconsider only when a suitable environment permits real verification; this does not change the confirmed v0.19–v0.23 sequence.
+**Current-environment decision · 2026-11-03:** Isolated Python execution is not being implemented in the current environment because the required isolation and stop/recovery boundaries cannot be verified here. Ordinary subprocesses or mocks do not substitute for that evidence. Reconsider only when a suitable environment permits real verification; this does not assign replacement numbers to the superseded historical sequence.
 
 Private source paths, identifiers and detailed comparison remain in the restricted planning audit; this page contains only public responsibility summaries and existing public references. Source module registration does not prove implementation or acceptance. Before implementation, the owning proposal records retained core responsibilities, deliberate simplifications, bundled adaptations and unresolved dependencies. CLI/API-first still applies; UI, deployment and article publication have their own evidence boundaries.
 

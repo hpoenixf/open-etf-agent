@@ -71,15 +71,15 @@ npm run demo -- --case document-compare
 <a id="versions"></a>
 ## Latest three modules
 
-**v0.18.0 adds one confirmed Schedule Occurrence**, with an explicit due-time wake through the original Worker, Admission and Publication. [Exact API qualification and fixture CLI boundaries](docs/verification/v018-release.md). No background daemon or recurring scheduler.
+**v0.19 is a candidate upgrade to existing module composition contracts**: custom sources, Worker, Memory, trusted extensions, PDF, Response, Child, Admission and explicitly woken Schedule combinations. [Compatibility matrix and runnable checks](docs/composition.md) · [Real qualification and repair boundaries](docs/verification/v019-release.md). Not yet released; this does not claim every cross-product combination or a production fund-research service.
 
 **2026-11-02 foundation repair:** [Working-input admission, cancellation facts, Child settlement and no-saving summary precheck](docs/verification/foundation-repair-20261102.md). Provider-free regressions passed; this is not a new release or live qualification.
 
 | Module | What changes | Run and inspect |
 | --- | --- | --- |
+| v0.19 · Composition contracts (candidate) | Explicit inputs and combinations through original owners, with recoverable summary reuse | [Contracts and boundaries](docs/composition.md) · [Qualification](docs/verification/v019-release.md) |
 | v0.18 · Schedule Occurrence | One confirmed, explicitly woken occurrence through original owners | [Commands and boundaries](docs/schedule-occurrence.md) · [Qualification](docs/verification/v018-release.md) |
 | v0.17 · Shared Admission | Two local callers share one capacity slot; original Runtime remains the only budget owner | [Commands and boundaries](docs/shared-admission.md) · [Qualification](docs/verification/v017-release.md) |
-| v0.16 · Document revocation | Current permission is rechecked before disclosure and later reads; previously delivered bytes cannot be recalled | [Commands](docs/module-guide.md#v016--revocable-documents) · [Contract and evidence](openspec/changes/v016-document-revocation/evidence.md) |
 
 [All fixed versions and commands](docs/module-guide.md#versions) · [Machine-readable version lineage](versions.json) · [GitHub Releases](https://github.com/hpoenixf/open-etf-agent/releases)
 

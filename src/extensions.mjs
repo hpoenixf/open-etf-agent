@@ -4,15 +4,24 @@ import { connectFixtureMcp } from './mcp.mjs';
 const exact = (args, keys) => {
   if (!args || Array.isArray(args) || Object.keys(args).sort().join(',') !== keys.slice().sort().join(',')) throw new Error('Invalid tool argument fields');
 };
-export async function prepareSkillMcp({ signal } = {}) {
-  const catalog = await createSkillCatalog({ root: fileURLToPath(new URL('../fixtures/skills', import.meta.url)) });
-  const session = await connectFixtureMcp({ signal });
+// Explicit host assembly; catalog paths and connections never come from model calls.
+export async function prepareSkillMcpExtensions({ skillRoot, catalog: suppliedCatalog, connect, signal } = {}) {
+  if ((skillRoot === undefined) === (suppliedCatalog === undefined) || typeof connect !== 'function') throw new Error('Explicit Skill catalog/root and MCP connector required');
+  const catalog = suppliedCatalog ?? await createSkillCatalog({ root: skillRoot });
+  if (!catalog || !['list','read','resource'].every(k => typeof catalog[k] === 'function')) throw new Error('Invalid trusted Skill catalog');
+  const session = await connect({ signal });
+  if (!session || typeof session.call !== 'function' || typeof session.close !== 'function' || typeof session.validateArguments !== 'function' || session.tools?.[0]?.name !== 'read_page') { await session?.close?.(); throw new Error('Invalid trusted MCP session'); }
+
   const extensions = [
     { name: 'list_skills', description: 'List explicitly enabled local Skill metadata only.', parameters: { type: 'object', properties: {}, additionalProperties: false }, validate: args => exact(args, []), execute: async () => ({ skills: catalog.list() }) },
     { name: 'read_skill', description: 'Read one known Skill as data; it grants no permissions.', parameters: { type: 'object', properties: { skillId: { type: 'string' } }, required: ['skillId'], additionalProperties: false }, methodResult: true, validate: args => { exact(args, ['skillId']); if (typeof args.skillId !== 'string') throw new Error('Invalid Skill ID'); }, execute: async args => catalog.read(args.skillId) },
     { name: 'read_skill_resource', description: 'Read a bounded nonsymlink resource beneath an enabled Skill.', parameters: { type: 'object', properties: { skillId: { type: 'string' }, path: { type: 'string' } }, required: ['skillId', 'path'], additionalProperties: false }, validate: args => exact(args, ['skillId', 'path']), execute: async args => catalog.resource(args.skillId, args.path) },
-    { name: 'mcp_read_page', description: session.tools[0].description, parameters: session.tools[0].inputSchema, sourceResult: true, validate: args => { exact(args, ['documentId', 'page']); if (!['atlas-a', 'atlas-b'].includes(args.documentId) || !Number.isSafeInteger(args.page) || args.page < 1 || args.page > 2) throw new Error('Invalid page arguments'); }, execute: (args, { callId, signal: callSignal }) => session.call('read_page', args, { modelCallId: callId, signal: callSignal }) }
+    { name: 'mcp_read_page', description: session.tools[0].description, parameters: session.tools[0].inputSchema, sourceResult: true, validate: args => session.validateArguments(args), execute: (args, { callId, signal: callSignal }) => session.call('read_page', args, { modelCallId: callId, signal: callSignal }) }
   ];
+  return { extensions, close: () => session.close(), pid: session.pid };
+}
+export async function prepareSkillMcp({ signal } = {}) {
+  const prepared = await prepareSkillMcpExtensions({ skillRoot: fileURLToPath(new URL('../fixtures/skills', import.meta.url)), connect: connectFixtureMcp, signal });
   let step = 0;
   const gateway = {
     mode: 'fixture',
@@ -35,5 +44,5 @@ export async function prepareSkillMcp({ signal } = {}) {
       return { kind: 'final', text: `Saved synthetic skill-mcp report ${receipt.fileId}.`, usage: null };
     }
   };
-  return { extensions, gateway, close: () => session.close(), pid: session.pid };
+  return { ...prepared, gateway };
 }

@@ -120,10 +120,11 @@ test('RC Host v1 resume is explicitly refused before effects while original arti
   const artifacts=await openArtifactStore({directory:runDirectory,readOnly:true});assert.equal((await artifacts.read(report.value.artifactId)).sha256,report.value.sha256);
   session.create({runId:'new-protocol',directory:runDirectory,definition,snapshot:state('tool-host@2')});
   // Controlled read-time version change, not a claim of atomic cross-version admission.
+  // v19 inspects descriptors first and activates only after both original Run checks.
   const beforeNew=session.inspect('new-protocol');let inspections=0,claims=0;
   const changedView={...session,inspect(id){const actual=session.inspect(id);return ++inspections===1?actual:{...actual,snapshot:{...actual.snapshot,host:legacy}};},claim(){claims++;throw new Error('Must refuse before claim');}};
-  const racing=options('new-protocol');await assert.rejects(run({...racing,durable:{...racing.durable,store:changedView}}),{code:'UNSUPPORTED_HOST_SNAPSHOT_VERSION'});assert.equal(inspections,2);assert.equal(claims,0);assert.equal(calls,0);assert.equal(activations,1);assert.deepEqual(session.inspect('new-protocol'),beforeNew);assert.deepEqual(await files(),beforeFiles);
-  const outcome=await run(options('new-protocol'));assert.equal(outcome.status,'completed');assert.equal(calls,1);assert.equal(activations,2);assert.equal(session.inspect('new-protocol').snapshot.host.schemaVersion,'tool-host@2');assert.equal((await artifacts.read(report.value.artifactId)).sha256,report.value.sha256);
+  const racing=options('new-protocol');await assert.rejects(run({...racing,durable:{...racing.durable,store:changedView}}),{code:'UNSUPPORTED_HOST_SNAPSHOT_VERSION'});assert.equal(inspections,2);assert.equal(claims,0);assert.equal(calls,0);assert.equal(activations,0);assert.deepEqual(session.inspect('new-protocol'),beforeNew);assert.deepEqual(await files(),beforeFiles);
+  const outcome=await run(options('new-protocol'));assert.equal(outcome.status,'completed');assert.equal(calls,1);assert.equal(activations,1);assert.equal(session.inspect('new-protocol').snapshot.host.schemaVersion,'tool-host@2');assert.equal((await artifacts.read(report.value.artifactId)).sha256,report.value.sha256);
  }finally{session.close();}
 });
 test('RC v2 Hook reconciliation binds the stored effective call without rerunning hooks or execution',async()=>{

@@ -16,10 +16,11 @@ export async function workRun(options) {
  const original = store.inspect(runId);
  const body = options.publication ? store.publication(runId) : null;
  return {
-  workerStatus: original.status !== 'active' ? 'settled' : outcome.status === 'interrupted' ? 'interrupted' : 'unresolved',
+  workerStatus: original.status !== 'active' ? 'settled' : outcome.status === 'awaiting-response' ? 'awaiting-response' : outcome.status === 'interrupted' ? 'interrupted' : 'unresolved',
   run: original,
   publication: body?.receipt ?? null,
   observationCode: outcome.code,
+  ...(outcome.status==='awaiting-response'?{questionId:outcome.questionId,deadlineAt:outcome.deadlineAt}:{}),
   ...(outcome.interruption ? { interruption: outcome.interruption } : {})
  };
 }

@@ -1,0 +1,288 @@
+{
+  "schemaVersion": "v19-original-mechanical-decision@1",
+  "batch": "C-original",
+  "executionIdentity": "49f8f82465c0db943e34d8a6f16fc1199be9e56d77ba217f2518cc8ecb518208",
+  "executionIdentityBasis": {
+    "sourceCommit": "c4037c06f90be44662f27b7f5d3c385237aa696d",
+    "executionInventoryFileSha256": "bffa29726672126e14353ef6b711aaf50f23082d74a7e8fa006f79b05136457e",
+    "provider": {
+      "endpoint": "https://opencode.ai/inference/go/openai/v1/chat/completions",
+      "model": "deepseek-v4.1-flash"
+    },
+    "gatewayBinding": {
+      "mode": "live",
+      "provider": "opencode.ai-go",
+      "protocol": "chat-completions",
+      "model": "deepseek-v4.1-flash",
+      "version": "1"
+    },
+    "profile": {
+      "physicalPerTask": 24,
+      "physicalPerBatch": 240,
+      "roles": {
+        "main": 24,
+        "child": 6,
+        "summary": 6
+      },
+      "httpDeadlineMs": 120000,
+      "taskDeadlineMs": 3600000,
+      "readerReadbackDeadlineMs": 20000,
+      "maxResponseBytes": 1000000
+    },
+    "taskIds": [
+      "C01",
+      "C02",
+      "C03",
+      "C04",
+      "C05",
+      "C06",
+      "C07",
+      "C08",
+      "C09",
+      "C10"
+    ],
+    "adapterSha256": "981a7488f2637fd6a0d35e08bfb6b3b9109a4fc77299e7108310b624981c739c"
+  },
+  "realProviderApplicability": "supported-in-declared-scope",
+  "separateSafetyGatePassed": false,
+  "safetyEvidence": {
+    "independentAcceptanceSha256": null,
+    "originalStopCode": "UNKNOWN_OR_PARTIAL_OR_BILLING",
+    "originalUnknownBillingNew": 0,
+    "sourceBoundaries": "A/B c403 and repaired C6a52 remain separate identities; no automatic transfer.",
+    "fixedProviderFreeReceipts": [
+      {
+        "name": "FINAL-PROVIDER-FREE-VALIDATION.safe.json",
+        "sha256": "f425a1b6228f3734653c8b7e5c9eba6acb484b0ee2b492214b9489ecbff6f1f9"
+      },
+      {
+        "name": "INTEGRATION-REVIEW-FINAL.safe.json",
+        "sha256": "93d9e5a8742eac2149efa78128f6096a21e45a91c003bb4011e229b96ab5b9fd"
+      }
+    ],
+    "fullSuiteBoundary": "See fixed receipt: final targeted validation is distinguished from predecessor full-suite execution; no same-source full-suite claim is fabricated."
+  },
+  "normalGate": {
+    "planned": 10,
+    "requiredSuccesses": 9,
+    "threshold": 0.9,
+    "taskIds": [
+      "C01",
+      "C02",
+      "C03",
+      "C04",
+      "C05",
+      "C06",
+      "C07",
+      "C08",
+      "C09",
+      "C10"
+    ],
+    "tasks": [
+      {
+        "id": "C01",
+        "executionIdentity": "49f8f82465c0db943e34d8a6f16fc1199be9e56d77ba217f2518cc8ecb518208",
+        "realProvider": true,
+        "physicalRequests": 3,
+        "status": "success",
+        "eligibleSuccess": true,
+        "runtimeAccepted": true,
+        "workflowCompleted": true,
+        "deliveryReadback": true,
+        "onTime": true,
+        "unknownEffects": false,
+        "provenance": {
+          "stateFileSha256": "c3645cf93e5c50129f019bd9615c033111a2fe309d5f3833edcabf4f182a45bb",
+          "completedAt": 1793682192485,
+          "originalFixtureDeadlineAt": 1793685739463,
+          "code": null,
+          "mechanismChecksPassed": true
+        }
+      },
+      {
+        "id": "C02",
+        "executionIdentity": "49f8f82465c0db943e34d8a6f16fc1199be9e56d77ba217f2518cc8ecb518208",
+        "realProvider": true,
+        "physicalRequests": 3,
+        "status": "success",
+        "eligibleSuccess": true,
+        "runtimeAccepted": true,
+        "workflowCompleted": true,
+        "deliveryReadback": true,
+        "onTime": true,
+        "unknownEffects": false,
+        "provenance": {
+          "stateFileSha256": "c3645cf93e5c50129f019bd9615c033111a2fe309d5f3833edcabf4f182a45bb",
+          "completedAt": 1793682212678,
+          "originalFixtureDeadlineAt": 1793685793847,
+          "code": null,
+          "mechanismChecksPassed": true
+        }
+      },
+      {
+        "id": "C03",
+        "executionIdentity": "49f8f82465c0db943e34d8a6f16fc1199be9e56d77ba217f2518cc8ecb518208",
+        "realProvider": true,
+        "physicalRequests": 5,
+        "status": "success",
+        "eligibleSuccess": true,
+        "runtimeAccepted": true,
+        "workflowCompleted": true,
+        "deliveryReadback": true,
+        "onTime": true,
+        "unknownEffects": false,
+        "provenance": {
+          "stateFileSha256": "c3645cf93e5c50129f019bd9615c033111a2fe309d5f3833edcabf4f182a45bb",
+          "completedAt": 1793682260803,
+          "originalFixtureDeadlineAt": 1793685813972,
+          "code": null,
+          "mechanismChecksPassed": true
+        }
+      },
+      {
+        "id": "C04",
+        "executionIdentity": "49f8f82465c0db943e34d8a6f16fc1199be9e56d77ba217f2518cc8ecb518208",
+        "realProvider": true,
+        "physicalRequests": 3,
+        "status": "success",
+        "eligibleSuccess": true,
+        "runtimeAccepted": true,
+        "workflowCompleted": true,
+        "deliveryReadback": true,
+        "onTime": true,
+        "unknownEffects": false,
+        "provenance": {
+          "stateFileSha256": "c3645cf93e5c50129f019bd9615c033111a2fe309d5f3833edcabf4f182a45bb",
+          "completedAt": 1793682296101,
+          "originalFixtureDeadlineAt": 1793685862112,
+          "code": null,
+          "mechanismChecksPassed": true
+        }
+      },
+      {
+        "id": "C05",
+        "executionIdentity": "49f8f82465c0db943e34d8a6f16fc1199be9e56d77ba217f2518cc8ecb518208",
+        "realProvider": true,
+        "physicalRequests": 3,
+        "status": "success",
+        "eligibleSuccess": true,
+        "runtimeAccepted": true,
+        "workflowCompleted": true,
+        "deliveryReadback": true,
+        "onTime": true,
+        "unknownEffects": false,
+        "provenance": {
+          "stateFileSha256": "c3645cf93e5c50129f019bd9615c033111a2fe309d5f3833edcabf4f182a45bb",
+          "completedAt": 1793682314401,
+          "originalFixtureDeadlineAt": 1793685897424,
+          "code": null,
+          "mechanismChecksPassed": true
+        }
+      },
+      {
+        "id": "C06",
+        "executionIdentity": "49f8f82465c0db943e34d8a6f16fc1199be9e56d77ba217f2518cc8ecb518208",
+        "realProvider": true,
+        "physicalRequests": 3,
+        "status": "success",
+        "eligibleSuccess": true,
+        "runtimeAccepted": true,
+        "workflowCompleted": true,
+        "deliveryReadback": true,
+        "onTime": true,
+        "unknownEffects": false,
+        "provenance": {
+          "stateFileSha256": "c3645cf93e5c50129f019bd9615c033111a2fe309d5f3833edcabf4f182a45bb",
+          "completedAt": 1793682355638,
+          "originalFixtureDeadlineAt": 1793685915740,
+          "code": null,
+          "mechanismChecksPassed": true
+        }
+      },
+      {
+        "id": "C07",
+        "executionIdentity": "49f8f82465c0db943e34d8a6f16fc1199be9e56d77ba217f2518cc8ecb518208",
+        "realProvider": true,
+        "physicalRequests": 3,
+        "status": "success",
+        "eligibleSuccess": true,
+        "runtimeAccepted": true,
+        "workflowCompleted": true,
+        "deliveryReadback": true,
+        "onTime": true,
+        "unknownEffects": false,
+        "provenance": {
+          "stateFileSha256": "c3645cf93e5c50129f019bd9615c033111a2fe309d5f3833edcabf4f182a45bb",
+          "completedAt": 1793682392406,
+          "originalFixtureDeadlineAt": 1793685956999,
+          "code": null,
+          "mechanismChecksPassed": true
+        }
+      },
+      {
+        "id": "C08",
+        "executionIdentity": "49f8f82465c0db943e34d8a6f16fc1199be9e56d77ba217f2518cc8ecb518208",
+        "realProvider": true,
+        "physicalRequests": 5,
+        "status": "success",
+        "eligibleSuccess": true,
+        "runtimeAccepted": true,
+        "workflowCompleted": true,
+        "deliveryReadback": true,
+        "onTime": true,
+        "unknownEffects": false,
+        "provenance": {
+          "stateFileSha256": "c3645cf93e5c50129f019bd9615c033111a2fe309d5f3833edcabf4f182a45bb",
+          "completedAt": 1793682445416,
+          "originalFixtureDeadlineAt": 1793685993771,
+          "code": null,
+          "mechanismChecksPassed": true
+        }
+      },
+      {
+        "id": "C09",
+        "executionIdentity": "49f8f82465c0db943e34d8a6f16fc1199be9e56d77ba217f2518cc8ecb518208",
+        "realProvider": true,
+        "physicalRequests": 5,
+        "status": "success",
+        "eligibleSuccess": true,
+        "runtimeAccepted": true,
+        "workflowCompleted": true,
+        "deliveryReadback": true,
+        "onTime": true,
+        "unknownEffects": false,
+        "provenance": {
+          "stateFileSha256": "c3645cf93e5c50129f019bd9615c033111a2fe309d5f3833edcabf4f182a45bb",
+          "completedAt": 1793682482976,
+          "originalFixtureDeadlineAt": 1793686046911,
+          "code": null,
+          "mechanismChecksPassed": true
+        }
+      },
+      {
+        "id": "C10",
+        "executionIdentity": "49f8f82465c0db943e34d8a6f16fc1199be9e56d77ba217f2518cc8ecb518208",
+        "realProvider": true,
+        "physicalRequests": 15,
+        "status": "unknown",
+        "eligibleSuccess": false,
+        "runtimeAccepted": true,
+        "workflowCompleted": false,
+        "deliveryReadback": false,
+        "onTime": true,
+        "unknownEffects": true,
+        "provenance": {
+          "stateFileSha256": "c3645cf93e5c50129f019bd9615c033111a2fe309d5f3833edcabf4f182a45bb",
+          "completedAt": 1793682662126,
+          "originalFixtureDeadlineAt": 1793686084307,
+          "code": "COMPACTION_OUTCOME_UNKNOWN",
+          "mechanismChecksPassed": false
+        }
+      }
+    ],
+    "attempted": 10,
+    "notRun": 0,
+    "successes": 9,
+    "observedRate": 0.9
+  }
+}

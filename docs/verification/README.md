@@ -4,6 +4,10 @@
 
 [Project home](../../README.md) · [Coverage contract for the 31 registered articles](../../README.md#reading)
 
+## v0.19 candidate composition evidence
+
+[Fixed cohorts and repair](v019-release.md): A10/10, B9/10, original C unqualified, repair C10/10. Source differences and pending publication remain explicit.
+
 ## 2026-11-03 · Current campaign / 当前轮次
 
 **v0.7–v0.18：每版重新冻结并完成10次真实任务，至少9次成功；当前版本已知未解决 Runtime 问题清零后，才进入下一版。** 不复用旧成功样本填本轮分子，不替换失败/超时/unknown；每批报告真实进度。fixture增量也要测该版本实际支持的真实调用路径，但不移除fixture guard、不伪称该增量已真实验收。v0.1–v0.6历史资格保留，不重复测。

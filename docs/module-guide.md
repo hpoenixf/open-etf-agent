@@ -401,3 +401,8 @@ Open an [issue](https://github.com/hpoenixf/open-etf-agent/issues) with the **st
 ---
 
 <p align="center">Build small. Keep evidence.<br /><a href="../README.zh-CN.md">阅读简体中文版</a></p>
+
+<a id="v019-composition"></a>
+## v0.19 · Composition contracts candidate
+
+[Compatibility matrix and original runnable checks](composition.md) · [Per-cohort real qualification, failures and upgrade boundaries](verification/v019-release.md). Formal publication still awaits approval and remote CI.

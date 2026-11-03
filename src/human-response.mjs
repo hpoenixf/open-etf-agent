@@ -1,6 +1,8 @@
 import { createHash } from 'node:crypto';
 export const RESPONSE_PROFILE = 'ordinary-response@1';
 export const RESPONSE_BINDING = Object.freeze({id:'ordinary-response',version:'1'});
+export const RESPONSE_COMPOSITION_BINDING = Object.freeze({id:'ordinary-response',version:'2'});
+export function hasResponseComposition(bindings){return bindings?.adapters?.some(item=>responseCanonical(item)===responseCanonical(RESPONSE_COMPOSITION_BINDING))===true;}
 export const responseHash = text => createHash('sha256').update(text).digest('hex');
 export const responseCanonical = value => JSON.stringify(value,(_,v)=>v&&typeof v==='object'&&!Array.isArray(v)?Object.fromEntries(Object.keys(v).sort().map(k=>[k,v[k]])):v);
 const fail=()=>{throw Object.assign(new Error('INVALID_ORDINARY_RESPONSE'),{code:'INVALID_ORDINARY_RESPONSE'});};
@@ -18,7 +20,8 @@ export function hasResponseSemantics(value){
 export function validateResponseProfile(definition,enabled){
  const config=definition.config,binding=definition.bindings.adapters.find(v=>v.id===RESPONSE_BINDING.id);
  if(!enabled){if(hasResponseSemantics(definition))fail();return;}
- if(config.ordinaryResponse!==RESPONSE_PROFILE||responseCanonical(binding)!==responseCanonical(RESPONSE_BINDING)||definition.bindings.gateway.mode!=='fixture'||definition.bindings.plugins.length||config.workingInput!==undefined||config.taskId!=null||definition.bindings.adapters.some(v=>!['ordinary-response','durable-demo'].includes(v.id)))fail();
+ if(hasResponseComposition(definition.bindings)){if(config.ordinaryResponse!==RESPONSE_PROFILE||config.taskId!=null||config.documentProtection!==undefined)fail();return;}
+ if(config.documentCatalog!==undefined||config.pdfSnapshot!==undefined||config.ordinaryResponse!==RESPONSE_PROFILE||responseCanonical(binding)!==responseCanonical(RESPONSE_BINDING)||definition.bindings.gateway.mode!=='fixture'||definition.bindings.plugins.length||config.workingInput!==undefined||config.taskId!=null||definition.bindings.adapters.some(v=>!['ordinary-response','durable-demo'].includes(v.id)))fail();
 }
 export function responseResult(fact){if(!fact.receipt)fail();return{callId:fact.call.id,status:'succeeded',dispatched:true,durationMs:0,value:{kind:RESPONSE_PROFILE,runId:fact.runId,rootId:fact.rootId,questionId:fact.questionId,responseId:fact.receipt.responseId,questionHash:fact.questionHash,responseHash:fact.receipt.responseHash,text:fact.receipt.text}};}
 export function adoptionHash(fact){return responseHash(responseCanonical({phase:'result-committed',proposal:{kind:'calls',calls:[fact.call]},cursor:0,result:responseResult(fact),questionId:fact.questionId}));}
