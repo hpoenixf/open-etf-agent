@@ -415,6 +415,7 @@ Open an [issue](https://github.com/hpoenixf/open-etf-agent/issues) with the **st
 [Import, submit, work, inspect and read reports](research-project.md) · [Run control, correction and observation limits](run-control.md) · [Layered evidence](verification/v020-release.md). Same-Run recovery keeps original grants and budgets; unknown effects are not replayed.
 
 <a id="v021-human-interaction"></a>
-## v0.21 · Ordinary Human Interaction (candidate)
+<a id="v021--ordinary-human-interaction-candidate"></a>
+## v0.21 · Ordinary Human Interaction
 
 [CLI/API](human-interaction.md) · [Qualification and limits](verification/v021-release.md).

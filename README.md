@@ -71,7 +71,7 @@ npm run demo -- --case document-compare
 <a id="versions"></a>
 ## Latest three modules
 
-**v0.21 candidate has completed qualification**: ask sequential questions, receive answers and resume the original task through report readback, without creating new permission grants. [Usage](docs/human-interaction.md) · [Ten real tasks and limits](docs/verification/v021-release.md). Not published yet; stable versions remain below.
+**v0.21 adds ordinary multi-question interaction**: receive associated answers and resume the original Run through report readback, without creating new permission grants. [Usage](docs/human-interaction.md) · [Ten real tasks and limits](docs/verification/v021-release.md) · [Fixed public source](https://github.com/hpoenixf/open-etf-agent/tree/427315b5554b1c9af8fa50b8ab622747045e691a). Final-package CI and Release are verified separately.
 
 **v0.20 adds local research projects**: import your selected text, Markdown or PDF, submit a natural task, work or resume the original Run and read its persisted report. Memory, Child and trusted tools stay behind original permission and budget owners. [Public CLI/API](docs/research-project.md) · [Run control and bounded correction](docs/run-control.md) · [Layered evidence](docs/verification/v020-release.md). [Fixed public source](https://github.com/hpoenixf/open-etf-agent/tree/a5cef6d5cf1a4597f0f1271025cd6cc16be151e5) is byte-verified. The final package, its CI and release tag are separate from this source pin; layered evidence does not mean every historical gate passed.
 
@@ -79,9 +79,9 @@ npm run demo -- --case document-compare
 
 | Module | What changes | Run and inspect |
 | --- | --- | --- |
+| v0.21 · Ordinary Human Interaction | Associated questions, receipts and same-Run adoption/recovery | [CLI/API](docs/human-interaction.md) · [Evidence](docs/verification/v021-release.md) |
 | v0.20 · Local research projects | User-selected sources, original Run lifecycle and bounded tool correction | [CLI/API](docs/research-project.md) · [Evidence](docs/verification/v020-release.md) |
 | v0.19 · Composition contracts | Explicit inputs and combinations through original owners, with recoverable summary reuse | [Contracts and boundaries](docs/composition.md) · [Qualification](docs/verification/v019-release.md) |
-| v0.18 · Schedule Occurrence | One confirmed, explicitly woken occurrence through original owners | [Commands and boundaries](docs/schedule-occurrence.md) · [Qualification](docs/verification/v018-release.md) |
 
 [All fixed versions and commands](docs/module-guide.md#versions) · [Machine-readable version lineage](versions.json) · [GitHub Releases](https://github.com/hpoenixf/open-etf-agent/releases)
 

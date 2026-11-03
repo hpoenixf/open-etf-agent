@@ -1,6 +1,6 @@
 # Ordinary questions in a local research project
 
-This v0.21 implementation passed fixed-source offline and real-task qualification; publication remains pending. See [qualification and limits](verification/v021-release.md).
+This v0.21 implementation passed fixed-source offline and real-task qualification; final-package CI and tag are separate checks. See [qualification and limits](verification/v021-release.md).
 
 A task can ask for missing facts, wait without an active worker, accept an explicitly associated answer and continue the same Run. An answer is untrusted task data. It does not approve a purchase, expand a document grant or authorize a Memory write.
 

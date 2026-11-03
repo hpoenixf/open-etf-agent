@@ -71,7 +71,7 @@ npm run demo -- --case document-compare
 <a id="versions"></a>
 ## 最近三个模块
 
-**v0.21 候选已完成测评**：同一任务可连续提问、收答、恢复并冷读报告；不是新权限审批。[用法](docs/human-interaction.zh-CN.md) · [10/10真实任务与边界](docs/verification/v021-release.zh-CN.md)。尚未发布，下面保留当前稳定版本。
+**v0.21 提供普通多轮问答**：任务可连续提问、接收关联回答，并恢复同一个Run到报告冷读；回答不是新权限。[用法](docs/human-interaction.zh-CN.md) · [10/10真实任务与边界](docs/verification/v021-release.zh-CN.md) · [固定公开源码](https://github.com/hpoenixf/open-etf-agent/tree/427315b5554b1c9af8fa50b8ab622747045e691a)。最终包原CI与Release另行核验。
 
 **v0.20 提供本地研究项目**：导入明确选择的文本、Markdown或PDF，以自然语言提交任务，执行或恢复原Run，并读取持久报告。Memory、Child与可信工具仍受原权限和预算Owner约束。[公开CLI/API](docs/research-project.zh-CN.md) · [终结与有界纠错](docs/run-control.zh-CN.md) · [分层证据](docs/verification/v020-release.zh-CN.md)。[固定公开源码](https://github.com/hpoenixf/open-etf-agent/tree/a5cef6d5cf1a4597f0f1271025cd6cc16be151e5)已逐字节核验。最终发布包、其CI与标签另行核验，分层证据不等于历史所有门均通过。
 
@@ -79,9 +79,9 @@ npm run demo -- --case document-compare
 
 | 模块 | 解决什么 | 运行与核对 |
 | --- | --- | --- |
+| v0.21 · 普通人机交互 | 关联提问、收答、同Run采纳与恢复 | [CLI/API](docs/human-interaction.zh-CN.md) · [证据](docs/verification/v021-release.zh-CN.md) |
 | v0.20 · 本地研究项目 | 自选资料、原Run生命周期及有界工具纠错 | [CLI/API](docs/research-project.zh-CN.md) · [证据](docs/verification/v020-release.zh-CN.md) |
 | v0.19 · 组合合同 | 原Owner的显式输入与组合、可恢复摘要复用 | [合同/边界](docs/composition.zh-CN.md) · [资格](docs/verification/v019-release.zh-CN.md) |
-| v0.18 · Schedule Occurrence | 一次确认、显式唤醒，复用原 Owner | [运行与边界](docs/schedule-occurrence.md) · [资格证据](docs/verification/v018-release.md) |
 
 [完整固定版本与运行说明](docs/module-guide.zh-CN.md#versions) · [机器可读版本谱系](versions.json) · [GitHub Releases](https://github.com/hpoenixf/open-etf-agent/releases)
 
