@@ -792,7 +792,7 @@
     "independentInstallAndBuild": true,
     "originalTwoProcessNormalAndUnknown": true,
     "independentSourceReview": "no mandatory code fixes",
-    "offlineReceiptSha256": "3f8387aa3432588d5eb37c786b6e78f85f5de914d2d09301f7ff8f894552960d",
+    "offlineReceiptSha256": "ffcc4e48d45b9e912413ffbff35bee71799ab97dc20322164d7f2c56835ebb3a",
     "independentTenTaskAcceptanceSha256": "b14696fbe2916f8a8129fefc46243ae895f52288dec9361c45e15a20dfc6f0fb",
     "independentTenTaskScopeDecision": "Original4 successes retained exactly; task05 unknown and occupied original capacity retained; only original06-10 run in isolated new group with identical sharedAdmission config. Per-Run normal-path gate passed; no original-group recovery, unknown settlement, global-capacity or live-contention certification.",
     "offlineSafetyNotInRealTaskDenominator": true,
@@ -856,5 +856,13 @@
     "successes": 9,
     "observedRate": 0.9,
     "scope": "declared receipts only; fixed evidence and publication review still required"
+  },
+  "publicEvidenceReferenceCorrection": {
+    "correctedAt": "2026-11-03",
+    "field": "separateSafetyGate.offlineReceiptSha256",
+    "previousSha256": "3f8387aa3432588d5eb37c786b6e78f85f5de914d2d09301f7ff8f894552960d",
+    "correctedPublishedSha256": "ffcc4e48d45b9e912413ffbff35bee71799ab97dc20322164d7f2c56835ebb3a",
+    "originalReceiptSha256": "580e532d1e94e52ea9ad35096db507cc0c93219af215934cb70d7f89544a72a9",
+    "reason": "The previous hash addressed a pre-publication offline receipt whose releaseQualification description said pending. The published offline receipt changed only that descriptive string to refer to the historical combined five-task document. Offline observations, inputs and assertions are unchanged. This corrects the public byte reference, not the original ten-task results, unknown accounting, implementation identity or historical release tags."
   }
 }
