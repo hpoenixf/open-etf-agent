@@ -37,10 +37,10 @@ test('8.2 committed body survives a later report-required failure without invent
   assert.equal(f.store.inspect(outcome.runId).status, 'failed');
  } finally { f.store.close(); }
 });
-test('8.2 post-commit local failure preserves body independently of failed terminal', async () => {
+test('8.2 committed notification failure cannot veto the original body or successful Run', async () => {
  const f = await fixture(); let receipt; try {
   const outcome = await run({ ...f.options, durable: { ...f.options.durable, onPublication(value) { receipt = value.receipt; throw Object.assign(new Error('SYNTHETIC_AFTER_COMMIT'), { code: 'SYNTHETIC_AFTER_COMMIT' }); } } });
-  assert.equal(outcome.code, 'SYNTHETIC_AFTER_COMMIT'); assert.equal(outcome.status, 'failed'); assert.ok(receipt);
+  assert.equal(outcome.code, null); assert.equal(outcome.status, 'completed'); assert.ok(receipt); assert.equal(outcome.controlObservations[0].code,'PUBLICATION_NOTIFICATION_UNCONFIRMED');
   assert.deepEqual(f.store.confirmPublication(receipt).receipt, receipt); assert.deepEqual(outcome.publication, receipt);
  } finally { f.store.close(); }
 });

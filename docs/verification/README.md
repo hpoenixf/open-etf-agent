@@ -4,6 +4,10 @@
 
 [Project home](../../README.md) · [Coverage contract for the 31 registered articles](../../README.md#reading)
 
+## v0.20 layered evidence candidate
+
+[Original cohorts, repairs and source boundaries](v020-release.md). Additional B: runtime completion 9/10, frozen mechanism 8/10, with separately accepted provider-free forget-exclusion proof. Historical failures and unknowns remain; publication is pending.
+
 ## v0.19 candidate composition evidence
 
 [Fixed cohorts and repair](v019-release.md): A10/10, B9/10, original C unqualified, repair C10/10. Source differences and pending publication remain explicit.

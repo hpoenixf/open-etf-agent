@@ -7,3 +7,10 @@ test-output/
 *.log
 
 !.env.example
+
+# Reader-owned project inputs, snapshots and outputs are not publication material.
+research-example/
+research-projects/
+
+# Also ignore a shared dependency directory represented by a symlink.
+/node_modules

@@ -61,7 +61,7 @@ function encodeMessages(messages) {
 // No authorization is implied by importing this adapter. CLI keeps live blocked.
 // The caller must supply an explicit reviewed grant; never derive it from data.
 export function createChatGateway({ endpoint, model, apiKey, authorization, stream = false, maxInputBytes = 1048576, fetchImpl = globalThis.fetch }) {
-  if (!authorization?.providerApproved || !authorization?.syntheticDataApproved || !authorization?.costApproved) throw new Error('LIVE_BLOCKED');
+  if (authorization?.providerApproved !== true || !(authorization?.syntheticDataApproved === true || authorization?.dataApproved === true) || authorization?.costApproved !== true) throw new Error('LIVE_BLOCKED');
   if (!Number.isSafeInteger(maxInputBytes) || maxInputBytes < 1 || maxInputBytes > 1048576) throw new Error('Invalid input byte limit');
   const url = new URL(endpoint);
   if (url.protocol !== 'https:' || url.username || url.password || url.search || url.hash || !url.pathname.endsWith('/chat/completions')) throw new Error('Invalid trusted endpoint');

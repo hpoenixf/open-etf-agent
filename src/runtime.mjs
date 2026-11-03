@@ -1,3 +1,4 @@
+import { decideRunControl, validateControlObservations, controlErrorCode } from './run-control.mjs';
 import { validateSchedule, scheduleRunId, hasScheduleComposition, validateScheduleCompositionScope } from './schedule.mjs';
 import { RESPONSE_PROFILE, RESPONSE_BINDING, hasResponseComposition, validateResponseCheckpoint, validateResponseCall } from './human-response.mjs';
 import { createTaskTime, validateTaskTime, projectTaskTime, taskTimeMessage } from './temporal.mjs';
@@ -9,7 +10,7 @@ import { createRootBudget } from './cooperation.mjs';
 import { normalizePdfSnapshot, pdfSnapshotBinding } from './pdf-input.mjs';
 import { compactWorkingView } from './compaction.mjs';
 import { projectMemory } from './memory-projection.mjs';
-import { projectContext } from './context.mjs';
+import { projectContext, projectControlProofs } from './context.mjs';
 import { activateTrustedPlugins, inspectTrustedPlugins } from './plugins.mjs';
 import { sha256, DOCUMENT_REVOCATION_PROFILE, normalizeDocumentCatalog, documentCatalogBinding } from './source.mjs';
 import { PUBLICATION_BINDING, PUBLICATION_TEXT_MAX_BYTES, preparePublication } from './publication.mjs';
@@ -35,6 +36,14 @@ async function bounded(promise, signal) {
   const stopped = new Promise((_,reject)=>{cancel=()=>reject(signal.reason);signal.addEventListener('abort',cancel,{once:true});});
   try{return await Promise.race([promise,stopped]);}finally{signal.removeEventListener('abort',cancel);}
 }
+// Notification is not Run work. After a confirmed sealed-final commit it gets
+// one bounded observation window, never a retry or proof of remote termination.
+async function observeCommittedPublication(callback,event,signal){
+ signal.throwIfAborted();let timer;
+ const observed=Promise.resolve().then(()=>{signal.throwIfAborted();return callback(event);}).then(()=>true,()=>false);
+ try{return await bounded(Promise.race([observed,new Promise(resolve=>{timer=setTimeout(()=>resolve(false),100);})]),signal);}
+ finally{clearTimeout(timer);}
+}
 // The checkpoint phase, not a lingering dispatch pointer, decides whether a
 // receipt was committed. Session uses this same transition inside its cancel transaction.
 function retainUnknownDispatch(state, dispatch = state.inFlight) {
@@ -59,7 +68,7 @@ export function validateGatewayOutcomeCheckpoint(state) {
 }
 export function validateRuntimeCheckpoint(state, definition) {
   validateResponseCheckpoint(state,definition.config?.ordinaryResponse===RESPONSE_PROFILE);
-  validateGatewayOutcomeCheckpoint(state);
+  validateGatewayOutcomeCheckpoint(state);validateControlObservations(state);
   if(state?.schemaVersion!=='runtime-checkpoint@1'||!Array.isArray(state.messages)||state.messages[0]?.role!=='user'||state.messages[0]?.content!==definition.question||!Array.isArray(state.usedIds)||new Set(state.usedIds).size!==state.usedIds.length||state.usedIds.some(id=>typeof id!=='string')||!Number.isSafeInteger(state.rounds)||state.rounds<0||state.rounds>definition.limits.maxRounds||!Number.isSafeInteger(state.toolsDispatched)||state.toolsDispatched<0||state.toolsDispatched>definition.limits.maxTools||!Number.isSafeInteger(state.cursor)||state.cursor<0||!Array.isArray(state.partialEffects)||!Array.isArray(state.unknownEffects)||!Array.isArray(state.hookErrors))throw failure('INVALID_RUNTIME_CHECKPOINT');
   if(['proposal-sealed','awaiting-response','tool-dispatched','result-committed','result-consumed'].includes(state.phase)){validateProposal(state.proposal);if(state.proposal.kind==='calls'&&state.cursor>state.proposal.calls.length)throw failure('INVALID_RUNTIME_CHECKPOINT');}
   if(state.phase==='result-committed'&&state.result?.callId!==state.proposal.calls[state.cursor]?.id)throw failure('INVALID_RUNTIME_CHECKPOINT');
@@ -87,7 +96,7 @@ export function validateRuntimeCheckpoint(state, definition) {
   if(state.usedIds.some(id=>!allCalls.has(id)))throw failure('INVALID_PAIRED_CHECKPOINT');
   if(state.proposal?.kind==='calls'&&(!lastGroup||canonical(lastGroup.group.calls)!==canonical(state.proposal.calls)||state.cursor!==lastGroup.settled))throw failure('INVALID_PAIRED_CHECKPOINT');
   if(lastGroup&&lastGroup.settled<lastGroup.group.calls.length&&state.proposal?.kind!=='calls')throw failure('INVALID_PAIRED_CHECKPOINT');
-  if(state.phase==='terminal'&&state.outcome){for(const key of ['answer','status','code','rounds','toolsDispatched','unknownEffects','partialEffects','hookErrors','gatewayOutcome'])if(canonical(state.outcome[key])!==canonical(state[key]))throw failure('INVALID_TERMINAL_OUTCOME');if(canonical(state.outcome.receipt)!==canonical(state.host===null&&['failed','cancelled'].includes(state.status)?null:state.host?.receipt))throw failure('INVALID_TERMINAL_OUTCOME');}
+  if(state.phase==='terminal'&&state.outcome){for(const key of ['answer','status','code','rounds','toolsDispatched','unknownEffects','partialEffects','hookErrors','gatewayOutcome','controlObservations'])if(canonical(state.outcome[key])!==canonical(state[key]))throw failure('INVALID_TERMINAL_OUTCOME');if(canonical(state.outcome.receipt)!==canonical(state.host===null&&['failed','cancelled'].includes(state.status)?null:state.host?.receipt))throw failure('INVALID_TERMINAL_OUTCOME');}
 
 }
 
@@ -152,6 +161,7 @@ async function drive({ question, gateway, outputRoot='runs', requireReport=false
   if(submitting&&durable.rootId!==undefined&&durable.rootId!==durable.runId)throw failure('ROOT_SCOPE_MISMATCH');
   // Refuse an unsupported persisted Host protocol before plugin activation or
   // claiming execution. Session/Artifact reads remain separate from resumption.
+  if(durable&&typeof durable.store.validateCheckpoint!=='function')throw failure('SESSION_CONTRACT_UNSUPPORTED');
   let terminalRead=false;
   if (durable?.runId) {
     try {
@@ -190,6 +200,11 @@ async function drive({ question, gateway, outputRoot='runs', requireReport=false
       let count=0,partial=false;
       for(let i=1;i<state.messages.length;i++){
         const group=state.messages[i];if(group.role!=='assistant')continue;
+        const paired=group.calls.map((c,j)=>state.messages[i+1+j]?.result);
+        if(paired.some(r=>r?.validation?.schemaVersion==='specialist-group-refusal@1')){
+          if(partial||!host.verifyGroupRejections(group.calls,paired))throw failure('RECOVERY_CORRECTION_MISMATCH');count++;continue;
+        }
+
         for(let j=0;j<group.calls.length;j++){
           const message=state.messages[i+1+j];if(message?.role!=='tool')break;
           const result=message.result;
@@ -201,7 +216,7 @@ async function drive({ question, gateway, outputRoot='runs', requireReport=false
     }
     function boundToOriginal(saved) {
       if (!submitting && saved.snapshot.host!=null) assertHostSnapshotVersion(saved.snapshot.host,protectionFor(saved));
-      validateRuntimeCheckpoint(saved.snapshot,saved.definition);
+      validateRuntimeCheckpoint(saved.snapshot,saved.definition);validateControlObservations(saved.snapshot,saved.runId);
       if(canonical(saved.definition.bindings)!==canonical(durable.bindings)||saved.definition.grantId!==durable.grantId||saved.definition.question!==question||canonical(saved.definition.limits)!==canonical(budget)||canonical(saved.definition.config)!==canonical(config))throw failure('RUN_BINDINGS_MISMATCH');
     }
     if(submitting){
@@ -248,7 +263,7 @@ async function drive({ question, gateway, outputRoot='runs', requireReport=false
           state.publication=saved?.receipt;
         }
 
-        const restored=state.host?await createToolHost({directory,documentCatalog,pdfInput,ordinaryResponse:ordinaryResponse?{confirm:(call,result)=>durable.store.confirmResponse(runId,call,result)}:undefined,extensions,hooks,allowedTools,allowedDocuments,enableNotes:!!workingInput?.compaction,restore:state.host,...(protectedMode?{readOnly:true,documentAccess:protectedAccess(stored)}:{})}):null;
+        const restored=state.host?await createToolHost({directory,runIdentity:stored?{runId,grantId:stored.definition.grantId}:undefined,documentCatalog,pdfInput,ordinaryResponse:ordinaryResponse?{confirm:(call,result)=>durable.store.confirmResponse(runId,call,result)}:undefined,extensions,hooks,allowedTools,allowedDocuments,enableNotes:!!workingInput?.compaction,restore:state.host,...(protectedMode?{readOnly:true,documentAccess:protectedAccess(stored)}:{})}):null;
         for(const message of state.messages)if(message.role==='tool'){const call=state.messages.flatMap(m=>m.calls||[]).find(c=>c.id===message.callId);if(call)await restored.verifyResult(call,message.result);}
         if(state.result){const call=state.proposal?.calls?.[state.cursor];if(call)await restored.verifyResult(call,state.result);}
         if(restored)verifyCorrectionHistory(restored);
@@ -276,6 +291,8 @@ async function drive({ question, gateway, outputRoot='runs', requireReport=false
     let host,log,inFlight=state.phase==='tool-dispatched'?state.inFlight:null;
     let gatewayUnsettled=state.phase==='model-reserved';
     const logErrors=[];let sourceSnapshots=[],resultRefs=[];
+    function observeControl(owner,code){state.controlObservations??=[];if(state.controlObservations.length<32)state.controlObservations.push({owner,runId,code,status:'unconfirmed'});}
+    function secondary(owner,code,required=true){observeControl(owner,code);const decision=decideRunControl({kind:'secondary-failure',code,required},{status:state.status});if(decision.action==='stop'){state.status='failed';state.code=decision.reason;}}
     async function effect(promise){
       // Sequential execution has at most one unsettled owned operation.
       const settled=Promise.resolve(promise).then(()=>true,()=>true);pendingEffect=settled;
@@ -304,7 +321,7 @@ async function drive({ question, gateway, outputRoot='runs', requireReport=false
       // plugin owner activates only for an admitted active execution.
       if(plugins)selected=await effect(activateTrustedPlugins({plugins,expectedBindings:durable?.bindings.plugins,signal:controller.signal}));
       if(claim&&durable.onClaim)await bounded(Promise.resolve().then(()=>durable.onClaim({runId,rootId:claim.rootId,owner:claim.owner,fence:claim.fence})),controller.signal);
-      host=await effect(createToolHost({directory,documentCatalog,ordinaryResponse:ordinaryResponse?{confirm:(call,result)=>durable.store.confirmResponse(runId,call,result)}:undefined,extensions,hooks,allowedTools,allowedDocuments,enableNotes:!!workingInput?.compaction,restore:state.host??undefined,pdfInput,...(protectedMode?{documentAccess:protectedAccess(claim.read(),claim)}:{})}));
+      host=await effect(createToolHost({directory,runIdentity:claim?{runId,grantId:claim.read().definition.grantId}:undefined,canOfferReferenceCorrection:claim?()=>{const s=claim.read().snapshot;return s.phase==='proposal-sealed'&&s.cursor===0&&s.proposal?.calls?.length===1&&!s.inFlight&&!s.partialEffects.length&&!s.unknownEffects.length&&s.gatewayOutcome==='settled';}:undefined,documentCatalog,ordinaryResponse:ordinaryResponse?{confirm:(call,result)=>durable.store.confirmResponse(runId,call,result)}:undefined,extensions,hooks,allowedTools,allowedDocuments,enableNotes:!!workingInput?.compaction,restore:state.host??undefined,pdfInput,...(protectedMode?{documentAccess:protectedAccess(claim.read(),claim)}:{})}));
       if(durable?.runId)for(const message of state.messages)if(message.role==='tool'){const call=state.messages.flatMap(m=>m.calls||[]).find(c=>c.id===message.callId);await host.verifyResult(call,message.result);}
       verifyCorrectionHistory(host);
       if(state.working)await host.verifyWorkingInput(state.working);
@@ -330,7 +347,7 @@ async function drive({ question, gateway, outputRoot='runs', requireReport=false
           if(!state.working){
             const lookupMemory=ref=>{if(ref.libraryId!==workingInput.memoryLibrary.libraryId)throw failure('MEMORY_SCOPE_MISMATCH');return workingInput.memoryLibrary.state(ref.id);};
             const memoryMessages=workingInput?.memoryLibrary?await projectMemory({messages:state.messages,lookupState:lookupMemory}):structuredClone(state.messages);
-            const workingMessages=projectTaskTime(memoryMessages, temporal);
+            const workingMessages=projectControlProofs(projectTaskTime(memoryMessages, temporal));
             let requestMessages=contextBytes===undefined?workingMessages:await projectContext({messages:workingMessages,maxBytes:contextBytes,lookupSource:host.resolveSource});let noteRef=null;
             if(workingInput?.compaction&&(state.compactionState?.frontier||Buffer.byteLength(JSON.stringify(requestMessages))>=workingInput.compaction.thresholdBytes)){
               // A crash during summary generation keeps its consumed root reservation; no adoption is implied.
@@ -377,6 +394,9 @@ async function drive({ question, gateway, outputRoot='runs', requireReport=false
           }
           state.gatewayOutcome='settled';validateProposal(proposal);
           if(proposal.kind==='calls'){if(proposal.calls.some(c=>c.name==='ask_response')){if(!ordinaryResponse||proposal.calls.length!==1)throw failure('INVALID_ORDINARY_RESPONSE');validateResponseCall(proposal.calls[0]);if(durable.store.responseStatus(runId))throw failure('QUESTION_LIMIT');}const ids=new Set();for(const c of proposal.calls){if(state.usedIds.includes(c.id)||ids.has(c.id))throw failure('DUPLICATE_CALL_ID');ids.add(c.id);}if(state.toolsDispatched+proposal.calls.length>budget.maxTools)throw failure('TOOL_LIMIT');}
+          // Use the original Session codec before mutating the recoverable state.
+          // A malformed JS-only Gateway result must not poison its own failure checkpoint.
+          if(claim)durable.store.validateCheckpoint({...state,phase:'proposal-sealed',proposal:structuredClone(proposal),cursor:0,result:null,working:null,messages:proposal.kind==='calls'?[...state.messages,{role:'assistant',calls:structuredClone(proposal.calls)}]:state.messages});
           state.proposal=structuredClone(proposal);state.cursor=0;state.result=null;state.working=null;
           if(proposal.kind==='calls')state.messages.push({role:'assistant',calls:structuredClone(proposal.calls)});
           await checkpoint('proposal-sealed');await record('model_proposal',{kind:proposal.kind,callIds:proposal.calls?.map(c=>c.id)||[],usage:proposal.usage??null,cost:null,durationMs:performance.now()-start});
@@ -387,10 +407,33 @@ async function drive({ question, gateway, outputRoot='runs', requireReport=false
           if(publication){
             const committed=claim.publish(preparePublication({runId,rootId:claim.rootId,text:state.answer}));
             state.publication=committed.receipt;
-            if(durable.onPublication)await bounded(Promise.resolve().then(()=>durable.onPublication({runId,receipt:structuredClone(committed.receipt),idempotent:committed.idempotent})),controller.signal);
-            controller.signal.throwIfAborted();
+            // A control checkpoint is deliberately separate from delivery observation.
+            if(durable.onCheckpoint)await bounded(Promise.resolve().then(()=>durable.onCheckpoint({phase:'publication-committed',runId,directory,receipt:structuredClone(committed.receipt),fence:claim.fence})),controller.signal);
+            controller.signal.throwIfAborted();claim.read();durable.store.confirmPublication(committed.receipt);
+            // There is no more model/tool dispatch on this sealed-final path. Keep
+            // user cancellation and fence protection, not a notification-owned deadline.
+            clearTimeout(timer);
+            if(durable.onPublication){
+              const confirmed=await observeCommittedPublication(durable.onPublication,{runId,receipt:structuredClone(committed.receipt),idempotent:committed.idempotent},controller.signal);
+              controller.signal.throwIfAborted();claim.read();durable.store.confirmPublication(committed.receipt);
+              if(!confirmed){const notificationDecision=decideRunControl({kind:'committed-notification'});if(notificationDecision.action!=='continue')throw failure(notificationDecision.reason);observeControl('publication-notification','PUBLICATION_NOTIFICATION_UNCONFIRMED');}
+            }
+            controller.signal.throwIfAborted();claim.read();
           }
-          if(requireReport&&!host.receipt)throw failure('REPORT_REQUIRED');state.status='completed';state.code=null;break;
+          const finalDecision=decideRunControl({kind:'sealed-final',reportPresent:!!host.receipt},{requireReport,unknown:gatewayUnsettled||state.unknownEffects.length>0});if(finalDecision.action==='stop')throw failure(finalDecision.reason);state.status='completed';state.code=null;break;
+        }
+        if(claim&&state.phase==='proposal-sealed'&&state.cursor===0&&!hooks&&!state.partialEffects.length&&!state.unknownEffects.length&&state.gatewayOutcome==='settled'){
+          const refused=host.rejectProposalGroup(state.proposal.calls);
+          if(refused){
+            const decision=decideRunControl({kind:'group-refusal',proved:true},{corrections:state.corrections??0});
+            const next={...structuredClone(state),phase:'result-consumed',cursor:state.proposal.calls.length,result:null,inFlight:null,host:host.snapshot(),corrections:1,failureCode:decision.action==='stop'?decision.reason:null};
+            for(const result of refused){next.usedIds.push(result.callId);next.messages.push({role:'tool',callId:result.callId,result});}
+            state=structuredClone(claim.rejectProposalGroup(next).snapshot);
+            if(durable.onCheckpoint)await bounded(Promise.resolve().then(()=>durable.onCheckpoint({phase:'result-consumed',runId,directory,cursor:state.cursor,fence:claim.fence,groupRejected:true})),controller.signal);
+            for(const result of refused)await record('tool_result',{callId:result.callId,name:state.proposal.calls.find(c=>c.id===result.callId).name,status:'rejected',dispatched:false,durationMs:0});
+            if(decision.action!=='stop')await record('validation_correction_offered',{callId:refused.find(r=>r.validation.ownerCallId===r.callId).callId,code:'SPECIALIST_SINGLE_CALL_REQUIRED',remainingRounds:budget.maxRounds-state.rounds});
+            continue;
+          }
         }
         if(state.phase==='result-consumed')state.phase='proposal-sealed';
         if(state.cursor>=state.proposal.calls.length){state.proposal=null;state.cursor=0;state.result=null;await checkpoint('ready');continue;}
@@ -421,11 +464,10 @@ async function drive({ question, gateway, outputRoot='runs', requireReport=false
         if(result.artifactEffects)state.partialEffects.push({callId:call.id,name:effectiveName,artifactEffects:structuredClone(result.artifactEffects)});
         if(result.memoryEffect)state.partialEffects.push({callId:call.id,name:effectiveName,memoryEffect:structuredClone(result.memoryEffect)});
         let correctionOffered=false;
-        state.failureCode=result.status==='succeeded'?null:(result.dispatched?'TOOL_FAILED':'TOOL_REJECTED');
-        if(state.failureCode&&!hooks&&state.proposal.calls.length===1&&!state.partialEffects.length&&!state.unknownEffects.length&&host.correctionEligible(call,result)){
-          if((state.corrections??0)>=1)state.failureCode='CORRECTION_LIMIT';
-          else{state.corrections=1;state.failureCode=null;correctionOffered=true;}
-        }
+        const toolDecision=decideRunControl({kind:'tool-result',succeeded:result.status==='succeeded',dispatched:result.dispatched,correctionProved:await host.correctionEligible(call,result)},
+          {singleCall:state.proposal.calls.length===1,hooks:!!hooks,partial:state.partialEffects.length>0,unknown:state.unknownEffects.length>0,corrections:state.corrections??0});
+        state.failureCode=toolDecision.action==='stop'?toolDecision.reason:null;
+        if(toolDecision.reason==='LOCAL_CORRECTION'){state.corrections=1;correctionOffered=true;}
         state.messages.push({role:'tool',callId:call.id,result:structuredClone(result)});state.cursor++;state.result=null;
         await checkpoint('result-consumed');
         await record('tool_result',{callId:call.id,name:effectiveName,status:result.status,dispatched:result.dispatched,partialPaths,memoryEffect:result.memoryEffect,artifactEffects:result.artifactEffects,artifactId:result.value?.artifactId,durationMs:result.durationMs,resultRef:result.value?.resultRef,sourceAcquisition:result.value?.mcp?{serverName:result.value.mcp.serverName,protocolVersion:result.value.mcp.protocolVersion,protocolRequestId:result.value.mcp.protocolRequestId,modelCallId:result.value.mcp.modelCallId}:undefined,original:result.original,effective:result.effective,hookErrors:result.hookErrors||[]});
@@ -434,20 +476,27 @@ async function drive({ question, gateway, outputRoot='runs', requireReport=false
         if(state.failureCode)throw failure(state.failureCode);
       }
     }catch(error){
-      state.code=error.code||'EXECUTION_FAILED';state.status=state.code==='CANCELLED'||state.code==='RUN_CANCELLED'?'cancelled':'failed';
+      let code=controlErrorCode(error);
+      let cancelled=controller.signal.aborted&&['CANCELLED','RUN_CANCELLED'].includes(controlErrorCode(controller.signal.reason));
+      if(!cancelled&&claim){try{const original=durable.store.inspect(runId);cancelled=original.status==='cancelled'||original.rootStatus==='cancelled';}catch{}}
+      if(cancelled)code='CANCELLED';else if(['CANCELLED','RUN_CANCELLED'].includes(code))code='EXECUTION_FAILED';
+      state.code=decideRunControl({kind:'failure',code}).reason;state.status=cancelled?'cancelled':'failed';
       retainUnknownDispatch(state,inFlight);
     }finally{
       clearTimeout(timer);clearInterval(heartbeat);
       if(interrupted)effectsStopped=await drainStoppedEffect();
-      if(pdfInput!==undefined){try{await host?.close();}catch{state.status='failed';state.code='PDF_CLEANUP_FAILED';}}
-      signal?.removeEventListener('abort',cancel);hostSignal?.removeEventListener('abort',stop);
-      if(allowedTools&&host){try{sourceSnapshots=await host.getSources();resultRefs=await host.getResultRefs();}catch{state.status='failed';state.code='RESULT_READBACK_FAILED';}}
-      if(log){try{await record(awaitingResponse?'run_yielded':interrupted?'worker_interrupted':'run_finished',{status:awaitingResponse?'awaiting-response':interrupted?'interrupted':state.status,code:state.code,toolsDispatched:state.toolsDispatched,receipt:host?.receipt,unknownEffects:state.unknownEffects,partialEffects:state.partialEffects});}catch{if(state.status==='completed'){state.status='failed';state.code='LOG_WRITE_FAILED';}}await log.close().catch(()=>logErrors.push('LOG_CLOSE_FAILED'));}
-      if(hooks)state.hookErrors.push(...await hooks.observe('release',{runId,rootId:rootBudget.rootId,taskId,status:state.status,code:state.code,logErrors:[...logErrors],receipt:host?.receipt}));
+      if(pdfInput!==undefined){try{await host?.close();}catch{secondary('pdf-cleanup','PDF_CLEANUP_FAILED');}}
+      if(allowedTools&&host){try{sourceSnapshots=await host.getSources();resultRefs=await host.getResultRefs();}catch{secondary('result-readback','RESULT_READBACK_FAILED');}}
+      if(log){try{await record(awaitingResponse?'run_yielded':interrupted?'worker_interrupted':'run_finished',{settlementPhase:'pre-settlement',terminalAuthority:claim?'Session.finish':'Runtime.return',status:awaitingResponse?'awaiting-response':interrupted?'interrupted':state.status,code:state.code,toolsDispatched:state.toolsDispatched,receipt:host?.receipt,unknownEffects:state.unknownEffects,partialEffects:state.partialEffects});}catch{secondary('log','LOG_WRITE_FAILED',false);}await log.close().catch(()=>logErrors.push('LOG_CLOSE_FAILED'));}
+      if(hooks){try{state.hookErrors.push(...await hooks.observe('release',{runId,rootId:rootBudget.rootId,taskId,status:state.status,code:state.code,logErrors:[...logErrors],receipt:host?.receipt}));}catch{state.hookErrors.push({phase:'release',error:'HOOK_RELEASE_FAILED'});secondary('hook-release','HOOK_RELEASE_FAILED',false);}}
     }
+    // Keep external cancellation observable through asynchronous cleanup/release.
+    // Finalization does not grant time or revive an old writer.
+    if(!interrupted&&controller.signal.aborted){const code=controller.signal.reason?.code||'EXECUTION_FAILED';if(['CANCELLED','RUN_CANCELLED'].includes(code)||state.status==='completed'){state.code=decideRunControl({kind:'failure',code}).reason;state.status=['CANCELLED','RUN_CANCELLED'].includes(code)?'cancelled':'failed';}}
+    signal?.removeEventListener('abort',cancel);hostSignal?.removeEventListener('abort',stop);
     if(protectedMode&&state.status!=='completed')state.answer='';
     state.gatewayOutcome=gatewayUnsettled?'unknown':'settled';
-    const outcome={runId,rootId:rootBudget.rootId,directory:resolve(directory),status:state.status,code:state.code,gatewayOutcome:state.gatewayOutcome,answer:state.answer,...(state.publication?{publication:structuredClone(state.publication)}:{}),receipt:host?.receipt??null,toolsDispatched:state.toolsDispatched,rounds:state.rounds,logErrors,unknownEffects:state.unknownEffects,partialEffects:state.partialEffects,hookErrors:state.hookErrors,rootUsage:rootBudget.snapshot(),taskId,...(allowedTools?{sources:sourceSnapshots,resultRefs}:{}),semanticStatus:'unreviewed'};
+    const outcome={...(state.controlObservations?{controlObservations:structuredClone(state.controlObservations)}:{}),runId,rootId:rootBudget.rootId,directory:resolve(directory),status:state.status,code:state.code,gatewayOutcome:state.gatewayOutcome,answer:state.answer,...(state.publication?{publication:structuredClone(state.publication)}:{}),receipt:host?.receipt??null,toolsDispatched:state.toolsDispatched,rounds:state.rounds,logErrors,unknownEffects:state.unknownEffects,partialEffects:state.partialEffects,hookErrors:state.hookErrors,rootUsage:rootBudget.snapshot(),taskId,...(allowedTools?{sources:sourceSnapshots,resultRefs}:{}),semanticStatus:'unreviewed'};
     if(awaitingResponse){try{claim.release();return{...outcome,status:'awaiting-response',code:null,questionId:state.responseQuestion,deadlineAt};}catch(error){const current=durable.store.inspect(runId);return{...outcome,status:current.status==='cancelled'?'cancelled':'failed',code:current.status==='cancelled'?'CANCELLED':error.code};}}
     if(interrupted){
       let leaseReleased=false;if(effectsStopped){try{leaseReleased=claim.release();}catch{}}

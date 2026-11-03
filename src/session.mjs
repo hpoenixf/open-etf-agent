@@ -1,3 +1,4 @@
+import { validateControlObservations } from './run-control.mjs';
 import { SCHEDULE_PROFILE, prepareSchedule, validateScheduleReference, scheduleCanonical } from './schedule.mjs';
 import { searchPages } from './retrieval.mjs';
 import { validateProtectedHostSnapshot, validateProtectedCsvResult } from './tools.mjs';
@@ -77,7 +78,7 @@ function validateConfig(value, ordinary = false, protectedProfile = false) {
   if (value.workingInput.memoryLibraryId !== undefined && !identifier(value.workingInput.memoryLibraryId)) fail('INVALID_DEFINITION');
   if (value.workingInput.compaction !== undefined) {
    const c = value.workingInput.compaction; fields(c, ['thresholdBytes', 'version'], ['summaryTimeoutMs','maxSummaryRounds']);
-   if (!Number.isSafeInteger(c.thresholdBytes) || c.thresholdBytes < 1 || c.thresholdBytes > 1048576 || !identifier(c.version) || (c.summaryTimeoutMs !== undefined && (!Number.isSafeInteger(c.summaryTimeoutMs) || c.summaryTimeoutMs < 1 || c.summaryTimeoutMs > 30000))) fail('INVALID_DEFINITION');
+   if (!Number.isSafeInteger(c.thresholdBytes) || c.thresholdBytes < 1 || c.thresholdBytes > 1048576 || !identifier(c.version) || (c.summaryTimeoutMs !== undefined && (!Number.isSafeInteger(c.summaryTimeoutMs) || c.summaryTimeoutMs < 1 || c.summaryTimeoutMs > 120000))) fail('INVALID_DEFINITION');
    if(c.version==='gateway-history-compaction@2'?(!Number.isSafeInteger(c.maxSummaryRounds)||c.maxSummaryRounds<1||c.maxSummaryRounds>24):c.maxSummaryRounds!==undefined)fail('INVALID_DEFINITION');
   }
  }
@@ -93,11 +94,12 @@ function definitionBytes(value, ordinary = false, protectedProfile = false) {
  validateBindings(value.bindings); validateConfig(value.config, ordinary, protectedProfile); validateResponseProfile(value, ordinary); return json(value, 65536);
 }
 function checkpointBytes(value, terminal = false, ordinary = false) {
- validateResponseCheckpoint(value, ordinary);validateGatewayOutcomeCheckpoint(value);
+ validateResponseCheckpoint(value, ordinary);validateGatewayOutcomeCheckpoint(value);validateControlObservations(value);
  if (!object(value) || value.schemaVersion !== 'runtime-checkpoint@1' || !(phases.has(value.phase) || ordinary && value.phase === 'awaiting-response') || (terminal ? value.phase !== 'terminal' || !['completed', 'failed', 'cancelled'].includes(value.status) : value.phase === 'terminal')) fail('INVALID_CHECKPOINT');
  return json(value, MAX_CHECKPOINT_JSON);
 }
 function validateRunRoot(row, root, definition, snapshot) {
+ validateControlObservations(snapshot,row.run_id);
  if(!root) fail('CORRUPT_ROOT');
   if (!['active', 'completed', 'failed', 'cancelled'].includes(row.status) || !['active', 'completed', 'failed', 'cancelled'].includes(root.status) || (row.status === 'active') === (snapshot.phase === 'terminal') || (snapshot.phase === 'terminal' && snapshot.status !== row.status) || definition.grantId !== root.grant_id || definition.deadlineAt > root.deadline_at || definition.rootLimits.model !== root.model_limit || definition.rootLimits.tool !== root.tool_limit || !Number.isSafeInteger(root.model_used) || !Number.isSafeInteger(root.tool_used) || root.model_used < 0 || root.tool_used < 0 || root.model_used > root.model_limit || root.tool_used > root.tool_limit) fail('CORRUPT_SESSION_STATE');
 }
@@ -433,6 +435,7 @@ export async function openSession({ directory, clock = Date.now, leaseMs = 1000,
  }
  function scheduleView(fact){return {reference:fact.reference,envelope:fact.envelope,confirmedAt:fact.confirmedAt,state:fact.state,decidedAt:fact.decidedAt,materializedAt:fact.materializedAt,runId:fact.materializedRunId,run:fact.materializedRunId===null?null:view(getRun(fact.materializedRunId))};}
  const store = {
+  validateCheckpoint(snapshot) { encodeCheckpoint(snapshot); return true; },
   confirmSchedule({schedule,definition,snapshot}) {
    if(!scheduled)fail('SCHEDULE_PROFILE_REQUIRED');encodeDefinition(definition);encodeCheckpoint(snapshot);validateRuntimeCheckpoint(snapshot,definition);
    const prepared=prepareSchedule(schedule,definition,snapshot),encoded=json(prepared.envelope,131072);
@@ -602,7 +605,31 @@ export async function openSession({ directory, clock = Date.now, leaseMs = 1000,
     runId, rootId, owner, fence, get leaseUntil() { return store.inspect(runId).leaseUntil; },
     read() { return transaction(() => { writer(runId, owner, fence, false); return view(getRun(runId)); }); },
     renew() { return transaction(() => { writer(runId, owner, fence, false); const until = now() + leaseMs; db.prepare('UPDATE runs SET lease_until=? WHERE run_id=?').run(until, runId); return until; }); },
-    checkpoint(snapshot) { const encoded = encodeCheckpoint(snapshot); return transaction(() => { writer(runId, owner, fence); db.prepare('UPDATE runs SET snapshot=? WHERE run_id=?').run(encoded, runId); return view(getRun(runId)); }); },
+    rejectProposalGroup(snapshot) {
+     const encoded=encodeCheckpoint(snapshot);return transaction(()=>{
+      const row=writer(runId,owner,fence),prior=parsed(row.snapshot,MAX_CHECKPOINT_JSON),calls=prior.proposal?.calls,sha=v=>createHash('sha256').update(canonical(v)).digest('hex');
+      if(prior.phase!=='proposal-sealed'||prior.cursor!==0||!Array.isArray(calls)||calls.length<2||prior.inFlight||prior.unknownEffects.length||prior.partialEffects.length||prior.gatewayOutcome!=='settled'||snapshot.phase!=='result-consumed'||snapshot.cursor!==calls.length||snapshot.result!==null||snapshot.inFlight!==null||canonical(snapshot.proposal)!==canonical(prior.proposal)||canonical(snapshot.host)!==canonical(prior.host)||snapshot.toolsDispatched!==prior.toolsDispatched||snapshot.rounds!==prior.rounds||snapshot.corrections!==1||snapshot.failureCode!==((prior.corrections??0)>=1?'CORRECTION_LIMIT':null))fail('GROUP_REFUSAL_TRANSITION');
+      if(canonical(snapshot.messages.slice(0,prior.messages.length))!==canonical(prior.messages)||snapshot.messages.length!==prior.messages.length+calls.length||canonical(snapshot.usedIds)!==canonical([...prior.usedIds,...calls.map(c=>c.id)])||new Set(snapshot.usedIds).size!==snapshot.usedIds.length)fail('GROUP_REFUSAL_PAIRING');
+      const expected={...prior,phase:'result-consumed',cursor:calls.length,result:null,inFlight:null,corrections:1,failureCode:(prior.corrections??0)>=1?'CORRECTION_LIMIT':null,usedIds:[...prior.usedIds,...calls.map(c=>c.id)],messages:snapshot.messages};
+      if(canonical(expected)!==canonical(snapshot))fail('GROUP_REFUSAL_STATE_CHANGED');
+      const definition=parsed(row.definition,65536);
+      let shared;for(let i=0;i<calls.length;i++){
+       const call=calls[i],m=snapshot.messages[prior.messages.length+i],r=m?.result,v=r?.validation;
+       if(m?.role!=='tool'||m.callId!==call.id||r.callId!==call.id||r.status!=='rejected'||r.dispatched!==false||r.durationMs!==0||v?.schemaVersion!=='specialist-group-refusal@1'||v.runId!==runId||v.groupHash!==sha(calls)||v.requestHash!==sha(call)||canonical(v.callIds)!==canonical(calls.map(c=>c.id))||v.repairable!==true||r.error!==v.code||v.code!==(call.id===v.ownerCallId?'SPECIALIST_SINGLE_CALL_REQUIRED':'GROUP_NOT_DISPATCHED'))fail('GROUP_REFUSAL_IDENTITY');
+       fields(m,['role','callId','result']);fields(r,['callId','status','dispatched','error','validation','durationMs']);fields(v,['schemaVersion','runId','ownerBinding','groupHash','callIds','ownerCallId','code','repairable','requestHash']);
+       if(calls.filter(c=>c.id===v.ownerCallId).length!==1||!definition.bindings.adapters.some(b=>canonical(b)===canonical(v.ownerBinding)))fail('GROUP_REFUSAL_OWNER_BINDING');
+       const identity=canonical({ownerBinding:v.ownerBinding,ownerCallId:v.ownerCallId});if(shared&&shared!==identity)fail('GROUP_REFUSAL_IDENTITY');shared=identity;
+      }
+      db.prepare('UPDATE runs SET snapshot=? WHERE run_id=?').run(encoded,runId);return view(getRun(runId));
+     });
+    },
+    checkpoint(snapshot) { const encoded = encodeCheckpoint(snapshot); return transaction(() => {
+     const row=writer(runId, owner, fence),proof=snapshot.result?.validation;
+     if(proof?.schemaVersion==='builtin-report-reference-validation@1'){
+      const prior=parsed(row.snapshot,MAX_CHECKPOINT_JSON),definition=parsed(row.definition,65536),call=prior.proposal?.calls?.[prior.cursor];
+      if(snapshot.phase!=='result-committed'||prior.phase!=='proposal-sealed'||prior.cursor!==0||prior.proposal?.calls?.length!==1||call?.name!=='save_report'||canonical(snapshot.proposal)!==canonical(prior.proposal)||snapshot.cursor!==prior.cursor||proof.runId!==runId||proof.grantId!==definition.grantId||proof.requestHash!==createHash('sha256').update(canonical(call)).digest('hex')||canonical(proof.basis)!==canonical(prior.host?.results)||canonical(snapshot.host)!==canonical(prior.host)||prior.host?.saveAttempted!==false||prior.host?.receipt!==null||prior.inFlight||prior.gatewayOutcome!=='settled'||prior.unknownEffects?.length||prior.partialEffects?.length||snapshot.result.dispatched!==false||snapshot.result.callId!==call.id)fail('REFERENCE_CORRECTION_TRANSITION');
+     }
+     db.prepare('UPDATE runs SET snapshot=? WHERE run_id=?').run(encoded, runId); return view(getRun(runId)); }); },
     askResponse(expected) {
      return transaction(()=>{
       if(!ordinary)fail('ORDINARY_PROFILE_REQUIRED');

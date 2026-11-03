@@ -55,6 +55,15 @@ async function writeIndex(directory,entries) {
   try { file=await open(temp,'wx',0o600); await file.writeFile(JSON.stringify({schemaVersion:'content-index@1',entries})+'\n'); await file.sync(); await file.close(); file=null; await rename(temp,target); }
   finally { await file?.close().catch(()=>{}); await unlink(temp).catch(()=>{}); }
 }
+// Pure interpretation of a Result-owner basis, never a lookup in a later index.
+export function reportReferenceIssue(args,basis) {
+ const sources=new Set(basis.filter(x=>x.kind==='source').map(x=>x.sourceId));
+ const refs=new Set(basis.map(x=>x.resultRef));
+ for(const id of args.sourceIds)if(!sources.has(id))return refs.has(id)?'REPORT_TYPED_REFERENCE_NOT_SOURCE':null;
+ const count=basis.filter(x=>x.kind==='calculation').length;
+ for(const m of args.text.matchAll(/\[(C?)([0-9]+)\]/g)){const n=Number(m[2]);if(n<1||n>(m[1]?count:args.sourceIds.length))return 'REPORT_CITATION_OUT_OF_RANGE';}
+ return null;
+}
 export async function createResultStore({directory,allowedDocuments,readOnly=false}={}) {
   if(typeof readOnly!=='boolean')throw new Error('Invalid result read mode');
   directory=await safeDirectory(directory); const records=await(readOnly?safeDirectory:ensureSafeDirectory)(join(directory,'results'));
@@ -132,6 +141,15 @@ export async function createResultStore({directory,allowedDocuments,readOnly=fal
   }
   return {
     snapshot: () => structuredClone([...byRef.values()]),
+    async referenceBasis() {
+      await queue;const basis=structuredClone([...byRef.values()]);
+      const check=async()=>{const disk=parse(await boundedBytes(join(directory,'content-index.json'),131072));if(disk.schemaVersion!=='content-index@1'||!isDeepStrictEqual(disk.entries,basis))throw new Error('Result index changed during reference validation');};
+      await check();for(const item of basis)await readRecord(item.resultRef,item.kind);await check();return basis;
+    },
+    async verifyReferenceBasis(basis) {
+      if(!Array.isArray(basis)||basis.length>64||!isDeepStrictEqual(basis,[...byRef.values()].slice(0,basis.length)))throw new Error('Reference basis prefix changed');
+      for(const item of basis)await readRecord(item.resultRef,item.kind);return true;
+    },
     async verifySnapshot(expected) {
       if (JSON.stringify(expected) !== JSON.stringify([...byRef.values()])) throw new Error('Host result snapshot changed');
       for (const entry of expected) await readRecord(entry.resultRef, entry.kind);

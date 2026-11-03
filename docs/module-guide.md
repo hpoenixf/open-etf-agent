@@ -17,7 +17,7 @@ A small research Agent that grows through independently runnable development sna
 
 The introductory task compares **original synthetic documents**, not real funds. The small synthetic ETF Plugin introduced in v0.7 is also not a live financial-data service. Complete ETF research tools remain on the roadmap. This project does not execute trades or provide investment advice.
 
-> **Start here:** this v0.17 source adds one bounded shared Admission capacity group. [Release qualification](verification/v017-release.md) keeps real-provider delivery and offline concurrency safety separate. Earlier fixed stages and tags remain historical evidence; default CLI examples stay synthetic.
+> **Start here:** [v0.20 local research projects](research-project.md) introduce an explicit user-data CLI/API. [Layered evidence](verification/v020-release.md) preserves original runs, failures and source differences. The candidate is not a published release; historical tags and synthetic examples remain available.
 
 > **Looking for real model calls?** Read the [16 historical HTTP calls across v0.1–v0.5](#live-evidence), then the [separate live runner and its authorization requirements](#live-entry). Those records do not qualify v0.11 live recovery.
 
@@ -407,3 +407,8 @@ Open an [issue](https://github.com/hpoenixf/open-etf-agent/issues) with the **st
 ## v0.19 · Composition contracts
 
 [Compatibility matrix and original runnable checks](composition.md) · [Per-cohort real qualification, failures and upgrade boundaries](verification/v019-release.md). [v0.19.0](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.19.0) identifies the final package after its original CI; the qualification record preserves the separate implementation snapshot and earlier failed checks.
+
+<a id="v020-research-project"></a>
+## v0.20 · Local research projects (candidate)
+
+[Import, submit, work, inspect and read reports](research-project.md) · [Run control, correction and observation limits](run-control.md) · [Layered evidence](verification/v020-release.md). Same-Run recovery keeps original grants and budgets; unknown effects are not replayed.

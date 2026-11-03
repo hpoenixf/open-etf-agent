@@ -11,7 +11,7 @@ async function boundedSummary(summarize,input,parentSignal,timeoutMs){
 }
 const identityKeys=['sourceId','documentId','name','version','page','sha256','mediaType'];
 export async function compactWorkingView({messages,maxBytes,lookupSource,rootBudget,summarize,saveNote,signal,lookupMemoryState,canCompactHistory,summaryTimeoutMs=2000,reserveSummary,frontier,readNote,allowSummary=true}={}){
-  if(!Number.isSafeInteger(summaryTimeoutMs)||summaryTimeoutMs<1||summaryTimeoutMs>30000)throw new Error('Invalid summary timeout');
+  if(!Number.isSafeInteger(summaryTimeoutMs)||summaryTimeoutMs<1||summaryTimeoutMs>120000)throw new Error('Invalid summary timeout');
   if(typeof summarize!=='function'||typeof saveNote!=='function'||typeof rootBudget?.claim!=='function')throw new Error('Invalid compaction configuration');
   if(typeof allowSummary!=='boolean')throw new Error('Invalid summary allowance');
   const basis=sha256(JSON.stringify(messages));

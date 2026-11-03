@@ -1,3 +1,4 @@
+import {specialistGroupRefusal,specialistHistoricalGroup} from './specialist-child.mjs';
 import { RESPONSE_TOOL, RESPONSE_PROFILE, validateResponseCall } from './human-response.mjs';
 import {openPdfInput,normalizePdfSnapshot} from './pdf-input.mjs';
 import {openArtifactStore,encodeCsv,projectArtifactEffects,validateArtifactProtection,validateProtectedSourcePayload,validateProtectedArtifactDescriptor} from './artifacts.mjs';
@@ -5,7 +6,7 @@ import {saveReport,REPORT_TEXT_MAX_BYTES,validateProtectedReportReceipt} from '.
 import { projectMemoryEffect } from './memory-effects.mjs';
 import { readFile, open, constants } from 'node:fs/promises';
 import { join } from 'node:path';
-import { createResultStore, validateSourceDescriptor } from './results.mjs';
+import { createResultStore, validateSourceDescriptor, reportReferenceIssue } from './results.mjs';
 import { calculateChange } from './calculation.mjs';
 import { isDeepStrictEqual } from 'node:util';
 import { safeDirectory } from './storage-files.mjs';
@@ -20,6 +21,18 @@ const requestIdentity = (original,effective,hookUsed) => sha256(JSON.stringify([
 const recoveryFail = message => { throw Object.assign(new Error(message), {code:'RECOVERY_CHECKPOINT_MISMATCH'}); };
 // Only this original builtin validator can mint a correction-eligible rejection.
 const validationBrand=Symbol('builtin-calculation-validation');
+const reportValidationBrand=Symbol('builtin-report-input-validation');
+const reportReferenceBrand=Symbol('builtin-report-reference-validation');
+function checkpointJsonStable(value){try{return isDeepStrictEqual(value,JSON.parse(JSON.stringify(value)));}catch{return false;}}
+const reportInputFail=code=>{const error=new Error(code);error[reportValidationBrand]=true;error.validationCode=code;throw error;};
+function validateReportInputShape(args){
+ const names=Object.hasOwn(args||{},'attachmentIds')?['text','sourceIds','attachmentIds']:['text','sourceIds'];
+ if(!object(args)||Object.keys(args).length!==names.length||names.some(k=>!Object.hasOwn(args,k)))reportInputFail('REPORT_ARGUMENT_FIELDS');
+ if(typeof args.text!=='string'||!args.text.trim()||Buffer.byteLength(args.text)>REPORT_TEXT_MAX_BYTES)reportInputFail('REPORT_TEXT_INVALID');
+ if(!Array.isArray(args.sourceIds)||!args.sourceIds.length||args.sourceIds.length>64||new Set(args.sourceIds).size!==args.sourceIds.length||args.sourceIds.some(id=>typeof id!=='string'))reportInputFail('REPORT_SOURCE_IDS_INVALID');
+ if(args.attachmentIds!==undefined&&(!Array.isArray(args.attachmentIds)||args.attachmentIds.length>16||new Set(args.attachmentIds).size!==args.attachmentIds.length))reportInputFail('REPORT_ATTACHMENT_IDS_INVALID');
+}
+
 const correctionCodes=new Set(['CALC_REQUIRED_FIELD_MISSING','CALC_NUMBER_TYPE','CALC_UNIT_FORMAT']);
 const calculationFail=code=>{const error=new Error(code);error[validationBrand]=true;error.validationCode=code;throw error;};
 const unitPattern='^[A-Za-z][A-Za-z0-9 /%_-]{0,39}(?![\\s\\S])';
@@ -53,7 +66,7 @@ export function assertWorkingInputToolSelection({allowedTools,contextBytes,compa
     throw Object.assign(new Error('Working input requires selected original/note reread tools'),{code:'WORKING_INPUT_TOOL_UNAVAILABLE'});
   }
 }
-export async function createToolHost({ directory, extensions = [], hooks, allowedTools, allowedDocuments, enableNotes=false, restore, pdfInput, ordinaryResponse, readOnly=false, documentAccess, documentCatalog }) {
+export async function createToolHost({ directory, extensions = [], hooks, allowedTools, allowedDocuments, enableNotes=false, restore, pdfInput, ordinaryResponse, readOnly=false, documentAccess, documentCatalog, runIdentity, canOfferReferenceCorrection }) {
   if(typeof readOnly!=='boolean'||readOnly&&pdfInput!==undefined)fail('Invalid Host read mode');
   const protection=documentAccess===undefined?undefined:validateArtifactProtection(documentAccess.protection);
   if(protection&&(extensions.length||hooks||enableNotes||pdfInput!==undefined||ordinaryResponse||!['consume','dependencies','output','verifyQuery'].every(k=>typeof documentAccess[k]==='function')||!readOnly&&!['bind','register','query'].every(k=>typeof documentAccess[k]==='function')||JSON.stringify(allowedTools)!==JSON.stringify(['search_pages','read_page','read_result','create_csv','save_report'])))fail('Unsupported protected Host configuration');
@@ -178,15 +191,23 @@ export async function createToolHost({ directory, extensions = [], hooks, allowe
     },
     save_report: {
       artifactEffects:true,
-      description: 'Save definite Markdown using only source IDs returned by read_page. Path is Host-owned. One attempt per run; no automatic retry.',
-      parameters: { type: 'object', additionalProperties: false, properties: { text: { type: 'string', minLength: 1, maxLength: REPORT_TEXT_MAX_BYTES, description: 'Complete Markdown, at most 256 KiB of UTF-8 text.' }, sourceIds: { type: 'array', minItems: 1, uniqueItems: true, items: { type: 'string' } }, attachmentIds:{type:'array',maxItems:16,uniqueItems:true,items:{type:'string',pattern:'^artifact:sha256:[a-f0-9]{64}$'}} }, required: ['text', 'sourceIds'] },
+      description: 'Save evidence-backed Markdown. sourceIds must be exact original sourceId values acquired in this Run (including original text, PDF, or Child-returned sources). Never put resultRef, calculation:sha256, or artifact:sha256 references in sourceIds. Only Host-registered calculate_change results carrying a calculation:sha256 resultRef are attached automatically and may be cited as [C1], [C2] in their acquisition order. A generic plugin result is not a registered calculation: describe it as a derived tool result without a [Cn] marker and cite its acquired original input sources. Cite original sources as [1], [2] in sourceIds order. Path is Host-owned. One attempt per run; no automatic retry.',
+      parameters: { type: 'object', additionalProperties: false, properties: { text: { type: 'string', minLength: 1, maxLength: REPORT_TEXT_MAX_BYTES, description: 'Complete Markdown, at most 256 KiB of UTF-8 text.' }, sourceIds: { type: 'array', minItems: 1, uniqueItems: true, description: 'Exact acquired original sourceId values only, not calculation/result/artifact references. Keep the source IDs returned by source-reading tools unchanged. Only registered calculate_change results with calculation:sha256 resultRefs are included automatically and cited as [C1], [C2]; generic plugin outputs do not create these numbered citations.', items: { type: 'string' } }, attachmentIds:{type:'array',maxItems:16,uniqueItems:true,items:{type:'string',pattern:'^artifact:sha256:[a-f0-9]{64}$'}} }, required: ['text', 'sourceIds'] },
       async validate(args) {
-        fields(args,Object.hasOwn(args||{},'attachmentIds')?['text','sourceIds','attachmentIds']:['text','sourceIds']);
+        validateReportInputShape(args);
         if(args.attachmentIds!==undefined){if(!Array.isArray(args.attachmentIds)||args.attachmentIds.length>16||new Set(args.attachmentIds).size!==args.attachmentIds.length)fail('Invalid attachments');for(const id of args.attachmentIds){const item=await artifacts.read(id);if(protection&&item.format!=='csv')fail('PROTECTED_CSV_SCOPE');}}
         if (typeof args.text !== 'string' || !args.text.trim() || Buffer.byteLength(args.text) > REPORT_TEXT_MAX_BYTES) fail('Report text missing or too large');
         if (!Array.isArray(args.sourceIds) || !args.sourceIds.length || args.sourceIds.length > 64 || new Set(args.sourceIds).size !== args.sourceIds.length || args.sourceIds.some(id => typeof id !== 'string')) fail('Report needs unique sources actually read in this run');
-        const originals=[];for (const id of args.sourceIds){const ref=await results.resolve(id);const source=await readSource(ref.resultRef);await verifyPdf(source);if(source.pdf)originals.push(source.pdf.originalArtifactId);}
+        const referenceBasis=runIdentity&&!hooks&&!protection&&!saveAttempted&&!receipt&&canOfferReferenceCorrection?.()===true?await results.referenceBasis():null;
+        const originals=[];for (const id of args.sourceIds){
+          // Exact acquired source identity wins. Only a positively owned typed
+          // ref may skip source resolution, never an unknown or denied source.
+          const typed=referenceBasis&&!referenceBasis.some(x=>x.kind==='source'&&x.sourceId===id)?referenceBasis.find(x=>x.resultRef===id):null;
+          if(typed&&typed.kind!=='source')continue;
+          const ref=typed??await results.resolve(id);const source=await readSource(ref.resultRef);await verifyPdf(source);if(source.pdf)originals.push(source.pdf.originalArtifactId);
+        }
         if(new Set([...(args.attachmentIds||[]),...originals]).size>16)fail('Too many original attachments');
+        if(referenceBasis){const code=reportReferenceIssue(args,referenceBasis);if(code){for(const item of referenceBasis)if(item.kind==='source')await verifyPdf(await readSource(item.resultRef));const error=new Error(code);error[reportReferenceBrand]=true;error.validationCode=code;error.basis=referenceBasis;throw error;}}
         const calculations = await results.listCalculations();
         for (const marker of args.text.matchAll(/\[(C?)([0-9]+)\]/g)) { const n = Number(marker[2]); if (n < 1 || n > (marker[1] ? calculations.length : args.sourceIds.length)) fail('Unknown numbered acquired-result citation'); }
         if (saveAttempted) fail('Save already attempted; inspect existing artifacts, do not retry');
@@ -217,6 +238,7 @@ export async function createToolHost({ directory, extensions = [], hooks, allowe
     if (!Array.isArray(allowedTools) || !allowedTools.length || new Set(allowedTools).size !== allowedTools.length || allowedTools.some(name => !Object.hasOwn(bindings, name))) fail('Invalid tool allowlist');
     for (const name of Object.keys(bindings)) if (!allowedTools.includes(name)) delete bindings[name];
   }
+  const originalGroupOwners=new Map(extensions.filter(b=>Object.hasOwn(bindings,b.name)).map(b=>[b.name,b]));
   const definitions=Object.entries(bindings).map(([name,b])=>({name,description:b.description,parameters:b.parameters}));
   const canonical = value => JSON.stringify(value,(_,v)=>object(v)?Object.fromEntries(Object.keys(v).sort().map(k=>[k,v[k]])):v);
   const definitionsHash=sha256(JSON.stringify(definitions));
@@ -259,8 +281,32 @@ export async function createToolHost({ directory, extensions = [], hooks, allowe
     try{bindings.calculate_change.validate(call.arguments);}catch(error){if(error?.[validationBrand]===true&&error.validationCode===v.code)return v.repairable;}
     recoveryFail('Calculation rejection validator mismatch');
   }
+  function verifyReportRejection(call,result){
+    if(hooks||protection||!Object.hasOwn(bindings,'save_report'))recoveryFail('Report correction scope mismatch');
+    try{fields(call,['id','name','arguments']);fields(result,['callId','status','dispatched','error','validation','durationMs']);fields(result.validation,['schemaVersion','code','repairable','requestHash']);}catch{recoveryFail('Report correction shape mismatch');}
+    const v=result.validation;
+    if(!checkpointJsonStable(call)||call.name!=='save_report'||typeof call.id!=='string'||!call.id||call.id.length>200||/[\u0000-\u001f]/.test(call.id)||result.callId!==call.id||result.status!=='rejected'||result.dispatched!==false||!Number.isFinite(result.durationMs)||result.durationMs<0||v.schemaVersion!=='builtin-report-input-validation@1'||v.repairable!==true||result.error!==v.code||v.requestHash!==sha256(canonical(call)))recoveryFail('Report correction identity mismatch');
+    try{validateReportInputShape(call.arguments);}catch(error){if(error?.[reportValidationBrand]===true&&error.validationCode===v.code)return true;}
+    recoveryFail('Report correction validator mismatch');
+  }
+  function verifyReferenceRejection(call,result){
+    const v=result.validation;
+    if(!runIdentity||hooks||protection||call.name!=='save_report'||!checkpointJsonStable(call))recoveryFail('Reference correction scope mismatch');
+    try{fields(result,['callId','status','dispatched','error','validation','durationMs']);fields(v,['schemaVersion','code','repairable','requestHash','runId','grantId','scopeHash','basis','basisHash']);}catch{recoveryFail('Reference correction shape mismatch');}
+    if(v.schemaVersion!=='builtin-report-reference-validation@1'||v.runId!==runIdentity.runId||v.grantId!==runIdentity.grantId||v.scopeHash!==sha256(canonical({definitionsHash,allowedDocuments:allowedDocuments??null}))||v.repairable!==true||result.callId!==call.id||result.status!=='rejected'||result.dispatched!==false||result.error!==v.code||!Number.isFinite(result.durationMs)||result.durationMs<0||v.requestHash!==sha256(canonical(call))||!Array.isArray(v.basis)||v.basis.length>64||v.basisHash!==sha256(canonical(v.basis))||canonical(v.basis)!==canonical(results.snapshot().slice(0,v.basis.length)))recoveryFail('Reference correction identity mismatch');
+    validateReportInputShape(call.arguments);if(reportReferenceIssue(call.arguments,v.basis)!==v.code)recoveryFail('Reference correction fact mismatch');return true;
+  }
+  const verifyLocalRejection=(call,result)=>result.validation?.schemaVersion==='builtin-report-reference-validation@1'?verifyReferenceRejection(call,result):result.validation?.schemaVersion==='builtin-report-input-validation@1'?verifyReportRejection(call,result):verifyCalculationRejection(call,result);
+  function groupRefusals(calls,historical=false){
+    if(hooks||protection||!runIdentity||!Array.isArray(calls)||calls.length<2||calls.some(c=>!Object.hasOwn(bindings,c.name)||c.name==='ask_response'||!checkpointJsonStable(c)))return null;
+    const facts=[...originalGroupOwners.values()].map(b=>specialistGroupRefusal(b,calls,historical)).filter(Boolean);if(facts.length!==1)return null;
+    const fact=facts[0];if(fact.runId!==runIdentity.runId)recoveryFail('Group owner Run mismatch');
+    return calls.map(call=>({callId:call.id,status:'rejected',dispatched:false,error:call.id===fact.ownerCallId?'SPECIALIST_SINGLE_CALL_REQUIRED':'GROUP_NOT_DISPATCHED',validation:{...fact,code:call.id===fact.ownerCallId?'SPECIALIST_SINGLE_CALL_REQUIRED':'GROUP_NOT_DISPATCHED',repairable:true,requestHash:sha256(canonical(call))},durationMs:0}));
+  }
   const host = {
-    correctionEligible(call,result){return result?.validation===undefined?false:verifyCalculationRejection(call,result);},
+    rejectProposalGroup:calls=>groupRefusals(calls,false),
+    verifyGroupRejections(calls,rejections){const expected=groupRefusals(calls,true);if(!expected||canonical(expected)!==canonical(rejections))recoveryFail('Group refusal proof mismatch');return true;},
+    correctionEligible(call,result){return result?.validation===undefined||result.validation.schemaVersion==='specialist-group-refusal@1'?false:verifyLocalRejection(call,result);},
     async canCompactHistory(call,result){
       if(!enableNotes||hooks||!object(call)||!object(result))return false;
       const binding=bindings[call.name];
@@ -273,7 +319,12 @@ export async function createToolHost({ directory, extensions = [], hooks, allowe
     snapshot: () => ({schemaVersion:protection?'tool-host-protected@1':'tool-host@2',...(protection?{protection:structuredClone(protection)}:{}),definitionsHash,...(historyCompaction?{historyCompaction:structuredClone(historyCompaction)}:{}),results:results.snapshot(),methods:structuredClone([...methods.values()]),saveAttempted,receipt:structuredClone(receipt)}),
     async verifyWorkingInput(working){if(working.noteRef){const value=await results.readNote(working.noteRef);const projected=working.messages.find(m=>m.role==='tool'&&m.result?.value?.resultRef===working.noteRef)?.result.value;if(!projected||JSON.stringify({...value,resultRef:working.noteRef})!==JSON.stringify(projected))recoveryFail('Recovered working note mismatch');}},
     async verifyResult(call,result){
-      if(result?.validation!==undefined)verifyCalculationRejection(call,result);
+      if(result?.validation?.schemaVersion==='specialist-group-refusal@1'){
+        const groups=[...originalGroupOwners.values()].map(b=>specialistHistoricalGroup(b,call.id)).filter(Boolean);
+        if(groups.length!==1)recoveryFail('Group history owner missing');const expected=groupRefusals(groups[0],true)?.find(r=>r.callId===call.id);
+        if(!expected||canonical(expected)!==canonical(result)||canonical(groups[0].find(c=>c.id===call.id))!==canonical(call))recoveryFail('Group result identity mismatch');return;
+      }
+      if(result?.validation!==undefined){verifyLocalRejection(call,result);if(result.validation.schemaVersion==='builtin-report-reference-validation@1')await results.verifyReferenceBasis(result.validation.basis);}
       if(call?.name==='ask_response'||result?.value?.kind===RESPONSE_PROFILE){if(!ordinaryResponse||call?.name!=='ask_response')recoveryFail('Ordinary response owner required');validateResponseCall(call);await ordinaryResponse.confirm(call,result);return;}
       if(result.status!=='succeeded')return;
       if (result.callId!==call.id) recoveryFail('Recovered call ID mismatch');
@@ -356,7 +407,7 @@ export async function createToolHost({ directory, extensions = [], hooks, allowe
         requestHash=requestIdentity(original||call,effective||call,Boolean(hooks));
         onDispatch({ original: structuredClone(original || call), effective: structuredClone(call) }); // Root resource reservation precedes the actual handler.
       } catch (error) {
-        const validation=!hooks&&call?.name==='calculate_change'&&error?.[validationBrand]===true?{schemaVersion:'builtin-calculation-validation@2',code:error.validationCode,repairable:correctionCodes.has(error.validationCode),requestHash:sha256(canonical(call))}:null;
+        const validation=runIdentity&&!hooks&&!protection&&!saveAttempted&&!receipt&&call?.name==='save_report'&&checkpointJsonStable(call)&&error?.[reportReferenceBrand]===true?{schemaVersion:'builtin-report-reference-validation@1',code:error.validationCode,repairable:true,requestHash:sha256(canonical(call)),...runIdentity,scopeHash:sha256(canonical({definitionsHash,allowedDocuments:allowedDocuments??null})),basis:error.basis,basisHash:sha256(canonical(error.basis))}:!hooks&&call?.name==='calculate_change'&&error?.[validationBrand]===true?{schemaVersion:'builtin-calculation-validation@2',code:error.validationCode,repairable:correctionCodes.has(error.validationCode),requestHash:sha256(canonical(call))}:!hooks&&!protection&&!saveAttempted&&!receipt&&call?.name==='save_report'&&checkpointJsonStable(call)&&error?.[reportValidationBrand]===true?{schemaVersion:'builtin-report-input-validation@1',code:error.validationCode,repairable:true,requestHash:sha256(canonical(call))}:null;
         return finish({callId,status:'rejected',dispatched:false,error:validation?.code??error.message,...(validation?{validation}:{})});
       }
       try {

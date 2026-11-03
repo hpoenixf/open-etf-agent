@@ -1,0 +1,3143 @@
+{
+  "schema": "v020-public-case-observations@1",
+  "scope": "Whitelisted outcome fields; no original internal paths, database, credentials, raw wire logs, or provider payloads. Historical failed checks remain unchanged.",
+  "cases": [
+    {
+      "id": "original-A-A01",
+      "caseId": "A01",
+      "cohort": "original-A",
+      "sourceCommit": "d7a24ba52f820e8160e85c45209c8f97ddf9e650",
+      "originalEvidenceSha256": "50b6766c8bef9d64c35e09b97308e94450d899fc7425181ff9717dbed543393a",
+      "repairSlot": null,
+      "originalTerminalStatus": "completed",
+      "observationCode": null,
+      "physicalRequests": 3,
+      "mechanismChecks": [
+        {
+          "id": "submit-zero-dispatch",
+          "passed": true
+        },
+        {
+          "id": "original-run-terminal",
+          "passed": true
+        },
+        {
+          "id": "original-source-identities",
+          "passed": true
+        },
+        {
+          "id": "cold-report-original-bytes",
+          "passed": true
+        },
+        {
+          "id": "original-admission-reconciliation",
+          "passed": true
+        },
+        {
+          "id": "public-http-artifact-bytes",
+          "passed": true
+        },
+        {
+          "id": "custom-source-id",
+          "passed": true
+        },
+        {
+          "id": "all-selected-sources-acquired",
+          "passed": true
+        }
+      ],
+      "frozenEligibleSuccess": true,
+      "reportEvidenceIds": [
+        "original-A-A01-report-1"
+      ]
+    },
+    {
+      "id": "original-A-A02",
+      "caseId": "A02",
+      "cohort": "original-A",
+      "sourceCommit": "d7a24ba52f820e8160e85c45209c8f97ddf9e650",
+      "originalEvidenceSha256": "154762b29ecc65de6741d6e231dd0b877367c55511f9777a68b163a16dc0c1b7",
+      "repairSlot": null,
+      "originalTerminalStatus": "completed",
+      "observationCode": null,
+      "physicalRequests": 3,
+      "mechanismChecks": [
+        {
+          "id": "submit-zero-dispatch",
+          "passed": true
+        },
+        {
+          "id": "original-run-terminal",
+          "passed": true
+        },
+        {
+          "id": "original-source-identities",
+          "passed": true
+        },
+        {
+          "id": "cold-report-original-bytes",
+          "passed": true
+        },
+        {
+          "id": "original-admission-reconciliation",
+          "passed": true
+        },
+        {
+          "id": "public-http-artifact-bytes",
+          "passed": true
+        },
+        {
+          "id": "distinct-source-versions",
+          "passed": true
+        },
+        {
+          "id": "all-selected-sources-acquired",
+          "passed": true
+        }
+      ],
+      "frozenEligibleSuccess": true,
+      "reportEvidenceIds": [
+        "original-A-A02-report-1"
+      ]
+    },
+    {
+      "id": "original-A-A03",
+      "caseId": "A03",
+      "cohort": "original-A",
+      "sourceCommit": "d7a24ba52f820e8160e85c45209c8f97ddf9e650",
+      "originalEvidenceSha256": "063f19bc9afcab63c204ca88072d4322ebfc9aab6bb78e8595c448d04811c987",
+      "repairSlot": null,
+      "originalTerminalStatus": "completed",
+      "observationCode": null,
+      "physicalRequests": 3,
+      "mechanismChecks": [
+        {
+          "id": "submit-zero-dispatch",
+          "passed": true
+        },
+        {
+          "id": "original-run-terminal",
+          "passed": true
+        },
+        {
+          "id": "original-source-identities",
+          "passed": true
+        },
+        {
+          "id": "cold-report-original-bytes",
+          "passed": true
+        },
+        {
+          "id": "original-admission-reconciliation",
+          "passed": true
+        },
+        {
+          "id": "public-http-artifact-bytes",
+          "passed": true
+        },
+        {
+          "id": "all-selected-conflicting-sources-acquired",
+          "passed": true
+        }
+      ],
+      "frozenEligibleSuccess": true,
+      "reportEvidenceIds": [
+        "original-A-A03-report-1"
+      ]
+    },
+    {
+      "id": "original-A-A04",
+      "caseId": "A04",
+      "cohort": "original-A",
+      "sourceCommit": "d7a24ba52f820e8160e85c45209c8f97ddf9e650",
+      "originalEvidenceSha256": "d41f47734a67f20b976960472befcf651b945ab54d59622cca440d8162e87add",
+      "repairSlot": null,
+      "originalTerminalStatus": "completed",
+      "observationCode": null,
+      "physicalRequests": 3,
+      "mechanismChecks": [
+        {
+          "id": "submit-zero-dispatch",
+          "passed": true
+        },
+        {
+          "id": "original-run-terminal",
+          "passed": true
+        },
+        {
+          "id": "original-source-identities",
+          "passed": true
+        },
+        {
+          "id": "cold-report-original-bytes",
+          "passed": true
+        },
+        {
+          "id": "original-admission-reconciliation",
+          "passed": true
+        },
+        {
+          "id": "public-http-artifact-bytes",
+          "passed": true
+        },
+        {
+          "id": "all-three-sources-acquired",
+          "passed": true
+        }
+      ],
+      "frozenEligibleSuccess": true,
+      "reportEvidenceIds": [
+        "original-A-A04-report-1"
+      ]
+    },
+    {
+      "id": "original-A-A05",
+      "caseId": "A05",
+      "cohort": "original-A",
+      "sourceCommit": "d7a24ba52f820e8160e85c45209c8f97ddf9e650",
+      "originalEvidenceSha256": "1e24f188b6252a4d1016c4973188f11ac12276fc441ae119b4cdd0e802f408fd",
+      "repairSlot": null,
+      "originalTerminalStatus": "failed",
+      "observationCode": "TOOL_REJECTED",
+      "physicalRequests": 3,
+      "mechanismChecks": [],
+      "frozenEligibleSuccess": false,
+      "reportEvidenceIds": []
+    },
+    {
+      "id": "original-A-A06",
+      "caseId": "A06",
+      "cohort": "original-A",
+      "sourceCommit": "b7c191952ffef9de95c2a58b81230b974420e6c9",
+      "originalEvidenceSha256": "981956c3f453fe183136a3a88aeaf80a57c205ba22765acafa6ff0ac8f3ece08",
+      "repairSlot": null,
+      "originalTerminalStatus": "completed",
+      "observationCode": null,
+      "physicalRequests": 4,
+      "mechanismChecks": [
+        {
+          "id": "submit-zero-dispatch",
+          "passed": true
+        },
+        {
+          "id": "original-run-terminal",
+          "passed": true
+        },
+        {
+          "id": "original-source-identities",
+          "passed": true
+        },
+        {
+          "id": "cold-report-original-bytes",
+          "passed": true
+        },
+        {
+          "id": "original-admission-reconciliation",
+          "passed": true
+        },
+        {
+          "id": "public-http-artifact-bytes",
+          "passed": true
+        },
+        {
+          "id": "original-numeric-source-acquired",
+          "passed": true
+        },
+        {
+          "id": "csv-original-bytes",
+          "passed": true
+        }
+      ],
+      "frozenEligibleSuccess": true,
+      "reportEvidenceIds": [
+        "original-A-A06-report-1"
+      ]
+    },
+    {
+      "id": "original-A-A07",
+      "caseId": "A07",
+      "cohort": "original-A",
+      "sourceCommit": "b7c191952ffef9de95c2a58b81230b974420e6c9",
+      "originalEvidenceSha256": "ed333fcdef1b4cb04bd5344e99646bc5e7e32e13211a4a0a89227f1fe96b91c7",
+      "repairSlot": null,
+      "originalTerminalStatus": "completed",
+      "observationCode": null,
+      "physicalRequests": 3,
+      "mechanismChecks": [
+        {
+          "id": "submit-zero-dispatch",
+          "passed": true
+        },
+        {
+          "id": "original-run-terminal",
+          "passed": true
+        },
+        {
+          "id": "original-source-identities",
+          "passed": true
+        },
+        {
+          "id": "cold-report-original-bytes",
+          "passed": true
+        },
+        {
+          "id": "original-admission-reconciliation",
+          "passed": true
+        },
+        {
+          "id": "public-http-artifact-bytes",
+          "passed": true
+        },
+        {
+          "id": "real-pdf-snapshot",
+          "passed": true
+        },
+        {
+          "id": "pdf-physical-page-two",
+          "passed": true
+        },
+        {
+          "id": "original-pdf-attachment",
+          "passed": true
+        }
+      ],
+      "frozenEligibleSuccess": true,
+      "reportEvidenceIds": [
+        "original-A-A07-report-1"
+      ]
+    },
+    {
+      "id": "original-A-A08",
+      "caseId": "A08",
+      "cohort": "original-A",
+      "sourceCommit": "b7c191952ffef9de95c2a58b81230b974420e6c9",
+      "originalEvidenceSha256": "4c28ab07f5a2650ee124e5704d8ff0d77b6b6fd1b6b79a5d42abadb233b4e82f",
+      "repairSlot": null,
+      "originalTerminalStatus": "completed",
+      "observationCode": null,
+      "physicalRequests": 3,
+      "mechanismChecks": [
+        {
+          "id": "submit-zero-dispatch",
+          "passed": true
+        },
+        {
+          "id": "original-run-terminal",
+          "passed": true
+        },
+        {
+          "id": "original-source-identities",
+          "passed": true
+        },
+        {
+          "id": "cold-report-original-bytes",
+          "passed": true
+        },
+        {
+          "id": "original-admission-reconciliation",
+          "passed": true
+        },
+        {
+          "id": "public-http-artifact-bytes",
+          "passed": true
+        },
+        {
+          "id": "text-and-pdf-sources",
+          "passed": true
+        },
+        {
+          "id": "real-pdf-snapshot",
+          "passed": true
+        },
+        {
+          "id": "original-pdf-attachment",
+          "passed": true
+        }
+      ],
+      "frozenEligibleSuccess": true,
+      "reportEvidenceIds": [
+        "original-A-A08-report-1"
+      ]
+    },
+    {
+      "id": "original-A-A09",
+      "caseId": "A09",
+      "cohort": "original-A",
+      "sourceCommit": "b7c191952ffef9de95c2a58b81230b974420e6c9",
+      "originalEvidenceSha256": "d9545e8573f7bccbc755451757152ce024acb325bda8b98c787632e7a0ccc2bd",
+      "repairSlot": null,
+      "originalTerminalStatus": "completed",
+      "observationCode": null,
+      "physicalRequests": 3,
+      "mechanismChecks": [
+        {
+          "id": "submit-zero-dispatch",
+          "passed": true
+        },
+        {
+          "id": "original-run-terminal",
+          "passed": true
+        },
+        {
+          "id": "original-source-identities",
+          "passed": true
+        },
+        {
+          "id": "cold-report-original-bytes",
+          "passed": true
+        },
+        {
+          "id": "original-admission-reconciliation",
+          "passed": true
+        },
+        {
+          "id": "public-http-artifact-bytes",
+          "passed": true
+        },
+        {
+          "id": "incomplete-original-source-acquired",
+          "passed": true
+        }
+      ],
+      "frozenEligibleSuccess": true,
+      "reportEvidenceIds": [
+        "original-A-A09-report-1"
+      ]
+    },
+    {
+      "id": "original-A-A10",
+      "caseId": "A10",
+      "cohort": "original-A",
+      "sourceCommit": "b7c191952ffef9de95c2a58b81230b974420e6c9",
+      "originalEvidenceSha256": "744964334f3ba6bcf56592c002ea50f17849ac31cc2dac2ccb393c19cc5d0915",
+      "repairSlot": null,
+      "originalTerminalStatus": "completed",
+      "observationCode": null,
+      "physicalRequests": 3,
+      "mechanismChecks": [
+        {
+          "id": "submit-zero-dispatch",
+          "passed": true
+        },
+        {
+          "id": "original-run-terminal",
+          "passed": true
+        },
+        {
+          "id": "original-source-identities",
+          "passed": true
+        },
+        {
+          "id": "cold-report-original-bytes",
+          "passed": true
+        },
+        {
+          "id": "original-admission-reconciliation",
+          "passed": true
+        },
+        {
+          "id": "public-http-artifact-bytes",
+          "passed": true
+        },
+        {
+          "id": "fresh-reviewed-install",
+          "passed": true
+        },
+        {
+          "id": "all-selected-sources-acquired",
+          "passed": true
+        },
+        {
+          "id": "public-http-cold-read",
+          "passed": true
+        }
+      ],
+      "frozenEligibleSuccess": true,
+      "reportEvidenceIds": [
+        "original-A-A10-report-1"
+      ]
+    },
+    {
+      "id": "original-B-B01",
+      "caseId": "B01",
+      "cohort": "original-B",
+      "sourceCommit": "b7c191952ffef9de95c2a58b81230b974420e6c9",
+      "originalEvidenceSha256": "42cf59c0b7475b55d44b8469089674b5b8471fa27101c410abadeaaf7c1d70fc",
+      "repairSlot": null,
+      "originalTerminalStatus": "completed",
+      "observationCode": null,
+      "physicalRequests": 4,
+      "mechanismChecks": [
+        {
+          "id": "submit-zero-dispatch",
+          "passed": true
+        },
+        {
+          "id": "original-runs-terminal-before-deadline",
+          "passed": true
+        },
+        {
+          "id": "original-source-identities",
+          "passed": true
+        },
+        {
+          "id": "cold-report-original-bytes",
+          "passed": true
+        },
+        {
+          "id": "public-http-artifact-bytes",
+          "passed": true
+        },
+        {
+          "id": "per-root-original-admission-reconciliation",
+          "passed": true
+        },
+        {
+          "id": "one-scenario-aggregate-account",
+          "passed": true
+        },
+        {
+          "id": "terminal-zero-redispatch",
+          "passed": true
+        },
+        {
+          "id": "current-memory-consumed",
+          "passed": true
+        }
+      ],
+      "frozenEligibleSuccess": true,
+      "reportEvidenceIds": [
+        "original-B-B01-report-1"
+      ]
+    },
+    {
+      "id": "original-B-B02",
+      "caseId": "B02",
+      "cohort": "original-B",
+      "sourceCommit": "b7c191952ffef9de95c2a58b81230b974420e6c9",
+      "originalEvidenceSha256": "4c1b1c8c295c47b27c82ec88bdd951431c9d14ee01830fe4ea2d69d1a21a6f09",
+      "repairSlot": null,
+      "originalTerminalStatus": "completed",
+      "observationCode": null,
+      "physicalRequests": 8,
+      "mechanismChecks": [
+        {
+          "id": "submit-zero-dispatch",
+          "passed": true
+        },
+        {
+          "id": "original-runs-terminal-before-deadline",
+          "passed": true
+        },
+        {
+          "id": "original-source-identities",
+          "passed": true
+        },
+        {
+          "id": "cold-report-original-bytes",
+          "passed": true
+        },
+        {
+          "id": "public-http-artifact-bytes",
+          "passed": true
+        },
+        {
+          "id": "per-root-original-admission-reconciliation",
+          "passed": true
+        },
+        {
+          "id": "one-scenario-aggregate-account",
+          "passed": true
+        },
+        {
+          "id": "terminal-zero-redispatch",
+          "passed": true
+        },
+        {
+          "id": "old-memory-revision-consumed",
+          "passed": true
+        },
+        {
+          "id": "explicit-memory-cas-revision",
+          "passed": true
+        },
+        {
+          "id": "new-memory-revision-consumed",
+          "passed": true
+        },
+        {
+          "id": "old-publication-retained",
+          "passed": true
+        }
+      ],
+      "frozenEligibleSuccess": true,
+      "reportEvidenceIds": [
+        "original-B-B02-report-1",
+        "original-B-B02-report-2"
+      ]
+    },
+    {
+      "id": "original-B-B03",
+      "caseId": "B03",
+      "cohort": "original-B",
+      "sourceCommit": "b7c191952ffef9de95c2a58b81230b974420e6c9",
+      "originalEvidenceSha256": "8958ccbf3f63402c950262e52f4324230cc4c05cee7a30d3e9c54826c4924bf5",
+      "repairSlot": null,
+      "originalTerminalStatus": "completed",
+      "observationCode": null,
+      "physicalRequests": 8,
+      "mechanismChecks": [
+        {
+          "id": "submit-zero-dispatch",
+          "passed": true
+        },
+        {
+          "id": "original-runs-terminal-before-deadline",
+          "passed": true
+        },
+        {
+          "id": "original-source-identities",
+          "passed": true
+        },
+        {
+          "id": "cold-report-original-bytes",
+          "passed": true
+        },
+        {
+          "id": "public-http-artifact-bytes",
+          "passed": true
+        },
+        {
+          "id": "per-root-original-admission-reconciliation",
+          "passed": true
+        },
+        {
+          "id": "one-scenario-aggregate-account",
+          "passed": true
+        },
+        {
+          "id": "terminal-zero-redispatch",
+          "passed": true
+        },
+        {
+          "id": "old-memory-revision-consumed",
+          "passed": true
+        },
+        {
+          "id": "explicit-memory-forget",
+          "passed": true
+        },
+        {
+          "id": "forgotten-memory-not-consumed",
+          "passed": true
+        },
+        {
+          "id": "old-publication-retained",
+          "passed": true
+        }
+      ],
+      "frozenEligibleSuccess": true,
+      "reportEvidenceIds": [
+        "original-B-B03-report-1",
+        "original-B-B03-report-2"
+      ]
+    },
+    {
+      "id": "original-B-B04",
+      "caseId": "B04",
+      "cohort": "original-B",
+      "sourceCommit": "b7c191952ffef9de95c2a58b81230b974420e6c9",
+      "originalEvidenceSha256": "2a1486cd34087c45bcc51fa50d75b52b24cd0b6b142f4eff22a6ee40dec14892",
+      "repairSlot": null,
+      "originalTerminalStatus": "completed",
+      "observationCode": null,
+      "physicalRequests": 4,
+      "mechanismChecks": [
+        {
+          "id": "submit-zero-dispatch",
+          "passed": true
+        },
+        {
+          "id": "original-runs-terminal-before-deadline",
+          "passed": true
+        },
+        {
+          "id": "original-source-identities",
+          "passed": true
+        },
+        {
+          "id": "cold-report-original-bytes",
+          "passed": true
+        },
+        {
+          "id": "public-http-artifact-bytes",
+          "passed": true
+        },
+        {
+          "id": "per-root-original-admission-reconciliation",
+          "passed": true
+        },
+        {
+          "id": "one-scenario-aggregate-account",
+          "passed": true
+        },
+        {
+          "id": "terminal-zero-redispatch",
+          "passed": true
+        },
+        {
+          "id": "conflicting-memory-consumed",
+          "passed": true
+        },
+        {
+          "id": "no-implicit-memory-write",
+          "passed": true
+        }
+      ],
+      "frozenEligibleSuccess": true,
+      "reportEvidenceIds": [
+        "original-B-B04-report-1"
+      ]
+    },
+    {
+      "id": "original-B-B05",
+      "caseId": "B05",
+      "cohort": "original-B",
+      "sourceCommit": "b7c191952ffef9de95c2a58b81230b974420e6c9",
+      "originalEvidenceSha256": "6442b9cfe196ed2828ff676ecf22a5c2c46aca6ebe9e3d4043863e40a045b130",
+      "repairSlot": null,
+      "originalTerminalStatus": "completed",
+      "observationCode": null,
+      "physicalRequests": 6,
+      "mechanismChecks": [
+        {
+          "id": "submit-zero-dispatch",
+          "passed": true
+        },
+        {
+          "id": "original-runs-terminal-before-deadline",
+          "passed": true
+        },
+        {
+          "id": "original-source-identities",
+          "passed": true
+        },
+        {
+          "id": "cold-report-original-bytes",
+          "passed": true
+        },
+        {
+          "id": "public-http-artifact-bytes",
+          "passed": true
+        },
+        {
+          "id": "per-root-original-admission-reconciliation",
+          "passed": true
+        },
+        {
+          "id": "one-scenario-aggregate-account",
+          "passed": true
+        },
+        {
+          "id": "terminal-zero-redispatch",
+          "passed": true
+        },
+        {
+          "id": "original-child-handoff-consumed",
+          "passed": true
+        },
+        {
+          "id": "child-original-sources-published",
+          "passed": true
+        },
+        {
+          "id": "child-shares-original-root",
+          "passed": true
+        }
+      ],
+      "frozenEligibleSuccess": true,
+      "reportEvidenceIds": [
+        "original-B-B05-report-1"
+      ]
+    },
+    {
+      "id": "original-B-B06",
+      "caseId": "B06",
+      "cohort": "original-B",
+      "sourceCommit": "b7c191952ffef9de95c2a58b81230b974420e6c9",
+      "originalEvidenceSha256": "2a23bc74eca72aa1d0efdce6344f3fdde02700f17d4a5b731d1ac284435d7c31",
+      "repairSlot": null,
+      "originalTerminalStatus": "completed",
+      "observationCode": null,
+      "physicalRequests": 8,
+      "mechanismChecks": [
+        {
+          "id": "submit-zero-dispatch",
+          "passed": true
+        },
+        {
+          "id": "original-runs-terminal-before-deadline",
+          "passed": true
+        },
+        {
+          "id": "original-source-identities",
+          "passed": true
+        },
+        {
+          "id": "cold-report-original-bytes",
+          "passed": true
+        },
+        {
+          "id": "public-http-artifact-bytes",
+          "passed": true
+        },
+        {
+          "id": "per-root-original-admission-reconciliation",
+          "passed": true
+        },
+        {
+          "id": "one-scenario-aggregate-account",
+          "passed": true
+        },
+        {
+          "id": "terminal-zero-redispatch",
+          "passed": true
+        },
+        {
+          "id": "current-memory-consumed",
+          "passed": true
+        },
+        {
+          "id": "original-child-handoff-consumed",
+          "passed": true
+        },
+        {
+          "id": "child-original-sources-published",
+          "passed": true
+        },
+        {
+          "id": "child-shares-original-root",
+          "passed": true
+        },
+        {
+          "id": "memory-child-publication-one-run",
+          "passed": true
+        }
+      ],
+      "frozenEligibleSuccess": true,
+      "reportEvidenceIds": [
+        "original-B-B06-report-1"
+      ]
+    },
+    {
+      "id": "original-B-B07",
+      "caseId": "B07",
+      "cohort": "original-B",
+      "sourceCommit": "b7c191952ffef9de95c2a58b81230b974420e6c9",
+      "originalEvidenceSha256": "d7b871e2dc9e436f4991b2cb2188b28bc234f38678f9f8f0e548604727e00e3c",
+      "repairSlot": null,
+      "originalTerminalStatus": "failed",
+      "observationCode": null,
+      "physicalRequests": 2,
+      "mechanismChecks": [
+        {
+          "id": "submit-zero-dispatch",
+          "passed": true
+        },
+        {
+          "id": "original-runs-terminal-before-deadline",
+          "passed": false
+        },
+        {
+          "id": "original-source-identities",
+          "passed": false
+        },
+        {
+          "id": "cold-report-original-bytes",
+          "passed": true
+        },
+        {
+          "id": "public-http-artifact-bytes",
+          "passed": false
+        },
+        {
+          "id": "per-root-original-admission-reconciliation",
+          "passed": false
+        },
+        {
+          "id": "one-scenario-aggregate-account",
+          "passed": true
+        },
+        {
+          "id": "terminal-zero-redispatch",
+          "passed": false
+        },
+        {
+          "id": "trusted-skill-method-acquired",
+          "passed": true
+        },
+        {
+          "id": "trusted-skill-original-binding",
+          "passed": true
+        }
+      ],
+      "frozenEligibleSuccess": false,
+      "reportEvidenceIds": []
+    },
+    {
+      "id": "original-B-B08",
+      "caseId": "B08",
+      "cohort": "original-B",
+      "sourceCommit": "b7c191952ffef9de95c2a58b81230b974420e6c9",
+      "originalEvidenceSha256": "d5e29dc1e880fc598427a8e7320c7980023905058c22d662ec1a8c5d1f6f42e6",
+      "repairSlot": null,
+      "originalTerminalStatus": "completed",
+      "observationCode": null,
+      "physicalRequests": 3,
+      "mechanismChecks": [
+        {
+          "id": "submit-zero-dispatch",
+          "passed": true
+        },
+        {
+          "id": "original-runs-terminal-before-deadline",
+          "passed": true
+        },
+        {
+          "id": "original-source-identities",
+          "passed": true
+        },
+        {
+          "id": "cold-report-original-bytes",
+          "passed": true
+        },
+        {
+          "id": "public-http-artifact-bytes",
+          "passed": true
+        },
+        {
+          "id": "per-root-original-admission-reconciliation",
+          "passed": true
+        },
+        {
+          "id": "one-scenario-aggregate-account",
+          "passed": true
+        },
+        {
+          "id": "terminal-zero-redispatch",
+          "passed": true
+        },
+        {
+          "id": "official-sdk-mcp-read-page",
+          "passed": true
+        },
+        {
+          "id": "mcp-original-source-published",
+          "passed": true
+        },
+        {
+          "id": "trusted-mcp-original-binding",
+          "passed": true
+        }
+      ],
+      "frozenEligibleSuccess": true,
+      "reportEvidenceIds": [
+        "original-B-B08-report-1"
+      ]
+    },
+    {
+      "id": "original-B-B09",
+      "caseId": "B09",
+      "cohort": "original-B",
+      "sourceCommit": "b7c191952ffef9de95c2a58b81230b974420e6c9",
+      "originalEvidenceSha256": "b35eeb82854f25db129e0e05a26b896e77a08853bae55f36b360495782a367ea",
+      "repairSlot": null,
+      "originalTerminalStatus": "failed",
+      "observationCode": null,
+      "physicalRequests": 3,
+      "mechanismChecks": [
+        {
+          "id": "submit-zero-dispatch",
+          "passed": true
+        },
+        {
+          "id": "original-runs-terminal-before-deadline",
+          "passed": false
+        },
+        {
+          "id": "original-source-identities",
+          "passed": false
+        },
+        {
+          "id": "cold-report-original-bytes",
+          "passed": true
+        },
+        {
+          "id": "public-http-artifact-bytes",
+          "passed": false
+        },
+        {
+          "id": "per-root-original-admission-reconciliation",
+          "passed": false
+        },
+        {
+          "id": "one-scenario-aggregate-account",
+          "passed": true
+        },
+        {
+          "id": "terminal-zero-redispatch",
+          "passed": false
+        },
+        {
+          "id": "trusted-arithmetic-original-result",
+          "passed": false
+        },
+        {
+          "id": "trusted-arithmetic-original-binding",
+          "passed": true
+        }
+      ],
+      "frozenEligibleSuccess": false,
+      "reportEvidenceIds": []
+    },
+    {
+      "id": "original-B-B10",
+      "caseId": "B10",
+      "cohort": "original-B",
+      "sourceCommit": "293d6af88666b365e88a50364b4125362edcb390",
+      "originalEvidenceSha256": "914b3abedd6a515529051e4531f11ef430134603fadfc8708fc040794a674ae8",
+      "repairSlot": null,
+      "originalTerminalStatus": "failed",
+      "observationCode": null,
+      "physicalRequests": 1,
+      "mechanismChecks": [
+        {
+          "id": "submit-zero-dispatch",
+          "passed": true
+        },
+        {
+          "id": "original-runs-terminal-before-deadline",
+          "passed": false
+        },
+        {
+          "id": "original-source-identities",
+          "passed": false
+        },
+        {
+          "id": "cold-report-original-bytes",
+          "passed": true
+        },
+        {
+          "id": "public-http-artifact-bytes",
+          "passed": false
+        },
+        {
+          "id": "per-root-original-admission-reconciliation",
+          "passed": false
+        },
+        {
+          "id": "one-scenario-aggregate-account",
+          "passed": true
+        },
+        {
+          "id": "terminal-zero-redispatch",
+          "passed": false
+        },
+        {
+          "id": "distinct-throughput-method-bound",
+          "passed": false
+        },
+        {
+          "id": "original-child-handoff-consumed",
+          "passed": false
+        },
+        {
+          "id": "child-original-sources-published",
+          "passed": false
+        },
+        {
+          "id": "child-shares-original-root",
+          "passed": false
+        }
+      ],
+      "frozenEligibleSuccess": false,
+      "reportEvidenceIds": []
+    },
+    {
+      "id": "original-C-C01",
+      "caseId": "C01",
+      "cohort": "original-C",
+      "sourceCommit": "b3db504b35a356770b9972f33170fddf8589b2b7",
+      "originalEvidenceSha256": "73e6ceaf396e8fbc7aacf9b1fa078875e5e05d580851bb163a63200ae69315b4",
+      "repairSlot": null,
+      "originalTerminalStatus": "completed",
+      "observationCode": null,
+      "physicalRequests": 3,
+      "mechanismChecks": [
+        {
+          "id": "submit-zero-dispatch",
+          "passed": true
+        },
+        {
+          "id": "original-terminal",
+          "passed": true
+        },
+        {
+          "id": "new-process-work",
+          "passed": true
+        },
+        {
+          "id": "original-ticket-reconciliation",
+          "passed": true
+        },
+        {
+          "id": "cold-report-and-http",
+          "passed": true
+        },
+        {
+          "id": "source-results-retained",
+          "passed": true
+        },
+        {
+          "id": "queued-original-run",
+          "passed": true
+        }
+      ],
+      "frozenEligibleSuccess": true,
+      "reportEvidenceIds": [
+        "original-C-C01-report-1"
+      ]
+    },
+    {
+      "id": "original-C-C02",
+      "caseId": "C02",
+      "cohort": "original-C",
+      "sourceCommit": "b3db504b35a356770b9972f33170fddf8589b2b7",
+      "originalEvidenceSha256": "8eac1ea95a12c7a9b37e42bd8ccb9d679e905d38e2e0e6e8af4505a87ac80c6f",
+      "repairSlot": null,
+      "originalTerminalStatus": "completed",
+      "observationCode": null,
+      "physicalRequests": 3,
+      "mechanismChecks": [
+        {
+          "id": "submit-zero-dispatch",
+          "passed": true
+        },
+        {
+          "id": "original-terminal",
+          "passed": true
+        },
+        {
+          "id": "new-process-work",
+          "passed": true
+        },
+        {
+          "id": "original-ticket-reconciliation",
+          "passed": true
+        },
+        {
+          "id": "cold-report-and-http",
+          "passed": true
+        },
+        {
+          "id": "source-results-retained",
+          "passed": true
+        },
+        {
+          "id": "known-checkpoint-stop",
+          "passed": true
+        },
+        {
+          "id": "distinct-process-resume",
+          "passed": true
+        },
+        {
+          "id": "prior-results-preserved",
+          "passed": true
+        }
+      ],
+      "frozenEligibleSuccess": true,
+      "reportEvidenceIds": [
+        "original-C-C02-report-1"
+      ]
+    },
+    {
+      "id": "original-C-C03",
+      "caseId": "C03",
+      "cohort": "original-C",
+      "sourceCommit": "b3db504b35a356770b9972f33170fddf8589b2b7",
+      "originalEvidenceSha256": "dfb6a3e1784ae4d4bbaaaf11ceb08d1e038162905d06e97949493aeaf0e54fd8",
+      "repairSlot": null,
+      "originalTerminalStatus": "completed",
+      "observationCode": null,
+      "physicalRequests": 7,
+      "mechanismChecks": [
+        {
+          "id": "submit-zero-dispatch",
+          "passed": true
+        },
+        {
+          "id": "original-terminal",
+          "passed": true
+        },
+        {
+          "id": "new-process-work",
+          "passed": true
+        },
+        {
+          "id": "original-ticket-reconciliation",
+          "passed": true
+        },
+        {
+          "id": "cold-report-and-http",
+          "passed": true
+        },
+        {
+          "id": "source-results-retained",
+          "passed": true
+        },
+        {
+          "id": "known-checkpoint-stop",
+          "passed": true
+        },
+        {
+          "id": "distinct-process-resume",
+          "passed": true
+        },
+        {
+          "id": "prior-results-preserved",
+          "passed": true
+        },
+        {
+          "id": "actual-memory-consumption",
+          "passed": true
+        },
+        {
+          "id": "actual-child-handoff",
+          "passed": true
+        },
+        {
+          "id": "same-root-budget-continuity",
+          "passed": true
+        }
+      ],
+      "frozenEligibleSuccess": true,
+      "reportEvidenceIds": [
+        "original-C-C03-report-1"
+      ]
+    },
+    {
+      "id": "original-C-C04",
+      "caseId": "C04",
+      "cohort": "original-C",
+      "sourceCommit": "b3db504b35a356770b9972f33170fddf8589b2b7",
+      "originalEvidenceSha256": "1a24447c4cbddc2a7bc45ef8f49c5ca67cc7b06d11eeab551007e1591883d728",
+      "repairSlot": null,
+      "originalTerminalStatus": "completed",
+      "observationCode": null,
+      "physicalRequests": 3,
+      "mechanismChecks": [
+        {
+          "id": "submit-zero-dispatch",
+          "passed": true
+        },
+        {
+          "id": "original-terminal",
+          "passed": true
+        },
+        {
+          "id": "new-process-work",
+          "passed": true
+        },
+        {
+          "id": "original-ticket-reconciliation",
+          "passed": true
+        },
+        {
+          "id": "cold-report-and-http",
+          "passed": true
+        },
+        {
+          "id": "source-results-retained",
+          "passed": true
+        },
+        {
+          "id": "known-checkpoint-stop",
+          "passed": true
+        },
+        {
+          "id": "distinct-process-resume",
+          "passed": true
+        },
+        {
+          "id": "selected-pdf-path-moved",
+          "passed": true
+        },
+        {
+          "id": "retained-pdf-original-artifact",
+          "passed": true
+        }
+      ],
+      "frozenEligibleSuccess": true,
+      "reportEvidenceIds": [
+        "original-C-C04-report-1"
+      ]
+    },
+    {
+      "id": "original-C-C05",
+      "caseId": "C05",
+      "cohort": "original-C",
+      "sourceCommit": "b3db504b35a356770b9972f33170fddf8589b2b7",
+      "originalEvidenceSha256": "70109286beee7c75f446b5d10e1f9de663195492dd5b42a3c7c7581c7a156851",
+      "repairSlot": null,
+      "originalTerminalStatus": "completed",
+      "observationCode": null,
+      "physicalRequests": 3,
+      "mechanismChecks": [
+        {
+          "id": "submit-zero-dispatch",
+          "passed": true
+        },
+        {
+          "id": "original-terminal",
+          "passed": true
+        },
+        {
+          "id": "new-process-work",
+          "passed": true
+        },
+        {
+          "id": "original-ticket-reconciliation",
+          "passed": true
+        },
+        {
+          "id": "cold-report-and-http",
+          "passed": true
+        },
+        {
+          "id": "source-results-retained",
+          "passed": true
+        },
+        {
+          "id": "terminal-new-process-zero-replay",
+          "passed": true
+        }
+      ],
+      "frozenEligibleSuccess": true,
+      "reportEvidenceIds": [
+        "original-C-C05-report-1"
+      ]
+    },
+    {
+      "id": "original-C-C06",
+      "caseId": "C06",
+      "cohort": "original-C",
+      "sourceCommit": "b3db504b35a356770b9972f33170fddf8589b2b7",
+      "originalEvidenceSha256": "5f0a3f921271f777e1873cffe3da14911f6cd20e94ac9b13ba0ec42c789ccbcd",
+      "repairSlot": null,
+      "originalTerminalStatus": "completed",
+      "observationCode": null,
+      "physicalRequests": 3,
+      "mechanismChecks": [
+        {
+          "id": "submit-zero-dispatch",
+          "passed": true
+        },
+        {
+          "id": "original-terminal",
+          "passed": true
+        },
+        {
+          "id": "new-process-work",
+          "passed": true
+        },
+        {
+          "id": "original-ticket-reconciliation",
+          "passed": true
+        },
+        {
+          "id": "cold-report-and-http",
+          "passed": true
+        },
+        {
+          "id": "source-results-retained",
+          "passed": true
+        },
+        {
+          "id": "original-task-time-retained",
+          "passed": true
+        },
+        {
+          "id": "anchor-and-observed-dates-distinct",
+          "passed": true
+        }
+      ],
+      "frozenEligibleSuccess": true,
+      "reportEvidenceIds": [
+        "original-C-C06-report-1"
+      ]
+    },
+    {
+      "id": "original-C-C07",
+      "caseId": "C07",
+      "cohort": "original-C",
+      "sourceCommit": "b3db504b35a356770b9972f33170fddf8589b2b7",
+      "originalEvidenceSha256": "3d4956be5347b38053ef8bc3a6579728dbf15f2a656172a99d04b848fe0d30ec",
+      "repairSlot": null,
+      "originalTerminalStatus": "PROCESS_RESULT_INVALID",
+      "observationCode": "PROCESS_RESULT_INVALID",
+      "physicalRequests": null,
+      "mechanismChecks": [],
+      "frozenEligibleSuccess": false,
+      "reportEvidenceIds": []
+    },
+    {
+      "id": "original-C-C08",
+      "caseId": "C08",
+      "cohort": "original-C",
+      "sourceCommit": "b3db504b35a356770b9972f33170fddf8589b2b7",
+      "originalEvidenceSha256": "8101345895b2a2a828e58ffe82ec44de15369780b04e819c616eab7fed8ba36f",
+      "repairSlot": null,
+      "originalTerminalStatus": "completed",
+      "observationCode": null,
+      "physicalRequests": 6,
+      "mechanismChecks": [
+        {
+          "id": "submit-zero-dispatch",
+          "passed": true
+        },
+        {
+          "id": "original-terminal",
+          "passed": true
+        },
+        {
+          "id": "new-process-work",
+          "passed": true
+        },
+        {
+          "id": "original-ticket-reconciliation",
+          "passed": true
+        },
+        {
+          "id": "cold-report-and-http",
+          "passed": true
+        },
+        {
+          "id": "source-results-retained",
+          "passed": true
+        },
+        {
+          "id": "two-independent-roots",
+          "passed": true
+        },
+        {
+          "id": "same-source-manifest",
+          "passed": true
+        },
+        {
+          "id": "separate-publications",
+          "passed": true
+        },
+        {
+          "id": "scenario-aggregate-accounting",
+          "passed": true
+        }
+      ],
+      "frozenEligibleSuccess": true,
+      "reportEvidenceIds": [
+        "original-C-C08-report-1",
+        "original-C-C08-report-2"
+      ]
+    },
+    {
+      "id": "original-C-C09",
+      "caseId": "C09",
+      "cohort": "original-C",
+      "sourceCommit": "b3db504b35a356770b9972f33170fddf8589b2b7",
+      "originalEvidenceSha256": "8b03e25487a59f4d01e54b956a96f62d2a316fa9fd9f961ce47465fc94c9d254",
+      "repairSlot": null,
+      "originalTerminalStatus": "completed",
+      "observationCode": null,
+      "physicalRequests": 6,
+      "mechanismChecks": [
+        {
+          "id": "submit-zero-dispatch",
+          "passed": true
+        },
+        {
+          "id": "original-terminal",
+          "passed": true
+        },
+        {
+          "id": "new-process-work",
+          "passed": true
+        },
+        {
+          "id": "original-ticket-reconciliation",
+          "passed": true
+        },
+        {
+          "id": "cold-report-and-http",
+          "passed": true
+        },
+        {
+          "id": "source-results-retained",
+          "passed": true
+        },
+        {
+          "id": "new-source-manifest",
+          "passed": true
+        },
+        {
+          "id": "old-publication-unchanged",
+          "passed": true
+        },
+        {
+          "id": "old-source-version-retained",
+          "passed": true
+        }
+      ],
+      "frozenEligibleSuccess": true,
+      "reportEvidenceIds": [
+        "original-C-C09-report-1",
+        "original-C-C09-report-2"
+      ]
+    },
+    {
+      "id": "original-C-C10",
+      "caseId": "C10",
+      "cohort": "original-C",
+      "sourceCommit": "b3db504b35a356770b9972f33170fddf8589b2b7",
+      "originalEvidenceSha256": "cb72495511eff51ff33feb928193e316b503f41d79fb3ff29b2b094d19446985",
+      "repairSlot": null,
+      "originalTerminalStatus": "completed",
+      "observationCode": null,
+      "physicalRequests": 4,
+      "mechanismChecks": [
+        {
+          "id": "submit-zero-dispatch",
+          "passed": true
+        },
+        {
+          "id": "original-terminal",
+          "passed": true
+        },
+        {
+          "id": "new-process-work",
+          "passed": true
+        },
+        {
+          "id": "original-ticket-reconciliation",
+          "passed": true
+        },
+        {
+          "id": "cold-report-and-http",
+          "passed": true
+        },
+        {
+          "id": "source-results-retained",
+          "passed": true
+        },
+        {
+          "id": "known-memory-commit-stop",
+          "passed": true
+        },
+        {
+          "id": "distinct-process-resume",
+          "passed": true
+        },
+        {
+          "id": "single-original-memory-intent",
+          "passed": true
+        },
+        {
+          "id": "single-memory-revision",
+          "passed": true
+        }
+      ],
+      "frozenEligibleSuccess": true,
+      "reportEvidenceIds": [
+        "original-C-C10-report-1"
+      ]
+    },
+    {
+      "id": "original-D-D01",
+      "caseId": "D01",
+      "cohort": "original-D",
+      "sourceCommit": "b3db504b35a356770b9972f33170fddf8589b2b7",
+      "originalEvidenceSha256": "45f468284f605a9026b2c91e4ce1b148242653bcc2db8a53a5e8e114d210c14d",
+      "repairSlot": null,
+      "originalTerminalStatus": "completed",
+      "observationCode": null,
+      "physicalRequests": 3,
+      "mechanismChecks": [
+        {
+          "id": "submit-zero-dispatch",
+          "passed": true
+        },
+        {
+          "id": "original-terminal-and-deadline",
+          "passed": true
+        },
+        {
+          "id": "original-ticket-reconciliation",
+          "passed": true
+        },
+        {
+          "id": "original-source-identities",
+          "passed": true
+        },
+        {
+          "id": "cold-report-and-http",
+          "passed": true
+        },
+        {
+          "id": "terminal-zero-replay",
+          "passed": true
+        },
+        {
+          "id": "scenario-aggregate-accounting",
+          "passed": true
+        },
+        {
+          "id": "original-schedule-occurrence",
+          "passed": true
+        },
+        {
+          "id": "zero-dispatch-before-due",
+          "passed": true
+        },
+        {
+          "id": "explicit-due-wake",
+          "passed": true
+        }
+      ],
+      "frozenEligibleSuccess": true,
+      "reportEvidenceIds": [
+        "original-D-D01-report-1"
+      ]
+    },
+    {
+      "id": "original-D-D02",
+      "caseId": "D02",
+      "cohort": "original-D",
+      "sourceCommit": "b3db504b35a356770b9972f33170fddf8589b2b7",
+      "originalEvidenceSha256": "b573efe1fc7a6765f92a8e23c9acfa5a7d1fd74253432b55181cd246e07f5318",
+      "repairSlot": null,
+      "originalTerminalStatus": "completed",
+      "observationCode": null,
+      "physicalRequests": 4,
+      "mechanismChecks": [
+        {
+          "id": "submit-zero-dispatch",
+          "passed": true
+        },
+        {
+          "id": "original-terminal-and-deadline",
+          "passed": true
+        },
+        {
+          "id": "original-ticket-reconciliation",
+          "passed": true
+        },
+        {
+          "id": "original-source-identities",
+          "passed": true
+        },
+        {
+          "id": "cold-report-and-http",
+          "passed": true
+        },
+        {
+          "id": "terminal-zero-replay",
+          "passed": true
+        },
+        {
+          "id": "scenario-aggregate-accounting",
+          "passed": true
+        },
+        {
+          "id": "original-schedule-occurrence",
+          "passed": true
+        },
+        {
+          "id": "zero-dispatch-before-due",
+          "passed": true
+        },
+        {
+          "id": "explicit-due-wake",
+          "passed": true
+        },
+        {
+          "id": "bound-memory-consumed",
+          "passed": true
+        }
+      ],
+      "frozenEligibleSuccess": true,
+      "reportEvidenceIds": [
+        "original-D-D02-report-1"
+      ]
+    },
+    {
+      "id": "original-D-D03",
+      "caseId": "D03",
+      "cohort": "original-D",
+      "sourceCommit": "b3db504b35a356770b9972f33170fddf8589b2b7",
+      "originalEvidenceSha256": "72db77eb508c78f041f73e544928bcbf559757b13abd0220015828313ba10928",
+      "repairSlot": null,
+      "originalTerminalStatus": "completed",
+      "observationCode": null,
+      "physicalRequests": 3,
+      "mechanismChecks": [
+        {
+          "id": "submit-zero-dispatch",
+          "passed": true
+        },
+        {
+          "id": "original-terminal-and-deadline",
+          "passed": true
+        },
+        {
+          "id": "original-ticket-reconciliation",
+          "passed": true
+        },
+        {
+          "id": "original-source-identities",
+          "passed": true
+        },
+        {
+          "id": "cold-report-and-http",
+          "passed": true
+        },
+        {
+          "id": "terminal-zero-replay",
+          "passed": true
+        },
+        {
+          "id": "scenario-aggregate-accounting",
+          "passed": true
+        },
+        {
+          "id": "original-schedule-occurrence",
+          "passed": true
+        },
+        {
+          "id": "zero-dispatch-before-due",
+          "passed": true
+        },
+        {
+          "id": "explicit-due-wake",
+          "passed": true
+        },
+        {
+          "id": "original-pdf-bytes",
+          "passed": true
+        }
+      ],
+      "frozenEligibleSuccess": true,
+      "reportEvidenceIds": [
+        "original-D-D03-report-1"
+      ]
+    },
+    {
+      "id": "original-D-D04",
+      "caseId": "D04",
+      "cohort": "original-D",
+      "sourceCommit": "b3db504b35a356770b9972f33170fddf8589b2b7",
+      "originalEvidenceSha256": "e2c256e6e9ad65044b19c829a2caa1f94be18c97012c260fb8eaa4adb0a3bfbc",
+      "repairSlot": null,
+      "originalTerminalStatus": "completed",
+      "observationCode": null,
+      "physicalRequests": 4,
+      "mechanismChecks": [
+        {
+          "id": "submit-zero-dispatch",
+          "passed": true
+        },
+        {
+          "id": "original-terminal-and-deadline",
+          "passed": true
+        },
+        {
+          "id": "original-ticket-reconciliation",
+          "passed": true
+        },
+        {
+          "id": "original-source-identities",
+          "passed": true
+        },
+        {
+          "id": "cold-report-and-http",
+          "passed": true
+        },
+        {
+          "id": "terminal-zero-replay",
+          "passed": true
+        },
+        {
+          "id": "scenario-aggregate-accounting",
+          "passed": true
+        },
+        {
+          "id": "original-response-question",
+          "passed": true
+        },
+        {
+          "id": "original-response-adoption",
+          "passed": true
+        },
+        {
+          "id": "unchanged-response-scope",
+          "passed": true
+        }
+      ],
+      "frozenEligibleSuccess": true,
+      "reportEvidenceIds": [
+        "original-D-D04-report-1"
+      ]
+    },
+    {
+      "id": "original-D-D05",
+      "caseId": "D05",
+      "cohort": "original-D",
+      "sourceCommit": "b3db504b35a356770b9972f33170fddf8589b2b7",
+      "originalEvidenceSha256": "02c1ab9a3bf5d8c19f81cd060930dc7a6d727434940bdaaba7e4acf73719a1f3",
+      "repairSlot": null,
+      "originalTerminalStatus": "completed",
+      "observationCode": null,
+      "physicalRequests": 4,
+      "mechanismChecks": [
+        {
+          "id": "submit-zero-dispatch",
+          "passed": true
+        },
+        {
+          "id": "original-terminal-and-deadline",
+          "passed": true
+        },
+        {
+          "id": "original-ticket-reconciliation",
+          "passed": true
+        },
+        {
+          "id": "original-source-identities",
+          "passed": true
+        },
+        {
+          "id": "cold-report-and-http",
+          "passed": true
+        },
+        {
+          "id": "terminal-zero-replay",
+          "passed": true
+        },
+        {
+          "id": "scenario-aggregate-accounting",
+          "passed": true
+        },
+        {
+          "id": "original-response-question",
+          "passed": true
+        },
+        {
+          "id": "original-response-adoption",
+          "passed": true
+        },
+        {
+          "id": "unchanged-response-scope",
+          "passed": true
+        }
+      ],
+      "frozenEligibleSuccess": true,
+      "reportEvidenceIds": [
+        "original-D-D05-report-1"
+      ]
+    },
+    {
+      "id": "original-D-D06",
+      "caseId": "D06",
+      "cohort": "original-D",
+      "sourceCommit": "b3db504b35a356770b9972f33170fddf8589b2b7",
+      "originalEvidenceSha256": "78ca278866ba94babe96fa1b8a602c5c34d699aeb3132143f844d289e793e71c",
+      "repairSlot": null,
+      "originalTerminalStatus": "completed",
+      "observationCode": null,
+      "physicalRequests": 5,
+      "mechanismChecks": [
+        {
+          "id": "submit-zero-dispatch",
+          "passed": true
+        },
+        {
+          "id": "original-terminal-and-deadline",
+          "passed": true
+        },
+        {
+          "id": "original-ticket-reconciliation",
+          "passed": true
+        },
+        {
+          "id": "original-source-identities",
+          "passed": true
+        },
+        {
+          "id": "cold-report-and-http",
+          "passed": true
+        },
+        {
+          "id": "terminal-zero-replay",
+          "passed": true
+        },
+        {
+          "id": "scenario-aggregate-accounting",
+          "passed": true
+        },
+        {
+          "id": "bound-memory-consumed",
+          "passed": true
+        },
+        {
+          "id": "trusted-calculation-result",
+          "passed": true
+        },
+        {
+          "id": "original-source-retained-with-derived-calculation",
+          "passed": true
+        }
+      ],
+      "frozenEligibleSuccess": true,
+      "reportEvidenceIds": [
+        "original-D-D06-report-1"
+      ]
+    },
+    {
+      "id": "original-D-D07",
+      "caseId": "D07",
+      "cohort": "original-D",
+      "sourceCommit": "b3db504b35a356770b9972f33170fddf8589b2b7",
+      "originalEvidenceSha256": "8ed534c1dc321101c46d783a2778872d74c27b1a41bbfcfde782ec3223fb7840",
+      "repairSlot": null,
+      "originalTerminalStatus": "completed",
+      "observationCode": null,
+      "physicalRequests": 3,
+      "mechanismChecks": [
+        {
+          "id": "submit-zero-dispatch",
+          "passed": true
+        },
+        {
+          "id": "original-terminal-and-deadline",
+          "passed": true
+        },
+        {
+          "id": "original-ticket-reconciliation",
+          "passed": true
+        },
+        {
+          "id": "original-source-identities",
+          "passed": true
+        },
+        {
+          "id": "cold-report-and-http",
+          "passed": true
+        },
+        {
+          "id": "terminal-zero-replay",
+          "passed": true
+        },
+        {
+          "id": "scenario-aggregate-accounting",
+          "passed": true
+        },
+        {
+          "id": "disabled-memory-child-config",
+          "passed": true
+        },
+        {
+          "id": "no-disabled-tool-effects",
+          "passed": true
+        }
+      ],
+      "frozenEligibleSuccess": true,
+      "reportEvidenceIds": [
+        "original-D-D07-report-1"
+      ]
+    },
+    {
+      "id": "original-D-D08",
+      "caseId": "D08",
+      "cohort": "original-D",
+      "sourceCommit": "b3db504b35a356770b9972f33170fddf8589b2b7",
+      "originalEvidenceSha256": "149f3ea688d43539c3c6aac1815072547225c50a57d0663f462249e03b28cb51",
+      "repairSlot": null,
+      "originalTerminalStatus": "completed",
+      "observationCode": null,
+      "physicalRequests": 7,
+      "mechanismChecks": [
+        {
+          "id": "submit-zero-dispatch",
+          "passed": true
+        },
+        {
+          "id": "original-terminal-and-deadline",
+          "passed": true
+        },
+        {
+          "id": "original-ticket-reconciliation",
+          "passed": true
+        },
+        {
+          "id": "original-source-identities",
+          "passed": true
+        },
+        {
+          "id": "cold-report-and-http",
+          "passed": true
+        },
+        {
+          "id": "terminal-zero-replay",
+          "passed": true
+        },
+        {
+          "id": "scenario-aggregate-accounting",
+          "passed": true
+        },
+        {
+          "id": "same-project-config-revision",
+          "passed": true
+        },
+        {
+          "id": "old-run-config-and-publication-unchanged",
+          "passed": true
+        },
+        {
+          "id": "new-run-new-config",
+          "passed": true
+        },
+        {
+          "id": "all-run-report-bundle",
+          "passed": true
+        }
+      ],
+      "frozenEligibleSuccess": true,
+      "reportEvidenceIds": [
+        "original-D-D08-report-1",
+        "original-D-D08-report-2"
+      ]
+    },
+    {
+      "id": "original-D-D09",
+      "caseId": "D09",
+      "cohort": "original-D",
+      "sourceCommit": "b3db504b35a356770b9972f33170fddf8589b2b7",
+      "originalEvidenceSha256": "7c0c71b16349d4fd624659f2d2701abc342658499c0ac72aea2ef3e249e3ff42",
+      "repairSlot": null,
+      "originalTerminalStatus": "completed",
+      "observationCode": null,
+      "physicalRequests": 7,
+      "mechanismChecks": [
+        {
+          "id": "submit-zero-dispatch",
+          "passed": true
+        },
+        {
+          "id": "original-terminal-and-deadline",
+          "passed": true
+        },
+        {
+          "id": "original-ticket-reconciliation",
+          "passed": true
+        },
+        {
+          "id": "original-source-identities",
+          "passed": true
+        },
+        {
+          "id": "cold-report-and-http",
+          "passed": true
+        },
+        {
+          "id": "terminal-zero-replay",
+          "passed": true
+        },
+        {
+          "id": "scenario-aggregate-accounting",
+          "passed": true
+        },
+        {
+          "id": "fresh-reviewed-install",
+          "passed": true
+        },
+        {
+          "id": "bound-memory-consumed",
+          "passed": true
+        },
+        {
+          "id": "actual-child-handoff",
+          "passed": true
+        },
+        {
+          "id": "known-checkpoint-stop",
+          "passed": true
+        },
+        {
+          "id": "distinct-process-resume",
+          "passed": true
+        },
+        {
+          "id": "same-run-grant-budget",
+          "passed": true
+        },
+        {
+          "id": "prior-results-retained",
+          "passed": true
+        }
+      ],
+      "frozenEligibleSuccess": true,
+      "reportEvidenceIds": [
+        "original-D-D09-report-1"
+      ]
+    },
+    {
+      "id": "original-D-D10",
+      "caseId": "D10",
+      "cohort": "original-D",
+      "sourceCommit": "b3db504b35a356770b9972f33170fddf8589b2b7",
+      "originalEvidenceSha256": "cccf0a1941c59a4c9c7de8351f0fbb6269d15c06bb95840ca3820e4002edaafc",
+      "repairSlot": null,
+      "originalTerminalStatus": "completed",
+      "observationCode": null,
+      "physicalRequests": 3,
+      "mechanismChecks": [
+        {
+          "id": "submit-zero-dispatch",
+          "passed": true
+        },
+        {
+          "id": "original-terminal-and-deadline",
+          "passed": true
+        },
+        {
+          "id": "original-ticket-reconciliation",
+          "passed": true
+        },
+        {
+          "id": "original-source-identities",
+          "passed": true
+        },
+        {
+          "id": "cold-report-and-http",
+          "passed": true
+        },
+        {
+          "id": "terminal-zero-replay",
+          "passed": true
+        },
+        {
+          "id": "scenario-aggregate-accounting",
+          "passed": true
+        },
+        {
+          "id": "general-config-reused",
+          "passed": true
+        },
+        {
+          "id": "new-source-not-fixture-catalog",
+          "passed": true
+        }
+      ],
+      "frozenEligibleSuccess": true,
+      "reportEvidenceIds": [
+        "original-D-D10-report-1"
+      ]
+    },
+    {
+      "id": "repair-1-A05",
+      "caseId": "A05",
+      "cohort": "repair-1",
+      "sourceCommit": "b7c191952ffef9de95c2a58b81230b974420e6c9",
+      "originalEvidenceSha256": "30f4d2d9f0871ec39e7f203b32fedf58c634cd79189940b05a45ba9750dd6d9c",
+      "repairSlot": 1,
+      "originalTerminalStatus": "completed",
+      "observationCode": null,
+      "physicalRequests": 4,
+      "mechanismChecks": [
+        {
+          "id": "submit-zero-dispatch",
+          "passed": true
+        },
+        {
+          "id": "original-run-terminal",
+          "passed": true
+        },
+        {
+          "id": "original-source-identities",
+          "passed": true
+        },
+        {
+          "id": "cold-report-original-bytes",
+          "passed": true
+        },
+        {
+          "id": "original-admission-reconciliation",
+          "passed": true
+        },
+        {
+          "id": "public-http-artifact-bytes",
+          "passed": true
+        },
+        {
+          "id": "original-numeric-source-acquired",
+          "passed": true
+        },
+        {
+          "id": "original-calculation-result",
+          "passed": true
+        }
+      ],
+      "frozenEligibleSuccess": null,
+      "reportEvidenceIds": [
+        "repair-1-A05-report-1"
+      ],
+      "independentlyReviewedRuntimeContractPassed": true,
+      "originalFrozenAllChecksPassed": true,
+      "evidenceQualificationNote": "Separate repair evidence; never substituted into original cohort denominator."
+    },
+    {
+      "id": "repair-2-B09",
+      "caseId": "B09",
+      "cohort": "repair-2",
+      "sourceCommit": "b3db504b35a356770b9972f33170fddf8589b2b7",
+      "originalEvidenceSha256": "2ef7f190c9b41024830a2310c76021098df8d0ad4833b571852c18d05c73cd8d",
+      "repairSlot": 2,
+      "originalTerminalStatus": "completed",
+      "observationCode": null,
+      "physicalRequests": 4,
+      "mechanismChecks": [
+        {
+          "id": "submit-zero-dispatch",
+          "passed": true
+        },
+        {
+          "id": "original-runs-terminal-before-deadline",
+          "passed": true
+        },
+        {
+          "id": "original-source-identities",
+          "passed": true
+        },
+        {
+          "id": "cold-report-original-bytes",
+          "passed": true
+        },
+        {
+          "id": "public-http-artifact-bytes",
+          "passed": true
+        },
+        {
+          "id": "per-root-original-admission-reconciliation",
+          "passed": true
+        },
+        {
+          "id": "one-scenario-aggregate-account",
+          "passed": true
+        },
+        {
+          "id": "terminal-zero-redispatch",
+          "passed": true
+        },
+        {
+          "id": "trusted-arithmetic-original-result",
+          "passed": false
+        },
+        {
+          "id": "trusted-arithmetic-original-binding",
+          "passed": true
+        }
+      ],
+      "frozenEligibleSuccess": null,
+      "reportEvidenceIds": [
+        "repair-2-B09-report-1"
+      ],
+      "independentlyReviewedRuntimeContractPassed": true,
+      "originalFrozenAllChecksPassed": false,
+      "evidenceQualificationNote": "Original allocation-specific arithmetic false retained; independently verified valid original call/result."
+    },
+    {
+      "id": "repair-3-B10",
+      "caseId": "B10",
+      "cohort": "repair-3",
+      "sourceCommit": "b3db504b35a356770b9972f33170fddf8589b2b7",
+      "originalEvidenceSha256": "d3787eecb59728cf5e3e977efecb1c7a7b97556875cb2f85940470eea3958d22",
+      "repairSlot": 3,
+      "originalTerminalStatus": "completed",
+      "observationCode": null,
+      "physicalRequests": 6,
+      "mechanismChecks": [
+        {
+          "id": "submit-zero-dispatch",
+          "passed": true
+        },
+        {
+          "id": "original-runs-terminal-before-deadline",
+          "passed": true
+        },
+        {
+          "id": "original-source-identities",
+          "passed": true
+        },
+        {
+          "id": "cold-report-original-bytes",
+          "passed": true
+        },
+        {
+          "id": "public-http-artifact-bytes",
+          "passed": true
+        },
+        {
+          "id": "per-root-original-admission-reconciliation",
+          "passed": true
+        },
+        {
+          "id": "one-scenario-aggregate-account",
+          "passed": true
+        },
+        {
+          "id": "terminal-zero-redispatch",
+          "passed": true
+        },
+        {
+          "id": "distinct-throughput-method-bound",
+          "passed": true
+        },
+        {
+          "id": "original-child-handoff-consumed",
+          "passed": true
+        },
+        {
+          "id": "child-original-sources-published",
+          "passed": true
+        },
+        {
+          "id": "child-shares-original-root",
+          "passed": true
+        }
+      ],
+      "frozenEligibleSuccess": null,
+      "reportEvidenceIds": [
+        "repair-3-B10-report-1"
+      ],
+      "independentlyReviewedRuntimeContractPassed": true,
+      "originalFrozenAllChecksPassed": true,
+      "evidenceQualificationNote": "Separate repair evidence; never substituted into original cohort denominator."
+    },
+    {
+      "id": "repair-4-C07",
+      "caseId": "C07",
+      "cohort": "repair-4",
+      "sourceCommit": "dd3f039345454671ddbc17ce29361ff184f981e4",
+      "originalEvidenceSha256": "a0d829a654a5582684d162a57decca7e27b448025a9b7263c793ecfedd6d3ba5",
+      "repairSlot": 4,
+      "originalTerminalStatus": "completed",
+      "observationCode": null,
+      "physicalRequests": 8,
+      "mechanismChecks": [
+        {
+          "id": "submit-zero-dispatch",
+          "passed": true
+        },
+        {
+          "id": "original-terminal",
+          "passed": true
+        },
+        {
+          "id": "new-process-work",
+          "passed": true
+        },
+        {
+          "id": "original-ticket-reconciliation",
+          "passed": true
+        },
+        {
+          "id": "cold-report-and-http",
+          "passed": true
+        },
+        {
+          "id": "source-results-retained",
+          "passed": true
+        },
+        {
+          "id": "actual-memory-consumption",
+          "passed": true
+        },
+        {
+          "id": "managed-summary-admission",
+          "passed": true
+        },
+        {
+          "id": "adopted-frontier",
+          "passed": true
+        },
+        {
+          "id": "no-repeated-frontier-summary",
+          "passed": true
+        }
+      ],
+      "frozenEligibleSuccess": null,
+      "reportEvidenceIds": [
+        "repair-4-C07-report-1"
+      ],
+      "independentlyReviewedRuntimeContractPassed": true,
+      "originalFrozenAllChecksPassed": true,
+      "evidenceQualificationNote": "Separate repair evidence; never substituted into original cohort denominator."
+    },
+    {
+      "id": "repair-5-B09",
+      "caseId": "B09",
+      "cohort": "repair-5",
+      "sourceCommit": "214bd24c373457a6852340d86e53cb2addd13add",
+      "originalEvidenceSha256": "f8a64e3681be5d31e8196d9fd0ea3c34c369f727786b2687e7f539fdab649147",
+      "repairSlot": 5,
+      "originalTerminalStatus": "completed",
+      "observationCode": null,
+      "physicalRequests": 4,
+      "mechanismChecks": [
+        {
+          "id": "submit-zero-dispatch",
+          "passed": true
+        },
+        {
+          "id": "original-runs-terminal-before-deadline",
+          "passed": true
+        },
+        {
+          "id": "original-source-identities",
+          "passed": true
+        },
+        {
+          "id": "cold-report-original-bytes",
+          "passed": true
+        },
+        {
+          "id": "public-http-artifact-bytes",
+          "passed": true
+        },
+        {
+          "id": "per-root-original-admission-reconciliation",
+          "passed": true
+        },
+        {
+          "id": "one-scenario-aggregate-account",
+          "passed": true
+        },
+        {
+          "id": "terminal-zero-redispatch",
+          "passed": true
+        },
+        {
+          "id": "trusted-arithmetic-original-result",
+          "passed": true
+        },
+        {
+          "id": "trusted-arithmetic-original-binding",
+          "passed": true
+        }
+      ],
+      "frozenEligibleSuccess": null,
+      "reportEvidenceIds": [
+        "repair-5-B09-report-1"
+      ],
+      "independentlyReviewedRuntimeContractPassed": true,
+      "originalFrozenAllChecksPassed": true,
+      "evidenceQualificationNote": "Separate repair evidence; never substituted into original cohort denominator."
+    },
+    {
+      "id": "repair-6-B10",
+      "caseId": "B10",
+      "cohort": "repair-6",
+      "sourceCommit": "214bd24c373457a6852340d86e53cb2addd13add",
+      "originalEvidenceSha256": "113806a1a374c6b6930dfc9ce621dcbebbd48921b5d7e15319b3f65b8c321efb",
+      "repairSlot": 6,
+      "originalTerminalStatus": "completed",
+      "observationCode": null,
+      "physicalRequests": 6,
+      "mechanismChecks": [
+        {
+          "id": "submit-zero-dispatch",
+          "passed": true
+        },
+        {
+          "id": "original-runs-terminal-before-deadline",
+          "passed": true
+        },
+        {
+          "id": "original-source-identities",
+          "passed": true
+        },
+        {
+          "id": "cold-report-original-bytes",
+          "passed": true
+        },
+        {
+          "id": "public-http-artifact-bytes",
+          "passed": true
+        },
+        {
+          "id": "per-root-original-admission-reconciliation",
+          "passed": true
+        },
+        {
+          "id": "one-scenario-aggregate-account",
+          "passed": true
+        },
+        {
+          "id": "terminal-zero-redispatch",
+          "passed": true
+        },
+        {
+          "id": "distinct-throughput-method-bound",
+          "passed": true
+        },
+        {
+          "id": "original-child-handoff-consumed",
+          "passed": true
+        },
+        {
+          "id": "child-original-sources-published",
+          "passed": true
+        },
+        {
+          "id": "child-shares-original-root",
+          "passed": true
+        }
+      ],
+      "frozenEligibleSuccess": null,
+      "reportEvidenceIds": [
+        "repair-6-B10-report-1"
+      ],
+      "independentlyReviewedRuntimeContractPassed": true,
+      "originalFrozenAllChecksPassed": true,
+      "evidenceQualificationNote": "Separate repair evidence; never substituted into original cohort denominator."
+    },
+    {
+      "id": "additional-B-B01",
+      "caseId": "B01",
+      "cohort": "additional-B",
+      "sourceCommit": "214bd24c373457a6852340d86e53cb2addd13add",
+      "originalEvidenceSha256": "93cf2d6dc0aebc3fce075422449e45765e9adeb1ae3154f508ea8d27410d1c38",
+      "repairSlot": null,
+      "originalTerminalStatus": "failed",
+      "observationCode": null,
+      "physicalRequests": 3,
+      "mechanismChecks": [
+        {
+          "id": "submit-zero-dispatch",
+          "passed": true
+        },
+        {
+          "id": "original-runs-terminal-before-deadline",
+          "passed": false
+        },
+        {
+          "id": "original-source-identities",
+          "passed": false
+        },
+        {
+          "id": "cold-report-original-bytes",
+          "passed": true
+        },
+        {
+          "id": "public-http-artifact-bytes",
+          "passed": false
+        },
+        {
+          "id": "per-root-original-admission-reconciliation",
+          "passed": false
+        },
+        {
+          "id": "one-scenario-aggregate-account",
+          "passed": true
+        },
+        {
+          "id": "terminal-zero-redispatch",
+          "passed": false
+        },
+        {
+          "id": "current-memory-consumed",
+          "passed": true
+        }
+      ],
+      "frozenEligibleSuccess": false,
+      "reportEvidenceIds": [],
+      "naturalCorrectionTriggered": false
+    },
+    {
+      "id": "additional-B-B02",
+      "caseId": "B02",
+      "cohort": "additional-B",
+      "sourceCommit": "214bd24c373457a6852340d86e53cb2addd13add",
+      "originalEvidenceSha256": "908d9eb8ee12ff8e91968d478b03fb9db92d690f7a38d8a8801f4a23b4cfdb51",
+      "repairSlot": null,
+      "originalTerminalStatus": "completed",
+      "observationCode": null,
+      "physicalRequests": 8,
+      "mechanismChecks": [
+        {
+          "id": "submit-zero-dispatch",
+          "passed": true
+        },
+        {
+          "id": "original-runs-terminal-before-deadline",
+          "passed": true
+        },
+        {
+          "id": "original-source-identities",
+          "passed": true
+        },
+        {
+          "id": "cold-report-original-bytes",
+          "passed": true
+        },
+        {
+          "id": "public-http-artifact-bytes",
+          "passed": true
+        },
+        {
+          "id": "per-root-original-admission-reconciliation",
+          "passed": true
+        },
+        {
+          "id": "one-scenario-aggregate-account",
+          "passed": true
+        },
+        {
+          "id": "terminal-zero-redispatch",
+          "passed": true
+        },
+        {
+          "id": "old-memory-revision-consumed",
+          "passed": true
+        },
+        {
+          "id": "explicit-memory-cas-revision",
+          "passed": true
+        },
+        {
+          "id": "new-memory-revision-consumed",
+          "passed": true
+        },
+        {
+          "id": "old-publication-retained",
+          "passed": true
+        }
+      ],
+      "frozenEligibleSuccess": true,
+      "reportEvidenceIds": [
+        "additional-B-B02-report-1",
+        "additional-B-B02-report-2"
+      ],
+      "naturalCorrectionTriggered": false
+    },
+    {
+      "id": "additional-B-B03",
+      "caseId": "B03",
+      "cohort": "additional-B",
+      "sourceCommit": "214bd24c373457a6852340d86e53cb2addd13add",
+      "originalEvidenceSha256": "35b3d4ad661b1f4b611a933401d112ba5b134f74e60ce42da2a45752d99b76e6",
+      "repairSlot": null,
+      "originalTerminalStatus": "completed",
+      "observationCode": null,
+      "physicalRequests": 7,
+      "mechanismChecks": [
+        {
+          "id": "submit-zero-dispatch",
+          "passed": true
+        },
+        {
+          "id": "original-runs-terminal-before-deadline",
+          "passed": true
+        },
+        {
+          "id": "original-source-identities",
+          "passed": true
+        },
+        {
+          "id": "cold-report-original-bytes",
+          "passed": true
+        },
+        {
+          "id": "public-http-artifact-bytes",
+          "passed": true
+        },
+        {
+          "id": "per-root-original-admission-reconciliation",
+          "passed": true
+        },
+        {
+          "id": "one-scenario-aggregate-account",
+          "passed": true
+        },
+        {
+          "id": "terminal-zero-redispatch",
+          "passed": true
+        },
+        {
+          "id": "old-memory-revision-consumed",
+          "passed": true
+        },
+        {
+          "id": "explicit-memory-forget",
+          "passed": true
+        },
+        {
+          "id": "forgotten-memory-not-consumed",
+          "passed": false
+        },
+        {
+          "id": "old-publication-retained",
+          "passed": true
+        }
+      ],
+      "frozenEligibleSuccess": false,
+      "reportEvidenceIds": [
+        "additional-B-B03-report-1",
+        "additional-B-B03-report-2"
+      ],
+      "naturalCorrectionTriggered": false
+    },
+    {
+      "id": "additional-B-B04",
+      "caseId": "B04",
+      "cohort": "additional-B",
+      "sourceCommit": "214bd24c373457a6852340d86e53cb2addd13add",
+      "originalEvidenceSha256": "59a898d4ac9a83f04d3a24474bc0fab6cdd7583f720e639ff036077fc1e134e1",
+      "repairSlot": null,
+      "originalTerminalStatus": "completed",
+      "observationCode": null,
+      "physicalRequests": 4,
+      "mechanismChecks": [
+        {
+          "id": "submit-zero-dispatch",
+          "passed": true
+        },
+        {
+          "id": "original-runs-terminal-before-deadline",
+          "passed": true
+        },
+        {
+          "id": "original-source-identities",
+          "passed": true
+        },
+        {
+          "id": "cold-report-original-bytes",
+          "passed": true
+        },
+        {
+          "id": "public-http-artifact-bytes",
+          "passed": true
+        },
+        {
+          "id": "per-root-original-admission-reconciliation",
+          "passed": true
+        },
+        {
+          "id": "one-scenario-aggregate-account",
+          "passed": true
+        },
+        {
+          "id": "terminal-zero-redispatch",
+          "passed": true
+        },
+        {
+          "id": "conflicting-memory-consumed",
+          "passed": true
+        },
+        {
+          "id": "no-implicit-memory-write",
+          "passed": true
+        }
+      ],
+      "frozenEligibleSuccess": true,
+      "reportEvidenceIds": [
+        "additional-B-B04-report-1"
+      ],
+      "naturalCorrectionTriggered": false
+    },
+    {
+      "id": "additional-B-B05",
+      "caseId": "B05",
+      "cohort": "additional-B",
+      "sourceCommit": "214bd24c373457a6852340d86e53cb2addd13add",
+      "originalEvidenceSha256": "7f896881faeedd9162cddb07e278e8e10c0d8e4c65632fe94ba7c46f9391305d",
+      "repairSlot": null,
+      "originalTerminalStatus": "completed",
+      "observationCode": null,
+      "physicalRequests": 6,
+      "mechanismChecks": [
+        {
+          "id": "submit-zero-dispatch",
+          "passed": true
+        },
+        {
+          "id": "original-runs-terminal-before-deadline",
+          "passed": true
+        },
+        {
+          "id": "original-source-identities",
+          "passed": true
+        },
+        {
+          "id": "cold-report-original-bytes",
+          "passed": true
+        },
+        {
+          "id": "public-http-artifact-bytes",
+          "passed": true
+        },
+        {
+          "id": "per-root-original-admission-reconciliation",
+          "passed": true
+        },
+        {
+          "id": "one-scenario-aggregate-account",
+          "passed": true
+        },
+        {
+          "id": "terminal-zero-redispatch",
+          "passed": true
+        },
+        {
+          "id": "original-child-handoff-consumed",
+          "passed": true
+        },
+        {
+          "id": "child-original-sources-published",
+          "passed": true
+        },
+        {
+          "id": "child-shares-original-root",
+          "passed": true
+        }
+      ],
+      "frozenEligibleSuccess": true,
+      "reportEvidenceIds": [
+        "additional-B-B05-report-1"
+      ],
+      "naturalCorrectionTriggered": false
+    },
+    {
+      "id": "additional-B-B06",
+      "caseId": "B06",
+      "cohort": "additional-B",
+      "sourceCommit": "214bd24c373457a6852340d86e53cb2addd13add",
+      "originalEvidenceSha256": "1a940598d66f8094b74ae921290865f974b5d4abae06ecbfcabdf1cb888ee783",
+      "repairSlot": null,
+      "originalTerminalStatus": "completed",
+      "observationCode": null,
+      "physicalRequests": 8,
+      "mechanismChecks": [
+        {
+          "id": "submit-zero-dispatch",
+          "passed": true
+        },
+        {
+          "id": "original-runs-terminal-before-deadline",
+          "passed": true
+        },
+        {
+          "id": "original-source-identities",
+          "passed": true
+        },
+        {
+          "id": "cold-report-original-bytes",
+          "passed": true
+        },
+        {
+          "id": "public-http-artifact-bytes",
+          "passed": true
+        },
+        {
+          "id": "per-root-original-admission-reconciliation",
+          "passed": true
+        },
+        {
+          "id": "one-scenario-aggregate-account",
+          "passed": true
+        },
+        {
+          "id": "terminal-zero-redispatch",
+          "passed": true
+        },
+        {
+          "id": "current-memory-consumed",
+          "passed": true
+        },
+        {
+          "id": "original-child-handoff-consumed",
+          "passed": true
+        },
+        {
+          "id": "child-original-sources-published",
+          "passed": true
+        },
+        {
+          "id": "child-shares-original-root",
+          "passed": true
+        },
+        {
+          "id": "memory-child-publication-one-run",
+          "passed": true
+        }
+      ],
+      "frozenEligibleSuccess": true,
+      "reportEvidenceIds": [
+        "additional-B-B06-report-1"
+      ],
+      "naturalCorrectionTriggered": false
+    },
+    {
+      "id": "additional-B-B07",
+      "caseId": "B07",
+      "cohort": "additional-B",
+      "sourceCommit": "214bd24c373457a6852340d86e53cb2addd13add",
+      "originalEvidenceSha256": "d4e3720f688bda5fd5e865ce3af854c694505bb1b896f517ee177fc9be56acfd",
+      "repairSlot": null,
+      "originalTerminalStatus": "completed",
+      "observationCode": null,
+      "physicalRequests": 3,
+      "mechanismChecks": [
+        {
+          "id": "submit-zero-dispatch",
+          "passed": true
+        },
+        {
+          "id": "original-runs-terminal-before-deadline",
+          "passed": true
+        },
+        {
+          "id": "original-source-identities",
+          "passed": true
+        },
+        {
+          "id": "cold-report-original-bytes",
+          "passed": true
+        },
+        {
+          "id": "public-http-artifact-bytes",
+          "passed": true
+        },
+        {
+          "id": "per-root-original-admission-reconciliation",
+          "passed": true
+        },
+        {
+          "id": "one-scenario-aggregate-account",
+          "passed": true
+        },
+        {
+          "id": "terminal-zero-redispatch",
+          "passed": true
+        },
+        {
+          "id": "trusted-skill-method-acquired",
+          "passed": true
+        },
+        {
+          "id": "trusted-skill-original-binding",
+          "passed": true
+        }
+      ],
+      "frozenEligibleSuccess": true,
+      "reportEvidenceIds": [
+        "additional-B-B07-report-1"
+      ],
+      "naturalCorrectionTriggered": false
+    },
+    {
+      "id": "additional-B-B08",
+      "caseId": "B08",
+      "cohort": "additional-B",
+      "sourceCommit": "214bd24c373457a6852340d86e53cb2addd13add",
+      "originalEvidenceSha256": "5c1c2fa8900227834ce32417649a509b6b69afbdd968450c1fde9e1a538195a3",
+      "repairSlot": null,
+      "originalTerminalStatus": "completed",
+      "observationCode": null,
+      "physicalRequests": 3,
+      "mechanismChecks": [
+        {
+          "id": "submit-zero-dispatch",
+          "passed": true
+        },
+        {
+          "id": "original-runs-terminal-before-deadline",
+          "passed": true
+        },
+        {
+          "id": "original-source-identities",
+          "passed": true
+        },
+        {
+          "id": "cold-report-original-bytes",
+          "passed": true
+        },
+        {
+          "id": "public-http-artifact-bytes",
+          "passed": true
+        },
+        {
+          "id": "per-root-original-admission-reconciliation",
+          "passed": true
+        },
+        {
+          "id": "one-scenario-aggregate-account",
+          "passed": true
+        },
+        {
+          "id": "terminal-zero-redispatch",
+          "passed": true
+        },
+        {
+          "id": "official-sdk-mcp-read-page",
+          "passed": true
+        },
+        {
+          "id": "mcp-original-source-published",
+          "passed": true
+        },
+        {
+          "id": "trusted-mcp-original-binding",
+          "passed": true
+        }
+      ],
+      "frozenEligibleSuccess": true,
+      "reportEvidenceIds": [
+        "additional-B-B08-report-1"
+      ],
+      "naturalCorrectionTriggered": false
+    },
+    {
+      "id": "additional-B-B09",
+      "caseId": "B09",
+      "cohort": "additional-B",
+      "sourceCommit": "214bd24c373457a6852340d86e53cb2addd13add",
+      "originalEvidenceSha256": "6d5ce5cc2b4112fa5ce3fd8131bed65195eb26ba1cd159647eed60182548ba83",
+      "repairSlot": null,
+      "originalTerminalStatus": "completed",
+      "observationCode": null,
+      "physicalRequests": 4,
+      "mechanismChecks": [
+        {
+          "id": "submit-zero-dispatch",
+          "passed": true
+        },
+        {
+          "id": "original-runs-terminal-before-deadline",
+          "passed": true
+        },
+        {
+          "id": "original-source-identities",
+          "passed": true
+        },
+        {
+          "id": "cold-report-original-bytes",
+          "passed": true
+        },
+        {
+          "id": "public-http-artifact-bytes",
+          "passed": true
+        },
+        {
+          "id": "per-root-original-admission-reconciliation",
+          "passed": true
+        },
+        {
+          "id": "one-scenario-aggregate-account",
+          "passed": true
+        },
+        {
+          "id": "terminal-zero-redispatch",
+          "passed": true
+        },
+        {
+          "id": "trusted-arithmetic-original-result",
+          "passed": true
+        },
+        {
+          "id": "trusted-arithmetic-original-binding",
+          "passed": true
+        }
+      ],
+      "frozenEligibleSuccess": true,
+      "reportEvidenceIds": [
+        "additional-B-B09-report-1"
+      ],
+      "naturalCorrectionTriggered": false
+    },
+    {
+      "id": "additional-B-B10",
+      "caseId": "B10",
+      "cohort": "additional-B",
+      "sourceCommit": "214bd24c373457a6852340d86e53cb2addd13add",
+      "originalEvidenceSha256": "ce46ec86d0f904693bad03a911d6af5f3d8d8fb64085ed67d55e30f22556b5ce",
+      "repairSlot": null,
+      "originalTerminalStatus": "completed",
+      "observationCode": null,
+      "physicalRequests": 6,
+      "mechanismChecks": [
+        {
+          "id": "submit-zero-dispatch",
+          "passed": true
+        },
+        {
+          "id": "original-runs-terminal-before-deadline",
+          "passed": true
+        },
+        {
+          "id": "original-source-identities",
+          "passed": true
+        },
+        {
+          "id": "cold-report-original-bytes",
+          "passed": true
+        },
+        {
+          "id": "public-http-artifact-bytes",
+          "passed": true
+        },
+        {
+          "id": "per-root-original-admission-reconciliation",
+          "passed": true
+        },
+        {
+          "id": "one-scenario-aggregate-account",
+          "passed": true
+        },
+        {
+          "id": "terminal-zero-redispatch",
+          "passed": true
+        },
+        {
+          "id": "distinct-throughput-method-bound",
+          "passed": true
+        },
+        {
+          "id": "original-child-handoff-consumed",
+          "passed": true
+        },
+        {
+          "id": "child-original-sources-published",
+          "passed": true
+        },
+        {
+          "id": "child-shares-original-root",
+          "passed": true
+        }
+      ],
+      "frozenEligibleSuccess": true,
+      "reportEvidenceIds": [
+        "additional-B-B10-report-1"
+      ],
+      "naturalCorrectionTriggered": false
+    }
+  ]
+}

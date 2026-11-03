@@ -42,9 +42,9 @@ test('15.3 another call ID cannot allocate a second specialist',async()=>{
  let step=0,count=0;const h=await harness({main:()=>step++===0?delegate():call('different-id','source_check',{question:'Again.'}),child:input=>{count++;return oneReadChild(input);}});
  try{assert.equal(h.result.status,'failed');assert.equal(h.result.code,'TOOL_REJECTED');assert.equal(count,2);assert.ok(h.store.findChild(h.result.runId,'source-check-v1'));}finally{h.store.close();}
 });
-test('15.4 mixed batch is rejected before Child dispatch',async()=>{
+test('15.4 mixed group is paired without dispatch; repeating original IDs remains rejected',async()=>{
  let count=0;const h=await harness({main:()=>({kind:'calls',calls:[...delegate().calls,{id:'other',name:'read_page',arguments:{documentId:'atlas-a',page:1}}]}),child:input=>{count++;return oneReadChild(input);}});
- try{assert.equal(h.result.code,'TOOL_REJECTED');assert.equal(count,0);assert.equal(h.store.findChild(h.result.runId,'source-check-v1'),null);}finally{h.store.close();}
+ try{assert.equal(h.result.code,'DUPLICATE_CALL_ID');assert.equal(h.result.rootUsage.tool,0);assert.equal(h.store.inspect(h.result.runId).snapshot.corrections,1);assert.equal(count,0);assert.equal(h.store.findChild(h.result.runId,'source-check-v1'),null);}finally{h.store.close();}
 });
 test('15.5 known failed Child preserves original sources and explicit failure',async()=>{
  let step=0,seen;const h=await harness({main:({messages})=>{if(step++===0)return delegate();seen=messages.at(-1).result.value;return{kind:'final',text:'The original partial source is usable; the Child failed.'};},child:({messages})=>messages.some(m=>m.role==='tool')?call('bad-page','read_page',{documentId:'atlas-a',page:99}):call('good-page','read_page',{documentId:'atlas-a',page:1})});

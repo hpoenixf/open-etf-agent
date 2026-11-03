@@ -1,0 +1,145 @@
+{
+  "schema": "v020-public-campaign-manifest@1",
+  "preparedAt": "2026-11-03T12:17:57.870753+00:00",
+  "publicationStatus": "prepared locally; not uploaded or published",
+  "finalCandidate": {
+    "commit": "214bd24c373457a6852340d86e53cb2addd13add",
+    "tree": "9ed8b0a983449f2ffe90d5f891465a970f45d4a0",
+    "offlineQualification": "Combined evidence: full run 772/774 on 8f63ffd, two obsolete mixed-group test assertions updated and 2/2 targeted pass on final214; production/fixture input bytes identical. No final full774 rerun claim.",
+    "productionAndFixtureInputs": 83,
+    "executionInputsSha256": "874549b03e1168ceb9313a85f140f0f979941a3675a22a0e0aa122b6b4846d29",
+    "qualificationReceiptSha256": "aa8ee4e55a3595b1f2d5470045c557b1fe72d3fe66bbd70b913cc394d8506260"
+  },
+  "original40": {
+    "successes": 35,
+    "denominator": 40,
+    "allAttempted": true,
+    "batches": {
+      "A": {
+        "successes": 9,
+        "denominator": 10,
+        "frozenPassed": true,
+        "criticalFailures": [],
+        "originalRollupSha256": "1bdadb949a4fb7b6b902cdcf28b9f17c8b2aea4970e1411416abda9191dd784c"
+      },
+      "B": {
+        "successes": 7,
+        "denominator": 10,
+        "frozenPassed": false,
+        "criticalFailures": [],
+        "originalRollupSha256": "ba4d4d146ec630217443ac16aec436220eea9ab47791219a846765dc26c61c0e"
+      },
+      "C": {
+        "successes": 9,
+        "denominator": 10,
+        "frozenPassed": false,
+        "criticalFailures": [
+          "C07"
+        ],
+        "originalRollupSha256": "0a1d56c9d109789302fd96aac3bfee319e8602ba171cfb1c1de58669ec9e9828"
+      },
+      "D": {
+        "successes": 10,
+        "denominator": 10,
+        "frozenPassed": true,
+        "criticalFailures": [],
+        "originalRollupSha256": "c104b64ea1b0115ce82d878fcaae87ac6340537a8524d2bb0ef87f38499d6f7f"
+      }
+    },
+    "strictCampaignGatePassed": false,
+    "failuresNeverReplaced": true,
+    "sameFinalSourceClaim": false
+  },
+  "repairs": {
+    "used": 6,
+    "maximum": 10,
+    "remaining": 4,
+    "replaceOriginalDenominator": false,
+    "C07": {
+      "originalSummaryTimeoutMs": 10000,
+      "newSummaryTimeoutMs": 30000,
+      "repairSourceCommit": "dd3f039345454671ddbc17ce29361ff184f981e4",
+      "changedHostObservationCondition": true,
+      "oldUnknownNeverReplayedOrReleased": true
+    },
+    "B09Slot2": {
+      "runtimeContractIndependentlyVerified": true,
+      "originalFrozenArithmeticCheckFalsePreserved": true,
+      "reason": "Old checker required one allocation decomposition; actual original arguments/results were valid."
+    }
+  },
+  "additionalB": {
+    "distinctAdditionalTasks": 10,
+    "sourceCommit": "214bd24c373457a6852340d86e53cb2addd13add",
+    "runtimeCompleted": 9,
+    "denominator": 10,
+    "frozenMechanismSuccesses": 8,
+    "frozenGatePassed": false,
+    "criticalB06Passed": true,
+    "failedReportCase": "B01",
+    "independentlySupplementedMechanismCase": "B03",
+    "layeredAcceptance": {
+      "userAccepted": true,
+      "basis": "9/10 completed real runs plus independent provider-free original forget-exclusion mechanism proof",
+      "doesNotRewriteFrozen8Of10": true,
+      "doesNotRewriteOriginalB7Of10": true
+    },
+    "independentForgetProof": {
+      "sourceCommit": "214bd24c373457a6852340d86e53cb2addd13add",
+      "evidenceSha256": "4fecb4f84c1604c537b4280920a417fb862b95014ee9d64cf105ef652853235a",
+      "scriptSha256": "c5d6e774ad96ac85ec469318304642dc0f832c35d63aa392a1871fcf30975bd9",
+      "sameQueryBeforeAfterWithRetainedPositiveControl": true,
+      "exactForgottenIdReadRejected": true,
+      "metadataListExcludesForgotten": true,
+      "originalWorkingProjectionExcludesForgotten": true,
+      "coldReopenedSameLibrary": true,
+      "providerCalls": 0,
+      "paidRepairSlotsConsumed": 0
+    },
+    "naturalCorrectionHits": 0,
+    "liveCorrectionPathCoverageClaim": false
+  },
+  "accounting": {
+    "generationSequence": 789,
+    "actualObservedTotal": 1625,
+    "conservativeUpper": 1681,
+    "globalLimit": 3000,
+    "unknownTotalLowerBound": 16,
+    "predecessorRiskHold": 56,
+    "campaignPhysicalSinceSequence543": 246,
+    "knownGoZeroSinceSequence543": 245,
+    "newCampaignUnknown": 1,
+    "additionalBPhysical": 52,
+    "additionalBKnownGoZero": 52,
+    "repairSlotsConsumed": 6,
+    "ledgerSha256": "23369ab2e02d23aa3ef6713bcc5f9a22007a81995f26ad500b57db484e0462f3",
+    "remoteUnknownSettledClaim": false
+  },
+  "processes": {
+    "terminalOwnerReceipts": 15,
+    "allOwnedProcessGroupsTerminal": true,
+    "allBarriersReleased": true,
+    "remoteEffectsSettledClaim": false
+  },
+  "limitations": [
+    "Original C07 remains a critical failed unknown attempt; the dd3 repair passed only under explicitly changed 30-second summary observation.",
+    "Original batches used multiple pinned source revisions; per-case attribution is provided.",
+    "B01 in the additional cohort finalized without a persisted report; it remains failed.",
+    "B03 original frozen search check remains false; independent same-query positive-control proof is a separate evidence layer.",
+    "Bounded correction is covered by deterministic original Runtime/Session tests; latest real natural tasks did not trigger correction.",
+    "No paid semantic judge or semantic quality qualification; no claim that final full suite passed 774/774."
+  ],
+  "finalReleaseDecision": "Not made by this manifest; layered B acceptance is recorded separately from unchanged original strict campaign gates.",
+  "files": [
+    {
+      "name": "case-mechanism-observations.json",
+      "sha256": "4323e91edb24cf526e2aaa9d02eeada6ea13fec662745895772cd66f54b06a5d",
+      "bytes": 82100
+    },
+    {
+      "name": "synthetic-data-and-reports.json",
+      "sha256": "357dee7321a74ee6c2eef0032284e08bec7348dd2f935c014388edf7707a7372",
+      "bytes": 297863
+    }
+  ]
+}

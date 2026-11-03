@@ -1,0 +1,32 @@
+{
+  "commit": "214bd24c373457a6852340d86e53cb2addd13add",
+  "tree": "9ed8b0a983449f2ffe90d5f891465a970f45d4a0",
+  "combinedOfflineEvidenceReady": true,
+  "fullSuite": {
+    "commit": "8f63ffd78452f706b495e06dacec83fe04d44063",
+    "tests": 774,
+    "passed": 772,
+    "failed": 2,
+    "sha256": "fcaf964ab1050403d1456c956f8e876405b155edda1b5f5c56c284fa240870fb",
+    "failureScope": "Two old Child mixed-group expectations superseded by the authorized atomic zero-dispatch contract; failure receipts retained"
+  },
+  "finalTargetedTests": {
+    "file": "test/specialist-call-contract.test.mjs",
+    "passed": 2,
+    "failed": 0,
+    "sha256": "e1f8c60a52bc4564be7821d75236082915501c01cb1ba4c687b277f56fa6a09f"
+  },
+  "finalFullSuiteRerun": false,
+  "productionAndFixtureInputsUnchangedFromFull": true,
+  "build": {
+    "passed": true,
+    "sha256": "a9d33ca58b185b9e021a8bd11190b3f953f4995d4e46bbfff0de39818c9e4af0"
+  },
+  "schema": "v020-public-offline-summary@1",
+  "sourceInputs": {
+    "path": "execution-inputs.safe.json",
+    "sha256": "874549b03e1168ceb9313a85f140f0f979941a3675a22a0e0aa122b6b4846d29",
+    "count": 83
+  },
+  "scope": "Combined original-suite and targeted evidence, not a final full-suite pass. Remote package CI is a separate future check."
+}

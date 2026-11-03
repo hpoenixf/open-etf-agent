@@ -1,8 +1,11 @@
 import { validateSource } from './source.mjs';
 const fail = message => { throw new Error(message); };
+export function projectControlProofs(messages){const projected=structuredClone(messages);for(const m of projected)if(m.role==='tool'&&['builtin-report-reference-validation@1','specialist-group-refusal@1'].includes(m.result?.validation?.schemaVersion)){const v=m.result.validation;m.result.validation={schemaVersion:v.schemaVersion,code:v.code,repairable:v.repairable,requestHash:v.requestHash};}return projected;}
 export async function projectContext({ messages, maxBytes, lookupSource } = {}) {
   if (!Array.isArray(messages) || !messages.length || messages[0].role!=='user' || !Number.isSafeInteger(maxBytes) || maxBytes<1 || maxBytes>1048576 || typeof lookupSource!=='function') fail('Invalid context budget/configuration');
-  const projected=structuredClone(messages); const groups=[]; const used=new Set();
+  const projected=structuredClone(messages);
+  for(const m of projected)if(m.role==='tool'&&['builtin-report-reference-validation@1','specialist-group-refusal@1'].includes(m.result?.validation?.schemaVersion)){const v=m.result.validation;m.result.validation={schemaVersion:v.schemaVersion,code:v.code,repairable:v.repairable,requestHash:v.requestHash};}
+  const groups=[]; const used=new Set();
   for (let i=0;i<projected.length;i++) {
     const message=projected[i];
     if (message.role==='tool') fail('Unpaired tool group');
