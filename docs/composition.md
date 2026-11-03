@@ -1,6 +1,7 @@
-# Composition contracts (v0.19 candidate)
+<a id="composition-contracts-v019-candidate"></a>
+# Composition contracts (v0.19)
 
-This page describes the candidate's API contracts. The [qualification record](verification/v019-release.md) separates fixed real-model cohorts, provider-free checks and pending publication. Bundled CLI scenarios remain explicit examples. A successful example is not evidence that every possible combination is supported.
+This page describes v0.19's API contracts. The [qualification record](verification/v019-release.md) separates fixed real-model cohorts, provider-free checks and formal release identity. Bundled CLI scenarios remain explicit examples. A successful example is not evidence that every possible combination is supported.
 
 ## Host-owned inputs, original execution owners
 

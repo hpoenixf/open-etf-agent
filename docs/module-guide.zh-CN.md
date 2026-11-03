@@ -420,6 +420,7 @@ Web 取材是原路线中的外网输入候选，仍未编号；Web 读取界面
 <p align="center">小步演进，保留证据。<br /><sub>Build small. Keep evidence.</sub></p>
 
 <a id="v019-composition"></a>
-## v0.19 · 组合合同候选
+<a id="v019--组合合同候选"></a>
+## v0.19 · 组合合同
 
-[兼容矩阵与原合同运行检查](composition.zh-CN.md) · [逐批真实资格、失败与升级边界](verification/v019-release.zh-CN.md)。正式版本发布仍待批准和远端 CI。
+[兼容矩阵与原合同运行检查](composition.zh-CN.md) · [逐批真实资格、失败与升级边界](verification/v019-release.zh-CN.md)。[v0.19.0](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.19.0) 对应原 CI 通过后的最终包；资格记录分别保留实现快照与此前失败检查。

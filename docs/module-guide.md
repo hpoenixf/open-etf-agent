@@ -403,6 +403,7 @@ Open an [issue](https://github.com/hpoenixf/open-etf-agent/issues) with the **st
 <p align="center">Build small. Keep evidence.<br /><a href="../README.zh-CN.md">阅读简体中文版</a></p>
 
 <a id="v019-composition"></a>
-## v0.19 · Composition contracts candidate
+<a id="v019--composition-contracts-candidate"></a>
+## v0.19 · Composition contracts
 
-[Compatibility matrix and original runnable checks](composition.md) · [Per-cohort real qualification, failures and upgrade boundaries](verification/v019-release.md). Formal publication still awaits approval and remote CI.
+[Compatibility matrix and original runnable checks](composition.md) · [Per-cohort real qualification, failures and upgrade boundaries](verification/v019-release.md). [v0.19.0](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.19.0) identifies the final package after its original CI; the qualification record preserves the separate implementation snapshot and earlier failed checks.
