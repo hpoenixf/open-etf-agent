@@ -67,6 +67,10 @@
     "0.16": {
       "commit": "35f244f2e06da447c110325d2ac5a5c39f36e842",
       "tree": "bc127865a46b172ef0884257e4ad9d5a32a5d862"
+    },
+    "0.17": {
+      "commit": "8137e592b0a07bcb0dfdd8756409c5bbc7d909ce",
+      "tree": "182381c980924790262bcee403c322d716c43a2b"
     }
   },
   "targets": {

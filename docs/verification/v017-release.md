@@ -23,3 +23,7 @@ These tasks use fictional Atlas guides. They are Runtime/workflow checks, not fi
 The [2026-11-02 five-task observation](v017-release.safe.json) and its original reports are retained unchanged as historical evidence. Its former five-task qualification declaration is superseded by the current ten-task decision and must not be used to qualify this release.
 
 The original proposal and task notes preserve their historical status. Public source identity and final tag are recorded after actual publication and readback; a local execution hash, historical dangling object, CI result, or article link alone is not a GitHub Release.
+
+## Public implementation identity
+
+Fixed implementation [`8137e592b0a07bcb0dfdd8756409c5bbc7d909ce`](https://github.com/hpoenixf/open-etf-agent/tree/8137e592b0a07bcb0dfdd8756409c5bbc7d909ce), tree `182381c980924790262bcee403c322d716c43a2b`. All 79 frozen execution-input files match the current ten-task campaign and separately recorded offline safety evidence. Only documentation and release metadata differ. The final v0.17.0 tag and GitHub Release identify the subsequent package commit containing this binding; the implementation staging commit is not ambiguously presented as the final package.
