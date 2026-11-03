@@ -7,7 +7,7 @@ import { run, submitRun } from './runtime.mjs';
 const config = JSON.parse(process.argv[2]);
 const localEndpoint = new URL(config.endpoint);
 if (localEndpoint.protocol !== 'http:' || localEndpoint.hostname !== '127.0.0.1' || localEndpoint.pathname !== '/chat/completions') throw new Error('OFFLINE_LOOPBACK_REQUIRED');
-const session = await openSession({ directory: join(config.directory, 'session'), leaseMs: 300 });
+const session = await openSession({ directory: join(config.directory, 'session'), leaseMs: config.leaseMs ?? 300 });
 const admission = await createSharedAdmission({ directory: join(config.directory, 'capacity'), routeId: 'offline-fixed-route', queueTimeoutMs: config.queueTimeoutMs ?? 2000, pollMs: 10 });
 const controller = new AbortController();
 process.on('message', message => { if (message === 'cancel') controller.abort(); });

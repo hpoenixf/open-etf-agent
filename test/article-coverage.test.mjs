@@ -88,7 +88,7 @@ test('coverage: render refuses reversed markers without changing README bytes', 
   const root = await mkdtemp(resolve('test-output/coverage-render-'));
   await mkdir(join(root,'scripts'));
   await mkdir(join(root,'docs/verification'), {recursive:true});
-  for (const path of ['scripts/check-article-coverage.mjs','docs/verification/article-coverage.json','docs/verification/article-coverage-source.json','versions.json']) {
+  for (const path of ['scripts/check-article-coverage.mjs','scripts/real-ten-evidence.mjs','docs/verification/article-coverage.json','docs/verification/article-coverage-source.json','versions.json']) {
     await copyFile(new URL('../'+path, import.meta.url), join(root,path));
   }
   const original = Buffer.from('before\n<!-- article-coverage:end -->\nmiddle\n<!-- article-coverage:start -->\nafter\n');

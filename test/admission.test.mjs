@@ -10,6 +10,7 @@ import { openSession } from '../src/session.mjs';
 import { createChatGateway } from '../src/gateway.mjs';
 import { run as executeRun, submitRun } from '../src/runtime.mjs';
 
+const fixtureLeaseMs = 5000;
 const bindings = { gateway: { mode: 'live', provider: 'offline-fixture', protocol: 'chat-completions', model: 'synthetic', version: '1' }, plugins: [], adapters: [] };
 async function run(options) {
   await submitRun(options);
@@ -35,9 +36,9 @@ async function completedWorker(worker) {
   assert.equal(result.code, 0, worker.describe());
   assert.equal(result.message?.result?.status, 'completed', worker.describe());
 }
-async function fixture(handler) {
+async function fixture(handler, { leaseMs = fixtureLeaseMs } = {}) {
   await mkdir('test-output', { recursive: true }); const directory = await mkdtemp(resolve('test-output/admission-'));
-  const session = await openSession({ directory: join(directory, 'session'), leaseMs: 300 });
+  const session = await openSession({ directory: join(directory, 'session'), leaseMs });
   const admission = await createSharedAdmission({ directory: join(directory, 'capacity'), routeId: 'offline-fixed-route', queueTimeoutMs: 2000, pollMs: 10 });
   const requests = []; const children = []; let active = 0; let maximum = 0;
   const server = createServer(async (req, res) => {
@@ -49,7 +50,7 @@ async function fixture(handler) {
   await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
   const endpoint = `http://127.0.0.1:${server.address().port}/chat/completions`;
   const launch = (runId, extra = {}) => {
-    const child = fork(new URL('./fixtures/admission-worker.mjs', import.meta.url), [JSON.stringify({ directory, endpoint, runId, ...extra })], { stdio: ['ignore', 'pipe', 'pipe', 'ipc'] }); children.push(child);
+    const child = fork(new URL('./fixtures/admission-worker.mjs', import.meta.url), [JSON.stringify({ directory, endpoint, runId, leaseMs, ...extra })], { stdio: ['ignore', 'pipe', 'pipe', 'ipc'] }); children.push(child);
     let message, outcome; let stderr = ''; child.on('message', value => { message = value; }); child.stderr.on('data', chunk => { stderr += chunk; });
     const done = new Promise(resolve => child.on('exit', (code, signal) => { outcome = { code, signal, message, stderr }; resolve(outcome); }));
     const describe = () => JSON.stringify({ runId, exitCode: outcome?.code, signal: outcome?.signal,
@@ -67,8 +68,9 @@ test('two original Gateway workers share one slot; settled original ticket survi
   try {
     const a = f.launch('first'); await waitFor(() => f.requests.length === 1, 'first dispatch');
     const b = f.launch('second'); await waitFor(() => f.admission.snapshot().requests.some(x => x.state === 'queued'), 'second queued');
-    assert.equal(f.requests.length, 1); complete(f.requests[0].res);
-    await waitFor(() => f.requests.length === 2, 'second dispatch'); complete(f.requests[1].res);
+    assert.equal(f.requests.length, 1); complete(f.requests[0].res); await completedWorker(a);
+    assert.equal(f.admission.snapshot().requests.find(x => x.runId === 'first')?.state, 'completed', a.describe());
+    await waitFor(() => f.requests.length === 2, 'second dispatch', 4000, b); complete(f.requests[1].res);
     const [ar, br] = await Promise.all([a.done, b.done]); assert.equal(ar.code, 0, ar.stderr); assert.equal(br.code, 0, br.stderr);
     assert.equal(ar.message.result.status, 'completed'); assert.equal(br.message.result.status, 'completed'); assert.equal(f.maximum(), 1);
     const tickets = f.admission.snapshot().requests; assert.deepEqual(tickets.map(x => x.state), ['completed', 'completed']);
@@ -167,7 +169,7 @@ for (const revoke of ['cancel-root', 'takeover-fence']) test(`observed ${revoke}
     const b = f.launch(`queued-${revoke}`); await waitFor(() => f.admission.snapshot().requests.some(x => x.runId === `queued-${revoke}`), 'queued reservation');
     if (revoke === 'cancel-root') f.session.cancel(`queued-${revoke}`);
     else {
-      takeover = await openSession({ directory: join(f.directory, 'session'), clock: () => Date.now() + 500, leaseMs: 300 });
+      takeover = await openSession({ directory: join(f.directory, 'session'), clock: () => Date.now() + fixtureLeaseMs + 1, leaseMs: fixtureLeaseMs });
       takeover.claim(`queued-${revoke}`, 'replacement-owner');
     }
     complete(f.requests[0].res); await Promise.all([a.done, b.done]);
@@ -200,7 +202,27 @@ test('ordinary local tool extensions remain usable through the managed Gateway',
       gateway: { mode: original.mode, admission: 'shared-admission@1', next: input => managed.next(input) },
       extensions: [{ name: 'local_echo', description: 'A synthetic local tool.', parameters: { type: 'object', properties: {}, additionalProperties: false }, validate() {}, execute() { executions++; return { value: 'local' }; } }],
       durable: { store: f.session, grantId: 'offline-grant', bindings, onClaim({ runId }) { managed = f.admission.wrap(original, { session: f.session, runId }); } } });
-    assert.equal(result.status, 'completed'); assert.equal(executions, 1); assert.equal(f.requests.length, 2);
+    assert.equal(result.status, 'completed', JSON.stringify({code:result.code,rootUsage:result.rootUsage,unknownEffects:result.unknownEffects})); assert.equal(executions, 1); assert.equal(f.requests.length, 2);
     assert.deepEqual(f.admission.snapshot().requests.map(x => x.state), ['completed', 'completed']);
   } finally { await f.close(); }
+});
+
+// Admission contention is not a sub-second wall-clock Session lease benchmark.
+// Preserve refusal on an expired owner; isolate that boundary from the normal fixture.
+test('fixture lease isolates scheduling delay without weakening expired-writer refusal', { timeout: 10000 }, async () => {
+  for (const leaseMs of [300, fixtureLeaseMs]) {
+    const f = await fixture(({ res }) => complete(res), { leaseMs });
+    try {
+      const original = createChatGateway({ endpoint: 'https://offline-fixture.invalid/chat/completions', model: 'synthetic', apiKey: 'synthetic', authorization: { providerApproved: true, syntheticDataApproved: true, costApproved: true }, fetchImpl: (_url, options) => fetch(f.endpoint, options) });
+      let managed;
+      const execution = executeRun({ question: 'owned scheduling-delay fixture', requireReport: false, outputRoot: join(f.directory, 'runs'),
+        gateway: { mode: original.mode, admission: 'shared-admission@1', next: input => managed.next(input) },
+        durable: { store: f.session, grantId: 'offline-grant', bindings, onClaim({ runId }) {
+          managed = f.admission.wrap(original, { session: f.session, runId });
+          Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 600);
+        } } });
+      if (leaseMs === 300) { const result = await execution; assert.equal(result.status, 'failed'); assert.equal(result.code, 'STALE_WRITER'); assert.equal(f.requests.length, 0); assert.equal(f.admission.snapshot().requests.length, 0); }
+      else { const result = await execution; assert.equal(result.status, 'completed', result.code); assert.equal(f.requests.length, 1); assert.deepEqual(f.admission.snapshot().requests.map(t => t.state), ['completed']); }
+    } finally { await f.close(); }
+  }
 });
