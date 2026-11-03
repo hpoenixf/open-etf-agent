@@ -27,6 +27,11 @@ Node 下限按实际 API 使用范围放宽到 26.8.1。当前 v0.11 的窄安�
 - **一条逐步增加能力的执行链：** 新机制接回既有 Runtime / Tool Host，不另造一条只供演示的执行流程。
 - **可核对的验证边界：** 保留失败、修复和未验证项，区分程序机制通过、模型判断正确与正式发布。
 
+<a id="v018--schedule-occurrence"></a>
+### v0.18 · One Schedule Occurrence / 一次确认的计划执行
+
+[Explicit fixture CLI and supported real API boundaries / 显式 fixture CLI 与真实 API 边界](schedule-occurrence.md). [Current ten-task qualification / 当前十任务资格](verification/v018-release.md). One confirmed occurrence and explicit wake; no background or recurring service.
+
 <a id="v017--shared-admission"></a>
 ### v0.17 · Shared local Admission / 本地共享容量
 

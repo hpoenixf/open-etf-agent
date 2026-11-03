@@ -30,6 +30,11 @@ The introductory task compares **original synthetic documents**, not real funds.
 
 Documentation defaults to English. Use the language links at the top of the main entry pages for Chinese. Historical evidence, internal Specs and some detailed design documents remain in their original language; they are not presented as English translations. Article links marked **Chinese original** have no complete English edition.
 
+<a id="v018--schedule-occurrence"></a>
+### v0.18 · One Schedule Occurrence / 一次确认的计划执行
+
+[Explicit fixture CLI and supported real API boundaries / 显式 fixture CLI 与真实 API 边界](schedule-occurrence.md). [Current ten-task qualification / 当前十任务资格](verification/v018-release.md). One confirmed occurrence and explicit wake; no background or recurring service.
+
 <a id="v017--shared-admission"></a>
 ### v0.17 · Shared local Admission / 本地共享容量
 

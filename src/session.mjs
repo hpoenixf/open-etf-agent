@@ -1,3 +1,4 @@
+import { SCHEDULE_PROFILE, prepareSchedule, validateScheduleReference, scheduleCanonical } from './schedule.mjs';
 import { searchPages } from './retrieval.mjs';
 import { validateProtectedHostSnapshot, validateProtectedCsvResult } from './tools.mjs';
 import { validateArtifactProtection, validateProtectedOutputFact, validateProtectedOutputProof, validateProtectedSourcePayload, PROTECTED_OUTPUT_BYTES } from './artifacts.mjs';
@@ -112,6 +113,11 @@ const schemas = [
  `CREATE TABLE publication_events (run_id TEXT PRIMARY KEY REFERENCES runs(run_id), event TEXT NOT NULL) STRICT`
 ];
 
+const scheduleSchemas = [
+ `CREATE TABLE schedule_definitions (schedule_id TEXT PRIMARY KEY, envelope TEXT NOT NULL, confirmation_hash TEXT NOT NULL, confirmed_at INTEGER NOT NULL) STRICT`,
+ `CREATE TABLE schedule_occurrences (schedule_id TEXT PRIMARY KEY REFERENCES schedule_definitions(schedule_id), state TEXT NOT NULL, run_id TEXT UNIQUE REFERENCES runs(run_id), decided_at INTEGER, materialized_at INTEGER) STRICT`
+];
+
 const responseSchema = `CREATE TABLE ordinary_responses (run_id TEXT PRIMARY KEY REFERENCES runs(run_id), question_id TEXT NOT NULL UNIQUE, response_id TEXT UNIQUE, fact TEXT NOT NULL) STRICT`;
 
 
@@ -131,8 +137,8 @@ function hasProtectedSemantics(value) {
 // Synchronous short transactions own facts only. No tool/model callback enters a transaction.
 export async function openSession({ directory, clock = Date.now, leaseMs = 1000, profile, readOnly = false } = {}) {
  if (typeof readOnly !== 'boolean' || typeof directory !== 'string' || typeof clock !== 'function' || !Number.isSafeInteger(leaseMs) || leaseMs < 20 || leaseMs > 30000) fail('INVALID_SESSION_OPTIONS');
- if (profile !== undefined && profile !== RESPONSE_PROFILE && profile !== DOCUMENT_REVOCATION_PROFILE) fail('INVALID_SESSION_PROFILE');
- let ordinary = profile === RESPONSE_PROFILE; const protectedProfile=profile===DOCUMENT_REVOCATION_PROFILE;
+ if (profile !== undefined && profile !== RESPONSE_PROFILE && profile !== DOCUMENT_REVOCATION_PROFILE && profile !== SCHEDULE_PROFILE) fail('INVALID_SESSION_PROFILE');
+ let ordinary = profile === RESPONSE_PROFILE; const protectedProfile=profile===DOCUMENT_REVOCATION_PROFILE; const scheduled=profile===SCHEDULE_PROFILE;
  const encodeDefinition = value => definitionBytes(value, ordinary, protectedProfile);
  const encodeCheckpoint = (value, terminal = false) => {let checked=value;if(protectedProfile&&value?.host?.schemaVersion==='tool-host-protected@1'){
    validateProtectedHostSnapshot(value.host,value.host.protection);checked=structuredClone(value);checked.host=null;const csv=(call,result)=>{validateProtectedCsvResult(call,result,value.host.protection);return {...result,value:null};};
@@ -198,12 +204,41 @@ export async function openSession({ directory, clock = Date.now, leaseMs = 1000,
    if(row.result_ref!==fact.resultRef||!parsed(run.definition,65536).config.allowedDocuments.includes(fact.documentId))fail('PROTECTED_SCOPE_MISMATCH');
   }
  }
+ function scheduleFact(connection, scheduleId) {
+  const row=connection.prepare('SELECT * FROM schedule_definitions WHERE schedule_id=?').get(scheduleId);
+  if(!row)fail('UNKNOWN_SCHEDULE');
+  const envelope=parsed(row.envelope,131072);fields(envelope,['schemaVersion','schedule','definition','snapshot'],[],'INVALID_SCHEDULE');
+  if(envelope.schemaVersion!==SCHEDULE_PROFILE)fail('INVALID_SCHEDULE');
+  encodeDefinition(envelope.definition);encodeCheckpoint(envelope.snapshot);validateRuntimeCheckpoint(envelope.snapshot,envelope.definition);
+  const prepared=prepareSchedule(envelope.schedule,envelope.definition,envelope.snapshot);
+  if(row.schedule_id!==prepared.reference.scheduleId||row.confirmation_hash!==prepared.reference.confirmationHash||!Number.isSafeInteger(row.confirmed_at)||row.confirmed_at<0||row.confirmed_at>=Date.parse(envelope.schedule.scheduledInstant))fail('CORRUPT_SCHEDULE');
+  const occurrence=connection.prepare('SELECT * FROM schedule_occurrences WHERE schedule_id=?').get(scheduleId);
+  if(!occurrence||!['confirmed','materialized','missed','cancelled','revoked'].includes(occurrence.state))fail('CORRUPT_SCHEDULE');
+  if(occurrence.state==='confirmed'?(occurrence.decided_at!==null||occurrence.run_id!==null):(!Number.isSafeInteger(occurrence.decided_at)||occurrence.decided_at<row.confirmed_at))fail('CORRUPT_SCHEDULE');
+  if(occurrence.state==='materialized'&&occurrence.run_id===null||occurrence.state==='missed'&&occurrence.run_id!==null)fail('CORRUPT_SCHEDULE');
+  if(occurrence.state==='missed'&&occurrence.decided_at<Date.parse(envelope.schedule.scheduledInstant)+envelope.schedule.maxLatenessMs)fail('CORRUPT_SCHEDULE');
+  if(occurrence.run_id===null&&occurrence.materialized_at!==null)fail('CORRUPT_SCHEDULE');
+  if(occurrence.run_id!==null){
+   const due=Date.parse(envelope.schedule.scheduledInstant);if(!Number.isSafeInteger(occurrence.materialized_at)||occurrence.materialized_at<due||occurrence.materialized_at>=due+envelope.schedule.maxLatenessMs||occurrence.decided_at<occurrence.materialized_at)fail('CORRUPT_SCHEDULE');
+   if(occurrence.run_id!==prepared.runId)fail('CORRUPT_SCHEDULE');
+   const run=connection.prepare('SELECT * FROM runs WHERE run_id=?').get(occurrence.run_id);
+   if(!run||run.parent_run_id!==null||run.root_id!==run.run_id||scheduleCanonical(parsed(run.definition,65536))!==scheduleCanonical(envelope.definition))fail('CORRUPT_SCHEDULE');
+   const snapshot=parsed(run.snapshot,MAX_CHECKPOINT_JSON);encodeCheckpoint(snapshot,snapshot.phase==='terminal');validateRuntimeCheckpoint(snapshot,envelope.definition);validateRunRoot(run,connection.prepare('SELECT * FROM roots WHERE root_id=?').get(run.root_id),envelope.definition,snapshot);
+   if(['cancelled','revoked'].includes(occurrence.state)&&run.status==='active')fail('CORRUPT_SCHEDULE');
+  }
+  return {...prepared,confirmedAt:row.confirmed_at,state:occurrence.state,decidedAt:occurrence.decided_at,materializedRunId:occurrence.run_id,materializedAt:occurrence.materialized_at};
+ }
+ function validateScheduleDatabase(connection){
+  for(const row of connection.prepare('SELECT schedule_id FROM schedule_definitions').all())scheduleFact(connection,row.schedule_id);
+  if(connection.prepare('SELECT 1 FROM schedule_occurrences o LEFT JOIN schedule_definitions d ON d.schedule_id=o.schedule_id WHERE d.schedule_id IS NULL').get()||connection.prepare('SELECT 1 FROM runs r LEFT JOIN schedule_occurrences o ON o.run_id=r.run_id WHERE o.run_id IS NULL').get()||connection.prepare('SELECT 1 FROM roots r LEFT JOIN runs x ON x.root_id=r.root_id WHERE x.run_id IS NULL').get())fail('CORRUPT_SCHEDULE');
+ }
  function validateSchema(connection) {
   const version = connection.prepare('PRAGMA user_version').get().user_version; const app = connection.prepare('PRAGMA application_id').get().application_id;
   const actual = connection.prepare("SELECT sql FROM sqlite_master WHERE name NOT LIKE 'sqlite_%' ORDER BY name").all().map(row => row.sql);
-  if (!(protectedProfile ? version===4 : [2,3].includes(version)) || (profile === RESPONSE_PROFILE && version !== 3) || app !== APP_ID || JSON.stringify(actual) !== JSON.stringify([...(version===4?[...schemas,...protectedSchemas]:version === 3 ? [...schemas,responseSchema] : schemas)].sort())) fail('UNSUPPORTED_SESSION_SCHEMA');
+  if (!(scheduled ? version===5 : protectedProfile ? version===4 : [2,3].includes(version)) || (profile === RESPONSE_PROFILE && version !== 3) || app !== APP_ID || JSON.stringify(actual) !== JSON.stringify([...(version===5?[...schemas,...scheduleSchemas]:version===4?[...schemas,...protectedSchemas]:version === 3 ? [...schemas,responseSchema] : schemas)].sort())) fail('UNSUPPORTED_SESSION_SCHEMA');
   ordinary = version === 3;
   if(protectedProfile)validateProtectedDatabase(connection);
+  if(scheduled)validateScheduleDatabase(connection);
   // Admission (including a hot-journal isolated copy) rejects cross-profile semantics.
   for (const row of connection.prepare('SELECT * FROM runs').iterate()) {
    if(!ordinary){
@@ -235,7 +270,7 @@ export async function openSession({ directory, clock = Date.now, leaseMs = 1000,
   db = new DatabaseSync(filename, { timeout: 1000, readOnly }); safeExistingDirectory(directory); identity = safeFile(filename, true);
   if (fresh) {
    db.exec('PRAGMA journal_mode=DELETE; PRAGMA synchronous=FULL; BEGIN IMMEDIATE');
-   try { for (const schema of protectedProfile ? [...schemas,...protectedSchemas] : ordinary ? [...schemas,responseSchema] : schemas) db.exec(schema); db.exec(`PRAGMA application_id=${APP_ID}; PRAGMA user_version=${protectedProfile ? 4 : ordinary ? 3 : SCHEMA_VERSION}; COMMIT`); }
+   try { for (const schema of scheduled ? [...schemas,...scheduleSchemas] : protectedProfile ? [...schemas,...protectedSchemas] : ordinary ? [...schemas,responseSchema] : schemas) db.exec(schema); db.exec(`PRAGMA application_id=${APP_ID}; PRAGMA user_version=${scheduled ? 5 : protectedProfile ? 4 : ordinary ? 3 : SCHEMA_VERSION}; COMMIT`); }
    catch (error) { db.exec('ROLLBACK'); throw error; }
   }
   validateSchema(db);
@@ -362,7 +397,73 @@ export async function openSession({ directory, clock = Date.now, leaseMs = 1000,
   }
   db.prepare("UPDATE roots SET status='cancelled' WHERE root_id=?").run(rootId);
  }
+ function insertRun({ runId = 'run-' + randomUUID(), rootId, parentRunId = null, parentClaim, directory: runDirectory, definition, snapshot }) {
+   const encodedDefinition = encodeDefinition(definition); const encodedSnapshot = encodeCheckpoint(snapshot); if(protectedProfile&&parentRunId!==null)fail('PROTECTED_CHILD_UNSUPPORTED'); if (ordinary && parentRunId !== null) fail('ORDINARY_CHILD_UNSUPPORTED'); if (snapshot.phase !== 'ready' || !identifier(runId)) fail('INVALID_CHECKPOINT'); runDirectory = safeExistingDirectory(runDirectory);
+    if(protectedProfile){const a=authorityFrom(db);if(canonical(definition.config.documentProtection)!==canonical({authorityId:a.authorityId,libraryId:a.libraryId}))fail('PROTECTED_SCOPE_MISMATCH');for(const documentId of definition.config.allowedDocuments)grantFrom(db,documentId);}
+    if (db.prepare('SELECT 1 FROM runs WHERE run_id=?').get(runId)) fail('RUN_EXISTS');
+    if (parentRunId !== null) {
+     const parent = getRun(parentRunId); const root = active(parent);
+     if (!object(parentClaim) || !identifier(parentClaim.owner) || !Number.isSafeInteger(parentClaim.fence) || parentClaim.fence < 1) fail('PARENT_CLAIM_REQUIRED');
+     writer(parentRunId, parentClaim.owner, parentClaim.fence);
+     if (!identifier(definition.config.taskId)) fail('CHILD_TASK_REQUIRED');
+     const siblings = db.prepare('SELECT definition FROM runs WHERE parent_run_id=?').all(parentRunId);
+     if (siblings.some(row => parsed(row.definition, 65536).config.taskId === definition.config.taskId)) fail('CHILD_EXISTS');
+     if (siblings.length >= 64) fail('CHILD_LIMIT');
+     if (parent.parent_run_id !== null) fail('CHILD_DEPTH_LIMIT'); if (rootId !== undefined && rootId !== parent.root_id) fail('ROOT_SCOPE_MISMATCH'); rootId = parent.root_id;
+     const previous = parsed(parent.definition, 65536);
+     if (definition.grantId !== root.grant_id || definition.deadlineAt > previous.deadlineAt || canonical(definition.bindings.gateway) !== canonical(previous.bindings.gateway) || canonical(definition.rootLimits) !== canonical(previous.rootLimits)) fail('CHILD_SCOPE_MISMATCH');
+     for (const key of ['allowedTools', 'allowedDocuments']) if (previous.config[key] && (!definition.config[key] || definition.config[key].some(value => !previous.config[key].includes(value)))) fail('CHILD_SCOPE_MISMATCH');
+     for (const kind of ['plugins', 'adapters']) if (definition.bindings[kind].some(item => !previous.bindings[kind].some(old => canonical(old) === canonical(item)))) fail('CHILD_BINDING_MISMATCH');
+    } else {
+     if (rootId !== undefined && rootId !== runId) fail('ROOT_SCOPE_MISMATCH'); rootId = runId;
+     db.prepare('INSERT INTO roots(root_id,grant_id,model_limit,tool_limit,deadline_at) VALUES(?,?,?,?,?)').run(rootId, definition.grantId, definition.rootLimits.model, definition.rootLimits.tool, definition.deadlineAt);
+    }
+    db.prepare('INSERT INTO runs(run_id,root_id,parent_run_id,directory,definition,snapshot,created_at) VALUES(?,?,?,?,?,?,?)').run(runId, rootId, parentRunId, runDirectory, encodedDefinition, encodedSnapshot, now()); return view(getRun(runId));
+
+ }
+ function boundSchedule(reference){
+  if(!scheduled)fail('SCHEDULE_PROFILE_REQUIRED');validateScheduleReference(reference);
+  const fact=scheduleFact(db,reference.scheduleId);
+  if(scheduleCanonical(fact.reference)!==scheduleCanonical(reference))fail('SCHEDULE_BINDING_MISMATCH');return fact;
+ }
+ function scheduleView(fact){return {reference:fact.reference,envelope:fact.envelope,confirmedAt:fact.confirmedAt,state:fact.state,decidedAt:fact.decidedAt,materializedAt:fact.materializedAt,runId:fact.materializedRunId,run:fact.materializedRunId===null?null:view(getRun(fact.materializedRunId))};}
  const store = {
+  confirmSchedule({schedule,definition,snapshot}) {
+   if(!scheduled)fail('SCHEDULE_PROFILE_REQUIRED');encodeDefinition(definition);encodeCheckpoint(snapshot);validateRuntimeCheckpoint(snapshot,definition);
+   const prepared=prepareSchedule(schedule,definition,snapshot),encoded=json(prepared.envelope,131072);
+   return transaction(()=>{
+    if(db.prepare('SELECT 1 FROM schedule_definitions WHERE schedule_id=?').get(schedule.scheduleId))return scheduleView(boundSchedule(prepared.reference));
+    const time=now();if(time>=Date.parse(schedule.scheduledInstant))fail('SCHEDULE_CONFIRMATION_TOO_LATE');
+    db.prepare('INSERT INTO schedule_definitions VALUES(?,?,?,?)').run(schedule.scheduleId,encoded,prepared.reference.confirmationHash,time);
+    db.prepare("INSERT INTO schedule_occurrences VALUES(?,'confirmed',NULL,NULL,NULL)").run(schedule.scheduleId);
+    return scheduleView(boundSchedule(prepared.reference));
+   });
+  },
+  inspectSchedule(reference){return transaction(()=>scheduleView(boundSchedule(reference)));},
+  materializeSchedule({reference,definition,snapshot,directory}){
+   return transaction(()=>{
+    const fact=boundSchedule(reference),prepared=prepareSchedule(fact.envelope.schedule,definition,snapshot);
+    if(scheduleCanonical(prepared.reference)!==scheduleCanonical(reference))fail('SCHEDULE_BINDING_MISMATCH');
+    if(fact.state!=='confirmed')return scheduleView(fact);
+    const time=now(),due=Date.parse(fact.envelope.schedule.scheduledInstant);
+    if(time<due)return {...scheduleView(fact),state:'not-due'};
+    if(time>=due+fact.envelope.schedule.maxLatenessMs){db.prepare("UPDATE schedule_occurrences SET state='missed',decided_at=? WHERE schedule_id=?").run(time,reference.scheduleId);return scheduleView(boundSchedule(reference));}
+    if(directory===undefined)return {...scheduleView(fact),state:'due'};
+    insertRun({runId:fact.runId,directory,definition:fact.envelope.definition,snapshot:fact.envelope.snapshot});
+    db.prepare("UPDATE schedule_occurrences SET state='materialized',run_id=?,decided_at=?,materialized_at=? WHERE schedule_id=?").run(fact.runId,time,time,reference.scheduleId);
+    return scheduleView(boundSchedule(reference));
+   });
+  },
+  cancelSchedule(reference,{revoke=false}={}){
+   if(typeof revoke!=='boolean')fail('INVALID_SCHEDULE');return transaction(()=>{
+    const fact=boundSchedule(reference);
+    if(['cancelled','revoked','missed'].includes(fact.state))return scheduleView(fact);
+    if(fact.materializedRunId!==null)cancelRoot(fact.materializedRunId);
+    db.prepare('UPDATE schedule_occurrences SET state=?,decided_at=? WHERE schedule_id=?').run(revoke?'revoked':'cancelled',now(),reference.scheduleId);
+    return scheduleView(boundSchedule(reference));
+   });
+  },
+
   initializeDocumentLibrary(manifests) {
    return transaction(()=>{if(!protectedProfile)fail('DOCUMENT_PROFILE_REQUIRED');if(!Array.isArray(manifests)||manifests.length!==2)fail('INVALID_DOCUMENT_LIBRARY');const values=manifests.map(validateDocumentManifest).sort((a,b)=>a.documentId.localeCompare(b.documentId));if(values.map(x=>x.documentId).join(',')!=='atlas-a,atlas-b')fail('INVALID_DOCUMENT_LIBRARY');
     if(db.prepare('SELECT 1 FROM document_authority').get()){const authority=authorityFrom(db);for(const m of values)if(grantFrom(db,m.documentId).manifest_hash!==documentManifestHash(m))fail('DOCUMENT_LIBRARY_ALREADY_INITIALIZED');return authority;}
@@ -397,32 +498,8 @@ export async function openSession({ directory, clock = Date.now, leaseMs = 1000,
    });
   },
 
-  directory, leaseMs, schemaVersion: protectedProfile ? 4 : ordinary ? 3 : 2,
-  create({ runId = 'run-' + randomUUID(), rootId, parentRunId = null, parentClaim, directory: runDirectory, definition, snapshot }) {
-   const encodedDefinition = encodeDefinition(definition); const encodedSnapshot = encodeCheckpoint(snapshot); if(protectedProfile&&parentRunId!==null)fail('PROTECTED_CHILD_UNSUPPORTED'); if (ordinary && parentRunId !== null) fail('ORDINARY_CHILD_UNSUPPORTED'); if (snapshot.phase !== 'ready' || !identifier(runId)) fail('INVALID_CHECKPOINT'); runDirectory = safeExistingDirectory(runDirectory);
-   return transaction(() => {
-    if(protectedProfile){const a=authorityFrom(db);if(canonical(definition.config.documentProtection)!==canonical({authorityId:a.authorityId,libraryId:a.libraryId}))fail('PROTECTED_SCOPE_MISMATCH');for(const documentId of definition.config.allowedDocuments)grantFrom(db,documentId);}
-    if (db.prepare('SELECT 1 FROM runs WHERE run_id=?').get(runId)) fail('RUN_EXISTS');
-    if (parentRunId !== null) {
-     const parent = getRun(parentRunId); const root = active(parent);
-     if (!object(parentClaim) || !identifier(parentClaim.owner) || !Number.isSafeInteger(parentClaim.fence) || parentClaim.fence < 1) fail('PARENT_CLAIM_REQUIRED');
-     writer(parentRunId, parentClaim.owner, parentClaim.fence);
-     if (!identifier(definition.config.taskId)) fail('CHILD_TASK_REQUIRED');
-     const siblings = db.prepare('SELECT definition FROM runs WHERE parent_run_id=?').all(parentRunId);
-     if (siblings.some(row => parsed(row.definition, 65536).config.taskId === definition.config.taskId)) fail('CHILD_EXISTS');
-     if (siblings.length >= 64) fail('CHILD_LIMIT');
-     if (parent.parent_run_id !== null) fail('CHILD_DEPTH_LIMIT'); if (rootId !== undefined && rootId !== parent.root_id) fail('ROOT_SCOPE_MISMATCH'); rootId = parent.root_id;
-     const previous = parsed(parent.definition, 65536);
-     if (definition.grantId !== root.grant_id || definition.deadlineAt > previous.deadlineAt || canonical(definition.bindings.gateway) !== canonical(previous.bindings.gateway) || canonical(definition.rootLimits) !== canonical(previous.rootLimits)) fail('CHILD_SCOPE_MISMATCH');
-     for (const key of ['allowedTools', 'allowedDocuments']) if (previous.config[key] && (!definition.config[key] || definition.config[key].some(value => !previous.config[key].includes(value)))) fail('CHILD_SCOPE_MISMATCH');
-     for (const kind of ['plugins', 'adapters']) if (definition.bindings[kind].some(item => !previous.bindings[kind].some(old => canonical(old) === canonical(item)))) fail('CHILD_BINDING_MISMATCH');
-    } else {
-     if (rootId !== undefined && rootId !== runId) fail('ROOT_SCOPE_MISMATCH'); rootId = runId;
-     db.prepare('INSERT INTO roots(root_id,grant_id,model_limit,tool_limit,deadline_at) VALUES(?,?,?,?,?)').run(rootId, definition.grantId, definition.rootLimits.model, definition.rootLimits.tool, definition.deadlineAt);
-    }
-    db.prepare('INSERT INTO runs(run_id,root_id,parent_run_id,directory,definition,snapshot,created_at) VALUES(?,?,?,?,?,?,?)').run(runId, rootId, parentRunId, runDirectory, encodedDefinition, encodedSnapshot, now()); return view(getRun(runId));
-   });
-  },
+  directory, leaseMs, schemaVersion: scheduled ? 5 : protectedProfile ? 4 : ordinary ? 3 : 2,
+  create(input) { if(scheduled)fail('SCHEDULE_MATERIALIZATION_REQUIRED'); return transaction(() => insertRun(input)); },
   inspect(runId) { return transaction(() => view(getRun(runId))); },
   response(runId, questionId) {
    responseId(questionId);
@@ -576,6 +653,6 @@ export async function openSession({ directory, clock = Date.now, leaseMs = 1000,
   },
   close() { if (!closed) { db.close(); closed = true; } }
  };
- if(readOnly)return Object.freeze({directory,schemaVersion:protectedProfile?4:ordinary?3:2,readOnly:true,inspect:store.inspect,findChild:store.findChild,...(protectedProfile?{publication:store.publication,publicationRevisions:store.publicationRevisions,publicationEvent:store.publicationEvent,verifyProtectedQueryResult:store.verifyProtectedQueryResult,protectedOutput:store.protectedOutput,consumeProtectedSource:store.consumeProtectedSource,protectedDependencies:store.protectedDependencies,readProtectedOutput:store.readProtectedOutput,listProtectedOutputs:store.listProtectedOutputs}:{}),close:store.close});
+ if(readOnly)return Object.freeze({directory,schemaVersion:scheduled?5:protectedProfile?4:ordinary?3:2,readOnly:true,inspect:store.inspect,findChild:store.findChild,...(scheduled?{inspectSchedule:store.inspectSchedule,publication:store.publication,publicationRevisions:store.publicationRevisions,publicationEvent:store.publicationEvent}:{}),...(protectedProfile?{publication:store.publication,publicationRevisions:store.publicationRevisions,publicationEvent:store.publicationEvent,verifyProtectedQueryResult:store.verifyProtectedQueryResult,protectedOutput:store.protectedOutput,consumeProtectedSource:store.consumeProtectedSource,protectedDependencies:store.protectedDependencies,readProtectedOutput:store.readProtectedOutput,listProtectedOutputs:store.listProtectedOutputs}:{}),close:store.close});
  return Object.freeze(store);
 }

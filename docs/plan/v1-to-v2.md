@@ -40,6 +40,8 @@ Each version's proposal must state core responsibilities, deliberate simplificat
 
 Existing scope, tags and verification records for v0.17/v0.18 and earlier versions remain intact. Later completion of Scheduled tasks, Web, isolated Python and the 1.0/2.0 qualification milestones are outside these five versions and receive no new version allocation here.
 
+**Current-environment decision · 2026-11-03:** Isolated Python execution is not being implemented in the current environment because the required isolation and stop/recovery boundaries cannot be verified here. Ordinary subprocesses or mocks do not substitute for that evidence. Reconsider only when a suitable environment permits real verification; this does not change the confirmed v0.19–v0.23 sequence.
+
 Private source paths, identifiers and detailed comparison remain in the restricted planning audit; this page contains only public responsibility summaries and existing public references. Source module registration does not prove implementation or acceptance. Before implementation, the owning proposal records retained core responsibilities, deliberate simplifications, bundled adaptations and unresolved dependencies. CLI/API-first still applies; UI, deployment and article publication have their own evidence boundaries.
 
 The current campaign remains **ten fresh real tasks per version, at least nine successes and no known unresolved Runtime issue before advancing**. Even fixture-only increments run the version's supported real path without removing fixture guards or claiming live validation of the fixture increment. Use the [current verification index](../verification/README.md) and [release workflow](../release-workflow.md); planning does not replace their evidence or authorize extra calls.

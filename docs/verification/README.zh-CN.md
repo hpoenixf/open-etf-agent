@@ -13,6 +13,7 @@
 ## Current qualified module evidence / 当前模块资格证据
 
 - **v0.17:** [Shared Admission evidence / 共享容量证据](v017-release.md), [fixed ten outcomes / 固定十次结果](v017-real-ten.safe.json): 9/10, including one retained environment-interrupted unknown task. Original group occupancy remains untouched; the remaining five tasks used a separate group with identical configuration. No original-group recovery or live-concurrency claim.
+- **v0.18:** [Schedule Occurrence evidence / 一次计划执行证据](v018-release.md), [fixed ten outcomes / 固定十次结果](v018-real-ten.safe.json): 10/10 through the original Schedule API, Worker, Admission, Publication and cold Reader. Fixture CLI and live API evidence remain separate; no background recurrence claim.
 
 ## 2026-11-02 · General gate / 通用门槛（本轮受上方明确重测要求约束）
 
