@@ -1,0 +1,431 @@
+{
+  "schemaVersion": 1,
+  "kind": "shared-admission-offline-qualification",
+  "version": "0.17.0",
+  "modelCalls": 0,
+  "paidCalls": 0,
+  "localExecutionCommit": "7e43ba64f335140533e2ad3eea4ca744aba7157d",
+  "localExecutionTree": "70733afadfb23e0f3b293e4d51b703545989d01b",
+  "publicSourceState": "not yet published",
+  "fullSuite": {
+    "command": [
+      "node",
+      "--test",
+      "--test-reporter=tap",
+      "--test-concurrency=1",
+      "test/admission.test.mjs",
+      "test/article-coverage.test.mjs",
+      "test/artifact-integration.test.mjs",
+      "test/artifacts.test.mjs",
+      "test/bounded-validation.test.mjs",
+      "test/claim-race.test.mjs",
+      "test/cli.test.mjs",
+      "test/compaction-bounds.test.mjs",
+      "test/compaction-lower-bound.test.mjs",
+      "test/compaction-receipts.test.mjs",
+      "test/compaction.test.mjs",
+      "test/context-capability-profile.test.mjs",
+      "test/context.test.mjs",
+      "test/cooperation-integration.test.mjs",
+      "test/cooperation.test.mjs",
+      "test/document-revocation.test.mjs",
+      "test/durable-correction.test.mjs",
+      "test/durable-memory.test.mjs",
+      "test/durable-review.test.mjs",
+      "test/durable-runtime.test.mjs",
+      "test/evaluate.test.mjs",
+      "test/extensions.test.mjs",
+      "test/foundation-wip-integration.test.mjs",
+      "test/gateway.test.mjs",
+      "test/hooks.test.mjs",
+      "test/live-config.test.mjs",
+      "test/live-options.test.mjs",
+      "test/live-trace.test.mjs",
+      "test/live-transport.test.mjs",
+      "test/live-validation.test.mjs",
+      "test/long-content.test.mjs",
+      "test/mcp.test.mjs",
+      "test/memory-bounds.test.mjs",
+      "test/memory-consumer-cli.test.mjs",
+      "test/memory-consumer.test.mjs",
+      "test/memory-effects.test.mjs",
+      "test/memory-projection.test.mjs",
+      "test/memory.test.mjs",
+      "test/ordinary-response-process.test.mjs",
+      "test/ordinary-response-schema.test.mjs",
+      "test/ordinary-response.test.mjs",
+      "test/parent-child-abort.test.mjs",
+      "test/pdf-cli.test.mjs",
+      "test/pdf-delivery.test.mjs",
+      "test/pdf-input.test.mjs",
+      "test/plugins.test.mjs",
+      "test/portfolio-rebalance.test.mjs",
+      "test/protected-cli.test.mjs",
+      "test/protected-csv.test.mjs",
+      "test/protected-long-content.test.mjs",
+      "test/protected-output.test.mjs",
+      "test/protected-query.test.mjs",
+      "test/protected-runtime.test.mjs",
+      "test/provider-finish-schema.test.mjs",
+      "test/publication-cli.test.mjs",
+      "test/publication-runtime.test.mjs",
+      "test/publication.test.mjs",
+      "test/reader.test.mjs",
+      "test/readme-navigation.test.mjs",
+      "test/research-integration.test.mjs",
+      "test/result-consumption-cli.test.mjs",
+      "test/result-consumption-delivery.test.mjs",
+      "test/result-consumption.test.mjs",
+      "test/results.test.mjs",
+      "test/retrieval.test.mjs",
+      "test/review.test.mjs",
+      "test/runtime.test.mjs",
+      "test/session-cli.test.mjs",
+      "test/session-recovery.test.mjs",
+      "test/session.test.mjs",
+      "test/skills.test.mjs",
+      "test/specialist-child.test.mjs",
+      "test/specialist-process.test.mjs",
+      "test/specialist-publication.test.mjs",
+      "test/specialist-readonly.test.mjs",
+      "test/storage-files-errors.test.mjs",
+      "test/stream-gateway.test.mjs",
+      "test/stream-null-continuation.test.mjs",
+      "test/stream-nullable-function-delta.test.mjs",
+      "test/stream.test.mjs",
+      "test/task-timeout-bound.test.mjs",
+      "test/teaching-defaults.test.mjs",
+      "test/temporal-cli.test.mjs",
+      "test/temporal.test.mjs",
+      "test/tool-fragment-id.test.mjs",
+      "test/tools.test.mjs",
+      "test/v02-cli.test.mjs",
+      "test/v03-cli.test.mjs",
+      "test/v04-cli.test.mjs",
+      "test/v05-cli.test.mjs",
+      "test/v06-cli.test.mjs",
+      "test/worker-cli.test.mjs",
+      "test/worker-process.test.mjs",
+      "test/worker.test.mjs",
+      "test/working-input-integration.test.mjs"
+    ],
+    "targets": [
+      "test/admission.test.mjs",
+      "test/article-coverage.test.mjs",
+      "test/artifact-integration.test.mjs",
+      "test/artifacts.test.mjs",
+      "test/bounded-validation.test.mjs",
+      "test/claim-race.test.mjs",
+      "test/cli.test.mjs",
+      "test/compaction-bounds.test.mjs",
+      "test/compaction-lower-bound.test.mjs",
+      "test/compaction-receipts.test.mjs",
+      "test/compaction.test.mjs",
+      "test/context-capability-profile.test.mjs",
+      "test/context.test.mjs",
+      "test/cooperation-integration.test.mjs",
+      "test/cooperation.test.mjs",
+      "test/document-revocation.test.mjs",
+      "test/durable-correction.test.mjs",
+      "test/durable-memory.test.mjs",
+      "test/durable-review.test.mjs",
+      "test/durable-runtime.test.mjs",
+      "test/evaluate.test.mjs",
+      "test/extensions.test.mjs",
+      "test/foundation-wip-integration.test.mjs",
+      "test/gateway.test.mjs",
+      "test/hooks.test.mjs",
+      "test/live-config.test.mjs",
+      "test/live-options.test.mjs",
+      "test/live-trace.test.mjs",
+      "test/live-transport.test.mjs",
+      "test/live-validation.test.mjs",
+      "test/long-content.test.mjs",
+      "test/mcp.test.mjs",
+      "test/memory-bounds.test.mjs",
+      "test/memory-consumer-cli.test.mjs",
+      "test/memory-consumer.test.mjs",
+      "test/memory-effects.test.mjs",
+      "test/memory-projection.test.mjs",
+      "test/memory.test.mjs",
+      "test/ordinary-response-process.test.mjs",
+      "test/ordinary-response-schema.test.mjs",
+      "test/ordinary-response.test.mjs",
+      "test/parent-child-abort.test.mjs",
+      "test/pdf-cli.test.mjs",
+      "test/pdf-delivery.test.mjs",
+      "test/pdf-input.test.mjs",
+      "test/plugins.test.mjs",
+      "test/portfolio-rebalance.test.mjs",
+      "test/protected-cli.test.mjs",
+      "test/protected-csv.test.mjs",
+      "test/protected-long-content.test.mjs",
+      "test/protected-output.test.mjs",
+      "test/protected-query.test.mjs",
+      "test/protected-runtime.test.mjs",
+      "test/provider-finish-schema.test.mjs",
+      "test/publication-cli.test.mjs",
+      "test/publication-runtime.test.mjs",
+      "test/publication.test.mjs",
+      "test/reader.test.mjs",
+      "test/readme-navigation.test.mjs",
+      "test/research-integration.test.mjs",
+      "test/result-consumption-cli.test.mjs",
+      "test/result-consumption-delivery.test.mjs",
+      "test/result-consumption.test.mjs",
+      "test/results.test.mjs",
+      "test/retrieval.test.mjs",
+      "test/review.test.mjs",
+      "test/runtime.test.mjs",
+      "test/session-cli.test.mjs",
+      "test/session-recovery.test.mjs",
+      "test/session.test.mjs",
+      "test/skills.test.mjs",
+      "test/specialist-child.test.mjs",
+      "test/specialist-process.test.mjs",
+      "test/specialist-publication.test.mjs",
+      "test/specialist-readonly.test.mjs",
+      "test/storage-files-errors.test.mjs",
+      "test/stream-gateway.test.mjs",
+      "test/stream-null-continuation.test.mjs",
+      "test/stream-nullable-function-delta.test.mjs",
+      "test/stream.test.mjs",
+      "test/task-timeout-bound.test.mjs",
+      "test/teaching-defaults.test.mjs",
+      "test/temporal-cli.test.mjs",
+      "test/temporal.test.mjs",
+      "test/tool-fragment-id.test.mjs",
+      "test/tools.test.mjs",
+      "test/v02-cli.test.mjs",
+      "test/v03-cli.test.mjs",
+      "test/v04-cli.test.mjs",
+      "test/v05-cli.test.mjs",
+      "test/v06-cli.test.mjs",
+      "test/worker-cli.test.mjs",
+      "test/worker-process.test.mjs",
+      "test/worker.test.mjs",
+      "test/working-input-integration.test.mjs"
+    ],
+    "exitCode": 0,
+    "timedOut": false,
+    "orphanedAfterLeaderExit": false,
+    "leaderWaited": true,
+    "durationSeconds": 79.50857127201743,
+    "counts": {
+      "tests": 586,
+      "pass": 586,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 0,
+      "todo": 0
+    },
+    "inputFiles": 210,
+    "inputManifestSha256": "b2f2a696ce9cec1c5bad5bc716eef2d9af8a3bcea482b89301b15cc064c4d9d6",
+    "inputHashesUnchanged": true,
+    "stdoutSha256": "f22dc7cb16959ec12427a393fd16e8fb1ed24bb351fd349ffb1371215feb30a0",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "environment": "explicit PATH/HOME/LANG/TZ/NODE_OPTIONS only; no inherited provider credentials",
+    "scope": "original provider-free tests; synthetic fixtures and their loopback/subprocess mechanisms only; no live runner/provider probe"
+  },
+  "build": {
+    "command": [
+      "node",
+      "scripts/build.mjs"
+    ],
+    "targets": [
+      "scripts/build.mjs"
+    ],
+    "exitCode": 0,
+    "timedOut": false,
+    "orphanedAfterLeaderExit": false,
+    "leaderWaited": true,
+    "durationSeconds": 2.074366346001625,
+    "counts": {},
+    "inputFiles": 210,
+    "inputManifestSha256": "b2f2a696ce9cec1c5bad5bc716eef2d9af8a3bcea482b89301b15cc064c4d9d6",
+    "inputHashesUnchanged": true,
+    "stdoutSha256": "c54bdfca402a9a481bfcbe1be8df1db5188d1851a83b32367356b2e80f6bcde2",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "environment": "explicit PATH/HOME/LANG/TZ/NODE_OPTIONS only; no inherited provider credentials",
+    "scope": "original provider-free tests; synthetic fixtures and their loopback/subprocess mechanisms only; no live runner/provider probe"
+  },
+  "independent": {
+    "modelCalls": 0,
+    "paidCalls": 0,
+    "sourceDigest": "3366a17e41826ac428e0a43b3d971d5ba2d3145298d328ab7a4ab67a73163502",
+    "installBoundary": "independent offline npm ci from copied existing official cache; not fresh network download",
+    "observations": [
+      {
+        "stage": "independent-install",
+        "exitCode": 0,
+        "durationSeconds": 1.6574616879224777,
+        "stdoutSha256": "9b5aab76ab13ad855cf20d5cc24edb9c0d19d0dfcea02936de9dd9113dd2a9bd",
+        "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "stage": "independent-build",
+        "exitCode": 0,
+        "durationSeconds": 1.9014609139412642,
+        "stdoutSha256": "71cba42d91b37b23f99fc646629ec09e6e0f95dcfb152cc9cec75060dc1d079d",
+        "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "stage": "independent-normal",
+        "exitCode": 0,
+        "durationSeconds": 0.3845444379840046,
+        "stdoutSha256": "3add425d0dceb3d74d1d0d64e255f48e392c048180453effedfb0acfdd80d7d0",
+        "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "summary": {
+          "receipt": "synthetic-normal/normal-W6FswA/receipt.safe.json",
+          "retainedSyntheticState": "synthetic-normal/normal-W6FswA"
+        },
+        "demoReceiptSha256": "d1cac473b119953bc378ecc37efe0452c557b47efbf64b5c5c1a64afbd2c156e",
+        "demoReceipt": {
+          "scenario": "normal",
+          "qualification": "offline loopback HTTP; not external provider acceptance",
+          "externalModelCalls": 0,
+          "maximumConcurrentHttp": 1,
+          "requests": 2,
+          "originalRootModelDebits": [
+            1,
+            1
+          ],
+          "observations": [
+            {
+              "stage": "A owns slot; B waits",
+              "requests": 1,
+              "tickets": [
+                {
+                  "ticketId": "ed8ee7a0-3322-486d-873d-4f84138b4fd4",
+                  "runId": "caller-a",
+                  "state": "dispatched",
+                  "modelOrdinal": 1
+                },
+                {
+                  "ticketId": "08120d44-7b4a-4a1b-8e7d-e04a4fd588af",
+                  "runId": "caller-b",
+                  "state": "queued",
+                  "modelOrdinal": 1
+                }
+              ]
+            },
+            {
+              "stage": "A settled; B dispatched",
+              "requests": 2,
+              "tickets": [
+                {
+                  "ticketId": "ed8ee7a0-3322-486d-873d-4f84138b4fd4",
+                  "runId": "caller-a",
+                  "state": "completed",
+                  "modelOrdinal": 1
+                },
+                {
+                  "ticketId": "08120d44-7b4a-4a1b-8e7d-e04a4fd588af",
+                  "runId": "caller-b",
+                  "state": "dispatched",
+                  "modelOrdinal": 1
+                }
+              ]
+            },
+            {
+              "stage": "terminal capacity facts",
+              "requests": 2,
+              "tickets": [
+                {
+                  "ticketId": "ed8ee7a0-3322-486d-873d-4f84138b4fd4",
+                  "runId": "caller-a",
+                  "state": "completed",
+                  "modelOrdinal": 1
+                },
+                {
+                  "ticketId": "08120d44-7b4a-4a1b-8e7d-e04a4fd588af",
+                  "runId": "caller-b",
+                  "state": "completed",
+                  "modelOrdinal": 1
+                }
+              ]
+            }
+          ],
+          "recovery": "Inspect original tickets. Unknown/dispatched work has no automatic release, refund or resend."
+        }
+      },
+      {
+        "stage": "independent-unknown",
+        "exitCode": 0,
+        "durationSeconds": 0.5522560949902982,
+        "stdoutSha256": "dcd3035aaf3052dd1673b3cc8290b40ba8ca2773eec638e416b43e8cc0e538a5",
+        "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "summary": {
+          "receipt": "synthetic-unknown/unknown-YB5anc/receipt.safe.json",
+          "retainedSyntheticState": "synthetic-unknown/unknown-YB5anc"
+        },
+        "demoReceiptSha256": "fb34a74a5b65fed0b0815ceef66472069a507fb579bf0143ec1e58a2233ebb3c",
+        "demoReceipt": {
+          "scenario": "unknown",
+          "qualification": "offline loopback HTTP; not external provider acceptance",
+          "externalModelCalls": 0,
+          "maximumConcurrentHttp": 1,
+          "requests": 1,
+          "originalRootModelDebits": [
+            1,
+            1
+          ],
+          "observations": [
+            {
+              "stage": "A outcome unknown; B cannot oversell",
+              "requests": 1,
+              "tickets": [
+                {
+                  "ticketId": "3fcc6202-04bf-46b5-8fc7-d5d12fe1067a",
+                  "runId": "caller-a",
+                  "state": "unknown",
+                  "modelOrdinal": 1
+                },
+                {
+                  "ticketId": "b4cbd9eb-8420-4497-800f-a7e7395134fb",
+                  "runId": "caller-b",
+                  "state": "queued",
+                  "modelOrdinal": 1
+                }
+              ]
+            },
+            {
+              "stage": "terminal capacity facts",
+              "requests": 1,
+              "tickets": [
+                {
+                  "ticketId": "3fcc6202-04bf-46b5-8fc7-d5d12fe1067a",
+                  "runId": "caller-a",
+                  "state": "unknown",
+                  "modelOrdinal": 1
+                },
+                {
+                  "ticketId": "b4cbd9eb-8420-4497-800f-a7e7395134fb",
+                  "runId": "caller-b",
+                  "state": "cancelled",
+                  "modelOrdinal": 1
+                }
+              ]
+            }
+          ],
+          "recovery": "Inspect original tickets. Unknown/dispatched work has no automatic release, refund or resend."
+        }
+      }
+    ],
+    "status": "passed",
+    "fixedLocalCommit": "7e43ba64f335140533e2ad3eea4ca744aba7157d",
+    "fixedLocalTree": "70733afadfb23e0f3b293e4d51b703545989d01b",
+    "inputsUnchanged": true,
+    "inputComparisonExclusions": [
+      ".env.example public placeholder; no body read"
+    ]
+  },
+  "releaseQualification": "This offline receipt alone does not establish the separate real-request gate; see v017-release.safe.json for the combined exact-source qualification.",
+  "review": {
+    "result": "no mandatory code fixes",
+    "scope": "exact eleven-file delta from independently qualified v16",
+    "runtimeSha256": "5edf4d3293653867f622c8d906ce5bf92b7320ddb4cf6ef01762a4bda000db86",
+    "admissionSha256": "a9e602180531cd422abe3edc1af9488ee3f8739cb4256c5becec1152ed3bec63"
+  },
+  "publicSanitization": "Synthetic output locations normalized relative to qualification workspace; original process output hashes retained. No database or raw logs included."
+}

@@ -71,15 +71,15 @@ npm run demo -- --case document-compare
 <a id="versions"></a>
 ## 最近三个模块
 
-**v0.16.0 新增文档当前撤权检查**，接入原有查询、获取、报告、Publication 和 Reader 路径。显式本地 profile 使用合成 fixture，不开放受保护资料的真实模型输入、任意文档导入或企业 ACL。[发布资格与保留边界](docs/verification/v016-release.md)。
+**v0.17.0 新增单组本地共享 Admission 容量槽**，沿用原 Runtime / RootBudget，保留未知请求占位。[固定源码与分别计账的真实/离线资格](docs/verification/v017-release.md)。不增加路由、故障转移，也不声称 live 并发认证。
 
 **2026-11-02 底座修复：**[工作输入准入、取消事实、Child 结算与无收益摘要预检查](docs/verification/foundation-repair-20261102.md)。零真实模型调用的回归已通过；不是新增 Release，也不是新一批实测资格。
 
 | 模块 | 解决什么 | 运行与核对 |
 | --- | --- | --- |
+| v0.17 · 共享 Admission | 两个本地调用者共享一个容量槽，预算仍由原 Runtime 唯一扣减 | [运行与边界](docs/shared-admission.md) · [资格证据](docs/verification/v017-release.md) |
 | v0.16 · 文档撤权 | 披露及后续读取重新检查当前资格；不能撤回已经送出的字节 | [运行说明](docs/module-guide.zh-CN.md#v016--revocable-documents) · [合同与证据](openspec/changes/v016-document-revocation/evidence.md) |
 | v0.15 · 串行专家 Child | 一个有界来源核对 Child，原始结果回到 Main；派生意见不取得事实权限 | [运行说明](docs/module-guide.zh-CN.md#v015--serial-specialist-child) · [合同与证据](openspec/changes/serial-specialist-child/evidence.md) |
-| v0.14 · 只读记忆消费 | 显式选已有库，只读召回当前修订；临时模式在访问库前生效 | [运行说明](docs/module-guide.zh-CN.md#v014--只读消费既有memory库) · [合同与证据](openspec/changes/v014-memory-consumer/evidence.md) |
 
 [完整固定版本与运行说明](docs/module-guide.zh-CN.md#versions) · [机器可读版本谱系](versions.json) · [GitHub Releases](https://github.com/hpoenixf/open-etf-agent/releases)
 

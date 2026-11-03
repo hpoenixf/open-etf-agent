@@ -1,6 +1,6 @@
 **English** | [简体中文](README.zh-CN.md)
 
-# Verification evidence index · v0.1–v0.11
+# Verification evidence index
 
 [Project home](../../README.md) · [Coverage contract for the 31 registered articles](../../README.md#reading)
 
@@ -9,6 +9,10 @@
 **v0.7–v0.18：每版重新冻结并完成10次真实任务，至少9次成功；当前版本已知未解决 Runtime 问题清零后，才进入下一版。** 不复用旧成功样本填本轮分子，不替换失败/超时/unknown；每批报告真实进度。fixture增量也要测该版本实际支持的真实调用路径，但不移除fixture guard、不伪称该增量已真实验收。v0.1–v0.6历史资格保留，不重复测。
 
 **Fresh ten real tasks per version, v0.7–v0.18, at least nine successes and no known unresolved applicable Runtime defects before advancing.** Historical outcomes remain unchanged and receive no new-campaign sample credit. [Current policy / 本轮规范](../live-validation.md#fresh-v07-v18-campaign-20261103). The reuse guidance below is general policy outside this explicit fresh campaign; old five/four wording is historical only.
+
+## Current qualified module evidence / 当前模块资格证据
+
+- **v0.17:** [Shared Admission evidence / 共享容量证据](v017-release.md), [fixed ten outcomes / 固定十次结果](v017-real-ten.safe.json): 9/10, including one retained environment-interrupted unknown task. Original group occupancy remains untouched; the remaining five tasks used a separate group with identical configuration. No original-group recovery or live-concurrency claim.
 
 ## 2026-11-02 · General gate / 通用门槛（本轮受上方明确重测要求约束）
 

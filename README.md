@@ -71,15 +71,15 @@ npm run demo -- --case document-compare
 <a id="versions"></a>
 ## Latest three modules
 
-**v0.16.0 adds current document-revocation checks** to the original query, acquisition, Report, Publication and Reader path. The explicit local profile uses synthetic fixtures; it does not enable protected live-model input, arbitrary document ingestion or enterprise ACLs. [Release qualification and retained boundaries](docs/verification/v016-release.md).
+**v0.17.0 adds one shared local Admission slot** around original durable Runtime reservations, with original RootBudget ownership and retained unknown occupancy. [Qualified source and separate real-provider/offline evidence](docs/verification/v017-release.md). No routing, failover or live-concurrency certification.
 
 **2026-11-02 foundation repair:** [Working-input admission, cancellation facts, Child settlement and no-saving summary precheck](docs/verification/foundation-repair-20261102.md). Provider-free regressions passed; this is not a new release or live qualification.
 
 | Module | What changes | Run and inspect |
 | --- | --- | --- |
+| v0.17 · Shared Admission | Two local callers share one capacity slot; original Runtime remains the only budget owner | [Commands and boundaries](docs/shared-admission.md) · [Qualification](docs/verification/v017-release.md) |
 | v0.16 · Document revocation | Current permission is rechecked before disclosure and later reads; previously delivered bytes cannot be recalled | [Commands](docs/module-guide.md#v016--revocable-documents) · [Contract and evidence](openspec/changes/v016-document-revocation/evidence.md) |
 | v0.15 · Serial specialist Child | One bounded source-checking Child returns original results to Main; derived advice gains no source authority | [Commands](docs/module-guide.md#v015--serial-specialist-child) · [Contract and evidence](openspec/changes/serial-specialist-child/evidence.md) |
-| v0.14 · Read-only Memory | Select an existing library and consume current revisions; temporary mode takes effect before library access | [Commands](docs/module-guide.md#v014--read-only-existing-memory) · [Contract and evidence](openspec/changes/v014-memory-consumer/evidence.md) |
 
 [All fixed versions and commands](docs/module-guide.md#versions) · [Machine-readable version lineage](versions.json) · [GitHub Releases](https://github.com/hpoenixf/open-etf-agent/releases)
 

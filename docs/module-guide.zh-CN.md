@@ -16,7 +16,7 @@ Node 下限按实际 API 使用范围放宽到 26.8.1。当前 v0.11 的窄安�
 
 目前的入门案例是**原创合成文档比较**，并非真实基金分析。v0.7 另有小型原创合成 ETF Plugin，仍不是实时基金数据或真实基金分析；完整 ETF 研究工具在后续路线中。本项目不提供交易执行或投资建议。
 
-> **从哪里开始？** 本 v0.16 源码在原 Runtime 与交付链中加入可撤销的 fixture 文档。[固定发版资格](verification/v016-release.md) 分别记录源码、交付与安装边界。更早固定阶段与标签继续作为历史证据；源码快照本身不等于 GitHub Release 已发布。默认公开 CLI 为离线合成示例，历史真实调用不是任意新增调用的授权。
+> **从哪里开始？** 本 v0.17 源码新增一个有界共享 Admission 容量组。[发版资格](verification/v017-release.md) 分开保留真实调用交付与离线并发安全证据。旧固定版本和标签继续作为历史证据，默认 CLI 示例仍为合成内容。
 
 > **想看真实模型调用，而不只是 fixture？** 先看 [v0.1–v0.5 的 16 次真实 HTTP 调用记录](#live-evidence)，再看 [独立受限 live runner 的入口与授权条件](#live-entry)。这些是历史证据，不是 v0.11 live 恢复资格。
 
@@ -26,6 +26,11 @@ Node 下限按实际 API 使用范围放宽到 26.8.1。当前 v0.11 的窄安�
 - **一次真实的文件交付：** 报告、来源版本、原文快照、文件哈希和保存回执，而不只有一段“已完成”的回答。
 - **一条逐步增加能力的执行链：** 新机制接回既有 Runtime / Tool Host，不另造一条只供演示的执行流程。
 - **可核对的验证边界：** 保留失败、修复和未验证项，区分程序机制通过、模型判断正确与正式发布。
+
+<a id="v017--shared-admission"></a>
+### v0.17 · Shared local Admission / 本地共享容量
+
+[Run normal and retained-unknown examples / 运行正常与未知占位示例](shared-admission.md). One fixed route, one slot, original Runtime budget ownership; no TTL release of unknown work. [Separate offline safety and fixed ten-task qualification / 离线安全与固定十任务真实调用分别计账](verification/v017-release.md).
 
 <a id="v016--revocable-documents"></a>
 ### v0.16 · 沿原交付路径检查文档撤权

@@ -17,7 +17,7 @@ A small research Agent that grows through independently runnable development sna
 
 The introductory task compares **original synthetic documents**, not real funds. The small synthetic ETF Plugin introduced in v0.7 is also not a live financial-data service. Complete ETF research tools remain on the roadmap. This project does not execute trades or provide investment advice.
 
-> **Start here:** this v0.16 source adds revocable fixture documents to the existing Runtime and publication path. See the [fixed release qualification](verification/v016-release.md) for source, delivery and installation boundaries. Earlier fixed stages and tags remain historical evidence; a source snapshot is not itself proof of a GitHub Release. The public CLI is an offline synthetic example; recorded real calls are not authorization for arbitrary new calls.
+> **Start here:** this v0.17 source adds one bounded shared Admission capacity group. [Release qualification](verification/v017-release.md) keeps real-provider delivery and offline concurrency safety separate. Earlier fixed stages and tags remain historical evidence; default CLI examples stay synthetic.
 
 > **Looking for real model calls?** Read the [16 historical HTTP calls across v0.1–v0.5](#live-evidence), then the [separate live runner and its authorization requirements](#live-entry). Those records do not qualify v0.11 live recovery.
 
@@ -29,6 +29,11 @@ The introductory task compares **original synthetic documents**, not real funds.
 - **Explicit evidence boundaries:** failures, fixes and unverified behavior are retained. Runtime correctness, model judgment and release status are separate claims.
 
 Documentation defaults to English. Use the language links at the top of the main entry pages for Chinese. Historical evidence, internal Specs and some detailed design documents remain in their original language; they are not presented as English translations. Article links marked **Chinese original** have no complete English edition.
+
+<a id="v017--shared-admission"></a>
+### v0.17 · Shared local Admission / 本地共享容量
+
+[Run normal and retained-unknown examples / 运行正常与未知占位示例](shared-admission.md). One fixed route, one slot, original Runtime budget ownership; no TTL release of unknown work. [Separate offline safety and fixed ten-task qualification / 离线安全与固定十任务真实调用分别计账](verification/v017-release.md).
 
 <a id="v016--revocable-documents"></a>
 ### v0.16 · Revocable documents through the original delivery path

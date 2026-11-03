@@ -10,7 +10,7 @@ A feature release must deliver a coherent capability corresponding to an indepen
 
 ### Revised disposition of the remaining plan
 
-These are module work packages, **not newly assigned version numbers or implementation claims**. For an already introduced module, merge supporting increments into its coherent completion work rather than presenting each as a new module. Select only one package justified by a real user gap; confirm its scope and prerequisites before assigning a feature version. Ordinary repairs and internal iterations remain maintenance work, not standalone new-module milestones.
+These are module work packages, **not implementation claims**. Five packages now have the confirmed v0.19–v0.23 sequence in the next section; the other packages have no newly assigned version. For an already introduced module, merge supporting increments into its coherent completion work rather than presenting each as a new module. Advance one package in the current version at a time, first confirming its scope and prerequisites. Ordinary repairs and internal iterations remain maintenance work, not standalone new-module milestones.
 
 | Previous candidate / disposition | Independent module and core input → processing → output | Bundle into that module; acceptance boundary |
 | --- | --- | --- |
@@ -23,6 +23,22 @@ These are module work packages, **not newly assigned version numbers or implemen
 | Original 1.8: consolidate task lifecycle | **Scheduled tasks.** A confirmed definition → occurrence identity and execution binding → original Run/report and cancellation outcome. | Bundle wake-up, CLI and persistence adaptations with definition/occurrence identity, duplicate and missed wakes, cancellation and restart. One timer fixture alone is insufficient. Reuse Worker, Temporal and Admission; missing prerequisites defer this package rather than add extra owners. [Design lineage][schedule]. |
 | Web / isolated Python: remain unnumbered, independent candidates | **Web evidence acquisition** or **isolated analysis**, separately: permitted input → bounded acquisition/execution → original evidence or analysis result. | Provider/parser adapters belong inside their module. Require real retrieval/coverage or actual isolation and stop boundaries respectively; unavailable infrastructure remains a deferral, not a mock qualification. |
 | 1.0 / 2.0: retain qualification milestones | Consolidate only the supported modules already delivered. | No new module count, forced feature bundle or release date; installation, recovery, upgrade and artifact readback must match actual support claims. |
+
+### Confirmed sequence on 2026-11-03: v0.19–v0.23
+
+The next five versions follow the complete module work-package boundaries above. **This is an approved development sequence, not an implementation, acceptance or release status, and it promises no release dates.** Existing teaching increments are foundations, not slices to release again. A complete module does not mean copying every private feature or bundling unrelated modules.
+
+| Order / planned version | Main module | Responsibilities and boundaries to complete together |
+| --- | --- | --- |
+| 1 / **v0.19** | **Full Memory lifecycle** | Save, revise, forget, eligible recall and actual model adoption, together with scope/revision checks, temporary-mode behavior and recovery. Reuse original Memory facts; recall wiring alone is insufficient. |
+| 2 / **v0.20** | **Human Interaction** | Producer requests, authenticated associated replies, durable handoff and separate receipt/adoption/effect facts, together with pending, duplicate, expiry and recovery behavior. Declare supported interaction kinds; unsupported approval or park behavior remains explicitly deferred. |
+| 3 / **v0.21** | **Child execution** | Admitted delegation, isolated context, actual execution, original results and Main consumption, together with failure/cancellation, root constraints, inspection and recovery. A new role or fixture does not replace the execution capability. |
+| 4 / **v0.22** | **Knowledge** | Admitted collections and queries, bounded retrieval, original source evidence and consumer adoption, together with indexing/query adapters and readback. Resolve the contract difference between the existing revocation teaching profile and the original authorization lifecycle first; add no parallel permission owner. |
+| 5 / **v0.23** | **Provider Admission** | Physical-attempt capacity requests, queues/leases, cancellation, release or unknown quarantine, together with contention, restart and unknown occupancy. Routing, Run budgets and billing remain with their original modules. |
+
+Each version's proposal must state core responsibilities, deliberate simplifications, bundled support work and prerequisites, then qualify the corresponding fixed version. Missing prerequisites are blockers to record, not a reason to shrink the version into an adapter, endpoint or fixture release. Advancing still requires at least nine successes in ten real tasks for that version and no known unresolved Runtime issue; old results cannot stand in for new-version evidence. Code, articles, UI and deployment retain separate qualification records.
+
+Existing scope, tags and verification records for v0.17/v0.18 and earlier versions remain intact. Later completion of Scheduled tasks, Web, isolated Python and the 1.0/2.0 qualification milestones are outside these five versions and receive no new version allocation here.
 
 Private source paths, identifiers and detailed comparison remain in the restricted planning audit; this page contains only public responsibility summaries and existing public references. Source module registration does not prove implementation or acceptance. Before implementation, the owning proposal records retained core responsibilities, deliberate simplifications, bundled adaptations and unresolved dependencies. CLI/API-first still applies; UI, deployment and article publication have their own evidence boundaries.
 

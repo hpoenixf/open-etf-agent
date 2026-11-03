@@ -14,6 +14,14 @@ import { PUBLICATION_BINDING, PUBLICATION_TEXT_MAX_BYTES, preparePublication } f
 import { projectProviderProtocolDiagnostic } from './gateway.mjs';
 
 const failure = code => Object.assign(new Error(code), { code });
+const modelReservations = new WeakSet();
+// Only this Runtime's successful durable reserve operation mints a receipt.
+export function projectModelReservation(receipt) { return receipt && modelReservations.has(receipt) ? { ...receipt } : null; }
+function modelReservation(view) {
+  const receipt = Object.freeze({ rootId: view.rootId, runId: view.runId, owner: view.owner, fence: view.fence,
+    modelOrdinal: view.rootUsage.model, round: view.snapshot.rounds, inputHash: view.snapshot.working.hash });
+  modelReservations.add(receipt); return receipt;
+}
 const canonical = value => JSON.stringify(value, (_,v) => v && typeof v==='object'&&!Array.isArray(v)?Object.fromEntries(Object.keys(v).sort().map(k=>[k,v[k]])):v);
 function validateProposal(p) {
   if (p?.kind === 'final' && typeof p.text === 'string' && Buffer.byteLength(p.text) <= PUBLICATION_TEXT_MAX_BYTES) return;
@@ -78,6 +86,7 @@ export function run(options) { return drive(options, false); }
 export function submitRun(options) { return drive(options, true); }
 async function drive({ question, gateway, outputRoot='runs', requireReport=false, signal, hostSignal, limits={}, extensions=[], hooks, plugins, rootBudget, allowedTools, allowedDocuments, taskId=null, contextBytes, workingInput, durable, publication = false, pdfInput, taskTime, ordinaryResponse = false, documentProtection = false }, submitting) {
   if(typeof question!=='string'||!question.trim()||Buffer.byteLength(question)>16000||typeof gateway?.next!=='function')throw failure('INVALID_INPUT');
+  if (gateway.admission === 'shared-admission@1' && (!durable || workingInput?.compaction || durable.parentRunId)) throw failure('ADMISSION_EXECUTION_UNSUPPORTED');
   if (taskTime !== undefined && (!taskTime || typeof taskTime !== 'object' || Array.isArray(taskTime) || Object.keys(taskTime).some(key => !['anchorInstant', 'timeZone'].includes(key)))) throw failure('INVALID_TASK_TIME_INPUT');
   const budget={maxRounds:24,maxTools:64,timeoutMs:120000,...limits};
   for(const [key,value] of Object.entries(budget))if(!['maxRounds','maxTools','timeoutMs'].includes(key)||!Number.isSafeInteger(value)||value<1||value>(key==='timeoutMs'?3600000:1000))throw failure('INVALID_LIMIT');
@@ -236,8 +245,10 @@ async function drive({ question, gateway, outputRoot='runs', requireReport=false
     async function checkpoint(phase,{reserve}={}){
       const previousPhase=state.phase;state.phase=phase;state.host=host.snapshot();state.inFlight=inFlight;state.logSequence=record.sequence;
       if(claim){
-        try{if(reserve){claim.reserve(reserve,state);if(reserve==='model')gatewayUnsettled=true;}else claim.checkpoint(state);}catch(error){state.phase=previousPhase;throw error;}
+        let reservedView;
+        try{if(reserve){reservedView=claim.reserve(reserve,state);if(reserve==='model')gatewayUnsettled=true;}else claim.checkpoint(state);}catch(error){state.phase=previousPhase;throw error;}
         if(durable.onCheckpoint)await bounded(Promise.resolve().then(()=>durable.onCheckpoint({phase,runId,directory,cursor:state.cursor,callId:state.proposal?.calls?.[state.cursor]?.id,noteRef:state.working?.noteRef,workingHash:state.working?.hash,fence:claim.fence})),controller.signal);
+        return reservedView;
       }
     }
     try{
@@ -279,10 +290,10 @@ async function drive({ question, gateway, outputRoot='runs', requireReport=false
           }
           // Forgetting after adoption but before dispatch removes old typed Memory from the next actual input.
           if(workingInput?.memoryLibrary){state.working.messages=await projectMemory({messages:state.working.messages,lookupState:ref=>workingInput.memoryLibrary.state(ref.id)});state.working.hash=sha256(JSON.stringify(state.working.messages));}
-          state.rounds++;state.gatewayOutcome='unknown';if(claim)await checkpoint('model-reserved',{reserve:'model'});else{rootBudget.claim('model');gatewayUnsettled=true;}
+          state.rounds++;state.gatewayOutcome='unknown';let reservation;if(claim){const reservedView=await checkpoint('model-reserved',{reserve:'model'});if(gateway.admission==='shared-admission@1')reservation=modelReservation(reservedView);}else{rootBudget.claim('model');gatewayUnsettled=true;}
           const start=performance.now();let proposal;
           try{
-            proposal=await effect(Promise.resolve().then(()=>{controller.signal.throwIfAborted();gatewayUnsettled=true;return gateway.next({messages:structuredClone(state.working.messages),tools:structuredClone(host.definitions),signal:controller.signal});}));
+            proposal=await effect(Promise.resolve().then(()=>{controller.signal.throwIfAborted();gatewayUnsettled=true;return gateway.next({messages:structuredClone(state.working.messages),tools:structuredClone(host.definitions),signal:controller.signal,...(reservation?{reservation}:{})});}));
             controller.signal.throwIfAborted();gatewayUnsettled=false;
           }catch(error){
             // Only the original Gateway can brand a recognized terminal finish.

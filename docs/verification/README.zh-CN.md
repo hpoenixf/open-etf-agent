@@ -10,6 +10,10 @@
 
 **Fresh ten real tasks per version, v0.7–v0.18, at least nine successes and no known unresolved applicable Runtime defects before advancing.** Historical outcomes remain unchanged and receive no new-campaign sample credit. [Current policy / 本轮规范](../live-validation.md#fresh-v07-v18-campaign-20261103). The reuse guidance below is general policy outside this explicit fresh campaign; old five/four wording is historical only.
 
+## Current qualified module evidence / 当前模块资格证据
+
+- **v0.17:** [Shared Admission evidence / 共享容量证据](v017-release.md), [fixed ten outcomes / 固定十次结果](v017-real-ten.safe.json): 9/10, including one retained environment-interrupted unknown task. Original group occupancy remains untouched; the remaining five tasks used a separate group with identical configuration. No original-group recovery or live-concurrency claim.
+
 ## 2026-11-02 · General gate / 通用门槛（本轮受上方明确重测要求约束）
 
 **Exactly ten real tasks per version, at least nine successes / 每版恰好10次真实任务，至少9次通过。** Inventory and reuse valid original ten-task evidence first; do not repeat valid measurements. Failures/timeouts/unknowns remain; 5/5 is incomplete. 先盘点原十次证据，不重复有效测评，不改历史结果或标签。[Policy / 规范](../live-validation.md#release-qualification) · [Dated decisions / 当前决策](release-gate-20261102.md).

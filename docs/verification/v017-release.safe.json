@@ -1,0 +1,775 @@
+{
+  "schemaVersion": 1,
+  "kind": "shared-admission-release-qualification",
+  "version": "0.17.0",
+  "localExecutionCommit": "7e43ba64f335140533e2ad3eea4ca744aba7157d",
+  "localExecutionTree": "70733afadfb23e0f3b293e4d51b703545989d01b",
+  "planSha256": "56a4ac1fcdc00ef8cf2648306706a91f20d6cebbeb9f0cbf9ab716fa0f7e291e",
+  "retainedOriginalStateSha256": "3edeee9246f705978ddf22e03aeeb580810a63e19adf370304aedef10c2b6e35",
+  "inputFiles": [
+    {
+      "path": "fixtures/cases.json",
+      "sha256": "9f91af7bbf425d20e48d985d3f33e7770ca2aaf1e9fe011c1d35ace31a062ba6",
+      "gitBlob": "a4507653663035dd4e2e16dadbc5e97b704ccd49"
+    },
+    {
+      "path": "fixtures/comparison-table.json",
+      "sha256": "5904cd51243be2a5682aed8ace3089ca0dfa448b8dcb59b47ee12a5cb74eed0e",
+      "gitBlob": "c7ff764f883f21fa0b6338280c04eaae51da49d3"
+    },
+    {
+      "path": "fixtures/documents.json",
+      "sha256": "0eed0f1ba7aef916b67eedb397e92e52c68d1ef5d2b7598b4013330c314ea8f1",
+      "gitBlob": "b1adb45d573e56908d2e1be82a90419c7985c6c9"
+    },
+    {
+      "path": "fixtures/local-pdf.json",
+      "sha256": "6339ce78d317baab5bdbd76efd3357d62594659e9f343af63d391192c241d217",
+      "gitBlob": "1464a0977bf5f045637db2c65b210a1bdb586b19"
+    },
+    {
+      "path": "fixtures/portfolio-rebalance.json",
+      "sha256": "0cc6146ba68aa9e65cb640fcac2f07cb5f5a99e5a232d9bc2047c7d1846cd232",
+      "gitBlob": "3b5ce86dddadd6b67afcab6701ee1cfbfa50580e"
+    },
+    {
+      "path": "fixtures/skills/compare/SKILL.md",
+      "sha256": "f5dddc14e6deb9f0308bd1360794f343870cb31f2924f533370b6eb650d77754",
+      "gitBlob": "d3e63dcc1fab843d1eca08abb342cd0b63e7cc6f"
+    },
+    {
+      "path": "fixtures/skills/compare/checklist.txt",
+      "sha256": "3587d34fc69e1bf1e79a5c1230c32dcd9c588e5a1fc05f52bc26aff7ee318e31",
+      "gitBlob": "f9932537544e18808f0dc092aa9de80e018ce752"
+    },
+    {
+      "path": "package-lock.json",
+      "sha256": "2a98bceb6c12453811872657bf8c32d48d758766060419fb9b335cd6c722ba72",
+      "gitBlob": "a0d1f30a39df2ae130699d74cbe33d5745454cd4"
+    },
+    {
+      "path": "package.json",
+      "sha256": "ec1683bd3031330a06e25e0a4d6d7a8734cc05eb2a45f5af0b9285873874c28e",
+      "gitBlob": "3d75c8b1fa156e076576c3b841e791e7fa08a68b"
+    },
+    {
+      "path": "scripts/build.mjs",
+      "sha256": "99b74ef6e3fa0be2bab927adaeb9a65480dff22f4a6c4e67253622ecbac89344",
+      "gitBlob": "57ed4cbc220be41aceab2f116c11a00f60e2c0bd"
+    },
+    {
+      "path": "src/admission-demo-worker.mjs",
+      "sha256": "be27559ceb1b2b57a6dd13b5e541e2cd61b1b1b067d2d8fdb6646fb4ba463b48",
+      "gitBlob": "730fd000c3b1b34521d0be0c4e9e84a9671b799b"
+    },
+    {
+      "path": "src/admission-demo.mjs",
+      "sha256": "b86db55625cad861c9b18d992be2380ca8b12857bc0ad2bed368698ac6c63ec6",
+      "gitBlob": "8300675c217e8a793028caafc09cee4086ff64ca"
+    },
+    {
+      "path": "src/admission.mjs",
+      "sha256": "a9e602180531cd422abe3edc1af9488ee3f8739cb4256c5becec1152ed3bec63",
+      "gitBlob": "19e945fd6eeada27c9c18439b4a41fc3e9b05d1e"
+    },
+    {
+      "path": "src/artifact-demo.mjs",
+      "sha256": "b56ba56449613dc02754887aeaf3ae3227ff74dcf5d916a86df0d57c79e81ba6",
+      "gitBlob": "87e8cf9cbb400b253bfaee2d14ce86ad33c86279"
+    },
+    {
+      "path": "src/artifacts.mjs",
+      "sha256": "b8119eb752f6c2d17ab7917fd641eff1c040cbf2ae8c30e3b13d046f46e234f7",
+      "gitBlob": "949cc7651e887754886a8f76e4ba9fa04b1998c3"
+    },
+    {
+      "path": "src/calculation.mjs",
+      "sha256": "5b7b775e7b80c2326db16e8f5d7771cc64b0b112f6430f92afdc78b5d158b43f",
+      "gitBlob": "3e95cc04cd81b2ec2dc5b11378c97969fafd73bc"
+    },
+    {
+      "path": "src/child-results.mjs",
+      "sha256": "1e1522bf3fce336c03b4781a4fa303ff039986f35c2aa5dbb57b248411ce194c",
+      "gitBlob": "7368e9ac86ac28f03a0595461397bdee7f7f9c39"
+    },
+    {
+      "path": "src/child.mjs",
+      "sha256": "e501292f05e68974bb2dab1692f2de17fd07d1800947cc17323643997cd68414",
+      "gitBlob": "c3331e494115d512e52c00327d96a516f3dbb80a"
+    },
+    {
+      "path": "src/cli.mjs",
+      "sha256": "1a43616cf07c944509e6637c7f6dea53fa4a37534df7b363eb1aabe021a3c415",
+      "gitBlob": "30b8a58081133b30f78e7cb93f1303ce5ba4d20a"
+    },
+    {
+      "path": "src/compaction.mjs",
+      "sha256": "2d11ffd4b71f3418332b72f54e481ea2a669285129baec725b8b4541ae655210",
+      "gitBlob": "ce4547f2288b5af91643cdb020aff1c397d66080"
+    },
+    {
+      "path": "src/context.mjs",
+      "sha256": "780fd236a02cdbd08932c34a3f0169bd703bbb2b37c003636134263c13098c6e",
+      "gitBlob": "568532667ef727eb14b8cb550752f49e71534e07"
+    },
+    {
+      "path": "src/cooperation-demo.mjs",
+      "sha256": "8fe51ff844db362b2687e86fe53dc38cb1148441133ffd04f0f159dc9ea72e5c",
+      "gitBlob": "ee67e59c104ff0f45d2169e6d3cff4e8ed2ea012"
+    },
+    {
+      "path": "src/cooperation.mjs",
+      "sha256": "984f63e17a29b03b3bd97a84c363f217f867ae9f2a34af100e7ddf12e12b0c71",
+      "gitBlob": "2fbfe193b8446d6360cbd5de737b5a976e0eb843"
+    },
+    {
+      "path": "src/durable-child.mjs",
+      "sha256": "ce37d18ea8542d477c06deb2e8167613a80f2e5b81a9ad9730fd5f70688c7d5b",
+      "gitBlob": "39f1fec6d6b73793dd29957b83f16dedfd84822d"
+    },
+    {
+      "path": "src/durable-demo.mjs",
+      "sha256": "f054ddf80b60c47e19c16c2bafc5512bd72143c4c35c03bacc868ee80884eaa3",
+      "gitBlob": "b8d899fbe9384c2e80d7d2cf4d2476bc5d501634"
+    },
+    {
+      "path": "src/durable-memory.mjs",
+      "sha256": "5448f1306cb8da43dc3651c6d312742f2dd9d27dd25080b681308f66b8101f72",
+      "gitBlob": "dd7911151444a4609f6b5e9bc9d0e290978f7674"
+    },
+    {
+      "path": "src/evaluate-cli.mjs",
+      "sha256": "306bbad49b7698449421d1a694decbafdb1fdf31841a829edd058e2209ece794",
+      "gitBlob": "05abed88e0855f73ffca1e6c64f971504c8a0394"
+    },
+    {
+      "path": "src/evaluate.mjs",
+      "sha256": "974e288e0516dcd4098110bbba1e0ee2e868a717d48778ff48295b53e5aae200",
+      "gitBlob": "b8e27cfa0514dfc4b00a40aba4b0726c24820be1"
+    },
+    {
+      "path": "src/example-plugins.mjs",
+      "sha256": "05dc97f843e14f3fe4224dd35b0c57d5232b97240a3bd25115d3abdea537f0eb",
+      "gitBlob": "c31188c928a1cf4a3169c929899dc980fb6c5d04"
+    },
+    {
+      "path": "src/extensions.mjs",
+      "sha256": "0bc6ab3e24f1b8e51a3373dacca48ba5e6857064ff7aee29675340d57d4711db",
+      "gitBlob": "3c12ee8e6b4ca4516b842b5cdd6f46f67cf8f808"
+    },
+    {
+      "path": "src/fixture-gateway.mjs",
+      "sha256": "5ba1ae02049188f7b5890aca19df3bfe5e987cd389ef3b103518cbad88c40bcd",
+      "gitBlob": "530662b69faf65366ab903737caa3a034bb67177"
+    },
+    {
+      "path": "src/fixture-server.mjs",
+      "sha256": "98830aa62741d054efb969bf717e964790a109f31feef75681ba2ac105fd3738",
+      "gitBlob": "f3aef6d5ba6e9df5b8917ba6cb345cc059428bf1"
+    },
+    {
+      "path": "src/gateway.mjs",
+      "sha256": "f7b200b3a72bf35a9b8c3c9cc465c2999c67a2558ef4cd7611b5e43929deef5e",
+      "gitBlob": "d2c046a149ad2db922bc05e305af9469f1b7a939"
+    },
+    {
+      "path": "src/hooks.mjs",
+      "sha256": "aeedd9bfeaffbd5a23e069817740cfac0574e570c494b717588644f432db06d4",
+      "gitBlob": "874e75839e1fafd2b8ee298d345f50085ab9ffcf"
+    },
+    {
+      "path": "src/human-response.mjs",
+      "sha256": "89297937e02a6d03ac0d6deff735d66aa551110633198288d7510374d6c641ee",
+      "gitBlob": "4a5d1f07d844101d0b742353a85a82e4babe988e"
+    },
+    {
+      "path": "src/live-config.mjs",
+      "sha256": "e021eabdce6f4c8b9f52d70669e6be934f1a674197b45739c4ce592c1f21d546",
+      "gitBlob": "398840ac1eaedf24326135540aa2805f18e358b1"
+    },
+    {
+      "path": "src/live-options.mjs",
+      "sha256": "ddd4eba2bac029bd4c06227ad0807d412f2dff8d5b2caae8a471b5e7bcaf3555",
+      "gitBlob": "41bf9c2f13cd8b66dc659ecb33797fa7e22c3dc3"
+    },
+    {
+      "path": "src/live-trace.mjs",
+      "sha256": "9f45500caeb8a51c335fc01bc1b2eb05e24c97ecfe9a1d583581a77763e3374f",
+      "gitBlob": "3fa4f18a72d439473de6c84cb9587f530473e9f0"
+    },
+    {
+      "path": "src/live-transport.mjs",
+      "sha256": "a8912b1157418136e111e2184afe96711443e0e010bdf4e4f4e069524a9fcbc3",
+      "gitBlob": "3f105cd4b1d2fa19139aba872e3bc33ec73b9267"
+    },
+    {
+      "path": "src/live-validation.mjs",
+      "sha256": "1e5896f5686cc3d8cf0f6321e6c9dc63e3fb2621919119bff61ca4d1bcc626ef",
+      "gitBlob": "de3b9779b8e298f8dd2a66f4b145f0ce851754cc"
+    },
+    {
+      "path": "src/mcp.mjs",
+      "sha256": "fbc19a7192bf79ddb142aad1d828bd4f5fc5e183e2def8b7a71ac30431d04d39",
+      "gitBlob": "9eb02d08da378b0a87c32904f0a7d435e6150258"
+    },
+    {
+      "path": "src/memory-consumer.mjs",
+      "sha256": "56c12074b32be107ab8d097a4cf35302e0af2d7bd270a70523d31a5bd455b7cd",
+      "gitBlob": "eef897fb20eb5c34dda1b5809f4124799dfd0892"
+    },
+    {
+      "path": "src/memory-effects.mjs",
+      "sha256": "92b5079e6d0c8c5c40f6cae28de4612fba772b591c61a27092fba9236c148592",
+      "gitBlob": "fddc38897e93de91c2a93d003d9033201af4e54e"
+    },
+    {
+      "path": "src/memory-projection.mjs",
+      "sha256": "b4c5215c4507b35db0b6c74dc3a6ec2f5cfb2dc62ce3c13f4537d4ef1b34f6fe",
+      "gitBlob": "f8d293d62011962f41e29fd0c01763e1e16d154f"
+    },
+    {
+      "path": "src/memory-recall-demo.mjs",
+      "sha256": "c733ec7df7c97d05454c0c792160cbdd6438dd2249ef2af3da1b49ad85c60b98",
+      "gitBlob": "7a701c6dca76d987a10054c4b76d0fff9b6b5785"
+    },
+    {
+      "path": "src/memory-tools.mjs",
+      "sha256": "2f3b25a8b77d02e97bf35146dcf71019e9d197d9778684f294142c3e2761d724",
+      "gitBlob": "d9da0b538cca7bb6b994733155c0ad392e8daea9"
+    },
+    {
+      "path": "src/memory.mjs",
+      "sha256": "78826d5d0bce89e92c97134d5cc497ce835a09dcc12539e668fb4e527f48caae",
+      "gitBlob": "918b0b562a17e4d239ef496fd99f870a21a3d899"
+    },
+    {
+      "path": "src/observe.mjs",
+      "sha256": "377d72765b8683b0b8331b739a995d965389571e79dc2b213957032cc8c5308c",
+      "gitBlob": "2dd7a6d7c0cd2aed4c2ec0322ddc1ec3f58ac7e5"
+    },
+    {
+      "path": "src/pdf-demo.mjs",
+      "sha256": "8f805d01e82a046c0fb2e5c14c703df518de676ad35000a7ebe8602db658a553",
+      "gitBlob": "d8cf72f6e60723c3a7b5778085827ae74c40eaf0"
+    },
+    {
+      "path": "src/pdf-input.mjs",
+      "sha256": "1ec14ca7a8f6c462bd123907286bb73baa3eff73be05c3affedc1c7934e82841",
+      "gitBlob": "191e8e51db48cd28b25a1e8813dc5901eda0d350"
+    },
+    {
+      "path": "src/pdf-parser-worker.mjs",
+      "sha256": "987cbce7acc7ac809e707e3ea74858cec0cb1e2f1929a0309c14740c35586501",
+      "gitBlob": "5a211da75f41f0562bd164f41e1d9f26893168e7"
+    },
+    {
+      "path": "src/plugins.mjs",
+      "sha256": "188d109ad808661a9b0219619c74696560931d25e557f361718a2d0f2fa511f8",
+      "gitBlob": "947b7cc11cb4d7a45a285c4f8f7e382bcf47936f"
+    },
+    {
+      "path": "src/portfolio-rebalance-demo.mjs",
+      "sha256": "45c9ad864f05ed6bd56f99fc1194727b0ce39d93e0760020d5d0ff0f4a35fc2a",
+      "gitBlob": "a8b0ba428b4bce09d5ac4a6a760bb7384ac414b8"
+    },
+    {
+      "path": "src/publication.mjs",
+      "sha256": "18feb5cf2dc8798c204a8701eea6721dee9f18e87bd0e3d904560daa4a0dd5cb",
+      "gitBlob": "f5aed9fbc1673ae440d08b0bf37b9b406ade6013"
+    },
+    {
+      "path": "src/reader-cli.mjs",
+      "sha256": "60f5b9c5a743db2fe485e4da50853d39c1e2a0783525947cfea2674238678c2c",
+      "gitBlob": "17f8b20a1c36692a672803ea621c84a9c6c6e360"
+    },
+    {
+      "path": "src/reader.mjs",
+      "sha256": "5456850b37ee63d9024a1ae292ef7655d4873c4c983f987d8a356a0b55ed6efc",
+      "gitBlob": "541af8e19876f062f5081eddf2713f2b55ec66c9"
+    },
+    {
+      "path": "src/report.mjs",
+      "sha256": "9f62848fd8ca9d7cd47e0351598be62603910448e116b5a00ad87208cccbc678",
+      "gitBlob": "4088a6c5fe895c2708ac2e4fc38785e62d330ff0"
+    },
+    {
+      "path": "src/result-consumption-demo.mjs",
+      "sha256": "7c37a8418a157115d183e2ee7f8a025452da12b4135f491ad2916fc9c39ec3e7",
+      "gitBlob": "63ccc933be564e010bcddf3ab613767349008626"
+    },
+    {
+      "path": "src/results.mjs",
+      "sha256": "a3805ea95d6906e5b73faae0a83331d7bd0aeeb5d8300391dc038a323837520e",
+      "gitBlob": "b0518d9bce3c7e57e5ae28675a794d992f5e53df"
+    },
+    {
+      "path": "src/retrieval-demo.mjs",
+      "sha256": "d55b579fefdfd43e4797c98191a52786d73d5903981130071de37a6c09adcfac",
+      "gitBlob": "bef98b21cff1aa62d382c343fe7f1371f769a693"
+    },
+    {
+      "path": "src/retrieval.mjs",
+      "sha256": "23313cf6879fa1b29a80a00a1883fdfa2c3085bdb125eb5cfd8334937bce15de",
+      "gitBlob": "6cb64735194a8edc1a5afd4c73a72b48ee7dbc1e"
+    },
+    {
+      "path": "src/runtime.mjs",
+      "sha256": "5edf4d3293653867f622c8d906ce5bf92b7320ddb4cf6ef01762a4bda000db86",
+      "gitBlob": "c6d1189c27d29a36c3bd1a61dbcfffb2e43b5cdb"
+    },
+    {
+      "path": "src/session-cli.mjs",
+      "sha256": "5cb9836fe7fa762af3f80ed8bda5ad3fa48b8700b552960b21e6ddb08ba8d40a",
+      "gitBlob": "089de8f1244be3b7ea6df395b1b91e6102d56b22"
+    },
+    {
+      "path": "src/session-recovery.mjs",
+      "sha256": "10a04529c83cbefc127902221e57d8796f893f5f5fcb15d2aefc80cd6c5a1cf9",
+      "gitBlob": "da082cfa181d4dcced79378704d849b92e98e66e"
+    },
+    {
+      "path": "src/session.mjs",
+      "sha256": "923920ebf262e27a0b7c20f4c954697f3a1aac2b9f25cef0f3cc183561c91d81",
+      "gitBlob": "9288eaf6036b861a1c3078f0725b5fbb3c4ef7b6"
+    },
+    {
+      "path": "src/skills.mjs",
+      "sha256": "39da1f37d9686bb93b2e2da406f1b7232b397eed99c0d61f6b4256b1c8e50de1",
+      "gitBlob": "403272808e0b5693648256947c19e9e95fadbfb1"
+    },
+    {
+      "path": "src/source.mjs",
+      "sha256": "ae004a390d600c7f2ead93c8ab3e2583cc442fa917ec914d91ae21c28bc7872b",
+      "gitBlob": "339ad73c093d775b48d2c4b43a46e9d8a45d5907"
+    },
+    {
+      "path": "src/specialist-child.mjs",
+      "sha256": "77eb103af95f9cd9db0348eab7cc664ee4ee40294a1aa0dadfa4d21fb294cea4",
+      "gitBlob": "c9ea48b729bcf133bbb1e408fa3aa3ce15ff1ef8"
+    },
+    {
+      "path": "src/specialist-cli.mjs",
+      "sha256": "32d02ffc073512d2689aadebad4e18dcb489b9cf6190311113d96b4d8721682a",
+      "gitBlob": "22b7dcdcf6219d8c268edd3702506b5edd11ff9a"
+    },
+    {
+      "path": "src/specialist-demo.mjs",
+      "sha256": "462deaa47fc2ea52e7806445ea41a2628396b662e5273de82420e5eef30d51af",
+      "gitBlob": "1a0eabf422d5bda72c7369e63807475d1a143f66"
+    },
+    {
+      "path": "src/storage-files.mjs",
+      "sha256": "44ec8a1efc0c270975b55743e706d6da5f6f967a9722099d51c3e66a278b1ea7",
+      "gitBlob": "492b1b734679e8f8e3c7441c32b2bdb4a10d6c3f"
+    },
+    {
+      "path": "src/stream.mjs",
+      "sha256": "010f66751e677184de6f4de9767582cfba1c353acadd1f6c4ed5bae3397b2cef",
+      "gitBlob": "d03554feafc72cb6927cd1bc758e3eaec8183a04"
+    },
+    {
+      "path": "src/temporal-cli.mjs",
+      "sha256": "485dfc249cceae4fe20eb1fd29b2408449c1ab5772f1dcb8acf8ff5bebfbd772",
+      "gitBlob": "485a83724c98b5ac9fe1cd1f48e5c37b7e0db635"
+    },
+    {
+      "path": "src/temporal-demo.mjs",
+      "sha256": "0c5c3de1b18be068deba0d45c8a1f80829a1ba8957515cd1e88086800305ffe4",
+      "gitBlob": "4b9835f595d348f8c52197196a59f379265eecc3"
+    },
+    {
+      "path": "src/temporal.mjs",
+      "sha256": "9fc839349cb2e7ecc362a954e7bf7dbc7590ac08e72a177b75e1472c3411eb8f",
+      "gitBlob": "689718c86020ae117434fe1779960a59c6b604f8"
+    },
+    {
+      "path": "src/tools.mjs",
+      "sha256": "9dc071b924bdcce4a714256e2c00df6434652c0ddee03706cf4cca3f0410e83b",
+      "gitBlob": "0476dbdda790ee09015483993c431ad3caf81fb2"
+    },
+    {
+      "path": "src/worker.mjs",
+      "sha256": "7aba65ed6a16a9561ebae2a6d0831122490606e64379e5d4f8986f1665b478c1",
+      "gitBlob": "df8338fdc8c4a679c711a509a56a4f6cfdd1f3b6"
+    },
+    {
+      "path": "src/working-demo.mjs",
+      "sha256": "cd3d8973b54bc141978cc654d33746ea3b02211991394d2f7fd04d8b6f61fa9a",
+      "gitBlob": "dc59bbf93d4927a92095626ddc55455e5b25f700"
+    },
+    {
+      "path": "src/working-note.mjs",
+      "sha256": "6bc9411849e92afdd8ff5c06d55067e833d7d9a4dcf5fecb778c35b16d1adaa7",
+      "gitBlob": "1cd6d77c46a27d520dc698390cbc248abcf977d5"
+    }
+  ],
+  "normalGate": {
+    "planned": 5,
+    "attempted": 5,
+    "requiredSuccesses": 4,
+    "successes": 5,
+    "notRun": 0,
+    "threshold": 0.8,
+    "observedRate": 1,
+    "passed": true,
+    "physicalRequests": 15,
+    "knownGoZero": 15,
+    "unknownNew": 0,
+    "tasks": [
+      {
+        "caseId": "initial-single-page",
+        "question": "Use only the supplied fictional Atlas guides, not financial or real product data. Read atlas-a physical page 1 through read_page. Describe export conditions. Save a Markdown report using save_report with all acquired source IDs, then give a short final answer. Do not claim a saved report before the original save_report receipt. This is a synthetic integration task, not a factual-quality test.",
+        "questionSha256": "f0982b25cbd2020991b9451896589859fa5c432d16c1b296ad89ac0cc4227fe8",
+        "requiredSources": [
+          {
+            "documentId": "atlas-a",
+            "page": 1,
+            "sourceId": "atlas-a@A-2026-01:p1",
+            "sha256": "948ef1fc240590b97eb97b9f5a9e74eac4136ff14983bc7102dfc91eabad30a0"
+          }
+        ],
+        "runId": "v17-release-five-20261102-r1-run-1",
+        "status": "completed",
+        "eligibleSuccess": true,
+        "rootUsage": {
+          "model": 3,
+          "tool": 2
+        },
+        "physicalRequests": 3,
+        "knownGoZero": 3,
+        "newUnknown": 0,
+        "originalTicketCount": 3,
+        "originalTicketsSha256": "7c6e95cb4de7f874456438ff06a15cc89d7131314e120e2ba46944c120ba7a3d",
+        "originalPublication": {
+          "receipt": {
+            "schemaVersion": "publication-receipt@1",
+            "runId": "v17-release-five-20261102-r1-run-1",
+            "rootId": "v17-release-five-20261102-r1-run-1",
+            "blockId": "answer",
+            "revision": 1,
+            "deliveryOrdinal": 1,
+            "payloadHash": "0ee8b3d991169907ecb13d648c0f48228c9a4a9fe9ff53d9127241a81fb20304",
+            "bindingHash": "cae048e1777d5c2e9d45c83e50fbc682228e27ab8f41cdfc04e979702cf0461f"
+          },
+          "bodySha256": "e657d61a708fc0c315a11b0dba720feb2ae7bd44cda1de110ac18b3dec6c7e1e",
+          "bodyBytes": 442,
+          "factsSha256": "949e523cd96c378ace64e6671845c351064d7bc2dc59b3d2e57d0b4371bcfe87",
+          "eventSha256": "7cd0842299ece95bf53b9920e8721f5df5c7a4a9043c3cb4f39d5dddd8877e0d",
+          "reportReceipt": {
+            "operationId": "call_7736e62312ee43afbe46538b",
+            "fileId": "sha256:efbefff7bfff4b04ada9fb1675bcc047152faae3a0b966eb2a91fe65fa39d07b",
+            "path": "report.md",
+            "sha256": "efbefff7bfff4b04ada9fb1675bcc047152faae3a0b966eb2a91fe65fa39d07b",
+            "bytes": 1468,
+            "mediaType": "text/markdown; charset=utf-8",
+            "artifactId": "artifact:sha256:a228c397d333c4ae482c019cabbd39cc0644ae5cc23cc8571e4b2b5b23a43ed2",
+            "revisionId": "revision:sha256:e98bbd83bb7787b651bb16a41b2ac42137070132d8298e921df88784f40d59e7",
+            "attachmentIds": []
+          }
+        },
+        "reportPath": "docs/verification/v017-live-reports/initial-single-page.md",
+        "coldReadback": {
+          "providerCalls": 0,
+          "newReservations": 0,
+          "inventoryUnchanged": true,
+          "reportSha256": "efbefff7bfff4b04ada9fb1675bcc047152faae3a0b966eb2a91fe65fa39d07b",
+          "reportBytes": 1468,
+          "readerClosed": true,
+          "inspectionOnly": true
+        },
+        "liveContentionClaim": false
+      },
+      {
+        "caseId": "reopen-single-page",
+        "question": "Use only the supplied fictional Atlas guides, not financial or real product data. Read atlas-b physical page 1 through read_page. Describe export conditions. Save a Markdown report using save_report with all acquired source IDs, then give a short final answer. Do not claim a saved report before the original save_report receipt. This is a synthetic integration task, not a factual-quality test.",
+        "questionSha256": "8c89359de9a9fbe2f4455038cc35c6a27b27a5e07b596a0f4b412cf4310cdf0c",
+        "requiredSources": [
+          {
+            "documentId": "atlas-b",
+            "page": 1,
+            "sourceId": "atlas-b@B-2026-02:p1",
+            "sha256": "a25c6c264eb82e4f4472028726e5c140a3ef9e082ca8ed3427c9e894d5a54f2d"
+          }
+        ],
+        "runId": "v17-release-five-20261102-r1-run-2",
+        "status": "completed",
+        "eligibleSuccess": true,
+        "rootUsage": {
+          "model": 3,
+          "tool": 2
+        },
+        "physicalRequests": 3,
+        "knownGoZero": 3,
+        "newUnknown": 0,
+        "originalTicketCount": 3,
+        "originalTicketsSha256": "0a7d87b2ff2840972931d7a00721d9f8a68ed666660e9ab3d3dcd417d8c7734b",
+        "originalPublication": {
+          "receipt": {
+            "schemaVersion": "publication-receipt@1",
+            "runId": "v17-release-five-20261102-r1-run-2",
+            "rootId": "v17-release-five-20261102-r1-run-2",
+            "blockId": "answer",
+            "revision": 1,
+            "deliveryOrdinal": 1,
+            "payloadHash": "f19b12d91ce7db17a71ed31c5be9ddc437721f6f31e01ab91baf3143ad393c0b",
+            "bindingHash": "86d517a022558d57fc5f9c5110c7461847aaf3aab5de61224bbb3c0088aa5f43"
+          },
+          "bodySha256": "88c6477ac8b4e1e3c4bad8084ce5292ea03f6112329678467d1a8c8fbc1d5cae",
+          "bodyBytes": 469,
+          "factsSha256": "529f1bacd8e390ecfd85f9376df1b0c85fe101805afddd5de490a63450cadff6",
+          "eventSha256": "c4472386fe01b33dc5bdf2d2de814b8324b2494c1ea2eef818ac02b52d8c0389",
+          "reportReceipt": {
+            "operationId": "call_00_mk14eeqlj8ykywx0lmyv8h2t",
+            "fileId": "sha256:dfd91a0f53757974e0319b39098cb055e77bda988da0438a4e3eb93d8f32293d",
+            "path": "report.md",
+            "sha256": "dfd91a0f53757974e0319b39098cb055e77bda988da0438a4e3eb93d8f32293d",
+            "bytes": 1192,
+            "mediaType": "text/markdown; charset=utf-8",
+            "artifactId": "artifact:sha256:39beada03e43063e5d6cebd43732788d9340bae057f0bb4f16f8592fdca88357",
+            "revisionId": "revision:sha256:dd5818b7961fb77b80e68385c2e114bf5053ca0380af9eae20c59ce7cf3326a1",
+            "attachmentIds": []
+          }
+        },
+        "reportPath": "docs/verification/v017-live-reports/reopen-single-page.md",
+        "coldReadback": {
+          "providerCalls": 0,
+          "newReservations": 0,
+          "inventoryUnchanged": true,
+          "reportSha256": "dfd91a0f53757974e0319b39098cb055e77bda988da0438a4e3eb93d8f32293d",
+          "reportBytes": 1192,
+          "readerClosed": true,
+          "inspectionOnly": true
+        },
+        "liveContentionClaim": false
+      },
+      {
+        "caseId": "two-source-export",
+        "question": "Use only the supplied fictional Atlas guides, not financial or real product data. Read atlas-a physical page 1 and atlas-b physical page 1 through read_page. Compare export conditions. Save a Markdown report using save_report with all acquired source IDs, then give a short final answer. Do not claim a saved report before the original save_report receipt. This is a synthetic integration task, not a factual-quality test.",
+        "questionSha256": "59004361fbbf3f9e4c501c510493f7940af3ae571d966dc3388e0c89dc4b8efa",
+        "requiredSources": [
+          {
+            "documentId": "atlas-a",
+            "page": 1,
+            "sourceId": "atlas-a@A-2026-01:p1",
+            "sha256": "948ef1fc240590b97eb97b9f5a9e74eac4136ff14983bc7102dfc91eabad30a0"
+          },
+          {
+            "documentId": "atlas-b",
+            "page": 1,
+            "sourceId": "atlas-b@B-2026-02:p1",
+            "sha256": "a25c6c264eb82e4f4472028726e5c140a3ef9e082ca8ed3427c9e894d5a54f2d"
+          }
+        ],
+        "runId": "v17-release-five-20261102-r1-run-3",
+        "status": "completed",
+        "eligibleSuccess": true,
+        "rootUsage": {
+          "model": 3,
+          "tool": 3
+        },
+        "physicalRequests": 3,
+        "knownGoZero": 3,
+        "newUnknown": 0,
+        "originalTicketCount": 3,
+        "originalTicketsSha256": "b412a7b91e9748f37ee88f1817fb6726a14f0d454ac7a628a45bd133cc15e72c",
+        "originalPublication": {
+          "receipt": {
+            "schemaVersion": "publication-receipt@1",
+            "runId": "v17-release-five-20261102-r1-run-3",
+            "rootId": "v17-release-five-20261102-r1-run-3",
+            "blockId": "answer",
+            "revision": 1,
+            "deliveryOrdinal": 1,
+            "payloadHash": "1c7aa1b60b1b6276f7b996052f3392a0b5df0e305096c37f631a93a0bb06fd1a",
+            "bindingHash": "f14b9dfbb53d692040b808b5d05048dcde439961c3291c1f3660103250b9d5d3"
+          },
+          "bodySha256": "c79182c58cc273bb6c28bd7621e3ecde15536b519fcb4b971a22c02ed7ad62c2",
+          "bodyBytes": 714,
+          "factsSha256": "30c990e49da1c71741abdbd06058100a742199e30b73572251e2251b4c0263ba",
+          "eventSha256": "3b3bf055e386197cf28368d1386e19dbd54888d56ce39b66a5b7243bb32c5439",
+          "reportReceipt": {
+            "operationId": "call_d493b7ec7f17484d91c43bdc",
+            "fileId": "sha256:0c5f6d07eab577035808a07a7e41e417e7ee6ae3b7a3829df3a5a7581ad0f652",
+            "path": "report.md",
+            "sha256": "0c5f6d07eab577035808a07a7e41e417e7ee6ae3b7a3829df3a5a7581ad0f652",
+            "bytes": 2570,
+            "mediaType": "text/markdown; charset=utf-8",
+            "artifactId": "artifact:sha256:65f050702208b0d99f377d07a0ec391a02ae885272209293587758088e5a9f75",
+            "revisionId": "revision:sha256:f1e57b0df7ee102259016f5eb6b5dac610bbe581af26c0f4215a078968dbcc30",
+            "attachmentIds": []
+          }
+        },
+        "reportPath": "docs/verification/v017-live-reports/two-source-export.md",
+        "coldReadback": {
+          "providerCalls": 0,
+          "newReservations": 0,
+          "inventoryUnchanged": true,
+          "reportSha256": "0c5f6d07eab577035808a07a7e41e417e7ee6ae3b7a3829df3a5a7581ad0f652",
+          "reportBytes": 2570,
+          "readerClosed": true,
+          "inspectionOnly": true
+        },
+        "liveContentionClaim": false
+      },
+      {
+        "caseId": "two-source-offline",
+        "question": "Use only the supplied fictional Atlas guides, not financial or real product data. Read atlas-a physical page 2 and atlas-b physical page 2 through read_page. Compare offline-use conditions. Save a Markdown report using save_report with all acquired source IDs, then give a short final answer. Do not claim a saved report before the original save_report receipt. This is a synthetic integration task, not a factual-quality test.",
+        "questionSha256": "a1837f7009e1410bc7fd8537ec673a0a6e6df3d132f62cdc42688f9bcf8a74ef",
+        "requiredSources": [
+          {
+            "documentId": "atlas-a",
+            "page": 2,
+            "sourceId": "atlas-a@A-2026-01:p2",
+            "sha256": "4ffa8621deb9c7706d979191b5a4c73cd51e988a8d838402ee270e4853fbba61"
+          },
+          {
+            "documentId": "atlas-b",
+            "page": 2,
+            "sourceId": "atlas-b@B-2026-02:p2",
+            "sha256": "3139e7e679bc9bfb2968170747b68933fb3bb8f874326b07b9dc0cfa1f8868e4"
+          }
+        ],
+        "runId": "v17-release-five-20261102-r1-run-4",
+        "status": "completed",
+        "eligibleSuccess": true,
+        "rootUsage": {
+          "model": 3,
+          "tool": 3
+        },
+        "physicalRequests": 3,
+        "knownGoZero": 3,
+        "newUnknown": 0,
+        "originalTicketCount": 3,
+        "originalTicketsSha256": "8d543f9ca6582c8e42ce5f98016166c096d8f00484a4214d083ef191a299f4f0",
+        "originalPublication": {
+          "receipt": {
+            "schemaVersion": "publication-receipt@1",
+            "runId": "v17-release-five-20261102-r1-run-4",
+            "rootId": "v17-release-five-20261102-r1-run-4",
+            "blockId": "answer",
+            "revision": 1,
+            "deliveryOrdinal": 1,
+            "payloadHash": "73838328fae9b284d216aec75037bb4fa1bec22aabf3f01ccea63526253fbc87",
+            "bindingHash": "28abb83ae65b84bae8ccd2580f45224fcf0f251336d1f7b76c7d44b9d7bdf89a"
+          },
+          "bodySha256": "50a3a314ca0c97c8eabfd9fad9d9586d0d8fbe3417edd65eb747ac7732e7cfad",
+          "bodyBytes": 547,
+          "factsSha256": "f9c57c985376ff834df81cef0be2a927ceefe65ed57fce8b105d74073af7959a",
+          "eventSha256": "d1b5f9976fcf90125d716245950fe276f5f6634dc73df5283334596683090aa0",
+          "reportReceipt": {
+            "operationId": "call_dd703fbbeecb478e85551ae7",
+            "fileId": "sha256:c3ee97199f20251d63fb723224a11707cef59afdc710e247291fdf31847fd9c6",
+            "path": "report.md",
+            "sha256": "c3ee97199f20251d63fb723224a11707cef59afdc710e247291fdf31847fd9c6",
+            "bytes": 2845,
+            "mediaType": "text/markdown; charset=utf-8",
+            "artifactId": "artifact:sha256:8ee4dd7d50f876598f503d6143a6a317e7ce830b56f9e77f75aca0980cef1ba6",
+            "revisionId": "revision:sha256:651e4e0fcf68b5b08ea4d37b20b0d3689da55b32e34c86970ec2a305c3231192",
+            "attachmentIds": []
+          }
+        },
+        "reportPath": "docs/verification/v017-live-reports/two-source-offline.md",
+        "coldReadback": {
+          "providerCalls": 0,
+          "newReservations": 0,
+          "inventoryUnchanged": true,
+          "reportSha256": "c3ee97199f20251d63fb723224a11707cef59afdc710e247291fdf31847fd9c6",
+          "reportBytes": 2845,
+          "readerClosed": true,
+          "inspectionOnly": true
+        },
+        "liveContentionClaim": false
+      },
+      {
+        "caseId": "same-document-two-pages",
+        "question": "Use only the supplied fictional Atlas guides, not financial or real product data. Read atlas-a physical page 1 and atlas-a physical page 2 through read_page. Summarize export and offline-use conditions. Save a Markdown report using save_report with all acquired source IDs, then give a short final answer. Do not claim a saved report before the original save_report receipt. This is a synthetic integration task, not a factual-quality test.",
+        "questionSha256": "10c70f20c082473be4ca531c9660357dd0a6977e6bcf7f87bc0d8b715dc85e12",
+        "requiredSources": [
+          {
+            "documentId": "atlas-a",
+            "page": 1,
+            "sourceId": "atlas-a@A-2026-01:p1",
+            "sha256": "948ef1fc240590b97eb97b9f5a9e74eac4136ff14983bc7102dfc91eabad30a0"
+          },
+          {
+            "documentId": "atlas-a",
+            "page": 2,
+            "sourceId": "atlas-a@A-2026-01:p2",
+            "sha256": "4ffa8621deb9c7706d979191b5a4c73cd51e988a8d838402ee270e4853fbba61"
+          }
+        ],
+        "runId": "v17-release-five-20261102-r1-run-5",
+        "status": "completed",
+        "eligibleSuccess": true,
+        "rootUsage": {
+          "model": 3,
+          "tool": 3
+        },
+        "physicalRequests": 3,
+        "knownGoZero": 3,
+        "newUnknown": 0,
+        "originalTicketCount": 3,
+        "originalTicketsSha256": "45e6735ea9a31246388655629e8a9621e1b9dfae9f878a7188de3e2442dd61c8",
+        "originalPublication": {
+          "receipt": {
+            "schemaVersion": "publication-receipt@1",
+            "runId": "v17-release-five-20261102-r1-run-5",
+            "rootId": "v17-release-five-20261102-r1-run-5",
+            "blockId": "answer",
+            "revision": 1,
+            "deliveryOrdinal": 1,
+            "payloadHash": "81d626887e32c6e67362793982e01bade79da149bf38ec4fc3e66f0aa08d9131",
+            "bindingHash": "ebbdd8ace9089381cdc9a2f14d5fc014fce894fb419ee39f1b31a4cfd9c967e1"
+          },
+          "bodySha256": "81237b07f35bcd2397efff3b911c2d585f2188c551f37f7de6de866d973e0b29",
+          "bodyBytes": 690,
+          "factsSha256": "c1438a7fc83105e1b3ee2f7e0e0e0f9b0d7e08d97898af69363000a941d90020",
+          "eventSha256": "ec5edad45d8fb99ff7303b6b53fb4a70d251689c83f9020e50641447cedd0d9c",
+          "reportReceipt": {
+            "operationId": "call_d955696992d246fb97d77060",
+            "fileId": "sha256:a8a22045a2cbf11b5532fc1586abc4653312bbef7fad67e26b1ba136b3fb65fc",
+            "path": "report.md",
+            "sha256": "a8a22045a2cbf11b5532fc1586abc4653312bbef7fad67e26b1ba136b3fb65fc",
+            "bytes": 2130,
+            "mediaType": "text/markdown; charset=utf-8",
+            "artifactId": "artifact:sha256:46cc1f802ca2e7222eac7e1d46efc395028dbd97b2ba1e1bddbb92b39b7ddd87",
+            "revisionId": "revision:sha256:85e47a16d248a5d14d0c088ce8ad05d4f754dda9d004ac273a35d0437d435eea",
+            "attachmentIds": []
+          }
+        },
+        "reportPath": "docs/verification/v017-live-reports/same-document-two-pages.md",
+        "coldReadback": {
+          "providerCalls": 0,
+          "newReservations": 0,
+          "inventoryUnchanged": true,
+          "reportSha256": "a8a22045a2cbf11b5532fc1586abc4653312bbef7fad67e26b1ba136b3fb65fc",
+          "reportBytes": 2130,
+          "readerClosed": true,
+          "inspectionOnly": true
+        },
+        "liveContentionClaim": false
+      }
+    ]
+  },
+  "separateSafetyGate": {
+    "passed": true,
+    "receipt": "docs/verification/v017-admission-offline.safe.json",
+    "sameExecutionSource": true,
+    "fullSuitePassed": 586,
+    "fullSuiteFailed": 0,
+    "independentInstallAndBuild": true,
+    "originalTwoProcessNormalAndUnknown": true,
+    "independentSourceReview": "no mandatory code fixes"
+  },
+  "modelCalls": 15,
+  "extraCharge": 0,
+  "historicalResultsRewritten": false,
+  "historicalUnknownRetained": 11,
+  "sourceInputRechecked": true,
+  "liveContentionClaim": false,
+  "financialSemanticQualification": false,
+  "contentQualityAffectsSuccess": false,
+  "releaseQualificationPassed": true,
+  "remoteReleasePublished": false,
+  "scope": "Five real-provider synthetic tasks with original Admission, Publication, report and cold Reader; separate provider-free concurrency/unknown safety. No financial quality or live concurrency certification."
+}
