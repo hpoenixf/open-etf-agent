@@ -25,3 +25,7 @@ The source is qualified separately from remote ref durability, GitHub Release an
 ## 中文摘要
 
 v0.18 仅交付一次明确确认、到时显式唤醒的 occurrence，复用原 Worker/Admission/Publication。完整离线测试、独立安装与736字节交付读回通过；本轮真实 API 十任务为10/10、30次Go-zero请求，旧五任务原记录作为历史保留。默认CLI仍fixture，不能声称自动后台、周期任务、金融质量或全面断电恢复。原601/602失败、旧32案例和真正旧opener证据均保留，不能相互冒充。
+
+## Public implementation identity
+
+Fixed implementation [`b1d2431a6b86bd0120f2fe5acb531ef928e92de2`](https://github.com/hpoenixf/open-etf-agent/tree/b1d2431a6b86bd0120f2fe5acb531ef928e92de2), tree `6743403885eeda0552f9ad1ebf7e84989c6fc525`. All 81 frozen execution-input files match the current ten-task campaign and separately recorded offline safety evidence. Only documentation and release metadata differ. The final v0.18.0 tag and GitHub Release identify the subsequent package commit containing this binding; the implementation staging commit is not ambiguously presented as the final package.
