@@ -1,10 +1,10 @@
-# v0.19 组合资格候选
+# v0.19 组合资格
 
 [English](v019-release.md) · [完整组合矩阵](../composition.zh-CN.md) · [升级边界](../upgrade-guide.zh-CN.md)
 
 ## 状态与范围
 
-文档列明的组合已完成实现及有界机制验证。正式发布、远端源码读回与发布 CI 尚未完成。本版升级既有 Owner 的扩展性，不是生产基金研究服务，也不宣称所有模块任意组合。
+文档列明的组合已完成实现及有界机制验证。不可变公开实现及证据快照见下文；正式发布状态与本资格记录分开。本版升级既有 Owner 的扩展性，不是生产基金研究服务，也不宣称所有模块任意组合。
 
 自定义 catalog、原 Result/计算/CSV/报告、Memory 消费与显式一次性效果、Worker 恢复、可信 Skill/MCP/插件、Response/PDF、Child/Admission 及确认后的 Schedule 组合，继续遵守原身份、权限、共享预算、fence 与未知结果规则。以完整矩阵中的支持、前置条件和不支持项为准。
 
@@ -36,3 +36,9 @@ Response+Schedule 需要组合持久等待协议，当前不支持。Atlas 历�
 - [Original evaluator outputs](v019-mechanical-results.safe.json)
 - [Original execution inputs](v019-original-execution-inputs.safe.json) · [Repair execution inputs](v019-repair-execution-inputs.safe.json)
 - [Provider-free and source-impact boundaries](v019-provider-free.safe.json)
+
+## 固定公开源码与最终发布包
+
+实现及证据快照为 [`9b6ae0adf1df7efd4fd138b8d2957103b8fd9132`](https://github.com/hpoenixf/open-etf-agent/tree/9b6ae0adf1df7efd4fd138b8d2957103b8fd9132)，tree 为 `13739de4e3062df5674710e5a1709dbf28a07f9f`。其中 80 项执行输入摘要与修复执行清单一致；A/B 仍保留原执行来源及单独审查的未受影响合同范围。公开快照包含安全证据，不包含私有执行器状态或本地 Git 祖先。
+
+`versions.json` 记录此固定源码快照。`v0.19.0` tag 与 GitHub Release 必须指向随后完成的最终 metadata 包，并以该包原 CI 通过为前提。metadata 不改变执行输入。实际发布状态以 [GitHub Releases](https://github.com/hpoenixf/open-etf-agent/releases) 和 tag 所指提交的检查为准；本记录本身不证明 Release 或 CI 已完成。

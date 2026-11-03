@@ -1,10 +1,10 @@
-# v0.19 composition qualification candidate
+# v0.19 composition qualification
 
 [中文](v019-release.zh-CN.md) · [Composition matrix](../composition.md) · [Upgrade boundary](../upgrade-guide.md#v019-explicit-composition-and-summary-protocol-boundaries)
 
 ## Status and exact scope
 
-Implementation and bounded mechanism qualification are complete for the documented combinations. Formal publication, remote source readback and release CI are pending. This is an extensibility upgrade of existing owners, not a production fund-research service or a claim that every module combination works.
+Implementation and bounded mechanism qualification are complete for the documented combinations. The immutable public implementation/evidence snapshot is identified below. Formal release status is separate from this qualification record. This is an extensibility upgrade of existing owners, not a production fund-research service or a claim that every module combination works.
 
 Custom catalogs, original Result/Calculation/CSV/report, Memory consumption and explicit one-use effects, Worker recovery, trusted Skill/MCP/plugins, Response/PDF, Child/Admission and confirmed Schedule combinations retain their original identity, permission, shared budget, fence and unknown-result rules. See the full supported/prerequisite/unsupported matrix rather than inferring capability from a successful example.
 
@@ -36,3 +36,9 @@ Response + Schedule needs a combined durable wait protocol and is unsupported. H
 - [Original evaluator outputs](v019-mechanical-results.safe.json)
 - [Original execution inputs](v019-original-execution-inputs.safe.json) · [Repair execution inputs](v019-repair-execution-inputs.safe.json)
 - [Provider-free and source-impact boundaries](v019-provider-free.safe.json)
+
+## Immutable public source and final release package
+
+The implementation/evidence snapshot is [`9b6ae0adf1df7efd4fd138b8d2957103b8fd9132`](https://github.com/hpoenixf/open-etf-agent/tree/9b6ae0adf1df7efd4fd138b8d2957103b8fd9132) with tree `13739de4e3062df5674710e5a1709dbf28a07f9f`. Its 80 executable-input hashes match the repair execution inventory; A/B retain their original execution identity and separately reviewed unaffected-contract scope. The public snapshot contains the safe evidence, not private harness state or local Git ancestors.
+
+`versions.json` records this immutable source snapshot. The `v0.19.0` tag and GitHub Release must identify the subsequent final metadata package after its original CI passes. Metadata does not change the execution inputs. Consult [GitHub Releases](https://github.com/hpoenixf/open-etf-agent/releases) and the tagged commit’s checks for actual publication status; this record alone is not proof of a completed release or CI run.
