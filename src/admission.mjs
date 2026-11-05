@@ -28,18 +28,18 @@ function reserved(session, runId, initial = false) {
 
 // One local capacity group, not a provider registry or a billing owner.
 // A dispatched request stays occupied until its original Gateway returns.
-export async function createSharedAdmission({ directory, routeId, maxQueue = 8, pollMs = 20, queueTimeoutMs = 30000, readOnly = false }) {
-  if (typeof readOnly !== 'boolean' || typeof routeId !== 'string' || !/^[A-Za-z0-9][A-Za-z0-9_.:/-]{0,199}$/.test(routeId)
+export async function createSharedAdmission({ directory, routeId, maxQueue = 8, pollMs = 20, queueTimeoutMs = 30000, readOnly = false, existingOnly = false }) {
+  if (typeof readOnly !== 'boolean' || typeof existingOnly !== 'boolean' || typeof routeId !== 'string' || !/^[A-Za-z0-9][A-Za-z0-9_.:/-]{0,199}$/.test(routeId)
     || !Number.isSafeInteger(maxQueue) || maxQueue < 1 || maxQueue > 64
     || !Number.isSafeInteger(pollMs) || pollMs < 1 || pollMs > 1000
     || !Number.isSafeInteger(queueTimeoutMs) || queueTimeoutMs < 1 || queueTimeoutMs > 300000) fail('INVALID_ADMISSION_CONFIG');
-  const root = await (readOnly ? safeDirectory(directory) : ensureSafeDirectory(directory));
+  const root = await (readOnly || existingOnly ? safeDirectory(directory) : ensureSafeDirectory(directory));
   const filename = join(root, 'admission.sqlite');
   for (const path of [filename, `${filename}-journal`, `${filename}-wal`, `${filename}-shm`]) {
     try { const stat = lstatSync(path); if (!stat.isFile() || stat.isSymbolicLink() || stat.nlink !== 1) fail('UNSAFE_ADMISSION_FILE'); }
-    catch (error) { if (error.code !== 'ENOENT') throw error; }
+    catch (error) { if (error.code !== 'ENOENT') throw error; if (existingOnly && path === filename) fail('ADMISSION_OWNER_MISSING'); }
   }
-  if (!readOnly) { try { closeSync(openSync(filename, 'wx', 0o600)); } catch (error) { if (error.code !== 'EEXIST') throw error; } }
+  if (!readOnly && !existingOnly) { try { closeSync(openSync(filename, 'wx', 0o600)); } catch (error) { if (error.code !== 'EEXIST') throw error; } }
   const db = new DatabaseSync(filename, {readOnly});
   if (readOnly) db.exec('PRAGMA query_only=ON');
   db.exec('PRAGMA busy_timeout=1000');
@@ -51,7 +51,7 @@ export async function createSharedAdmission({ directory, routeId, maxQueue = 8, 
   try {
     const initialize = () => {
       const app = db.prepare('PRAGMA application_id').get().application_id;
-      if (!readOnly && app === 0 && db.prepare("SELECT count(*) AS n FROM sqlite_master WHERE name NOT LIKE 'sqlite_%'").get().n === 0) {
+      if (!readOnly && !existingOnly && app === 0 && db.prepare("SELECT count(*) AS n FROM sqlite_master WHERE name NOT LIKE 'sqlite_%'").get().n === 0) {
         db.exec(`PRAGMA application_id=${APP_ID};
           CREATE TABLE capacity (id INTEGER PRIMARY KEY CHECK(id=1), route_id TEXT NOT NULL, max_queue INTEGER NOT NULL) STRICT;
           CREATE TABLE requests (sequence INTEGER PRIMARY KEY AUTOINCREMENT, request_id TEXT NOT NULL UNIQUE, reservation_id TEXT NOT NULL UNIQUE, root_id TEXT NOT NULL, run_id TEXT NOT NULL, model_ordinal INTEGER NOT NULL, round INTEGER NOT NULL, input_hash TEXT NOT NULL, owner TEXT NOT NULL, fence INTEGER NOT NULL, deadline_at INTEGER NOT NULL, state TEXT NOT NULL CHECK(state IN ('queued','admitted','dispatched','completed','cancelled','unknown')), created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL) STRICT;`);
