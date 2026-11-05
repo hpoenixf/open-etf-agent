@@ -4,6 +4,8 @@
 
 这是 **v0.23 候选实现**。本地、无提供方测试不等于真实模型验收或正式发布。[提案](../openspec/changes/v023-knowledge/proposal.md)记录了范围与验收门槛。
 
+首轮固定源码真实十题保留 **8/10，未通过资格门**。原失败与前瞻提示修复记录在[修复说明](../openspec/changes/v023-knowledge/repair-2026-11-05.md)中，仍须完成新的整批十题验收。
+
 Knowledge 把现有显式文件导入、有界检索与原研究流程连接起来。查询返回完整原文页，由 Host 登记到原有 Result 存储；模型获得正文和准确的 `sourceId`、`resultRef`，随后由既有 Report、Publication、Reader 保留同一字节。搜索分数只是排序提示，不是权限或语义质量判定。
 
 ## 为新研究任务启用
