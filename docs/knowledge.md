@@ -4,6 +4,8 @@
 
 This is the **v0.23 candidate**. Local/provider-free checks are not a real-model qualification or release. The [proposal](../openspec/changes/v023-knowledge/proposal.md) records the scope and acceptance gates.
 
+The first fixed-source real cohort remains **8/10, not qualified**. Its failures and the prospective guidance repair are recorded in the [repair note](../openspec/changes/v023-knowledge/repair-2026-11-05.md); a new whole-ten qualification is still required.
+
 Knowledge connects the existing explicit source import to bounded retrieval and the original research workflow. A query returns original whole pages. Host registers them in the existing Result store, the model receives their text and exact `sourceId`/`resultRef`, and the ordinary Report/Publication/Reader path retains the same bytes. Search scores are ranking hints, not authority or a semantic-quality judgment.
 
 ## Enable it for a new research task
