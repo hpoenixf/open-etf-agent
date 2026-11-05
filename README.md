@@ -2,7 +2,8 @@
 
 《从对话到工作：研究型智能体的设计与实践》的配套只在本独立分支维护。
 
-- [R6 配套：下载、校验与验证范围](book-companion/agent-practice-r6/README.md)
+- [R6.1 勘误配套：下载、修正说明与验证范围（推荐）](book-companion/agent-practice-r6-1/README.md)
+- [R6 历史配套](book-companion/agent-practice-r6/README.md)
 - [R5 历史配套](book-companion/agent-practice-r5/README.md)
 - [本书固定公开源码 v0.21.0](https://github.com/hpoenixf/open-etf-agent/tree/b22c43633101a10a50fc5b09ecc5ecba038f873a)
 - [勘误与问题入口](https://github.com/hpoenixf/open-etf-agent/issues)：请注明书稿轮次、章节与可复现的合成输入，避免贴凭据或私人资料。
