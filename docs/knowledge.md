@@ -21,6 +21,10 @@ This is a fragment, not a complete gateway configuration. Existing projects use 
 
 For example, explicitly import two synthetic service descriptions, then ask: “Use Knowledge to find the export formats and offline restrictions in both descriptions. Save a report citing the original pages, and say if this collection does not answer a question.” The model chooses query terms; the Runtime does not turn lexical overlap into a correctness score.
 
+If a task supplies a query value, limit, tool order or single-call grouping, the model-facing guidance tells the model to preserve it instead of expanding the query. Knowledge tasks also distinguish explicit source restrictions from information the source does not state, and require derived Child commentary to be checked against the actual question and original evidence. These are prompt instructions, not Runtime guarantees of model obedience or semantic correctness. The query implementation still accepts valid query text as data and retains its original byte hash.
+
+The repaired candidate changes Knowledge tool descriptions and Knowledge-task guidance. Previously admitted Knowledge tasks must continue with their original fixed executable source: the persisted question and Host definitions are binding inputs, and changed bindings fail closed rather than transparently migrating. Ordinary non-Knowledge task guidance is unchanged. No recovery check is relaxed.
+
 Inspect a task's original collection without executing it:
 
 ```sh

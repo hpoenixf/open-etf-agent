@@ -29,6 +29,12 @@ node src/research-cli.mjs knowledge inspect --project DIR --run RUN_ID
 
 输出包含原资料 manifest、catalog/index 哈希、文档范围和限额。它不是来源获取或模型采用回执。`run work`、`run report`、`report serve` 保留原来的语义与真实提供方授权要求。
 
+## 模型指引与固定绑定
+
+任务若明确给出 query、limit、工具顺序或单调用分组，模型指引要求原样保留，不把 query 扩写成另一问题。Knowledge 任务还要求区分原文明确限制与原文未声明的信息，并依据实际问句和原始证据复核 Child 的派生评论。这些只是提示指引，不是 Runtime 对模型遵循指令或语义正确性的保证。检索器仍把合法 query 当作数据，保留其原始字节哈希。
+
+修复候选改变了 Knowledge 工具描述和 Knowledge 任务指引。此前已准入的 Knowledge 任务应继续使用原固定可执行源码：持久化 question 与 Host definitions 都是绑定输入，变更后会关闭失败，不会透明迁移。普通非 Knowledge 任务的指引保持原样，不放松恢复校验。
+
 ## 结果与容量合同
 
 `knowledge_query` 只接受不超过 512 个 UTF-8 字节的非空查询，以及可选的正整数 `limit`；它不能超过已准入的 `maxResults`（1–8）。参数不能指定新文档、路径、URL 或资料库。实现使用 Unicode 词项和连续汉字二元组，并做 NFKC 归一化；没有 embedding 提供方、reranker 或语义搜索质量保证。同分按文档 ID、物理页码排序。

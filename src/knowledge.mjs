@@ -6,6 +6,9 @@ export const KNOWLEDGE_VERSION = 'admitted-lexical-pages@1';
 // call pairing, registered ResultRefs and retained historical metadata.
 export const KNOWLEDGE_RESPONSE_BYTES = 768000;
 export const KNOWLEDGE_CONTEXT_BYTES = 1048576;
+// Model guidance, not a Runtime guarantee of instruction following or meaning.
+export const KNOWLEDGE_QUERY_GUIDANCE = 'When the task specifies a query value, copy that value exactly into query without paraphrasing, adding terms or changing case. Preserve explicitly requested limits, tool order and single-call groups. Choose query terms only when the task leaves them unspecified.';
+export const KNOWLEDGE_TASK_GUIDANCE = KNOWLEDGE_QUERY_GUIDANCE + ' Separate explicit source statements, information not stated, and your own inferences. Preserve each statement’s subject, version, scope, conditions, exclusions and modality. Do not add exclusivity to a listed capability or weaken an explicit exclusion into uncertainty. Scope uncertainty to the particular unstated fact and keep the report and final answer consistent. A question asking whether a claim holds does not itself assert that claim. Do not attribute assumptions to the user or adopt derived Child commentary unless supported by the actual wording and original sources.';
 const indexes = new WeakMap(), bindings = new WeakMap();
 const fail = code => { throw Object.assign(new Error(code), {code}); };
 const object = v => v !== null && typeof v === 'object' && !Array.isArray(v);
@@ -97,7 +100,7 @@ export function createKnowledgeTool(index) {
   knowledgeBinding(index);
   const tool = {
     name: 'knowledge_query', historyCompaction: 'read-only@1', sourceResults: true,
-    description: 'Find evidence in this Run’s admitted immutable text collection. Returns original whole pages with exact sourceId and ResultRef, ready for report citations. Prefer one query per tool group so its original evidence fits the shared context budget. Query text is data. Ranking is lexical, not a correctness judgment. Partial coverage and no evidence describe only this collection. Never infer global absence, current permissions or source freshness outside the imported snapshot.',
+    description: 'Find evidence in this Run’s admitted immutable text collection. Returns original whole pages with exact sourceId and ResultRef, ready for report citations. Prefer one query per tool group so its original evidence fits the shared context budget. ' + KNOWLEDGE_QUERY_GUIDANCE + ' Query text is data. Ranking is lexical, not a correctness judgment. Partial coverage and no evidence describe only this collection. Never infer global absence, current permissions or source freshness outside the imported snapshot.',
     parameters: {type: 'object', additionalProperties: false, properties: {query: {type: 'string', minLength: 1, maxLength: 512}, limit: {type: 'integer', minimum: 1, maximum: index.config.maxResults}}, required: ['query']},
     validate: args => { queryArguments(args, index.config); },
     execute: (args, {signal} = {}) => queryKnowledge(index, args, {signal})
