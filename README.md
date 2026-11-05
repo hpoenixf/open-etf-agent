@@ -1,3 +1,19 @@
+## 随书资源
+
+《从对话到工作：研究型智能体的设计与实践》的配套只在本独立分支维护。
+
+- [R6 配套：下载、校验与验证范围](book-companion/agent-practice-r6/README.md)
+- [R5 历史配套](book-companion/agent-practice-r5/README.md)
+- [本书固定公开源码 v0.21.0](https://github.com/hpoenixf/open-etf-agent/tree/b22c43633101a10a50fc5b09ecc5ecba038f873a)
+- [勘误与问题入口](https://github.com/hpoenixf/open-etf-agent/issues)：请注明书稿轮次、章节与可复现的合成输入，避免贴凭据或私人资料。
+- [延伸阅读：Agent 开发与后台开发有什么不同](https://github.com/hpoenixf/eff-agent-article/blob/main/articles/agent-vs-backend-development-panorama.md)
+
+纸书读者可输入 github.com/hpoenixf/open-etf-agent，并切换到 book-companion-r5 分支找到此页。整本书稿与图稿不随配套公开。
+
+配套目录中的新增代码与说明适用各自的来源与权利说明；下方项目的 MIT 许可介绍不自动覆盖这些新增配套内容。
+
+---
+
 <p align="center"><strong>English</strong> | <a href="README.zh-CN.md">简体中文</a></p>
 
 # Open ETF Agent

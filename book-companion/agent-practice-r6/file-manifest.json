@@ -1,0 +1,334 @@
+{
+  "schema": "agent-practice-companion@1",
+  "release": "r6",
+  "public_project_version": "v0.21.0",
+  "public_project_commit": "b22c43633101a10a50fc5b09ecc5ecba038f873a",
+  "files": [
+    {
+      "path": "README.md",
+      "bytes": 4957,
+      "sha256": "dad4e545261f0d7d7ddde228e258aeaae3264c2ac944909d05ae1b04681ab350"
+    },
+    {
+      "path": "THIRD_PARTY_NOTICES.md",
+      "bytes": 2085,
+      "sha256": "e50dc9771cfff988c3b2ca1e018d8dea7781f86e267e74b96a28b90422be6e10"
+    },
+    {
+      "path": "VALIDATION.md",
+      "bytes": 3466,
+      "sha256": "463b3e6a13e41386b1abf8c3bdf094f8ee0473361eb4e37cb88691922934ea29"
+    },
+    {
+      "path": "appendices/project-setup.md",
+      "bytes": 7673,
+      "sha256": "f825f37165aac2599949b472c8eed73515542f1c119dfff8f66485f73c8345a4"
+    },
+    {
+      "path": "appendices/run-index.md",
+      "bytes": 15525,
+      "sha256": "ae65b83a08019b1bf01a920effa16e1041b73054b271c3d249b56d79e3da693f"
+    },
+    {
+      "path": "examples/README.md",
+      "bytes": 5356,
+      "sha256": "326eac0076627e0f483f02caa29946a4e41cc26eab449a4a706b6fe861a14a7e"
+    },
+    {
+      "path": "examples/ch03/book-check-report.mjs",
+      "bytes": 578,
+      "sha256": "efd48ab9d423509d1bb8b9fcdbc6c5b6e5d1852d9b3f16cc0dad4f167015ab67"
+    },
+    {
+      "path": "examples/ch03/inspect-first-report.mjs",
+      "bytes": 1373,
+      "sha256": "ccecb0f88473451e4071691d613e38633a453b318017f1cfcea54fb0c29d8906"
+    },
+    {
+      "path": "examples/ch04/trace-calculation.mjs",
+      "bytes": 2890,
+      "sha256": "3c50701e42ff3411c214e5041e6e67d24015933debc3c07f2c835781159ff1e2"
+    },
+    {
+      "path": "examples/ch05/observe-the-loop.mjs",
+      "bytes": 2470,
+      "sha256": "78f5ad3791e6da89da72b55dc373e266bc5229a423bb1b853c63ce2ab3657dfc"
+    },
+    {
+      "path": "examples/ch06/find-and-read.mjs",
+      "bytes": 4477,
+      "sha256": "b433bf84b8f0d381cb6a881aa419dcf0b7dcb1b78a6af25953ff43d3402cc5e9"
+    },
+    {
+      "path": "examples/ch06/research-notes.json",
+      "bytes": 1168,
+      "sha256": "912741a32c111abd2345f3d572262912af10965bcfab87f3eec71b5adcc13f7b"
+    },
+    {
+      "path": "examples/ch07/reuse-the-method.mjs",
+      "bytes": 4804,
+      "sha256": "7e7d5cdaf20a022c834fc780f9699f54adc91a7936c2fea2a8016e8d7cf9526a"
+    },
+    {
+      "path": "examples/ch07/skills/portfolio-check/SKILL.md",
+      "bytes": 1380,
+      "sha256": "6d149380740ce3f35dd4108992aa3958495da259f864c43079350d82d93f1232"
+    },
+    {
+      "path": "examples/ch09/book-read-http.mjs",
+      "bytes": 1485,
+      "sha256": "07e9d3ac343f3e20c7541a7b4b5c5cd55e46dd5bf61a269cc91fcc110a5ff05e"
+    },
+    {
+      "path": "examples/ch10/cash-basis.md",
+      "bytes": 554,
+      "sha256": "89a17270b09019e6701a5e3d8bd61029ab47094cb6aa837b81130be8c5e42058"
+    },
+    {
+      "path": "examples/ch10/clarify-and-resume.mjs",
+      "bytes": 9811,
+      "sha256": "76f6822608ddf2c4aac911d7060f531a9c6b22eff284a6ef353b829343859b84"
+    },
+    {
+      "path": "examples/ch12/stop-at-the-limit.mjs",
+      "bytes": 4919,
+      "sha256": "4a850f569e0a5a3bfd16dd4c70c3fbd40e64ed85643c82c3b4a7bdffdf48432b"
+    },
+    {
+      "path": "examples/ch13/remember-and-forget.mjs",
+      "bytes": 5217,
+      "sha256": "105a72a970888e26e029218bf654bcd0e0163cf37daacd23d0efda0d935c972f"
+    },
+    {
+      "path": "examples/ch14/refuse-the-instruction.mjs",
+      "bytes": 3088,
+      "sha256": "7f6284adb7771c0a1561f5b1de2b58d750aacad88f4a42ab44ba6084d730a2d6"
+    },
+    {
+      "path": "examples/ch15/ask-an-assistant.mjs",
+      "bytes": 13756,
+      "sha256": "5dfcf235006b782d1e6b0f93580db758a685fe6210c19b494856f561db5972a2"
+    },
+    {
+      "path": "examples/ch15/cash-basis.md",
+      "bytes": 554,
+      "sha256": "89a17270b09019e6701a5e3d8bd61029ab47094cb6aa837b81130be8c5e42058"
+    },
+    {
+      "path": "examples/ch15/cash-draft.md",
+      "bytes": 395,
+      "sha256": "6eeb364ad1859b87dce25631d8105b930f02fc98fac234a1a5f8253ec12e42b3"
+    },
+    {
+      "path": "examples/ch16/cash-basis.md",
+      "bytes": 554,
+      "sha256": "89a17270b09019e6701a5e3d8bd61029ab47094cb6aa837b81130be8c5e42058"
+    },
+    {
+      "path": "examples/ch16/work-at-a-fixed-time.mjs",
+      "bytes": 17226,
+      "sha256": "5901491279692efdb1db00f522f00fd2cb4df00f60c86346d97464783acb7701"
+    },
+    {
+      "path": "examples/ch17/check-the-task.mjs",
+      "bytes": 3831,
+      "sha256": "1f568a3ba2c8319c47a5fa1054f31fc0392103cca77f59642141188b5c5e0de8"
+    },
+    {
+      "path": "examples/ch18/guard-the-pair.mjs",
+      "bytes": 3543,
+      "sha256": "de6bf31c38f2709624cde0261acc0721dbc29b707c01ed454b86ac28f567024b"
+    },
+    {
+      "path": "examples/check-base.mjs",
+      "bytes": 741,
+      "sha256": "376fedba0ae844a4202ada3bf75c503fbbd27e0c1a2f2d70b30ee1872f329e31"
+    },
+    {
+      "path": "examples/minimal/capstone/injection.json",
+      "bytes": 1295,
+      "sha256": "4545424d266a08a038880c219b36ebceee1c14cd45fedcb41177eaafd5cf495c"
+    },
+    {
+      "path": "examples/minimal/capstone/missing-answer.json",
+      "bytes": 1698,
+      "sha256": "3dc9cdfa93857bb14ac922107fee5752afa62579855fa8a4c09b94b09a1ce660"
+    },
+    {
+      "path": "examples/minimal/capstone/normal.json",
+      "bytes": 3214,
+      "sha256": "6484cebdb55df7a8b337185351333a0479bc015dc0c845cb47ae01befd4a841a"
+    },
+    {
+      "path": "examples/minimal/capstone/reference-report.md",
+      "bytes": 605,
+      "sha256": "9cdba84461ee2a8b4682ce90ff85918fd0d251458ed689a053fe388ce2093f81"
+    },
+    {
+      "path": "examples/minimal/capstone/run.mjs",
+      "bytes": 1126,
+      "sha256": "e38fab52e481d08f77584842fb17ae5a08112046b0b4526e93d84e6ed97a2030"
+    },
+    {
+      "path": "examples/minimal/capstone/sources/A.md",
+      "bytes": 204,
+      "sha256": "e7e386b752501f44629c27fcf6b841a581fdea522ccd3071e0ac52b04ec1e44e"
+    },
+    {
+      "path": "examples/minimal/capstone/sources/B-appendix.md",
+      "bytes": 381,
+      "sha256": "a9876238143bdbe0d077a28026276179471cfaa0d89c131bb9a523c40744d52e"
+    },
+    {
+      "path": "examples/minimal/capstone/sources/B-injection.md",
+      "bytes": 400,
+      "sha256": "befdd7ca4901c7685c28859aaad55768572658cfcb54a5006281776218a5f1e9"
+    },
+    {
+      "path": "examples/minimal/capstone/sources/B.md",
+      "bytes": 237,
+      "sha256": "0d644eddae5fc0276341994cf4772ee7812b0e559af647c71e213c1927040e56"
+    },
+    {
+      "path": "examples/minimal/capstone/task-card.md",
+      "bytes": 844,
+      "sha256": "bddeef68270d27b5ed45fe529afd8e6fd70007efc2a145c01c6a34f04825becd"
+    },
+    {
+      "path": "examples/minimal/capstone/verify.mjs",
+      "bytes": 3213,
+      "sha256": "a719e28059b846e62d92a202ad2edf61108c165fed64c93ff9022987f7e02166"
+    },
+    {
+      "path": "examples/minimal/ch04-09/compare-rows.mjs",
+      "bytes": 1602,
+      "sha256": "9292829bcb69b843ad44eef9471a040a7c38d8b4787acb2cf230afdd26f0e2ef"
+    },
+    {
+      "path": "examples/minimal/ch04-09/create-table.mjs",
+      "bytes": 1781,
+      "sha256": "1ffc52cdfd15e2bfd783c5b73754e02a6996ccbb16f0a5bac23bbf640eacbd7a"
+    },
+    {
+      "path": "examples/minimal/ch04-09/find-notes.mjs",
+      "bytes": 1462,
+      "sha256": "3e1de65ffb8230ea0d5bf7a2226e623f812c3ba8e90adc14db7172afc8427190"
+    },
+    {
+      "path": "examples/minimal/ch04-09/reread-table.mjs",
+      "bytes": 1086,
+      "sha256": "c12671863a8e5238678f6169b148fafe43da7d323c48a1ff63e0ce286c5a38d8"
+    },
+    {
+      "path": "examples/minimal/ch04-09/validate-proposals.mjs",
+      "bytes": 1351,
+      "sha256": "784f3c43e681dc0e20e21f1bde982da11c0be87dba4abbcbb09a144fbdceb39f"
+    },
+    {
+      "path": "examples/minimal/ch05/model-loop.mjs",
+      "bytes": 10034,
+      "sha256": "64282ef99f9534ebb2f1c4ed4e38c8c763e88f2ae465e2901b1f917826baedcb"
+    },
+    {
+      "path": "examples/minimal/ch05/replay.json",
+      "bytes": 2603,
+      "sha256": "fa19828d67d3192e19863e6ad5bf0a46bbec82d1037120706acff4c65d82eced"
+    },
+    {
+      "path": "examples/minimal/ch05/sources/A.md",
+      "bytes": 204,
+      "sha256": "e7e386b752501f44629c27fcf6b841a581fdea522ccd3071e0ac52b04ec1e44e"
+    },
+    {
+      "path": "examples/minimal/ch05/sources/B-appendix.md",
+      "bytes": 313,
+      "sha256": "109c508695971b15a9ef72ebee15bef3037011d013317aef73e9a1261fae7484"
+    },
+    {
+      "path": "examples/minimal/ch05/sources/B.md",
+      "bytes": 237,
+      "sha256": "0d644eddae5fc0276341994cf4772ee7812b0e559af647c71e213c1927040e56"
+    },
+    {
+      "path": "examples/minimal/ch05/task-card.md",
+      "bytes": 547,
+      "sha256": "f7b21b4f8a8e2fffc18f3170c600f18d62fde64e49025fc30d06992d5e97e77a"
+    },
+    {
+      "path": "examples/minimal/ch05/test-protocol.mjs",
+      "bytes": 3326,
+      "sha256": "f874a9893e780bd2dd2682856e95e86ed54383bb028b608aa9b38eaed7528837"
+    },
+    {
+      "path": "examples/minimal/ch10-16/atlas-boundaries.mjs",
+      "bytes": 5786,
+      "sha256": "892873fc1f35651b78a7e5508f3c67a3c301616953b1395ec41a84d48ba5afd2"
+    },
+    {
+      "path": "examples/minimal/ch10-16/atlas-long-task.mjs",
+      "bytes": 6751,
+      "sha256": "5270f75cee31fe39646fd5b1ccce64ed75e8c10af87345a997cd41393710429c"
+    },
+    {
+      "path": "examples/minimal/ch17/evaluate-samples.mjs",
+      "bytes": 2387,
+      "sha256": "fe39f5e05f80f4006cf32dd2095a9a9d64bda0eead6f06a3622f5f482234f3b5"
+    },
+    {
+      "path": "examples/minimal/ch17/reports/A.md",
+      "bytes": 204,
+      "sha256": "e7e386b752501f44629c27fcf6b841a581fdea522ccd3071e0ac52b04ec1e44e"
+    },
+    {
+      "path": "examples/minimal/ch17/reports/B-appendix.md",
+      "bytes": 313,
+      "sha256": "109c508695971b15a9ef72ebee15bef3037011d013317aef73e9a1261fae7484"
+    },
+    {
+      "path": "examples/minimal/ch17/reports/B.md",
+      "bytes": 237,
+      "sha256": "0d644eddae5fc0276341994cf4772ee7812b0e559af647c71e213c1927040e56"
+    },
+    {
+      "path": "examples/minimal/ch17/reports/example-reviews.json",
+      "bytes": 603,
+      "sha256": "48ae6000fed0369d5426dd7d240c9aa3ad3ec677ff41709a4be761b5a5987ed4"
+    },
+    {
+      "path": "examples/minimal/ch17/reports/report-1.md",
+      "bytes": 244,
+      "sha256": "b81faea5cdb80d5a315aebdd2be72225fc18755b5af7e0311d55f94cf0653666"
+    },
+    {
+      "path": "examples/minimal/ch17/reports/report-2.md",
+      "bytes": 159,
+      "sha256": "77463f58a4793928602770329afa8480a93131d26f013ec948df6ecc9cc7186a"
+    },
+    {
+      "path": "examples/minimal/ch17/reports/report-3.md",
+      "bytes": 241,
+      "sha256": "1ff7eaffa44c4458f82fad608469b9ffcfc7ffba819b84e5154c4d2649527b0a"
+    },
+    {
+      "path": "examples/minimal/ch17/reports/task.md",
+      "bytes": 624,
+      "sha256": "fc177dc6fce246f46a9fd222c3e4798748cbaf5f464d3c1e15b18f851ba6700f"
+    },
+    {
+      "path": "examples/minimal/first-loop.mjs",
+      "bytes": 4384,
+      "sha256": "c2e4fe3d238fd095eee895f0dc06aa9d148ea51cab2267c56d06d1c9041679eb"
+    },
+    {
+      "path": "examples/portfolio-pair.mjs",
+      "bytes": 753,
+      "sha256": "17ac22cb5bdd4c68e2f20f4c344dbd84cbaa1f05a52a731ad1054c2c033849bc"
+    },
+    {
+      "path": "verify-files.mjs",
+      "bytes": 2025,
+      "sha256": "074b766c9b0763f1aa2a1f0df3bf3f0dbb126f9384f457910085e52f9c620606"
+    }
+  ],
+  "integrity_scope": "The manifest and SHA256SUMS do not include themselves. Verify the whole ZIP using the separately delivered SHA256."
+}
