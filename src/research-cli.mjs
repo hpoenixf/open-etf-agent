@@ -2,7 +2,7 @@ import {open,constants} from 'node:fs/promises';
 import {resolve,dirname,join} from 'node:path';
 import {pathToFileURL} from 'node:url';
 import {safeDirectory} from './storage-files.mjs';
-import {createResearchProject,updateResearchProject,inspectResearchProject,readProjectJson,submitResearchTask,workResearchTask,inspectResearchTask,cancelResearchTask,respondResearchTask,readResearchReport,applyProjectMemoryIntent,approveProjectMemoryIntent,listResearchInteractions,inspectResearchInteraction} from './research-project.mjs';
+import {createResearchProject,updateResearchProject,inspectResearchProject,readProjectJson,submitResearchTask,workResearchTask,inspectResearchTask,cancelResearchTask,respondResearchTask,readResearchOutput,applyProjectMemoryIntent,approveProjectMemoryIntent,listResearchInteractions,inspectResearchInteraction,inspectResearchChildren} from './research-project.mjs';
 import {importProjectSources,loadProjectSources} from './project-sources.mjs';
 import {openMemoryLibrary} from './memory.mjs';
 import {startReader} from './reader.mjs';
@@ -19,6 +19,7 @@ Usage: node src/research-cli.mjs <group> <command> [options]
       [--memory-intents JSON_FILE] [--task-time JSON_FILE] [--schedule JSON_FILE]
   run work --project DIR --run ID
   run inspect|cancel --project DIR --run ID
+  child list --project DIR --run ID
   interaction list --project DIR [--run ID] [--limit NUMBER] [--after CURSOR]
   interaction inspect --project DIR --run ID --question-id ID
   run respond --project DIR --run ID --question-id ID --response-id ID --text TEXT_FILE
@@ -46,6 +47,7 @@ for submit --memory-intents. Memory mutations require an explicit one-time inten
 All options are single-use. Unknown options and positional arguments are rejected.
 `;
 const specifications={
+ 'child list':['project','run'],
  'interaction list':['project','run?','limit?','after?'],
  'interaction inspect':['project','run','question-id'],
  'project update':['project','config','expected-config'],
@@ -82,6 +84,7 @@ export async function runResearchCli(args,{stdout=process.stdout,stderr=process.
  try{
   const parsed=parseResearchArguments(args);if(parsed.help){stdout.write(RESEARCH_HELP);return 0;}
   const {command,options:o}=parsed,projectDir=resolve(o.project),runId=o.run;
+  if(command==='child list'){emit(await inspectResearchChildren({projectDir,runId}));return 0;}
   if(command==='interaction list'){emit(await listResearchInteractions({projectDir,runId,limit:o.limit===undefined?50:integer(o.limit,1,50),after:o.after}));return 0;}
   if(command==='interaction inspect'){emit(await inspectResearchInteraction({projectDir,runId,questionId:o['question-id']}));return 0;}
   if(command==='project init'){emit(await createResearchProject({directory:projectDir,config:await readProjectJson(o.config)}));return 0;}
@@ -102,11 +105,11 @@ export async function runResearchCli(args,{stdout=process.stdout,stderr=process.
   if(command==='run inspect'){emit(taskResult(await inspectResearchTask({projectDir,runId})));return 0;}
   if(command==='run cancel'){await cancelResearchTask({projectDir,runId});emit(taskResult(await inspectResearchTask({projectDir,runId})));return 0;}
   if(command==='run respond'){emit(await respondResearchTask({projectDir,runId,questionId:o['question-id'],responseId:o['response-id'],text:await textFile(o.text,16000)}));return 0;}
-  if(command==='run report'||command==='report inspect'){emit(await readResearchReport({projectDir,runId}));return 0;}
+  if(command==='run report'||command==='report inspect'){emit(await readResearchOutput({projectDir,runId}));return 0;}
   if(command.endsWith(' serve')){
-   const port=o.port===undefined?0:integer(o.port,0,65535),report=await readResearchReport({projectDir,runId});
-   const reader=await startReader({directory:report.directory,port});
-   try{await new Promise(resolve=>{const stop=()=>{signals.off('SIGINT',stop);signals.off('SIGTERM',stop);resolve();};signals.on('SIGINT',stop);signals.on('SIGTERM',stop);emit({runId,origin:reader.origin,directory:report.directory,receipt:report.receipt});});}finally{await reader.close();}return 0;
+   const port=o.port===undefined?0:integer(o.port,0,65535),report=await readResearchOutput({projectDir,runId});
+   const reader=await startReader({directory:report.directory,port,...(['degraded-answer','published-answer'].includes(report.kind)?{readAnswer:()=>readResearchOutput({projectDir,runId})}:{})});
+   try{await new Promise(resolve=>{const stop=()=>{signals.off('SIGINT',stop);signals.off('SIGTERM',stop);resolve();};signals.on('SIGINT',stop);signals.on('SIGTERM',stop);emit({runId,origin:reader.origin,directory:report.directory,receipt:report.receipt,...(['degraded-answer','published-answer'].includes(report.kind)?{kind:report.kind,publicationStatus:report.publicationStatus}:{} )});});}finally{await reader.close();}return 0;
   }
   if(command==='memory inspect'){
    await inspectResearchProject({projectDir});const memory=await openMemoryLibrary({directory:join(projectDir,'memory'),writable:false});try{emit(o.entry?await memory.read(o.entry):{libraryId:memory.libraryId,entries:await memory.list()});}finally{await memory.close();}return 0;

@@ -7,6 +7,7 @@ export function decideRunControl(fact, context = {}) {
  if(fact.kind==='failure')return stop(fact.code || 'EXECUTION_FAILED');
  if(fact.kind==='group-refusal'){if(!fact.proved)return stop('TOOL_REJECTED');return context.corrections>=1?stop('CORRECTION_LIMIT'):{action:'continue',reason:'LOCAL_GROUP_CORRECTION'};}
  if(fact.kind==='tool-result'){
+  if(fact.answerProved && context.singleCall && !context.hooks && !context.partial && !context.unknown)return {action:'publish-answer',reason:'REPORT_CITATIONS_DEGRADED'};
   if(fact.succeeded)return {action:'continue',reason:'TOOL_SETTLED'};
   if(fact.correctionProved && context.singleCall && !context.hooks && !context.partial && !context.unknown){
    return context.corrections>=1?stop('CORRECTION_LIMIT'):{action:'continue',reason:'LOCAL_CORRECTION'};
@@ -15,14 +16,15 @@ export function decideRunControl(fact, context = {}) {
  }
  if(fact.kind==='sealed-final'){
   if(context.unknown)return stop('OUTCOME_UNKNOWN');
-  if(context.requireReport&&!fact.reportPresent)return stop('REPORT_REQUIRED');
+  if(context.requireReport&&!fact.reportPresent&&!fact.publicationCommitted)return stop('REPORT_REQUIRED');
   return {action:'finalize',reason:'SEALED_FINAL'};
  }
  if(fact.kind==='committed-notification')return {action:'continue',reason:'COMMIT_PRESERVED_NOTIFICATION_UNCONFIRMED'};
  if(fact.kind==='secondary-failure'){
   // An observed cleanup failure must never replace cancellation, unknown, or the
-  // original failure. Required integrity/cleanup still vetoes a proposed success.
-  return context.status==='completed'&&fact.required?stop(fact.code):{action:'continue',reason:'PRIMARY_CAUSE_PRESERVED'};
+  // original failure. Required readback still gates nonpublished/Child outcomes,
+  // but cannot retract a Root answer already committed by Publication.
+  return context.status==='completed'&&fact.required&&!context.publicationCommitted?stop(fact.code):{action:'continue',reason:'PRIMARY_CAUSE_PRESERVED'};
  }
  throw Object.assign(new Error('INVALID_CONTROL_FACT'),{code:'INVALID_CONTROL_FACT'});
 }

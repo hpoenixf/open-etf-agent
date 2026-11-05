@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "v022-final-package-free@1",
+  "node": "26.11.1",
+  "build": {
+    "command": "node scripts/build.mjs",
+    "exitCode": 0
+  },
+  "fullSuite": {
+    "command": "node --test --test-concurrency=1 test/*.test.mjs",
+    "tests": 927,
+    "passed": 927,
+    "failed": 0,
+    "skipped": 0,
+    "cancelled": 0,
+    "exitCode": 0,
+    "durationMs": 154962.155522,
+    "combinedBuildAndSuiteOutputSha256": "11c8eeb290e7d3816c259e56ed74c40758d18a2a23826dadcc6397c9ed12a917"
+  },
+  "modelCalls": 0,
+  "runtimeSource": "v022-execution-inputs.safe.json",
+  "safetyScope": "Original runtime/source/Child authority, reservation/unknown boundaries, actual SIGKILL cold recovery, cancellation and publication regressions. Synthetic tests are not security certification.",
+  "historicalFailureRetained": "Earlier 925/926 aggregate remains separate; connection-lifetime fixture repair does not alter production Session.",
+  "articleMaintenance": {
+    "tests": 75,
+    "passed": 75,
+    "failed": 0,
+    "exitCode": 0,
+    "outputSha256": "74471246528f1d7a95d219cecc5e6e7706c8928fef2efa34973cada21e69c53b",
+    "priorFailedOutputRetainedSha256": "e3af9c8d76c7e06b864b359c1f1bc5faee2130b3fc3faae0ee1ee8ddda698e1e",
+    "originalFailure": "Historical v0.18 input receipt was checked against newer worktree bytes; fixed test now reads exact original Git commit and verifies tree blob plus SHA256. Checker and historical receipts unchanged."
+  }
+}

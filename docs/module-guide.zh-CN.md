@@ -262,6 +262,9 @@ node dist/src/session-cli.mjs publication-revisions --session runs/publication-d
 
 
 <a id="versions"></a>
+
+**v0.22 · 有界 Child 执行**：[用法](child-execution.zh-CN.md) · [分阶段 9/10 与 C06 独立补证](verification/v022-release.zh-CN.md)。保留原失败和历史 unknown，不称一次连续 10/10。
+
 <a id="完整版本演进"></a>
 ## 完整版本演进
 

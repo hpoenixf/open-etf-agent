@@ -1,3 +1,4 @@
+import {verifyReportDeliveryState,publicReportAssessment} from './report-assessment.mjs';
 import {INTERACTION_PROFILE, validateInteractionConfig, validateInteractionDefinition, validateInteractionCheckpoint, validateInteractionFacts, interactionResult, interactionAdoptionHash} from './human-interaction.mjs';
 import { validateControlObservations } from './run-control.mjs';
 import { SCHEDULE_PROFILE, prepareSchedule, validateScheduleReference, scheduleCanonical } from './schedule.mjs';
@@ -21,7 +22,7 @@ const SCHEMA_VERSION = 2;
 const MAX_JSON = 3 * 1048576;
 // Checkpoints may repeat report, proposal, answer and outcome bodies.
 const MAX_CHECKPOINT_JSON = 12 * 1048576;
-const MAX_PUBLICATION_JSON = 6 * PUBLICATION_TEXT_MAX_BYTES + 8192;
+const MAX_PUBLICATION_JSON = 6 * PUBLICATION_TEXT_MAX_BYTES + 393216;
 const phases = new Set(['ready', 'working-input', 'model-reserved', 'proposal-sealed', 'tool-dispatched', 'result-committed', 'result-consumed', 'terminal']);
 const fail = code => { throw Object.assign(new Error(code), { code }); };
 const object = value => value !== null && typeof value === 'object' && !Array.isArray(value);
@@ -381,6 +382,7 @@ export async function openSession({ directory, clock = Date.now, leaseMs = 1000,
  function commitPublication(row, proposed, expectedRevision) {
   publicationScope(row); if(protectedProfile&&!currentDependencies(row).length)fail('PROTECTED_DEPENDENCY_REQUIRED');const protectedOutput=protectedProfile?requiredReport(row):null;
   const prepared = validatePublication(proposed);
+  if(prepared.content.assessment)verifyReportDeliveryState(view(row),prepared);
   if (prepared.runId !== row.run_id || prepared.rootId !== row.root_id) fail('PUBLICATION_SCOPE_MISMATCH');
   const replacing = expectedRevision !== undefined;
   if (replacing && (!Number.isSafeInteger(expectedRevision) || expectedRevision < 1 || expectedRevision > 3)) fail('INVALID_PUBLICATION_REVISION');
@@ -389,7 +391,7 @@ export async function openSession({ directory, clock = Date.now, leaseMs = 1000,
   if (replacing && current.receipt.revision !== expectedRevision) fail('PUBLICATION_REVISION_MISMATCH');
   const binding = { definitionHash: digest(row.definition), hostHash: digest(canonical(parsed(row.snapshot, MAX_CHECKPOINT_JSON).host ?? null)),...(protectedOutput?{protectedOutputHash:digest(canonical(protectedOutput))}:{}) };
   const bindingHash = digest(canonical(binding));
-  if (current && current.content.text === prepared.content.text && current.receipt.bindingHash === bindingHash) return { receipt: structuredClone(current.receipt), idempotent: true };
+  if (current && current.receipt.payloadHash === prepared.payloadHash && current.receipt.bindingHash === bindingHash) return { receipt: structuredClone(current.receipt), idempotent: true };
   if (current && !replacing) fail('PUBLICATION_REPLACE_REQUIRED');
   if (current?.receipt.revision >= 3) fail('PUBLICATION_MODIFICATION_LIMIT');
   const receipt = validatePublicationReceipt({ schemaVersion: 'publication-receipt@1', runId: row.run_id, rootId: row.root_id, blockId: 'answer', revision: (current?.receipt.revision ?? 0) + 1, deliveryOrdinal: 1, payloadHash: prepared.payloadHash, bindingHash });
@@ -516,6 +518,7 @@ export async function openSession({ directory, clock = Date.now, leaseMs = 1000,
   directory, leaseMs, schemaVersion: scheduled ? 5 : protectedProfile ? 4 : interaction ? 6 : ordinary ? 3 : 2,
   create(input) { if(scheduled)fail('SCHEDULE_MATERIALIZATION_REQUIRED'); return transaction(() => insertRun(input)); },
   inspect(runId) { return transaction(() => view(getRun(runId))); },
+  readClaim(token) { return transaction(() => { if(!object(token)||!identifier(token.runId)||!identifier(token.owner)||!Number.isSafeInteger(token.fence)||token.fence<1)fail('INVALID_CLAIM'); return view(writer(token.runId,token.owner,token.fence)); }); },
   response(runId, questionId) {
    responseId(questionId);
    return transaction(()=>{const row=getRun(runId);const fact=interaction?interactionFacts(row).find(f=>f.questionId===questionId):responseFacts(row);if(!fact||fact.questionId!==questionId)fail('UNKNOWN_QUESTION');return structuredClone(fact);});
@@ -559,6 +562,7 @@ export async function openSession({ directory, clock = Date.now, leaseMs = 1000,
     return structuredClone(value);
    });
   },
+  listChildren(parentRunId) { return transaction(() => { getRun(parentRunId); const rows=db.prepare('SELECT * FROM runs WHERE parent_run_id=? ORDER BY created_at,run_id').all(parentRunId); if(rows.length>64)fail('CHILD_LIMIT'); return rows.map(view); }); },
   findChild(parentRunId, taskId) {
    if (!identifier(taskId)) fail('INVALID_TASK_ID');
    return transaction(() => {
@@ -637,6 +641,17 @@ export async function openSession({ directory, clock = Date.now, leaseMs = 1000,
       const prior=parsed(row.snapshot,MAX_CHECKPOINT_JSON),definition=parsed(row.definition,65536),call=prior.proposal?.calls?.[prior.cursor];
       if(snapshot.phase!=='result-committed'||prior.phase!=='proposal-sealed'||prior.cursor!==0||prior.proposal?.calls?.length!==1||call?.name!=='save_report'||canonical(snapshot.proposal)!==canonical(prior.proposal)||snapshot.cursor!==prior.cursor||proof.runId!==runId||proof.grantId!==definition.grantId||proof.requestHash!==createHash('sha256').update(canonical(call)).digest('hex')||canonical(proof.basis)!==canonical(prior.host?.results)||canonical(snapshot.host)!==canonical(prior.host)||prior.host?.saveAttempted!==false||prior.host?.receipt!==null||prior.inFlight||prior.gatewayOutcome!=='settled'||prior.unknownEffects?.length||prior.partialEffects?.length||snapshot.result.dispatched!==false||snapshot.result.callId!==call.id)fail('REFERENCE_CORRECTION_TRANSITION');
      }
+     if(snapshot.result?.deliveryAssessment){
+      const prior=parsed(row.snapshot,MAX_CHECKPOINT_JSON),call=prior.proposal?.calls?.[prior.cursor];
+      if(prior.phase!=='proposal-sealed'||prior.cursor!==0||prior.proposal?.calls?.length!==1||snapshot.phase!=='result-committed'||snapshot.cursor!==0||canonical(snapshot.proposal)!==canonical(prior.proposal)||canonical(snapshot.messages)!==canonical(prior.messages)||canonical(snapshot.host)!==canonical(prior.host)||snapshot.toolsDispatched!==prior.toolsDispatched||snapshot.rounds!==prior.rounds||canonical(snapshot.usedIds)!==canonical([...prior.usedIds,...(prior.usedIds.includes(call?.id)?[]:[call?.id])]))fail('REPORT_DELIVERY_TRANSITION');
+      const consumed={...snapshot,phase:'result-consumed',cursor:1,result:null,messages:[...snapshot.messages,{role:'tool',callId:call.id,result:snapshot.result}]};
+      verifyReportDeliveryState({...view(row),snapshot:consumed},{content:{text:call.arguments.text,assessment:publicReportAssessment(snapshot.result.deliveryAssessment,call.arguments.text)}});
+     }
+     const previous=parsed(row.snapshot,MAX_CHECKPOINT_JSON);
+     if(previous.result?.deliveryAssessment&&snapshot.phase==='result-consumed'){
+      if(canonical(snapshot.messages)!==canonical([...previous.messages,{role:'tool',callId:previous.result.callId,result:previous.result}])||canonical(snapshot.host)!==canonical(previous.host)||canonical(snapshot.proposal)!==canonical(previous.proposal))fail('REPORT_DELIVERY_TRANSITION');
+      const call=previous.proposal.calls[0];verifyReportDeliveryState({...view(row),snapshot},{content:{text:call.arguments.text,assessment:publicReportAssessment(previous.result.deliveryAssessment,call.arguments.text)}});
+     }
      db.prepare('UPDATE runs SET snapshot=? WHERE run_id=?').run(encoded, runId); return view(getRun(runId)); }); },
     askResponse(expected) {
      return transaction(()=>{
@@ -693,6 +708,6 @@ export async function openSession({ directory, clock = Date.now, leaseMs = 1000,
   },
   close() { if (!closed) { db.close(); closed = true; } }
  };
- if(readOnly)return Object.freeze({directory,schemaVersion:scheduled?5:protectedProfile?4:interaction?6:ordinary?3:2,readOnly:true,inspect:store.inspect,findChild:store.findChild,...(ordinary?{response:store.response,responseStatus:store.responseStatus,responseHistory:store.responseHistory}:{}),...(scheduled?{inspectSchedule:store.inspectSchedule,publication:store.publication,publicationRevisions:store.publicationRevisions,publicationEvent:store.publicationEvent}:{}),...(protectedProfile?{publication:store.publication,publicationRevisions:store.publicationRevisions,publicationEvent:store.publicationEvent,verifyProtectedQueryResult:store.verifyProtectedQueryResult,protectedOutput:store.protectedOutput,consumeProtectedSource:store.consumeProtectedSource,protectedDependencies:store.protectedDependencies,readProtectedOutput:store.readProtectedOutput,listProtectedOutputs:store.listProtectedOutputs}:{}),close:store.close});
+ if(readOnly)return Object.freeze({directory,schemaVersion:scheduled?5:protectedProfile?4:interaction?6:ordinary?3:2,readOnly:true,publication:store.publication,publicationRevisions:store.publicationRevisions,publicationEvent:store.publicationEvent,confirmPublication:store.confirmPublication,inspect:store.inspect,findChild:store.findChild,listChildren:store.listChildren,...(ordinary?{response:store.response,responseStatus:store.responseStatus,responseHistory:store.responseHistory}:{}),...(scheduled?{inspectSchedule:store.inspectSchedule,publication:store.publication,publicationRevisions:store.publicationRevisions,publicationEvent:store.publicationEvent}:{}),...(protectedProfile?{publication:store.publication,publicationRevisions:store.publicationRevisions,publicationEvent:store.publicationEvent,verifyProtectedQueryResult:store.verifyProtectedQueryResult,protectedOutput:store.protectedOutput,consumeProtectedSource:store.consumeProtectedSource,protectedDependencies:store.protectedDependencies,readProtectedOutput:store.readProtectedOutput,listProtectedOutputs:store.listProtectedOutputs}:{}),close:store.close});
  return Object.freeze(store);
 }

@@ -1,3 +1,4 @@
+import {validatePublicReportAssessment} from './report-assessment.mjs';
 import { createHash } from 'node:crypto';
 
 // Text-only adaptation of the original Publication contract. Not an Artifact receipt.
@@ -14,14 +15,14 @@ function fields(value, names, code = 'INVALID_PUBLICATION') {
 }
 function freeze(value) { for (const child of Object.values(value)) if (object(child)) freeze(child); return Object.freeze(value); }
 export function preparePublication(input) {
- fields(input, ['runId', 'rootId', 'text']);
+ fields(input, ['runId', 'rootId', 'text',...(input.assessment===undefined?[]:['assessment'])]);
  if (!id(input.runId) || !id(input.rootId) || typeof input.text !== 'string' || !input.text.trim() || Buffer.byteLength(input.text) > PUBLICATION_TEXT_MAX_BYTES || input.text.includes('\0') || Buffer.from(input.text).toString('utf8') !== input.text) fail('INVALID_PUBLICATION');
- const content = { type: 'text', text: input.text };
+ const content = { type: 'text', text: input.text,...(input.assessment===undefined?{}:{assessment:validatePublicReportAssessment(input.assessment,input.text)}) };
  return freeze({ schemaVersion: 'publication@1', runId: input.runId, rootId: input.rootId, blockId: 'answer', content, payloadHash: sha(JSON.stringify(content)) });
 }
 export function validatePublication(value) {
- fields(value, ['schemaVersion', 'runId', 'rootId', 'blockId', 'content', 'payloadHash']); fields(value.content, ['type', 'text']);
- const expected = preparePublication({ runId: value.runId, rootId: value.rootId, text: value.content.text });
+ fields(value, ['schemaVersion', 'runId', 'rootId', 'blockId', 'content', 'payloadHash']); fields(value.content, ['type', 'text',...(value.content.assessment===undefined?[]:['assessment'])]);
+ const expected = preparePublication({ runId: value.runId, rootId: value.rootId, text: value.content.text,...(value.content.assessment===undefined?{}:{assessment:value.content.assessment}) });
  if (value.schemaVersion !== expected.schemaVersion || value.blockId !== expected.blockId || value.content.type !== 'text' || value.payloadHash !== expected.payloadHash) fail('INVALID_PUBLICATION_IDENTITY');
  return expected;
 }
@@ -33,7 +34,7 @@ export function validatePublicationReceipt(value) {
 }
 export function committedPublicationEvent(value) {
  const receipt = validatePublicationReceipt(value.receipt);
- const prepared = preparePublication({ runId: receipt.runId, rootId: receipt.rootId, text: value.content?.text });
+ const prepared = preparePublication({ runId: receipt.runId, rootId: receipt.rootId, text: value.content?.text,...(value.content?.assessment===undefined?{}:{assessment:value.content.assessment}) });
  if (prepared.payloadHash !== receipt.payloadHash || value.content.type !== 'text') fail('PUBLICATION_IDENTITY_UNAVAILABLE');
  return { type: 'publication-committed', receipt: structuredClone(receipt), content: structuredClone(prepared.content) };
 }

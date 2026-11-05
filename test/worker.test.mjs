@@ -107,10 +107,10 @@ test('9.2 a stale original token cannot mutate or settle while the Worker holds 
   release(); const seen = await pending; assert.equal(seen.run.status, 'completed'); assert.equal(f.calls(), 1);
  } finally { release?.(); await pending?.catch(() => {}); f.store.close(); }
 });
-test('9.2 Worker observes later report failure without deleting Publication or presenting it as Run success', async () => {
+test('9.2 Worker observes committed answer success without inventing optional Report receipt', async () => {
  const f = await fixture(); try {
   const options = { ...f.options, requireReport: true }; await submit(options); const result = await work(options);
-  assert.equal(result.workerStatus, 'settled'); assert.equal(result.run.status, 'failed'); assert.equal(result.run.snapshot.code, 'REPORT_REQUIRED'); assert.ok(result.publication);
+  assert.equal(result.workerStatus, 'settled'); assert.equal(result.run.status, 'completed'); assert.equal(result.run.snapshot.code, null); assert.equal(result.run.snapshot.host.receipt,null); assert.ok(result.publication);
   assert.equal(f.store.confirmPublication(result.publication).content.text, 'Original bounded worker answer.');
  } finally { f.store.close(); }
 });

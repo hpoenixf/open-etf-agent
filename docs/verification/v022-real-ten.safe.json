@@ -1,0 +1,284 @@
+{
+  "schemaVersion": "v022-staged-real-ten@1",
+  "version": "0.22.0",
+  "executionIdentity": "68cc702cbeccf17f2013335b33fc1f4311a8c51cf9e4c934ad31d3d1a907a80d",
+  "executionEquivalence": "v022-execution-inputs.safe.json",
+  "realProviderApplicability": "supported",
+  "normalGate": {
+    "planned": 10,
+    "requiredSuccesses": 9,
+    "threshold": 0.9,
+    "taskIds": [
+      "C01",
+      "C02",
+      "C03",
+      "C04",
+      "C05",
+      "C06",
+      "C07",
+      "C08",
+      "C09",
+      "C10"
+    ],
+    "tasks": [
+      {
+        "id": "C01",
+        "status": "success",
+        "eligibleSuccess": true,
+        "realProvider": true,
+        "runtimeAccepted": true,
+        "workflowCompleted": true,
+        "deliveryReadback": true,
+        "onTime": true,
+        "unknownEffects": false,
+        "physicalRequests": 9,
+        "executionIdentity": "68cc702cbeccf17f2013335b33fc1f4311a8c51cf9e4c934ad31d3d1a907a80d",
+        "originalCaseSha256": "c3e3bd924d6e880d62aa943f21c46d52ecca2d7d965de7bbb1367da4cf067aea",
+        "originalFailureCode": null
+      },
+      {
+        "id": "C02",
+        "status": "success",
+        "eligibleSuccess": true,
+        "realProvider": true,
+        "runtimeAccepted": true,
+        "workflowCompleted": true,
+        "deliveryReadback": true,
+        "onTime": true,
+        "unknownEffects": false,
+        "physicalRequests": 9,
+        "executionIdentity": "68cc702cbeccf17f2013335b33fc1f4311a8c51cf9e4c934ad31d3d1a907a80d",
+        "originalCaseSha256": "ba56baece5729eb4fd1bbb518c71f6571ec123236a8a5ab7e6f9584c2990202c",
+        "originalFailureCode": null
+      },
+      {
+        "id": "C03",
+        "status": "success",
+        "eligibleSuccess": true,
+        "realProvider": true,
+        "runtimeAccepted": true,
+        "workflowCompleted": true,
+        "deliveryReadback": true,
+        "onTime": true,
+        "unknownEffects": false,
+        "physicalRequests": 9,
+        "executionIdentity": "68cc702cbeccf17f2013335b33fc1f4311a8c51cf9e4c934ad31d3d1a907a80d",
+        "originalCaseSha256": "f8d9d01590204b0d3f2993ee56540ef44a8960958a7f0f2e3d834081d2e1c806",
+        "originalFailureCode": null
+      },
+      {
+        "id": "C04",
+        "status": "success",
+        "eligibleSuccess": true,
+        "realProvider": true,
+        "runtimeAccepted": true,
+        "workflowCompleted": true,
+        "deliveryReadback": true,
+        "onTime": true,
+        "unknownEffects": false,
+        "physicalRequests": 12,
+        "executionIdentity": "68cc702cbeccf17f2013335b33fc1f4311a8c51cf9e4c934ad31d3d1a907a80d",
+        "originalCaseSha256": "dcfc5b4262e463c3b2bd78dab3482cb958b25d044610a3b3f74f8d5a26f3cd50",
+        "originalFailureCode": null
+      },
+      {
+        "id": "C05",
+        "status": "success",
+        "eligibleSuccess": true,
+        "realProvider": true,
+        "runtimeAccepted": true,
+        "workflowCompleted": true,
+        "deliveryReadback": true,
+        "onTime": true,
+        "unknownEffects": false,
+        "physicalRequests": 6,
+        "executionIdentity": "68cc702cbeccf17f2013335b33fc1f4311a8c51cf9e4c934ad31d3d1a907a80d",
+        "originalCaseSha256": "c3ddd4042a56c6606e44eb470f503a5f9268c5bd8654563cdbe389f646e954aa",
+        "originalFailureCode": null
+      },
+      {
+        "id": "C06",
+        "status": "failure",
+        "eligibleSuccess": false,
+        "realProvider": true,
+        "runtimeAccepted": true,
+        "workflowCompleted": true,
+        "deliveryReadback": false,
+        "onTime": null,
+        "unknownEffects": false,
+        "physicalRequests": 8,
+        "executionIdentity": "68cc702cbeccf17f2013335b33fc1f4311a8c51cf9e4c934ad31d3d1a907a80d",
+        "originalCaseSha256": "5923ed75b6449c21ea3a5831d2d1c3e4348e5463eb65232409dd49b7889c64b1",
+        "originalFailureCode": "HTTP_CSV_ACK_IDENTITY",
+        "applicationCompletionBasis": "Original Run terminal readback and independent C06 supplement; original harness terminal runtimeComplete/deliveryComplete booleans remain failed, not overwritten."
+      },
+      {
+        "id": "C07",
+        "status": "success",
+        "eligibleSuccess": true,
+        "realProvider": true,
+        "runtimeAccepted": true,
+        "workflowCompleted": true,
+        "deliveryReadback": true,
+        "onTime": true,
+        "unknownEffects": false,
+        "physicalRequests": 9,
+        "executionIdentity": "68cc702cbeccf17f2013335b33fc1f4311a8c51cf9e4c934ad31d3d1a907a80d",
+        "originalCaseSha256": "3848ef30db9f0bfae0424deebb8953cf5a7a535e3533de2ce0b262141aeda5f2",
+        "originalFailureCode": null
+      },
+      {
+        "id": "C08",
+        "status": "success",
+        "eligibleSuccess": true,
+        "realProvider": true,
+        "runtimeAccepted": true,
+        "workflowCompleted": true,
+        "deliveryReadback": true,
+        "onTime": true,
+        "unknownEffects": false,
+        "physicalRequests": 8,
+        "executionIdentity": "68cc702cbeccf17f2013335b33fc1f4311a8c51cf9e4c934ad31d3d1a907a80d",
+        "originalCaseSha256": "7fc0e8e68683523fd0df9fb4201cabd2cda4a784623caf588b8838417cbe1660",
+        "originalFailureCode": null
+      },
+      {
+        "id": "C09",
+        "status": "success",
+        "eligibleSuccess": true,
+        "realProvider": true,
+        "runtimeAccepted": true,
+        "workflowCompleted": true,
+        "deliveryReadback": true,
+        "onTime": true,
+        "unknownEffects": false,
+        "physicalRequests": 5,
+        "executionIdentity": "68cc702cbeccf17f2013335b33fc1f4311a8c51cf9e4c934ad31d3d1a907a80d",
+        "originalCaseSha256": "ba5ebd29c3406fe4c64632680cbe52b562726f5487e5a08d56828b8c0a06db36",
+        "originalFailureCode": null
+      },
+      {
+        "id": "C10",
+        "status": "success",
+        "eligibleSuccess": true,
+        "realProvider": true,
+        "runtimeAccepted": true,
+        "workflowCompleted": true,
+        "deliveryReadback": true,
+        "onTime": true,
+        "unknownEffects": false,
+        "physicalRequests": 6,
+        "executionIdentity": "68cc702cbeccf17f2013335b33fc1f4311a8c51cf9e4c934ad31d3d1a907a80d",
+        "originalCaseSha256": "c26c5574222a51f73c04c213e32a2a33ddfb8c1af93e6b6b614ed81ef0a16e3d",
+        "originalFailureCode": null
+      }
+    ],
+    "attempted": 10,
+    "notRun": 0,
+    "successes": 9,
+    "observedRate": 0.9
+  },
+  "separateSafetyGatePassed": true,
+  "safetyBasis": "Original reservation/source/budget/deadline guards, retained unknown holds, provider-free crash/isolation regressions, and independent original-owner reviews. This is not a security certification.",
+  "stagePolicy": {
+    "prospectivelyApprovedSameSourceStages": true,
+    "singleContinuousTenPassClaim": false,
+    "firstStageOriginalOutcomes": {
+      "success": 5,
+      "failure": 1,
+      "notRun": 4
+    },
+    "tailStageOriginalOutcomes": {
+      "success": 4,
+      "failure": 0,
+      "notRun": 0
+    },
+    "originalStatesUnchanged": true
+  },
+  "billing": {
+    "newPhysicalRequests": 81,
+    "observedGoZeroCharge": 81,
+    "newUnknown": 0,
+    "historicalUnknownLowerBoundRetained": 20,
+    "originalResponseBodiesRetained": false,
+    "scope": "Original full-body guard receipts and completed original admission tickets; no retroactive full-provider-body byte verification. No paid retries."
+  },
+  "c06Supplement": {
+    "originalFailureRetained": true,
+    "cause": "Measurement reader treated an explicit artifact-unavailable result as a missing artifact receipt. The original application had completed the report and a distinct rows CSV.",
+    "originalOwnerReadback": true,
+    "actualHttpReadback": true,
+    "reportBytes": 6244,
+    "csvBytes": 424,
+    "reportSha256": "ca86782b69ebb288ac0ad92f90f75e11614fe23641a0d07340eb09e38df70058",
+    "csvSha256": "396f223778be9537cc968c56b62a12f914be8178956c8aded75c8d0433c18b8e",
+    "applicableMechanismsIndependentlyVerified": 10,
+    "newModelCalls": 0,
+    "changesOriginalSuccessCount": false
+  },
+  "semanticReview": {
+    "coreSupportedCases": 10,
+    "perfectSemanticPassClaim": false,
+    "limitations": [
+      "C01: an aside overstates the absence of a service detail.",
+      "C02: a heading still says unresolved contradiction although the body preserves proposed versus approved scope.",
+      "C05: pending approval is described too cautiously instead of simply saying approval is pending.",
+      "C10: units are called an amount and one sentence attributes an opposing presupposition to the question."
+    ],
+    "scope": "Synthetic document reasoning, not financial advice or general model quality."
+  },
+  "provenance": [
+    {
+      "artifact": "plan.frozen.safe.json",
+      "sha256": "65a5dca7fd5d642ef9febf5c49b47841c5e7915be62660ca3d25ea7bfbbc62a7"
+    },
+    {
+      "artifact": "state.safe.json",
+      "sha256": "10a617d638b0daf82175061cd1b4657905bea8fa84078bd91e6a9e030b9b03ae"
+    },
+    {
+      "artifact": "process.safe.json",
+      "sha256": "a7815ae6f446861d7ab1137268cf36eff1e72cbd3982879d1f3a783bfdac6f01"
+    },
+    {
+      "artifact": "plan.frozen.safe.json",
+      "sha256": "3d2dbc478ab5ec52b0921761f741eb874f94f3c658edcfc6d3f14c120b0f56e3"
+    },
+    {
+      "artifact": "state.safe.json",
+      "sha256": "c95752b6475bc34ecf80e3bca99a849a71cfd778138d485da8d7e106184e3e9b"
+    },
+    {
+      "artifact": "process.safe.json",
+      "sha256": "05a97091ecd341da758a454b342e0b681ab06004b1f8e690c1fdbb51f9f7c4dd"
+    },
+    {
+      "artifact": "C06-HTTP-READBACK.safe.json",
+      "sha256": "a2f176c7c44045591bdbeba7a271286cd162f73b40589f5069f9b146a1ac74e1"
+    },
+    {
+      "artifact": "REVIEW-VERDICT.safe.json",
+      "sha256": "195320b4a839eb4f20966cd1a01021b83b16364fcfbd8508cf0f8f7f799e5f9a"
+    },
+    {
+      "artifact": "INDEPENDENT-STAGE-REVIEW.safe.json",
+      "sha256": "ff6c25126826b4a9dfc25c9d84a4518bf54900db9aa9a530411067af573283a1"
+    },
+    {
+      "artifact": "C06-MECHANISMS-SUPPLEMENT.safe.json",
+      "sha256": "a9932c303dd7aad7006ccc7f4a2a65f59fe2d083d050e3c3eacbdfca28914f4d"
+    },
+    {
+      "artifact": "INDEPENDENT-TAIL4-REVIEW.safe.json",
+      "sha256": "d32415141069d9e49f0c9c793127bae9440418c43a1f70b10f30f76ef296336a"
+    }
+  ],
+  "publicationStatus": "Final commit, remote CI and release are separate gates.",
+  "safetyEvidence": {
+    "finalPackageProviderFreeReceipt": "v022-provider-free.safe.json",
+    "independentOriginalOwnerReviewSha256": "a9932c303dd7aad7006ccc7f4a2a65f59fe2d083d050e3c3eacbdfca28914f4d",
+    "independentStagedReviewSha256": "ff6c25126826b4a9dfc25c9d84a4518bf54900db9aa9a530411067af573283a1",
+    "independentTailReviewSha256": "d32415141069d9e49f0c9c793127bae9440418c43a1f70b10f30f76ef296336a",
+    "finalPackageProviderFreeReceiptSha256": "333bc3aa9b3b5bacea4c8622ab1a11a7312d8c196fa06f9fa754316809bad5aa"
+  }
+}

@@ -10,7 +10,7 @@ const bindings={gateway:{mode:'fixture',provider:'local',protocol:'fixture@1',mo
 const call=(id,name,args)=>({kind:'calls',calls:[{id,name,arguments:args}]});
 async function fixture(mode='correct'){
  await mkdir('test-output',{recursive:true});const directory=await mkdtemp(resolve('test-output/reference-boundaries-'));let store=await openSession({directory}),calls=0,runId;
- const options={question:'Synthetic source and calculation report.',outputRoot:join(directory,'outputs'),requireReport:true,publication:true,limits:{maxRounds:8,maxTools:8,timeoutMs:30000},durable:{store,grantId:'boundary-reference-grant',bindings,onClaim:v=>{runId=v.runId;}},gateway:{mode:'fixture',async next({messages}){
+ const options={question:'Synthetic source and calculation report.',outputRoot:join(directory,'outputs'),requireReport:true,publication:false,limits:{maxRounds:8,maxTools:8,timeoutMs:30000},durable:{store,grantId:'boundary-reference-grant',bindings:{...bindings,adapters:[]},onClaim:v=>{runId=v.runId;}},gateway:{mode:'fixture',async next({messages}){
   calls++;if(calls===1)return call('read','read_page',{documentId:'atlas-a',page:1});
   const source=messages.find(m=>m.callId==='read').result.value.sourceId;
   for(const m of messages)if(m.result?.validation){assert.equal(m.result.validation.basis,undefined,'private basis must not enter model projection');assert.equal(m.result.validation.basisHash,undefined);}

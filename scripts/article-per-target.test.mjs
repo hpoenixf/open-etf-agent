@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
+import { execFileSync } from 'node:child_process';
 import { validateManifest, validateQualifications, validateVersions, validateScenarioReceipt, validateReceipt, legacyManifest, renderTable, articleSlices, metadataFailure, verifyScenarioInput } from './check-article-coverage.mjs';
 import { validateContract, verifyScenarioSnapshot, verifyArticles, verifyRealTenFiles, validateRealTenSafety } from './check-article-backlinks.mjs';
 const load=async path=>JSON.parse(await readFile(new URL('../'+path,import.meta.url),'utf8'));
@@ -136,8 +137,10 @@ test('real-ten coverage: published reports, separate safety and historical recei
 });
 test('real-ten coverage: fixed source bytes require both receipt SHA256 and actual Git blob',async()=>{
  const evidence=realTen['schedule-occurrence'];
- for(const input of evidence.inputFiles){const bytes=await readFile(new URL('../'+input.path,import.meta.url));verifyScenarioInput(bytes,input,input.gitBlob);}
- const input=evidence.inputFiles.find(f=>f.path==='src/schedule.mjs'),bytes=await readFile(new URL('../'+input.path,import.meta.url));
+ const fixed=m.qualifications['schedule-occurrence'].commit,cwd=new URL('../',import.meta.url);
+ const fixedBytes=input=>{const actual=execFileSync('git',['rev-parse',`${fixed}:${input.path}`],{cwd,encoding:'utf8'}).trim();assert.equal(actual,input.gitBlob);return execFileSync('git',['show',`${fixed}:${input.path}`],{cwd});};
+ for(const input of evidence.inputFiles){const bytes=fixedBytes(input);verifyScenarioInput(bytes,input,input.gitBlob);}
+ const input=evidence.inputFiles.find(f=>f.path==='src/schedule.mjs'),bytes=fixedBytes(input);
  assert.throws(()=>verifyScenarioInput(bytes,{...input,gitBlob:'a'.repeat(40)},input.gitBlob),/Git blob/);
  assert.throws(()=>verifyScenarioInput(bytes,{...input,sha256:'a'.repeat(64)},input.gitBlob),/input hash/);
  assert.throws(()=>verifyScenarioInput(Buffer.concat([bytes,Buffer.from(' ')]),input,input.gitBlob),/Git blob/);

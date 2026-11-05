@@ -265,6 +265,9 @@ This is a real local SQLite/process flow with synthetic replies and no model cal
 
 
 <a id="versions"></a>
+
+**v0.22 · Bounded Child execution**: [Usage](child-execution.md) · [Staged 9/10 with independent C06 supplement](verification/v022-release.md). Original failure and historical unknowns remain; this is not one continuous 10/10 batch.
+
 <a id="complete-version-history"></a>
 ## Complete version history
 

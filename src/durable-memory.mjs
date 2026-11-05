@@ -81,7 +81,7 @@ export async function openDurableMemory({ directory, intents = [] } = {}) {
     return result;
   }
   const facade = { libraryId };
-  for (const method of ['list', 'search', 'read', 'state', 'save', 'revise', 'forget']) facade[method] = (...args) => operation(method, args);
+  for (const method of ['list', 'search', 'read', 'readOptional', 'verifyReadObservation', 'state', 'save', 'revise', 'forget']) facade[method] = (...args) => operation(method, args);
   Object.freeze(facade);
 
   async function state(ref) {

@@ -1,10 +1,20 @@
 import { validateSource } from './source.mjs';
 const fail = message => { throw new Error(message); };
-export function projectControlProofs(messages){const projected=structuredClone(messages);for(const m of projected)if(m.role==='tool'&&['builtin-report-reference-validation@1','specialist-group-refusal@1'].includes(m.result?.validation?.schemaVersion)){const v=m.result.validation;m.result.validation={schemaVersion:v.schemaVersion,code:v.code,repairable:v.repairable,requestHash:v.requestHash};}return projected;}
+const citationAdvice = 'The report text contains a numbered citation without an acquired source or registered calculation. Every literal numbered marker is checked, including examples and statements that a citation was not used. Remove or correct unsupported markers in text. Keep already-valid sourceIds unchanged: documentId is not sourceId; do not remove its version/page suffix or replace it with a resultRef. This explanation does not grant another attempt or change the Host correction limit.';
+export function projectControlProofs(messages){
+ const projected=structuredClone(messages);
+ for(const m of projected)if(m.role==='tool'&&['builtin-report-reference-validation@1','specialist-group-refusal@1'].includes(m.result?.validation?.schemaVersion)){
+  const v=m.result.validation;
+  // Model-facing explanation only. The persisted proof and its private basis
+  // remain unchanged; only the original Host/Runtime decides correction scope.
+  if(v.schemaVersion==='builtin-report-reference-validation@1'&&v.code==='REPORT_CITATION_OUT_OF_RANGE'&&v.repairable===true&&m.result.error===v.code&&m.callId===m.result.callId&&m.result.status==='rejected'&&m.result.dispatched===false)m.result.repairAdvice=citationAdvice;
+  m.result.validation={schemaVersion:v.schemaVersion,code:v.code,repairable:v.repairable,requestHash:v.requestHash};
+ }
+ return projected;
+}
 export async function projectContext({ messages, maxBytes, lookupSource } = {}) {
   if (!Array.isArray(messages) || !messages.length || messages[0].role!=='user' || !Number.isSafeInteger(maxBytes) || maxBytes<1 || maxBytes>1048576 || typeof lookupSource!=='function') fail('Invalid context budget/configuration');
-  const projected=structuredClone(messages);
-  for(const m of projected)if(m.role==='tool'&&['builtin-report-reference-validation@1','specialist-group-refusal@1'].includes(m.result?.validation?.schemaVersion)){const v=m.result.validation;m.result.validation={schemaVersion:v.schemaVersion,code:v.code,repairable:v.repairable,requestHash:v.requestHash};}
+  const projected=projectControlProofs(messages);
   const groups=[]; const used=new Set();
   for (let i=0;i<projected.length;i++) {
     const message=projected[i];

@@ -61,7 +61,9 @@ test('7.Memory settled save and revise remain verifiable after forget without re
   const reader = await openDurableMemory({ directory: dir });
   for (const receipt of [first, second, third]) assert.deepEqual(await reader.verifyReceipt(receipt), receipt);
   assert.deepEqual((await call(reader, 'memory_list', {})).entries, []);
-  await assert.rejects(call(reader, 'memory_read', { id: first.id }), /forgotten|unavailable/i);
+  const unavailable = await call(reader, 'memory_read', { id: first.id });
+  assert.equal(unavailable.kind, 'memory-unavailable'); assert.equal(unavailable.reason, 'forgotten'); assert.equal(unavailable.revision, 3); assert.equal(unavailable.id, first.id);
+  assert.equal(Object.hasOwn(unavailable, 'text'), false);
   await noLock(dir);
 });
 

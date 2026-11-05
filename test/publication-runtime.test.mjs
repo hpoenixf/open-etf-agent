@@ -30,11 +30,11 @@ test('8.2 missing or changed Publication binding refuses before a model request'
   assert.equal(f.calls(), 0);
  } finally { f.store.close(); }
 });
-test('8.2 committed body survives a later report-required failure without inventing report receipt', async () => {
+test('8.2 committed body completes without an optional Report receipt', async () => {
  const f = await fixture(); try {
-  const outcome = await run({ ...f.options, requireReport: true }); assert.equal(outcome.status, 'failed'); assert.equal(outcome.code, 'REPORT_REQUIRED'); assert.equal(outcome.receipt, null);
+  const outcome = await run({ ...f.options, requireReport: true }); assert.equal(outcome.status, 'completed'); assert.equal(outcome.code, null); assert.equal(outcome.receipt, null);
   assert.ok(outcome.publication); assert.equal(f.store.confirmPublication(outcome.publication).content.text, 'Original synthetic answer.');
-  assert.equal(f.store.inspect(outcome.runId).status, 'failed');
+  assert.equal(f.store.inspect(outcome.runId).status, 'completed');
  } finally { f.store.close(); }
 });
 test('8.2 committed notification failure cannot veto the original body or successful Run', async () => {

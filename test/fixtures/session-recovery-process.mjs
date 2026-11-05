@@ -8,7 +8,9 @@ if (mode === 'lock') {
 } else if (mode === 'spill') {
  const db = new DatabaseSync(directory + '/session.sqlite');
  db.exec('PRAGMA cache_size=1; PRAGMA synchronous=FULL; BEGIN IMMEDIATE; CREATE TABLE interrupted(payload BLOB); INSERT INTO interrupted VALUES(zeroblob(2097152))');
- process.send?.({ kind: 'spilled' }); setInterval(() => {}, 1000);
+ // Keep the uncommitted connection alive until the parent actually kills this
+ // fixture. An empty timer lets GC close SQLite and remove the journal early.
+ process.send?.({ kind: 'spilled' }); setInterval(() => { if (!db.isOpen) throw Error('Synthetic spill connection closed'); }, 1000);
 } else if (mode === 'open') {
  process.send?.({ kind: 'ready' });
  process.once('message', async () => {

@@ -34,7 +34,29 @@ export async function openMemoryLibrary({directory,writable=false}={}){
   const ready=()=>{if(closed||closing)fail('Memory library closed');};
   async function current(){await safeDirectory(directory);const latest=validateIndex(await readJSON(join(directory,'memory-index.json')));if(latest.libraryId!==libraryId)fail('Memory library identity changed');return latest;}
   async function metadata(id){if(!idPattern.test(id))fail('Invalid Memory entry id');return(await current()).entries.find(item=>item.id===id);}
-  async function read(id){ready();const item=await metadata(id);if(!item?.active)fail('Memory entry forgotten or unavailable');const path=await safeDirectory(join(directory,'entries',id));const record=await readJSON(join(path,item.revision+'.json'),16384);if(sha256(JSON.stringify(record))!==item.recordHash||record.kind!=='memory-entry'||record.libraryId!==libraryId||record.id!==id||record.revision!==item.revision||record.sha256!==item.sha256||sha256(record.text)!==item.sha256)fail('Corrupt Memory record identity');return record;}
+  async function readActive(id,item){const path=await safeDirectory(join(directory,'entries',id));const record=await readJSON(join(path,item.revision+'.json'),16384);if(sha256(JSON.stringify(record))!==item.recordHash||record.kind!=='memory-entry'||record.libraryId!==libraryId||record.id!==id||record.revision!==item.revision||record.sha256!==item.sha256||sha256(record.text)!==item.sha256)fail('Corrupt Memory record identity');return record;}
+  async function read(id){ready();const item=await metadata(id);if(!item?.active)fail('Memory entry forgotten or unavailable');return readActive(id,item);}
+  async function unavailable(id,item){
+    // A tombstone is a positive owner fact, not a caught read or integrity error.
+    if(item){const path=await safeDirectory(join(directory,'entries',id));const record=await readJSON(join(path,item.revision+'.json'),16384);if(item.active!==false||item.sha256!==null||record.kind!=='memory-tombstone'||record.libraryId!==libraryId||record.id!==id||record.revision!==item.revision||Object.hasOwn(record,'text')||sha256(JSON.stringify(record))!==item.recordHash)fail('Corrupt Memory tombstone identity');}
+    return {kind:'memory-unavailable',libraryId,id,revision:item?.revision??0,reason:item?'forgotten':'not-found',recordHash:item?.recordHash??null};
+  }
+  async function readOptional(id){ready();const item=await metadata(id);return item?.active?readActive(id,item):unavailable(id,item);}
+  async function verifyReadObservation(value,id){
+    ready();if(!idPattern.test(id)||!value||typeof value!=='object'||Array.isArray(value)||value.libraryId!==libraryId||value.id!==id)fail('Invalid Memory read observation');
+    const item=await metadata(id);
+    if(value.kind==='memory-entry'){
+      // Verify original immutable bytes, including an old acknowledged entry.
+      // Forgetting still removes its text from the future working projection.
+      if(Object.keys(value).sort().join(',')!=='id,kind,libraryId,provenance,revision,sha256,text'||!item||!Number.isSafeInteger(value.revision)||value.revision<1||value.revision>item.revision||typeof value.text!=='string'||!value.text.trim()||Buffer.byteLength(value.text)>8000||sha256(value.text)!==value.sha256||!value.provenance||Object.keys(value.provenance).sort().join(',')!=='intentId,operation,origin'||!['save','revise'].includes(value.provenance.operation)||!['intentId','origin'].every(k=>typeof value.provenance[k]==='string'&&/^[A-Za-z0-9_-]{1,100}$/.test(value.provenance[k])))fail('Invalid Memory entry observation');
+      const path=await safeDirectory(join(directory,'entries',id)),record=await readJSON(join(path,value.revision+'.json'),16384);
+      if(JSON.stringify(record)!==JSON.stringify(value)||value.revision===item.revision&&(!item.active||sha256(JSON.stringify(record))!==item.recordHash||value.sha256!==item.sha256))fail('Memory entry observation mismatch');
+      if(!item.active)await unavailable(id,item);return true;
+    }
+    if(Object.keys(value).sort().join(',')!=='id,kind,libraryId,reason,recordHash,revision'||value.kind!=='memory-unavailable')fail('Invalid Memory unavailable observation');
+    if(item?.active)fail('Memory unavailable observation changed');const expected=await unavailable(id,item);
+    if(Object.keys(expected).some(key=>value[key]!==expected[key]))fail('Memory unavailable observation mismatch');return true;
+  }
   function mutate(operation,id,expectedRevision,value,options={}){
     ready();if(!writable)fail('Memory library is read only');const signal=options.signal;signal?.throwIfAborted();const intent=structuredClone(options.intent);const text=operation==='forget'?undefined:candidateText(value);
     const work=queue.then(async()=>{
@@ -56,7 +78,7 @@ export async function openMemoryLibrary({directory,writable=false}={}){
   return Object.freeze({libraryId,
     async list(){ready();return(await current()).entries.filter(item=>item.active).map(({recordHash,...item})=>({libraryId,...item}));},
     async search(query){ready();if(typeof query!=='string'||!query.trim()||query.length>256)fail('Invalid Memory search');const active=(await current()).entries.filter(item=>item.active);const results=[];for(const item of active){const value=await read(item.id);if(value.text.toLowerCase().includes(query.toLowerCase()))results.push(value);}return results;},
-    read,async state(id){ready();const item=await metadata(id);return item?{libraryId,...item}:{libraryId,id,active:false,revision:0,sha256:null};},
+    read,readOptional,verifyReadObservation,async state(id){ready();const item=await metadata(id);return item?{libraryId,...item}:{libraryId,id,active:false,revision:0,sha256:null};},
     save:async(value,options)=>mutate('save',null,null,value,options),revise:async(id,revision,value,options)=>mutate('revise',id,revision,value,options),forget:async(id,revision,options)=>mutate('forget',id,revision,null,options),
     async close(){if(closed)return;closing=true;await queue;await release();closed=true;}
   });

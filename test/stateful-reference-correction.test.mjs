@@ -1,8 +1,8 @@
 import test from 'node:test';import assert from 'node:assert/strict';import{mkdir,mkdtemp,rm}from'node:fs/promises';import{resolve,join}from'node:path';import{run}from'../src/runtime.mjs';import{openSession}from'../src/session.mjs';
-const bindings={gateway:{mode:'fixture',provider:'local',protocol:'fixture@1',model:'reference',version:'1'},plugins:[],adapters:[{id:'publication',version:'publication@1'}]};
-for(const mode of ['typed-ref','numbered-citation'])test('Result owner anchored '+mode+' rejection corrects once and cold reads original fact',async()=>{
+const bindings={gateway:{mode:'fixture',provider:'local',protocol:'fixture@1',model:'reference',version:'1'},plugins:[],adapters:[]};
+for(const mode of ['typed-ref','numbered-citation'])test('Non-Publication Result owner anchored '+mode+' rejection corrects once and cold reads original fact',async()=>{
  await mkdir('test-output',{recursive:true});const directory=await mkdtemp(resolve('test-output/reference-proof-'));let store=await openSession({directory}),calls=0,source,ref;
- const options={question:'Use original sources.',outputRoot:join(directory,'outputs'),requireReport:true,publication:true,limits:{maxRounds:6,maxTools:6,timeoutMs:30000},durable:{store,grantId:'reference-grant',bindings},gateway:{mode:'fixture',async next({messages}){
+ const options={question:'Use original sources.',outputRoot:join(directory,'outputs'),requireReport:true,publication:false,limits:{maxRounds:6,maxTools:6,timeoutMs:30000},durable:{store,grantId:'reference-grant',bindings},gateway:{mode:'fixture',async next({messages}){
  calls++;
  if(calls===1)return{kind:'calls',calls:[{id:'read',name:'read_page',arguments:{documentId:'atlas-a',page:1}}]};
  const read=messages.find(m=>m.callId==='read').result.value;source=read.sourceId;ref=read.resultRef;

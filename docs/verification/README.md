@@ -2,6 +2,10 @@
 
 # Verification evidence index
 
+## v0.22 bounded Child execution
+
+[Staged 9/10, original C06 failure and independent supplement, 927/927, scope](v022-release.md).
+
 <a id="v021-ordinary-human-interaction-candidate"></a>
 ## v0.21 ordinary Human Interaction
 

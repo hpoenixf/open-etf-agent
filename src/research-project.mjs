@@ -1,3 +1,4 @@
+import {normalizeChildExecution,childExecutionBinding,createChildExecutionBinding,inspectChildExecutions} from './child-execution.mjs';
 import {readdir} from 'node:fs/promises';
 import {INTERACTION_PROFILE, INTERACTION_BINDING, validateInteractionConfig} from './human-interaction.mjs';
 import {open,constants,rename,unlink,lstat} from 'node:fs/promises';
@@ -34,7 +35,7 @@ const keys=(v,allowed)=>{if(!object(v)||Object.keys(v).some(k=>!allowed.includes
 const integer=(v,min,max)=>Number.isSafeInteger(v)&&v>=min&&v<=max;
 const CAPABILITIES=['report','calculation','csv','memory','child','pdf','response','schedule','compaction','task-time','trusted-tools'];
 export function validateResearchConfig(input){
- keys(input,['schemaVersion','gateway','capabilities','allowedTools','childMethod','compaction','limits','timeZone','trustedPackages','interaction']);
+ keys(input,['schemaVersion','gateway','capabilities','allowedTools','childMethod','compaction','limits','timeZone','trustedPackages','interaction','childExecution']);
  if(input.schemaVersion!=='research-project@1')fail('PROJECT_CONFIG_VERSION');
  keys(input.gateway,['mode','provider','protocol','model','endpoint','apiKeyEnv','stream']);
  const g=input.gateway;if(!['live','fixture'].includes(g.mode)||typeof g.provider!=='string'||!g.provider||typeof g.model!=='string'||!g.model||g.protocol!==(g.mode==='live'?'chat-completions':'fixture@1'))fail('PROJECT_GATEWAY_CONFIG');
@@ -45,6 +46,7 @@ export function validateResearchConfig(input){
  const caps=input.capabilities;if(caps.includes('response')&&caps.includes('schedule'))fail('PROJECT_RESPONSE_SCHEDULE_UNSUPPORTED');
  if(caps.includes('response')&&caps.includes('child'))fail('PROJECT_RESPONSE_CHILD_UNSUPPORTED');
  if(caps.includes('schedule')&&caps.includes('child'))fail('PROJECT_SCHEDULE_CHILD_UNSUPPORTED');
+ if(input.childExecution!==undefined){if(!caps.includes('child'))fail('PROJECT_CHILD_REQUIRED');if(input.childMethod!==undefined)fail('PROJECT_CHILD_CONFIG_CONFLICT');normalizeChildExecution(input.childExecution);}
  if(input.childMethod!==undefined){if(!caps.includes('child'))fail('PROJECT_CHILD_REQUIRED');normalizeChildMethod(input.childMethod);}
  if(input.allowedTools!==undefined&&(!Array.isArray(input.allowedTools)||!input.allowedTools.length||new Set(input.allowedTools).size!==input.allowedTools.length||input.allowedTools.some(t=>typeof t!=='string'||!/^[_a-z][_a-z0-9]{0,63}$/.test(t))))fail('PROJECT_TOOL_ALLOWLIST');
  const limits={maxRounds:20,maxTools:32,timeoutMs:300000,model:24,tool:40,...input.limits};keys(limits,['maxRounds','maxTools','timeoutMs','model','tool']);
@@ -99,11 +101,15 @@ async function assemble(projectDir,definition,{gateway,apiKey,fetchImpl,hostSign
   if(caps.includes('memory')){const memory=await openDurableMemory({directory:p.memory,intents:definition.memoryIntents??[]});if(memory.libraryId!==definition.memoryLibraryId)fail('PROJECT_MEMORY_CHANGED');const writes=(definition.memoryIntents??[]).length>0;extensions.push(...memory.extensions.filter(t=>writes||!t.memoryEffect));adapters.push({id:'durable-memory',version:'1',contentSha256:memory.intentDigest});workingInput={memoryLibrary:memory};}
   if(caps.includes('compaction'))workingInput={...workingInput,compaction:{mode:'gateway',thresholdBytes:16000,summaryTimeoutMs:10000,maxSummaryRounds:4,...config.compaction}};
   let claim;const originalQuestion=questionFor(definition.question,sources);if(Buffer.byteLength(originalQuestion)>16000)fail('PROJECT_TASK_INPUT');
-  if(caps.includes('child')){const childDocuments=sources.catalog?.documents.map(d=>d.id)??[];if(!childDocuments.length||childDocuments.length>2)fail('PROJECT_CHILD_DOCUMENT_SCOPE');const selected={question:originalQuestion,documents:childDocuments,documentCatalog:sources.catalog,...(config.childMethod?{method:config.childMethod}:{})};adapters.push(sourceCheckBinding(selected));extensions.push(createSpecialistChildBinding({store,parentRunId:runId,parentClaim:()=>claim,...selected,gatewayFactory:()=>wrapped,outputRoot:p.runs}));}
+  if(caps.includes('child')){const childDocuments=sources.catalog?.documents.map(d=>d.id)??[];if(!childDocuments.length||childDocuments.length>(config.childExecution?64:2))fail('PROJECT_CHILD_DOCUMENT_SCOPE');
+   const selected={question:originalQuestion,documents:childDocuments,documentCatalog:sources.catalog,...(config.childExecution?{execution:config.childExecution}:config.childMethod?{method:config.childMethod}:{})};
+   adapters.push(config.childExecution?childExecutionBinding(selected):sourceCheckBinding(selected));
+   extensions.push((config.childExecution?createChildExecutionBinding:createSpecialistChildBinding)({store,parentRunId:runId,parentClaim:()=>claim,...selected,gatewayFactory:()=>wrapped,outputRoot:p.runs,...(config.childExecution?{onCheckpoint}:{})}));
+  }
   const available=['read_result','save_report',...(caps.includes('compaction')?['read_note']:[]),...(sources.catalog?['read_page']:[]),...(sources.pdfSnapshot?['read_pdf_page']:[]),...(caps.includes('calculation')?['calculate_change']:[]),...(caps.includes('csv')?['create_csv']:[]),...(caps.includes('response')?['ask_response']:[]),...extensions.map(t=>t.name)];
   const inspected=await inspectTrustedPlugins({plugins,signal});available.push(...inspected.extensions.map(t=>t.name));
   const allowedTools=config.allowedTools??available;if(allowedTools.some(t=>!available.includes(t))||!allowedTools.includes('save_report'))fail('PROJECT_UNAVAILABLE_TOOL');
-  if(caps.includes('child')&&(config.childMethod?normalizeChildMethod(config.childMethod).allowedTools:['read_page']).some(t=>!allowedTools.includes(t)))fail('PROJECT_CHILD_TOOL_SCOPE');
+  if(caps.includes('child')&&(config.childExecution?normalizeChildExecution(config.childExecution).methods.flatMap(m=>m.allowedTools):config.childMethod?normalizeChildMethod(config.childMethod).allowedTools:['read_page']).some(t=>!allowedTools.includes(t)))fail('PROJECT_CHILD_TOOL_SCOPE');
   const limits=config.limits;const options={question:originalQuestion,documentCatalog:sources.catalog??undefined,pdfInput:sources.pdfSnapshot?{snapshot:sources.pdfSnapshot}:undefined,allowedDocuments:documents,allowedTools,publication:true,requireReport:true,ordinaryResponse:caps.includes('response'),...(config.interaction?{interaction:config.interaction}:{}),extensions,plugins,workingInput,taskTime:definition.taskTime?{anchorInstant:definition.taskTime.anchorInstant,timeZone:definition.taskTime.timeZone}:undefined,contextBytes:32000,gateway:wrapped,outputRoot:p.runs,limits:{maxRounds:limits.maxRounds,maxTools:limits.maxTools,timeoutMs:limits.timeoutMs},hostSignal,signal,durable:{store,runId,grantId:definition.grantId,rootLimits:{model:limits.model,tool:limits.tool},bindings:{gateway:gatewayBinding(config),plugins:inspected.bindings,adapters},onClaim:v=>{claim=v;},onCheckpoint}};
   return{options,store,sources,runId,close:async()=>{for(const close of closers.reverse())await close();admission.close();store.close();}};
  }catch(error){admission?.close();store.close();throw error;}
@@ -153,3 +159,24 @@ export async function listResearchInteractions({projectDir,runId,limit=50,after}
  rows.sort((a,b)=>a.key<b.key?-1:a.key>b.key?1:0);const selected=rows.filter(r=>after===undefined||r.key>after);return {items:selected.slice(0,limit),nextAfter:selected.length>limit?selected[limit-1].key:null,warnings};
 }
 export async function inspectResearchInteraction({projectDir,runId,questionId}){const d=await readTask(projectDir,runId);if(!d.config.capabilities.includes('response'))fail('PROJECT_RESPONSE_NOT_ENABLED');const store=await openSession({directory:paths(projectDir,runId).session,profile:profile(d.config),readOnly:true});try{const history=store.responseHistory(runId),fact=history.find(f=>f.questionId===questionId);if(!fact)fail('UNKNOWN_QUESTION');return fact;}finally{store.close();}}
+
+// Selected original task only: bounded Session rows, no scanning or model calls.
+export async function inspectResearchChildren({projectDir,runId}){
+ const d=await readTask(projectDir,runId);if(!d.config.childExecution)fail('PROJECT_CHILD_EXECUTION_REQUIRED');
+ const sources=await loadProjectSources({projectDir,manifestSha256:d.sourceManifestSha256}),store=await openSession({directory:paths(projectDir,runId).session,readOnly:true});
+ try{return await inspectChildExecutions({store,parentRunId:runId,question:questionFor(d.question,sources),documents:sources.catalog.documents.map(doc=>doc.id),documentCatalog:sources.catalog,execution:d.config.childExecution});}finally{store.close();}
+}
+
+// Publication owns delivered answer bytes. No failed proposal is a delivery.
+export async function readResearchOutput({projectDir,runId}){
+ const {definition,run}=await inspectResearchTask({projectDir,runId});
+ if(!run)return readResearchReport({projectDir,runId});
+ const store=await openSession({directory:paths(projectDir,runId).session,...(profile(definition.config)?{profile:profile(definition.config)}:{}),readOnly:true});
+ let publication;try{publication=store.publication(run.runId);if(publication)store.confirmPublication(publication.receipt);}finally{store.close();}
+ if(!publication)return {kind:'report',...await readResearchReport({projectDir,runId})};
+ let report=null,reportError=null;
+ if(run.snapshot.host?.receipt){try{report=await readResearchReport({projectDir,runId});}catch{reportError='REPORT_ARTIFACT_UNAVAILABLE';}}
+ if(report)return {kind:'report',...report,publicationStatus:'published',publication};
+ const assessment=publication.content.assessment;
+ return {kind:assessment?'degraded-answer':'published-answer',runId:run.runId,status:run.status,code:run.snapshot.code,directory:run.directory,receipt:null,revision:null,report:null,reportStatus:reportError?'unavailable':'not-created',...(reportError?{reportError}:{}),publicationStatus:'published',publication,answer:{text:publication.content.text,sha256:sha256(publication.content.text),bytes:Buffer.byteLength(publication.content.text),semanticStatus:'unreviewed',verification:'at-publication',...(assessment?{...assessment}:{citations:[],calculations:[],markers:[],warning:'回答已发布；Report 未提供。回答的金融数字、计算结论和语义未经核验。'})}};
+}
