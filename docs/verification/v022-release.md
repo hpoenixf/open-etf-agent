@@ -34,3 +34,7 @@ Supported compositions include original Main-side Memory, calculation/CSV, expli
 ## Supporting delivery behavior
 
 [Publication-first answers](../answer-view.md) explains the tested supporting adapters: original Publication can preserve an explicitly degraded citation-assessed answer without inventing a Report receipt; optional Memory absence and proven local Child capacity exhaustion can be local outcomes, while authority, unknown-effect and budget guards remain. [Final-package free receipt](v022-provider-free.safe.json). A release-only article test now reads its declared historical Git source, retaining the old failure and fixed historical hashes without changing product code.
+
+## Fixed public source
+
+[fed2c5f886200d4c04281c6293d5eb1ee7c2eab9](https://github.com/hpoenixf/open-etf-agent/tree/fed2c5f886200d4c04281c6293d5eb1ee7c2eab9), tree `b42e1b0dfa2d1c8a21248e654255d91524f11ba2`. 281 execution files match the tested input bytes; the sole historical article-maintenance test repair retains both original and release hashes. Production source, fixtures and Runtime tests are unchanged. Dependency versions are unchanged; package/lock root project versions alone advance to 0.22.0. Later metadata and tag commits are not new real-task executions.

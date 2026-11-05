@@ -280,5 +280,10 @@
     "independentStagedReviewSha256": "ff6c25126826b4a9dfc25c9d84a4518bf54900db9aa9a530411067af573283a1",
     "independentTailReviewSha256": "d32415141069d9e49f0c9c793127bae9440418c43a1f70b10f30f76ef296336a",
     "finalPackageProviderFreeReceiptSha256": "333bc3aa9b3b5bacea4c8622ab1a11a7312d8c196fa06f9fa754316809bad5aa"
+  },
+  "publicSource": {
+    "commit": "fed2c5f886200d4c04281c6293d5eb1ee7c2eab9",
+    "tree": "b42e1b0dfa2d1c8a21248e654255d91524f11ba2",
+    "scope": "Fixed public execution-equivalent source with release-only metadata and the declared historical maintenance-test repair. Final package tag and CI remain separate."
   }
 }

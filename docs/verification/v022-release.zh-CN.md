@@ -34,3 +34,7 @@
 ## 配套交付语义
 
 [Publication-first answers](../answer-view.md) 说明本版已测试的配套适配：原 Publication 可保留带明确降级引用评估的原答案，不伪造 Report 回执；可选 Memory 缺失与明确 Child 容量耗尽可作为局部结果继续，权限、未知副作用与预算边界不变。[最终包免费检查回执](v022-provider-free.safe.json)。文章维护测试另修正为读取其声明的历史 Git 源码，保留旧失败及固定历史哈希，不改变产品代码。
+
+## 固定公开源码
+
+[fed2c5f886200d4c04281c6293d5eb1ee7c2eab9](https://github.com/hpoenixf/open-etf-agent/tree/fed2c5f886200d4c04281c6293d5eb1ee7c2eab9), tree `b42e1b0dfa2d1c8a21248e654255d91524f11ba2`. 281 个执行文件与原测试输入逐字节一致；唯一文章维护测试修复同时保留原哈希和新哈希。生产源码、fixture 与 Runtime 测试未变。依赖版本未变，package/lock 仅根项目版本升为 0.22.0。后续元数据提交和发布标签不代表重新执行真实任务。

@@ -71,7 +71,7 @@ npm run demo -- --case document-compare
 <a id="versions"></a>
 ## Latest three modules
 
-**v0.22 adds bounded Child execution**: select admitted read-only methods and narrow sources, inspect original Child identity and safely continue the same execution. [Usage](docs/child-execution.md) · [Staged 9/10 and C06 supplement](docs/verification/v022-release.md). Same tested source, two approved stages; not one continuous 10/10 batch. Final-package CI and publication are separate.
+**v0.22 adds bounded Child execution**: select admitted read-only methods and narrow sources, inspect original Child identity and safely continue the same execution. [Usage](docs/child-execution.md) · [Staged 9/10 and C06 supplement](docs/verification/v022-release.md). Same tested source, two approved stages; not one continuous 10/10 batch. Final-package CI and publication are separate. [Fixed public source](https://github.com/hpoenixf/open-etf-agent/tree/fed2c5f886200d4c04281c6293d5eb1ee7c2eab9).
 
 **v0.21 adds ordinary multi-question interaction**: receive associated answers and resume the original Run through report readback, without creating new permission grants. [Usage](docs/human-interaction.md) · [Ten real tasks and limits](docs/verification/v021-release.md) · [Fixed public source](https://github.com/hpoenixf/open-etf-agent/tree/427315b5554b1c9af8fa50b8ab622747045e691a). Final-package CI and Release are verified separately.
 
