@@ -2,6 +2,7 @@
 
 《从对话到工作：研究型智能体的设计与实践》的配套只在本独立分支维护。
 
+- [参考文献（纸书编号与完整网址）](book-companion/references/README.md)
 - [R6.1 勘误配套：下载、修正说明与验证范围（推荐）](book-companion/agent-practice-r6-1/README.md)
 - [R6 历史配套](book-companion/agent-practice-r6/README.md)
 - [R5 历史配套](book-companion/agent-practice-r5/README.md)
