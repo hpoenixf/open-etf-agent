@@ -2,6 +2,12 @@
 
 # From v0.8 to v2.0: CLI first, one complete module at a time
 
+## 2026-11-05 execution order after v0.22
+
+The published baseline is v0.22 Child execution. The current **v0.23 candidate is Knowledge**, following the maintained relative module order rather than reviving the historical numeric table below. It connects admitted immutable text collections, bounded lexical retrieval, original source adoption and report/recovery readback; see [scope and gates](../../openspec/changes/v023-knowledge/proposal.md). It is not yet a real-model-qualified or published release.
+
+After v0.23 satisfies its applicable acceptance gates, **v0.24 is the separate Provider Admission package**. It must close physical-attempt capacity, queue/lease, cancellation, release/unknown quarantine and restart together. Further versions follow demonstrated module gaps; neither a version number nor a local test count substitutes for qualification. Current budget, unknown accounting and publication permissions remain independent gates.
+
 ## 2026-11-03 amendment: release at the original module boundary
 
 **This amendment governs future scope decisions.** The older numbered candidate tables below remain historical planning records, not an active allocation of new releases. Existing tags, delivered increments and the current v0.7–v0.18 requalification campaign are unchanged. Do not renumber them, repeat an already delivered increment under its old 1.x label, or interrupt their verification to implement this plan.

@@ -4,6 +4,7 @@ import {pathToFileURL} from 'node:url';
 import {safeDirectory} from './storage-files.mjs';
 import {createResearchProject,updateResearchProject,inspectResearchProject,readProjectJson,submitResearchTask,workResearchTask,inspectResearchTask,cancelResearchTask,respondResearchTask,readResearchOutput,applyProjectMemoryIntent,approveProjectMemoryIntent,listResearchInteractions,inspectResearchInteraction,inspectResearchChildren} from './research-project.mjs';
 import {importProjectSources,loadProjectSources} from './project-sources.mjs';
+import {inspectResearchKnowledge} from './research-project.mjs';
 import {openMemoryLibrary} from './memory.mjs';
 import {startReader} from './reader.mjs';
 const fail=code=>{throw Object.assign(new Error(code),{code});};
@@ -20,6 +21,7 @@ Usage: node src/research-cli.mjs <group> <command> [options]
   run work --project DIR --run ID
   run inspect|cancel --project DIR --run ID
   child list --project DIR --run ID
+  knowledge inspect --project DIR --run ID
   interaction list --project DIR [--run ID] [--limit NUMBER] [--after CURSOR]
   interaction inspect --project DIR --run ID --question-id ID
   run respond --project DIR --run ID --question-id ID --response-id ID --text TEXT_FILE
@@ -47,6 +49,7 @@ for submit --memory-intents. Memory mutations require an explicit one-time inten
 All options are single-use. Unknown options and positional arguments are rejected.
 `;
 const specifications={
+ 'knowledge inspect':['project','run'],
  'child list':['project','run'],
  'interaction list':['project','run?','limit?','after?'],
  'interaction inspect':['project','run','question-id'],
@@ -84,6 +87,7 @@ export async function runResearchCli(args,{stdout=process.stdout,stderr=process.
  try{
   const parsed=parseResearchArguments(args);if(parsed.help){stdout.write(RESEARCH_HELP);return 0;}
   const {command,options:o}=parsed,projectDir=resolve(o.project),runId=o.run;
+  if(command==='knowledge inspect'){emit(await inspectResearchKnowledge({projectDir,runId}));return 0;}
   if(command==='child list'){emit(await inspectResearchChildren({projectDir,runId}));return 0;}
   if(command==='interaction list'){emit(await listResearchInteractions({projectDir,runId,limit:o.limit===undefined?50:integer(o.limit,1,50),after:o.after}));return 0;}
   if(command==='interaction inspect'){emit(await inspectResearchInteraction({projectDir,runId,questionId:o['question-id']}));return 0;}

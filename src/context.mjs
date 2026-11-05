@@ -12,8 +12,9 @@ export function projectControlProofs(messages){
  }
  return projected;
 }
-export async function projectContext({ messages, maxBytes, lookupSource } = {}) {
+export async function projectContext({ messages, maxBytes, lookupSource, additionalBudget } = {}) {
   if (!Array.isArray(messages) || !messages.length || messages[0].role!=='user' || !Number.isSafeInteger(maxBytes) || maxBytes<1 || maxBytes>1048576 || typeof lookupSource!=='function') fail('Invalid context budget/configuration');
+  if(additionalBudget!==undefined&&(!Number.isSafeInteger(additionalBudget?.maxBytes)||additionalBudget.maxBytes<1||typeof additionalBudget.measure!=='function'))fail('Invalid encoded context budget');
   const projected=projectControlProofs(messages);
   const groups=[]; const used=new Set();
   for (let i=0;i<projected.length;i++) {
@@ -31,7 +32,8 @@ export async function projectContext({ messages, maxBytes, lookupSource } = {}) 
       groups.push(indices);
     } else if (!['user','assistant','system'].includes(message.role) || typeof message.content!=='string') fail('Invalid context message');
   }
-  const size=()=>Buffer.byteLength(JSON.stringify(projected)); if(size()<=maxBytes) return projected;
+  const fits=()=>{if(Buffer.byteLength(JSON.stringify(projected))>maxBytes)return false;if(!additionalBudget)return true;const size=additionalBudget.measure(projected);if(!Number.isSafeInteger(size)||size<0)fail('Invalid encoded context measurement');return size<=additionalBudget.maxBytes;};
+  if(fits()) return projected;
   async function replace(value) {
     if (!value || typeof value!=='object') return value;
     if (typeof value.sourceId==='string' && typeof value.text==='string' && typeof value.resultRef==='string' && /^result:sha256:[a-f0-9]{64}$/.test(value.resultRef)) {
@@ -45,7 +47,7 @@ export async function projectContext({ messages, maxBytes, lookupSource } = {}) 
   }
   for(const group of groups.slice(0,-1)) {
     for(const index of group) if(projected[index].result.status==='succeeded') projected[index].result.value=await replace(projected[index].result.value);
-    if(size()<=maxBytes) return projected;
+    if(fits()) return projected;
   }
   throw Object.assign(new Error('Context byte budget cannot retain mandatory original question/latest complete group'),{code:'CONTEXT_CAPACITY_EXCEEDED'});
 }

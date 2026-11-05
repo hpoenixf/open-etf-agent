@@ -66,10 +66,12 @@ export function createChatGateway({ endpoint, model, apiKey, authorization, stre
   const url = new URL(endpoint);
   if (url.protocol !== 'https:' || url.username || url.password || url.search || url.hash || !url.pathname.endsWith('/chat/completions')) throw new Error('Invalid trusted endpoint');
   if (typeof model !== 'string' || !model || typeof apiKey !== 'string' || !apiKey) throw new Error('Missing trusted provider configuration');
+  const encodeInput = ({messages,tools}) => JSON.stringify({ model, stream, ...(stream ? { stream_options: { include_usage: true } } : {}), n: 1, messages: encodeMessages(messages), tools: tools.map(t => ({ type: 'function', function: t })) });
   return {
     mode: 'live',
+    inputBudget: Object.freeze({maxBytes:maxInputBytes,measure:input=>Buffer.byteLength(encodeInput(input))}),
     async next({ messages, tools, signal }) {
-      const body = JSON.stringify({ model, stream, ...(stream ? { stream_options: { include_usage: true } } : {}), n: 1, messages: encodeMessages(messages), tools: tools.map(t => ({ type: 'function', function: t })) });
+      const body = encodeInput({messages,tools});
       if (Buffer.byteLength(body) > maxInputBytes) throw new Error('PROVIDER_INPUT_BYTE_LIMIT');
       const response = await fetchImpl(url, {
         method: 'POST', redirect: 'error', signal,

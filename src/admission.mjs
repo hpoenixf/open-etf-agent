@@ -100,6 +100,7 @@ export async function createSharedAdmission({ directory, routeId, maxQueue = 8, 
       if (typeof gateway?.next !== 'function' || typeof session?.inspect !== 'function') fail('INVALID_ADMISSION_GATEWAY');
       const bind = selectedRunId => ({
         mode: gateway.mode,
+        ...(gateway.inputBudget?{inputBudget:gateway.inputBudget}:{}),
         admission: 'shared-admission@1',
         // Rebind the same route/capacity owner only after Session created the Run.
         // A Child receives its own Runtime receipt; a parent's ticket is never reusable.

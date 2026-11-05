@@ -10,7 +10,7 @@ async function boundedSummary(summarize,input,parentSignal,timeoutMs){
   finally{clearTimeout(timer);parentSignal?.removeEventListener('abort',abort);if(stop)controller.signal.removeEventListener('abort',stop);}
 }
 const identityKeys=['sourceId','documentId','name','version','page','sha256','mediaType'];
-export async function compactWorkingView({messages,maxBytes,lookupSource,rootBudget,summarize,saveNote,signal,lookupMemoryState,canCompactHistory,summaryTimeoutMs=2000,reserveSummary,frontier,readNote,allowSummary=true}={}){
+export async function compactWorkingView({messages,maxBytes,lookupSource,rootBudget,summarize,saveNote,signal,lookupMemoryState,canCompactHistory,summaryTimeoutMs=2000,reserveSummary,frontier,readNote,allowSummary=true,summaryInputFits}={}){
   if(!Number.isSafeInteger(summaryTimeoutMs)||summaryTimeoutMs<1||summaryTimeoutMs>120000)throw new Error('Invalid summary timeout');
   if(typeof summarize!=='function'||typeof saveNote!=='function'||typeof rootBudget?.claim!=='function')throw new Error('Invalid compaction configuration');
   if(typeof allowSummary!=='boolean')throw new Error('Invalid summary allowance');
@@ -81,6 +81,7 @@ export async function compactWorkingView({messages,maxBytes,lookupSource,rootBud
   const minimum=view(noteFor('x'),provisional);
   if(bytes(minimum)>=bytes(baseline)||bytes(minimum)>maxBytes)return fallback('no-net-saving');
   const summaryInput={groups:structuredClone(eligible.map(group=>baseline.slice(group.start,group.end+1)))};let reservation;
+  if(summaryInputFits!==undefined){if(typeof summaryInputFits!=='function')throw new Error('Invalid summary input measurement');if(!summaryInputFits(summaryInput))return fallback('summary-input-capacity');}
   try{if(reserveSummary!==undefined){if(typeof reserveSummary!=='function')throw new Error('Invalid summary reservation');reservation=await reserveSummary(summaryInput);}else rootBudget.claim('model');}catch(error){if(error?.code!=='ROOT_BUDGET_EXHAUSTED'&&reserveSummary!==undefined)throw error;return fallback('budget-exhausted');}
   let text;
   try{text=await boundedSummary(summarize,{...summaryInput,...(reserveSummary?{reservation}:{})},signal,summaryTimeoutMs);}catch(error){return fallback(signal?.aborted?'cancelled':error?.code==='SUMMARY_TIMEOUT'?'summary-timeout':'summary-failed');}

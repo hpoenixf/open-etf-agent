@@ -1,4 +1,5 @@
 import {normalizeChildExecution,childExecutionBinding,createChildExecutionBinding,inspectChildExecutions} from './child-execution.mjs';
+import {normalizeKnowledgeConfig,createKnowledgeIndex,knowledgeBinding,createKnowledgeTool,KNOWLEDGE_CONTEXT_BYTES} from './knowledge.mjs';
 import {readdir} from 'node:fs/promises';
 import {INTERACTION_PROFILE, INTERACTION_BINDING, validateInteractionConfig} from './human-interaction.mjs';
 import {open,constants,rename,unlink,lstat} from 'node:fs/promises';
@@ -33,9 +34,9 @@ const id=v=>{if(typeof v!=='string'||!/^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$/.test(v)
 const hex=v=>typeof v==='string'&&/^[a-f0-9]{64}$/.test(v);
 const keys=(v,allowed)=>{if(!object(v)||Object.keys(v).some(k=>!allowed.includes(k)))fail('PROJECT_INVALID_FIELDS');};
 const integer=(v,min,max)=>Number.isSafeInteger(v)&&v>=min&&v<=max;
-const CAPABILITIES=['report','calculation','csv','memory','child','pdf','response','schedule','compaction','task-time','trusted-tools'];
+const CAPABILITIES=['report','calculation','csv','memory','child','pdf','response','schedule','compaction','task-time','trusted-tools','knowledge'];
 export function validateResearchConfig(input){
- keys(input,['schemaVersion','gateway','capabilities','allowedTools','childMethod','compaction','limits','timeZone','trustedPackages','interaction','childExecution']);
+ keys(input,['schemaVersion','gateway','capabilities','allowedTools','childMethod','compaction','limits','timeZone','trustedPackages','interaction','childExecution','knowledge']);
  if(input.schemaVersion!=='research-project@1')fail('PROJECT_CONFIG_VERSION');
  keys(input.gateway,['mode','provider','protocol','model','endpoint','apiKeyEnv','stream']);
  const g=input.gateway;if(!['live','fixture'].includes(g.mode)||typeof g.provider!=='string'||!g.provider||typeof g.model!=='string'||!g.model||g.protocol!==(g.mode==='live'?'chat-completions':'fixture@1'))fail('PROJECT_GATEWAY_CONFIG');
@@ -43,7 +44,9 @@ export function validateResearchConfig(input){
  if(g.stream!==undefined&&typeof g.stream!=='boolean')fail('PROJECT_GATEWAY_CONFIG');
  if(!Array.isArray(input.capabilities)||!input.capabilities.includes('report')||new Set(input.capabilities).size!==input.capabilities.length||input.capabilities.some(v=>!CAPABILITIES.includes(v)))fail('PROJECT_CAPABILITIES');
  if(input.interaction!==undefined){if(!input.capabilities.includes('response'))fail('PROJECT_RESPONSE_NOT_ENABLED');validateInteractionConfig(input.interaction);}
+ if(input.knowledge!==undefined){if(!input.capabilities.includes('knowledge'))fail('PROJECT_KNOWLEDGE_NOT_ENABLED');normalizeKnowledgeConfig(input.knowledge);}
  const caps=input.capabilities;if(caps.includes('response')&&caps.includes('schedule'))fail('PROJECT_RESPONSE_SCHEDULE_UNSUPPORTED');
+ if(caps.includes('knowledge')&&caps.includes('schedule'))fail('PROJECT_KNOWLEDGE_SCHEDULE_UNSUPPORTED');
  if(caps.includes('response')&&caps.includes('child'))fail('PROJECT_RESPONSE_CHILD_UNSUPPORTED');
  if(caps.includes('schedule')&&caps.includes('child'))fail('PROJECT_SCHEDULE_CHILD_UNSUPPORTED');
  if(input.childExecution!==undefined){if(!caps.includes('child'))fail('PROJECT_CHILD_REQUIRED');if(input.childMethod!==undefined)fail('PROJECT_CHILD_CONFIG_CONFLICT');normalizeChildExecution(input.childExecution);}
@@ -93,10 +96,11 @@ async function assemble(projectDir,definition,{gateway,apiKey,fetchImpl,hostSign
   if(selectedGateway&&config.gateway.mode==='live')fail('PROJECT_LIVE_GATEWAY_OVERRIDE');
   const requestContext=new AsyncLocalStorage();
   if(!selectedGateway){if(!dispatch)selectedGateway={mode:config.gateway.mode,next(){fail('PROJECT_SUBMIT_MUST_NOT_DISPATCH');}};else{if(config.gateway.mode!=='live')fail('PROJECT_FIXTURE_GATEWAY_REQUIRED');selectedGateway=createChatGateway({endpoint:config.gateway.endpoint,model:config.gateway.model,apiKey,authorization:definition.authorization,stream:config.gateway.stream??false,fetchImpl:fetchImpl?((url,options)=>fetchImpl(url,options,requestContext.getStore())):undefined});}}
-  const originalGateway=selectedGateway;selectedGateway={mode:originalGateway.mode,next(input){const r=input.reservation;const context=r?Object.freeze({role:r.purpose==='compaction'?'summary':r.runId===r.rootId?'main':'child',rootId:r.rootId,runId:r.runId,modelOrdinal:r.modelOrdinal,purpose:r.purpose??'main',inputHash:r.inputHash}):null;return requestContext.run(context,async()=>{try{const result=await originalGateway.next(input);if(config.gateway.mode==='live'&&typeof apiKey==='string'&&apiKey&&containsSecret(result,apiKey))fail('PROJECT_CREDENTIAL_ECHO');return result;}catch(error){if(config.gateway.mode==='live'&&typeof apiKey==='string'&&apiKey&&(String(error?.message).includes(apiKey)||String(error?.code).includes(apiKey)))fail('PROJECT_CREDENTIAL_ECHO');throw error;}});}};
+  const originalGateway=selectedGateway;selectedGateway={mode:originalGateway.mode,...(originalGateway.inputBudget?{inputBudget:originalGateway.inputBudget}:{}),next(input){const r=input.reservation;const context=r?Object.freeze({role:r.purpose==='compaction'?'summary':r.runId===r.rootId?'main':'child',rootId:r.rootId,runId:r.runId,modelOrdinal:r.modelOrdinal,purpose:r.purpose??'main',inputHash:r.inputHash}):null;return requestContext.run(context,async()=>{try{const result=await originalGateway.next(input);if(config.gateway.mode==='live'&&typeof apiKey==='string'&&apiKey&&containsSecret(result,apiKey))fail('PROJECT_CREDENTIAL_ECHO');return result;}catch(error){if(config.gateway.mode==='live'&&typeof apiKey==='string'&&apiKey&&(String(error?.message).includes(apiKey)||String(error?.code).includes(apiKey)))fail('PROJECT_CREDENTIAL_ECHO');throw error;}});}};
   admission=await createSharedAdmission({directory:join(projectDir,'admission',hash(config.gateway)),routeId:hash(config.gateway),queueTimeoutMs:Math.min(config.limits.timeoutMs,30000),pollMs:10});
   const runId=definition.schedule?scheduleRunId(definition.schedule):definition.runId;const wrapped=admission.wrap(selectedGateway,{session:store,runId});
   const adapters=[PUBLICATION_BINDING],extensions=[];let workingInput;const plugins=await loadProjectPlugins({projectDir,config});
+  if(caps.includes('knowledge')){if(!sources.catalog)fail('PROJECT_KNOWLEDGE_TEXT_REQUIRED');const index=createKnowledgeIndex({catalog:sources.catalog,allowedDocuments:sources.catalog.documents.map(d=>d.id),config:config.knowledge,signal});adapters.push(knowledgeBinding(index));extensions.push(createKnowledgeTool(index));}
   if(caps.includes('response'))adapters.push(config.interaction?INTERACTION_BINDING:RESPONSE_COMPOSITION_BINDING);if(caps.includes('schedule'))adapters.push(SCHEDULE_COMPOSITION_BINDING);
   if(caps.includes('memory')){const memory=await openDurableMemory({directory:p.memory,intents:definition.memoryIntents??[]});if(memory.libraryId!==definition.memoryLibraryId)fail('PROJECT_MEMORY_CHANGED');const writes=(definition.memoryIntents??[]).length>0;extensions.push(...memory.extensions.filter(t=>writes||!t.memoryEffect));adapters.push({id:'durable-memory',version:'1',contentSha256:memory.intentDigest});workingInput={memoryLibrary:memory};}
   if(caps.includes('compaction'))workingInput={...workingInput,compaction:{mode:'gateway',thresholdBytes:16000,summaryTimeoutMs:10000,maxSummaryRounds:4,...config.compaction}};
@@ -110,7 +114,7 @@ async function assemble(projectDir,definition,{gateway,apiKey,fetchImpl,hostSign
   const inspected=await inspectTrustedPlugins({plugins,signal});available.push(...inspected.extensions.map(t=>t.name));
   const allowedTools=config.allowedTools??available;if(allowedTools.some(t=>!available.includes(t))||!allowedTools.includes('save_report'))fail('PROJECT_UNAVAILABLE_TOOL');
   if(caps.includes('child')&&(config.childExecution?normalizeChildExecution(config.childExecution).methods.flatMap(m=>m.allowedTools):config.childMethod?normalizeChildMethod(config.childMethod).allowedTools:['read_page']).some(t=>!allowedTools.includes(t)))fail('PROJECT_CHILD_TOOL_SCOPE');
-  const limits=config.limits;const options={question:originalQuestion,documentCatalog:sources.catalog??undefined,pdfInput:sources.pdfSnapshot?{snapshot:sources.pdfSnapshot}:undefined,allowedDocuments:documents,allowedTools,publication:true,requireReport:true,ordinaryResponse:caps.includes('response'),...(config.interaction?{interaction:config.interaction}:{}),extensions,plugins,workingInput,taskTime:definition.taskTime?{anchorInstant:definition.taskTime.anchorInstant,timeZone:definition.taskTime.timeZone}:undefined,contextBytes:32000,gateway:wrapped,outputRoot:p.runs,limits:{maxRounds:limits.maxRounds,maxTools:limits.maxTools,timeoutMs:limits.timeoutMs},hostSignal,signal,durable:{store,runId,grantId:definition.grantId,rootLimits:{model:limits.model,tool:limits.tool},bindings:{gateway:gatewayBinding(config),plugins:inspected.bindings,adapters},onClaim:v=>{claim=v;},onCheckpoint}};
+  const limits=config.limits;const options={question:originalQuestion,documentCatalog:sources.catalog??undefined,pdfInput:sources.pdfSnapshot?{snapshot:sources.pdfSnapshot}:undefined,allowedDocuments:documents,allowedTools,publication:true,requireReport:true,ordinaryResponse:caps.includes('response'),...(config.interaction?{interaction:config.interaction}:{}),extensions,plugins,workingInput,taskTime:definition.taskTime?{anchorInstant:definition.taskTime.anchorInstant,timeZone:definition.taskTime.timeZone}:undefined,contextBytes:caps.includes('knowledge')?KNOWLEDGE_CONTEXT_BYTES:32000,gateway:wrapped,outputRoot:p.runs,limits:{maxRounds:limits.maxRounds,maxTools:limits.maxTools,timeoutMs:limits.timeoutMs},hostSignal,signal,durable:{store,runId,grantId:definition.grantId,rootLimits:{model:limits.model,tool:limits.tool},bindings:{gateway:gatewayBinding(config),plugins:inspected.bindings,adapters},onClaim:v=>{claim=v;},onCheckpoint}};
   return{options,store,sources,runId,close:async()=>{for(const close of closers.reverse())await close();admission.close();store.close();}};
  }catch(error){admission?.close();store.close();throw error;}
 }
@@ -165,6 +169,15 @@ export async function inspectResearchChildren({projectDir,runId}){
  const d=await readTask(projectDir,runId);if(!d.config.childExecution)fail('PROJECT_CHILD_EXECUTION_REQUIRED');
  const sources=await loadProjectSources({projectDir,manifestSha256:d.sourceManifestSha256}),store=await openSession({directory:paths(projectDir,runId).session,readOnly:true});
  try{return await inspectChildExecutions({store,parentRunId:runId,question:questionFor(d.question,sources),documents:sources.catalog.documents.map(doc=>doc.id),documentCatalog:sources.catalog,execution:d.config.childExecution});}finally{store.close();}
+}
+
+// Inspect the original admitted collection, never today's changed project config.
+// This does not acquire sources, run a query, call a model or mint a receipt.
+export async function inspectResearchKnowledge({projectDir,runId}){
+ const d=await readTask(projectDir,runId);if(!d.config.capabilities.includes('knowledge'))fail('PROJECT_KNOWLEDGE_NOT_ENABLED');
+ const sources=await loadProjectSources({projectDir,manifestSha256:d.sourceManifestSha256});if(!sources.catalog)fail('PROJECT_KNOWLEDGE_TEXT_REQUIRED');
+ const index=createKnowledgeIndex({catalog:sources.catalog,allowedDocuments:sources.catalog.documents.map(doc=>doc.id),config:d.config.knowledge});
+ return {runId:d.runId,sourceManifestSha256:d.sourceManifestSha256,binding:knowledgeBinding(index),index:structuredClone(index),authorization:'admitted-run-snapshot',pdfIndexed:false};
 }
 
 // Publication owns delivered answer bytes. No failed proposal is a delivery.

@@ -1,4 +1,5 @@
 import {prepareReportAssessment,assessmentHash} from './report-assessment.mjs';
+import {verifyKnowledgeResult} from './knowledge.mjs';
 import {specialistGroupRefusal,specialistHistoricalGroup} from './specialist-child.mjs';
 import {childExecutionGroupRefusal,childExecutionHistoricalGroup,childExecutionInputRefusal} from './child-execution.mjs';
 import { RESPONSE_TOOL, RESPONSE_PROFILE, validateResponseCall } from './human-response.mjs';
@@ -385,6 +386,7 @@ export async function createToolHost({ directory, extensions = [], hooks, allowe
       async function source(current){const stored=await readSource(current?.resultRef);if(protection){const {resultRef,...payload}=current;validateProtectedSourcePayload(payload);}for(const key of ['sourceId','documentId','name','version','page','text','sha256','mediaType'])if(stored[key]!==current[key])recoveryFail('Recovered source payload mismatch');if(!isDeepStrictEqual(stored.pdf,current.pdf))recoveryFail('PDF source provenance mismatch');await verifyPdf(stored);}
       if(binding.sourceResult||name==='read_result')await source(value);
       if(binding.sourceResults){if(!Array.isArray(value?.sources))recoveryFail('Recovered sources mismatch');for(const item of value.sources)await source(item);}
+      verifyKnowledgeResult(originalGroupOwners.get(name) ?? binding, result.effective || call, value);
       if(binding.methodResult){const method=methods.get(value?.id);if(!method||JSON.stringify(method)!==JSON.stringify(value))recoveryFail('Recovered method payload mismatch');}
       if(name==='calculate_change') {
         const expected = await calculationValue(result.effective?.arguments || call.arguments);
