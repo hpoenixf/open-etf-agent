@@ -15,6 +15,8 @@ import {DOCUMENT_REVOCATION_PROFILE} from '../src/source.mjs';
 import {initialize,options as protectedOptions} from './protected-runtime-fixture.mjs';
 import {createResearchProject,submitResearchTask,workResearchTask,inspectResearchTask,readResearchReport} from '../src/research-project.mjs';
 import {importProjectSources} from '../src/project-sources.mjs';
+// Shape/correction fixtures test authority and replay, not short-lease expiry.
+const normalLeaseMs=5000;
 const schema='child-execution-input-validation@1';
 const call=(id,name,args)=>({id,name,arguments:args}),proposal=(...calls)=>({kind:'calls',calls});
 const selected={question:'Check original selected observations.',documents:['atlas-a'],execution:{schemaVersion:'child-execution@1',maxChildren:2,methods:[CLAIM_COMPARISON_METHOD]}};
@@ -23,7 +25,7 @@ const missing={methodId:valid.methodId,question:valid.question};
 const final={kind:'final',text:'Original evidence retained.'};
 async function directory(t){await mkdir('test-output',{recursive:true});const d=await mkdtemp(resolve('test-output/child-input-'));t.after(()=>rm(d,{recursive:true,force:true}));return d;}
 async function fixture(t,{main,requireReport=true,tools=['delegate_child','read_page','save_report'],documents=selected.documents,rootLimits={model:12,tool:10},hooks,mutate,onBinding,fake=false}={}){
- const dir=await directory(t);let store=await openSession({directory:dir,leaseMs:150}),token,runId,mainCalls=0,childCalls=0;
+ const dir=await directory(t);let store=await openSession({directory:dir,leaseMs:normalLeaseMs}),token,runId,mainCalls=0,childCalls=0;
  t.after(()=>store.close());
  const bindings={gateway:{mode:'fixture',provider:'synthetic',protocol:'fixture@1',model:'child-input',version:'1'},plugins:[],adapters:[childExecutionBinding(selected)]};
  const childGateway=()=>({mode:'fixture',next({messages}){childCalls++;return messages.some(m=>m.role==='tool')?final:proposal(call('page','read_page',{documentId:'atlas-a',page:1}));}});
@@ -32,14 +34,14 @@ async function fixture(t,{main,requireReport=true,tools=['delegate_child','read_
  async function execute(extra={}){let binding=owner();if(fake)binding={name:'delegate_child',description:binding.description,parameters:binding.parameters,validate(){throw Object.assign(Error('CHILD_ARGUMENT_REQUIRED'),{validation:{schemaVersion:schema,repairable:true},validationCode:'CHILD_ARGUMENT_REQUIRED'});},execute(){assert.fail('fake must not dispatch');}};mutate?.(binding);onBinding?.(binding);
   return run({question:selected.question,extensions:[binding],allowedTools:tools,allowedDocuments:documents,requireReport,hooks,outputRoot:join(dir,'runs'),limits:{maxRounds:8,maxTools:8,timeoutMs:30000},gateway:{mode:'fixture',next(input){mainCalls++;return(main??defaultMain)(input,mainCalls);}},...extra,durable:{store,...(runId?{runId}:{}),grantId:'child-input-grant',bindings,rootLimits,onClaim:v=>{token=v;runId=v.runId;},...extra.durable}});
  }
- return{dir,execute,owner,get store(){return store;},get runId(){return runId;},counts:()=>({mainCalls,childCalls}),saved:()=>store.inspect(runId),async reopen(){store.close();token=undefined;store=await openSession({directory:dir,leaseMs:150});},async coldHost(overrides={}){const s=store.inspect(runId);return createToolHost({directory:s.directory,restore:s.snapshot.host,readOnly:true,extensions:[owner()],allowedTools:tools,allowedDocuments:documents,runIdentity:{runId,grantId:s.definition.grantId},...overrides});}};
+ return{dir,execute,owner,get store(){return store;},get runId(){return runId;},counts:()=>({mainCalls,childCalls}),saved:()=>store.inspect(runId),async reopen(){store.close();token=undefined;store=await openSession({directory:dir,leaseMs:normalLeaseMs});},async coldHost(overrides={}){const s=store.inspect(runId);return createToolHost({directory:s.directory,restore:s.snapshot.host,readOnly:true,extensions:[owner()],allowedTools:tools,allowedDocuments:documents,runIdentity:{runId,grantId:s.definition.grantId},...overrides});}};
 }
 function badPair(f){const s=f.saved().snapshot;return s.result?.callId==='bad'?s.result:s.messages.find(m=>m.callId==='bad').result;}
 
 test('original Session missing documents is paired once, zero-debit refused, then a new call runs one actual Child and saves Report',async t=>{
  const f=await fixture(t),out=await f.execute({durable:{onCheckpoint:e=>{if(e.phase==='result-committed'&&f.saved().snapshot.proposal?.calls?.[0]?.id==='bad'){assert.deepEqual(f.saved().rootUsage,{model:1,tool:0});assert.equal(f.store.listChildren(f.runId).length,0);}}}});
  assert.equal(out.status,'completed',out.code);assert.deepEqual(out.rootUsage,{model:6,tool:3});assert.deepEqual(f.counts(),{mainCalls:4,childCalls:2});const bad=badPair(f);assert.equal(bad.status,'rejected');assert.equal(bad.dispatched,false);assert.equal(bad.validation.schemaVersion,schema);assert.equal(bad.validation.field,'documents');assert.equal(bad.error,'CHILD_ARGUMENT_REQUIRED');assert.equal(f.saved().snapshot.corrections,1);assert.equal(f.saved().snapshot.messages.filter(m=>m.callId==='bad').length,1);assert.equal(f.store.listChildren(f.runId).length,1);assert.ok(out.receipt);
- const timeline=await readTimeline(out.directory);assert.equal(timeline.entries.filter(e=>e.type==='validation_correction_offered').length,1);await f.reopen();const cold=await f.coldHost();await cold.verifyResult(call('bad','delegate_child',missing),bad);assert.equal(cold.correctionEligible(call('bad','delegate_child',missing),bad),true);const again=await f.execute();assert.equal(again.runId,out.runId);assert.equal(again.status,'completed');assert.deepEqual(f.counts(),{mainCalls:4,childCalls:2});assert.deepEqual(again.rootUsage,out.rootUsage);
+ const timeline=await readTimeline(out.directory);assert.equal(timeline.entries.filter(e=>e.type==='validation_correction_offered').length,1);await f.reopen();const cold=await f.coldHost();await cold.verifyResult(call('bad','delegate_child',missing),bad);assert.equal(cold.correctionEligible(call('bad','delegate_child',missing),bad),true);const again=await f.execute();assert.equal(again.runId,out.runId);assert.equal(again.status,'completed',again.code);assert.deepEqual(f.counts(),{mainCalls:4,childCalls:2});assert.deepEqual(again.rootUsage,out.rootUsage);
 });
 
 for(const args of [missing,{methodId:valid.methodId,documents:valid.documents},{question:valid.question,documents:valid.documents},{...valid,documents:'atlas-a'},{...valid,question:4},{...valid,documents:[4]}])test('original Child pure shape is feedback without filling or parsing '+JSON.stringify(args),async t=>{
@@ -73,7 +75,7 @@ test('legacy no-proof terminal refusal is not retrofitted or reopened by the ori
 });
 
 test('mixed group retains original atomic group refusal, never a Child shape proof or partial dispatch',async t=>{
- const f=await fixture(t,{requireReport:false,main:(_input,n)=>n===1?proposal(call('bad','delegate_child',missing),call('peer','read_page',{documentId:'atlas-a',page:1})):final});const out=await f.execute();assert.equal(out.status,'completed');const results=f.saved().snapshot.messages.filter(m=>m.role==='tool').map(m=>m.result);assert.equal(results.length,2);assert.ok(results.every(r=>r.validation.schemaVersion==='specialist-group-refusal@1'&&!r.dispatched));assert.deepEqual(out.rootUsage,{model:2,tool:0});assert.equal(f.store.listChildren(f.runId).length,0);
+ const f=await fixture(t,{requireReport:false,main:(_input,n)=>n===1?proposal(call('bad','delegate_child',missing),call('peer','read_page',{documentId:'atlas-a',page:1})):final});const out=await f.execute();assert.equal(out.status,'completed',out.code);const results=f.saved().snapshot.messages.filter(m=>m.role==='tool').map(m=>m.result);assert.equal(results.length,2);assert.ok(results.every(r=>r.validation.schemaVersion==='specialist-group-refusal@1'&&!r.dispatched));assert.deepEqual(out.rootUsage,{model:2,tool:0});assert.equal(f.store.listChildren(f.runId).length,0);
 });
 
 test('existing singleton, partial and unknown guards remain authoritative',()=>{
@@ -82,7 +84,7 @@ test('existing singleton, partial and unknown guards remain authoritative',()=>{
 });
 
 for(const phase of ['result-committed','result-consumed'])test('same Run original Child rejection cold recovery at '+phase+' consumes the pair once',async t=>{
- const f=await fixture(t),stop=new AbortController();const first=await f.execute({hostSignal:stop.signal,durable:{onCheckpoint:e=>{if(e.phase===phase&&f.saved().snapshot.proposal?.calls?.[0]?.id==='bad')stop.abort();}}});assert.equal(first.status,'interrupted');const proof=badPair(f);assert.deepEqual(first.rootUsage,{model:1,tool:0});await f.reopen();const done=await f.execute();assert.equal(done.status,'completed',done.code);assert.equal(done.runId,first.runId);assert.deepEqual(done.rootUsage,{model:6,tool:3});assert.deepEqual(badPair(f),proof);assert.deepEqual(f.counts(),{mainCalls:4,childCalls:2});
+ const f=await fixture(t),stop=new AbortController();const first=await f.execute({hostSignal:stop.signal,durable:{onCheckpoint:e=>{if(e.phase===phase&&f.saved().snapshot.proposal?.calls?.[0]?.id==='bad')stop.abort();}}});assert.equal(first.status,'interrupted',first.code);const proof=badPair(f);assert.deepEqual(first.rootUsage,{model:1,tool:0});await f.reopen();const done=await f.execute();assert.equal(done.status,'completed',done.code);assert.equal(done.runId,first.runId);assert.deepEqual(done.rootUsage,{model:6,tool:3});assert.deepEqual(badPair(f),proof);assert.deepEqual(f.counts(),{mainCalls:4,childCalls:2});
 });
 
 test('original root model budget cannot be enlarged by Child input correction',async t=>{
@@ -90,7 +92,7 @@ test('original root model budget cannot be enlarged by Child input correction',a
 });
 
 for(const kind of ['user','session'])test('strong '+kind+' cancellation stops before correction reservation',async t=>{
- const f=await fixture(t),stop=new AbortController();const out=await f.execute({signal:stop.signal,durable:{onCheckpoint:e=>{if(e.phase==='result-consumed'&&f.saved().snapshot.proposal?.calls?.[0]?.id==='bad'){if(kind==='user')stop.abort();else f.store.cancel(f.runId);}}}});assert.equal(out.status,'cancelled');assert.deepEqual(out.rootUsage,{model:1,tool:0});assert.equal(f.store.listChildren(f.runId).length,0);await f.reopen();assert.equal((await f.execute()).status,'cancelled');assert.deepEqual(f.counts(),{mainCalls:1,childCalls:0});
+ const f=await fixture(t),stop=new AbortController();const out=await f.execute({signal:stop.signal,durable:{onCheckpoint:e=>{if(e.phase==='result-consumed'&&f.saved().snapshot.proposal?.calls?.[0]?.id==='bad'){if(kind==='user')stop.abort();else f.store.cancel(f.runId);}}}});assert.equal(out.status,'cancelled',out.code);assert.deepEqual(out.rootUsage,{model:1,tool:0});assert.equal(f.store.listChildren(f.runId).length,0);await f.reopen();assert.equal((await f.execute()).status,'cancelled');assert.deepEqual(f.counts(),{mainCalls:1,childCalls:0});
 });
 
 test('protected Runtime cannot admit a Child extension or grant its input proof',async t=>{
@@ -134,5 +136,5 @@ test('fresh original writer cancellation denies even a genuine uncommitted shape
   let error;try{binding.validate(original.arguments);}catch(caught){error=caught;}
   const context={error,allowedTools:saved.definition.config.allowedTools,allowedDocuments:saved.definition.config.allowedDocuments};
   assert.equal(childExecutionInputRefusal(binding,original,context).schemaVersion,schema);f.store.cancel(f.runId);assert.equal(childExecutionInputRefusal(binding,original,context),null);checked=true;
- }}});assert.equal(checked,true);assert.equal(out.status,'cancelled');assert.deepEqual(out.rootUsage,{model:1,tool:0});assert.equal(f.saved().snapshot.messages.some(m=>m.result?.validation?.schemaVersion===schema),false);assert.equal(f.store.listChildren(f.runId).length,0);
+ }}});assert.equal(checked,true);assert.equal(out.status,'cancelled',out.code);assert.deepEqual(out.rootUsage,{model:1,tool:0});assert.equal(f.saved().snapshot.messages.some(m=>m.result?.validation?.schemaVersion===schema),false);assert.equal(f.store.listChildren(f.runId).length,0);
 });
