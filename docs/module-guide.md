@@ -266,6 +266,8 @@ This is a real local SQLite/process flow with synthetic replies and no model cal
 
 <a id="versions"></a>
 
+**v0.23 adds admitted Knowledge retrieval**: query explicitly imported text and keep whole original pages through Result, Report and Reader. [Usage](knowledge.md) · [Layered evidence](verification/v023-release.md) · [Fixed public source](https://github.com/hpoenixf/open-etf-agent/tree/4e893ead9ebe8cdd13146ddc96fe1d56a1e56365). Observed Runtime contracts passed 10/10; the frozen mechanical result remains 9/10 and strict complete-task quality 5/10. These are distinct measures, not ten perfect answers.
+
 **v0.22 · Bounded Child execution**: [Usage](child-execution.md) · [Staged 9/10 with independent C06 supplement](verification/v022-release.md). Original failure and historical unknowns remain; this is not one continuous 10/10 batch.
 
 <a id="complete-version-history"></a>
@@ -414,6 +416,8 @@ Open an [issue](https://github.com/hpoenixf/open-etf-agent/issues) with the **st
 <a id="v020-research-project"></a>
 <a id="v020--local-research-projects-candidate"></a>
 ## v0.20 · Local research projects
+
+**v0.20 adds local research projects**: import your selected text, Markdown or PDF, submit a natural task, work or resume the original Run and read its persisted report. Memory, Child and trusted tools stay behind original permission and budget owners. [Public CLI/API](research-project.md) · [Run control and bounded correction](run-control.md) · [Layered evidence](verification/v020-release.md). [Fixed public source](https://github.com/hpoenixf/open-etf-agent/tree/a5cef6d5cf1a4597f0f1271025cd6cc16be151e5) is byte-verified. The final package, its CI and release tag are separate from this source pin; layered evidence does not mean every historical gate passed.
 
 [Import, submit, work, inspect and read reports](research-project.md) · [Run control, correction and observation limits](run-control.md) · [Layered evidence](verification/v020-release.md). Same-Run recovery keeps original grants and budgets; unknown effects are not replayed.
 

@@ -263,6 +263,8 @@ node dist/src/session-cli.mjs publication-revisions --session runs/publication-d
 
 <a id="versions"></a>
 
+**v0.23 提供已准入 Knowledge 检索**：查询显式导入的文本，沿 Result、Report 和 Reader 保留完整原文页。[用法](knowledge.zh-CN.md) · [分层证据](verification/v023-release.zh-CN.md) · [固定公开源码](https://github.com/hpoenixf/open-etf-agent/tree/4e893ead9ebe8cdd13146ddc96fe1d56a1e56365)。本批观察到的 Runtime 合同通过 10/10；冻结机械结果仍为 9/10，严格完整任务质量为 5/10。三者分别记录，不代表十份完美答案。
+
 **v0.22 · 有界 Child 执行**：[用法](child-execution.zh-CN.md) · [分阶段 9/10 与 C06 独立补证](verification/v022-release.zh-CN.md)。保留原失败和历史 unknown，不称一次连续 10/10。
 
 <a id="完整版本演进"></a>
@@ -431,6 +433,8 @@ Web 取材是原路线中的外网输入候选，仍未编号；Web 读取界面
 <a id="v020-research-project"></a>
 <a id="v020--本地研究项目候选"></a>
 ## v0.20 · 本地研究项目
+
+**v0.20 提供本地研究项目**：导入明确选择的文本、Markdown或PDF，以自然语言提交任务，执行或恢复原Run，并读取持久报告。Memory、Child与可信工具仍受原权限和预算Owner约束。[公开CLI/API](research-project.zh-CN.md) · [终结与有界纠错](run-control.zh-CN.md) · [分层证据](verification/v020-release.zh-CN.md)。[固定公开源码](https://github.com/hpoenixf/open-etf-agent/tree/a5cef6d5cf1a4597f0f1271025cd6cc16be151e5)已逐字节核验。最终发布包、其CI与标签另行核验，分层证据不等于历史所有门均通过。
 
 [导入、提交、执行、检查与报告读取](research-project.zh-CN.md) · [终结、有界纠错与观察限制](run-control.zh-CN.md) · [分层证据](verification/v020-release.zh-CN.md)。原Run恢复保留原权限和预算，未知效果不重放。
 

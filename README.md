@@ -71,19 +71,19 @@ npm run demo -- --case document-compare
 <a id="versions"></a>
 ## Latest three modules
 
+**v0.23 adds admitted Knowledge retrieval**: query explicitly imported text and keep whole original pages through Result, Report and Reader. [Usage](docs/knowledge.md) · [Layered evidence](docs/verification/v023-release.md) · [Fixed public source](https://github.com/hpoenixf/open-etf-agent/tree/4e893ead9ebe8cdd13146ddc96fe1d56a1e56365). Observed Runtime contracts passed 10/10; the frozen mechanical result remains 9/10 and strict complete-task quality 5/10. These are distinct measures, not ten perfect answers.
+
 **v0.22 adds bounded Child execution**: select admitted read-only methods and narrow sources, inspect original Child identity and safely continue the same execution. [Usage](docs/child-execution.md) · [Staged 9/10 and C06 supplement](docs/verification/v022-release.md). Same tested source, two approved stages; not one continuous 10/10 batch. Final-package CI and publication are separate. [Fixed public source](https://github.com/hpoenixf/open-etf-agent/tree/fed2c5f886200d4c04281c6293d5eb1ee7c2eab9).
 
 **v0.21 adds ordinary multi-question interaction**: receive associated answers and resume the original Run through report readback, without creating new permission grants. [Usage](docs/human-interaction.md) · [Ten real tasks and limits](docs/verification/v021-release.md) · [Fixed public source](https://github.com/hpoenixf/open-etf-agent/tree/427315b5554b1c9af8fa50b8ab622747045e691a). Final-package CI and Release are verified separately.
-
-**v0.20 adds local research projects**: import your selected text, Markdown or PDF, submit a natural task, work or resume the original Run and read its persisted report. Memory, Child and trusted tools stay behind original permission and budget owners. [Public CLI/API](docs/research-project.md) · [Run control and bounded correction](docs/run-control.md) · [Layered evidence](docs/verification/v020-release.md). [Fixed public source](https://github.com/hpoenixf/open-etf-agent/tree/a5cef6d5cf1a4597f0f1271025cd6cc16be151e5) is byte-verified. The final package, its CI and release tag are separate from this source pin; layered evidence does not mean every historical gate passed.
 
 **2026-11-02 foundation repair:** [Working-input admission, cancellation facts, Child settlement and no-saving summary precheck](docs/verification/foundation-repair-20261102.md). Provider-free regressions passed; this is not a new release or live qualification.
 
 | Module | What changes | Run and inspect |
 | --- | --- | --- |
+| v0.23 · Admitted Knowledge | Bounded lexical retrieval, original pages and same-Run readback | [Usage](docs/knowledge.md) · [Evidence](docs/verification/v023-release.md) |
 | v0.22 · Bounded Child execution | Admitted methods, narrow sources, original lifecycle and same-Child continuation | [Usage](docs/child-execution.md) · [Evidence](docs/verification/v022-release.md) |
 | v0.21 · Ordinary Human Interaction | Associated questions, receipts and same-Run adoption/recovery | [CLI/API](docs/human-interaction.md) · [Evidence](docs/verification/v021-release.md) |
-| v0.20 · Local research projects | User-selected sources, original Run lifecycle and bounded tool correction | [CLI/API](docs/research-project.md) · [Evidence](docs/verification/v020-release.md) |
 
 [All fixed versions and commands](docs/module-guide.md#versions) · [Machine-readable version lineage](versions.json) · [GitHub Releases](https://github.com/hpoenixf/open-etf-agent/releases)
 

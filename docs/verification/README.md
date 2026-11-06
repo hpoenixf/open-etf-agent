@@ -2,6 +2,10 @@
 
 # Verification evidence index
 
+## v0.23 admitted Knowledge retrieval
+
+[Observed Runtime 10/10; frozen mechanical 9/10; strict complete-task quality 5/10; scope](v023-release.md). [Original-cohort summary](v023-real-ten.safe.json) · [Fixed-source CI / fullSuite](v023-provider-free.safe.json) · [Frozen input hashes](v023-execution-inputs.safe.json). Earlier 8/10 remains unchanged and separate. · [Dated Runtime-scoped release decision](v023-runtime-release-decision.safe.json)
+
 ## v0.22 bounded Child execution
 
 [Staged 9/10, original C06 failure and independent supplement, 927/927, scope](v022-release.md).

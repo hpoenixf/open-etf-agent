@@ -1,0 +1,42 @@
+{
+  "schemaVersion": "v023-fixed-source-ci@1",
+  "kind": "fixed-implementation-ci-not-final-release-package",
+  "source": {
+    "commit": "4e893ead9ebe8cdd13146ddc96fe1d56a1e56365",
+    "tree": "4531111e641200ab046f28b618f3ffda5a1b2a87"
+  },
+  "ci": {
+    "url": "https://github.com/hpoenixf/open-etf-agent/actions/runs/42142073211",
+    "runId": 42142073211,
+    "jobId": 127644559181,
+    "event": "workflow_dispatch",
+    "ref": "wip/v023-knowledge-20261105",
+    "status": "completed",
+    "conclusion": "success",
+    "exactCheckoutShaObserved": true
+  },
+  "nodeTested": "26.11.1",
+  "nodeDeclaredRange": ">=26.8.1 <27",
+  "lockedDependencyInstall": {
+    "command": "npm ci --ignore-scripts --no-audit --no-fund",
+    "passed": true
+  },
+  "build": {
+    "command": "npm run build",
+    "passed": true,
+    "kind": "native ESM"
+  },
+  "fullSuite": {
+    "command": "npm test",
+    "resolvedScript": "node --test --test-concurrency=1 test/*.test.mjs",
+    "tests": 959,
+    "passed": 959,
+    "failed": 0,
+    "cancelled": 0,
+    "skipped": 0,
+    "todo": 0
+  },
+  "modelCalls": 0,
+  "finalMetadataPackageVerifiedByThisReceipt": false,
+  "scope": "Provider-free original CI execution at the fixed implementation commit; not model quality, live-provider qualification, browser acceptance or final tag/Release verification."
+}

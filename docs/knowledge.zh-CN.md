@@ -2,9 +2,9 @@
 
 # Knowledge：检索已准入资料，保留原文证据
 
-这是 **v0.23 候选实现**。本地、无提供方测试不等于真实模型验收或正式发布。[提案](../openspec/changes/v023-knowledge/proposal.md)记录了范围与验收门槛。
+v0.23 提供已准入 Knowledge 检索。[发布证据](verification/v023-release.zh-CN.md)分别记录 Runtime 合同、模型质量和最终发布包；[提案](../openspec/changes/v023-knowledge/proposal.md)保留原范围与验收计划。
 
-首轮固定源码真实十题保留 **8/10，未通过资格门**。原失败与前瞻提示修复记录在[修复说明](../openspec/changes/v023-knowledge/repair-2026-11-05.md)中，仍须完成新的整批十题验收。
+首轮固定源码批次保留**原机械口径 8/10**。独立的修复后整批十题已完成：**本批观察到的 Runtime 合同 10/10、冻结机械检查 9/10、严格完整自然任务 5/10**。仅属模型 query 或内容选择的问题不记为 Runtime 实现失败。原分数不改，两批不合并；详见[分层结果与边界](verification/v023-release.zh-CN.md)。
 
 Knowledge 把现有显式文件导入、有界检索与原研究流程连接起来。查询返回完整原文页，由 Host 登记到原有 Result 存储；模型获得正文和准确的 `sourceId`、`resultRef`，随后由既有 Report、Publication、Reader 保留同一字节。搜索分数只是排序提示，不是权限或语义质量判定。
 

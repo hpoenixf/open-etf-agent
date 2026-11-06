@@ -2,6 +2,10 @@
 
 # 验证证据索引 · v0.1–v0.11
 
+## v0.23 已准入 Knowledge 检索
+
+[本批 Runtime 合同 10/10、冻结机械 9/10、严格完整任务质量 5/10 及范围](v023-release.zh-CN.md)。[原批次摘要](v023-real-ten.safe.json) · [固定源码 CI / fullSuite](v023-provider-free.safe.json) · [冻结输入哈希](v023-execution-inputs.safe.json)。早先 8/10 保留原样，不与新批次合并。 · [注明日期的 Runtime 范围发布决定](v023-runtime-release-decision.safe.json)
+
 ## v0.22 有界 Child 执行
 
 [分阶段 9/10、C06 原失败与独立补证、927/927 及边界](v022-release.zh-CN.md)。

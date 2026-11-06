@@ -1,0 +1,161 @@
+{
+  "schemaVersion": "v023-public-layered-real-ten@1",
+  "kind": "sanitized-summary-not-a-new-qualification-declaration",
+  "source": {
+    "commit": "4e893ead9ebe8cdd13146ddc96fe1d56a1e56365",
+    "tree": "4531111e641200ab046f28b618f3ffda5a1b2a87",
+    "executionIdentity": "358d870241804bde8b350c7f4edf21e8dfd49d8907c396b342090d300914f431"
+  },
+  "frozenPlanSha256": "c3a78f2e7130afd25515990b976bf7ddf06a6ec78066d9d4cd745f9091f3a9a0",
+  "independentFinalReviewSha256": "f405067215a0a54c70f4c7df834e238d2f949875fc8a58e187da9f44c7792c15",
+  "tasksCompleted": 10,
+  "runtime": {
+    "observedContractsPassed": 10,
+    "denominator": 10,
+    "confirmedApplicableImplementationDefects": 0,
+    "scope": "Observed fixed-source contracts only; not a universal absence-of-bugs claim."
+  },
+  "frozenMechanical": {
+    "successes": 9,
+    "denominator": 10,
+    "failedCase": "K10",
+    "originalOutcomeEdited": false
+  },
+  "strictNaturalTask": {
+    "eligible": 5,
+    "denominator": 10,
+    "originalStrictThresholdMet": false,
+    "eligibleCases": [
+      "K02",
+      "K03",
+      "K04",
+      "K06",
+      "K07"
+    ],
+    "ineligibleCases": [
+      "K01",
+      "K05",
+      "K08",
+      "K09",
+      "K10"
+    ],
+    "notRuntimeFailureScore": true
+  },
+  "history": {
+    "originalPriorCohortMechanical": "8/10",
+    "originalPriorCohortEdited": false,
+    "cohortsPooled": false
+  },
+  "cases": [
+    {
+      "id": "K01",
+      "runtimeObservedContractPass": true,
+      "frozenMechanicalSuccess": true,
+      "strictNaturalTaskEligible": false,
+      "modelDefects": [
+        "K01-UNCERTAINTY-CONTRADICTION"
+      ],
+      "physicalRequests": 3
+    },
+    {
+      "id": "K02",
+      "runtimeObservedContractPass": true,
+      "frozenMechanicalSuccess": true,
+      "strictNaturalTaskEligible": true,
+      "modelDefects": [],
+      "physicalRequests": 3
+    },
+    {
+      "id": "K03",
+      "runtimeObservedContractPass": true,
+      "frozenMechanicalSuccess": true,
+      "strictNaturalTaskEligible": true,
+      "modelDefects": [],
+      "physicalRequests": 4
+    },
+    {
+      "id": "K04",
+      "runtimeObservedContractPass": true,
+      "frozenMechanicalSuccess": true,
+      "strictNaturalTaskEligible": true,
+      "modelDefects": [],
+      "physicalRequests": 3
+    },
+    {
+      "id": "K05",
+      "runtimeObservedContractPass": true,
+      "frozenMechanicalSuccess": true,
+      "strictNaturalTaskEligible": false,
+      "modelDefects": [
+        "K05-QUERY-REWRITE"
+      ],
+      "physicalRequests": 3
+    },
+    {
+      "id": "K06",
+      "runtimeObservedContractPass": true,
+      "frozenMechanicalSuccess": true,
+      "strictNaturalTaskEligible": true,
+      "modelDefects": [],
+      "physicalRequests": 4
+    },
+    {
+      "id": "K07",
+      "runtimeObservedContractPass": true,
+      "frozenMechanicalSuccess": true,
+      "strictNaturalTaskEligible": true,
+      "modelDefects": [],
+      "physicalRequests": 5
+    },
+    {
+      "id": "K08",
+      "runtimeObservedContractPass": true,
+      "frozenMechanicalSuccess": true,
+      "strictNaturalTaskEligible": false,
+      "modelDefects": [
+        "K08-QUERY-REWRITE"
+      ],
+      "physicalRequests": 4
+    },
+    {
+      "id": "K09",
+      "runtimeObservedContractPass": true,
+      "frozenMechanicalSuccess": true,
+      "strictNaturalTaskEligible": false,
+      "modelDefects": [
+        "K09-QUERY-REWRITE"
+      ],
+      "physicalRequests": 6
+    },
+    {
+      "id": "K10",
+      "runtimeObservedContractPass": true,
+      "frozenMechanicalSuccess": false,
+      "strictNaturalTaskEligible": false,
+      "modelDefects": [
+        "K10-QUERY-REWRITE"
+      ],
+      "physicalRequests": 3
+    }
+  ],
+  "providerEvidence": {
+    "completedPhysicalRequests": 38,
+    "newUnknownRequests": 0,
+    "completeOriginalBodiesReviewed": 38,
+    "requestBodyHashesIndependentlyRecomputed": 38,
+    "originalRequestAssociationsChecked": true,
+    "rawBodiesPublished": false
+  },
+  "reviewLimit": "Read-only review of retained original receipts and reopened file bytes; no new Runtime worker, model call, mutable database query or HTTP probe.",
+  "modelCaveats": [
+    "K01 contradicts an explicit source internet requirement.",
+    "K05/K08/K09/K10 rewrite requested query values; valid query strings are model-selected data, not Runtime const/enum violations.",
+    "Minor verbosity, unsupported attribution, unnecessary keyboard/menu inference and localized modal overstatement remain; no claim of ten perfect answers."
+  ],
+  "publication": {
+    "releaseAuthorizedByThisSummary": false,
+    "finalPackageCiCovered": false,
+    "articleOrWebsiteQualificationAdded": false
+  },
+  "privacy": "Sanitized engineering summary only; no private paths, account/budget histories, credentials, databases or raw provider requests/responses/reports."
+}

@@ -2,9 +2,9 @@
 
 # Knowledge: query an admitted collection and retain original evidence
 
-This is the **v0.23 candidate**. Local/provider-free checks are not a real-model qualification or release. The [proposal](../openspec/changes/v023-knowledge/proposal.md) records the scope and acceptance gates.
+v0.23 provides admitted Knowledge retrieval. The [release evidence](verification/v023-release.md) separates observed Runtime contracts, model quality and the final package. The [proposal](../openspec/changes/v023-knowledge/proposal.md) preserves the original scope and acceptance plan.
 
-The first fixed-source real cohort remains **8/10, not qualified**. Its failures and the prospective guidance repair are recorded in the [repair note](../openspec/changes/v023-knowledge/repair-2026-11-05.md); a new whole-ten qualification is still required.
+The first fixed-source cohort remains **8/10 under its original mechanical criteria**. A separate repaired whole-ten cohort is complete: **10/10 observed Runtime contracts, 9/10 frozen mechanical checks and 5/10 strict complete natural tasks**. Model-only query/content defects are not counted as Runtime implementation failures. Original scores and cohorts are not rewritten or pooled. See the [layered result and limits](verification/v023-release.md).
 
 Knowledge connects the existing explicit source import to bounded retrieval and the original research workflow. A query returns original whole pages. Host registers them in the existing Result store, the model receives their text and exact `sourceId`/`resultRef`, and the ordinary Report/Publication/Reader path retains the same bytes. Search scores are ranking hints, not authority or a semantic-quality judgment.
 
