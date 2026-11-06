@@ -2,6 +2,10 @@
 
 # 验证证据索引 · v0.1–v0.11
 
+## v0.23.1 Runtime 维护
+
+[收尾心跳、取消返回、966/966 与维护适用性](v0231-maintenance.zh-CN.md)。原十题身份与分数不变，后续未完成的提供方观察不拼分。
+
 ## v0.23 已准入 Knowledge 检索
 
 [本批 Runtime 合同 10/10、冻结机械 9/10、严格完整任务质量 5/10 及范围](v023-release.zh-CN.md)。[原批次摘要](v023-real-ten.safe.json) · [固定源码 CI / fullSuite](v023-provider-free.safe.json) · [冻结输入哈希](v023-execution-inputs.safe.json)。早先 8/10 保留原样，不与新批次合并。 · [注明日期的 Runtime 范围发布决定](v023-runtime-release-decision.safe.json)

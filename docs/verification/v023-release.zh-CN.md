@@ -2,6 +2,8 @@
 
 # v0.23 已准入 Knowledge：Runtime 证据与模型边界
 
+[v0.23.1 维护：收尾修复与源码适用性](v0231-maintenance.zh-CN.md)。下文原结果仍绑定其原执行源码及身份。
+
 Knowledge 是本版唯一主要模块：把显式导入文本、有界词法检索连接起来，返回完整原文页，并沿既有 Report、Publication、Reader 保留原 Source/ResultRef 身份。Runtime、Session、来源导入、Context、Child 及原权限和预算 Owner 只是支持组件，不作为多个新模块发布。
 
 ## 三个结果分别阅读

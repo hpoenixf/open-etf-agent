@@ -2,6 +2,8 @@
 
 # v0.23 admitted Knowledge: Runtime evidence and model limits
 
+[v0.23.1 maintenance: finalization fixes and source applicability](v0231-maintenance.md). The original results below retain their original execution source and identity.
+
 Knowledge is this version's single main module. It connects explicitly imported text to bounded lexical retrieval, returns whole original pages and carries their original Source/ResultRef identity through the existing Report, Publication and Reader. Runtime, Session, source import, Context, Child and the existing permission/budget owners remain supporting components, not new independent modules.
 
 ## Read the three results separately

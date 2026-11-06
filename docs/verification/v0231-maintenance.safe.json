@@ -1,0 +1,579 @@
+{
+  "schemaVersion": "v023-maintenance-applicability@1",
+  "maintenanceVersion": "0.23.1",
+  "decisionDate": "2026-11-06",
+  "scope": "Maintenance applicability for the existing bounded Knowledge Runtime qualification; not a new ten-task execution or model-quality qualification.",
+  "originalNormalCohort": {
+    "sourceCommit": "4e893ead9ebe8cdd13146ddc96fe1d56a1e56365",
+    "executionIdentity": "358d870241804bde8b350c7f4edf21e8dfd49d8907c396b342090d300914f431",
+    "decision": "v023-runtime-release-decision.safe.json",
+    "executionInputs": "v023-execution-inputs.safe.json",
+    "summary": "v023-real-ten.safe.json",
+    "planned": 10,
+    "frozenMechanicalSuccesses": 9,
+    "observedRuntimeContracts": 10,
+    "strictCompleteTaskQuality": 5,
+    "sourceOrIdentityRewritten": false,
+    "originalRecordsModified": false
+  },
+  "fixedImplementation": {
+    "commit": "a9223e57b676f0bf0180769a348286d75c5ff647",
+    "tree": "c3ba8f1d344589737b953c0cd87155efcba880d6",
+    "productionFiles": 80,
+    "unchangedProductionFiles": 79,
+    "changedProductionFiles": [
+      "src/runtime.mjs"
+    ],
+    "wholeSourceByteEquivalenceClaim": false,
+    "inputs": [
+      {
+        "path": "src/admission-demo-worker.mjs",
+        "sha256": "306bee1191cc3d77ef1ff88953afcd7a0d5ae19d6cb020991133c5c2fbebc75b",
+        "unchangedFromOriginalTen": true
+      },
+      {
+        "path": "src/admission-demo.mjs",
+        "sha256": "b86db55625cad861c9b18d992be2380ca8b12857bc0ad2bed368698ac6c63ec6",
+        "unchangedFromOriginalTen": true
+      },
+      {
+        "path": "src/admission.mjs",
+        "sha256": "9eb1e133b9315e97518ba7291a6ec422562eae161afef63ddac8c35fbf37670f",
+        "unchangedFromOriginalTen": true
+      },
+      {
+        "path": "src/artifact-demo.mjs",
+        "sha256": "b56ba56449613dc02754887aeaf3ae3227ff74dcf5d916a86df0d57c79e81ba6",
+        "unchangedFromOriginalTen": true
+      },
+      {
+        "path": "src/artifacts.mjs",
+        "sha256": "b8119eb752f6c2d17ab7917fd641eff1c040cbf2ae8c30e3b13d046f46e234f7",
+        "unchangedFromOriginalTen": true
+      },
+      {
+        "path": "src/calculation.mjs",
+        "sha256": "5b7b775e7b80c2326db16e8f5d7771cc64b0b112f6430f92afdc78b5d158b43f",
+        "unchangedFromOriginalTen": true
+      },
+      {
+        "path": "src/child-execution.mjs",
+        "sha256": "cc017d9b3796ca84eef55baf0d22470c9111423f07e4255cdb50f77f59bcdf9e",
+        "unchangedFromOriginalTen": true
+      },
+      {
+        "path": "src/child-results.mjs",
+        "sha256": "1e1522bf3fce336c03b4781a4fa303ff039986f35c2aa5dbb57b248411ce194c",
+        "unchangedFromOriginalTen": true
+      },
+      {
+        "path": "src/child.mjs",
+        "sha256": "b2526c1e4a0c37f81b8c1a86b1ad87d1fb3171f7690eb7c1d1aedbf3bbfad057",
+        "unchangedFromOriginalTen": true
+      },
+      {
+        "path": "src/cli.mjs",
+        "sha256": "1a43616cf07c944509e6637c7f6dea53fa4a37534df7b363eb1aabe021a3c415",
+        "unchangedFromOriginalTen": true
+      },
+      {
+        "path": "src/compaction.mjs",
+        "sha256": "e4ba8984478339404708ab512624a579d38d0a5c77f0e6ae2fb6c900cafd3ed7",
+        "unchangedFromOriginalTen": true
+      },
+      {
+        "path": "src/context.mjs",
+        "sha256": "f91934eb0df773319bc8f4339afd92aa421c2eacd171d08499faf4393ce4a808",
+        "unchangedFromOriginalTen": true
+      },
+      {
+        "path": "src/cooperation-demo.mjs",
+        "sha256": "8fe51ff844db362b2687e86fe53dc38cb1148441133ffd04f0f159dc9ea72e5c",
+        "unchangedFromOriginalTen": true
+      },
+      {
+        "path": "src/cooperation.mjs",
+        "sha256": "984f63e17a29b03b3bd97a84c363f217f867ae9f2a34af100e7ddf12e12b0c71",
+        "unchangedFromOriginalTen": true
+      },
+      {
+        "path": "src/durable-child.mjs",
+        "sha256": "48b0b95a320109f5129719cbdbfd4cab21c63cf1a5434b5cfa74e55a8ea8cf67",
+        "unchangedFromOriginalTen": true
+      },
+      {
+        "path": "src/durable-demo.mjs",
+        "sha256": "f054ddf80b60c47e19c16c2bafc5512bd72143c4c35c03bacc868ee80884eaa3",
+        "unchangedFromOriginalTen": true
+      },
+      {
+        "path": "src/durable-memory.mjs",
+        "sha256": "db16e6e40a557e2b6828614e3c7b8f3e6c9369725b2d62e988d09427040c5dd7",
+        "unchangedFromOriginalTen": true
+      },
+      {
+        "path": "src/evaluate-cli.mjs",
+        "sha256": "306bbad49b7698449421d1a694decbafdb1fdf31841a829edd058e2209ece794",
+        "unchangedFromOriginalTen": true
+      },
+      {
+        "path": "src/evaluate.mjs",
+        "sha256": "974e288e0516dcd4098110bbba1e0ee2e868a717d48778ff48295b53e5aae200",
+        "unchangedFromOriginalTen": true
+      },
+      {
+        "path": "src/example-plugins.mjs",
+        "sha256": "05dc97f843e14f3fe4224dd35b0c57d5232b97240a3bd25115d3abdea537f0eb",
+        "unchangedFromOriginalTen": true
+      },
+      {
+        "path": "src/extensions.mjs",
+        "sha256": "5ece403239b5f09d7c3838d0e55af1793991fa690bb3e508d1ac8f87e603e0c8",
+        "unchangedFromOriginalTen": true
+      },
+      {
+        "path": "src/fixture-gateway.mjs",
+        "sha256": "5ba1ae02049188f7b5890aca19df3bfe5e987cd389ef3b103518cbad88c40bcd",
+        "unchangedFromOriginalTen": true
+      },
+      {
+        "path": "src/fixture-server.mjs",
+        "sha256": "98830aa62741d054efb969bf717e964790a109f31feef75681ba2ac105fd3738",
+        "unchangedFromOriginalTen": true
+      },
+      {
+        "path": "src/gateway.mjs",
+        "sha256": "526de95b4a3ed34b29c282f83c8d2f087d0fd18937a978631e4749b2984bf05d",
+        "unchangedFromOriginalTen": true
+      },
+      {
+        "path": "src/hooks.mjs",
+        "sha256": "aeedd9bfeaffbd5a23e069817740cfac0574e570c494b717588644f432db06d4",
+        "unchangedFromOriginalTen": true
+      },
+      {
+        "path": "src/human-interaction.mjs",
+        "sha256": "5e81b30062e5137083abd8f3de840a61b09720e20bc7e6fc122a58796eef96d2",
+        "unchangedFromOriginalTen": true
+      },
+      {
+        "path": "src/human-response.mjs",
+        "sha256": "40e5cfa35551be5bfdb5d09ba4b5f1f34e7e4204fa9c400996a09cc0fc1a50c0",
+        "unchangedFromOriginalTen": true
+      },
+      {
+        "path": "src/knowledge.mjs",
+        "sha256": "e88d99069d2f1ccba6144820e973e5f80ce3e57c266833f8cb559a9ffe5b9d6a",
+        "unchangedFromOriginalTen": true
+      },
+      {
+        "path": "src/live-config.mjs",
+        "sha256": "e021eabdce6f4c8b9f52d70669e6be934f1a674197b45739c4ce592c1f21d546",
+        "unchangedFromOriginalTen": true
+      },
+      {
+        "path": "src/live-options.mjs",
+        "sha256": "ddd4eba2bac029bd4c06227ad0807d412f2dff8d5b2caae8a471b5e7bcaf3555",
+        "unchangedFromOriginalTen": true
+      },
+      {
+        "path": "src/live-trace.mjs",
+        "sha256": "9f45500caeb8a51c335fc01bc1b2eb05e24c97ecfe9a1d583581a77763e3374f",
+        "unchangedFromOriginalTen": true
+      },
+      {
+        "path": "src/live-transport.mjs",
+        "sha256": "a8912b1157418136e111e2184afe96711443e0e010bdf4e4f4e069524a9fcbc3",
+        "unchangedFromOriginalTen": true
+      },
+      {
+        "path": "src/live-validation.mjs",
+        "sha256": "1e5896f5686cc3d8cf0f6321e6c9dc63e3fb2621919119bff61ca4d1bcc626ef",
+        "unchangedFromOriginalTen": true
+      },
+      {
+        "path": "src/mcp.mjs",
+        "sha256": "46b6c1dc5a2910edaad90d557c4f211e2a046b5a27a29b6248220e64b06f1695",
+        "unchangedFromOriginalTen": true
+      },
+      {
+        "path": "src/memory-consumer.mjs",
+        "sha256": "56c12074b32be107ab8d097a4cf35302e0af2d7bd270a70523d31a5bd455b7cd",
+        "unchangedFromOriginalTen": true
+      },
+      {
+        "path": "src/memory-effects.mjs",
+        "sha256": "92b5079e6d0c8c5c40f6cae28de4612fba772b591c61a27092fba9236c148592",
+        "unchangedFromOriginalTen": true
+      },
+      {
+        "path": "src/memory-projection.mjs",
+        "sha256": "b4c5215c4507b35db0b6c74dc3a6ec2f5cfb2dc62ce3c13f4537d4ef1b34f6fe",
+        "unchangedFromOriginalTen": true
+      },
+      {
+        "path": "src/memory-recall-demo.mjs",
+        "sha256": "c733ec7df7c97d05454c0c792160cbdd6438dd2249ef2af3da1b49ad85c60b98",
+        "unchangedFromOriginalTen": true
+      },
+      {
+        "path": "src/memory-tools.mjs",
+        "sha256": "ffeb476134963c08e21ac61aae4bff8ea9bf7287a2fceae44fa836ebdef42f1e",
+        "unchangedFromOriginalTen": true
+      },
+      {
+        "path": "src/memory.mjs",
+        "sha256": "363857f6410f0a4e2bf953752db7872d0fb25c3f831800fde0b50b9e3a349616",
+        "unchangedFromOriginalTen": true
+      },
+      {
+        "path": "src/observe.mjs",
+        "sha256": "036aca4761335cacc23481427273811581836e439be3118a923b9858528cfc1e",
+        "unchangedFromOriginalTen": true
+      },
+      {
+        "path": "src/pdf-demo.mjs",
+        "sha256": "8f805d01e82a046c0fb2e5c14c703df518de676ad35000a7ebe8602db658a553",
+        "unchangedFromOriginalTen": true
+      },
+      {
+        "path": "src/pdf-input.mjs",
+        "sha256": "8d11a41c59ef5843ce349a43c29e98ab3b6adc570c584414f5298f936419658e",
+        "unchangedFromOriginalTen": true
+      },
+      {
+        "path": "src/pdf-parser-worker.mjs",
+        "sha256": "987cbce7acc7ac809e707e3ea74858cec0cb1e2f1929a0309c14740c35586501",
+        "unchangedFromOriginalTen": true
+      },
+      {
+        "path": "src/plugins.mjs",
+        "sha256": "faa9d09c7ec8ca3bff00c558abab41efe2390c0ccdfba84b3b5d61f83d3d3196",
+        "unchangedFromOriginalTen": true
+      },
+      {
+        "path": "src/portfolio-rebalance-demo.mjs",
+        "sha256": "45c9ad864f05ed6bd56f99fc1194727b0ce39d93e0760020d5d0ff0f4a35fc2a",
+        "unchangedFromOriginalTen": true
+      },
+      {
+        "path": "src/project-plugins.mjs",
+        "sha256": "43b9311bcc39aea80cdbff3966b1a90f2907640fa3c04941a3075835d1c18c00",
+        "unchangedFromOriginalTen": true
+      },
+      {
+        "path": "src/project-sources.mjs",
+        "sha256": "47f84833b6c0be8293a6ae4b5e572b8345a92de3eef19bd9e64bb0b1be6059c5",
+        "unchangedFromOriginalTen": true
+      },
+      {
+        "path": "src/publication.mjs",
+        "sha256": "c28e848fe317c5f84aa499c19d76ae37c1fd586691dbc40a630ce56d971a0a04",
+        "unchangedFromOriginalTen": true
+      },
+      {
+        "path": "src/reader-cli.mjs",
+        "sha256": "60f5b9c5a743db2fe485e4da50853d39c1e2a0783525947cfea2674238678c2c",
+        "unchangedFromOriginalTen": true
+      },
+      {
+        "path": "src/reader.mjs",
+        "sha256": "eaac550d4e8c5718e262699c690dc4d31693957e62323aac8cf853cd584ccf5e",
+        "unchangedFromOriginalTen": true
+      },
+      {
+        "path": "src/report-assessment.mjs",
+        "sha256": "325b2b87ede3c3cfe0af3f20d1b1f4da741bfafb96d55e2c56ce2aa04bf759e4",
+        "unchangedFromOriginalTen": true
+      },
+      {
+        "path": "src/report.mjs",
+        "sha256": "9f62848fd8ca9d7cd47e0351598be62603910448e116b5a00ad87208cccbc678",
+        "unchangedFromOriginalTen": true
+      },
+      {
+        "path": "src/research-cli.mjs",
+        "sha256": "7b56474aa6aa4674ac73c7607fcbf52d6766cc4ec08c4b3124c067fde53e7897",
+        "unchangedFromOriginalTen": true
+      },
+      {
+        "path": "src/research-project.mjs",
+        "sha256": "006b8dcb8ef1225d95a2dd60be694b6b0bb60c319fbafa0b604b00d708c17634",
+        "unchangedFromOriginalTen": true
+      },
+      {
+        "path": "src/result-consumption-demo.mjs",
+        "sha256": "7c37a8418a157115d183e2ee7f8a025452da12b4135f491ad2916fc9c39ec3e7",
+        "unchangedFromOriginalTen": true
+      },
+      {
+        "path": "src/results.mjs",
+        "sha256": "9b235b49ca2af1cfe1985eb2193fbf31d553d2a4abdc98f7c2493e56798d86b5",
+        "unchangedFromOriginalTen": true
+      },
+      {
+        "path": "src/retrieval-demo.mjs",
+        "sha256": "d55b579fefdfd43e4797c98191a52786d73d5903981130071de37a6c09adcfac",
+        "unchangedFromOriginalTen": true
+      },
+      {
+        "path": "src/retrieval.mjs",
+        "sha256": "23313cf6879fa1b29a80a00a1883fdfa2c3085bdb125eb5cfd8334937bce15de",
+        "unchangedFromOriginalTen": true
+      },
+      {
+        "path": "src/run-control.mjs",
+        "sha256": "21d95aa1b3e4719066a899ed6b648d80333adfcdbc371880bf6d6b75e4a105d2",
+        "unchangedFromOriginalTen": true
+      },
+      {
+        "path": "src/runtime.mjs",
+        "sha256": "f5f4cf46cfb07ec7dbc5fac9eb821442d28a7d743df4d03cddc748793c53417f",
+        "unchangedFromOriginalTen": false
+      },
+      {
+        "path": "src/schedule-demo.mjs",
+        "sha256": "c2cb2967ada4e94e79f49702b4d2b9fc40b473132f795089667cb76f1622573a",
+        "unchangedFromOriginalTen": true
+      },
+      {
+        "path": "src/schedule.mjs",
+        "sha256": "be6895cefbffbe9b38710fdeadab800f07fc17a1faf4646f2ea9df6ba3c84608",
+        "unchangedFromOriginalTen": true
+      },
+      {
+        "path": "src/session-cli.mjs",
+        "sha256": "aa57f64553f0346995edaf276f38dbeb9c625519ee44777ba7d9c1c767b8514e",
+        "unchangedFromOriginalTen": true
+      },
+      {
+        "path": "src/session-recovery.mjs",
+        "sha256": "10a04529c83cbefc127902221e57d8796f893f5f5fcb15d2aefc80cd6c5a1cf9",
+        "unchangedFromOriginalTen": true
+      },
+      {
+        "path": "src/session.mjs",
+        "sha256": "a00943b125311ebac8c4d8d9a05e8d8608a81d553eecf5d505a492b435580ce7",
+        "unchangedFromOriginalTen": true
+      },
+      {
+        "path": "src/skills.mjs",
+        "sha256": "39da1f37d9686bb93b2e2da406f1b7232b397eed99c0d61f6b4256b1c8e50de1",
+        "unchangedFromOriginalTen": true
+      },
+      {
+        "path": "src/source.mjs",
+        "sha256": "1ccf4adbb905a391ffe25064bb7a5d8ec5644d37d7a9787a0fb10e7467640f31",
+        "unchangedFromOriginalTen": true
+      },
+      {
+        "path": "src/specialist-child.mjs",
+        "sha256": "328a374634b84869d32fb1723eb569c9ea962df93da306513e73a34d607de1d7",
+        "unchangedFromOriginalTen": true
+      },
+      {
+        "path": "src/specialist-cli.mjs",
+        "sha256": "32d02ffc073512d2689aadebad4e18dcb489b9cf6190311113d96b4d8721682a",
+        "unchangedFromOriginalTen": true
+      },
+      {
+        "path": "src/specialist-demo.mjs",
+        "sha256": "462deaa47fc2ea52e7806445ea41a2628396b662e5273de82420e5eef30d51af",
+        "unchangedFromOriginalTen": true
+      },
+      {
+        "path": "src/storage-files.mjs",
+        "sha256": "44ec8a1efc0c270975b55743e706d6da5f6f967a9722099d51c3e66a278b1ea7",
+        "unchangedFromOriginalTen": true
+      },
+      {
+        "path": "src/stream.mjs",
+        "sha256": "010f66751e677184de6f4de9767582cfba1c353acadd1f6c4ed5bae3397b2cef",
+        "unchangedFromOriginalTen": true
+      },
+      {
+        "path": "src/temporal-cli.mjs",
+        "sha256": "485dfc249cceae4fe20eb1fd29b2408449c1ab5772f1dcb8acf8ff5bebfbd772",
+        "unchangedFromOriginalTen": true
+      },
+      {
+        "path": "src/temporal-demo.mjs",
+        "sha256": "0c5c3de1b18be068deba0d45c8a1f80829a1ba8957515cd1e88086800305ffe4",
+        "unchangedFromOriginalTen": true
+      },
+      {
+        "path": "src/temporal.mjs",
+        "sha256": "9fc839349cb2e7ecc362a954e7bf7dbc7590ac08e72a177b75e1472c3411eb8f",
+        "unchangedFromOriginalTen": true
+      },
+      {
+        "path": "src/tools.mjs",
+        "sha256": "e6dbf76d5f98812143513baf35ec9d967e5cd1aaa53795b37270863cd359ba0d",
+        "unchangedFromOriginalTen": true
+      },
+      {
+        "path": "src/worker.mjs",
+        "sha256": "d977235350322e6999598c39d4df087dfc782556aa6298aa180fef1e90f3eacf",
+        "unchangedFromOriginalTen": true
+      },
+      {
+        "path": "src/working-demo.mjs",
+        "sha256": "cd3d8973b54bc141978cc654d33746ea3b02211991394d2f7fd04d8b6f61fa9a",
+        "unchangedFromOriginalTen": true
+      },
+      {
+        "path": "src/working-note.mjs",
+        "sha256": "6bc9411849e92afdd8ff5c06d55067e833d7d9a4dcf5fecb778c35b16d1adaa7",
+        "unchangedFromOriginalTen": true
+      }
+    ]
+  },
+  "changes": [
+    {
+      "area": "finalization-heartbeat",
+      "behavior": "Retain the original fenced Session heartbeat until asynchronous finalization or release completes; stop it on every return or throw.",
+      "preserved": [
+        "owner and fence",
+        "lease-expiry rejection",
+        "original Run deadline",
+        "no new work after deadline",
+        "unknown effects and request reservations"
+      ],
+      "evidence": [
+        "product runtime-finalization-lease tests",
+        "first independent lifecycle review",
+        "second independent lifecycle review",
+        "current full suite"
+      ]
+    },
+    {
+      "area": "waiting-response cancellation",
+      "behavior": "After original claim release, read durable Run/root state and return cancelled/CANCELLED if cancellation occurred during cleanup.",
+      "preserved": [
+        "original unanswered question/deadline",
+        "one-time response adoption",
+        "stale/expired writer rejection",
+        "readback failure remains failure"
+      ],
+      "evidence": [
+        "seven current product lifecycle regression cases",
+        "six incremental independent lifecycle cases"
+      ]
+    },
+    {
+      "area": "Child test timing",
+      "behavior": "Use 5000 ms for ordinary test leases; retain the explicit 150 ms expiry case and wait for persisted lease expiry after real process death.",
+      "productionDefaultChanged": false,
+      "evidence": [
+        "independent fixture review and 70 targeted tests",
+        "current full suite including cold-process tests"
+      ]
+    }
+  ],
+  "candidateVerification": {
+    "fullSuite": {
+      "total": 966,
+      "passed": 966,
+      "failed": 0,
+      "skipped": 0,
+      "cancelled": 0
+    },
+    "buildPassed": true,
+    "nodeTested": "26.11.1",
+    "nodeDeclaredRange": ">=26.8.1 <27",
+    "ci": {
+      "runId": 42151778991,
+      "url": "https://github.com/hpoenixf/open-etf-agent/actions/runs/42151778991",
+      "conclusion": "success",
+      "checkoutCommit": "a9223e57b676f0bf0180769a348286d75c5ff647",
+      "lockedInstallPassed": true,
+      "buildPassed": true,
+      "testsPassed": 966
+    },
+    "independentLifecycleBatches": [
+      {
+        "tests": 12,
+        "passed": 12,
+        "scope": "First fix; includes a retained observation of the then-unfixed cancellation-return defect."
+      },
+      {
+        "tests": 13,
+        "passed": 13,
+        "scope": "Second fix; seven current product tests and six additional independent cases."
+      }
+    ],
+    "countsAreNotAdditive": true,
+    "sourceApplicabilityReviewSha256": "d34d3b7078106e9630f077fbd1b51866deb533a243639d81e34532d4e71806be"
+  },
+  "retainedFixedSourceObservations": [
+    {
+      "scope": "original-ten-finalization-observation",
+      "planned": 10,
+      "completed": [
+        "K01"
+      ],
+      "providerBlocked": [
+        "K02"
+      ],
+      "notRun": [
+        "K03",
+        "K04",
+        "K05",
+        "K06",
+        "K07",
+        "K08",
+        "K09",
+        "K10"
+      ],
+      "physicalRequests": 4,
+      "completeGoZeroBodies": 3,
+      "unknownRequests": 1,
+      "runtimeProvenCompleted": 1,
+      "strictContentPassed": 0,
+      "httpStatus": 429,
+      "newTenTaskQualified": false
+    },
+    {
+      "scope": "separate-unrun-eight-supplement",
+      "planned": 8,
+      "completed": [
+        "K03",
+        "K04",
+        "K05",
+        "K06",
+        "K07"
+      ],
+      "providerBlocked": [
+        "K08"
+      ],
+      "notRun": [
+        "K09",
+        "K10"
+      ],
+      "physicalRequests": 20,
+      "completeGoZeroBodies": 19,
+      "unknownRequests": 1,
+      "runtimeProvenCompleted": 5,
+      "strictContentPassed": 4,
+      "httpStatus": 429,
+      "newTenTaskQualified": false
+    }
+  ],
+  "observationsPooled": false,
+  "unknownsRefundedOrReplayed": false,
+  "additionalRealCallsRequiredForThisMaintenanceDelta": false,
+  "publicPackageDeltaAllowed": [
+    "documentation and verification summaries",
+    "root package version 0.23.0 to 0.23.1 in package.json and two package-lock.json project fields"
+  ],
+  "dependencyEntriesChanged": false,
+  "qualificationGuardChanged": false,
+  "finalPackageAndRemotePublicationVerifiedByThisRecord": false,
+  "limitations": [
+    "Original full ten-task evidence remains tied to its original source.",
+    "A new fixed-source ten-task pass is not claimed.",
+    "Model truthfulness and literal query selection are not Runtime semantic guarantees.",
+    "The specific two HTTP429 causes and remote effects remain unknown.",
+    "Future behavior changes require a fresh affected-contract assessment."
+  ]
+}

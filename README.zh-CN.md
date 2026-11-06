@@ -73,6 +73,8 @@ npm run demo -- --case document-compare
 
 **v0.23 提供已准入 Knowledge 检索**：查询显式导入的文本，沿 Result、Report 和 Reader 保留完整原文页。[用法](docs/knowledge.zh-CN.md) · [分层证据](docs/verification/v023-release.zh-CN.md) · [固定公开源码](https://github.com/hpoenixf/open-etf-agent/tree/4e893ead9ebe8cdd13146ddc96fe1d56a1e56365)。本批观察到的 Runtime 合同通过 10/10；冻结机械结果仍为 9/10，严格完整任务质量为 5/10。三者分别记录，不代表十份完美答案。
 
+**v0.23.1 维护：** 原 Session 心跳覆盖最终收尾，等待期间正确返回持久化取消。[修复、966/966 与证据适用性](docs/verification/v0231-maintenance.zh-CN.md)；原十题分数与后续提供方中断分别保留。
+
 **v0.22 提供有界 Child 执行**：选择已准入的只读方法与窄来源，查看原 Child 身份并安全恢复同一执行。[用法](docs/child-execution.zh-CN.md) · [分阶段 9/10 与 C06 补证](docs/verification/v022-release.zh-CN.md)。同一测试源码、两个批准阶段，不是一次连续 10/10；最终包 CI 与发布另行核验。 [固定公开源码](https://github.com/hpoenixf/open-etf-agent/tree/fed2c5f886200d4c04281c6293d5eb1ee7c2eab9)。
 
 **v0.21 提供普通多轮问答**：任务可连续提问、接收关联回答，并恢复同一个Run到报告冷读；回答不是新权限。[用法](docs/human-interaction.zh-CN.md) · [10/10真实任务与边界](docs/verification/v021-release.zh-CN.md) · [固定公开源码](https://github.com/hpoenixf/open-etf-agent/tree/427315b5554b1c9af8fa50b8ab622747045e691a)。最终包原CI与Release另行核验。
