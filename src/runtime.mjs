@@ -345,6 +345,9 @@ async function drive({ question, gateway, outputRoot='runs', requireReport=false
       controller.signal.throwIfAborted();claim.read();
     }
 
+    // The original fenced claim owns asynchronous finalization too. Keep its
+    // heartbeat until finish/release returns, without weakening Session checks.
+    try{
     try{
       controller.signal.throwIfAborted();
       // Binding and terminal-read checks precede lifecycle effects. The original
@@ -511,7 +514,7 @@ async function drive({ question, gateway, outputRoot='runs', requireReport=false
       state.code=decideRunControl({kind:'failure',code}).reason;state.status=cancelled?'cancelled':'failed';
       retainUnknownDispatch(state,inFlight);
     }finally{
-      clearTimeout(timer);clearInterval(heartbeat);
+      clearTimeout(timer);
       if(interrupted)effectsStopped=await drainStoppedEffect();
       if(pdfInput!==undefined){try{await host?.close();}catch{secondary('pdf-cleanup','PDF_CLEANUP_FAILED');}}
       if(allowedTools&&host){try{sourceSnapshots=await host.getSources();resultRefs=await host.getResultRefs();}catch{secondary('result-readback','RESULT_READBACK_FAILED');}}
@@ -533,5 +536,9 @@ async function drive({ question, gateway, outputRoot='runs', requireReport=false
     }
     if(claim){try{state.phase='terminal';state.host=host?.snapshot()??state.host;state.outcome=outcome;claim.finish(state);}catch(error){outcome.status=error.code==='RUN_CANCELLED'?'cancelled':'failed';outcome.code=error.code==='RUN_CANCELLED'?'CANCELLED':error.code||'CHECKPOINT_FAILED';}finally{try{claim.release();}catch{}}}
     return outcome;
+    }finally{
+      clearInterval(heartbeat);clearTimeout(timer);
+      signal?.removeEventListener('abort',cancel);hostSignal?.removeEventListener('abort',stop);
+    }
   }
 }
