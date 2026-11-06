@@ -6,7 +6,9 @@ import {CLAIM_COMPARISON_METHOD} from '../src/child.mjs';
 import {childExecutionBinding,createChildExecutionBinding,inspectChildExecutions} from '../src/child-execution.mjs';
 const [directory,mode,target]=process.argv.slice(2);
 const question='Check the selected original synthetic page.',documents=['atlas-a'],execution={schemaVersion:'child-execution@1',maxChildren:2,methods:[CLAIM_COMPARISON_METHOD]};
-const selected={question,documents,execution},store=await openSession({directory,leaseMs:150});let token,paused=false;
+// Keep live work independent of short timer stalls; the parent waits for persisted expiry after SIGKILL.
+const normalLeaseMs=5000;
+const selected={question,documents,execution},store=await openSession({directory,leaseMs:normalLeaseMs});let token,paused=false;
 const call=(id,name,args)=>({kind:'calls',calls:[{id,name,arguments:args}]});
 const checkpoint=async event=>{const role=event.runId==='original'?'main':'child';if(mode==='start'&&!paused&&role+':'+event.phase===target){paused=true;process.send?.({kind:'checkpoint',pid:process.pid,role,phase:event.phase,runId:event.runId,root:store.inspect('original'),children:store.listChildren('original')});await new Promise(()=>{});}};
 const binding=createChildExecutionBinding({store,parentRunId:'original',parentClaim:()=>token,...selected,outputRoot:join(directory,'runs'),onCheckpoint:checkpoint,gatewayFactory:()=>({mode:'fixture',async next({messages}){await appendFile(join(directory,'fixture-requests.txt'),'child\n');return messages.some(m=>m.role==='tool')?{kind:'final',text:'Derived source observation.'}:call('page','read_page',{documentId:'atlas-a',page:1});}})});
