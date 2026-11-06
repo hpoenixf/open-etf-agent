@@ -528,7 +528,16 @@ async function drive({ question, gateway, outputRoot='runs', requireReport=false
     if(protectedMode&&state.status!=='completed')state.answer='';
     state.gatewayOutcome=gatewayUnsettled?'unknown':'settled';
     const outcome={...(state.controlObservations?{controlObservations:structuredClone(state.controlObservations)}:{}),runId,rootId:rootBudget.rootId,directory:resolve(directory),status:state.status,code:state.code,gatewayOutcome:state.gatewayOutcome,answer:state.answer,...(state.publication?{publication:structuredClone(state.publication)}:{}),receipt:host?.receipt??null,toolsDispatched:state.toolsDispatched,rounds:state.rounds,logErrors,unknownEffects:state.unknownEffects,partialEffects:state.partialEffects,hookErrors:state.hookErrors,rootUsage:rootBudget.snapshot(),taskId,...(allowedTools?{sources:sourceSnapshots,resultRefs}:{}),semanticStatus:'unreviewed'};
-    if(awaitingResponse){try{claim.release();return{...outcome,status:'awaiting-response',code:null,questionId:state.responseQuestion,deadlineAt};}catch(error){const current=durable.store.inspect(runId);return{...outcome,status:current.status==='cancelled'?'cancelled':'failed',code:current.status==='cancelled'?'CANCELLED':error.code};}}
+    if(awaitingResponse){
+      try{
+        claim.release();
+        const current=durable.store.inspect(runId);
+        // Cancellation may release the original claim while release hooks run.
+        // A no-op release is not evidence that the question is still available.
+        if(current.status==='cancelled'||current.rootStatus==='cancelled')return{...outcome,status:'cancelled',code:'CANCELLED'};
+        return{...outcome,status:'awaiting-response',code:null,questionId:state.responseQuestion,deadlineAt};
+      }catch(error){const current=durable.store.inspect(runId),cancelled=current.status==='cancelled'||current.rootStatus==='cancelled';return{...outcome,status:cancelled?'cancelled':'failed',code:cancelled?'CANCELLED':error.code};}
+    }
     if(interrupted){
       let leaseReleased=false;if(effectsStopped){try{leaseReleased=claim.release();}catch{}}
       const original=durable.store.inspect(runId);
