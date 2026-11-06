@@ -263,6 +263,8 @@ node dist/src/session-cli.mjs publication-revisions --session runs/publication-d
 
 <a id="versions"></a>
 
+**v0.24 让项目修订沿用原 Provider Admission 容量**：同一规范化端点在模型或流式配置变化后仍保留一个项目内原 Owner。[用法](provider-capacity.zh-CN.md) · [十题证据与边界](verification/v024-release.zh-CN.md) · [固定实测源码](https://github.com/hpoenixf/open-etf-agent/tree/0d47e318e0f5fb36d45d8be274324a06bdd20d5c)。机械与具名 Runtime 合同通过 10/10；保留 C09 未修复的错引等模型内容问题，不代表账户级限流或真实并发资格。
+
 **v0.23 提供已准入 Knowledge 检索**：查询显式导入的文本，沿 Result、Report 和 Reader 保留完整原文页。[用法](knowledge.zh-CN.md) · [分层证据](verification/v023-release.zh-CN.md) · [固定公开源码](https://github.com/hpoenixf/open-etf-agent/tree/4e893ead9ebe8cdd13146ddc96fe1d56a1e56365)。本批观察到的 Runtime 合同通过 10/10；冻结机械结果仍为 9/10，严格完整任务质量为 5/10。三者分别记录，不代表十份完美答案。
 
 **v0.22 · 有界 Child 执行**：[用法](child-execution.zh-CN.md) · [分阶段 9/10 与 C06 独立补证](verification/v022-release.zh-CN.md)。保留原失败和历史 unknown，不称一次连续 10/10。
@@ -441,5 +443,7 @@ Web 取材是原路线中的外网输入候选，仍未编号；Web 读取界面
 <a id="v021-human-interaction"></a>
 <a id="v021--普通人机交互候选"></a>
 ## v0.21 · 普通人机交互
+
+**v0.21 提供普通多轮问答**：任务可连续提问、接收关联回答，并恢复同一个Run到报告冷读；回答不是新权限。[用法](human-interaction.zh-CN.md) · [10/10真实任务与边界](verification/v021-release.zh-CN.md) · [固定公开源码](https://github.com/hpoenixf/open-etf-agent/tree/427315b5554b1c9af8fa50b8ab622747045e691a)。最终包原CI与Release另行核验。
 
 [CLI/API](human-interaction.zh-CN.md) · [资格与边界](verification/v021-release.zh-CN.md).

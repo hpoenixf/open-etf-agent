@@ -2,6 +2,10 @@
 
 # 验证证据索引 · v0.1–v0.11
 
+## v0.24 项目提供方容量
+
+[真实十题、机械 / 具名 Runtime 10/10 与保留的内容问题](v024-release.zh-CN.md)。[原批次摘要](v024-real-ten.safe.json) · [固定源码 CI / fullSuite](v024-provider-free.safe.json) · [执行输入](v024-execution-inputs.safe.json) · [Runtime 范围决定](v024-runtime-release-decision.safe.json)。串行真实协议与离线竞争证据分开呈现。
+
 ## v0.23.1 Runtime 维护
 
 [收尾心跳、取消返回、966/966 与维护适用性](v0231-maintenance.zh-CN.md)。原十题身份与分数不变，后续未完成的提供方观察不拼分。

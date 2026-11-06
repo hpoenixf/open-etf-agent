@@ -266,6 +266,8 @@ This is a real local SQLite/process flow with synthetic replies and no model cal
 
 <a id="versions"></a>
 
+**v0.24 keeps Provider Admission capacity stable across project revisions**: the same normalized endpoint retains one original project-local owner when model or streaming configuration changes. [Usage](provider-capacity.md) · [Ten-task evidence and limits](verification/v024-release.md) · [Fixed tested source](https://github.com/hpoenixf/open-etf-agent/tree/0d47e318e0f5fb36d45d8be274324a06bdd20d5c). Mechanical and named Runtime contracts passed 10/10; model content caveats, including C09’s unrepaired citation error, remain. Not account-wide limiting or live-concurrency qualification.
+
 **v0.23 adds admitted Knowledge retrieval**: query explicitly imported text and keep whole original pages through Result, Report and Reader. [Usage](knowledge.md) · [Layered evidence](verification/v023-release.md) · [Fixed public source](https://github.com/hpoenixf/open-etf-agent/tree/4e893ead9ebe8cdd13146ddc96fe1d56a1e56365). Observed Runtime contracts passed 10/10; the frozen mechanical result remains 9/10 and strict complete-task quality 5/10. These are distinct measures, not ten perfect answers.
 
 **v0.22 · Bounded Child execution**: [Usage](child-execution.md) · [Staged 9/10 with independent C06 supplement](verification/v022-release.md). Original failure and historical unknowns remain; this is not one continuous 10/10 batch.
@@ -424,5 +426,7 @@ Open an [issue](https://github.com/hpoenixf/open-etf-agent/issues) with the **st
 <a id="v021-human-interaction"></a>
 <a id="v021--ordinary-human-interaction-candidate"></a>
 ## v0.21 · Ordinary Human Interaction
+
+**v0.21 adds ordinary multi-question interaction**: receive associated answers and resume the original Run through report readback, without creating new permission grants. [Usage](human-interaction.md) · [Ten real tasks and limits](verification/v021-release.md) · [Fixed public source](https://github.com/hpoenixf/open-etf-agent/tree/427315b5554b1c9af8fa50b8ab622747045e691a). Final-package CI and Release are verified separately.
 
 [CLI/API](human-interaction.md) · [Qualification and limits](verification/v021-release.md).

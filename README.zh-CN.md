@@ -71,21 +71,21 @@ npm run demo -- --case document-compare
 <a id="versions"></a>
 ## 最近三个模块
 
+**v0.24 让项目修订沿用原 Provider Admission 容量**：同一规范化端点在模型或流式配置变化后仍保留一个项目内原 Owner。[用法](docs/provider-capacity.zh-CN.md) · [十题证据与边界](docs/verification/v024-release.zh-CN.md) · [固定实测源码](https://github.com/hpoenixf/open-etf-agent/tree/0d47e318e0f5fb36d45d8be274324a06bdd20d5c)。机械与具名 Runtime 合同通过 10/10；保留 C09 未修复的错引等模型内容问题，不代表账户级限流或真实并发资格。
+
 **v0.23 提供已准入 Knowledge 检索**：查询显式导入的文本，沿 Result、Report 和 Reader 保留完整原文页。[用法](docs/knowledge.zh-CN.md) · [分层证据](docs/verification/v023-release.zh-CN.md) · [固定公开源码](https://github.com/hpoenixf/open-etf-agent/tree/4e893ead9ebe8cdd13146ddc96fe1d56a1e56365)。本批观察到的 Runtime 合同通过 10/10；冻结机械结果仍为 9/10，严格完整任务质量为 5/10。三者分别记录，不代表十份完美答案。
 
 **v0.23.1 维护：** 原 Session 心跳覆盖最终收尾，等待期间正确返回持久化取消。[修复、966/966 与证据适用性](docs/verification/v0231-maintenance.zh-CN.md)；原十题分数与后续提供方中断分别保留。
 
 **v0.22 提供有界 Child 执行**：选择已准入的只读方法与窄来源，查看原 Child 身份并安全恢复同一执行。[用法](docs/child-execution.zh-CN.md) · [分阶段 9/10 与 C06 补证](docs/verification/v022-release.zh-CN.md)。同一测试源码、两个批准阶段，不是一次连续 10/10；最终包 CI 与发布另行核验。 [固定公开源码](https://github.com/hpoenixf/open-etf-agent/tree/fed2c5f886200d4c04281c6293d5eb1ee7c2eab9)。
 
-**v0.21 提供普通多轮问答**：任务可连续提问、接收关联回答，并恢复同一个Run到报告冷读；回答不是新权限。[用法](docs/human-interaction.zh-CN.md) · [10/10真实任务与边界](docs/verification/v021-release.zh-CN.md) · [固定公开源码](https://github.com/hpoenixf/open-etf-agent/tree/427315b5554b1c9af8fa50b8ab622747045e691a)。最终包原CI与Release另行核验。
-
 **2026-11-02 底座修复：**[工作输入准入、取消事实、Child 结算与无收益摘要预检查](docs/verification/foundation-repair-20261102.md)。零真实模型调用的回归已通过；不是新增 Release，也不是新一批实测资格。
 
 | 模块 | 解决什么 | 运行与核对 |
 | --- | --- | --- |
+| v0.24 · 项目提供方容量 | 修订沿用原端点 Owner，unknown 保留占用 | [用法](docs/provider-capacity.zh-CN.md) · [证据](docs/verification/v024-release.zh-CN.md) |
 | v0.23 · 已准入 Knowledge | 有界词法检索、完整原页与同 Run 读回 | [用法](docs/knowledge.zh-CN.md) · [证据](docs/verification/v023-release.zh-CN.md) |
 | v0.22 · 有界 Child 执行 | 准入方法、窄来源、原生命周期与同 Child 恢复 | [用法](docs/child-execution.zh-CN.md) · [证据](docs/verification/v022-release.zh-CN.md) |
-| v0.21 · 普通人机交互 | 关联提问、收答、同Run采纳与恢复 | [CLI/API](docs/human-interaction.zh-CN.md) · [证据](docs/verification/v021-release.zh-CN.md) |
 
 [完整固定版本与运行说明](docs/module-guide.zh-CN.md#versions) · [机器可读版本谱系](versions.json) · [GitHub Releases](https://github.com/hpoenixf/open-etf-agent/releases)
 
@@ -152,7 +152,6 @@ npm run demo -- --case document-compare
 参见[仓库维护验收要求](docs/verification/README.zh-CN.md#repository-maintenance)。
 
 欢迎通过 [Issues](https://github.com/hpoenixf/open-etf-agent/issues) 提交问题或讨论。可复现问题请附**阶段/提交、Node 版本、最小步骤、预期与实际结果**；请勿提交密钥、私人资料、数据库、真实持仓或未经清理的原始日志。改进建议优先说明它解决的具体问题，以及如何验证。
-
 
 
 <details>

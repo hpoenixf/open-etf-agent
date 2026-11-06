@@ -2,6 +2,10 @@
 
 # Verification evidence index
 
+## v0.24 project provider capacity
+
+[Ten real tasks, mechanical / named Runtime 10/10 and retained content flaws](v024-release.md). [Original-cohort summary](v024-real-ten.safe.json) · [Fixed-source CI / fullSuite](v024-provider-free.safe.json) · [Execution inputs](v024-execution-inputs.safe.json) · [Runtime-scoped decision](v024-runtime-release-decision.safe.json). Serial protocol evidence and provider-free contention remain separate.
+
 ## v0.23.1 Runtime maintenance
 
 [Finalization heartbeat, cancellation return, 966/966 and maintenance applicability](v0231-maintenance.md). Original ten-task identity and scores remain unchanged; later incomplete provider observations are not pooled.

@@ -1,0 +1,455 @@
+{
+  "schemaVersion": "v024-layered-real-ten-summary@1",
+  "decisionDate": "2026-11-06",
+  "sourceCommit": "0d47e318e0f5fb36d45d8be274324a06bdd20d5c",
+  "sourceTree": "aa59d9c8ba735ff05a881134d665cc64edaee6d7",
+  "executionIdentity": "f9ecbff5f4578b1af61006a7a97ff17976f0f4b383d1f57f5575ef29eef748ad",
+  "provider": "OpenCode Go",
+  "model": "deepseek-v4.1-flash",
+  "sourceMaterial": "Nineteen original synthetic text sources for ten frozen tasks; not private financial or user data.",
+  "originalCohortSha256": "a405df9cf89a3e4673bfa7a68653efa7afdc1c0b220c86d180b2c1e889b2c3ce",
+  "frozenPlanSha256": "66e9ad55f276c2399426522dbcd3d70ca2d5f5b2369b4e4504b62c6a54d07cbf",
+  "planned": 10,
+  "attempted": 10,
+  "mechanicalSuccesses": 10,
+  "observedNamedRuntimeContractPasses": 10,
+  "completedReports": 10,
+  "completedPublications": 10,
+  "physicalRequests": 30,
+  "completeOriginalGoZeroBodies": 30,
+  "newUnknownRequests": 0,
+  "perfectSemanticTenOfTenClaim": false,
+  "semanticNumericScore": null,
+  "cases": [
+    {
+      "id": "C01",
+      "originalCaseSha256": "11f091b413b397fc1dbe3a9d415075a7780f4d2a56c168f5b4bea427c88e3e9a",
+      "independentReviewSha256": "95f60dfbefdec9595daf2bed980c931692e173bd48aa64941be6990441e676ed",
+      "originalStatus": "completed",
+      "physicalRequests": 3,
+      "mechanicalQualification": "eligible",
+      "observedRuntimeContracts": "pass",
+      "reportBytes": 2833,
+      "reportSha256": "d63816dc235d923d63ce56d2e5448045eb6cbba2c48296c89d66f1c8c8c54bad",
+      "publicationPayloadHash": "fe7b6bc56ae9f50e278f8048f47b52c1caacb911064a3759dce6384113ebb24a",
+      "delivery": {
+        "reportSaved": true,
+        "publicationCommitted": true,
+        "completed": true,
+        "coldAndCapturedHttpMatch": true,
+        "observedWithinOriginalDeadline": true
+      },
+      "modelQualityResult": "substantively-faithful-with-minor-wording-imprecision",
+      "coreTaskQuality": "主要事实及引用忠实；一处把已明确联网要求写成“未提离线导出”的措辞偏松，且缺口枚举偏长。最终回复保留了正确联网条件，未虚构离线能力。",
+      "modelQualityNotes": [
+        {
+          "severity": "minor-wording",
+          "quote": "The only offline capability stated is **local draft editing**; nothing is said about offline export.",
+          "assessment": "The second clause is loose: the source already says export requires an internet connection, so offline export is restricted rather than entirely unaddressed. The table and preceding bullet correctly state that requirement, and the final Publication preserves it. This is a local wording issue, not a missing key fact or invented offline-export support.",
+          "runtimeFailure": false,
+          "changesMechanicalScore": false
+        },
+        {
+          "severity": "presentation-only",
+          "quote": "No numeric or otherwise quantified connectivity limits (e.g., timeouts, retry counts, bandwidth, number of devices/sessions) appear in either document.",
+          "assessment": "This source-bounded absence statement is accurate, but the long list of unrelated gaps makes a requested concise report less concise. It creates no new Runtime or mechanical failure.",
+          "runtimeFailure": false,
+          "changesMechanicalScore": false
+        }
+      ],
+      "semanticNumericScore": null,
+      "qualityChangesMechanicalScore": false
+    },
+    {
+      "id": "C02",
+      "originalCaseSha256": "000760a6ef4ed886b24806dc770e9aca47b55bbcefc11a59c5b7c7ecb4942d25",
+      "independentReviewSha256": "a83963e752fbbf9312d45613b3dbc2e99068a333243886e340863408220899c1",
+      "originalStatus": "completed",
+      "physicalRequests": 3,
+      "mechanicalQualification": "eligible",
+      "observedRuntimeContracts": "pass",
+      "reportBytes": 5260,
+      "reportSha256": "e8f1231d77ba305366489efae1db7a42cf90872f460fa151fef70ac7b9179bb3",
+      "publicationPayloadHash": "ed290f6dd8e000a9522dd018b0cfb698b5eee0708ee3091b1f3da45ec260871e",
+      "delivery": {
+        "reportSaved": true,
+        "publicationCommitted": true,
+        "completed": true,
+        "coldAndCapturedHttpMatch": true,
+        "observedWithinOriginalDeadline": true
+      },
+      "modelQualityResult": "faithful-core-facts-with-presentation-notes",
+      "coreTaskQuality": "中文报告覆盖全部必需事实，未从 C01 借入登录条件，来源与编号一致。主要问题仅为过度保守措辞和无关缺口枚举偏长；未见实质功能误述。",
+      "modelQualityNotes": [
+        {
+          "severity": "minor-phrasing",
+          "quote": "离线导出 | 原文未写明支持；且明确“导出需要联网”",
+          "assessment": "The first clause is more hesitant than necessary because the internet requirement already determines the offline restriction. The same cell explicitly gives that requirement, and the analysis/conclusion consistently preserve it. No unsupported offline capability is claimed.",
+          "runtimeFailure": false,
+          "changesMechanicalScore": false
+        },
+        {
+          "severity": "presentation-only",
+          "quote": "## 信息缺口与不确定性（不得视为支持）",
+          "assessment": "The report expands two very short sources into a long catalogue of possible gaps. These statements remain source-bounded and are not invented features. This is an efficiency/readability note, not a substantive rubric failure.",
+          "runtimeFailure": false,
+          "changesMechanicalScore": false
+        }
+      ],
+      "semanticNumericScore": null,
+      "qualityChangesMechanicalScore": false
+    },
+    {
+      "id": "C03",
+      "originalCaseSha256": "5cd2d2abd09b49e3b7903b780c9f91c693feb42e9665edf575d186d717f2e979",
+      "independentReviewSha256": "8e7ad2ad166f4050c478adb718c88a95cd9ad2c6f4f8cfabc4ff9f8bd533cc58",
+      "originalStatus": "completed",
+      "physicalRequests": 3,
+      "mechanicalQualification": "eligible",
+      "observedRuntimeContracts": "pass",
+      "reportBytes": 3117,
+      "reportSha256": "429c22960220e4b1313f97924ee6b87a4640b269cf5d7cb411c81b19ceb5fe21",
+      "publicationPayloadHash": "56aa20cdff0885e072f69eae41c49cd5fbc4eccf98ea04bb206f32ad5f460707",
+      "delivery": {
+        "reportSaved": true,
+        "publicationCommitted": true,
+        "completed": true,
+        "coldAndCapturedHttpMatch": true,
+        "observedWithinOriginalDeadline": true
+      },
+      "modelQualityResult": "faithful-with-presentation-note",
+      "coreTaskQuality": "常规窗口、附件替换期限、周一例外及组织者确认前提全部忠实，未变成自动或全民延期。仅有超出短报告需要的缺口说明。",
+      "modelQualityNotes": [
+        {
+          "severity": "presentation-only",
+          "quote": "## Missing information and uncertainty",
+          "assessment": "The required conditions are correct. The additional paragraphs on missing dates, procedures and synthetic status are mostly source-bounded caveats, but make the requested short report longer than necessary. This is not a missing rubric fact or a Runtime failure.",
+          "runtimeFailure": false,
+          "changesMechanicalScore": false
+        }
+      ],
+      "semanticNumericScore": null,
+      "qualityChangesMechanicalScore": false
+    },
+    {
+      "id": "C04",
+      "originalCaseSha256": "f5b077a4f396f5076ec99fe278a21856da6319eba97a7b462e8bd9e0af86d403",
+      "independentReviewSha256": "9d89313d96b75f00471e85816bd3e9b475025a0dabc4bf08ffd893f8c09ed997",
+      "originalStatus": "completed",
+      "physicalRequests": 3,
+      "mechanicalQualification": "eligible",
+      "observedRuntimeContracts": "pass",
+      "reportBytes": 5808,
+      "reportSha256": "e5d0268b82df4dbd039b25a6cb73d4c58f0cbbc67112584c117a7f45ca256bb7",
+      "publicationPayloadHash": "717987da803a8db934b935c0b4e3106d8c2da2b0453ea44267a9d799330c0643",
+      "delivery": {
+        "reportSaved": true,
+        "publicationCommitted": true,
+        "completed": true,
+        "coldAndCapturedHttpMatch": true,
+        "observedWithinOriginalDeadline": true
+      },
+      "modelQualityResult": "substantively-faithful-with-minor-wording-imprecision",
+      "coreTaskQuality": "两日期、各自可用范围和矛盾未解均保留，未推断后文权威或实际原因。两处轻微措辞把“提及但未解释”说成“未提及/明确拒绝解释”，列模型内容提示，不改机械分。",
+      "modelQualityNotes": [
+        {
+          "severity": "minor-wording",
+          "quote": "The later note supplies no rationale, no change log, no effective date for a policy change, and no reference to the October 1 announcement.",
+          "assessment": "The source does reference the earlier announcement, although it does not name October 1 within that sentence. Saying no reference is too broad and is immediately followed by the correct quotation. The main conclusion that the discrepancy is unexplained remains supported.",
+          "runtimeFailure": false,
+          "changesMechanicalScore": false
+        },
+        {
+          "severity": "minor-unsupported-intent-wording",
+          "quote": "The later note explicitly declines to explain the earlier announcement",
+          "assessment": "The source says does not explain, not that it deliberately declines. Declines adds an unnecessary implication of intent. It does not select either rollout status as authoritative or establish a cause, and is recorded only as a model wording concern.",
+          "runtimeFailure": false,
+          "changesMechanicalScore": false
+        },
+        {
+          "severity": "presentation-only",
+          "quote": "## Missing information",
+          "assessment": "The long list of possible missing evidence is cautious rather than a claim those processes occurred, but is more elaborate than needed to answer the short two-note comparison.",
+          "runtimeFailure": false,
+          "changesMechanicalScore": false
+        }
+      ],
+      "semanticNumericScore": null,
+      "qualityChangesMechanicalScore": false
+    },
+    {
+      "id": "C05",
+      "originalCaseSha256": "575b3b34405089a1ac59bf8e02a5e38962f11d43aae9a9d3d0739b8ee797fee6",
+      "independentReviewSha256": "a3a9e723c4055037039a7cacc01603045ad235c09b9c7fd3cb907cfb834f2905",
+      "originalStatus": "completed",
+      "physicalRequests": 3,
+      "mechanicalQualification": "eligible",
+      "observedRuntimeContracts": "pass",
+      "reportBytes": 4977,
+      "reportSha256": "9c29653a954a886a365cb457685c1f610c4f526630929b86b4535879b37d29e2",
+      "publicationPayloadHash": "074e750162abdae2838aa89ff328873bfcbee1f14087e34e9a6f67ddcc23efcf",
+      "delivery": {
+        "reportSaved": true,
+        "publicationCommitted": true,
+        "completed": true,
+        "coldAndCapturedHttpMatch": true,
+        "observedWithinOriginalDeadline": true
+      },
+      "modelQualityResult": "faithful-core-facts-with-minor-source-description-error",
+      "coreTaskQuality": "导出格式与认证缺失范围均正确；明确拒绝把材料未写升级为未获认证或外部搜索结论。正文误称原文四行（实际三行），并有冗长缺口枚举，仅列模型质量提示。",
+      "modelQualityNotes": [
+        {
+          "severity": "minor-source-description-error",
+          "quote": "The supplied document is very short and carries only four lines of content",
+          "assessment": "The original UTF-8 fixture has three nonempty physical text lines (title, Version, and the combined exports/offline-editing/certification line), not four. The source has one physical page as correctly reported elsewhere. This line-count error does not omit or change the required export/certification facts and is a model-body error, not a Runtime contract failure.",
+          "runtimeFailure": false,
+          "changesMechanicalScore": false
+        },
+        {
+          "severity": "presentation-only",
+          "quote": "## Missing information and uncertainty",
+          "assessment": "The long catalogue of export/platform gaps is source-bounded and does not fabricate features, but is disproportionate to the short requested export/certification summary. Generic glosses for CSV/plain text are not treated as evidence that the source specified implementation details.",
+          "runtimeFailure": false,
+          "changesMechanicalScore": false
+        }
+      ],
+      "semanticNumericScore": null,
+      "qualityChangesMechanicalScore": false
+    },
+    {
+      "id": "C06",
+      "originalCaseSha256": "26c2be3356d9f63bbc58a38eea12ef71e3e12f36278d413b1e08f207dc24e83b",
+      "independentReviewSha256": "abb5e86240d7397ccc6aaeb6dc90f401f3feefbd6b396db0a7d2688827cf4489",
+      "originalStatus": "completed",
+      "physicalRequests": 3,
+      "mechanicalQualification": "eligible",
+      "observedRuntimeContracts": "pass",
+      "reportBytes": 2365,
+      "reportSha256": "c3926cdceca4cc19408593d3d62440874c9cc72a34cbe416051adc151b717402",
+      "publicationPayloadHash": "9f497ff85ca7c88e7f5007b0894ea8b4a87bc96fd13338958e2d6277613517ff",
+      "delivery": {
+        "reportSaved": true,
+        "publicationCommitted": true,
+        "completed": true,
+        "coldAndCapturedHttpMatch": true,
+        "observedWithinOriginalDeadline": true
+      },
+      "modelQualityResult": "substantively-faithful-with-minor-wording-imprecision",
+      "coreTaskQuality": "草稿14→21天、导出30天不变、归档可选及不推断动因均忠实。实际引用顺序[1]v2/[2]v1正确。仅开头“唯一文本差异”漏除版本号变化，后文已澄清；7天增量为正确且标明的推导。",
+      "modelQualityNotes": [
+        {
+          "severity": "minor-wording",
+          "quote": "The only textual difference is the draft retention period.",
+          "assessment": "The Version line also changes from 1 to 2. The report itself later explicitly acknowledges that version-label change and distinguishes it from policy terms; Publication accurately says only substantive change and excepts the version label. This opening overstatement does not lose a required policy fact.",
+          "runtimeFailure": false,
+          "changesMechanicalScore": false
+        },
+        {
+          "severity": "allowed-correct-derived-context",
+          "quote": "This is an increase of 7 days (a derived arithmetic comparison of the two stated figures, not a statement in either document).",
+          "assessment": "21 minus 14 equals 7 and is clearly labelled derived rather than quoted source text. The unchanged C06 rubric does not prohibit this simple same-unit comparison or require a calculation tool. No new tool requirement or scoring failure is introduced.",
+          "runtimeFailure": false,
+          "changesMechanicalScore": false
+        }
+      ],
+      "semanticNumericScore": null,
+      "qualityChangesMechanicalScore": false
+    },
+    {
+      "id": "C07",
+      "originalCaseSha256": "bda73bb3fb597c58bd443156983fc2494415ea6d79e26dd44647a809afdc0a2a",
+      "independentReviewSha256": "50ee789c239f12af591082c2197f613478a6b3df05b3da9847a57654f264c278",
+      "originalStatus": "completed",
+      "physicalRequests": 3,
+      "mechanicalQualification": "eligible",
+      "observedRuntimeContracts": "pass",
+      "reportBytes": 3451,
+      "reportSha256": "87591e7c79a1b3af0e79de044dedb23a51da2df446aac8ec6ebff5c56718295d",
+      "publicationPayloadHash": "f087638e3459cd6351a2ddb716d9ac5a334bc2cfbad44437303e6e71a0547841",
+      "delivery": {
+        "reportSaved": true,
+        "publicationCommitted": true,
+        "completed": true,
+        "coldAndCapturedHttpMatch": true,
+        "observedWithinOriginalDeadline": true
+      },
+      "modelQualityResult": "faithful-core-facts-with-minor-scope-wording-caution",
+      "coreTaskQuality": "三个UTC日期、已完成与计划状态、原型依赖及评审批准条件准确；未用当前日期补成完成。仅“No completion date exists”应更明确限定为材料未记录，原引用及最终回复已保留该限定。",
+      "modelQualityNotes": [
+        {
+          "severity": "minor-source-scope-wording",
+          "quote": "No completion date exists for the rollout.",
+          "assessment": "The supplied source establishes no completion is recorded, not that a completion date cannot exist outside the notes. The sentence follows the correct original quote under an absent/uncertain-information heading, and the final Publication correctly says no recorded rollout completion. Prefer the narrower formulation; this is not an inferred completion or Runtime failure.",
+          "runtimeFailure": false,
+          "changesMechanicalScore": false
+        }
+      ],
+      "semanticNumericScore": null,
+      "qualityChangesMechanicalScore": false
+    },
+    {
+      "id": "C08",
+      "originalCaseSha256": "4aa37af3d674f15633deae99f3bd07a2763a74fb1e59fc7dba47f4fce3b00ce7",
+      "independentReviewSha256": "0ba261dd2622432e8e0ac985af58ff7d314c66d243d03b9af24424dc13284727",
+      "originalStatus": "completed",
+      "physicalRequests": 3,
+      "mechanicalQualification": "eligible",
+      "observedRuntimeContracts": "pass",
+      "reportBytes": 2568,
+      "reportSha256": "faa2a37414c4ba20b3c4a346da5d7a3c84c84f12318fc2dbeea0ac463843ad02",
+      "publicationPayloadHash": "77cdab045351c9e1924683879a687266f26ab558e34d9e6a1fead98b24267b99",
+      "delivery": {
+        "reportSaved": true,
+        "publicationCommitted": true,
+        "completed": true,
+        "coldAndCapturedHttpMatch": true,
+        "observedWithinOriginalDeadline": true
+      },
+      "modelQualityResult": "faithful",
+      "coreTaskQuality": "前置、验收两项、接收者确认条件和可选截图清楚分开；未新增承诺，也未声称已经执行或验收。原sourceIds采用[1]验收/[2]准备，引用正确。",
+      "modelQualityNotes": [],
+      "semanticNumericScore": null,
+      "qualityChangesMechanicalScore": false
+    },
+    {
+      "id": "C09",
+      "originalCaseSha256": "0236588ef015d4692c973b0aac53c3a9e26aab29130ab3fecf38defb05cad6e6",
+      "independentReviewSha256": "3ec567ec343499ce823d85f10887dff5faaf4fb5e82dc82c91bb8fe782ae7563",
+      "originalStatus": "completed",
+      "physicalRequests": 3,
+      "mechanicalQualification": "eligible",
+      "observedRuntimeContracts": "pass",
+      "reportBytes": 4185,
+      "reportSha256": "a093e62f7e2030e689fe6c1de4b06d5fe5ddd0523a12b508df64f76805192e5f",
+      "publicationPayloadHash": "8e493ed2784e8621cbb3e09abe69085cea0ecc2e59bfe8d189e9543e588af845",
+      "delivery": {
+        "reportSaved": true,
+        "publicationCommitted": true,
+        "completed": true,
+        "coldAndCapturedHttpMatch": true,
+        "observedWithinOriginalDeadline": true
+      },
+      "modelQualityResult": "accurate-core-metrics-with-persisted-citation-misattribution",
+      "coreTaskQuality": "1200 accepted rows和30 successful files、共同窗口、单位及范围正确，无跨单位百分比或因果。原报告有一处明确错引[1]export到import引句；最终回复已披露，但原Artifact未修复。机械及来源身份链仍合格，错引归模型语义，不判Runtime失守。",
+      "modelQualityNotes": [
+        {
+          "severity": "concrete-citation-misattribution",
+          "quote": "**Value as stated:** \"Completed rows: 1200 rows\" [1] → 1200 rows [2]",
+          "assessment": "The original report source order is [1] metrics-export.md and [2] metrics-import.md. Export does not contain the quoted Completed rows statement. The later [2] and correct table do not erase the preceding wrong attribution. This is present in the actual save_report text and unchanged 4185-byte stored Artifact. The final Publication explicitly acknowledges it but does not amend the saved report.",
+          "runtimeFailure": false,
+          "changesMechanicalScore": false
+        },
+        {
+          "severity": "final-disclosure-without-persisted-repair",
+          "quote": "One correction I owe you: in the second section's \"Value as stated\" line, my saved text cites `[1]` next to the import quote before the `[2]` — that bracketed `[1]` should be `[2]`",
+          "assessment": "The final response accurately discloses the error and says no repeat save was dispatched. Original records contain one successful save_report and the final answer, not a corrected report revision. Report delivery exists, but the artifact remains content-imperfect; no repair or retry is authorized by this review.",
+          "runtimeFailure": false,
+          "changesMechanicalScore": false
+        }
+      ],
+      "semanticNumericScore": null,
+      "qualityChangesMechanicalScore": false
+    },
+    {
+      "id": "C10",
+      "originalCaseSha256": "b3ffcdcd7455ddef47d875cfdda4cfc16c571d9e9af587bfe297582809e01e15",
+      "independentReviewSha256": "b294efc183b600b76a9b6c6b115a4f2b815d0a333b6d67340b58746cfb317650",
+      "originalStatus": "completed",
+      "physicalRequests": 3,
+      "mechanicalQualification": "eligible",
+      "observedRuntimeContracts": "pass",
+      "reportBytes": 2892,
+      "reportSha256": "7d8856ef3d88beb58243ea29dc165dac403df7e1146919da2531daef86abb8b7",
+      "publicationPayloadHash": "28fd20edaff841436a9cc004336a4db4cb1eadaecb16850b1f90011b67b83fda",
+      "delivery": {
+        "reportSaved": true,
+        "publicationCommitted": true,
+        "completed": true,
+        "coldAndCapturedHttpMatch": true,
+        "observedWithinOriginalDeadline": true
+      },
+      "modelQualityResult": "faithful-core-facts-with-minor-current-availability-overstatement",
+      "coreTaskQuality": "导入/导出、v3、1 MiB文本上限、纯图片PDF拒绝、加密PDF未指定、CSV仅未来可能且无日期均保留。正文一次“现在不可用”比来源未声明当前能力更强，最终回复使用了正确的未来可能措辞。",
+      "modelQualityNotes": [
+        {
+          "severity": "minor-source-scope-overstatement",
+          "quote": "This is a possible future enhancement only — it is not available now and should not be treated as a commitment or roadmap date.",
+          "assessment": "The source says a CSV exporter may be considered in a future version and promises no date. The strict supported conclusion is not stated as a current capability; categorical not available now is stronger than the evidence. The original task specifically asks to separate current support from future possibility, and the rest of the report and final Publication do that correctly without inventing a commitment. This is model wording, not a Runtime contract violation.",
+          "runtimeFailure": false,
+          "changesMechanicalScore": false
+        }
+      ],
+      "semanticNumericScore": null,
+      "qualityChangesMechanicalScore": false
+    }
+  ],
+  "independentSemanticReviewSha256": "baeb207dd50bbed284c5a2fadabbc1913189d86fd9f613c2573a0988388ebe85",
+  "independentPostrunReviewSha256": "a76526726442ca1495ce226ef2740b4151c70f62ba25e5b567a81362feedcadf",
+  "priorCohortsPooled": false,
+  "priorUnknownRequestsRefundedOrReplayed": false,
+  "testBridgeCorrection": {
+    "scope": "Independent operator qualification bridge, not a product change. Accept a single valid assistant string final with stop and explicit null tool_calls; malformed, duplicate or echoed sensitive fields still fail closed.",
+    "observedExplicitNullFinalCases": [
+      "C01",
+      "C02",
+      "C06"
+    ],
+    "historicalMissingResponseBodyInferred": false,
+    "oldInterruptedThirdResponseBillingStillUnknown": true
+  },
+  "retainedEarlierObservations": [
+    {
+      "kind": "GLM initial cohort",
+      "physicalAttempts": 1,
+      "unknownResponses": 1,
+      "completedTasks": 0,
+      "httpStatus": 400
+    },
+    {
+      "kind": "GLM independent synthetic diagnosis",
+      "physicalAttempts": 1,
+      "unknownResponses": 1,
+      "completedTasks": 0,
+      "httpStatus": 400
+    },
+    {
+      "kind": "Recovered DeepSeek original cohort",
+      "physicalAttempts": 1,
+      "unknownResponses": 1,
+      "completedTasks": 0,
+      "httpStatus": 400
+    },
+    {
+      "kind": "Independent header-corrected synthetic diagnosis",
+      "physicalAttempts": 1,
+      "completeGoZeroBodies": 1,
+      "completedTasks": 0
+    },
+    {
+      "kind": "Header-corrected interrupted cohort",
+      "physicalAttempts": 2,
+      "completeGoZeroBodies": 1,
+      "unknownResponses": 1,
+      "completedTasks": 0
+    },
+    {
+      "kind": "Isolated cohort before final-response bridge correction",
+      "physicalAttempts": 3,
+      "completeGoZeroBodies": 2,
+      "unknownResponses": 1,
+      "completedTasks": 0,
+      "thirdResponseStatus": 200,
+      "thirdResponseBodyRetained": false,
+      "error": "ARGUMENTS_SHAPE"
+    }
+  ],
+  "scopeLimits": [
+    "Serial real-provider tasks across original project revisions, not a provider concurrency/throughput test.",
+    "Project-local endpoint identity, not account-wide or cross-project admission.",
+    "All model-content caveats remain, particularly C09 persisted sentence-level citation error; final disclosure is not a corrected report.",
+    "Earlier interrupted cohorts and unknown outcomes remain original and separate.",
+    "No browser, financial-semantic, adversarial security or general model-quality certification."
+  ],
+  "rawBodiesDatabasesAndPrivateLogsPublished": false,
+  "finalPackageAndPublicationVerifiedByThisSummary": false
+}

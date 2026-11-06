@@ -1,0 +1,56 @@
+{
+  "schemaVersion": "v024-fixed-source-provider-free@1",
+  "sourceCommit": "0d47e318e0f5fb36d45d8be274324a06bdd20d5c",
+  "sourceTree": "aa59d9c8ba735ff05a881134d665cc64edaee6d7",
+  "nodeTested": "26.11.1",
+  "nodeDeclaredRange": ">=26.8.1 <27",
+  "fullSuite": {
+    "total": 988,
+    "passed": 988,
+    "failed": 0,
+    "skipped": 0,
+    "cancelled": 0
+  },
+  "buildPassed": true,
+  "installedInputsVerified": 3668,
+  "sourceVerificationSha256": "c0e57d2ec1b84083e588e43bdad7cd44c600fc8815b09d19225843610c792f04",
+  "ci": {
+    "runId": 42151795006,
+    "url": "https://github.com/hpoenixf/open-etf-agent/actions/runs/42151795006",
+    "head": "0d47e318e0f5fb36d45d8be274324a06bdd20d5c",
+    "conclusion": "success",
+    "lockedInstallPassed": true,
+    "testSummary": {
+      "tests": 988,
+      "passed": 988,
+      "failed": 0,
+      "skipped": 0,
+      "cancelled": 0
+    },
+    "buildPassed": true
+  },
+  "retainedEarlierCandidateFailure": {
+    "sourceHead": "5ac968296ba63acf9a6bed7655228095edbb0624",
+    "total": 981,
+    "passed": 978,
+    "failed": 3
+  },
+  "mechanismScope": [
+    "Original project revision identity and task binding",
+    "Real separate local worker contention and cold SQLite ticket readback",
+    "Queued cancellation and retained dispatched unknown occupancy",
+    "Missing/corrupt owner and legacy revision refusal",
+    "Existing lifecycle heartbeat/cancellation regressions"
+  ],
+  "qualificationBridge": {
+    "focusedCurrentChecks": 69,
+    "passed": 69,
+    "independentNarrowResponseShapeChecks": 51,
+    "countsNotAdditive": true,
+    "freeProofSha256": "6cab357b699a24d29d8657a43ade4c39baf3995bcfdd408168d55afa9a51b439",
+    "finalAdmissionReviewSha256": "f948851304ee40d6aa01a554f41e6b92b6449754ba603d0e80fd5c76a58196e6"
+  },
+  "providerCallsByTheseOfflineChecks": 0,
+  "modelQualityClaim": false,
+  "finalPackageVerificationSeparate": true
+}
