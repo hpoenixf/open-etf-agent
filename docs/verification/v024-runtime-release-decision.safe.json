@@ -198,6 +198,7 @@
     "modelOnlyIssuesReclassifiedAsRuntimeFailures": false
   },
   "publicSummary": "v024-real-ten.safe.json",
-  "publicationState": "basis-reviewed; final package validation, exact CI and publication pending",
-  "guardLimit": "Declaration consistency only; not publication permission or a replacement for original evidence."
+  "publicationState": "Qualification basis independently reviewed; local integrated-package full suite/build passed; exact final-commit CI and publication verified separately.",
+  "guardLimit": "Declaration consistency only; not publication permission or a replacement for original evidence.",
+  "localIntegratedPackageVerification": "v024-package-verification.safe.json"
 }

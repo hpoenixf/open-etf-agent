@@ -1,6 +1,6 @@
 # One local shared capacity group
 
-The unreleased v0.24 Project capacity policy is described separately in [English](provider-capacity.md) and [简体中文](provider-capacity.zh-CN.md). The historical v0.17 scope below is retained.
+The v0.24 Project capacity policy is described separately in [English](provider-capacity.md) and [简体中文](provider-capacity.zh-CN.md). The historical v0.17 scope below is retained.
 
 The v0.17 module wraps the original durable main `gateway.next` entry with one fixed route and one shared slot. The original Runtime `claim.reserve` transaction remains the only RootBudget debit owner. Admission stores capacity identity, not another budget or billing ledger.
 

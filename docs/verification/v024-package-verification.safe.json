@@ -1,0 +1,34 @@
+{
+  "schemaVersion": "v024-release-package-provider-free@1",
+  "testedPackageCommit": "ba52afc14cdf75bd50bf88806d7a042ddb995323",
+  "testedPackageTree": "19a7b48defefabb2f451a0331df45914cb594326",
+  "testedProductSource": "0d47e318e0f5fb36d45d8be274324a06bdd20d5c",
+  "nodeTested": "26.11.1",
+  "nodeDeclaredRange": ">=26.8.1 <27",
+  "fullSuite": {
+    "total": 988,
+    "passed": 988,
+    "failed": 0,
+    "cancelled": 0,
+    "skipped": 0
+  },
+  "buildPassed": true,
+  "trackedInputsUnchanged": 695,
+  "installedInputsVerifiedBeforeAndAfter": 3668,
+  "process": {
+    "exitCode": 0,
+    "timedOut": false,
+    "durationSeconds": 192.2842369908467,
+    "ownedLocalGroupStoppedAndLeaderWaited": true,
+    "allDescendantsStopClaim": false
+  },
+  "originalResultSha256": "2df2503a1163d51ec88ff13280b03838df6858b0037a4b3434dac5381e456b99",
+  "originalProcessReceiptSha256": "3f89bc91ac1567f5277f0a27eedb397207a530061428cfa4bf24c5903375a764",
+  "originalInputReadbackSha256": "abf2acc50f12555fb5e08ca0bd4bd2528e3d047d4e64919e2d8cd17ae3eb2dd4",
+  "sourceContentReviewSha256": "dbc963dfbe11fc452daf30833ddfcc76b3fbaac53d9ae1fa6709f2ab807cd829",
+  "sourceAndTestsEqualRealCohort": true,
+  "dependencyEntriesChanged": false,
+  "modelCalls": 0,
+  "laterPackageChanges": "Only this receipt, verification navigation and precise release-status wording; no execution source, tests, scripts, fixtures or dependency changes. Focused final-doc checks and exact final-commit CI remain separate.",
+  "publicationVerifiedByThisRecord": false
+}

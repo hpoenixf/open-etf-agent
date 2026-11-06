@@ -4,7 +4,7 @@
 
 ## v0.24 project provider capacity
 
-[Ten real tasks, mechanical / named Runtime 10/10 and retained content flaws](v024-release.md). [Original-cohort summary](v024-real-ten.safe.json) · [Fixed-source CI / fullSuite](v024-provider-free.safe.json) · [Execution inputs](v024-execution-inputs.safe.json) · [Runtime-scoped decision](v024-runtime-release-decision.safe.json). Serial protocol evidence and provider-free contention remain separate.
+[Ten real tasks, mechanical / named Runtime 10/10 and retained content flaws](v024-release.md). [Original-cohort summary](v024-real-ten.safe.json) · [Fixed-source CI / fullSuite](v024-provider-free.safe.json) · [Integrated-package 988/988](v024-package-verification.safe.json) · [Execution inputs](v024-execution-inputs.safe.json) · [Runtime-scoped decision](v024-runtime-release-decision.safe.json). Serial protocol evidence and provider-free contention remain separate.
 
 ## v0.23.1 Runtime maintenance
 

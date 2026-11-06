@@ -2,7 +2,7 @@
 
 # v0.24 provider capacity: fixed-source evidence and limits
 
-**Candidate evidence, not a published release.** The fixed ten-task cohort and independent reviews are complete. Final release-package validation, exact-commit CI, tag and Release remain pending.
+**This page records fixed-source qualification, not publication.** The ten-task cohort, independent reviews and local integrated-package checks are complete. Exact final-commit CI, tag and Release status are verified separately.
 
 Provider Admission is the single main module. In a new-format project, changing the model or streaming configuration for the same normalized endpoint retains the original project-local capacity owner. Runtime and Session continue owning grants, budgets and original Run identity. No new router, billing owner or account-wide limiter is introduced.
 
@@ -32,7 +32,7 @@ The external test bridge was narrowly corrected to accept a complete final respo
 
 [Exact-source CI](https://github.com/hpoenixf/open-etf-agent/actions/runs/42151795006) passed locked installation, native ESM build and **988/988** provider-free tests, with no failures, skips or cancellations. Actual tested Node.js: **26.11.1**. Declared support remains **>=26.8.1 <27**; the whole range was not tested. See the [fixed-source CI / fullSuite receipt](v024-provider-free.safe.json).
 
-This evidence applies to the unchanged tested product. A later documentation/version-metadata package needs explicit byte-equivalence review and its own final checks; the fixed-source CI result is not that later package's result. The earlier candidate's 978-test record remains historical.
+The local integrated package `ba52afc14cdf75bd50bf88806d7a042ddb995323` separately passed **988/988** and build with 695 tracked inputs unchanged. Its product, tests, scripts and fixtures match the real cohort byte for byte. See the [original package execution receipt](v024-package-verification.safe.json). Later changes add only documentation receipts/status wording; exact final-commit CI must still be read for that commit. The earlier 978-test record stays historical, and execution counts are not added together.
 
 ## Capacity and compatibility boundaries
 

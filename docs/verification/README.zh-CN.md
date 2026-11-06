@@ -4,7 +4,7 @@
 
 ## v0.24 项目提供方容量
 
-[真实十题、机械 / 具名 Runtime 10/10 与保留的内容问题](v024-release.zh-CN.md)。[原批次摘要](v024-real-ten.safe.json) · [固定源码 CI / fullSuite](v024-provider-free.safe.json) · [执行输入](v024-execution-inputs.safe.json) · [Runtime 范围决定](v024-runtime-release-decision.safe.json)。串行真实协议与离线竞争证据分开呈现。
+[真实十题、机械 / 具名 Runtime 10/10 与保留的内容问题](v024-release.zh-CN.md)。[原批次摘要](v024-real-ten.safe.json) · [固定源码 CI / fullSuite](v024-provider-free.safe.json) · [整合包 988/988](v024-package-verification.safe.json) · [执行输入](v024-execution-inputs.safe.json) · [Runtime 范围决定](v024-runtime-release-decision.safe.json)。串行真实协议与离线竞争证据分开呈现。
 
 ## v0.23.1 Runtime 维护
 
