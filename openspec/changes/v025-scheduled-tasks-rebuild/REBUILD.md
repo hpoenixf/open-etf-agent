@@ -69,3 +69,13 @@ be added. It also preserves model-reserved usage across a cold wake with no new
 dispatch, and leaves explicit unknown recovery to the original Worker. All tests
 are synthetic and offline. Full-suite and independent final qualification are
 still pending; no old live or offline result is inherited.
+
+## Provider-free qualification checkpoint
+
+Fixed source `1afb49ae75c6322cd95442a1868d1ec90f7164cf` passed a new complete
+999/999 local suite and build. PR #2's original Verify workflow also passed
+999/999 and build; its synthetic merge tree exactly equals the WIP source tree.
+See `docs/verification/v025-rebuild-provider-free.safe.json` for exact bindings.
+The added acceptance bridge and synthetic case plan are separate prospective
+engineering preparation, not evidence of a live pass. No model has been called
+by this reconstruction so far. The PR remains a draft, not a release approval.

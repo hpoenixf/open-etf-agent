@@ -1,0 +1,46 @@
+{
+  "schema": "rebuilt-v025-provider-free-verification@1",
+  "sourceCommit": "1afb49ae75c6322cd95442a1868d1ec90f7164cf",
+  "sourceTree": "5db2ec135c77e40df129e7ef208a4a2ecf5525da",
+  "reconstructionFrom": "afbfb9865539c18c9358ac65c822f929aaa6e872",
+  "oldQualificationInherited": false,
+  "local": {
+    "node": "26.11.1",
+    "nodeSha256": "5a7b8a3cf5ccb57d297519754fd73238f64cf560afd0ef19a2f9bf7384cbb657",
+    "tests": 999,
+    "passed": 999,
+    "failed": 0,
+    "skipped": 0,
+    "cancelled": 0,
+    "testDurationMs": 195732.07978,
+    "testOwnerSeconds": 195.80951096100034,
+    "buildExitCode": 0,
+    "buildOwnerSeconds": 4.193199376000848,
+    "trackedSourceUnchanged": true
+  },
+  "ci": {
+    "runId": 42426371617,
+    "url": "https://github.com/hpoenixf/open-etf-agent/actions/runs/42426371617",
+    "head": "1afb49ae75c6322cd95442a1868d1ec90f7164cf",
+    "checkoutCommit": "1a575b6d62bd024f5bb5fa1e46f74248c537042c",
+    "checkoutTree": "5db2ec135c77e40df129e7ef208a4a2ecf5525da",
+    "headTree": "5db2ec135c77e40df129e7ef208a4a2ecf5525da",
+    "treeEquivalent": true,
+    "conclusion": "success",
+    "tests": 999,
+    "passed": 999,
+    "failed": 0,
+    "testDurationMs": 189505.773369,
+    "buildPassed": true
+  },
+  "independentReview": {
+    "scope": "exact static Standards/Spec review",
+    "requiredBlockers": 0,
+    "reviewSha256": "12b1b1e7cb8c7209c40528d56f5679ab077c404fadcf94cdf176e114944ca301",
+    "extraPermissionExperiment": "1/5 passed; three Project fixtures denied fsync under additional Node Permission Model; composition failed without independent diagnosis. Not treated as green qualification or product failure."
+  },
+  "modelCalls": 0,
+  "liveAcceptance": "pending; new independent scenarios, no historical result inheritance",
+  "release": false,
+  "evidenceScope": "Full suite applies to sourceCommit above. Later engineering-only transport/case/doc preparation is separately tested, not asserted to be part of that exact full run."
+}

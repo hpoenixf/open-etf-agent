@@ -1,0 +1,488 @@
+{
+  "schema": "rebuilt-schedule-ten-scenarios-draft@1",
+  "status": "FROZEN_PLANNING_DRAFT_NOT_EXECUTABLE_OR_GO",
+  "newNotRecovered": true,
+  "productObservedHead": "1afb49ae75c6322cd95442a1868d1ec90f7164cf",
+  "contractReadbackSha256": {
+    "src/scheduled-tasks.mjs": "46db538e5e412b7ce48171a725a184a5265fe7191544f0719c16b2ca993e90b1",
+    "src/schedule.mjs": "be6895cefbffbe9b38710fdeadab800f07fc17a1faf4646f2ea9df6ba3c84608",
+    "src/research-project.mjs": "039349b49c2506ec95cbcd7b1a8382ca69349d61fc7c8477322a2b5d32526043",
+    "src/runtime.mjs": "f9f80b0b8d6060632494bfbf92ea87986fcf0dbb5fa4ee1cd472ad453c7cc094",
+    "src/worker.mjs": "d977235350322e6999598c39d4df087dfc782556aa6298aa180fef1e90f3eacf",
+    "src/reader.mjs": "eaac550d4e8c5718e262699c690dc4d31693957e62323aac8cf853cd584ccf5e",
+    "src/temporal.mjs": "9fc839349cb2e7ecc362a954e7bf7dbc7590ac08e72a177b75e1472c3411eb8f",
+    "test/scheduled-tasks.test.mjs": "8a4b82a2c502b5f0a4a2d3cd0fd1efff23e1f080330752d0ef2242af02466d6a",
+    "test/scheduled-tasks-fresh.test.mjs": "c9620bfe3c44abd7709f0d481afe629eddb29ac42e3573a6aadfbc366e541b2e",
+    "test/schedule-composition.test.mjs": "af61da70792535d27e4c30fece1655e705fc826e653bb85225e3eb351a7e5b37"
+  },
+  "modelCalls": 0,
+  "reservationsCreated": 0,
+  "plannedBatchCap": 108,
+  "caseCapsTotal": 84,
+  "unassignedHeadroom": 24,
+  "unassignedHeadroomPolicy": "Not permission for probes, retry or quota redistribution. No minimum call count: stop when complete. Case caps include explicit resume and all sibling calls.",
+  "scheduleInstantiation": {
+    "definitionRevision": 1,
+    "scheduledInstant": "Freeze a future real UTC ISO millisecond instant per scenario immediately before confirmation; do not fake wall clock.",
+    "maxLatenessMs": 60000,
+    "timeoutMs": 180000,
+    "specialCase7": "Freeze two future instants/windows with expired sibling conclusively late and survivor still eligible at sweep. All windows < timeoutMs.",
+    "ids": "Fresh batch-prefixed scheduleId/runId/source IDs; not old S01/S02 IDs."
+  },
+  "axes": {
+    "runtime": "pass/fail/unassessed against exact defined contracts and traces; existing >=9/10 runtime acceptance threshold only; do not mark lack of evidence or provider failure as runtime defect. Preconditions matter: model not reading or not saving does not itself fail runtime. Only traced violation of its obligations, such as loss/mutation of already accepted evidence, acknowledged persisted bytes or identity/dispatch rules, is a contract failure; unexercised branches remain unassessed.",
+    "modelSemantic": "independent content/citation/date/fact review against these source bytes; retain errors even if runtime passes.",
+    "finalTask": "report saved and source-backed; required cold/host observations completed; incomplete or incorrect answers disclosed separately."
+  },
+  "cases": [
+    {
+      "id": "RB25-01",
+      "title": "Due once",
+      "modelAttemptCap": 8,
+      "capabilities": [
+        "report",
+        "schedule",
+        "task-time"
+      ],
+      "timeZone": "UTC",
+      "sources": [
+        {
+          "file": "rb25-01-a.md",
+          "text": "SYNTHETIC TEST MATERIAL ONLY. Scenario RB25-01. Atlas fee is 0.20% annually; dealing cutoff is 14:00 UTC."
+        },
+        {
+          "file": "rb25-01-b.md",
+          "text": "SYNTHETIC TEST MATERIAL ONLY. Scenario RB25-01. Birch fee is 0.35% annually; dealing cutoff is 15:00 UTC."
+        }
+      ],
+      "question": "Read both original synthetic pages. Save a concise report that compares their facts, cites the actual source IDs returned by read_page for each claim, and distinguishes unknowns from explicit negatives. Do not claim any real market or investment fact.",
+      "hostSequence": [
+        "Confirm future once; inspect zero requests.",
+        "At due within lateness window runDueScheduledTasks(limit=1)."
+      ],
+      "runtimeAssertions": [
+        "One original materialized identity; accepted evidence and successful publication receipts, if present, remain durable and readable without mutation."
+      ],
+      "semanticExpectedFacts": [
+        "Atlas fee is 0.20% annually; dealing cutoff is 14:00 UTC.",
+        "Birch fee is 0.35% annually; dealing cutoff is 15:00 UTC."
+      ],
+      "expectedReportCount": 1,
+      "finalTaskAssertions": [
+        "Expected number of actual persisted source-backed reports delivered; absent report is task incomplete, not automatically a runtime failure.",
+        "Original Run completes and report cites both original source receipts."
+      ],
+      "modelExpectations": [
+        "Read both original synthetic pages and choose save_report with correct source IDs; non-use or incorrect content is evaluated as model/task behavior separately."
+      ]
+    },
+    {
+      "id": "RB25-02",
+      "title": "Early wake has no dispatch",
+      "modelAttemptCap": 8,
+      "capabilities": [
+        "report",
+        "schedule",
+        "task-time"
+      ],
+      "timeZone": "UTC",
+      "sources": [
+        {
+          "file": "rb25-02-a.md",
+          "text": "SYNTHETIC TEST MATERIAL ONLY. Scenario RB25-02. Cedar supports CSV export; PDF support is not stated."
+        },
+        {
+          "file": "rb25-02-b.md",
+          "text": "SYNTHETIC TEST MATERIAL ONLY. Scenario RB25-02. Delta explicitly does not support CSV export; PDF support is not stated."
+        }
+      ],
+      "question": "Read both original synthetic pages. Save a concise report that compares their facts, cites the actual source IDs returned by read_page for each claim, and distinguishes unknowns from explicit negatives. Do not claim any real market or investment fact.",
+      "hostSequence": [
+        "Confirm future once.",
+        "Before due invoke sweep and inspect capacity: attempted=0, no Run or model request.",
+        "Wait until due; sweep once."
+      ],
+      "runtimeAssertions": [
+        "early state confirmed, run null, request count unchanged",
+        "later original confirmation materializes once"
+      ],
+      "semanticExpectedFacts": [
+        "Cedar supports CSV export; PDF support is not stated.",
+        "Delta explicitly does not support CSV export; PDF support is not stated."
+      ],
+      "expectedReportCount": 1,
+      "finalTaskAssertions": [
+        "Expected number of actual persisted source-backed reports delivered; absent report is task incomplete, not automatically a runtime failure."
+      ],
+      "modelExpectations": [
+        "Read both original synthetic pages and choose save_report with correct source IDs; non-use or incorrect content is evaluated as model/task behavior separately."
+      ]
+    },
+    {
+      "id": "RB25-03",
+      "title": "Duplicate wake",
+      "modelAttemptCap": 8,
+      "capabilities": [
+        "report",
+        "schedule",
+        "task-time"
+      ],
+      "timeZone": "UTC",
+      "sources": [
+        {
+          "file": "rb25-03-a.md",
+          "text": "SYNTHETIC TEST MATERIAL ONLY. Scenario RB25-03. Elm distribution cadence is quarterly."
+        },
+        {
+          "file": "rb25-03-b.md",
+          "text": "SYNTHETIC TEST MATERIAL ONLY. Scenario RB25-03. Fir distribution cadence is monthly."
+        }
+      ],
+      "question": "Read both original synthetic pages. Save a concise report that compares their facts, cites the actual source IDs returned by read_page for each claim, and distinguishes unknowns from explicit negatives. Do not claim any real market or investment fact.",
+      "hostSequence": [
+        "Confirm and due-sweep once to terminal.",
+        "Invoke two further serial sweeps, including cold process; inspect unchanged usage."
+      ],
+      "runtimeAssertions": [
+        "post-terminal attempted=0 for both wakes",
+        "Same Run identity and no added requests; if a successful report revision exists, preserve its identity and bytes."
+      ],
+      "semanticExpectedFacts": [
+        "Elm distribution cadence is quarterly.",
+        "Fir distribution cadence is monthly."
+      ],
+      "expectedReportCount": 1,
+      "finalTaskAssertions": [
+        "Expected number of actual persisted source-backed reports delivered; absent report is task incomplete, not automatically a runtime failure."
+      ],
+      "modelExpectations": [
+        "Read both original synthetic pages and choose save_report with correct source IDs; non-use or incorrect content is evaluated as model/task behavior separately."
+      ]
+    },
+    {
+      "id": "RB25-04",
+      "title": "Cold confirmed opening",
+      "modelAttemptCap": 8,
+      "capabilities": [
+        "report",
+        "schedule",
+        "task-time"
+      ],
+      "timeZone": "UTC",
+      "sources": [
+        {
+          "file": "rb25-04-a.md",
+          "text": "SYNTHETIC TEST MATERIAL ONLY. Scenario RB25-04. Grove has a stated settlement lag of two calendar days."
+        },
+        {
+          "file": "rb25-04-b.md",
+          "text": "SYNTHETIC TEST MATERIAL ONLY. Scenario RB25-04. Hazel settlement lag is not provided."
+        }
+      ],
+      "question": "Read both original synthetic pages. Save a concise report that compares their facts, cites the actual source IDs returned by read_page for each claim, and distinguishes unknowns from explicit negatives. Do not claim any real market or investment fact.",
+      "hostSequence": [
+        "Confirm future once and close confirmation process.",
+        "Cold process lists and inspects original confirmed envelope; no gateway call.",
+        "At due original host sweep works it."
+      ],
+      "runtimeAssertions": [
+        "cold opening preserves confirmationHash and zero usage",
+        "one original occurrence after due"
+      ],
+      "semanticExpectedFacts": [
+        "Grove has a stated settlement lag of two calendar days.",
+        "Hazel settlement lag is not provided."
+      ],
+      "expectedReportCount": 1,
+      "finalTaskAssertions": [
+        "Expected number of actual persisted source-backed reports delivered; absent report is task incomplete, not automatically a runtime failure."
+      ],
+      "modelExpectations": [
+        "Read both original synthetic pages and choose save_report with correct source IDs; non-use or incorrect content is evaluated as model/task behavior separately."
+      ]
+    },
+    {
+      "id": "RB25-05",
+      "title": "Bounded serial sweep",
+      "modelAttemptCap": 10,
+      "capabilities": [
+        "report",
+        "schedule",
+        "task-time"
+      ],
+      "timeZone": "UTC",
+      "sources": [
+        {
+          "file": "rb25-05-a.md",
+          "text": "SYNTHETIC TEST MATERIAL ONLY. Scenario RB25-05. Iris limit is 120 units per order."
+        },
+        {
+          "file": "rb25-05-b.md",
+          "text": "SYNTHETIC TEST MATERIAL ONLY. Scenario RB25-05. Juniper limit is 80 units per order."
+        }
+      ],
+      "question": "Read both original synthetic pages. Save a concise report that compares their facts, cites the actual source IDs returned by read_page for each claim, and distinguishes unknowns from explicit negatives. Do not claim any real market or investment fact.",
+      "hostSequence": [
+        "Confirm a-first and b-second with distinct questions over the same two synthetic pages and the same pre-frozen future due; maxLatenessMs=60000, timeoutMs=180000.",
+        "At due sweep limit=1. After the first worker returns, inspect b-second: it must remain unmaterialized (null Run, zero requests); inspect alone may show confirmed even if its eligibility window has now elapsed.",
+        "Invoke the second sweep with limit=1. If b-second is still eligible it may materialize; if its frozen window expired, observe original missed with zero requests. Do not replace the task, alter the window, or retry to obtain a report.",
+        "After both decisions, a further sweep must not redispatch materialized/missed tasks."
+      ],
+      "runtimeAssertions": [
+        "First sweep attempts at most one eligible task in sorted task-id order; for the intended initial eligible state it attempts a-first exactly once.",
+        "b-second remains unmaterialized with null Run and zero requests after the first limit=1 sweep; inspection does not promise continuing eligibility.",
+        "If b-second remains within its original eligibility window, the second sweep materializes one distinct Run; if expired, original missed with null Run/zero requests is correct. No duplicated or silently resumed occurrence."
+      ],
+      "semanticExpectedFacts": [
+        "Iris limit is 120 units per order.",
+        "Juniper limit is 80 units per order."
+      ],
+      "expectedReportCount": 2,
+      "perTaskModelAttemptCaps": {
+        "a-first": 5,
+        "b-second": 5
+      },
+      "questionVariants": {
+        "a-first": "Read both pages and report Iris and Juniper per-order limits with exact source citations.",
+        "b-second": "Read both pages and identify which stated per-order limit is smaller, citing both source IDs. Do not infer any investment suitability."
+      },
+      "finalTaskAssertions": [
+        "Expected number of actual persisted source-backed reports delivered; absent report is task incomplete, not automatically a runtime failure.",
+        "Both original tasks complete with two actual sourced reports."
+      ],
+      "modelExpectations": [
+        "Read both original synthetic pages and choose save_report with correct source IDs; non-use or incorrect content is evaluated as model/task behavior separately."
+      ],
+      "windowPolicy": {
+        "freezeBeforeExecution": true,
+        "maxLatenessMs": 60000,
+        "timeoutMs": 180000,
+        "notLatencyGuarantee": "The pre-frozen 60-second window is not a promise to fit ten model calls or the provider request timeout. No increase to product or service timeout is proposed.",
+        "legalExpiryClassification": "If slow first-task/model/service execution exhausts b-second eligibility, missed is a legitimate scheduling/latency boundary, not a runtime contract defect. Preserve actual timing and reason; do not infer provider cause without evidence.",
+        "taskOutcome": "Two reports remain the planned task deliverable. A legally missed second task is incomplete, never automatically accepted merely because runtime correctly rejected it.",
+        "forbidden": "No after-start window changes, replacement occurrence, retry, or score rewrite."
+      }
+    },
+    {
+      "id": "RB25-06",
+      "title": "Cancelled sibling, live survivor",
+      "modelAttemptCap": 8,
+      "capabilities": [
+        "report",
+        "schedule",
+        "task-time"
+      ],
+      "timeZone": "UTC",
+      "sources": [
+        {
+          "file": "rb25-06-a.md",
+          "text": "SYNTHETIC TEST MATERIAL ONLY. Scenario RB25-06. Kite minimum order is 20 units."
+        },
+        {
+          "file": "rb25-06-b.md",
+          "text": "SYNTHETIC TEST MATERIAL ONLY. Scenario RB25-06. Larch minimum order is 50 units."
+        }
+      ],
+      "question": "Read both original synthetic pages. Save a concise report that compares their facts, cites the actual source IDs returned by read_page for each claim, and distinguishes unknowns from explicit negatives. Do not claim any real market or investment fact.",
+      "hostSequence": [
+        "Confirm future a-cancelled and b-survivor.",
+        "Cancel a-cancelled before due, then close/reopen.",
+        "At due sweep surviving task; inspect cancelled sibling."
+      ],
+      "runtimeAssertions": [
+        "cancelled sibling remains cancelled, null Run, zero requests",
+        "Only the eligible survivor materializes; cancelled sibling never dispatches."
+      ],
+      "semanticExpectedFacts": [
+        "Kite minimum order is 20 units.",
+        "Larch minimum order is 50 units."
+      ],
+      "expectedReportCount": 1,
+      "finalTaskAssertions": [
+        "Expected number of actual persisted source-backed reports delivered; absent report is task incomplete, not automatically a runtime failure.",
+        "Survivor completes and persists its sourced report."
+      ],
+      "modelExpectations": [
+        "Read both original synthetic pages and choose save_report with correct source IDs; non-use or incorrect content is evaluated as model/task behavior separately."
+      ]
+    },
+    {
+      "id": "RB25-07",
+      "title": "Expired sibling, live survivor",
+      "modelAttemptCap": 8,
+      "capabilities": [
+        "report",
+        "schedule",
+        "task-time"
+      ],
+      "timeZone": "UTC",
+      "sources": [
+        {
+          "file": "rb25-07-a.md",
+          "text": "SYNTHETIC TEST MATERIAL ONLY. Scenario RB25-07. Maple audit date is explicitly 2025-02-03."
+        },
+        {
+          "file": "rb25-07-b.md",
+          "text": "SYNTHETIC TEST MATERIAL ONLY. Scenario RB25-07. Nectar audit date is not disclosed."
+        }
+      ],
+      "question": "Read both original synthetic pages. Save a concise report that compares their facts, cites the actual source IDs returned by read_page for each claim, and distinguishes unknowns from explicit negatives. Do not claim any real market or investment fact.",
+      "hostSequence": [
+        "Confirm a-expired with a short future due/lateness and b-survivor with a later due.",
+        "Wait until first window expired and second is eligible; sweep.",
+        "Inspect and repeat sweep without dispatch."
+      ],
+      "runtimeAssertions": [
+        "expired sibling missed, no materialized Run or request",
+        "only survivor dispatches; no retry of missed occurrence"
+      ],
+      "semanticExpectedFacts": [
+        "Maple audit date is explicitly 2025-02-03.",
+        "Nectar audit date is not disclosed."
+      ],
+      "expectedReportCount": 1,
+      "finalTaskAssertions": [
+        "Expected number of actual persisted source-backed reports delivered; absent report is task incomplete, not automatically a runtime failure."
+      ],
+      "modelExpectations": [
+        "Read both original synthetic pages and choose save_report with correct source IDs; non-use or incorrect content is evaluated as model/task behavior separately."
+      ]
+    },
+    {
+      "id": "RB25-08",
+      "title": "Timezone-aware frozen task anchor",
+      "modelAttemptCap": 8,
+      "capabilities": [
+        "report",
+        "schedule",
+        "task-time"
+      ],
+      "timeZone": "Asia/Shanghai",
+      "sources": [
+        {
+          "file": "rb25-08-a.md",
+          "text": "SYNTHETIC TEST MATERIAL ONLY. Scenario RB25-08. Orchid is a synthetic service available every calendar day; this statement does not define market sessions."
+        },
+        {
+          "file": "rb25-08-b.md",
+          "text": "SYNTHETIC TEST MATERIAL ONLY. Scenario RB25-08. Pine has no provided business-day calendar or market-session information."
+        }
+      ],
+      "question": "Read both original synthetic pages. Save a concise report that compares their facts, cites the actual source IDs returned by read_page for each claim, and distinguishes unknowns from explicit negatives. Do not claim any real market or investment fact. State the trusted taskDate, yesterday and tomorrow in Asia/Shanghai relative to the frozen scheduled anchor; do not infer freshness, holidays or a market session.",
+      "hostSequence": [
+        "Confirm future due with Asia/Shanghai; derive expected date/yesterday/tomorrow from exact scheduledInstant before dispatch.",
+        "At due sweep. Compare trusted taskTime against frozen definition and report wording."
+      ],
+      "runtimeAssertions": [
+        "definition taskTime anchor equals scheduledInstant and zone Asia/Shanghai",
+        "no clock/zone mutation during Run"
+      ],
+      "semanticExpectedFacts": [
+        "Orchid is a synthetic service available every calendar day; this statement does not define market sessions.",
+        "Pine has no provided business-day calendar or market-session information."
+      ],
+      "expectedReportCount": 1,
+      "finalTaskAssertions": [
+        "Expected number of actual persisted source-backed reports delivered; absent report is task incomplete, not automatically a runtime failure."
+      ],
+      "modelExpectations": [
+        "Read both original synthetic pages and choose save_report with correct source IDs; non-use or incorrect content is evaluated as model/task behavior separately."
+      ]
+    },
+    {
+      "id": "RB25-09",
+      "title": "Cold HTTP artifact bytes",
+      "modelAttemptCap": 8,
+      "capabilities": [
+        "report",
+        "schedule",
+        "task-time"
+      ],
+      "timeZone": "UTC",
+      "sources": [
+        {
+          "file": "rb25-09-a.md",
+          "text": "SYNTHETIC TEST MATERIAL ONLY. Scenario RB25-09. Quartz supports UTF-8 text labels including 上海."
+        },
+        {
+          "file": "rb25-09-b.md",
+          "text": "SYNTHETIC TEST MATERIAL ONLY. Scenario RB25-09. Reed supports UTF-8 text labels including café."
+        }
+      ],
+      "question": "Read both original synthetic pages. Save a concise report that compares their facts, cites the actual source IDs returned by read_page for each claim, and distinguishes unknowns from explicit negatives. Do not claim any real market or investment fact.",
+      "hostSequence": [
+        "Complete one due report. Close worker process.",
+        "Cold readResearchReport; startReader(directory=original Run directory, port=0).",
+        "GET /artifacts/<reportId>, /revisions/<revisionId>, and all registered /sources/<revisionId>/<index>; compare original bytes/hash; close reader."
+      ],
+      "runtimeAssertions": [
+        "Conditional on successful persisted report receipt: cold HTTP200 bytes/hash/length equal original artifact and receipt; absent publication is unassessed for this storage assertion, not automatic runtime failure.",
+        "Conditional on registered source entries: their cold HTTP bytes equal accepted original source bytes.",
+        "cold reads create zero additional requests"
+      ],
+      "semanticExpectedFacts": [
+        "Quartz supports UTF-8 text labels including 上海.",
+        "Reed supports UTF-8 text labels including café."
+      ],
+      "expectedReportCount": 1,
+      "finalTaskAssertions": [
+        "Expected number of actual persisted source-backed reports delivered; absent report is task incomplete, not automatically a runtime failure."
+      ],
+      "modelExpectations": [
+        "Read both original synthetic pages and choose save_report with correct source IDs; non-use or incorrect content is evaluated as model/task behavior separately."
+      ]
+    },
+    {
+      "id": "RB25-10",
+      "title": "Safe checkpoint stop then explicit work",
+      "modelAttemptCap": 10,
+      "capabilities": [
+        "report",
+        "schedule",
+        "task-time"
+      ],
+      "timeZone": "UTC",
+      "sources": [
+        {
+          "file": "rb25-10-a.md",
+          "text": "SYNTHETIC TEST MATERIAL ONLY. Scenario RB25-10. Spruce offers a 12-month synthetic service term."
+        },
+        {
+          "file": "rb25-10-b.md",
+          "text": "SYNTHETIC TEST MATERIAL ONLY. Scenario RB25-10. Tamarind offers a 6-month synthetic service term."
+        }
+      ],
+      "question": "Read both original synthetic pages. Save a concise report that compares their facts, cites the actual source IDs returned by read_page for each claim, and distinguishes unknowns from explicit negatives. Do not claim any real market or investment fact.",
+      "hostSequence": [
+        "Due sweep using resolveControls with onCheckpoint and hostSignal.",
+        "At result-consumed, independently read original durable snapshot. Require integer cursor>=1, matching run/fence, last message role=tool, and last tool callId equal snapshot.proposal.calls[cursor-1].id whose name is read_page, with succeeded source result. Confirm response/ticket settled and no in-flight model; then request cooperative host stop once. Callback callId is NOT the consumed call: cursor was already incremented, so it may identify the next call or be undefined. Wait original owner terminal.",
+        "Cold verify no in-flight model/unknown and durable consumed result. A sweep must not resume materialized Run.",
+        "Use explicit workResearchTask on same original task once with fresh non-aborted controls to finish remaining work."
+      ],
+      "runtimeAssertions": [
+        "stop only at consumed original tool result, never model-reserved or pending HTTP",
+        "cold sweep attempted=0 and no request increment",
+        "Explicit work retains original Run and previously accepted consumed evidence without duplicating settled dispatch."
+      ],
+      "semanticExpectedFacts": [
+        "Spruce offers a 12-month synthetic service term.",
+        "Tamarind offers a 6-month synthetic service term."
+      ],
+      "expectedReportCount": 1,
+      "finalTaskAssertions": [
+        "Expected number of actual persisted source-backed reports delivered; absent report is task incomplete, not automatically a runtime failure.",
+        "Explicit work completes and persists the sourced report within the same shared attempt cap."
+      ],
+      "modelExpectations": [
+        "Read both original synthetic pages and choose save_report with correct source IDs; non-use or incorrect content is evaluated as model/task behavior separately."
+      ],
+      "safeCheckpointPreflight": {
+        "requiredBeforeLive": true,
+        "method": "Offline original-product test must cover multi-call proposal (callback.callId may name next call) and last-call proposal (callback.callId may be undefined), independently read persisted snapshot, match last consumed tool message to proposal[cursor-1] read_page, prove settled ticket/no model in flight, cooperative stop and explicit work continuation.",
+        "doNotUse": "Do not identify consumed tool from callback.callId or callback cursor alone; do not manufacture snapshot or assume a callback proves remote settlement.",
+        "ifUnavailable": "No deliberate interruption. Record uncovered/incomplete; do not select another unsafe checkpoint or replay unknown."
+      }
+    }
+  ],
+  "planningFreezeNote": "Draft content frozen after review corrections; executable runner, exact product closure and dispatch GO are separate. No model calls or reservations created."
+}
