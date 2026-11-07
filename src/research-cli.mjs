@@ -1,3 +1,4 @@
+import {confirmScheduledTask,listScheduledTasks,inspectScheduledTask,cancelScheduledTask,runDueScheduledTasks} from './scheduled-tasks.mjs';
 import {open,constants} from 'node:fs/promises';
 import {resolve,dirname,join} from 'node:path';
 import {pathToFileURL} from 'node:url';
@@ -19,6 +20,11 @@ Usage: node src/research-cli.mjs <group> <command> [options]
   run submit --project DIR --run ID --question TEXT_FILE --manifest SHA256
       [--approve-provider --approve-data --approve-cost]
       [--memory-intents JSON_FILE] [--task-time JSON_FILE] [--schedule JSON_FILE]
+  schedule confirm --project DIR --run ID --question TEXT_FILE --manifest SHA256 --schedule JSON_FILE --confirm-once
+      [--approve-provider --approve-data --approve-cost]
+  schedule list --project DIR
+  schedule inspect|cancel --project DIR --run ID
+  schedule run-due --project DIR [--limit NUMBER (1..32)]
   run work --project DIR --run ID
   run inspect|cancel --project DIR --run ID
   child list --project DIR --run ID
@@ -51,6 +57,9 @@ for submit --memory-intents. Memory mutations require an explicit one-time inten
 All options are single-use. Unknown options and positional arguments are rejected.
 `;
 const specifications={
+ 'schedule confirm':['project','run','question','manifest','schedule','confirm-once','approve-provider?','approve-data?','approve-cost?'],
+ 'schedule list':['project'], 'schedule inspect':['project','run'], 'schedule cancel':['project','run'],
+ 'schedule run-due':['project','limit?'],
  'capacity inspect':['project','run'],
  'knowledge inspect':['project','run'],
  'child list':['project','run'],
@@ -69,7 +78,7 @@ const specifications={
  'memory revise':['project','intent','entry','revision','text','approve-intent'],
  'memory forget':['project','intent','entry','revision','approve-intent']
 };
-const flags=new Set(['approve-provider','approve-data','approve-cost','approve-intent']);
+const flags=new Set(['approve-provider','approve-data','approve-cost','approve-intent','confirm-once']);
 export function parseResearchArguments(args){
  if(args.length===0||(args.length===1&&['help','--help','-h'].includes(args[0])))return{help:true};
  const command=args.slice(0,2).join(' '),spec=specifications[command];if(!spec)fail('CLI_UNKNOWN_COMMAND');
@@ -90,6 +99,16 @@ export async function runResearchCli(args,{stdout=process.stdout,stderr=process.
  try{
   const parsed=parseResearchArguments(args);if(parsed.help){stdout.write(RESEARCH_HELP);return 0;}
   const {command,options:o}=parsed,projectDir=resolve(o.project),runId=o.run;
+  if(command==='schedule confirm'){
+   emit(taskResult(await confirmScheduledTask({projectDir,runId,confirmOnce:o['confirm-once'],question:await textFile(o.question,16000),sourceManifestSha256:o.manifest,schedule:await readProjectJson(o.schedule),authorization:{providerApproved:o['approve-provider']===true,dataApproved:o['approve-data']===true,costApproved:o['approve-cost']===true}})));return 0;
+  }
+  if(command==='schedule list'){const result=await listScheduledTasks({projectDir});emit({items:result.items.map(taskResult)});return 0;}
+  if(command==='schedule inspect'){emit(taskResult(await inspectScheduledTask({projectDir,runId})));return 0;}
+  if(command==='schedule cancel'){emit(taskResult(await cancelScheduledTask({projectDir,runId})));return 0;}
+  if(command==='schedule run-due'){
+   const host=new AbortController(),stop=()=>host.abort();signals.on('SIGINT',stop);signals.on('SIGTERM',stop);
+   try{emit(await runDueScheduledTasks({projectDir,limit:o.limit===undefined?16:integer(o.limit,1,32),hostSignal:host.signal,resolveControls:async({config})=>{if(config.gateway.mode!=='live')fail('CLI_LIVE_WORK_REQUIRED');secret=process.env[config.gateway.apiKeyEnv];if(!secret)fail('CLI_API_KEY_ENV_REQUIRED');return{apiKey:secret};}}));}finally{signals.off('SIGINT',stop);signals.off('SIGTERM',stop);}return 0;
+  }
   if(command==='capacity inspect'){emit(await inspectResearchCapacity({projectDir,runId}));return 0;}
   if(command==='knowledge inspect'){emit(await inspectResearchKnowledge({projectDir,runId}));return 0;}
   if(command==='child list'){emit(await inspectResearchChildren({projectDir,runId}));return 0;}

@@ -40,3 +40,17 @@ part of this version.
 This initial checkpoint contains the reconstruction plan only. It does not alter
 package versions, dependencies or lockfiles. Product implementation, tests and
 release qualification are pending.
+
+## Intermediate implementation checkpoint
+
+The first implementation slice adds the once-task API and CLI on the original
+Project, Schedule, Session and Worker owners. Twelve focused offline tests pass
+on this slice. This is a WIP safety checkpoint, not release qualification.
+
+Independent seam review identified a materialization race: a competing wake can
+materialize and interrupt a Run between the host eligibility observation and the
+original worker entry. The first slice does not yet prove that this cannot cause
+an automatic resume. An atomic fresh-materialization discriminator and regression
+coverage are still required. Unknown/interrupted cold-wake tests, the complete
+suite, independent final review and any new live qualification remain pending.
+No model calls were made by this reconstruction checkpoint.

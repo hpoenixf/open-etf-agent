@@ -179,6 +179,28 @@ export async function submitResearchTask({projectDir,runId,question,sourceManife
  if(prior&&hash(prior)!==hash(definition))fail('PROJECT_TASK_ALREADY_DEFINED');
  const opened=await assemble(projectDir,definition);try{if(!prior){try{await immutableJson(join(projectDir,'tasks'),runId+'.json',{definition,definitionSha256:hash(definition)});}catch(error){if(error.code!=='EEXIST')throw error;return submitResearchTask({projectDir,runId,question,sourceManifestSha256,authorization,memoryIntents,taskTime,schedule});}}if(schedule){const confirmed=await confirmScheduledRun(opened.options,schedule);try{await immutableJson(join(projectDir,'tasks'),runId+'.schedule.json',confirmed.reference);}catch(error){if(error.code!=='EEXIST')throw error;const saved=await readProjectJson(join(projectDir,'tasks',runId+'.schedule.json'));if(hash(saved)!==hash(confirmed.reference))fail('PROJECT_SCHEDULE_CHANGED');}return confirmed;}return await submitRun(opened.options);}finally{await opened.close();}
 }
+// Bounded enumeration of original immutable task records, not a second job queue.
+export async function listResearchScheduledTasks({projectDir}){
+ await inspectResearchProject({projectDir});
+ const entries=await readdir(join(projectDir,'tasks'),{withFileTypes:true});
+ const files=entries.filter(e=>e.name.endsWith('.json')&&!e.name.endsWith('.schedule.json'));
+ if(files.length>256)fail('PROJECT_SCHEDULE_SCAN_LIMIT');
+ const ids=files.map(e=>{if(!e.isFile()||e.isSymbolicLink())fail('PROJECT_UNSAFE_FILE');return id(e.name.slice(0,-5));}).sort();
+ const items=[];
+ for(const runId of ids){const definition=await readTask(projectDir,runId);if(definition.schedule)items.push(await inspectResearchScheduledTask({projectDir,runId}));}
+ return items;
+}
+export async function inspectResearchScheduledTask({projectDir,runId}){
+ const definition=await readTask(projectDir,runId);if(!definition.schedule)fail('PROJECT_SCHEDULE_REQUIRED');
+ const store=await openSession({directory:paths(projectDir,runId).session,profile:profile(definition.config),readOnly:true});
+ try{const schedule=store.inspectSchedule(await readProjectJson(join(projectDir,'tasks',runId+'.schedule.json')));return{definition,schedule,run:schedule.run};}finally{store.close();}
+}
+// Original Runtime alone decides missed/materialized. This path never creates a live gateway.
+export async function materializeResearchScheduledTask({projectDir,runId}){
+ const definition=await readTask(projectDir,runId);if(!definition.schedule)fail('PROJECT_SCHEDULE_REQUIRED');
+ const opened=await assemble(projectDir,definition);
+ try{return await materializeScheduledRun(opened.options,await readProjectJson(join(projectDir,'tasks',runId+'.schedule.json')));}finally{await opened.close();}
+}
 export async function workResearchTask({projectDir,runId,...controls}){projectDir=await safeDirectory(projectDir);const definition=await readTask(projectDir,runId);const opened=await assemble(projectDir,definition,{...controls,dispatch:true});try{if(definition.schedule){const reference=await readProjectJson(join(projectDir,'tasks',runId+'.schedule.json'));const occurrence=await materializeScheduledRun(opened.options,reference);if(!occurrence.runId)return occurrence;}return await workRun(opened.options);}finally{await opened.close();}}
 export async function inspectResearchTask({projectDir,runId}){const d=await readTask(projectDir,runId),p=paths(projectDir,runId);const store=await openSession({directory:p.session,...(profile(d.config)?{profile:profile(d.config)}:{}),readOnly:true});try{const actual=d.schedule?scheduleRunId(d.schedule):runId;if(d.schedule){const scheduled=store.inspectSchedule(await readProjectJson(join(projectDir,'tasks',runId+'.schedule.json')));if(!scheduled.runId)return {definition:d,schedule:scheduled,run:null};}const state=store.inspect(actual);return{definition:d,run:state};}finally{store.close();}}
 export async function cancelResearchTask({projectDir,runId}){const d=await readTask(projectDir,runId),store=await openSession({directory:paths(projectDir,runId).session,...(profile(d.config)?{profile:profile(d.config)}:{})});try{if(d.schedule)return store.cancelSchedule(await readProjectJson(join(projectDir,'tasks',runId+'.schedule.json')));return store.cancel(runId);}finally{store.close();}}
