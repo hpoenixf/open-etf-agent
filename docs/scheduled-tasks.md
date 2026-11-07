@@ -30,7 +30,11 @@ notifications, automatic external scheduler installation, or new provider exists
 
 Eligibility is read again after asynchronous control preparation. Original Runtime
 materialization and Session claim remain authoritative for competing callers,
-expiry and cancellation. An expired occurrence becomes `missed`, not a new Run.
+expiry and cancellation. The once host uses an opt-in, non-persisted freshness
+observation returned only by the Session transaction that actually inserts the
+Run. A competing caller that finds an existing Run does not automatically work
+it, even if the first caller stopped before dispatch. Legacy materialization
+returns remain unchanged by default. An expired occurrence becomes `missed`, not a new Run.
 Completed, cancelled and already materialized occurrences are not automatically
 run again. An interrupted or uncertain materialized Run must be inspected and, if
 appropriate, explicitly resumed through the existing `run work` command. Its old

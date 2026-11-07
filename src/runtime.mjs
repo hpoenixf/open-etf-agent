@@ -105,10 +105,11 @@ export function validateRuntimeCheckpoint(state, definition) {
 export function run(options) { return drive(options, false); }
 export function submitRun(options) { return drive(options, true); }
 export function confirmScheduledRun(options, schedule) { return drive(options, true, {kind:'confirm',schedule}); }
-export function materializeScheduledRun(options, reference) {
+export function materializeScheduledRun(options, reference, observation = {}) {
+ if(!observation||typeof observation!=='object'||Array.isArray(observation)||Object.keys(observation).some(k=>k!=='reportFresh')||observation.reportFresh!==undefined&&typeof observation.reportFresh!=='boolean')throw failure('INVALID_SCHEDULE_OBSERVATION');
  if(typeof options?.durable?.store?.inspectSchedule!=='function')throw failure('SCHEDULE_PROFILE_REQUIRED');
  const prior=options.durable.store.inspectSchedule(reference);
- return drive(options, true, {kind:'materialize',schedule:prior.envelope.schedule,reference});
+ return drive(options, true, {kind:'materialize',schedule:prior.envelope.schedule,reference,reportFresh:observation.reportFresh===true});
 }
 async function drive({ question, gateway, outputRoot='runs', requireReport=false, signal, hostSignal, limits={}, extensions=[], hooks, plugins, rootBudget, allowedTools, allowedDocuments, taskId=null, contextBytes, workingInput, durable, publication = false, pdfInput, taskTime, ordinaryResponse = false, documentProtection = false, documentCatalog, interaction }, submitting, scheduleOperation) {
   if(pdfInput?.snapshot!==undefined){if(Object.keys(pdfInput).length!==1)throw failure('PDF_INVALID_INPUT');pdfInput=Object.freeze({snapshot:normalizePdfSnapshot(pdfInput.snapshot)});}
@@ -243,12 +244,12 @@ async function drive({ question, gateway, outputRoot='runs', requireReport=false
         const prior=durable.store.inspectSchedule(scheduleOperation.reference);
         // Existing links still pass the original full Runtime binding checks.
         if(prior.runId!==null)original();
-        const checked=durable.store.materializeSchedule({reference:scheduleOperation.reference,definition,snapshot:state});
+        const checked=durable.store.materializeSchedule({reference:scheduleOperation.reference,definition,snapshot:state,reportFresh:scheduleOperation.reportFresh});
         if(checked.state!=='due')return checked;
         // Directory creation is not a SQL transaction; admission is checked again below.
         const root=await ensureSafeDirectory(outputRoot);directory=await mkdtemp(join(root,'run-'));
         if(signal?.aborted)throw failure('CANCELLED');
-        return durable.store.materializeSchedule({reference:scheduleOperation.reference,definition,snapshot:state,directory});
+        return durable.store.materializeSchedule({reference:scheduleOperation.reference,definition,snapshot:state,directory,reportFresh:scheduleOperation.reportFresh});
       }
       try{return original();}catch(error){if(error.code!=='UNKNOWN_RUN')throw error;}
       const root=await ensureSafeDirectory(outputRoot);directory=await mkdtemp(join(root,'run-'));runId=durable.runId;

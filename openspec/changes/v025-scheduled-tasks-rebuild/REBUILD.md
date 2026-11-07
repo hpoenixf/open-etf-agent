@@ -54,3 +54,18 @@ an automatic resume. An atomic fresh-materialization discriminator and regressio
 coverage are still required. Unknown/interrupted cold-wake tests, the complete
 suite, independent final review and any new live qualification remain pending.
 No model calls were made by this reconstruction checkpoint.
+
+## Atomic freshness checkpoint
+
+A behavior regression reproduced the first slice's unintended worker entry: an
+already materialized ready Run dispatched once despite the new host's fresh-only
+intent. The next slice adds an opt-in observation from the original Session SQL
+transaction that inserts the Run and uses it before entering Worker. Legacy
+materialization return values are unchanged.
+
+The focused owner suite passed 31 tests. A later four-test run repeated three
+cases and added atomic concurrent-materialization coverage; these counts must not
+be added. It also preserves model-reserved usage across a cold wake with no new
+dispatch, and leaves explicit unknown recovery to the original Worker. All tests
+are synthetic and offline. Full-suite and independent final qualification are
+still pending; no old live or offline result is inherited.

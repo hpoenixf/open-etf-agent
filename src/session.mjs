@@ -457,7 +457,8 @@ export async function openSession({ directory, clock = Date.now, leaseMs = 1000,
    });
   },
   inspectSchedule(reference){return transaction(()=>scheduleView(boundSchedule(reference)));},
-  materializeSchedule({reference,definition,snapshot,directory}){
+  materializeSchedule({reference,definition,snapshot,directory,reportFresh=false}){
+   if(typeof reportFresh!=='boolean')fail('INVALID_SCHEDULE_OBSERVATION');
    return transaction(()=>{
     const fact=boundSchedule(reference),prepared=prepareSchedule(fact.envelope.schedule,definition,snapshot);
     if(scheduleCanonical(prepared.reference)!==scheduleCanonical(reference))fail('SCHEDULE_BINDING_MISMATCH');
@@ -468,7 +469,7 @@ export async function openSession({ directory, clock = Date.now, leaseMs = 1000,
     if(directory===undefined)return {...scheduleView(fact),state:'due'};
     insertRun({runId:fact.runId,directory,definition:fact.envelope.definition,snapshot:fact.envelope.snapshot});
     db.prepare("UPDATE schedule_occurrences SET state='materialized',run_id=?,decided_at=?,materialized_at=? WHERE schedule_id=?").run(fact.runId,time,time,reference.scheduleId);
-    return scheduleView(boundSchedule(reference));
+    return {...scheduleView(boundSchedule(reference)),...(reportFresh?{materializedNow:true}:{})};
    });
   },
   cancelSchedule(reference,{revoke=false}={}){

@@ -37,9 +37,9 @@ export async function runDueScheduledTasks({projectDir,limit=16,hostSignal,gatew
   // be asynchronous; cancellation or another wake during it must remain effective.
   const latest=await inspectScheduledTask({projectDir,runId});
   if(latest.schedule.state!=='confirmed')continue;
-  if(Date.now()>=due+current.definition.schedule.maxLatenessMs){await materializeResearchScheduledTask({projectDir,runId});items.push({runId,state:'missed'});continue;}
+  if(Date.now()>=due+current.definition.schedule.maxLatenessMs){const occurrence=await materializeResearchScheduledTask({projectDir,runId});items.push({runId,state:occurrence.state});continue;}
   attempted++;
-  const result=await workResearchTask({...controls,projectDir,runId,hostSignal});
+  const result=await workResearchTask({...controls,projectDir,runId,hostSignal,requireFreshSchedule:true});
   items.push({runId,state:(await inspectScheduledTask({projectDir,runId})).schedule.state,workerStatus:result.workerStatus??null});
  }
  return{attempted,items,interrupted:hostSignal?.aborted===true};
