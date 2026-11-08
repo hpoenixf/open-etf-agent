@@ -1,0 +1,58 @@
+{
+  "schema": "rebuilt-v025-first-live-attempt@1",
+  "sourceProductCommit": "1afb49ae75c6322cd95442a1868d1ec90f7164cf",
+  "backedUpWipAtAttempt": "4e79b8069bb64c13c96ee3a2dca82bbf519556fb",
+  "independentNewCohort": true,
+  "oldResultsInherited": false,
+  "startedAt": "2026-11-08T00:10:05.833809+00:00",
+  "outcome": "stopped before any HTTP response; no completed scenario",
+  "requestReservations": 1,
+  "durableDispatchIntents": 1,
+  "localFetchReturns": 0,
+  "localFetchRejections": 1,
+  "completeProviderBodies": 0,
+  "completedScenarios": 0,
+  "plannedScenarios": 10,
+  "newUnknown": 1,
+  "unknownRetained": true,
+  "allocationHeld": 108,
+  "unused107Retained": true,
+  "threeAxes": {
+    "runtimeContract": "unassessed, not established as a product failure",
+    "modelSemantics": "unassessed, no provider answer",
+    "finalTask": "incomplete, no report"
+  },
+  "diagnostic": {
+    "scope": "subsequent unauthenticated official-homepage HEAD controls, not replay of the model request",
+    "normalExistingPlatformEnvironment": "HTTP 200",
+    "originalOwnerMinimalEnvironment": "EAI_AGAIN",
+    "onlyExistingPlatformNetworkAndCAEnvironmentInherited": "HTTP 200",
+    "historicalRequestReclassified": false,
+    "tlsValidationDisabled": false,
+    "newProxyOrAccount": false
+  },
+  "owner": {
+    "exitCode": 1,
+    "seconds": 1.5689840549966902,
+    "leaderWaited": true,
+    "registeredGroupRemaining": [],
+    "allDescendantsOrRemoteSettlementProven": false
+  },
+  "independentPostrunSha256": "448614232982bcd96845e525bc02cfcf82c20d1f47ac6e258553e213db777a80",
+  "supplement02": {
+    "scope": "only previously unrun RB25-02 through RB25-10, independent result if executed",
+    "preflight": {
+      "passed": 8,
+      "modelCalls": 0
+    },
+    "launchToolOutcome": "aborted; no session identifier returned",
+    "readbackAt": "2026-11-08T01:16:26Z",
+    "ownerAndBatchDirectoriesPresent": false,
+    "dispatchEvidencePresent": false,
+    "originalExactLaunchWindowExpired": true,
+    "allocatedRangeRemainsHeld": true,
+    "notAutomaticallyCombinedIntoOriginalCohort": true
+  },
+  "releaseQualification": false,
+  "release": false
+}

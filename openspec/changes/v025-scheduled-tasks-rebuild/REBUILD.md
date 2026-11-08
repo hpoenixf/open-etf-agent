@@ -79,3 +79,21 @@ See `docs/verification/v025-rebuild-provider-free.safe.json` for exact bindings.
 The added acceptance bridge and synthetic case plan are separate prospective
 engineering preparation, not evidence of a live pass. No model has been called
 by this reconstruction so far. The PR remains a draft, not a release approval.
+
+## First real-attempt boundary
+
+A separately frozen new ten-scenario campaign reached one durable request
+reservation and dispatch intent, then local fetch rejected before any HTTP
+response. No scenario completed; no answer or zero-cost receipt was available.
+The unknown and whole allocation remain retained, without replay. This does not establish a
+Runtime product failure or a passed acceptance run. Subsequent unauthenticated
+HEAD controls showed that the engineering owner had omitted the platform's
+existing networking/CA environment. Inheriting those unchanged values restored
+public-site connectivity, not proof of the historical request's remote outcome.
+
+A distinct nine-scenario supplement was prepared only for previously unrun
+RB25-02 through RB25-10. Its launch tool was interrupted and no owner/batch or
+dispatch record was observed. The original exact launch window expired; it was
+not retried. No supplementary qualification or release is claimed. See
+`docs/verification/v025-rebuild-first-live-attempt.safe.json`. Earlier sections
+remain historical stage records, including their then-zero request counts.
