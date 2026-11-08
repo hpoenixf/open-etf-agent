@@ -14,7 +14,19 @@ try{
  }},durable:{store,...(runId?{runId}:{}),grantId:'correction-grant',bindings,rootLimits:{model:5,tool:3},async onCheckpoint(event){
   const saved=store.inspect(event.runId);
   const shouldStop=event.phase===stop&&(stop==='model-reserved'?(saved.snapshot.corrections===1):saved.snapshot.proposal?.calls?.[0]?.id==='first');
-  if(shouldStop){process.send?.({kind:'stop',runId:event.runId,phase:event.phase,calls,rootUsage:saved.rootUsage});await new Promise(()=>{});}
+  if(shouldStop){
+   // Freeze the chosen durable boundary after IPC flush. An unresolved Promise
+   // still lets the 150ms lease heartbeat run and fail before the parent kills
+   // this child on a busy runner. Keep the original parent deadline bounded.
+   await new Promise((resolve,reject)=>{
+    if(!process.send){reject(new Error('Death fixture requires parent IPC'));return;}
+    process.send({kind:'stop',runId:event.runId,phase:event.phase,calls,rootUsage:saved.rootUsage},error=>{
+     if(error){reject(error);return;}
+     Atomics.wait(new Int32Array(new SharedArrayBuffer(4)),0,0,4000);
+     reject(new Error('Parent did not terminate checkpoint fixture within deadline'));
+    });
+   });
+  }
  }}});
  process.send?.({kind:'outcome',result,calls});
 }finally{store.close();}

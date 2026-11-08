@@ -71,21 +71,22 @@ npm run demo -- --case document-compare
 <a id="versions"></a>
 ## Latest three modules
 
+**v0.25 adds finite once Scheduled tasks**: confirm, inspect, cancel and explicitly run due work through the original project and execution owners. [Commands](docs/scheduled-tasks.md) · [Runtime qualification and content limits](docs/verification/v025-release.md). Nine preplanned scenarios contain ten normal logical tasks: Runtime contracts passed 10/10 with 30 complete Go responses; two model content issues remain. No cron, background daemon or automatic recovery of unknown work.
+
 **v0.24 keeps Provider Admission capacity stable across project revisions**: the same normalized endpoint retains one original project-local owner when model or streaming configuration changes. [Usage](docs/provider-capacity.md) · [Ten-task evidence and limits](docs/verification/v024-release.md) · [Fixed tested source](https://github.com/hpoenixf/open-etf-agent/tree/0d47e318e0f5fb36d45d8be274324a06bdd20d5c). Mechanical and named Runtime contracts passed 10/10; model content caveats, including C09’s unrepaired citation error, remain. Not account-wide limiting or live-concurrency qualification.
 
 **v0.23 adds admitted Knowledge retrieval**: query explicitly imported text and keep whole original pages through Result, Report and Reader. [Usage](docs/knowledge.md) · [Layered evidence](docs/verification/v023-release.md) · [Fixed public source](https://github.com/hpoenixf/open-etf-agent/tree/4e893ead9ebe8cdd13146ddc96fe1d56a1e56365). Observed Runtime contracts passed 10/10; the frozen mechanical result remains 9/10 and strict complete-task quality 5/10. These are distinct measures, not ten perfect answers.
 
 **v0.23.1 maintenance:** original Session heartbeat through finalization and durable cancellation while waiting. [Fixes, 966/966 and evidence applicability](docs/verification/v0231-maintenance.md); original ten-task scores and later provider interruptions remain separate.
 
-**v0.22 adds bounded Child execution**: select admitted read-only methods and narrow sources, inspect original Child identity and safely continue the same execution. [Usage](docs/child-execution.md) · [Staged 9/10 and C06 supplement](docs/verification/v022-release.md). Same tested source, two approved stages; not one continuous 10/10 batch. Final-package CI and publication are separate. [Fixed public source](https://github.com/hpoenixf/open-etf-agent/tree/fed2c5f886200d4c04281c6293d5eb1ee7c2eab9).
 
 **2026-11-02 foundation repair:** [Working-input admission, cancellation facts, Child settlement and no-saving summary precheck](docs/verification/foundation-repair-20261102.md). Provider-free regressions passed; this is not a new release or live qualification.
 
 | Module | What changes | Run and inspect |
 | --- | --- | --- |
+| v0.25 · Once Scheduled tasks | Explicit confirmation and bounded due-work sweep; original lifecycle and unknown retention | [Usage](docs/scheduled-tasks.md) · [Evidence](docs/verification/v025-release.md) |
 | v0.24 · Project provider capacity | Stable original endpoint owner across revisions; unknown stays occupied | [Usage](docs/provider-capacity.md) · [Evidence](docs/verification/v024-release.md) |
 | v0.23 · Admitted Knowledge | Bounded lexical retrieval, original pages and same-Run readback | [Usage](docs/knowledge.md) · [Evidence](docs/verification/v023-release.md) |
-| v0.22 · Bounded Child execution | Admitted methods, narrow sources, original lifecycle and same-Child continuation | [Usage](docs/child-execution.md) · [Evidence](docs/verification/v022-release.md) |
 
 [All fixed versions and commands](docs/module-guide.md#versions) · [Machine-readable version lineage](versions.json) · [GitHub Releases](https://github.com/hpoenixf/open-etf-agent/releases)
 

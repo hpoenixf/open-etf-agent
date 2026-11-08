@@ -1,5 +1,6 @@
 [English](README.md) | **简体中文**
 
+- [v0.25 一次性计划任务：Runtime 资格与模型内容边界](v025-release.zh-CN.md)
 # 验证证据索引 · v0.1–v0.11
 
 ## v0.24 项目提供方容量

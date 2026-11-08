@@ -2,6 +2,10 @@
 
 [Project home](../README.md) · [简体中文](module-guide.zh-CN.md)
 
+## Once scheduled tasks (v0.25)
+
+See [commands and lifecycle](scheduled-tasks.md) and [Runtime qualification and content boundaries](verification/v025-release.md). Explicit once scheduling only; release status is separate.
+
 Full commands, fixed stages and historical qualification notes moved from the project homepage. The [verification index](verification/README.md) remains the evidence directory; this guide does not rerun tests or upgrade any qualification. The homepage keeps the current three modules and first-run path.
 
 <a id="english"></a>
@@ -265,6 +269,8 @@ This is a real local SQLite/process flow with synthetic replies and no model cal
 
 
 <a id="versions"></a>
+
+**v0.25 adds finite once Scheduled tasks**: confirm, inspect, cancel and explicitly run due work through the original project and execution owners. [Commands](scheduled-tasks.md) · [Runtime qualification and content limits](verification/v025-release.md). Nine preplanned scenarios contain ten normal logical tasks: Runtime contracts passed 10/10 with 30 complete Go responses; two model content issues remain. No cron, background daemon or automatic recovery of unknown work.
 
 **v0.24 keeps Provider Admission capacity stable across project revisions**: the same normalized endpoint retains one original project-local owner when model or streaming configuration changes. [Usage](provider-capacity.md) · [Ten-task evidence and limits](verification/v024-release.md) · [Fixed tested source](https://github.com/hpoenixf/open-etf-agent/tree/0d47e318e0f5fb36d45d8be274324a06bdd20d5c). Mechanical and named Runtime contracts passed 10/10; model content caveats, including C09’s unrepaired citation error, remain. Not account-wide limiting or live-concurrency qualification.
 

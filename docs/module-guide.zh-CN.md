@@ -2,6 +2,10 @@
 
 [项目首页](../README.zh-CN.md) · [English](module-guide.md)
 
+## 一次性计划任务（v0.25）
+
+参见[命令与生命周期](scheduled-tasks.zh-CN.md)及[Runtime 资格与内容边界](verification/v025-release.zh-CN.md)。仅显式 once；正式发布状态另行核验。
+
 这里承接原首页的完整命令、固定版本与历史验证解释；[验证索引](verification/README.zh-CN.md)仍是证据目录，本次整理不表示重跑测试或升级资格。首页只展示最近三个模块和首次运行闭环。
 
 <a id="node-qualification-history"></a>
@@ -262,6 +266,8 @@ node dist/src/session-cli.mjs publication-revisions --session runs/publication-d
 
 
 <a id="versions"></a>
+
+**v0.25 提供有限的一次性计划任务**：沿原项目与执行 Owner 确认、查看、取消，并显式运行到期工作。[命令](scheduled-tasks.zh-CN.md) · [Runtime 资格与内容边界](verification/v025-release.zh-CN.md)。九个事前场景包含十个正常逻辑任务，Runtime 合同通过 10/10，取得 30 份完整 Go 响应；保留两处模型内容问题。不提供 cron、后台常驻或未知工作自动恢复。
 
 **v0.24 让项目修订沿用原 Provider Admission 容量**：同一规范化端点在模型或流式配置变化后仍保留一个项目内原 Owner。[用法](provider-capacity.zh-CN.md) · [十题证据与边界](verification/v024-release.zh-CN.md) · [固定实测源码](https://github.com/hpoenixf/open-etf-agent/tree/0d47e318e0f5fb36d45d8be274324a06bdd20d5c)。机械与具名 Runtime 合同通过 10/10；保留 C09 未修复的错引等模型内容问题，不代表账户级限流或真实并发资格。
 

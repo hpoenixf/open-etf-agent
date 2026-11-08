@@ -1,5 +1,6 @@
 **English** | [简体中文](README.zh-CN.md)
 
+- [v0.25 once Scheduled tasks: Runtime qualification and model content limits](v025-release.md)
 # Verification evidence index
 
 ## v0.24 project provider capacity

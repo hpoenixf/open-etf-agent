@@ -1,4 +1,4 @@
-# Once scheduled tasks (rebuild candidate)
+# Once scheduled tasks
 
 This module is a bounded host for the existing Schedule, Project, Session and
 Worker owners. It does not create a second job database. Confirmed definitions
@@ -44,3 +44,14 @@ Ctrl-C stops the host cooperatively; it does not silently cancel persisted tasks
 Tests use real local Project/Session/Worker and synthetic fixture gateways. They
 are offline mechanism checks, not proof of real model or service behavior. This is
 new reconstruction from v0.24, not recovered old v0.25 source or qualification.
+
+## Candidate evidence and scope
+
+[简体中文](scheduled-tasks.zh-CN.md) · [v0.25.0 candidate notes](verification/v025-release-candidate.md).
+The separate real supplement observed nine scenarios / ten prospectively defined
+logical tasks, with 30 complete Go zero-cost responses. This does not turn the
+original interrupted ten-scenario batch into a completed cohort. Content-quality
+limitations remain in the candidate notes. This documentation is prepared for a
+release candidate; it is not confirmation of a published tag or passed final CI.
+Schedule does not support combinations with Knowledge, Response or Child in this
+version. No cron, recurrence, notifications or additional background executor.
