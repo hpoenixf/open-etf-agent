@@ -43,3 +43,7 @@ The fixed resolver is Cloudflare DoH (`cloudflare-dns.com`, bootstrap `1.1.1.1`)
 DNS, robots and page requests share the 16-request operation cap and 30-second deadline. Plan@2 adds a 1 MiB accepted-response-body cap across the operation, retaining the old original/text and per-body limits. DNS bodies are bounded, retained with their hashes, and reparsed during cold inspection. Proxy connection attempts are separately observed, not substituted for HTTP responses. Old plan/transport/terminal @1 remain readable; new @2 records name the selected profile. The original `web-source@1` identity stays unchanged because its admission and transport hashes already bind those records.
 
 Access denials, rate limits and unknown effects still stop without fallback. No success on a proxy-backed path qualifies the older direct path, and historical examples of successful page acquisition are not evidence for this implementation.
+
+### Existing exclusion selectors
+
+The bounded `NO_PROXY` parser preserves exclusion intent even where the native proxy API ignores CIDR syntax. A matching host, address or strictly parsed CIDR refuses this profile; a valid nonmatching CIDR does not remove or rewrite the configuration. Complete bare IPv6 addresses are parsed before optional hostname-port rules. Malformed, mapped-family or unsupported/ambiguous selectors fail closed. This is compatibility with existing policy, not permission to route around an exclusion.

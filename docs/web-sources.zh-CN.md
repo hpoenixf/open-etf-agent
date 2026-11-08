@@ -43,3 +43,7 @@ node src/research-cli.mjs source acquisition --project ./research-project \
 DNS、robots 和页面共享整个操作的 16 次 HTTP 上限及 30 秒截止。plan@2 另声明整个操作 1 MiB 的可接受响应正文上限，旧原件/文本及单正文限制继续保留。DNS 原始正文有独立大小上限，绑定 hash 保存并在冷读重新核验；代理连接尝试单独观察，不冒充 HTTP 响应。旧 plan/transport/terminal @1 仍可读取，新 @2 明示所选 profile。`web-source@1` 身份规则不变，其 admission 与 transport hash 已绑定这些记录。
 
 权限拒绝、限流或未知副作用仍停止，不回退。代理路线的成功不能当成旧直连路线通过；历史上成功抓过网页，也不能替代本次实测。
+
+### 既有排除规则
+
+有界 `NO_PROXY` 解析器保留排除意图，即使原生代理 API 会忽略 CIDR。域名、地址或严格解析后的 CIDR 匹配时，本 profile 仍拒绝；合法但不匹配的 CIDR 不会改写或删除原配置。完整裸 IPv6 先于可选域名端口规则解析。畸形、映射地址族及不支持或歧义规则继续保守拒绝。这是兼容既有策略，不是绕过排除规则的许可。

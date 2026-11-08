@@ -93,3 +93,7 @@ CONNECT-200 progression into fake target TLS and cancellation. These are offline
 seams, not successful public TLS handshakes. Aggregate and real-network verification
 of this increment remain separate, not inherited from the prior WIP. No new
 dependency is added.
+
+## Existing NO_PROXY compatibility increment
+
+The saved c4bcbeb2 profile completed 1,090 local tests and build. Its first new public operation was refused locally before HTTP because existing NO_PROXY CIDRs were unsupported. That durable zero-dispatch failure remains unchanged. A limited reviewed correction now parses bounded exclusion rules before claiming: matching host/address/CIDR still refuses; legal nonmatching CIDR does not erase configuration. Complete bare IPv6 is not truncated as a port. A separate 46-test targeted run passed after this correction, including the old platform/consumer cases and 22 new selector boundaries. It is not a new aggregate or a public-network success, and no model requests have been made.

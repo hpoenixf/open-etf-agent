@@ -1,5 +1,6 @@
 import https from 'node:https';
 import {isIP} from 'node:net';
+import ipaddr from 'ipaddr.js';
 import {createHash} from 'node:crypto';
 import {webFailure,publicAddresses} from './web-policy.mjs';
 export const PLATFORM_PROFILE='platform-doh-pinned@1';
@@ -10,7 +11,8 @@ export function platformProxyConfig(env=process.env){
  let proxy;try{proxy=new URL(raw);}catch{throw webFailure('WEB_PLATFORM_PROXY_INVALID');}
  if(!['http:','https:'].includes(proxy.protocol)||/[\r\n]/.test(raw)||proxy.search||proxy.hash||proxy.pathname!=='/')throw webFailure('WEB_PLATFORM_PROXY_INVALID');
  if(process.versions.node!=='26.11.1')throw webFailure('WEB_PLATFORM_RUNTIME_UNQUALIFIED');
- return {proxy:proxy.href,noProxy:env.no_proxy||env.NO_PROXY||''};
+ const noProxy=env.no_proxy||env.NO_PROXY||'';
+ return {proxy:proxy.href,noProxy,noProxyRules:parseNoProxy(noProxy)};
 }
 const preparedProfiles=new WeakMap();
 export function prepareWebNetworkProfile(name='system-direct@1'){
@@ -22,17 +24,53 @@ export function readPreparedWebNetworkProfile(token,name){
  if(!token||!preparedProfiles.has(token)||token.networkProfile!==name)throw webFailure('WEB_NETWORK_PROFILE_INVALID');
  return preparedProfiles.get(token);
 }
-function checkNoProxy(host,address,list){
- for(const raw of list.split(',')){
+function selectorAddress(value){
+ if(!isIP(value))return null;
+ const parsed=ipaddr.parse(value);
+ if(parsed.kind()==='ipv6'&&['ipv4Mapped','rfc6145','rfc6052','6to4','teredo'].includes(parsed.range()))throw webFailure('WEB_PLATFORM_NO_PROXY_UNSUPPORTED');
+ return {address:parsed.toString(),family:parsed.kind()};
+}
+function parseNoProxy(list){
+ const unsupported=()=>{throw webFailure('WEB_PLATFORM_NO_PROXY_UNSUPPORTED');};
+ if(typeof list!=='string'||Buffer.byteLength(list)>8192)unsupported();
+ const tokens=list.split(',');if(tokens.length>128)unsupported();
+ const rules=[];
+ for(const raw of tokens){
   const token=raw.trim().toLowerCase();if(!token)continue;
-  const name=token.replace(/:443$/,'');
-  if(token==='*'||[host,address].some(v=>v.toLowerCase()===name)||name.startsWith('.')&&(host===name.slice(1)||host.endsWith(name))||name.startsWith('*.')&&host.endsWith(name.slice(1)))throw webFailure('WEB_PLATFORM_NO_PROXY_CONFLICT');
-  // Unsupported selector syntax must not silently route differently from Node.
-  if(/[\/\[\]]/.test(token)||token.includes('-')&&/^\d/.test(token))throw webFailure('WEB_PLATFORM_NO_PROXY_UNSUPPORTED');
+  if(token.length>256||/[\s\[\]\\%]/.test(token))unsupported();
+  if(token==='*'){rules.push(Object.freeze({kind:'all'}));continue;}
+  if(token.includes('/')){
+   const pieces=token.split('/');if(pieces.length!==2||!/^(0|[1-9][0-9]{0,2})$/.test(pieces[1]))unsupported();
+   const address=selectorAddress(pieces[0]),prefix=Number(pieces[1]);
+   if(!address||prefix>(address.family==='ipv4'?32:128))unsupported();
+   rules.push(Object.freeze({kind:'cidr',...address,prefix}));continue;
+  }
+  // Entire IPv6 is interpreted before a possible hostname:port suffix.
+  const address=selectorAddress(token);if(address){rules.push(Object.freeze({kind:'ip',...address}));continue;}
+  let name=token,port=null;
+  if(token.includes(':')){const pair=token.split(':');if(pair.length!==2||!/^[1-9][0-9]{0,4}$/.test(pair[1])||Number(pair[1])>65535)unsupported();[name]=pair;port=Number(pair[1]);}
+  const ip=selectorAddress(name);if(ip){rules.push(Object.freeze({kind:'ip',...ip,port}));continue;}
+  const kind=name.startsWith('*.')?'wildcard':name.startsWith('.')?'suffix':'host';
+  const hostname=kind==='wildcard'?name.slice(2):kind==='suffix'?name.slice(1):name;
+  if(!hostname||hostname.length>253||/^[0-9.]+$/.test(hostname)||/^\d.*-/.test(hostname)||!hostname.split('.').every(label=>/^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/.test(label)))unsupported();
+  rules.push(Object.freeze({kind,hostname,port}));
+ }
+ return Object.freeze(rules);
+}
+function checkNoProxy(host,address,rules){
+ const target=ipaddr.parse(address);
+ for(const rule of rules){
+  if(rule.port!==undefined&&rule.port!==null&&rule.port!==443)continue;
+  let match=rule.kind==='all';
+  if(rule.kind==='ip'||rule.kind==='cidr')match=rule.family===target.kind()&&(rule.kind==='ip'?target.toString()===rule.address:target.match(ipaddr.parse(rule.address),rule.prefix));
+  else if(rule.kind==='host')match=host===rule.hostname;
+  else if(rule.kind==='suffix')match=host===rule.hostname||host.endsWith('.'+rule.hostname);
+  else if(rule.kind==='wildcard')match=host.endsWith('.'+rule.hostname);
+  if(match)throw webFailure('WEB_PLATFORM_NO_PROXY_CONFLICT');
  }
 }
 export function platformPinnedTransport(original,address,signal,config){
- checkNoProxy(original.hostname,address.address,config.noProxy);
+ checkNoProxy(original.hostname,address.address,config.noProxyRules??parseNoProxy(config.noProxy));
  const agent=new https.Agent({proxyEnv:{HTTPS_PROXY:config.proxy},keepAlive:false,maxCachedSessions:0});
  const sockets=new Set();let closed=false,connectionAttempts=0;
  const own=socket=>{if(!socket)return;if(closed||signal.aborted){socket.destroy();return;}sockets.add(socket);socket.once('close',()=>sockets.delete(socket));};

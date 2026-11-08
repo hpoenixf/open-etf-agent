@@ -107,3 +107,35 @@ for(const abortDuringTls of [false,true])test('platform native CONNECT 200 prese
  else{onHandshake();assert.equal(result.error,null);assert.equal(result.socket,targetSocket);transport.dispose();assert.equal(proxySocket.destroyed,true);assert.equal(targetSocket.destroyed,true);}
  assert.equal(transport.connectionAttempts,1);
 });
+
+const noProxyConfig=value=>platformProxyConfig({HTTPS_PROXY:config.proxy,NO_PROXY:value});
+const guardPin=(value,pin=address.address)=>platformPinnedTransport(new URL('https://example.org/a'),{address:pin,family:net.isIP(pin)},new AbortController().signal,noProxyConfig(value));
+for(const [selector,pin] of [
+ ['0.0.0.0/0','1.1.1.1'],['1.1.1.1/32','1.1.1.1'],['1.1.1.0/24','1.1.1.255'],['1.1.1.255/24','1.1.1.0'],
+ ['::/0','2606:4700::1111'],['2606:4700::1111/128','2606:4700::1111'],['2606:4700::/32','2606:4700:ffff::1'],
+ ['2606:4700:0:0:0:0:0:443','2606:4700::443'],['2606:4700::443','2606:4700::443']
+])test('platform matching address exclusion refuses pin '+selector,()=>assert.throws(()=>guardPin(selector,pin),/WEB_PLATFORM_NO_PROXY_CONFLICT/));
+for(const [selector,pin] of [
+ ['10.0.0.0/8','1.1.1.1'],['1.1.1.0/24','1.1.2.0'],['1.1.1.1/32','1.1.1.2'],
+ ['fc00::/7','2606:4700::1111'],['2606:4700::/32','2606:4701::1'],['::/0','1.1.1.1'],['0.0.0.0/0','2606:4700::1111'],
+ ['2606:4700::443','2606:4700::'],['example.org:80','93.184.216.34']
+])test('platform legal nonmatching exclusion preserves proxy '+selector+' '+pin,()=>{const t=guardPin(selector,pin);assert.ok(t.options.agent);assert.equal(t.options.rejectUnauthorized,true);t.dispose();});
+test('platform malformed exclusions fail during configuration even after unrelated valid entry',()=>{
+ for(const token of ['10.0.0.0/33','::/129','10.0.0.0/08','10.0.0.0/-1','10.0.0.0/8:443','10.0.0.0/8/2','010.0.0.0/8','10.1/8','0x7f000001/32','[::1]','[::1]:443','fe80::1%zone','::ffff:192.0.2.1','::ffff:0:0/96','64:ff9b::/96','1.1.1.0-1.1.1.255','host:0','host:65536','host:0443','bad..host'])assert.throws(()=>noProxyConfig('unrelated.example,'+token),e=>e.code==='WEB_PLATFORM_NO_PROXY_UNSUPPORTED',token);
+});
+test('platform exclusion configuration bounds and frozen rule snapshot',()=>{
+ assert.throws(()=>noProxyConfig('a'.repeat(8193)),/WEB_PLATFORM_NO_PROXY_UNSUPPORTED/);
+ assert.throws(()=>noProxyConfig(Array(129).fill('local').join(',')),/WEB_PLATFORM_NO_PROXY_UNSUPPORTED/);
+ assert.throws(()=>noProxyConfig('a'.repeat(257)),/WEB_PLATFORM_NO_PROXY_UNSUPPORTED/);
+ const snapshot=noProxyConfig('LOCALHOST,10.0.0.0/8,::1');assert.equal(Object.isFrozen(snapshot.noProxyRules),true);assert.ok(snapshot.noProxyRules.every(Object.isFrozen));
+});
+test('platform matching bootstrap exclusion refuses before native Agent construction',t=>{
+ let constructors=0;t.mock.method(https,'Agent',()=>{constructors++;assert.fail('must not construct agent');});
+ assert.throws(()=>guardPin('1.1.1.0/24','1.1.1.1'),/WEB_PLATFORM_NO_PROXY_CONFLICT/);assert.equal(constructors,0);
+});
+test('platform unrelated CIDR retains actual native CONNECT pin and no direct fallback',t=>{
+ let connectOptions;const socket=new PassThrough();socket.setTimeout=()=>socket;
+ t.mock.method(net,'connect',options=>{connectOptions=options;return socket;});
+ const transport=guardPin('10.0.0.0/8,fc00::/7');transport.options.agent.createConnection({...transport.options,host:address.address,port:443},()=>{});
+ assert.equal(connectOptions.host,'proxy.example');assert.equal(Number(connectOptions.port),8080);assert.equal(transport.url.hostname,address.address);transport.dispose();assert.equal(socket.destroyed,true);
+});
