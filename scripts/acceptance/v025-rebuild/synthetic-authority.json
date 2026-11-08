@@ -1,0 +1,9 @@
+{
+  "scope": "SYNTHETIC_EXAMPLE_ONLY_NOT_AUTHORIZATION",
+  "historicalSummary": {
+    "provenance": "public simulation fixture, not a real budget ledger",
+    "historicalUnknownLowerBound": 28,
+    "permanentHeld": 502
+  },
+  "actualBudgetReservation": false
+}
