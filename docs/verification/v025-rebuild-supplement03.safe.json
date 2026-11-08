@@ -1,0 +1,320 @@
+{
+  "schema": "rebuilt-v025-independent-supplement03-observation@1",
+  "sourceProductCommit": "1afb49ae75c6322cd95442a1868d1ec90f7164cf",
+  "backedUpWipAtExecution": "8c73af3c14031e190f923a3a6b67ec9d10d8817e",
+  "frozenPlanSha256": "06ef865d1781ca82caca60ed74b4a4c018446ceb53e574ce3511391c36048977",
+  "scope": "independent previously-unrun RB25-02 through RB25-10; not combined into the original ten-scenario cohort",
+  "caseCount": 9,
+  "runtimeContractCasesPassed": 9,
+  "normalModelBearingLogicalTasks": 10,
+  "reportsPersistedAndByteRead": 10,
+  "completeResponseBodies": 30,
+  "nativeAdoptions": 30,
+  "providerEvidence": {
+    "bodies": 30,
+    "usageCostZero": 30,
+    "billingSourceGo": 30,
+    "bothEstimatedFieldsAbsent": 30,
+    "estimatedTrueObserved": 0,
+    "note": "sink estimated=false is normalization, not original provider explicit field"
+  },
+  "newUnknown": 0,
+  "wholeAllocationHeld": 108,
+  "unused78RemainHeld": true,
+  "oldFailuresUnknownAndCanceledAllocationRetained": true,
+  "owner": {
+    "exitCode": 0,
+    "seconds": 209.31112494300032,
+    "leaderWaited": true,
+    "registeredGroupRemaining": [],
+    "allDescendantsOrRemoteSettlementProven": false
+  },
+  "cases": [
+    {
+      "caseId": "RB25-02",
+      "runtimeContract": "pass",
+      "runtimeBasis": [
+        "early confirmed/null Run/zero requests then one completed Run"
+      ],
+      "reportCount": 1,
+      "semantic": {
+        "coreFactsAndCitationAssignment": "correct against original synthetic pages",
+        "qualityCaveat": null,
+        "rating": "no-material-error-observed"
+      },
+      "reports": [
+        {
+          "runId": "schedule-a7952e57930f0ce4e13d00756ff3e39452a2dec7c3ba2ea509a3fff4ca027076",
+          "reportSha256": "84e050502585bbe55f4e2fb3ff2feb2c5264cf9c1b44f5366b85397c6a2dddf8",
+          "bytes": 2394,
+          "revisionId": "revision:sha256:07497b170ff0baf8ffd4a30314ca79178eb2d3e330516df87e18252514fdcdec",
+          "sourceSha256": [
+            "8509bf97b9bc49afec7f3953013b33a2174c74f4fc5107bea5c38d19f23f0515",
+            "e66ceb7b9a2c11d3b6214bbd2bd512733b4b9ca3b9c4671d4a72311de9dde7b4"
+          ],
+          "modelTextSha256": "b00b885f584bf9a926168207d9061e5e8f2b78a5272494633c9f4801f472b844",
+          "originalModelTextIsReportPrefix": true
+        }
+      ]
+    },
+    {
+      "caseId": "RB25-03",
+      "runtimeContract": "pass",
+      "runtimeBasis": [
+        "fixed runner completed two post-completion sweeps including cold process; final ledger no added requests"
+      ],
+      "reportCount": 1,
+      "semantic": {
+        "coreFactsAndCitationAssignment": "correct against original synthetic pages",
+        "qualityCaveat": null,
+        "rating": "no-material-error-observed"
+      },
+      "reports": [
+        {
+          "runId": "schedule-3e2db76eb975398c7a9ba4c9942fd27ce21a20e995b2f0637139376750015499",
+          "reportSha256": "d9e9ecc944fd9bf02671a5706de55c7f20f4db914294cfcaab75ffddfa272de8",
+          "bytes": 2573,
+          "revisionId": "revision:sha256:37907a4ad72776de8f373be0e72d1ce093c6bb914b1bc73e5d2f86caa29cce2c",
+          "sourceSha256": [
+            "55c564b67a4381c0799c4ecdf38e4e7d3f85bccd634adeb816e805db5dcaf73f",
+            "b75458d3f7a5c9f4779101eab46fd4e50c59bca1a6f31bad757f1703454dbe2f"
+          ],
+          "modelTextSha256": "4af29704c33f44b79ebcfae483a7afa19a57268e30bf0cf7a555df8072b8d460",
+          "originalModelTextIsReportPrefix": true
+        }
+      ]
+    },
+    {
+      "caseId": "RB25-04",
+      "runtimeContract": "pass",
+      "runtimeBasis": [
+        "cold process confirmed reference equals original; zero prior requests"
+      ],
+      "reportCount": 1,
+      "semantic": {
+        "coreFactsAndCitationAssignment": "correct against original synthetic pages",
+        "qualityCaveat": null,
+        "rating": "no-material-error-observed"
+      },
+      "reports": [
+        {
+          "runId": "schedule-de580ef7c1bdc94419c7f54c98a75380c9790b20c6d58fa6acd90ac59526ea15",
+          "reportSha256": "95ad9ec80ced5b16cd0cdec6c0cccd5e48e72fee5dd22dc1a1e1d944052bca84",
+          "bytes": 2637,
+          "revisionId": "revision:sha256:f6ff58602428b1a8e98ff5610d335c7edcff574d817a6b6411649818ee659250",
+          "sourceSha256": [
+            "a52bc10ef471d2717c4e5fe9e4452e9339f2decadfb2484d56704397c33e1c92",
+            "fd32fe9284d198112d7d48c90041deffed6930fa343992d06352c5dd194f8560"
+          ],
+          "modelTextSha256": "6eecee23de53d7f70ff07e0fe65706c3823c81ce2438d09dcbb9314a14f7564a",
+          "originalModelTextIsReportPrefix": true
+        }
+      ]
+    },
+    {
+      "caseId": "RB25-05",
+      "runtimeContract": "pass",
+      "runtimeBasis": [
+        "two bounded one-attempt sweeps; distinct Runs/3 requests each; second-null assertion in fixed runner succeeded"
+      ],
+      "reportCount": 2,
+      "semantic": {
+        "coreFactsAndCitationAssignment": "correct against original synthetic pages",
+        "qualityCaveat": null,
+        "rating": "no-material-error-observed"
+      },
+      "reports": [
+        {
+          "runId": "schedule-2a0167b3ecc0371e548255583f8134c163cc94c071eb01706ec7526c53403a38",
+          "reportSha256": "6a856288d559371e901303b24fadbbd1e8c3f8f9464b7b0a2eaf4ad394735165",
+          "bytes": 1600,
+          "revisionId": "revision:sha256:3a6a165970a9a8f9048d06d03b416e30df06d5cf175e856d572a0d05f6470402",
+          "sourceSha256": [
+            "5522efff2eb2eeb7b0ae9e5ba0d4b8f00a5e6f83cbf789b108cfc51127f30b41",
+            "35f3660a897f0cf7d69d9291d78e4ae77584fd18bc3938986b400e52f2b28c00"
+          ],
+          "modelTextSha256": "03ef2c17c5df4b01c19f38dd8c7f1bcae5cc4cd1ba539b12f324948bed8f7239",
+          "originalModelTextIsReportPrefix": true
+        },
+        {
+          "runId": "schedule-73d0ffad78f831685e7f1bc835a2af4a8c72bf6172136a054fb243479bb76b27",
+          "reportSha256": "869ac5a859c11edccc8eb6a32cf07f6d306e7f8a57cd5b4352e982a6871427db",
+          "bytes": 1577,
+          "revisionId": "revision:sha256:3b3faaf148eae60aaf8b4e53e46c35ec94c3670affa60e977b198e27e5965bc3",
+          "sourceSha256": [
+            "35f3660a897f0cf7d69d9291d78e4ae77584fd18bc3938986b400e52f2b28c00",
+            "5522efff2eb2eeb7b0ae9e5ba0d4b8f00a5e6f83cbf789b108cfc51127f30b41"
+          ],
+          "modelTextSha256": "d82ecff29937bc9d5dec0bf75314f0435059b70ed33d6fc202d81fff1e903b6f",
+          "originalModelTextIsReportPrefix": true
+        }
+      ]
+    },
+    {
+      "caseId": "RB25-06",
+      "runtimeContract": "pass",
+      "runtimeBasis": [
+        "excluded sibling null Run, canceled/missed and zero requests; survivor complete"
+      ],
+      "reportCount": 1,
+      "semantic": {
+        "coreFactsAndCitationAssignment": "correct against original synthetic pages",
+        "qualityCaveat": "Known model inference/range issue; see limitations below. Core facts and citation assignments remain correct.",
+        "rating": "core-correct-with-caveat"
+      },
+      "reports": [
+        {
+          "runId": "schedule-5393c2614d04f49e526250523265d3decff8c6ef72d1c45289a15b793d0028c8",
+          "reportSha256": "b795c702dec29078d876a89dbe2d5529018c4db657302cf8bdb7fe2d0eec68b7",
+          "bytes": 3071,
+          "revisionId": "revision:sha256:605c4f5c7cc7be2d2daf9094605ed11c913bada6ed57f530a19212d13d006426",
+          "sourceSha256": [
+            "cc357c0583e419e4fa7f6ffdb02cb4663f738af2a93054101a0a19913d33e884",
+            "eb047329f5d06cf5500966b9dcace5d748d18a92d6713775aaa004ff345c027e"
+          ],
+          "modelTextSha256": "d2ff3c2be9de0ec446582eb8ae9916bd7a13524d205023136b8b68f2536f186e",
+          "originalModelTextIsReportPrefix": true
+        }
+      ]
+    },
+    {
+      "caseId": "RB25-07",
+      "runtimeContract": "pass",
+      "runtimeBasis": [
+        "excluded sibling null Run, canceled/missed and zero requests; survivor complete"
+      ],
+      "reportCount": 1,
+      "semantic": {
+        "coreFactsAndCitationAssignment": "correct against original synthetic pages",
+        "qualityCaveat": null,
+        "rating": "no-material-error-observed"
+      },
+      "reports": [
+        {
+          "runId": "schedule-a6cf9e86569c72704dfb61cfa5899576b4890262db7590a9424bd5e019f201bd",
+          "reportSha256": "f39ecb0b26a1ae5dea0c0f0f712d17a015986065127ea91515e3267d43fd2053",
+          "bytes": 2421,
+          "revisionId": "revision:sha256:fd7a633718a7086e60e47b1b840f5987ad5caaedaba9aabccd95c71aac73bb8c",
+          "sourceSha256": [
+            "abbd4e3e98ab6f0ce2dc9d62de83998530bee9799efb29b0b40b4853389929d1",
+            "e3b5d0b81742d79f248130ebb986c709d1929405ca1a535c795756d43c23eba1"
+          ],
+          "modelTextSha256": "c0630145eed8273c5a34f38cdb2e341b33ac72e92bc20b9014e3f63d6cd1adf4",
+          "originalModelTextIsReportPrefix": true
+        }
+      ]
+    },
+    {
+      "caseId": "RB25-08",
+      "runtimeContract": "pass",
+      "runtimeBasis": [
+        "frozen Shanghai task-time matches original definition; fixed observedFetch verifies actual trusted projection before each request"
+      ],
+      "reportCount": 1,
+      "semantic": {
+        "coreFactsAndCitationAssignment": "correct against original synthetic pages",
+        "qualityCaveat": null,
+        "rating": "no-material-error-observed"
+      },
+      "reports": [
+        {
+          "runId": "schedule-f4c95ddf9e2456f0cc8f7ad8edb13577d96d5308cb7ac2ee9ecdfdd66f430c2f",
+          "reportSha256": "3a69a4a0f5aa4a7956f89a4b7d7c3d1f86a4e87e96ffc35b6d0daadd4116eb87",
+          "bytes": 3766,
+          "revisionId": "revision:sha256:a48c2f3b9b530b44f771f57a22c19d7867dd66baf758beda549a411da971a0e6",
+          "sourceSha256": [
+            "4d694bab59e66cd479c0e5889dcd11b8037b00d894d82bd7f2e0732055a02b46",
+            "7ad501f0e056aaec5146348f0c7d35305e2d3a80f470a76fbfccaafd283ffd94"
+          ],
+          "modelTextSha256": "a4021f58550df3214cf7f6733e5c60f5a7301cd1aaa4cab4a9096e02dbaf431b",
+          "originalModelTextIsReportPrefix": true
+        }
+      ]
+    },
+    {
+      "caseId": "RB25-09",
+      "runtimeContract": "pass",
+      "runtimeBasis": [
+        "cold child real HTTP report matches original artifact SHA/size;2 source byte hashes match; revision endpoint serialization separately labeled"
+      ],
+      "reportCount": 1,
+      "semantic": {
+        "coreFactsAndCitationAssignment": "correct against original synthetic pages",
+        "qualityCaveat": "Known model inference/range issue; see limitations below. Core facts and citation assignments remain correct.",
+        "rating": "core-correct-with-caveat"
+      },
+      "reports": [
+        {
+          "runId": "schedule-1f298ee4a6d8448e9fd73efe4fe3388f44fb29a87896de009aa1462237f382c3",
+          "reportSha256": "2b0f37acec690bb5204283491e59130040695491bfa34f6e741fc6d281decdcf",
+          "bytes": 3953,
+          "revisionId": "revision:sha256:1388bfc72996452bbbb7cd2da27191cfb062d35079acd2aa892bdbc0494d72b8",
+          "sourceSha256": [
+            "735382c09540cfb4096ffef4d846e445ccee4d1fa8c687d00ebf8368a8180239",
+            "b71d35f6da3d4fcdb84f5a512b6ed4d4dc4bb6d0b41e5242e9d3dd4f5b6c7beb"
+          ],
+          "modelTextSha256": "317d54d17b5009bebef009c6d359a76a2070d7edaed73be7cde1ade7da771abb",
+          "originalModelTextIsReportPrefix": true
+        }
+      ]
+    },
+    {
+      "caseId": "RB25-10",
+      "runtimeContract": "pass",
+      "runtimeBasis": [
+        "safe original consumed read_page at cursor1; callback points next call; settled/nullinFlight/no unknown cold snapshot; sameRun explicit continuation new fence; cold sweep no dispatch assertion passed"
+      ],
+      "reportCount": 1,
+      "semantic": {
+        "coreFactsAndCitationAssignment": "correct against original synthetic pages",
+        "qualityCaveat": null,
+        "rating": "no-material-error-observed"
+      },
+      "reports": [
+        {
+          "runId": "schedule-eb3a406f2ac16de3ad43874ec6f209d8ee46962e1d697b00075867ee367fbaa5",
+          "reportSha256": "ebcb86e93c38a88ed9ff3560ab012839ae5252228327a0f203b63317d0ea286c",
+          "bytes": 3108,
+          "revisionId": "revision:sha256:f3b86eadc98deeee7c418e25c279e4971073902bae552d7fee6c5c1de853faa9",
+          "sourceSha256": [
+            "8b097010e3d83d82368d839c04672ba18a1522b13a3f53a2be1592b9aa6f294f",
+            "eadb5d60508968a4a979398ed044083216cfd34c3d98e3baf9fcd9fdc53b42bb"
+          ],
+          "modelTextSha256": "916b7fdcf5fe16b185fe834e6e93a25b41dfaf6862144ac23255b864501f9ff1",
+          "originalModelTextIsReportPrefix": true
+        }
+      ]
+    }
+  ],
+  "modelQualityLimitations": {
+    "RB25-06": "The original model text labels whether20 and50 are equal or negate the other value as unknown, conflating a missing explicit negation with a deducible numerical difference. Not a Runtime rewrite.",
+    "RB25-09": "The original model text says neither page generalizes and treats labels beyond each example as unknown, weakening the original category statement that UTF-8 text labels are supported, including the example. Not a Runtime rewrite."
+  },
+  "logicalTaskMapping": {
+    "scope": "evidentiary mapping, not an automatic release-gate declaration",
+    "logicalIds": [
+      "RB25-02/once",
+      "RB25-03/once",
+      "RB25-04/once",
+      "RB25-05/a-first",
+      "RB25-05/b-second",
+      "RB25-06/b-survivor",
+      "RB25-07/b-survivor",
+      "RB25-08/once",
+      "RB25-09/once",
+      "RB25-10/once"
+    ],
+    "prospectiveC05TwoQuestionsAndCaps": true,
+    "selectionBasedOnFrozenAliasesNotSuccessfulReports": true,
+    "concreteRunIds": "each scenario instantiated and persisted before its first dispatch, not all concrete IDs listed at batch start",
+    "originalNineCaseScoreUnchanged": true,
+    "releaseGateInterpretation": "pending explicit documented policy decision, no automatic ten-of-ten claim"
+  },
+  "independentReviewSha256": {
+    "mechanical": "72014703097806f38a56a7737f2ef9272bf7589163d827e526977d68dbb2ff77",
+    "semantic": "e196adfca4e31eb359948a881e3490044b30066a4162c316c40fedfe7d686c48",
+    "logicalTaskMapping": "4e9f12b53f8c803a3b3c471294dd3f0a28d7da7704097ab7bba240ff4f848128"
+  },
+  "releaseQualificationDeclared": false,
+  "release": false
+}

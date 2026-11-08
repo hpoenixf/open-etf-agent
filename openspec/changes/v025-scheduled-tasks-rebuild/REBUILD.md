@@ -97,3 +97,21 @@ dispatch record was observed. The original exact launch window expired; it was
 not retried. No supplementary qualification or release is claimed. See
 `docs/verification/v025-rebuild-first-live-attempt.safe.json`. Earlier sections
 remain historical stage records, including their then-zero request counts.
+
+## Reauthorized independent supplement
+
+After explicit permission to restart the previously unrun nine scenarios, a new
+independent batch completed RB25-02 through RB25-10. Independent review verified
+9/9 scenario Runtime contracts, ten persisted reports and thirty complete Go
+responses with cost zero, with no new unknown. The original failed scenario and
+canceled launch remain unchanged. This does not turn the original cohort into
+a passed ten-scenario result. Two model inference/range issues in 06 and 09 are
+retained separately from Runtime behavior; content is not described as flawless.
+
+C05 contained two distinct questions and bounded tasks before execution, so the
+nine scenarios encompass ten model-bearing logical tasks. The predeclared aliases
+and per-scenario persisted Run identities are mapped separately; whether that
+mapping satisfies the release gate must be documented, not silently substituted
+for the original nine-scenario score. No release qualification or publication is
+claimed by this checkpoint. See
+`docs/verification/v025-rebuild-supplement03.safe.json`.
