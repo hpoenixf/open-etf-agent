@@ -71,3 +71,25 @@ before calls, old unknowns remain held, and no overage is enabled.
 
 At this checkpoint no new dependency, product implementation, test, public
 acquisition, model request or qualification result is claimed.
+
+## Later checkpoint: explicit supported network profile
+
+The initial planning status above is historical. WIP `3a090329` preserves the
+reconstructed direct-profile implementation, 1,066 passing local tests and build.
+Its public acquisition attempts failed at DNS before HTTP dispatch; no public
+or model qualification was claimed.
+
+A reviewed prospective increment adds an explicit `platform-doh-pinned@1`
+profile, not an error-triggered fallback. It retains existing proxy/trust
+configuration, validates both DNS families, pins CONNECT destinations, retains
+original hostname certificate checks and shares finite request/byte/deadline
+limits. Old @1 records remain unchanged; new plan/transport/terminal @2 bind
+profile and resolver evidence. The source identity remains hash-bound through
+its existing admission/transport references. The implementation's targeted
+103-test run passed. Independent review then identified an IPv6 cold-record
+normalization mismatch, now corrected with an expanded/uppercase IPv6-only
+roundtrip. A separate 24-test focused run passed, including actual native Agent
+CONNECT-200 progression into fake target TLS and cancellation. These are offline
+seams, not successful public TLS handshakes. Aggregate and real-network verification
+of this increment remain separate, not inherited from the prior WIP. No new
+dependency is added.

@@ -19,7 +19,7 @@ Usage: node src/research-cli.mjs <group> <command> [options]
   source import --project DIR --files JSON_FILE
   source list --project DIR --manifest SHA256
   source acquire --project DIR --acquisition ID --urls JSON_FILE --approve-public-fetch
-      [--redirects JSON_FILE] [--base-manifest SHA256]
+      [--redirects JSON_FILE] [--base-manifest SHA256] [--network-profile platform-doh-pinned@1]
   source acquisition --project DIR --acquisition ID
   run submit --project DIR --run ID --question TEXT_FILE --manifest SHA256
       [--approve-provider --approve-data --approve-cost]
@@ -77,7 +77,7 @@ const specifications={
  'project update':['project','config','expected-config'],
  'project init':['project','config'], 'project inspect':['project'],
  'source import':['project','files'], 'source list':['project','manifest'],
- 'source acquire':['project','acquisition','urls','approve-public-fetch','redirects?','base-manifest?'],
+ 'source acquire':['project','acquisition','urls','approve-public-fetch','redirects?','base-manifest?','network-profile?'],
  'source acquisition':['project','acquisition'],
  'run submit':['project','run','question','manifest','approve-provider?','approve-data?','approve-cost?','memory-intents?','task-time?','schedule?'],
  'run work':['project','run'], 'run inspect':['project','run'], 'run cancel':['project','run'],
@@ -133,7 +133,7 @@ export async function runResearchCli(args,{stdout=process.stdout,stderr=process.
   if(command==='source acquisition'){emit(await inspectWebAcquisition({projectDir,acquisitionId:o.acquisition}));return 0;}
   if(command==='source acquire'){
    const controller=new AbortController(),stop=()=>controller.abort();signals.on('SIGINT',stop);signals.on('SIGTERM',stop);
-   try{const result=await acquireProjectWebSources({projectDir,acquisitionId:o.acquisition,urls:await readProjectJson(o.urls,32768),allowedRedirectUrls:o.redirects?await readProjectJson(o.redirects,32768):[],baseManifestSha256:o['base-manifest']??null,approvePublicFetch:o['approve-public-fetch']===true,signal:controller.signal});emit({...sourceResult(result),acquisition:result.acquisition});}finally{signals.off('SIGINT',stop);signals.off('SIGTERM',stop);}return 0;
+   try{const result=await acquireProjectWebSources({projectDir,acquisitionId:o.acquisition,urls:await readProjectJson(o.urls,32768),allowedRedirectUrls:o.redirects?await readProjectJson(o.redirects,32768):[],baseManifestSha256:o['base-manifest']??null,approvePublicFetch:o['approve-public-fetch']===true,networkProfile:o['network-profile']??'system-direct@1',signal:controller.signal});emit({...sourceResult(result),acquisition:result.acquisition});}finally{signals.off('SIGINT',stop);signals.off('SIGTERM',stop);}return 0;
   }
   if(command==='run submit'){
    const question=await textFile(o.question,16000),extra={};

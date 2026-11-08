@@ -18,7 +18,7 @@ The project claims the acquisition ID before any network request, then persists 
 ## Bounded and fail-closed
 
 - At most 4 selected pages, 16 total HTTP requests, and 3 redirects per page. Redirect destinations must already be admitted. HTTPS only; no credentials, IP-literal host, non-default port, or fragment.
-- Every resolved address must be public unicast. The accepted address is pinned to the actual HTTPS request while the original hostname remains the TLS/SNI/Host identity. No proxy, alternate resolver, or authentication fallback is added.
+- Every resolved address must be public unicast. The accepted address is pinned to the actual HTTPS request while the original hostname remains the TLS/SNI/Host identity. The default route adds no proxy, alternate resolver, or authentication fallback; the separately selected development profile below has its own explicit contract.
 - Robots rules are checked before each origin's page. A missing robots file (404/410) is allowed; access denial, rate limiting, unsupported responses, malformed/oversized rules, and a positive crawl delay fail closed. The deliberately limited robots profile does not promise unrestricted RFC compatibility.
 - UTF-8 HTML or text only. No JavaScript, nested-resource fetch, login, remote PDF, or visual inspection. HTML uses pinned parse5 with parsing-time structure/work guards and text extraction limits.
 - Each original page is at most 256 KiB; each robots body is at most 64 KiB. A selected source catalog permits 512 KiB of Web originals and 512 KiB of extracted text. These are **stored content limits**, not a claim that all network traffic is at most 512 KiB. Each page acquisition separately bounds accepted HTTP bodies, including robots, to 512 KiB; the whole operation also has the request/page bounds above. A received chunk crossing a limit is rejected, not stored as a valid source.
@@ -31,3 +31,15 @@ The source identity includes the acquisition and project, exact admitted base, r
 The ordinary Source → tool result → Result → Report → Artifact → cold Reader path retains this Web provenance. Originals are inert attachment downloads, with `nosniff` and a restrictive content policy, rather than active HTML rendered by Reader. A report containing real Web evidence is not labelled synthetic. Cold reads validate persisted bytes and do not refetch or reparse the public page.
 
 This is an evidence transport contract. It does not guarantee the model's factual reasoning, citation choice, or research completeness. Those observations must be reported independently of Runtime contract results.
+
+## Explicit platform profile (development increment)
+
+The default `system-direct@1` route and its existing records are unchanged. An operator can prospectively select `--network-profile platform-doh-pinned@1`. It is never selected automatically after a failure. This separate profile is implemented and under offline verification, not yet qualified by a public acquisition.
+
+It snapshots the existing environment proxy configuration before claiming the acquisition. It adds no proxy service, credentials, global dispatcher or trust setting. Missing/invalid configuration or a conflicting/unsupported `NO_PROXY` rule fails rather than choosing a direct route. The currently qualified native proxy API target is Node 26.11.1; other runtimes are refused for this opt-in profile.
+
+The fixed resolver is Cloudflare DoH (`cloudflare-dns.com`, bootstrap `1.1.1.1`), through a pinned CONNECT destination with the original TLS/SNI/Host identity. Both A and AAAA must return bounded, non-truncated, identity-matching NOERROR replies. A single-family NODATA is permitted, but two empty families, CNAME/unsupported records, malformed replies or any unsafe address refuse the acquisition. “Complete answer set” means both families returned for this operation, not every address a DNS zone might ever return.
+
+DNS, robots and page requests share the 16-request operation cap and 30-second deadline. Plan@2 adds a 1 MiB accepted-response-body cap across the operation, retaining the old original/text and per-body limits. DNS bodies are bounded, retained with their hashes, and reparsed during cold inspection. Proxy connection attempts are separately observed, not substituted for HTTP responses. Old plan/transport/terminal @1 remain readable; new @2 records name the selected profile. The original `web-source@1` identity stays unchanged because its admission and transport hashes already bind those records.
+
+Access denials, rate limits and unknown effects still stop without fallback. No success on a proxy-backed path qualifies the older direct path, and historical examples of successful page acquisition are not evidence for this implementation.

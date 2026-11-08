@@ -161,13 +161,13 @@ async function loadWebEntries(dirs,manifest,documents,signal){
   if(plan.projectId!==a.projectId||plan.acquisitionId!==a.id||plan.baseManifestSha256!==a.baseManifestSha256||acquisitionHash(plan)!==a.admissionSha256)fail('PROJECT_SOURCE_WEB_ADMISSION_CHANGED');
   const base=await readBaseManifest(dirs,a.baseManifestSha256,signal),prior=base?.webEntries??[];
   if(!same(manifest.files,base?.files??[])||!same(manifest.webEntries.slice(0,prior.length),prior)||manifest.webEntries.length!==prior.length+plan.urls.length)fail('PROJECT_SOURCE_WEB_BASE_CHANGED');
-  let originalTotal=0,textTotal=0;const summary={completedPages:0,requestCount:0,originalBytes:0,textBytes:0};
+  let originalTotal=0,textTotal=0;const summary={completedPages:0,requestCount:0,originalBytes:0,textBytes:0,...(plan.schemaVersion==='web-acquisition-plan@2'?{receivedBytes:0}:{})};
   for(const [index,e]of manifest.webEntries.entries()){
     const web=normalizeWebProvenance(await readObject(dirs,e.receiptSha256,32768,signal));
     if(web.projectId!==a.projectId||sha256(encode(web))!==e.receiptSha256)fail('PROJECT_SOURCE_WEB_ADMISSION_CHANGED');
     const originalPlan=normalizeWebAcquisitionPlan(await readObject(dirs,web.admissionSha256,65536,signal));
     if(originalPlan.projectId!==web.projectId||originalPlan.acquisitionId!==web.acquisitionId||originalPlan.baseManifestSha256!==web.baseManifestSha256||acquisitionHash(originalPlan)!==web.admissionSha256)fail('PROJECT_SOURCE_WEB_ADMISSION_CHANGED');
-    const transport=validateWebTransportRecord(await readObject(dirs,web.transportSha256,32768,signal),originalPlan);
+    const transport=validateWebTransportRecord(await readObject(dirs,web.transportSha256,131072,signal),originalPlan);
     if(['requestedUrl','finalUrl','retrievedAt','originalSha256','originalBytes','originalMediaType'].some(k=>transport[k]!==web[k])||!same(transport.extraction,web.extraction))fail('PROJECT_SOURCE_WEB_TRANSPORT_CHANGED');
     if(index>=prior.length&&(web.admissionSha256!==a.admissionSha256||web.requestedUrl!==plan.urls[index-prior.length]))fail('PROJECT_SOURCE_WEB_ADMISSION_CHANGED');
     const snapshot=await readObject(dirs,e.snapshotSha256,1048576,signal),identity=webDocumentIdentity(web);
@@ -176,9 +176,9 @@ async function loadWebEntries(dirs,manifest,documents,signal){
     originalTotal+=original.length;textTotal+=snapshot.pages.reduce((n,text)=>n+Buffer.byteLength(text),0);
     if(originalTotal>ACQUISITION_LIMITS.originalBytes||textTotal>ACQUISITION_LIMITS.textBytes)fail('PROJECT_SOURCE_WEB_LIMIT');
     documents.push({...snapshot,web,originalBase64:original.toString('base64')});
-    if(index>=prior.length){summary.completedPages++;summary.requestCount+=transport.requestCount;summary.originalBytes+=original.length;summary.textBytes+=snapshot.pages.reduce((n,text)=>n+Buffer.byteLength(text),0);}
+    if(index>=prior.length){summary.completedPages++;summary.requestCount+=transport.requestCount;if(plan.schemaVersion==='web-acquisition-plan@2')summary.receivedBytes+=transport.receivedBytes;summary.originalBytes+=original.length;summary.textBytes+=snapshot.pages.reduce((n,text)=>n+Buffer.byteLength(text),0);}
   }
-  if(summary.requestCount>plan.limits.requests)fail('PROJECT_SOURCE_WEB_LIMIT');
+  if(summary.requestCount>plan.limits.requests||(plan.schemaVersion==='web-acquisition-plan@2'&&summary.receivedBytes>plan.limits.networkBytes))fail('PROJECT_SOURCE_WEB_LIMIT');
   return summary;
 }
 
@@ -192,7 +192,8 @@ export async function persistWebAcquisition({projectDir,admission,observations,s
   const dirs=await directories(projectDir,true),admissionSha256=await put(dirs.objects,encode(plan),'json',signal),entries=[...(base?.manifest.webEntries??[])],documents=[...(base?.catalog?.documents??[])];
   for(const [i,o]of observations.entries()){
     if(!Buffer.isBuffer(o.body)||!Array.isArray(o.pages)||o.pages.some(t=>typeof t!=='string')||o.requestedUrl!==plan.urls[i])fail('PROJECT_SOURCE_WEB_OBSERVATION_INVALID');
-    const transport=validateWebTransportRecord({schemaVersion:'web-fetch-observation@1',requestedUrl:o.requestedUrl,finalUrl:o.finalUrl,retrievedAt:o.fetchedAt,originalSha256:sha256(o.body),originalBytes:o.body.length,originalMediaType:o.originalMediaType,extraction:o.extraction,textSha256:sha256(o.pages.join('')),redirects:o.redirects,robots:o.robots,requestCount:o.requestCount},plan);
+    const platform=plan.schemaVersion==='web-acquisition-plan@2';
+    const transport=validateWebTransportRecord({schemaVersion:platform?'web-fetch-observation@2':'web-fetch-observation@1',requestedUrl:o.requestedUrl,finalUrl:o.finalUrl,retrievedAt:o.fetchedAt,originalSha256:sha256(o.body),originalBytes:o.body.length,originalMediaType:o.originalMediaType,extraction:o.extraction,textSha256:sha256(o.pages.join('')),redirects:o.redirects,robots:o.robots,requestCount:o.requestCount,...(platform?{networkProfile:o.networkProfile,dnsObservations:o.dnsObservations,receivedBytes:o.receivedBytes,proxyConnectionAttempts:o.proxyConnectionAttempts}:{})},plan);
     const transportSha256=await put(dirs.objects,encode(transport),'json',signal);
     const web=normalizeWebProvenance({schemaVersion:'web-source@1',acquisitionId:plan.acquisitionId,projectId:plan.projectId,baseManifestSha256:plan.baseManifestSha256,admissionSha256,transportSha256,requestedUrl:transport.requestedUrl,finalUrl:transport.finalUrl,retrievedAt:transport.retrievedAt,originalSha256:transport.originalSha256,originalBytes:transport.originalBytes,originalMediaType:transport.originalMediaType,extraction:transport.extraction,pageMap:o.pages.map((text,index)=>({page:index+1,sha256:sha256(text),bytes:Buffer.byteLength(text)}))});
     const snapshot={...webDocumentIdentity(web),name:`Web source ${i+1}: ${new URL(web.requestedUrl).hostname}`.slice(0,200),pages:o.pages};

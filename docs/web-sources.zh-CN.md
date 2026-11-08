@@ -18,7 +18,7 @@ node src/research-cli.mjs source acquisition --project ./research-project \
 ## 有限且保守拒绝
 
 - 最多 4 个选中页面、16 次 HTTP 请求，每页最多 3 次跳转。跳转目标必须提前允许。仅 HTTPS，拒绝凭据、IP 字面主机、非默认端口和 fragment。
-- DNS 的全部返回地址都须为公共单播地址，实际 HTTPS 请求固定使用已检查的地址，同时保留原主机名作为 TLS/SNI/Host 身份。不新增代理、替代解析器或鉴权回退。
+- DNS 的全部返回地址都须为公共单播地址，实际 HTTPS 请求固定使用已检查的地址，同时保留原主机名作为 TLS/SNI/Host 身份。默认路线不新增代理、替代解析器或鉴权回退；下文另行明确选择的开发 profile 有单独合同。
 - 访问每个来源域前检查 robots。404/410 表示文件不存在，可以继续；权限拒绝、限流、不支持的响应、错误或超限规则、正数 crawl delay 均停止。这个有意收窄的 robots profile 不承诺支持全部 RFC 用法。
 - 仅 UTF-8 HTML 或文本。没有 JavaScript、嵌套资源抓取、登录、远程 PDF 或视觉检查。HTML 使用固定 parse5，并在解析过程中限制结构、工作量和提取文本。
 - 每个原始页面最多 256 KiB，单个 robots 正文最多 64 KiB。一个来源清单的 Web 原件及提取文本各最多 512 KiB。这是**存储内容上限**，不是所有网络流量最多 512 KiB 的声明。每页采集另有包含 robots 的 512 KiB 可接受正文上限，整个操作还有上述请求和页数限制。跨过上限的接收 chunk 会被拒绝，不会成为有效来源。
@@ -31,3 +31,15 @@ node src/research-cli.mjs source acquisition --project ./research-project \
 普通 Source → 工具结果 → Result → Report → Artifact → 冷 Reader 链路保留 Web provenance。原件是带 `nosniff` 和严格内容策略的惰性附件下载，不是在 Reader 中执行的 HTML。包含真实 Web 来源的报告不会标为 synthetic。冷读验证持久字节，不重新抓取或解析公网页面。
 
 这是证据传递合同，不保证模型推理、引用选择或研究完整性。内容质量观察必须与 Runtime 合同结果分开报告。
+
+## 显式平台 profile（开发增量）
+
+默认 `system-direct@1` 路线及其旧记录不变。操作者可以事前明确选择 `--network-profile platform-doh-pinned@1`，失败后绝不自动切换。这个独立 profile 已实现并正在离线核验，还没有通过实际公网采集。
+
+占有 acquisition 前只快照环境既有代理配置，不新增代理服务、凭据、全局 dispatcher 或信任设置。配置缺失、非法或 `NO_PROXY` 冲突/不支持时拒绝，而不是改成直连。当前明确核验的原生代理 API 目标为 Node 26.11.1，其他 runtime 对这个可选 profile 保守拒绝。
+
+固定解析器是 Cloudflare DoH（`cloudflare-dns.com`，bootstrap `1.1.1.1`）。CONNECT 指向固定且验证过的 IP，同时保留原始 TLS/SNI/Host 身份。A 和 AAAA 两族都须返回有界、非截断、问题身份匹配的 NOERROR 回复。允许一族 NODATA；两族全空、CNAME/不支持的记录、错误回复或任何不安全地址都会拒绝。“完整答案集”仅指本次两族回复，不表示一个 DNS 域在所有时刻的全部可能地址。
+
+DNS、robots 和页面共享整个操作的 16 次 HTTP 上限及 30 秒截止。plan@2 另声明整个操作 1 MiB 的可接受响应正文上限，旧原件/文本及单正文限制继续保留。DNS 原始正文有独立大小上限，绑定 hash 保存并在冷读重新核验；代理连接尝试单独观察，不冒充 HTTP 响应。旧 plan/transport/terminal @1 仍可读取，新 @2 明示所选 profile。`web-source@1` 身份规则不变，其 admission 与 transport hash 已绑定这些记录。
+
+权限拒绝、限流或未知副作用仍停止，不回退。代理路线的成功不能当成旧直连路线通过；历史上成功抓过网页，也不能替代本次实测。
