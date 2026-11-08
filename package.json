@@ -19,7 +19,10 @@
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "1.32.2",
+    "ipaddr.js": "2.5.0",
+    "parse5": "8.1.0",
     "pdf2json": "4.1.0",
+    "robots-parser": "3.0.1",
     "zod": "4.6.7"
   }
 }

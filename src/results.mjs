@@ -1,3 +1,4 @@
+import {webProvenanceSha256} from './web-source.mjs';
 import { open, constants, lstat, rename, unlink, readdir } from 'node:fs/promises';
 import { join } from 'node:path';
 import { randomUUID } from 'node:crypto';
@@ -7,7 +8,7 @@ import { validateSource, sha256 } from './source.mjs';
 import { validateNote, noteRef } from './working-note.mjs';
 import { validateCalculation } from './calculation.mjs';
 const identityKeys=['sourceId','documentId','name','version','page','sha256','mediaType'];
-const identity=source=>Object.fromEntries(identityKeys.map(key=>[key,source[key]]));
+const identity=source=>({...Object.fromEntries(identityKeys.map(key=>[key,source[key]])),...(source.web?{webSha256:webProvenanceSha256(source.web)}:{})});
 const refPattern=/^(?:result|calculation|note):sha256:[a-f0-9]{64}$/;
 const exact=(value,keys)=>value && typeof value==='object' && !Array.isArray(value) && Object.keys(value).sort().join(',')===keys.slice().sort().join(',');
 const validSelection=value=>exact(value,['offset','limit'])&&Number.isSafeInteger(value.offset)&&value.offset>=0&&value.offset<32&&Number.isSafeInteger(value.limit)&&value.limit>=1&&value.limit<=32;
@@ -33,8 +34,9 @@ function baseDescriptor(kind,value) {
   return {kind:'calculation',calculation:value.calculation,resultRef:'calculation:sha256:'+sha256(JSON.stringify({kind:'calculation',value}))};
 }
 export function validateSourceDescriptor(item){
- const keys=[...identityKeys,'kind','resultRef','recordPath','recordSha256'];
- if(!exact(item,keys)||item.kind!=='source'||['resultRef','recordSha256','sha256'].some(k=>typeof item[k]!=='string')||!/^result:sha256:[a-f0-9]{64}$/.test(item.resultRef)||item.recordPath!==recordPath(item.resultRef)||!/^[a-f0-9]{64}$/.test(item.recordSha256)||!/^[a-f0-9]{64}$/.test(item.sha256)||!Number.isSafeInteger(item.page)||item.page<1||['sourceId','documentId','name','version','mediaType'].some(k=>typeof item[k]!=='string'||!item[k]||item[k].length>200||/[\u0000-\u001f]/.test(item[k]))||item.mediaType!=='text/plain; charset=utf-8'||baseDescriptor('source',item).resultRef!==item.resultRef)throw new Error('Corrupt source index identity');
+ const keys=[...identityKeys,'kind','resultRef','recordPath','recordSha256',...(item?.webSha256!==undefined?['webSha256']:[])];
+ if(item?.webSha256!==undefined&&(typeof item.webSha256!=='string'||!/^[a-f0-9]{64}$/.test(item.webSha256)))throw new Error('Corrupt Web source identity');
+ if(!exact(item,keys)||item.kind!=='source'||['resultRef','recordSha256','sha256'].some(k=>typeof item[k]!=='string')||!/^result:sha256:[a-f0-9]{64}$/.test(item.resultRef)||item.recordPath!==recordPath(item.resultRef)||!/^[a-f0-9]{64}$/.test(item.recordSha256)||!/^[a-f0-9]{64}$/.test(item.sha256)||!Number.isSafeInteger(item.page)||item.page<1||['sourceId','documentId','name','version','mediaType'].some(k=>typeof item[k]!=='string'||!item[k]||item[k].length>200||/[\u0000-\u001f]/.test(item[k]))||item.mediaType!=='text/plain; charset=utf-8'||'result:sha256:'+sha256(JSON.stringify({...identity(item),...(item.webSha256!==undefined?{webSha256:item.webSha256}:{})}))!==item.resultRef)throw new Error('Corrupt source index identity');
  return structuredClone(item);
 }
 function recordPath(ref) { return 'results/'+ref.split(':').at(-1)+'.json'; }
