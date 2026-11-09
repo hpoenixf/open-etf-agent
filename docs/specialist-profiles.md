@@ -45,24 +45,53 @@ scope, question limits, Session definition limits and context limits still apply
 No permission to save Memory or publish a final report is granted to a Child.
 
 Current limits: 16 active profiles, 8 enabled profiles, 16 active presets, 32
-lifetime IDs of each kind, 256 immutable store generations, 256 KiB per generation.
-Mutations compete for an immutable ordinal seal before publishing its data; this
-is not an atomic transaction across both directories. Concurrent writers may receive a conflict or
-safe transient read refusal. There is no hidden retry loop. A torn committed
-file fails closed; an uncommitted dot-prefixed publication temporary is not
-admitted. This is not a claim of exhaustive crash recovery or all-descendant
-process cleanup.
+lifetime IDs of each kind, 256 KiB per generation. Generation ordinals and profile/
+preset revisions are positive safe integers; there is no 256-generation lifetime
+mutation ceiling. Counters never wrap or reuse identities. Exhausting the numeric
+representation fails explicitly. Immutable history is retained, not compacted;
+reads validate the full chain sequentially and their I/O cost grows with history.
 
-The catalog now has a separate sibling registration directory
-`.specialists-registration` in its Project. Initialization registers once; an
-existing catalog with missing registration, or registered catalog missing data,
-cannot be initialized as a new empty store. Each generation's ordinal and hash
-are durably reserved there before its immutable data file is published. Both
-sequences must match on every read, so losing an acknowledged tail cannot silently
-roll back an edit or tombstone. A reserved seal with missing/incomplete data is
-uncertain and fails closed: no automatic ordinal reuse, rollback, replay, or
-repair is provided. Preserve both directories in a backup. This is not protection
-against simultaneous deletion or rewriting of all Project authority files.
+The catalog has a sibling registration directory `.specialists-registration`.
+Initialization registers once; an existing catalog with missing registration or
+registered catalog missing its directory cannot be silently reset. Before claiming
+an ordinal seal, a writer durably stores the full canonical next snapshot in a
+content-addressed `.prepared-<hash>.json` recovery object. The exclusive ordinal
+seal then binds that exact snapshot hash; competing writers cannot substitute a
+different state. These prepared bodies remain part of the backup, even after ACK.
+
+Ordinary `openSpecialistProfiles` (including `create:true`), list and read calls
+never reconstruct files. A recoverable gap returns `SPECIALIST_RECOVERY_NEEDED`.
+Explicit recovery first validates the entire chain and visible directory entries,
+then reconstructs missing snapshots only from intact prepared bodies matching their
+existing seals, project identity and validated previous chain. Concurrent exact
+reconstruction is idempotent and never overwrites a different existing file.
+Legacy orphan seals without a provable matching body remain fail closed, as do
+corrupt snapshots, unsafe paths and mismatched prepared bodies. No seal is deleted,
+no head rolled back, and no ordinal or revision reused during recovery. This is
+not a cross-directory atomic transaction: concurrent writers may still receive a
+conflict or safe transient read refusal. Hidden temporary files are not committed
+generations. Preserve both directories, including prepared bodies, in backups.
+This does not protect against simultaneous rewriting/deletion of all authority
+files and is not a claim of exhaustive filesystem or process crash recovery.
+
+### Explicit recovery
+
+Only the authorized Project owner/unique writer should run recovery, with other
+catalog writers stopped. Use the Project's exact directory and project ID:
+
+```js
+import { recoverSpecialistProfiles } from './src/specialist-profiles.mjs';
+const store = await recoverSpecialistProfiles({ directory, projectId });
+console.log(store.recovery); // { repairedCount, alreadyPresentCount }
+```
+
+`repairedCount` counts snapshots this invocation published;
+`alreadyPresentCount` counts concurrent exact reconstructions verified instead.
+An intact store returns both as zero. No model calls or research tasks are started.
+Validation failures cause no repair writes. An I/O failure during the subsequent
+multi-file repair can leave a subset restored; it is not transactional. Preserve
+the error and use the same explicit entry to validate and finish the remaining
+exact repairs. Never delete the seals, prepared bodies, or immutable history.
 
 ## Child summary delivery size
 

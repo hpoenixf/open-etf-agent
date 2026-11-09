@@ -11,9 +11,11 @@ const hash=v=>sha256(canonical(v));
 const exact=(v,fields)=>{if(!object(v)||Object.keys(v).sort().join(',')!==[...fields].sort().join(','))fail('SPECIALIST_FIELDS');};
 const identifier=v=>typeof v==='string'&&/^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$/.test(v);
 const hex=v=>typeof v==='string'&&/^[a-f0-9]{64}$/.test(v);
-const revision=v=>Number.isSafeInteger(v)&&v>0&&v<=256;
+const revision=v=>Number.isSafeInteger(v)&&v>0;
 const name=v=>{if(typeof v!=='string'||!v.trim()||Buffer.byteLength(v)>160)fail('SPECIALIST_NAME');return v;};
-const LIMIT=262144,MAX_GENERATIONS=256;
+const LIMIT=262144;
+const generationName=n=>String(n).padStart(8,'0')+'.json';
+const generationOrdinal=name=>{if(!/^[0-9]{8,16}\.json$/.test(name))fail('SPECIALIST_CORRUPT');const n=Number(name.slice(0,-5));if(!revision(n)||generationName(n)!==name)fail('SPECIALIST_CORRUPT');return n;};
 function profileInput(v){exact(v,['name','description','enabled','method']);name(v.name);if(typeof v.description!=='string'||Buffer.byteLength(v.description)>500||typeof v.enabled!=='boolean')fail('SPECIALIST_PROFILE');return{...v,method:normalizeChildMethod(v.method)};}
 function refs(v){if(!Array.isArray(v)||v.length<1||v.length>8)fail('SPECIALIST_SELECTION');const seen=new Set();return v.map(x=>{exact(x,['profileId','revision']);if(!identifier(x.profileId)||!revision(x.revision)||seen.has(x.profileId))fail('SPECIALIST_SELECTION');seen.add(x.profileId);return{...x};});}
 function presetInput(v){exact(v,['name','profiles']);return{name:name(v.name),profiles:refs(v.profiles)};}
@@ -30,7 +32,9 @@ function validateState(s,projectId,ordinal,previousSha256){
  if(s.profiles.filter(p=>!p.tombstone).length>16||s.presets.filter(p=>!p.tombstone).length>16||s.profiles.filter(p=>p.enabled&&!p.tombstone).length>8)fail('SPECIALIST_CAPACITY');
 }
 /** Explicit project-local configuration, never authority, task queue or model execution. */
-export async function openSpecialistProfiles({directory,projectId,create=false}){
+export const openSpecialistProfiles=options=>openStore(options,false);
+export const recoverSpecialistProfiles=options=>openStore({...options,create:false},true);
+async function openStore({directory,projectId,create=false},recover){
  if(!identifier(projectId)||typeof create!=='boolean')fail('SPECIALIST_SCOPE');directory=resolve(directory);
  const parent=await safeDirectory(dirname(directory)),registration=join(parent,'.'+basename(directory)+'-registration');
  let registered=true;try{await lstat(registration);}catch(e){if(e.code!=='ENOENT')throw e;registered=false;}
@@ -45,23 +49,44 @@ export async function openSpecialistProfiles({directory,projectId,create=false})
  }
  await safeDirectory(registration);const identity=await readJson(join(registration,'identity.json'));if(canonical(identity)!==canonical({schemaVersion:'specialist-registration@1',projectId,directoryName:basename(directory)}))fail('SPECIALIST_SCOPE');
  directory=await safeDirectory(directory);
- async function read(){await safeDirectory(registration);await safeDirectory(directory);const entries=await readdir(directory,{withFileTypes:true});const committed=entries.filter(e=>!e.name.startsWith('.'));
-  const seals=(await readdir(registration)).filter(n=>n!=='identity.json'&&!n.startsWith('.'));if(seals.length!==committed.length||seals.some(n=>!/^\d{8}\.json$/.test(n)))fail('SPECIALIST_HEAD_MISSING');
-  if(!committed.length)fail('SPECIALIST_UNINITIALIZED');if(committed.length>MAX_GENERATIONS||committed.some(e=>!e.isFile()||!/^\d{8}\.json$/.test(e.name)))fail('SPECIALIST_CORRUPT');committed.sort((a,b)=>a.name.localeCompare(b.name));let last=null,previous=null;
-  for(const [i,e]of committed.entries()){if(e.name!==String(i+1).padStart(8,'0')+'.json')fail('SPECIALIST_CORRUPT');const seal=await readJson(join(registration,e.name));exact(seal,['ordinal','stateSha256']);const record=await readJson(join(directory,e.name));if(seal.ordinal!==i+1||seal.stateSha256!==record.stateSha256)fail('SPECIALIST_HEAD_CHANGED');exact(record,['state','stateSha256']);if(hash(record.state)!==record.stateSha256)fail('SPECIALIST_CORRUPT');validateState(record.state,projectId,i+1,previous);last=record.state;previous=record.stateSha256;}
-  return{state:last,sha256:previous};
+ // Prepared bodies are content-addressed and retained: a missing acknowledged
+ // snapshot can only be reconstructed from bytes already bound by its seal.
+ async function immutableExact(dir,name,value){try{await durable(dir,name,value);return true;}catch(e){if(e.code!=='EEXIST')throw e;const existing=await readJson(join(dir,name));if(canonical(existing)!==canonical(value))fail('SPECIALIST_HEAD_CHANGED');return false;}}
+ async function read(allowRecovery=false){await safeDirectory(registration);await safeDirectory(directory);
+  const seals=(await readdir(registration)).filter(n=>n!=='identity.json'&&!n.startsWith('.')).map(name=>({name,ordinal:generationOrdinal(name)})).sort((a,b)=>a.ordinal-b.ordinal);
+  if(!seals.length)fail('SPECIALIST_UNINITIALIZED');let last=null,previous=null;const repairs=[];
+  for(const [i,{name,ordinal}]of seals.entries()){
+   if(ordinal!==i+1)fail('SPECIALIST_CORRUPT');const seal=await readJson(join(registration,name));exact(seal,['ordinal','stateSha256']);if(seal.ordinal!==ordinal||!hex(seal.stateSha256))fail('SPECIALIST_HEAD_CHANGED');
+   let record,missing=false;try{record=await readJson(join(directory,name));}catch(e){if(e.code!=='ENOENT')throw e;missing=true;try{record=await readJson(join(registration,'.prepared-'+seal.stateSha256+'.json'));}catch(e){if(e.code==='ENOENT')fail('SPECIALIST_HEAD_MISSING');throw e;}}
+   exact(record,['state','stateSha256']);if(seal.stateSha256!==record.stateSha256)fail('SPECIALIST_HEAD_CHANGED');if(hash(record.state)!==record.stateSha256)fail('SPECIALIST_CORRUPT');validateState(record.state,projectId,ordinal,previous);
+   if(missing)repairs.push({name,record});last=record.state;previous=record.stateSha256;
+  }
+  // Reject non-canonical or unsealed visible snapshots; hidden publication temps
+  // are never interpreted as committed generations.
+  for(const e of await readdir(directory,{withFileTypes:true})){if(e.name.startsWith('.'))continue;if(!e.isFile())fail('SPECIALIST_CORRUPT');const ordinal=generationOrdinal(e.name);if(ordinal>seals.length)fail('SPECIALIST_HEAD_MISSING');}
+  const finalSeals=(await readdir(registration)).filter(n=>n!=='identity.json'&&!n.startsWith('.')).sort();if(canonical(finalSeals)!==canonical(seals.map(s=>s.name).sort()))fail('SPECIALIST_CONFLICT');
+  // No repair is attempted until every sealed generation and visible directory
+  // entry has passed validation. Ordinary reads never publish, even create:true.
+  if(repairs.length&&!allowRecovery)fail('SPECIALIST_RECOVERY_NEEDED');
+  let repairedCount=0;for(const {name,record}of repairs)if(await immutableExact(directory,name,record))repairedCount++;
+  return{state:last,sha256:previous,recovery:{repairedCount,alreadyPresentCount:repairs.length-repairedCount}};
  }
- async function publish(state){const bytes=Buffer.from(canonical({state,stateSha256:hash(state)})+'\n');if(bytes.length>LIMIT)fail('SPECIALIST_LIMIT');const name=String(state.ordinal).padStart(8,'0')+'.json';try{await durable(registration,name,{ordinal:state.ordinal,stateSha256:hash(state)});await publishImmutable(directory,name,bytes);}catch(e){if(e.code==='EEXIST')fail('SPECIALIST_CONFLICT');throw e;}const d=await open(directory,'r');try{await d.sync();}finally{await d.close();}}
- await read();
+ async function publish(state){const record={state,stateSha256:hash(state)},bytes=Buffer.from(canonical(record)+'\n');if(bytes.length>LIMIT)fail('SPECIALIST_LIMIT');const name=generationName(state.ordinal);
+  await immutableExact(registration,'.prepared-'+record.stateSha256+'.json',record);
+  try{await durable(registration,name,{ordinal:state.ordinal,stateSha256:record.stateSha256});}catch(e){if(e.code==='EEXIST')fail('SPECIALIST_CONFLICT');throw e;}
+  await immutableExact(directory,name,record);
+ }
+ const startup=await read(recover);
  async function mutate(kind,recordId,expected,input,remove=false,createId){const {state,sha256:previousSha256}=await read();const plural=kind==='profile'?'profiles':'presets',idKey=kind+'Id',items=state[plural];let next;
   if(recordId===null){const parsed=kind==='profile'?profileInput(input):presetInput(input);if(!identifier(createId))fail('SPECIALIST_CREATE_ID_REQUIRED');const existing=items.find(p=>p[idKey]===createId);if(existing){if(existing.creationInputSha256!==hash(parsed))fail('SPECIALIST_CONFLICT');return structuredClone(existing);}next=sealed({...parsed,[idKey]:createId,revision:1,tombstone:false,creationInputSha256:hash(parsed)});}
   else{if(!identifier(recordId)||!revision(expected))fail('SPECIALIST_SELECTION');const prior=items.find(p=>p[idKey]===recordId);if(!prior)fail('SPECIALIST_NOT_FOUND');if(prior.tombstone)fail('SPECIALIST_REMOVED');if(prior.revision!==expected)fail('SPECIALIST_CONFLICT');const parsed=remove?(kind==='profile'?{name:prior.name,description:prior.description,method:prior.method,enabled:false}:{name:prior.name,profiles:prior.profiles}):kind==='profile'?profileInput(input):presetInput(input);next=sealed({...parsed,[idKey]:recordId,revision:prior.revision+1,tombstone:remove,creationInputSha256:prior.creationInputSha256});}
-  if(state.ordinal>=MAX_GENERATIONS)fail('SPECIALIST_HISTORY_LIMIT');
+  if(!Number.isSafeInteger(state.ordinal+1)||!revision(next.revision))fail('SPECIALIST_COUNTER_EXHAUSTED');
   if(kind==='preset'&&!remove)resolveProfiles(state,next.profiles);
   const result={...state,ordinal:state.ordinal+1,previousSha256,[plural]:recordId===null?[...items,next]:items.map(p=>p[idKey]===recordId?next:p)};validateState(result,projectId,result.ordinal,previousSha256);await publish(result);return structuredClone(next);
  }
  function resolveProfiles(state,selected){return refs(selected).map(ref=>{const p=state.profiles.find(p=>p.profileId===ref.profileId);if(!p)fail('SPECIALIST_NOT_FOUND');if(p.revision!==ref.revision)fail('SPECIALIST_STALE_PROFILE');if(p.tombstone||!p.enabled)fail('SPECIALIST_UNAVAILABLE');return p;});}
  return Object.freeze({
+  ...(recover?{recovery:Object.freeze(startup.recovery)}:{}),
   async list(){const {state}=await read();return{projectId,profiles:state.profiles.filter(p=>!p.tombstone).map(({profileId,revision,name,description,enabled,contentSha256})=>({profileId,revision,name,description,enabled,contentSha256})),presets:state.presets.filter(p=>!p.tombstone).map(p=>structuredClone(p))};},
   async readProfile(profileId){if(!identifier(profileId))fail('SPECIALIST_SELECTION');const p=(await read()).state.profiles.find(p=>p.profileId===profileId);if(!p)fail('SPECIALIST_NOT_FOUND');return structuredClone(p);},
   async readPreset(presetId){if(!identifier(presetId))fail('SPECIALIST_SELECTION');const p=(await read()).state.presets.find(p=>p.presetId===presetId);if(!p)fail('SPECIALIST_NOT_FOUND');return structuredClone(p);},

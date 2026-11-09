@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import {mkdtemp,rm,readFile,writeFile,symlink} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
-import {openSpecialistProfiles} from '../src/specialist-profiles.mjs';
+import {openSpecialistProfiles,recoverSpecialistProfiles} from '../src/specialist-profiles.mjs';
 import {CLAIM_COMPARISON_METHOD} from '../src/child.mjs';
 const method=structuredClone(CLAIM_COMPARISON_METHOD);
 async function fixture(t){const root=await mkdtemp(join(process.env.V027_TEST_ROOT??tmpdir(),'profiles-'));t.after(()=>rm(root,{recursive:true,force:true}));return{root,directory:join(root,'specialists'),projectId:'project-a'};}
@@ -18,7 +18,7 @@ test('separate process CAS has one winner; uncommitted temp ignored and torn com
  const {spawn}=await import('node:child_process');const {pathToFileURL}=await import('node:url');
  const f=await fixture(t),s=await openSpecialistProfiles({...f,create:true}),p=await s.createProfile(randomUUID(),input);
  const moduleUrl=pathToFileURL(join(process.cwd(),'src/specialist-profiles.mjs')).href;
- const script=`import {openSpecialistProfiles} from ${JSON.stringify(moduleUrl)};const s=await openSpecialistProfiles(${JSON.stringify({directory:f.directory,projectId:f.projectId})});process.send('ready');process.once('message',async()=>{try{await s.updateProfile(${JSON.stringify(p.profileId)},1,${JSON.stringify(input)});process.send('won');}catch(e){process.send('rejected');}process.disconnect();});`;
+ const script=`import {openSpecialistProfiles,recoverSpecialistProfiles} from ${JSON.stringify(moduleUrl)};const s=await openSpecialistProfiles(${JSON.stringify({directory:f.directory,projectId:f.projectId})});process.send('ready');process.once('message',async()=>{try{await s.updateProfile(${JSON.stringify(p.profileId)},1,${JSON.stringify(input)});process.send('won');}catch(e){process.send('rejected');}process.disconnect();});`;
  const children=[0,1].map(()=>spawn(process.execPath,['--input-type=module','--eval',script],{stdio:['ignore','ignore','pipe','ipc']}));
  const outcomes=children.map(c=>new Promise((resolve,reject)=>{let result,ready=false,stderr='';c.stderr.on('data',b=>stderr+=b);c.on('message',m=>{if(m==='ready'){ready=true;c.emit('ready');}else result=m;});c.on('error',reject);c.on('exit',code=>code===0&&ready&&result?resolve(result):reject(new Error('CAS child '+code+' '+stderr)));}));
  await Promise.all(children.map(c=>new Promise(r=>c.once('ready',r))));children.forEach(c=>c.send('go'));assert.deepEqual((await Promise.all(outcomes)).sort(),['rejected','won']);assert.equal((await s.readProfile(p.profileId)).revision,2);
@@ -39,7 +39,7 @@ test('initialized catalog disappearance cannot reuse an old ID and revision',asy
  await assert.rejects(openSpecialistProfiles({...f,create:true}));
 });
 test('missing acknowledged tail cannot roll back a tombstone',async t=>{
- const {unlink}=await import('node:fs/promises');const f=await fixture(t),s=await openSpecialistProfiles({...f,create:true});await s.createProfile('stable',input);await s.removeProfile('stable',1);await unlink(join(f.directory,'00000003.json'));await assert.rejects(openSpecialistProfiles(f));
+ const {unlink}=await import('node:fs/promises');const f=await fixture(t),s=await openSpecialistProfiles({...f,create:true});await s.createProfile('stable',input);await s.removeProfile('stable',1);await unlink(join(f.directory,'00000003.json'));await assert.rejects(openSpecialistProfiles(f),e=>e.code==='SPECIALIST_RECOVERY_NEEDED');const recovered=await recoverSpecialistProfiles(f);assert.equal((await recovered.readProfile('stable')).tombstone,true);assert.equal((await recovered.list()).profiles.length,0);
 });
 
 test('reserved generation without data stays uncertain and cannot be reclaimed by init',async t=>{
