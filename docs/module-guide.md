@@ -2,6 +2,10 @@
 
 [Project home](../README.md) · [简体中文](module-guide.zh-CN.md)
 
+## Web evidence acquisition (v0.26)
+
+**v0.26 adds bounded Web evidence acquisition**: explicitly acquire public static pages, preserve originals and provenance, and consume frozen pages through the existing Report/Reader path. [Usage](web-sources.md) · [Dated Runtime 9/10 and retained failures](verification/v026-release.md). One task remains unknown; model content defects remain separate. New Web pages use 128 KiB and new Projects default to 1 MiB serialized context, not a model token window. No autonomous crawl or browser rendering.
+
 ## Once scheduled tasks (v0.25)
 
 See [commands and lifecycle](scheduled-tasks.md) and [Runtime qualification and content boundaries](verification/v025-release.md). Explicit once scheduling only; release status is separate.
@@ -269,6 +273,8 @@ This is a real local SQLite/process flow with synthetic replies and no model cal
 
 
 <a id="versions"></a>
+
+**v0.26 adds bounded Web evidence acquisition**: explicitly acquire public static pages, preserve originals and provenance, and consume frozen pages through the existing Report/Reader path. [Usage](web-sources.md) · [Dated Runtime 9/10 and retained failures](verification/v026-release.md). One task remains unknown; model content defects remain separate. New Web pages use 128 KiB and new Projects default to 1 MiB serialized context, not a model token window. No autonomous crawl or browser rendering.
 
 **v0.25 adds finite once Scheduled tasks**: confirm, inspect, cancel and explicitly run due work through the original project and execution owners. [Commands](scheduled-tasks.md) · [Runtime qualification and content limits](verification/v025-release.md). Nine preplanned scenarios contain ten normal logical tasks: Runtime contracts passed 10/10 with 30 complete Go responses; two model content issues remain. No cron, background daemon or automatic recovery of unknown work.
 

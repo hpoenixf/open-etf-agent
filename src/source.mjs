@@ -1,3 +1,5 @@
+import {validWebTextPage,webTextPageLimit} from './web-text-pages.mjs';
+import {normalizeWebProvenance,webDocumentIdentity,webOriginalBytes,validateWebPage} from './web-source.mjs';
 import { readFile } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
 export const sha256 = bytes => createHash('sha256').update(bytes).digest('hex');
@@ -5,7 +7,7 @@ export const READ_PAGE_SCHEMA = { type: 'object', additionalProperties: false, p
 const object = value => value !== null && typeof value === 'object' && !Array.isArray(value);
 const fail = message => { throw new Error(message); };
 export function validateSource(value) {
-  if (!object(value) || !['sourceId', 'documentId', 'name', 'version', 'text', 'sha256', 'mediaType'].every(k => typeof value[k] === 'string' && value[k].length > 0) || !Number.isSafeInteger(value.page) || value.page < 1 || Buffer.byteLength(value.text) > 64000 || value.sha256 !== sha256(value.text) || value.mediaType !== 'text/plain; charset=utf-8') fail('Invalid acquired source snapshot');
+  if (!object(value) || !['sourceId', 'documentId', 'name', 'version', 'text', 'sha256', 'mediaType'].every(k => typeof value[k] === 'string' && value[k].length > 0) || !Number.isSafeInteger(value.page) || value.page < 1 || Buffer.byteLength(value.text) > (value.web===undefined?64000:webTextPageLimit(normalizeWebProvenance(value.web).extraction.profile)) || value.sha256 !== sha256(value.text) || value.mediaType !== 'text/plain; charset=utf-8') fail('Invalid acquired source snapshot');
   if ([value.sourceId, value.documentId, value.name, value.version].some(s => s.length > 200 || /[\u0000-\u001f]/.test(s))) fail('Invalid source identity');
   if(value.pdf!==undefined){
     const p=value.pdf;
@@ -16,6 +18,7 @@ export function validateSource(value) {
       ||p.extraction!=='text-layer'||p.visualInspection!=='not-performed'||value.documentId!==`pdf:${p.originalSha256}`
       ||value.sourceId!==`${value.documentId}:p${value.page}`||value.version!==`${p.parser}:${p.originalSha256}`)fail('Invalid PDF source provenance');
   }
+  if(value.web!==undefined)validateWebPage(value);
   return structuredClone(value);
 }
 export async function readFixturePage({ documentId, page }) {
@@ -63,14 +66,16 @@ export function validateProtectedSourceBinding(value,authority,manifest) {
 // The fixture remains an adapter; custom catalog identity binds every page byte.
 export function normalizeDocumentCatalog(value) {
  const invalid=()=>{throw Object.assign(new Error('INVALID_DOCUMENT_CATALOG'),{code:'INVALID_DOCUMENT_CATALOG'});};
- if(!object(value)||Object.keys(value).sort().join(',')!=='documents,id,schemaVersion'||value.schemaVersion!=='document-catalog@1'||!protectedId(value.id)||!Array.isArray(value.documents)||value.documents.length<1||value.documents.length>64)invalid();
- const seen=new Set();let bytes=0;
+ if(!object(value)||Object.keys(value).sort().join(',')!=='documents,id,schemaVersion'||!['document-catalog@1','document-catalog@2'].includes(value.schemaVersion)||!protectedId(value.id)||!Array.isArray(value.documents)||value.documents.length<1||value.documents.length>64)invalid();
+ const seen=new Set();let bytes=0,originalBytes=0;
  const documents=value.documents.map(d=>{
-  if(!object(d)||Object.keys(d).sort().join(',')!=='id,name,pages,version'||!protectedId(d.id)||seen.has(d.id)||!protectedId(d.version)||`${d.id}@${d.version}:p16`.length>200||typeof d.name!=='string'||!d.name||d.name.length>200||/[\u0000-\u001f]/.test(d.name)||!Array.isArray(d.pages)||d.pages.length<1||d.pages.length>16)invalid();
-  seen.add(d.id);const pages=d.pages.map(text=>{if(typeof text!=='string'||!text||Buffer.byteLength(text)>64000)invalid();bytes+=Buffer.byteLength(text);if(bytes>1048576)invalid();return text;});
-  return Object.freeze({id:d.id,name:d.name,version:d.version,pages:Object.freeze(pages)});
+  if(!object(d)||Object.keys(d).sort().join(',')!==(value.schemaVersion==='document-catalog@2'&&d.web!==undefined?'id,name,originalBase64,pages,version,web':'id,name,pages,version')||!protectedId(d.id)||seen.has(d.id)||!protectedId(d.version)||`${d.id}@${d.version}:p16`.length>200||typeof d.name!=='string'||!d.name||d.name.length>200||/[\u0000-\u001f]/.test(d.name)||!Array.isArray(d.pages)||d.pages.length<1||d.pages.length>16)invalid();
+  seen.add(d.id);const web=d.web===undefined?undefined:normalizeWebProvenance(d.web);const pageLimit=web?webTextPageLimit(web.extraction.profile):64000;const pages=d.pages.map(text=>{if(typeof text!=='string'||!text||Buffer.byteLength(text)>pageLimit)invalid();bytes+=Buffer.byteLength(text);if(bytes>1048576)invalid();return text;});
+  if(web){const identity=webDocumentIdentity(web);if(d.id!==identity.id||d.version!==identity.version||pages.length!==web.pageMap.length)invalid();for(const [i,text]of pages.entries())if(!validWebTextPage(text,web.extraction.profile)||web.pageMap[i].sha256!==sha256(text)||web.pageMap[i].bytes!==Buffer.byteLength(text))invalid();originalBytes+=webOriginalBytes(web,d.originalBase64).length;if(originalBytes>524288)invalid();}
+  return Object.freeze({id:d.id,name:d.name,version:d.version,pages:Object.freeze(pages),...(web?{web,originalBase64:d.originalBase64}:{})});
  }).sort((a,b)=>a.id.localeCompare(b.id));
- return Object.freeze({schemaVersion:'document-catalog@1',id:value.id,documents:Object.freeze(documents)});
+ if(value.schemaVersion==='document-catalog@2'&&bytes>524288)invalid();
+ return Object.freeze({schemaVersion:value.schemaVersion,id:value.id,documents:Object.freeze(documents)});
 }
 export function documentCatalogBinding(value) {
  const catalog=normalizeDocumentCatalog(value);
@@ -83,5 +88,5 @@ export function catalogReadPageSchema(catalog) {
 export function readCatalogPage(catalog,{documentId,page}) {
  const value=normalizeDocumentCatalog(catalog),d=value.documents.find(d=>d.id===documentId);
  if(!d||!Number.isSafeInteger(page)||page<1||page>d.pages.length)fail('Unknown document or invalid page');
- const text=d.pages[page-1];return validateSource({sourceId:`${d.id}@${d.version}:p${page}`,documentId,name:d.name,version:d.version,page,text,sha256:sha256(text),mediaType:'text/plain; charset=utf-8'});
+ const text=d.pages[page-1];return validateSource({sourceId:`${d.id}@${d.version}:p${page}`,documentId,name:d.name,version:d.version,page,text,sha256:sha256(text),mediaType:'text/plain; charset=utf-8',...(d.web?{web:d.web}:{})});
 }

@@ -71,11 +71,12 @@ npm run demo -- --case document-compare
 <a id="versions"></a>
 ## 最近三个模块
 
+**v0.26 提供有界 Web 证据采集**：显式获取公开静态页面，保留原件与来源信息，再沿原 Report/Reader 消费冻结分页。[用法](docs/web-sources.zh-CN.md) · [本次 Runtime 9/10 与保留失败](docs/verification/v026-release.zh-CN.md)。一题仍为 unknown，模型内容瑕疵独立保留。新 Web 页为 128 KiB，新 Project 默认序列化上下文为 1 MiB，不是模型 token 窗口。不提供自主爬取或浏览器渲染。
+
 **v0.25 提供有限的一次性计划任务**：沿原项目与执行 Owner 确认、查看、取消，并显式运行到期工作。[命令](docs/scheduled-tasks.zh-CN.md) · [Runtime 资格与内容边界](docs/verification/v025-release.zh-CN.md)。九个事前场景包含十个正常逻辑任务，Runtime 合同通过 10/10，取得 30 份完整 Go 响应；保留两处模型内容问题。不提供 cron、后台常驻或未知工作自动恢复。
 
 **v0.24 让项目修订沿用原 Provider Admission 容量**：同一规范化端点在模型或流式配置变化后仍保留一个项目内原 Owner。[用法](docs/provider-capacity.zh-CN.md) · [十题证据与边界](docs/verification/v024-release.zh-CN.md) · [固定实测源码](https://github.com/hpoenixf/open-etf-agent/tree/0d47e318e0f5fb36d45d8be274324a06bdd20d5c)。机械与具名 Runtime 合同通过 10/10；保留 C09 未修复的错引等模型内容问题，不代表账户级限流或真实并发资格。
 
-**v0.23 提供已准入 Knowledge 检索**：查询显式导入的文本，沿 Result、Report 和 Reader 保留完整原文页。[用法](docs/knowledge.zh-CN.md) · [分层证据](docs/verification/v023-release.zh-CN.md) · [固定公开源码](https://github.com/hpoenixf/open-etf-agent/tree/4e893ead9ebe8cdd13146ddc96fe1d56a1e56365)。本批观察到的 Runtime 合同通过 10/10；冻结机械结果仍为 9/10，严格完整任务质量为 5/10。三者分别记录，不代表十份完美答案。
 
 **v0.23.1 维护：** 原 Session 心跳覆盖最终收尾，等待期间正确返回持久化取消。[修复、966/966 与证据适用性](docs/verification/v0231-maintenance.zh-CN.md)；原十题分数与后续提供方中断分别保留。
 
@@ -84,9 +85,9 @@ npm run demo -- --case document-compare
 
 | 模块 | 解决什么 | 运行与核对 |
 | --- | --- | --- |
+| v0.26 · Web 证据 | 显式采集、不可变原件与带来源读回 | [用法](docs/web-sources.zh-CN.md) · [证据](docs/verification/v026-release.zh-CN.md) |
 | v0.25 · 一次性计划任务 | 显式确认、有界到期扫描、原生命周期与未知占位 | [用法](docs/scheduled-tasks.zh-CN.md) · [证据](docs/verification/v025-release.zh-CN.md) |
 | v0.24 · 项目提供方容量 | 修订沿用原端点 Owner，unknown 保留占用 | [用法](docs/provider-capacity.zh-CN.md) · [证据](docs/verification/v024-release.zh-CN.md) |
-| v0.23 · 已准入 Knowledge | 有界词法检索、完整原页与同 Run 读回 | [用法](docs/knowledge.zh-CN.md) · [证据](docs/verification/v023-release.zh-CN.md) |
 
 [完整固定版本与运行说明](docs/module-guide.zh-CN.md#versions) · [机器可读版本谱系](versions.json) · [GitHub Releases](https://github.com/hpoenixf/open-etf-agent/releases)
 

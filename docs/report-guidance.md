@@ -1,0 +1,10 @@
+# Frozen report guidance for new Project tasks
+
+New submissions freeze `reportGuidance: source-faithful-report@1` in their original task definition and hash. The profile adds general source-fidelity guidance to the Main task question: preserve operation identities, order and conditions; distinguish illustrative derivation from source evidence; reconcile report and summary; cite only supporting passages. It contains no particular task answer.
+
+Existing tasks without the field keep exactly their historical question projection. Repeated submission and cold resume retain the original choice, including absence. Unknown or malformed profiles are rejected rather than silently upgraded. This version's prose is immutable; future wording needs a new version. Schedule confirmations freeze the same task field for subsequent materialization. Child tools and permissions are unchanged. The existing Child handoff can include the frozen Main question as `originalQuestion`, so this guidance may be visible through that original parent-question binding; no separate Child profile or new authority is introduced.
+
+Guidance is not a semantic validator, a guarantee of correctness, or a reason to mark earlier model errors correct. It does not force extra model/tool calls or enlarge budgets. The appended guidance counts toward the existing 16,000-byte Project question limit and the existing Context/Gateway serialized request limits; no limits are enlarged. Earlier reports and their evaluations remain unchanged.
+
+The [two-task diagnostic](verification/report-guidance-diagnostic.md) records a
+limited real-model observation, including the content defects that remained.

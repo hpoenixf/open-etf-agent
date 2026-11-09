@@ -1,5 +1,7 @@
 [English](README.md) | **简体中文**
 
+- [v0.26 Web 证据：本次 Runtime 9/10、未知与内容边界](v026-release.zh-CN.md)
+
 - [v0.25 一次性计划任务：Runtime 资格与模型内容边界](v025-release.zh-CN.md)
 # 验证证据索引 · v0.1–v0.11
 

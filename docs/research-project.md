@@ -167,3 +167,7 @@ See [Run control and termination ownership](run-control.md) for local refusal, c
 ## Explicit multi-question interaction (v0.21 implementation)
 
 An optional, explicitly versioned `interaction` configuration is being verified for new tasks. It permits bounded sequential questions with original request, receipt and adoption history, and supplies read-only local inbox commands. Existing projects without this option retain their original single-question contract. See [ordinary Human Interaction](human-interaction.md); this addition is not a new release or qualification claim for the historical v0.20 evidence above.
+
+## Configurable context bytes
+
+New Projects persist `contextBytes: 1048576`. Existing absent-field configurations keep their original fallback; explicit CAS revisions affect future admissions only. See [context byte budget and encoded-request limits](project-context.md).

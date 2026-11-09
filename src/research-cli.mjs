@@ -9,6 +9,7 @@ import {inspectResearchKnowledge} from './research-project.mjs';
 import {inspectResearchCapacity} from './research-project.mjs';
 import {openMemoryLibrary} from './memory.mjs';
 import {startReader} from './reader.mjs';
+import {acquireProjectWebSources,inspectWebAcquisition} from './web-acquisition.mjs';
 const fail=code=>{throw Object.assign(new Error(code),{code});};
 export const RESEARCH_HELP=`Local single-user research application (JSON output; no .env loading).
 Usage: node src/research-cli.mjs <group> <command> [options]
@@ -24,6 +25,9 @@ Usage: node src/research-cli.mjs <group> <command> [options]
   preset update --project DIR --id ID --revision NUMBER --preset JSON_FILE
   source import --project DIR --files JSON_FILE
   source list --project DIR --manifest SHA256
+  source acquire --project DIR --acquisition ID --urls JSON_FILE --approve-public-fetch
+      [--redirects JSON_FILE] [--base-manifest SHA256] [--network-profile platform-doh-pinned@1]
+  source acquisition --project DIR --acquisition ID
   run submit --project DIR --run ID --question TEXT_FILE --manifest SHA256
       [--approve-provider --approve-data --approve-cost]
       [--specialists JSON_FILE] [--memory-intents JSON_FILE] [--task-time JSON_FILE] [--schedule JSON_FILE]
@@ -55,6 +59,11 @@ Usage: node src/research-cli.mjs <group> <command> [options]
 resolved from the current directory, never a directory scan. Limits: 64 documents,
 16 text pages per document, 64000 UTF-8 bytes per page, 1 MiB text catalog,
 one PDF; PDF parser limits also apply. Import returns an immutable manifest SHA256.
+Web acquisition selects at most four public HTTPS pages, with an explicit exact
+redirect allowlist. Static HTML/UTF-8 text only; no login, JavaScript or search.
+An acquisition ID is never replayed, including after interruption. Inspection
+reads saved local evidence and does not fetch. Only complete immutable manifests
+can become task input. --base-manifest explicitly retains existing local sources.
 Submit does not call a model. Live submit requires all three explicit approvals:
 configured provider, selected source/question/Memory data, and configured cost limit.
 Work uses only the environment variable named by gateway.apiKeyEnv. Fixture projects
@@ -83,6 +92,8 @@ const specifications={
  'project update':['project','config','expected-config'],
  'project init':['project','config'], 'project inspect':['project'],
  'source import':['project','files'], 'source list':['project','manifest'],
+ 'source acquire':['project','acquisition','urls','approve-public-fetch','redirects?','base-manifest?','network-profile?'],
+ 'source acquisition':['project','acquisition'],
  'run submit':['project','run','question','manifest','approve-provider?','approve-data?','approve-cost?','memory-intents?','task-time?','schedule?','specialists?'],
  'run work':['project','run'], 'run inspect':['project','run'], 'run cancel':['project','run'],
  'run respond':['project','run','question-id','response-id','text'],
@@ -93,7 +104,7 @@ const specifications={
  'memory revise':['project','intent','entry','revision','text','approve-intent'],
  'memory forget':['project','intent','entry','revision','approve-intent']
 };
-const flags=new Set(['preserve-unknown','no-replay','no-refund','approve-provider','approve-data','approve-cost','approve-intent','confirm-once']);
+const flags=new Set(['preserve-unknown','no-replay','no-refund','approve-provider','approve-data','approve-cost','approve-intent','confirm-once','approve-public-fetch']);
 export function parseResearchArguments(args){
  if(args.length===0||(args.length===1&&['help','--help','-h'].includes(args[0])))return{help:true};
  const command=args.slice(0,2).join(' '),spec=specifications[command];if(!spec)fail('CLI_UNKNOWN_COMMAND');
@@ -148,6 +159,11 @@ export async function runResearchCli(args,{stdout=process.stdout,stderr=process.
   if(command==='project inspect'){emit(await inspectResearchProject({projectDir}));return 0;}
   if(command==='source import'){await inspectResearchProject({projectDir});emit(sourceResult(await importProjectSources({projectDir,files:await readProjectJson(o.files)})));return 0;}
   if(command==='source list'){await inspectResearchProject({projectDir});emit(sourceResult(await loadProjectSources({projectDir,manifestSha256:o.manifest})));return 0;}
+  if(command==='source acquisition'){emit(await inspectWebAcquisition({projectDir,acquisitionId:o.acquisition}));return 0;}
+  if(command==='source acquire'){
+   const controller=new AbortController(),stop=()=>controller.abort();signals.on('SIGINT',stop);signals.on('SIGTERM',stop);
+   try{const result=await acquireProjectWebSources({projectDir,acquisitionId:o.acquisition,urls:await readProjectJson(o.urls,32768),allowedRedirectUrls:o.redirects?await readProjectJson(o.redirects,32768):[],baseManifestSha256:o['base-manifest']??null,approvePublicFetch:o['approve-public-fetch']===true,networkProfile:o['network-profile']??'system-direct@1',signal:controller.signal});emit({...sourceResult(result),acquisition:result.acquisition});}finally{signals.off('SIGINT',stop);signals.off('SIGTERM',stop);}return 0;
+  }
   if(command==='run submit'){
    const question=await textFile(o.question,16000),extra={};
    for(const [key,arg]of [['specialistSelection','specialists'],['memoryIntents','memory-intents'],['taskTime','task-time'],['schedule','schedule']])if(o[arg])extra[key]=await readProjectJson(o[arg]);
