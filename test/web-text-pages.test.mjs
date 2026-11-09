@@ -49,7 +49,7 @@ test('Web control-character and escaping budgets preserve all codepoints without
  assert.throws(()=>paginateWebText('"'.repeat(524289)),e=>e.code==='WEB_PAGE_LIMIT');assert.throws(()=>paginateWebText('\ud800'),/WEB_TEXT_INVALID/);
 });
 
-test('Web 100000-byte v3 page refuses explicit32000 but completes configured1MiB Project flow',async t=>{
+test('Web latest large page can project a reference at 32000; full unpaged reread stays capacity-bound while 1MiB completes',async t=>{
  const text='a'.repeat(100000),report='# Selected source\n'+ 'Evidence sentence. '.repeat(100);const results=[];
  for(const contextBytes of [32000,1048576]){
   const projectDir=await directory(t,contextBytes),o=observation(text);Object.assign(o,extractWebText(o.body,'text/plain'));
@@ -63,7 +63,7 @@ test('Web 100000-byte v3 page refuses explicit32000 but completes configured1MiB
    return{kind:'final',text:'Saved and reread.'};
   }};
   const worked=await workResearchTask({projectDir,runId:'flow',gateway});results.push({contextBytes,status:worked.run.status,code:worked.run.snapshot.code,turn,measured});
-  if(contextBytes===1048576){assert.equal(worked.run.status,'completed',JSON.stringify(results));assert.equal(turn,4);}else{assert.notEqual(worked.run.status,'completed');assert.equal(turn,1);assert.equal(doc.pages[0],text);}
+  if(contextBytes===1048576){assert.equal(worked.run.status,'completed',JSON.stringify(results));assert.equal(turn,4);}else{assert.notEqual(worked.run.status,'completed');assert.equal(turn,3);assert.match(worked.run.snapshot.code,/CONTEXT|CAPACITY/);assert.ok(measured.every(n=>n<=contextBytes));assert.equal(doc.pages[0],text);}
  }
  t.diagnostic(JSON.stringify({explicitLimits:[32000,1048576],results}));
 });
