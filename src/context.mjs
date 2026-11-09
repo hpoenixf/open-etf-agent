@@ -12,7 +12,7 @@ export function projectControlProofs(messages){
  }
  return projected;
 }
-export async function projectContext({ messages, maxBytes, lookupSource, additionalBudget, projectOwnedResult } = {}) {
+export async function projectContext({ messages, maxBytes, lookupSource, additionalBudget, projectOwnedResult, projectOwnedCall } = {}) {
   if (!Array.isArray(messages) || !messages.length || messages[0].role!=='user' || !Number.isSafeInteger(maxBytes) || maxBytes<1 || maxBytes>1048576 || typeof lookupSource!=='function') fail('Invalid context budget/configuration');
   if(additionalBudget!==undefined&&(!Number.isSafeInteger(additionalBudget?.maxBytes)||additionalBudget.maxBytes<1||typeof additionalBudget.measure!=='function'))fail('Invalid encoded context budget');
   const projected=projectControlProofs(messages);
@@ -55,6 +55,14 @@ export async function projectContext({ messages, maxBytes, lookupSource, additio
       projected[index].result.value=await replace(owned??projected[index].result.value);
     }
     if(fits()) return projected;
+  }
+  if(projectOwnedCall)for(const group of groups){
+    for(const index of group){
+      const original=messages[index],call=messages.flatMap(m=>m.calls??[]).find(c=>c.id===original.callId);
+      const owned=await projectOwnedCall(call,original.result);
+      if(owned){const assistant=projected.find(m=>m.calls?.some(c=>c.id===call.id));assistant.calls=assistant.calls.map(c=>c.id===call.id?owned:c);}
+    }
+    if(fits())return projected;
   }
   throw Object.assign(new Error('Context byte budget cannot retain mandatory original question/tool identities; narrow the requested page selection or use a larger authorized context budget'),{code:'CONTEXT_CAPACITY_EXCEEDED'});
 }

@@ -56,7 +56,7 @@ function inputShapeIssue(value,selected){
 function childBindings(bindings){return {...bindings,adapters:bindings.adapters.filter(b=>canonical(b)!==canonical(PUBLICATION_BINDING))};}
 function parentAuthority(parent,selected){
  validateRuntimeCheckpoint(parent.snapshot,parent.definition);
- if(selected.projection!==undefined&&!['host-results@1','host-results@2'].includes(parent.definition.config.hostProjection))fail('CHILD_EXECUTION_BINDING_MISMATCH');
+ if(selected.projection!==undefined&&!['host-results@1','host-results@2','host-results@3'].includes(parent.definition.config.hostProjection))fail('CHILD_EXECUTION_BINDING_MISMATCH');
  if(parent.parentRunId!==null||parent.rootId!==parent.runId||parent.definition.question!==selected.question||parent.definition.bindings.plugins.length||!parent.definition.bindings.adapters.some(b=>canonical(b)===canonical(childExecutionBinding(selected)))||canonical(parent.definition.config.documentCatalog??null)!==canonical(selected.documentCatalog?documentCatalogBinding(selected.documentCatalog):null))fail('CHILD_EXECUTION_BINDING_MISMATCH');
 }
 function originalCall(parent,callId,selected){

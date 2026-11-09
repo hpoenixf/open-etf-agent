@@ -1,3 +1,4 @@
+import {projectControlProofs} from './context.mjs';
 import {webOriginalArtifactId,webOriginalBytes,webProvenanceSha256} from './web-source.mjs';
 import {prepareReportAssessment,assessmentHash} from './report-assessment.mjs';
 import {verifyKnowledgeResult} from './knowledge.mjs';
@@ -6,7 +7,7 @@ import {childExecutionGroupRefusal,childExecutionHistoricalGroup,childExecutionI
 import { RESPONSE_TOOL, RESPONSE_PROFILE, validateResponseCall } from './human-response.mjs';
 import {openPdfInput,normalizePdfSnapshot} from './pdf-input.mjs';
 import {openArtifactStore,encodeCsv,projectArtifactEffects,validateArtifactProtection,validateProtectedSourcePayload,validateProtectedArtifactDescriptor} from './artifacts.mjs';
-import {saveReport,REPORT_TEXT_MAX_BYTES,validateProtectedReportReceipt} from './report.mjs';
+import {saveReport,renderReportContent,REPORT_TEXT_MAX_BYTES,validateProtectedReportReceipt} from './report.mjs';
 import { projectMemoryEffect } from './memory-effects.mjs';
 import { readFile, open, constants } from 'node:fs/promises';
 import { join } from 'node:path';
@@ -78,7 +79,7 @@ export function assertWorkingInputToolSelection({allowedTools,contextBytes,compa
   }
 }
 export async function createToolHost({ directory, extensions = [], hooks, allowedTools, allowedDocuments, enableNotes=false, restore, pdfInput, ordinaryResponse, readOnly=false, documentAccess, documentCatalog, runIdentity, canOfferReferenceCorrection, answerDelivery=false, hostProjection, projectionOwner, confirmDerivedConsumption }) {
-  if(hostProjection!==undefined&&!['host-results@1','host-results@2'].includes(hostProjection))fail('Invalid Host projection policy');
+  if(hostProjection!==undefined&&!['host-results@1','host-results@2','host-results@3'].includes(hostProjection))fail('Invalid Host projection policy');
   if(hostProjection&&(!projectionOwner||typeof confirmDerivedConsumption!=='function'))fail('Host projection owner required');
   if(typeof readOnly!=='boolean'||readOnly&&pdfInput!==undefined)fail('Invalid Host read mode');
   const protection=documentAccess===undefined?undefined:validateArtifactProtection(documentAccess.protection);
@@ -260,7 +261,7 @@ export async function createToolHost({ directory, extensions = [], hooks, allowe
       async execute(args){if(args.resultRef.startsWith('result:'))return {...await readSource(args.resultRef),resultRef:args.resultRef};await ownedDerived(args.resultRef);return results.readDerivedSelection(args.resultRef,args.selection);}
     };
   }
-  if(hostProjection==='host-results@2'){
+  if(['host-results@2','host-results@3'].includes(hostProjection)){
     bindings.read_result={
       historyCompaction:'read-only@1',
       description:'Read an acquired immutable original with result:sha256:... using only resultRef: do not supply selection for source refs. For derived:sha256:... only, optional selection selects a Host-owned derived text page (default offset 0, limit 1024). Derived results are unreviewed, not source evidence. Derived offset/limit count Unicode code points; follow nextOffset for the complete derived text. No upstream fetch or Child replay.',
@@ -412,8 +413,42 @@ export async function createToolHost({ directory, extensions = [], hooks, allowe
       if(call.name==='read_result'&&call.arguments.resultRef.startsWith('derived:'))return {kind:'stored-derived-page-ref',derived:true,resultRef:call.arguments.resultRef,coverage:structuredClone(result.value.coverage),readWith:{name:'read_result',arguments:structuredClone(call.arguments)}};
       return null;
     },
+    async projectOwnedCall(call,result){
+      // A projection of a completed effect, never a rewritten executable proposal.
+      if(hostProjection!=='host-results@3'||hooks||protection||call?.name!=='save_report'||result?.status!=='succeeded'||result.dispatched!==true)return null;
+      await host.verifyResult(call,result);
+      if(result.callId!==call.id||result.value.operationId!==call.id)recoveryFail('Report call identity mismatch');
+      validateReportInputShape(call.arguments);
+      const artifact=await artifacts.read(result.value.artifactId);
+      const resultRefs=await Promise.all(call.arguments.sourceIds.map(id=>results.resolve(id)));
+      const selected=await Promise.all(resultRefs.map(ref=>readSource(ref.resultRef)));
+      // The saved manifest is the immutable effect-time basis, not the later
+      // growing Result inventory. Revalidate every referenced calculation.
+      const file=await open(join(directory,'manifest.json'),constants.O_RDONLY|constants.O_NOFOLLOW);let manifest;
+      try{const stat=await file.stat();if(!stat.isFile()||stat.size>5*1048576)recoveryFail('Unsafe report projection manifest');const raw=await file.readFile();if(raw.length>5*1048576)recoveryFail('Report projection manifest size');manifest=JSON.parse(raw);}finally{await file.close();}
+      if(!isDeepStrictEqual(manifest.receipt,result.value)||!isDeepStrictEqual(manifest.sources,selected)||!isDeepStrictEqual(manifest.resultRefs,resultRefs)||!Array.isArray(manifest.calculations))recoveryFail('Report projection basis mismatch');
+      const calculations=manifest.calculations;
+      for(const entry of calculations)if(!isDeepStrictEqual(await results.readCalculation(entry.ref.resultRef),entry.value))recoveryFail('Report projection calculation mismatch');
+      const attachments=[...new Set([...(call.arguments.attachmentIds||[]),...selected.filter(s=>s.pdf).map(s=>s.pdf.originalArtifactId),...selected.filter(s=>s.web).map(s=>webOriginalArtifactId(s.web))])];
+      if(!isDeepStrictEqual(attachments,result.value.attachmentIds))recoveryFail('Report attachment identity mismatch');
+      const bytes=Buffer.from(renderReportContent({text:call.arguments.text,selected,resultRefs,calculations,attachmentIds:attachments}));
+      if(!bytes.equals(artifact.bytes)||bytes.length!==result.value.bytes||sha256(bytes)!==result.value.sha256)recoveryFail('Report call text identity mismatch');
+      return {...structuredClone(call),arguments:{...structuredClone(call.arguments),text:{kind:'persisted-report-text-ref',artifactId:result.value.artifactId,revisionId:result.value.revisionId,sha256:result.value.sha256,bytes:result.value.bytes,requestHash:sha256(canonical(call)),textSha256:sha256(call.arguments.text),textBytes:Buffer.byteLength(call.arguments.text),meaning:'Complete report text remains in the original call and persisted artifact; this is a history projection, not a new tool request or proof of task completion.'}}};
+    },
     snapshot: () => ({schemaVersion:protection?'tool-host-protected@1':'tool-host@2',...(protection?{protection:structuredClone(protection)}:{}),definitionsHash,...(historyCompaction?{historyCompaction:structuredClone(historyCompaction)}:{}),results:results.snapshot(),methods:structuredClone([...methods.values()]),saveAttempted,receipt:structuredClone(receipt)}),
-    async verifyWorkingInput(working){
+    async verifyWorkingInput(working,originalMessages){
+      if(hostProjection==='host-results@3'){
+        const originals=(originalMessages??[]).flatMap(m=>m.calls??[]),calls=(working.messages??[]).flatMap(m=>m.calls??[]);
+        if(calls.some(c=>c.name==='save_report')&&!originalMessages)recoveryFail('Missing original report projection pair');
+        const ids=new Set([...originals.filter(c=>c.name==='save_report').map(c=>c.id),...calls.filter(c=>c.name==='save_report').map(c=>c.id)]);
+        for(const id of ids){
+          const original=originals.filter(c=>c.id===id),current=calls.filter(c=>c.id===id),results=(originalMessages??[]).filter(m=>m.role==='tool'&&m.callId===id),workingResults=(working.messages??[]).filter(m=>m.role==='tool'&&m.callId===id);
+          if(original.length!==1||current.length!==1||results.length!==1||workingResults.length!==1||!isDeepStrictEqual(workingResults[0],projectControlProofs(results)[0]))recoveryFail('Working report receipt mismatch');
+          if(isDeepStrictEqual(current[0],original[0]))continue;
+          const expected=await host.projectOwnedCall(original[0],results[0].result);
+          if(!expected||!isDeepStrictEqual(expected,current[0]))recoveryFail('Working report projection identity mismatch');
+        }
+      }
       for(const message of working.messages??[]){
         const view=message.result?.value,child=view?.child;
         if(child?.kind==='stored-derived-ref'){
