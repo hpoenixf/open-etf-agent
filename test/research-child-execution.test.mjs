@@ -19,14 +19,15 @@ test('22.project explicit execution configuration preserves old project contract
  assert.deepEqual(parseResearchArguments(['child','list','--project','project','--run','task']),{command:'child list',options:{project:'project',run:'task'}});
  for(const args of [['child','list','--project','project'],['child','list','--project','project','--run','task','--execute']])assert.throws(()=>parseResearchArguments(args));
 });
-test('22.project three-source project delegates two narrow scopes, publishes, and independently reopens original results',async t=>{
+test('report guidance execution Child cold inspection: 22.project three-source project delegates two narrow scopes, publishes, and independently reopens original results',async t=>{
  await mkdir('test-output',{recursive:true});const dir=await mkdtemp(resolve('test-output/research-children-'));t.after(()=>rm(dir,{recursive:true,force:true}));const projectDir=join(dir,'project');await createResearchProject({directory:projectDir,config});
  const files=[];for(const [i,text] of ['Measured output 20 units.','Measured output 30 units.','Unselected unrelated evidence.'].entries()){const path=join(dir,'source-'+i+'.md');await writeFile(path,text);files.push(path);}
  const sources=await importProjectSources({projectDir,files}),ids=sources.catalog.documents.map(d=>d.id);
  await submitResearchTask({projectDir,runId:'original',question:'Compare the first two selected observations with independent narrow checks and retain a report.',sourceManifestSha256:sources.manifestSha256});
+ assert.equal((await inspectResearchTask({projectDir,runId:'original'})).definition.reportGuidance,'source-faithful-report@1');
  let mainCalls=0,childCalls=0;const observed=[];const gateway={mode:'fixture',next({messages,reservation}){
   const results=messages.filter(m=>m.role==='tool');
-  if(reservation.runId!=='original'){childCalls++;const task=JSON.parse(messages[0].content.split('\n')[1]);assert.equal(task.documents.length,1);assert.notEqual(task.documents[0],ids[2]);assert.ok(!JSON.stringify(results).includes('other-child-private'));if(!results.length)return call('source','read_page',{documentId:task.documents[0],page:1});return{kind:'final',text:'Derived evidence checked.'};}
+  if(reservation.runId!=='original'){childCalls++;const task=JSON.parse(messages[0].content.split('\n')[1]);assert.match(task.originalQuestion,/Report fidelity guidance:/);assert.equal(task.documents.length,1);assert.notEqual(task.documents[0],ids[2]);assert.ok(!JSON.stringify(results).includes('other-child-private'));if(!results.length)return call('source','read_page',{documentId:task.documents[0],page:1});return{kind:'final',text:'Derived evidence checked.'};}
   mainCalls++;const children=results.filter(m=>m.result.value?.child);if(children.length<2)return call('child-'+children.length,'delegate_child',{methodId:'claim-comparison',question:'Check this original observation.',documents:[ids[children.length]]});
   if(!results.some(m=>m.result.value?.path==='report.md')){observed.push(...children.map(m=>m.result.value));return call('save','save_report',{text:'# Original observations\n20 units versus 30 units; methods and conditions are not established.',sourceIds:children.flatMap(m=>m.result.value.sources.map(s=>s.sourceId))});}return{kind:'final',text:'Saved.'};
  }};
