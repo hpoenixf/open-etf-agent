@@ -58,7 +58,7 @@ export async function readSpecialistHandoff({store,parentRunId,question,document
   : child.snapshot.gatewayOutcome!=='settled';
  if(out.unknownEffects.length||['MODEL_OUTCOME_UNKNOWN','TOOL_OUTCOME_UNKNOWN'].includes(out.code)||(out.status!=='completed'&&unknownGateway))fail('SPECIALIST_EFFECT_UNKNOWN');
  if(out.status==='completed'&&out.code!==null)fail('SPECIALIST_OUTCOME_MISMATCH');
- if(selected.method&&out.answer!==null&&(typeof out.answer!=='string'||Buffer.byteLength(out.answer)>selected.method.output.maxSummaryBytes))fail('CHILD_METHOD_OUTPUT_LIMIT');
+ if(typeof out.answer!=='string')fail('SPECIALIST_OUTCOME_MISMATCH');
  const host=await createToolHost({directory:child.directory,documentCatalog:selected.documentCatalog,allowedTools:selectedProfile.tools,allowedDocuments:selected.documents,restore:child.snapshot.host,readOnly:true});
  const owned=await host.getResultRefs();if(canonical(owned)!==canonical(out.resultRefs))fail('SPECIALIST_SOURCE_IDENTITY');
  const originals=await readChildSources({directory:child.directory,refs:owned.map(x=>x.resultRef),allowedDocuments:selected.documents,readOnly:true});

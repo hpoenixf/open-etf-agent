@@ -87,7 +87,7 @@ async function handoff(parent,child,call,chosen,selected){
  const out=child.snapshot.outcome;
  if(!['completed','failed'].includes(child.status)||!out||out.runId!==child.runId||out.rootId!==child.rootId||out.directory!==child.directory||out.taskId!==taskId(call.id)||out.status!==child.status||out.code!==child.snapshot.code)fail('CHILD_EXECUTION_OUTCOME_UNAVAILABLE');
  if(out.status==='completed'&&out.code!==null)fail('CHILD_EXECUTION_OUTCOME_MISMATCH');
- if(typeof out.answer!=='string'||Buffer.byteLength(out.answer)>chosen.method.output.maxSummaryBytes)fail('CHILD_METHOD_OUTPUT_LIMIT');
+ if(typeof out.answer!=='string')fail('CHILD_EXECUTION_OUTCOME_MISMATCH');
  const host=await createToolHost({directory:child.directory,documentCatalog:chosen.documentCatalog,allowedTools:chosen.method.allowedTools,allowedDocuments:chosen.documents,restore:child.snapshot.host,readOnly:true});
  const owned=await host.getResultRefs();if(canonical(owned)!==canonical(out.resultRefs))fail('CHILD_EXECUTION_SOURCE_IDENTITY');
  const originals=await readChildSources({directory:child.directory,refs:owned.map(r=>r.resultRef),allowedDocuments:chosen.documents,readOnly:true});

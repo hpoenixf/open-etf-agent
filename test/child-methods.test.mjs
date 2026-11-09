@@ -45,8 +45,8 @@ test('20.child missing parent tool permission and stale parent fence dispatch ze
 test('20.child model cannot select method or expand permissions in delegation arguments',async t=>{
  const h=await harness(t,{arguments_:{question:'Compare.',method:'administrator'}});assert.equal(h.result.status,'failed');assert.equal(h.childCalls,0);
 });
-test('20.child output bounds fail closed without truncating into a valid handoff',async t=>{
- const h=await harness(t,{method:{...CLAIM_COMPARISON_METHOD,output:{maxSummaryBytes:8}}});assert.equal(h.result.status,'failed');assert.equal(h.store.inspect(h.result.runId).snapshot.messages.at(-1).result.error,'CHILD_METHOD_OUTPUT_LIMIT');assert.equal(h.mainCalls,1);
+test('20.child legacy output metadata does not truncate or refuse handoff',async t=>{
+ const h=await harness(t,{method:{...CLAIM_COMPARISON_METHOD,output:{maxSummaryBytes:8}}});assert.equal(h.result.status,'completed');assert.ok(h.mainCalls>1);
 });
 test('20.child shares original root budget instead of allocating method budget',async t=>{
  const h=await harness(t,{rootLimits:{model:1,tool:20}});assert.equal(h.childCalls,0);assert.equal(h.result.rootUsage.model,1);assert.equal(h.result.status,'failed');
@@ -66,4 +66,15 @@ test('20.child reader rejects a nested parent and foreign grant identity',async 
  const store={inspect:id=>h.store.inspect(id),findChild:(id,task)=>{const child=structuredClone(h.store.findChild(id,task));child.definition.grantId='foreign-grant';return child;}};
  await assert.rejects(readSpecialistHandoff({store,parentRunId:h.result.runId,question,documents,method:CLAIM_COMPARISON_METHOD}),/IDENTITY_MISMATCH/);
  assert.equal(value.child.derived,true);
+});
+
+for(const maxSummaryBytes of [4000,8000,16000])test('legacy descriptor and prompt bytes stay exact '+maxSummaryBytes,async t=>{
+ const method={...CLAIM_COMPARISON_METHOD,version:'2',output:{maxSummaryBytes}},input={method,question,localQuestion:'Compare.',documents,callId:'old'};
+ assert.deepEqual(normalizeChildMethod(method),method);
+ const expected=method.text+'\n'+JSON.stringify({method,originalQuestion:question,localQuestion:'Compare.',documents,executionBudget:method.limits,budgetInstruction:'Use only the granted reader and documents within the total tool allowance. Return a derived summary within the output byte bound; Main owns Memory writes and final publication.',delegationCallId:'old'});
+ assert.equal(childMethodQuestion(input),expected);
+});
+test('new default descriptor has no summary byte cap or byte-bound prompt',()=>{
+ assert.deepEqual(CLAIM_COMPARISON_METHOD.output,{});assert.equal(CLAIM_COMPARISON_METHOD.version,'3');
+ assert.ok(!childMethodQuestion({method:CLAIM_COMPARISON_METHOD,question,localQuestion:'Compare.',documents,callId:'new'}).includes('output byte bound'));
 });

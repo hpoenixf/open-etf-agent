@@ -42,20 +42,20 @@ async function fixture(t,{question,method=CLAIM_COMPARISON_METHOD}){
 }
 
 test('22.comparison v2 binds complete-claim and counter-presupposition instructions without broadening authority',()=>{
- assert.equal(CLAIM_COMPARISON_METHOD.version,'2');
+ assert.equal(CLAIM_COMPARISON_METHOD.version,'3');
  assert.equal(CLAIM_COMPARISON_METHOD.contentSha256,sha256(CLAIM_COMPARISON_METHOD.text));
  for(const phrase of ['complete propositions','modality','cannot both be true','question or delegation','different predicates'])assert.ok(CLAIM_COMPARISON_METHOD.text.includes(phrase),phrase);
  assert.deepEqual(CLAIM_COMPARISON_METHOD.allowedTools,['read_page']);
  assert.deepEqual(CLAIM_COMPARISON_METHOD.limits,{maxRounds:6,maxTools:4,timeoutMs:60000});
  assert.deepEqual(CLAIM_COMPARISON_METHOD.input,{maxQuestionBytes:2000,maxDocuments:2});
- assert.deepEqual(CLAIM_COMPARISON_METHOD.output,{maxSummaryBytes:8000});
+ assert.deepEqual(CLAIM_COMPARISON_METHOD.output,{});
  assert.ok(!CLAIM_COMPARISON_METHOD.text.includes('2026-05-01'));
 });
 
 for(const question of ['Compare the recorded arrangements and their conditions.','Explain the direct contradictions between these dates and approval states.'])test('22.comparison actual Main/Child input retains review obligation and unreviewed failure witness: '+question,async t=>{
  const h=await fixture(t,{question});assert.equal(h.result.status,'completed');
  assert.ok(h.mainDescriptions.every(d=>d.includes('Do not strengthen the original question')&&d.includes('review the inference, not only citation accuracy')));
- const prompt=JSON.parse(h.childPrompt.split('\n')[1]);assert.equal(prompt.originalQuestion,question);assert.equal(prompt.localQuestion,question);assert.equal(prompt.method.version,'2');assert.equal(prompt.method.text,CLAIM_COMPARISON_METHOD.text);
+ const prompt=JSON.parse(h.childPrompt.split('\n')[1]);assert.equal(prompt.originalQuestion,question);assert.equal(prompt.localQuestion,question);assert.equal(prompt.method.version,'3');assert.equal(prompt.method.text,CLAIM_COMPARISON_METHOD.text);
  assert.equal(h.seen.child.summary,badSummary);assert.equal(h.seen.child.derived,true);assert.equal(h.seen.child.semanticStatus,'unreviewed');
  assert.deepEqual(new Set(h.seen.sources.map(s=>s.text)),new Set([notice,minutes]));
  assert.ok(h.seen.sources.every(s=>s.sha256===sha256(s.text)));assert.deepEqual(h.result.rootUsage,{model:5,tool:3});

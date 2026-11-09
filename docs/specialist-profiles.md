@@ -63,3 +63,11 @@ roll back an edit or tombstone. A reserved seal with missing/incomplete data is
 uncertain and fails closed: no automatic ordinal reuse, rollback, replay, or
 repair is provided. Preserve both directories in a backup. This is not protection
 against simultaneous deletion or rewriting of all Project authority files.
+
+## Child summary delivery size
+
+New methods use `output: {}` with no dedicated Child summary byte ceiling. The built-in comparison method is version 3. Summaries are not truncated, and the former ceiling is not replaced with a larger fixed threshold.
+
+Legacy `child-method@1` descriptors retain their original valid `output.maxSummaryBytes` value (1–16000) as immutable identity metadata, **not a delivery limit**. Stored descriptors, bindings and questions are not rewritten. Legacy questions reconstruct their original byte-bound wording for exact recovery; that wording does not reinstate enforcement. New methods omit that wording. Previously failed tasks stay failed and are not automatically rerun or relabeled as successful.
+
+Runtime final-answer capacity, Gateway request capacity, context, source authority, execution counts, time and cost boundaries remain separate and enforced. A large intact Child answer may still exceed context capacity. This change adds no paginated handoff, automatic continuation or truncation.
