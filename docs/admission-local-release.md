@@ -62,3 +62,36 @@ Project API/CLI, which resolves the immutable task's registered route and exact
 Session directory; do not substitute an arbitrary independently constructed
 Session with matching identifiers. Coordinated rewriting of all database authority
 is outside this local integrity contract.
+
+## Two-hour terminal maintenance: first stage
+
+`capacity maintain --project DIR --run ID` (API
+`maintainResearchUnknownCapacity`) applies the standing policy to eligible
+terminal unknown Main tickets of that original task. It is not another manual
+confirmation: its event explicitly says `two-hour-local-release@1`. The invariant
+acknowledgements describe the standing no-replay/no-refund/retain-unknown policy,
+not a newly clicked operator approval.
+
+The immutable original `createdAt` is enqueue time and includes queue waiting.
+Only elapsed time **strictly greater than 7,200,000 ms** qualifies. Equality is not
+due; updates and heartbeats do not move the origin. The event retains both dueAt
+and actual observedAt. Invalid/future creation time is blocked. Original manual
+events remain unchanged. A root with an active Child or other unsupported state
+is reported blocked, never silently freed. No provider/billing history is reset.
+
+This stage is an explicit lazy maintenance command, not a daemon or an active
+request timer. It does not yet install Project-work entry/exit hooks, persist an
+active-request stop intent, cancel a still-running Gateway or force lease
+revocation. Those paths require separate implementation and verification. Without
+a caller invoking maintenance, no promise of exactly-two-hour execution is made.
+
+### First-party design references
+
+- [AWS SQS visibility timeout](https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-visibility-timeout.html): local visibility/possession is distinct from completion; its redelivery semantics are **not** copied into model request replay.
+- [Temporal activity failure detection](https://docs.temporal.io/encyclopedia/detecting-activity-failures): heartbeat/timeout/cancellation mechanisms require an executing owner; an abort signal alone is not a stop receipt.
+- [Azure Service Bus locks and settlement](https://learn.microsoft.com/en-us/azure/service-bus-messaging/message-transfers-locks-settlement): releasing a lock does not establish business settlement.
+- [etcd concurrency API](https://etcd.io/docs/v3.6/dev-guide/api_concurrency_reference_v3/): identity/revision checks belong in the mutation transaction; they cannot recall remote computation.
+- [AWS idempotent API guidance](https://aws.amazon.com/builders-library/making-retries-safe-with-idempotent-APIs/): an idempotent local release operation does not establish provider-side request idempotency.
+
+These are supporting principles, not guarantees that this library implements those
+services or that any provider request has been cancelled.

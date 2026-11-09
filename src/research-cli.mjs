@@ -3,7 +3,7 @@ import {open,constants} from 'node:fs/promises';
 import {resolve,dirname,join} from 'node:path';
 import {pathToFileURL} from 'node:url';
 import {safeDirectory} from './storage-files.mjs';
-import {releaseResearchUnknownCapacity,createResearchProject,updateResearchProject,inspectResearchProject,readProjectJson,submitResearchTask,workResearchTask,inspectResearchTask,cancelResearchTask,respondResearchTask,readResearchOutput,applyProjectMemoryIntent,approveProjectMemoryIntent,listResearchInteractions,inspectResearchInteraction,inspectResearchChildren} from './research-project.mjs';
+import {maintainResearchUnknownCapacity,releaseResearchUnknownCapacity,createResearchProject,updateResearchProject,inspectResearchProject,readProjectJson,submitResearchTask,workResearchTask,inspectResearchTask,cancelResearchTask,respondResearchTask,readResearchOutput,applyProjectMemoryIntent,approveProjectMemoryIntent,listResearchInteractions,inspectResearchInteraction,inspectResearchChildren} from './research-project.mjs';
 import {importProjectSources,loadProjectSources} from './project-sources.mjs';
 import {inspectResearchKnowledge} from './research-project.mjs';
 import {inspectResearchCapacity} from './research-project.mjs';
@@ -29,7 +29,7 @@ Usage: node src/research-cli.mjs <group> <command> [options]
   run inspect|cancel --project DIR --run ID
   child list --project DIR --run ID
   knowledge inspect --project DIR --run ID
-  capacity inspect --project DIR --run ID
+  capacity inspect|maintain --project DIR --run ID
   capacity release-unknown --project DIR --run ID --release JSON_FILE
       --preserve-unknown --no-replay --no-refund
   interaction list --project DIR [--run ID] [--limit NUMBER] [--after CURSOR]
@@ -62,7 +62,7 @@ const specifications={
  'schedule confirm':['project','run','question','manifest','schedule','confirm-once','approve-provider?','approve-data?','approve-cost?'],
  'schedule list':['project'], 'schedule inspect':['project','run'], 'schedule cancel':['project','run'],
  'schedule run-due':['project','limit?'],
- 'capacity inspect':['project','run'],
+ 'capacity inspect':['project','run'], 'capacity maintain':['project','run'],
  'capacity release-unknown':['project','run','release','preserve-unknown','no-replay','no-refund'],
  'knowledge inspect':['project','run'],
  'child list':['project','run'],
@@ -116,6 +116,7 @@ export async function runResearchCli(args,{stdout=process.stdout,stderr=process.
    const intent=await readProjectJson(o.release,8192);if(!intent||typeof intent!=='object'||Array.isArray(intent)||Object.keys(intent).sort().join(',')!==['operationId','identity','expectedTicketSha256','reason'].sort().join(','))fail('CLI_RELEASE_FIELDS');
    emit(await releaseResearchUnknownCapacity({projectDir,runId,...intent,acknowledgements:{preserveUnknown:o['preserve-unknown']===true,noReplay:o['no-replay']===true,noRefund:o['no-refund']===true}}));return 0;
   }
+  if(command==='capacity maintain'){emit(await maintainResearchUnknownCapacity({projectDir,runId}));return 0;}
   if(command==='capacity inspect'){emit(await inspectResearchCapacity({projectDir,runId}));return 0;}
   if(command==='knowledge inspect'){emit(await inspectResearchKnowledge({projectDir,runId}));return 0;}
   if(command==='child list'){emit(await inspectResearchChildren({projectDir,runId}));return 0;}

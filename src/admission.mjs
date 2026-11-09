@@ -72,10 +72,12 @@ export async function createSharedAdmission({ directory, routeId, maxQueue = 8, 
   const validateRelease=(ticket,record)=>{
     if(!record)return null;
     let e;try{e=JSON.parse(record.event);}catch{fail('ADMISSION_RELEASE_CORRUPT');}
-    const fields=['schemaVersion','policy','operationId','identity','expectedTicketSha256','reason','acknowledgements','terminalProof','releasedAt','remoteOutcome','businessOutcome','billingOutcome','refund','replay'];
-    if(!e||typeof e!=='object'||Array.isArray(e)||Object.keys(e).sort().join(',')!==fields.sort().join(',')||!ticket||ticket.state!=='unknown'||e.schemaVersion!=='admission-local-release@1'||e.policy!=='manual-local-release'||record.ticket_id!==ticket.ticketId||record.operation_id!==e.operationId||typeof e.operationId!=='string'||!/^[A-Za-z0-9][A-Za-z0-9_-]{0,99}$/.test(e.operationId)||typeof e.reason!=='string'||!e.reason.trim()||Buffer.byteLength(e.reason)>1000||canonical(e.identity)!==canonical(identityFor(ticket))||e.expectedTicketSha256!==digest({routeId,...ticket})||canonical(e.acknowledgements)!==canonical({preserveUnknown:true,noReplay:true,noRefund:true})||e.remoteOutcome!=='unknown'||e.businessOutcome!=='unknown'||e.billingOutcome!=='unknown'||e.refund!==false||e.replay!==false||!Number.isSafeInteger(e.releasedAt)||e.releasedAt<1)fail('ADMISSION_RELEASE_CORRUPT');
+    const automatic=e?.policy==='two-hour-local-release@1';
+    const fields=[...(automatic?['expiry']:[]),'schemaVersion','policy','operationId','identity','expectedTicketSha256','reason','acknowledgements','terminalProof','releasedAt','remoteOutcome','businessOutcome','billingOutcome','refund','replay'];
+    if(!e||typeof e!=='object'||Array.isArray(e)||Object.keys(e).sort().join(',')!==fields.sort().join(',')||!ticket||ticket.state!=='unknown'||e.schemaVersion!=='admission-local-release@1'||!['manual-local-release','two-hour-local-release@1'].includes(e.policy)||record.ticket_id!==ticket.ticketId||record.operation_id!==e.operationId||typeof e.operationId!=='string'||!/^[A-Za-z0-9][A-Za-z0-9_-]{0,99}$/.test(e.operationId)||typeof e.reason!=='string'||!e.reason.trim()||Buffer.byteLength(e.reason)>1000||canonical(e.identity)!==canonical(identityFor(ticket))||e.expectedTicketSha256!==digest({routeId,...ticket})||canonical(e.acknowledgements)!==canonical({preserveUnknown:true,noReplay:true,noRefund:true})||e.remoteOutcome!=='unknown'||e.businessOutcome!=='unknown'||e.billingOutcome!=='unknown'||e.refund!==false||e.replay!==false||!Number.isSafeInteger(e.releasedAt)||e.releasedAt<1)fail('ADMISSION_RELEASE_CORRUPT');
     const p=e.terminalProof;if(!p||Object.keys(p).sort().join(',')!==['runId','rootId','fence','modelOrdinal','snapshotSha256','status','rootStatus','leaseUntil','gatewayOutcome'].sort().join(',')||p.runId!==ticket.runId||p.rootId!==ticket.rootId||p.fence!==ticket.fence||p.modelOrdinal!==ticket.modelOrdinal||!['completed','failed','cancelled'].includes(p.status)||!['completed','failed','cancelled'].includes(p.rootStatus)||p.leaseUntil!==0||p.gatewayOutcome!=='unknown'||typeof p.snapshotSha256!=='string'||!/^[a-f0-9]{64}$/.test(p.snapshotSha256))fail('ADMISSION_RELEASE_CORRUPT');
-    const intent=Object.fromEntries(['operationId','identity','expectedTicketSha256','reason','acknowledgements'].map(k=>[k,e[k]]));if(record.intent_hash!==digest(intent))fail('ADMISSION_RELEASE_CORRUPT');return e;
+    if(automatic){const x=e.expiry;if(!x||Object.keys(x).sort().join(',')!==['origin','createdAt','dueAt','observedAt'].sort().join(',')||x.origin!=='createdAt-includes-queue'||!Number.isSafeInteger(x.createdAt)||x.createdAt<1||!Number.isSafeInteger(x.dueAt)||x.dueAt<1||x.createdAt!==ticket.createdAt||x.dueAt!==ticket.createdAt+7200000||!Number.isSafeInteger(x.observedAt)||x.observedAt<=x.dueAt||e.releasedAt!==x.observedAt||e.operationId!=='two-hour-'+digest({routeId,ticketId:ticket.ticketId,createdAt:ticket.createdAt}))fail('ADMISSION_RELEASE_CORRUPT');}
+    const intent=Object.fromEntries(['operationId','identity','expectedTicketSha256','reason','acknowledgements',...(automatic?['policy','expiry']:[])].map(k=>[k,e[k]]));if(record.intent_hash!==digest(intent))fail('ADMISSION_RELEASE_CORRUPT');return e;
   };
   const activeCount=()=>{
     if(!hasReleaseTable())return db.prepare(`SELECT count(*) AS n FROM requests WHERE state IN ${active}`).get().n;
@@ -110,22 +112,39 @@ export async function createSharedAdmission({ directory, routeId, maxQueue = 8, 
   });
   const row = ticketId => db.prepare('SELECT sequence,request_id AS ticketId,reservation_id AS reservationId,root_id AS rootId,run_id AS runId,model_ordinal AS modelOrdinal,round,input_hash AS inputHash,owner,fence,deadline_at AS deadlineAt,state,created_at AS createdAt,updated_at AS updatedAt FROM requests WHERE request_id=?').get(ticketId) ?? null;
   const projectRow=ticketId=>{const ticket=row(ticketId);if(!ticket)return null;const release=releaseFor(ticketId);return {...ticket,ticketSha256:digest({routeId,...ticket}),...(release?{localRelease:validateRelease(ticket,release)}:{})};};
-  return {
-    releaseUnknown({session,operationId,identity,expectedTicketSha256,reason,acknowledgements}={}){
+  const appendRelease=({session,operationId,identity,expectedTicketSha256,reason,acknowledgements,policy='manual-local-release',expiry})=>{
       if(readOnly)fail('ADMISSION_READ_ONLY');
       if(typeof operationId!=='string'||!/^[A-Za-z0-9][A-Za-z0-9_-]{0,99}$/.test(operationId)||typeof reason!=='string'||!reason.trim()||Buffer.byteLength(reason)>1000||typeof expectedTicketSha256!=='string'||!/^[a-f0-9]{64}$/.test(expectedTicketSha256)||canonical(acknowledgements)!==canonical({preserveUnknown:true,noReplay:true,noRefund:true}))fail('ADMISSION_RELEASE_CONFIRMATION_REQUIRED');
       const ticket=row(identity?.ticketId);if(!ticket)fail('ADMISSION_TICKET_MISSING');
       const expectedIdentity=identityFor(ticket);
       if(canonical(identity)!==canonical(expectedIdentity)||ticket.state!=='unknown'||digest({routeId,...ticket})!==expectedTicketSha256)fail('ADMISSION_RELEASE_CAS');
-      const intent={operationId,identity:expectedIdentity,expectedTicketSha256,reason,acknowledgements};
+      const intent={operationId,identity:expectedIdentity,expectedTicketSha256,reason,acknowledgements,...(policy==='two-hour-local-release@1'?{policy,expiry}:{})};
       return withTerminalAdmissionOwner(session,ticket,proof=>transaction(()=>{
         const current=row(ticket.ticketId);if(canonical(current)!==canonical(ticket))fail('ADMISSION_RELEASE_CAS');
         if(!hasReleaseTable())db.exec('CREATE TABLE local_releases (ticket_id TEXT PRIMARY KEY REFERENCES requests(request_id),operation_id TEXT NOT NULL UNIQUE,intent_hash TEXT NOT NULL,event TEXT NOT NULL) STRICT');
         const prior=db.prepare('SELECT * FROM local_releases WHERE ticket_id=? OR operation_id=?').get(ticket.ticketId,operationId);
-        if(prior){const event=validateRelease(row(prior.ticket_id),prior);if(prior.intent_hash!==digest(intent))fail('ADMISSION_RELEASE_CONFLICT');return event;}
-        const event={schemaVersion:'admission-local-release@1',policy:'manual-local-release',...intent,terminalProof:proof,releasedAt:Date.now(),remoteOutcome:'unknown',businessOutcome:'unknown',billingOutcome:'unknown',refund:false,replay:false};
+        if(prior){const event=validateRelease(row(prior.ticket_id),prior);const replayIntent=policy==='two-hour-local-release@1'&&event.policy===policy?{...intent,expiry:{...expiry,observedAt:event.expiry.observedAt}}:intent;if(prior.intent_hash!==digest(replayIntent))fail('ADMISSION_RELEASE_CONFLICT');return event;}
+        const event={schemaVersion:'admission-local-release@1',policy,...intent,terminalProof:proof,releasedAt:expiry?.observedAt??Date.now(),remoteOutcome:'unknown',businessOutcome:'unknown',billingOutcome:'unknown',refund:false,replay:false};
         db.prepare('INSERT INTO local_releases VALUES (?,?,?,?)').run(ticket.ticketId,operationId,digest(intent),canonical(event));return event;
       }));
+  };
+  return {
+    releaseUnknown({session,operationId,identity,expectedTicketSha256,reason,acknowledgements}={}){return appendRelease({session,operationId,identity,expectedTicketSha256,reason,acknowledgements});},
+    maintainUnknown({session,rootId}={}){
+      if(readOnly)fail('ADMISSION_READ_ONLY');if(typeof rootId!=='string'||!rootId)fail('ADMISSION_MAINTENANCE_ROOT_REQUIRED');
+      const observedAt=Date.now();if(!Number.isSafeInteger(observedAt)||observedAt<1)fail('ADMISSION_POLICY_CLOCK_INVALID');
+      const items=[];
+      for(const record of db.prepare("SELECT request_id FROM requests WHERE root_id=? AND state='unknown' ORDER BY sequence").all(rootId)){
+        const ticket=row(record.request_id),prior=validateRelease(ticket,releaseFor(ticket.ticketId));
+        if(prior){items.push({ticketId:ticket.ticketId,state:'already-released',event:prior});continue;}
+        if(!Number.isSafeInteger(ticket.createdAt)||ticket.createdAt<1||ticket.createdAt>observedAt){items.push({ticketId:ticket.ticketId,state:'blocked',code:'ADMISSION_POLICY_CLOCK_INVALID'});continue;}
+        const dueAt=ticket.createdAt+7200000;if(!Number.isSafeInteger(dueAt)){items.push({ticketId:ticket.ticketId,state:'blocked',code:'ADMISSION_POLICY_CLOCK_INVALID'});continue;}if(observedAt<=dueAt){items.push({ticketId:ticket.ticketId,state:'not-due',dueAt,observedAt});continue;}
+        try{
+          const event=appendRelease({session,operationId:'two-hour-'+digest({routeId,ticketId:ticket.ticketId,createdAt:ticket.createdAt}),identity:identityFor(ticket),expectedTicketSha256:digest({routeId,...ticket}),reason:'Standing two-hour local capacity policy; no remote settlement, replay or refund.',acknowledgements:{preserveUnknown:true,noReplay:true,noRefund:true},policy:'two-hour-local-release@1',expiry:{origin:'createdAt-includes-queue',createdAt:ticket.createdAt,dueAt,observedAt}});
+          items.push({ticketId:ticket.ticketId,state:'released',event});
+        }catch(error){if(!['ADMISSION_RUN_NOT_TERMINAL','ADMISSION_RELEASE_SCOPE_UNSUPPORTED','ADMISSION_TERMINAL_RESERVATION_MISMATCH','ADMISSION_RELEASE_CAS','ADMISSION_RELEASE_CONFLICT'].includes(error.code))throw error;items.push({ticketId:ticket.ticketId,state:'blocked',code:error.code,dueAt,observedAt});}
+      }
+      return {policy:'two-hour-local-release@1',origin:'createdAt-includes-queue',observedAt,items};
     },
     snapshot() { return { routeId, capacity: 1, maxQueue, occupied:activeCount(),requests: db.prepare('SELECT request_id FROM requests ORDER BY sequence').all().map(x => projectRow(x.request_id)) }; },
     inspect(ticketId) { return projectRow(ticketId); },

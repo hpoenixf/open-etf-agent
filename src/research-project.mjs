@@ -281,3 +281,12 @@ export async function releaseResearchUnknownCapacity({projectDir,runId,...intent
  try{const root=session.inspect(actual);if(root.parentRunId!==null||root.rootId!==actual)fail('PROJECT_REQUEST_ROOT');admission=await createSharedAdmission({directory:join(projectDir,'admission',group.groupId),routeId:group.groupId,existingOnly:true});return admission.releaseUnknown({...intent,session});}
  finally{admission?.close();session.close();}
 }
+
+// Explicit/lazy maintenance for one frozen original task; no model dispatch.
+export async function maintainResearchUnknownCapacity({projectDir,runId}){
+ projectDir=await safeDirectory(projectDir);const definition=await readTask(projectDir,runId),project=await inspectResearchProject({projectDir}),group=taskCapacity(definition,project);await requireCapacityRegistration(projectDir,group);const actual=definition.schedule?scheduleRunId(definition.schedule):runId;
+ const directory=await safeDirectory(paths(projectDir,runId).session),stat=await lstat(join(directory,'session.sqlite'));if(!stat.isFile()||stat.isSymbolicLink()||stat.nlink!==1)fail('PROJECT_UNSAFE_FILE');
+ const session=await openSession({directory,...(profile(definition.config)?{profile:profile(definition.config)}:{})});let admission;
+ try{const root=session.inspect(actual);if(root.parentRunId!==null||root.rootId!==actual)fail('PROJECT_REQUEST_ROOT');admission=await createSharedAdmission({directory:join(projectDir,'admission',group.groupId),routeId:group.groupId,existingOnly:true});return admission.maintainUnknown({session,rootId:actual});}
+ finally{admission?.close();session.close();}
+}
