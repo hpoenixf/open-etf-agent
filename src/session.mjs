@@ -29,6 +29,11 @@ export function revokeActiveAdmissionOwner(session,ticket,persistStop){
  return revoke(ticket,persistStop);
 }
 
+export function fenceExpiredAdmissionOwner(session,ticket,persistStop){
+ const revoke=activeAdmissionOwners.get(session);if(!revoke||typeof persistStop!=="function")throw Object.assign(new Error("ADMISSION_SESSION_AUTHORITY_REQUIRED"),{code:"ADMISSION_SESSION_AUTHORITY_REQUIRED"});
+ return revoke(ticket,persistStop,true);
+}
+
 const APP_ID = 0x4f455446;
 const SCHEMA_VERSION = 2;
 const MAX_JSON = 3 * 1048576;
@@ -722,10 +727,10 @@ export async function openSession({ directory, clock = Date.now, leaseMs = 1000,
   close() { if (!closed) { db.close(); closed = true; } }
  };
  if(readOnly)return Object.freeze({directory,schemaVersion:scheduled?5:protectedProfile?4:interaction?6:ordinary?3:2,readOnly:true,publication:store.publication,publicationRevisions:store.publicationRevisions,publicationEvent:store.publicationEvent,confirmPublication:store.confirmPublication,inspect:store.inspect,findChild:store.findChild,listChildren:store.listChildren,...(ordinary?{response:store.response,responseStatus:store.responseStatus,responseHistory:store.responseHistory}:{}),...(scheduled?{inspectSchedule:store.inspectSchedule,publication:store.publication,publicationRevisions:store.publicationRevisions,publicationEvent:store.publicationEvent}:{}),...(protectedProfile?{publication:store.publication,publicationRevisions:store.publicationRevisions,publicationEvent:store.publicationEvent,verifyProtectedQueryResult:store.verifyProtectedQueryResult,protectedOutput:store.protectedOutput,consumeProtectedSource:store.consumeProtectedSource,protectedDependencies:store.protectedDependencies,readProtectedOutput:store.readProtectedOutput,listProtectedOutputs:store.listProtectedOutputs}:{}),close:store.close});
- activeAdmissionOwners.set(store,(ticket,persistStop)=>transaction(()=>{
+ activeAdmissionOwners.set(store,(ticket,persistStop,expired=false)=>transaction(()=>{
   const current=view(getRun(ticket.runId));
   if(ticket.runId!==ticket.rootId||current.parentRunId!==null||current.snapshot.purpose!==undefined)fail('ADMISSION_RELEASE_SCOPE_UNSUPPORTED');
-  if(current.rootId!==ticket.rootId||current.status!=='active'||current.rootStatus!=='active'||current.snapshot.phase!=='model-reserved'||current.owner!==ticket.owner||current.fence!==ticket.fence||current.leaseUntil<=now())fail('ADMISSION_ACTIVE_OWNER_MISMATCH');
+  if(current.rootId!==ticket.rootId||current.status!=='active'||current.rootStatus!=='active'||current.snapshot.phase!=='model-reserved'||current.owner!==ticket.owner||current.fence!==ticket.fence||(expired?current.leaseUntil>now():current.leaseUntil<=now()))fail('ADMISSION_ACTIVE_OWNER_MISMATCH');
   if(db.prepare("SELECT 1 FROM runs WHERE root_id=? AND run_id<>? AND (status='active' OR owner IS NOT NULL OR lease_until<>0)").get(ticket.rootId,ticket.runId))fail('ADMISSION_ACTIVE_CHILD_BLOCKED');
   const input=current.snapshot.working;if(current.snapshot.gatewayOutcome!=='unknown'||current.snapshot.rounds!==ticket.round||current.rootUsage.model!==ticket.modelOrdinal||input?.hash!==ticket.inputHash||!Array.isArray(input.messages)||digest(JSON.stringify(input.messages))!==ticket.inputHash)fail('ADMISSION_TERMINAL_RESERVATION_MISMATCH');
   // Admission's durable gate commits first. If Session commit fails, the gate

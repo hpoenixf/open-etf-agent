@@ -1,4 +1,4 @@
-import {withTerminalAdmissionOwner,revokeActiveAdmissionOwner} from './session.mjs';
+import {withTerminalAdmissionOwner,revokeActiveAdmissionOwner,fenceExpiredAdmissionOwner} from './session.mjs';
 import { DatabaseSync } from 'node:sqlite';
 import { randomUUID, createHash } from 'node:crypto';
 import { lstatSync, openSync, closeSync } from 'node:fs';
@@ -150,6 +150,29 @@ export async function createSharedAdmission({ directory, routeId, maxQueue = 8, 
       }));
   };
   return {
+    // Explicit operator recovery. A durable stop is NOT a release. Lock order
+    // is Session -> Admission; a failed Session commit leaves unknown held.
+    recoverExpiredOwner({session,ticketId,expectedTicketSha256}={}){
+      if(readOnly)fail("ADMISSION_READ_ONLY");
+      const current=row(ticketId);if(!current)fail("ADMISSION_TICKET_MISSING");
+      const prior=stopFor(current),original=prior?.ticket??current,observedAt=Date.now();
+      if(original.state!=="dispatched"||digest({routeId,...original})!==expectedTicketSha256)fail("ADMISSION_STOP_CAS");
+      if(!Number.isSafeInteger(observedAt)||observedAt<=original.createdAt+7200000)fail("ADMISSION_STOP_NOT_DUE");
+      const persist=()=>transaction(()=>{
+        const actual=row(ticketId);if(canonical(actual)!==canonical(current))fail("ADMISSION_STOP_CAS");
+        if(prior)return prior;
+        if(!hasStopTable())db.exec("CREATE TABLE expiry_stops (ticket_id TEXT PRIMARY KEY REFERENCES requests(request_id),event_hash TEXT NOT NULL,event TEXT NOT NULL) STRICT");
+        const event={schemaVersion:"admission-expiry-stop@1",policy:"two-hour-local-revocation@1",ticket:original,originalTicketSha256:expectedTicketSha256,createdAt:original.createdAt,dueAt:original.createdAt+7200000,observedAt,localEffect:"logical-adoption-revocation",remoteOutcome:"unknown"};
+        db.prepare("INSERT INTO expiry_stops VALUES (?,?,?)").run(ticketId,digest(event),canonical(event));
+        db.prepare("UPDATE requests SET state='unknown',updated_at=? WHERE request_id=? AND state='dispatched'").run(observedAt,ticketId);return event;
+      });
+      let stop;
+      if(prior&&session.inspect(original.runId).status!=="active")stop=withTerminalAdmissionOwner(session,original,()=>prior);
+      else stop=fenceExpiredAdmissionOwner(session,original,persist);
+      const ticket=row(ticketId);
+      const release=appendRelease({session,operationId:"lost-owner-"+digest({routeId,ticketId}),identity:identityFor(ticket),expectedTicketSha256:digest({routeId,...ticket}),reason:"Explicit expired-owner fence; local capacity only; remote result and billing remain unknown.",acknowledgements:{preserveUnknown:true,noReplay:true,noRefund:true}});
+      return JSON.parse(canonical({stop,release}));
+    },
     releaseUnknown({session,operationId,identity,expectedTicketSha256,reason,acknowledgements}={}){return appendRelease({session,operationId,identity,expectedTicketSha256,reason,acknowledgements});},
     maintainUnknown({session,rootId}={}){
       if(readOnly)fail('ADMISSION_READ_ONLY');if(typeof rootId!=='string'||!rootId)fail('ADMISSION_MAINTENANCE_ROOT_REQUIRED');
