@@ -60,3 +60,18 @@ catalog removal, followed by another process's terminal replay with a throwing
 Gateway proving no dispatch. The earlier checkpoint-2 reopen was same-process;
 only this later test establishes the stated cross-process boundary. Maximum-size
 question/definition regression cases and full-suite verification remain pending.
+
+## Checkpoint 4 focused closure
+
+SP-03's open-then-registration-symlink replacement is executable RED, followed by
+per-read registration directory safety validation and GREEN. The focused set also
+checks the original constructed Child question rejection over 16000 UTF-8 bytes,
+a valid smaller question, and exact Session JSON acceptance at 65536 bytes versus
+65537 rejection. These are original owner boundary tests, not a larger context
+window or a promise that every descriptor accepted by the catalog fits every
+future task. A paired Project fixture executes genuinely different claim-comparison
+and fee-basis methods with different instruction text, tool sets and bounds through
+the original Child consumer; an inline-config version still passes without a
+catalog. The original Root budget and all authority restrictions are unchanged.
+All responses remain FakeGateway fixture data: no semantic quality claim about
+real models follows from this coverage.

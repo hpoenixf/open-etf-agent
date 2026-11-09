@@ -46,7 +46,8 @@ No permission to save Memory or publish a final report is granted to a Child.
 
 Current limits: 16 active profiles, 8 enabled profiles, 16 active presets, 32
 lifetime IDs of each kind, 256 immutable store generations, 256 KiB per generation.
-Mutations are single-publish CAS; concurrent writers may receive a conflict or
+Mutations compete for an immutable ordinal seal before publishing its data; this
+is not an atomic transaction across both directories. Concurrent writers may receive a conflict or
 safe transient read refusal. There is no hidden retry loop. A torn committed
 file fails closed; an uncommitted dot-prefixed publication temporary is not
 admitted. This is not a claim of exhaustive crash recovery or all-descendant

@@ -47,3 +47,8 @@ test('reserved generation without data stays uncertain and cannot be reclaimed b
  const registration=join(dirname(f.directory),'.'+basename(f.directory)+'-registration');const seal=join(registration,'00000003.json');await writeFile(seal,JSON.stringify({ordinal:3,stateSha256:'a'.repeat(64)}));const before=await readFile(seal);
  await assert.rejects(s.createProfile('new',input),e=>e.code==='SPECIALIST_HEAD_MISSING');await assert.rejects(openSpecialistProfiles({...f,create:true}),e=>e.code==='SPECIALIST_HEAD_MISSING');assert.deepEqual(await readFile(seal),before);
 });
+
+test('already opened store refuses registration directory replaced by an alias',async t=>{
+ const {rename}=await import('node:fs/promises');const {dirname,basename}=await import('node:path');const f=await fixture(t),s=await openSpecialistProfiles({...f,create:true});const p=await s.createProfile('stable',input);const registration=join(dirname(f.directory),'.'+basename(f.directory)+'-registration');await rename(registration,registration+'-moved');await symlink(registration+'-moved',registration);
+ await assert.rejects(s.list());await assert.rejects(s.readProfile(p.profileId));await assert.rejects(s.resolveSelection({profiles:[{profileId:p.profileId,revision:1}],maxChildren:1}));
+});
