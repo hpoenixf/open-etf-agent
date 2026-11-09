@@ -149,10 +149,9 @@ export async function createSharedAdmission({ directory, routeId, maxQueue = 8, 
         db.prepare('INSERT INTO local_releases VALUES (?,?,?,?)').run(ticket.ticketId,operationId,digest(intent),canonical(event));return event;
       }));
   };
-  return {
     // Explicit operator recovery. A durable stop is NOT a release. Lock order
     // is Session -> Admission; a failed Session commit leaves unknown held.
-    recoverExpiredOwner({session,ticketId,expectedTicketSha256}={}){
+  const recoverExpiredOwner=({session,ticketId,expectedTicketSha256}={})=>{
       if(readOnly)fail("ADMISSION_READ_ONLY");
       const current=row(ticketId);if(!current)fail("ADMISSION_TICKET_MISSING");
       const prior=stopFor(current),original=prior?.ticket??current,observedAt=Date.now();
@@ -170,16 +169,37 @@ export async function createSharedAdmission({ directory, routeId, maxQueue = 8, 
       if(prior&&session.inspect(original.runId).status!=="active")stop=withTerminalAdmissionOwner(session,original,()=>prior);
       else stop=fenceExpiredAdmissionOwner(session,original,persist);
       const ticket=row(ticketId);
-      const release=appendRelease({session,operationId:"lost-owner-"+digest({routeId,ticketId}),identity:identityFor(ticket),expectedTicketSha256:digest({routeId,...ticket}),reason:"Explicit expired-owner fence; local capacity only; remote result and billing remain unknown.",acknowledgements:{preserveUnknown:true,noReplay:true,noRefund:true}});
-      return JSON.parse(canonical({stop,release}));
-    },
+      let release,alreadyReleased=false;try{release=appendRelease({session,operationId:"lost-owner-"+digest({routeId,ticketId}),identity:identityFor(ticket),expectedTicketSha256:digest({routeId,...ticket}),reason:"Explicit expired-owner fence; local capacity only; remote result and billing remain unknown.",acknowledgements:{preserveUnknown:true,noReplay:true,noRefund:true}});
+      }catch(error){
+        if(error.code!=="ADMISSION_RELEASE_CONFLICT")throw error;
+        release=withTerminalAdmissionOwner(session,ticket,()=>transaction(()=>{
+          const actual=row(ticketId),actualStop=stopFor(actual);
+          if(canonical(actual)!==canonical(ticket)||canonical(actualStop)!==canonical(stop))throw error;
+          const event=validateRelease(actual,releaseFor(ticketId));
+          // Only the standing automatic policy is a compatible competing intent.
+          // A different manual intent, identity or corrupt appendix is not swallowed.
+          if(!event||event.policy!=="two-hour-local-release@1")throw error;
+          return event;
+        }));alreadyReleased=true;
+      }
+      return JSON.parse(canonical({stop,release,...(alreadyReleased?{alreadyReleased:true}:{})}));
+  };
+  return {
+    recoverExpiredOwner,
     releaseUnknown({session,operationId,identity,expectedTicketSha256,reason,acknowledgements}={}){return appendRelease({session,operationId,identity,expectedTicketSha256,reason,acknowledgements});},
     maintainUnknown({session,rootId}={}){
       if(readOnly)fail('ADMISSION_READ_ONLY');if(typeof rootId!=='string'||!rootId)fail('ADMISSION_MAINTENANCE_ROOT_REQUIRED');
       const observedAt=Date.now();if(!Number.isSafeInteger(observedAt)||observedAt<1)fail('ADMISSION_POLICY_CLOCK_INVALID');
       const items=[];
-      for(const record of db.prepare("SELECT request_id FROM requests WHERE root_id=? AND state='unknown' ORDER BY sequence").all(rootId)){
-        const ticket=row(record.request_id),stop=stopFor(ticket),effectiveAt=Math.max(observedAt,stop?.observedAt??0),prior=validateRelease(ticket,releaseFor(ticket.ticketId));
+      for(const record of db.prepare("SELECT request_id FROM requests WHERE root_id=? AND state IN ('unknown','dispatched') ORDER BY sequence").all(rootId)){
+        const original=row(record.request_id),originalStop=stopFor(original);
+        if(original.state==="dispatched"||(originalStop&&session.inspect(original.runId).status==="active")){
+          if(observedAt<=original.createdAt+7200000){items.push({ticketId:original.ticketId,state:"not-due",dueAt:original.createdAt+7200000,observedAt});continue;}
+          try{const recovered=recoverExpiredOwner({session,ticketId:original.ticketId,expectedTicketSha256:originalStop?.originalTicketSha256??digest({routeId,...original})});items.push({ticketId:original.ticketId,state:recovered.alreadyReleased?"already-released":"released",event:recovered.release});}
+          catch(error){if(!["ADMISSION_ACTIVE_OWNER_MISMATCH","ADMISSION_ACTIVE_CHILD_BLOCKED","ADMISSION_RELEASE_SCOPE_UNSUPPORTED","ADMISSION_TERMINAL_RESERVATION_MISMATCH","ADMISSION_STOP_CAS","ADMISSION_RUN_NOT_TERMINAL"].includes(error.code))throw error;items.push({ticketId:original.ticketId,state:"blocked",code:error.code,observedAt});}
+          continue;
+        }
+        const ticket=original,stop=originalStop,effectiveAt=Math.max(observedAt,stop?.observedAt??0),prior=validateRelease(ticket,releaseFor(ticket.ticketId));
         if(prior){items.push({ticketId:ticket.ticketId,state:'already-released',event:prior});continue;}
         if(!Number.isSafeInteger(ticket.createdAt)||ticket.createdAt<1||ticket.createdAt>effectiveAt){items.push({ticketId:ticket.ticketId,state:'blocked',code:'ADMISSION_POLICY_CLOCK_INVALID'});continue;}
         const dueAt=ticket.createdAt+7200000;if(!Number.isSafeInteger(dueAt)){items.push({ticketId:ticket.ticketId,state:'blocked',code:'ADMISSION_POLICY_CLOCK_INVALID'});continue;}if(effectiveAt<=dueAt){items.push({ticketId:ticket.ticketId,state:'not-due',dueAt,observedAt});continue;}

@@ -303,7 +303,7 @@ export async function maintainResearchUnknownCapacity({projectDir,runId}){
 async function maintainProjectRouteBeforeWork(projectDir,definition){
  const project=await inspectResearchProject({projectDir}),group=taskCapacity(definition,project);await requireCapacityRegistration(projectDir,group);
  const admission=await createSharedAdmission({directory:join(projectDir,'admission',group.groupId),routeId:group.groupId,readOnly:true});let tickets;
- try{tickets=admission.snapshot().requests.filter(t=>t.state==='unknown'&&!t.localRelease&&t.runId===t.rootId);}finally{admission.close();}
+ try{tickets=admission.snapshot().requests.filter(t=>['unknown','dispatched'].includes(t.state)&&!t.localRelease&&t.runId===t.rootId);}finally{admission.close();}
  const ids=[...new Set(tickets.map(t=>t.rootId))];if(ids.length>1024)fail('PROJECT_CAPACITY_MAINTENANCE_LIMIT');
  let scheduled;
  for(const runId of ids){let original,taskId=runId;try{original=await readTask(projectDir,runId);}catch(error){if(!['ENOENT','PROJECT_INVALID_ID'].includes(error.code))throw error;}
