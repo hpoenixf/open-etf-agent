@@ -270,3 +270,14 @@ export async function readResearchOutput({projectDir,runId}){
  const assessment=publication.content.assessment;
  return {kind:assessment?'degraded-answer':'published-answer',runId:run.runId,status:run.status,code:run.snapshot.code,directory:run.directory,receipt:null,revision:null,report:null,reportStatus:reportError?'unavailable':'not-created',...(reportError?{reportError}:{}),publicationStatus:'published',publication,answer:{text:publication.content.text,sha256:sha256(publication.content.text),bytes:Buffer.byteLength(publication.content.text),semanticStatus:'unreviewed',verification:'at-publication',...(assessment?{...assessment}:{citations:[],calculations:[],markers:[],warning:'回答已发布；Report 未提供。回答的金融数字、计算结论和语义未经核验。'})}};
 }
+
+// Operator-only local capacity policy. Does not settle remote work or replay a Run.
+export async function releaseResearchUnknownCapacity({projectDir,runId,...intent}){
+ projectDir=await safeDirectory(projectDir);const definition=await readTask(projectDir,runId),project=await inspectResearchProject({projectDir});const group=taskCapacity(definition,project);await requireCapacityRegistration(projectDir,group);
+ const actual=definition.schedule?scheduleRunId(definition.schedule):runId;
+ if(intent.identity?.routeId!==group.groupId||intent.identity?.rootId!==actual)fail('PROJECT_REQUEST_ROOT');
+ const directory=await safeDirectory(paths(projectDir,runId).session),stat=await lstat(join(directory,'session.sqlite'));if(!stat.isFile()||stat.isSymbolicLink()||stat.nlink!==1)fail('PROJECT_UNSAFE_FILE');
+ const session=await openSession({directory,...(profile(definition.config)?{profile:profile(definition.config)}:{})});let admission;
+ try{const root=session.inspect(actual);if(root.parentRunId!==null||root.rootId!==actual)fail('PROJECT_REQUEST_ROOT');admission=await createSharedAdmission({directory:join(projectDir,'admission',group.groupId),routeId:group.groupId,existingOnly:true});return admission.releaseUnknown({...intent,session});}
+ finally{admission?.close();session.close();}
+}
