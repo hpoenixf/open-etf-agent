@@ -1,0 +1,22 @@
+{
+  "schema": "guidance-v2-full-offline@1",
+  "testExit": 0,
+  "summary": [
+    "# tests 1232",
+    "# pass 1232",
+    "# fail 0",
+    "# skipped 0",
+    "# duration_ms 225700.905002"
+  ],
+  "buildExit": 0,
+  "seconds": 230.58147883415222,
+  "inputsUnchanged": true,
+  "modelCalls": 0,
+  "testOutputSha256": "75137f1a681a54df2b26226142909c9363090fd4cd430d398a1db3c281a6d178",
+  "testStderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "sourceCommit": "a96940c4da4d17c82147af7e809377ea4f9abef6",
+  "legacyGuidanceBaseline": "a05693843abddf89f4396bbbb9feb7420828f387",
+  "legacyBaselineFilesVerified": 782,
+  "semanticImprovementVerified": false,
+  "release": false
+}
