@@ -33,3 +33,17 @@ test('create intent ID survives lost ACK, edit and remove; another body cannot r
  await s.removeProfile(a.profileId,2);assert.equal((await s.createProfile('stable-intent',input)).tombstone,true);assert.equal((await s.list()).profiles.length,0);
  await s.removePreset(preset.presetId,1);assert.equal((await s.createPreset('preset-intent',presetInput)).tombstone,true);await assert.rejects(s.createPreset('preset-intent',{...presetInput,name:'Other'}),e=>e.code==='SPECIALIST_CONFLICT');
 });
+
+test('initialized catalog disappearance cannot reuse an old ID and revision',async t=>{
+ const {rename}=await import('node:fs/promises');const f=await fixture(t),s=await openSpecialistProfiles({...f,create:true});await s.createProfile('stable',input);await rename(f.directory,f.directory+'-lost');
+ await assert.rejects(openSpecialistProfiles({...f,create:true}));
+});
+test('missing acknowledged tail cannot roll back a tombstone',async t=>{
+ const {unlink}=await import('node:fs/promises');const f=await fixture(t),s=await openSpecialistProfiles({...f,create:true});await s.createProfile('stable',input);await s.removeProfile('stable',1);await unlink(join(f.directory,'00000003.json'));await assert.rejects(openSpecialistProfiles(f));
+});
+
+test('reserved generation without data stays uncertain and cannot be reclaimed by init',async t=>{
+ const {dirname,basename}=await import('node:path');const f=await fixture(t),s=await openSpecialistProfiles({...f,create:true});await s.createProfile('stable',input);
+ const registration=join(dirname(f.directory),'.'+basename(f.directory)+'-registration');const seal=join(registration,'00000003.json');await writeFile(seal,JSON.stringify({ordinal:3,stateSha256:'a'.repeat(64)}));const before=await readFile(seal);
+ await assert.rejects(s.createProfile('new',input),e=>e.code==='SPECIALIST_HEAD_MISSING');await assert.rejects(openSpecialistProfiles({...f,create:true}),e=>e.code==='SPECIALIST_HEAD_MISSING');assert.deepEqual(await readFile(seal),before);
+});

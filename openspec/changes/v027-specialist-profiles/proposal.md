@@ -48,3 +48,15 @@ immutable historical generations but exposes only current records, not historica
 browsing. Focused process-CAS and partial-publication checks are added; no full
 suite, live qualification or v0.26 integration claim is made. The original
 checkpoint-1 create-ACK gap and first fixture argument rejection remain recorded.
+
+## Checkpoint 3 safety and process recovery
+
+Independent review SP-02 identified reinitialization and tail-loss rollback.
+Two executable RED cases are retained. Separate persistent catalog registration
+and pre-publication generation seals now reject both, and reject an interrupted
+reserved generation without reclaiming it. Project's immutable task remains the
+worker authority. A separate Node worker process consumes frozen specialists after
+catalog removal, followed by another process's terminal replay with a throwing
+Gateway proving no dispatch. The earlier checkpoint-2 reopen was same-process;
+only this later test establishes the stated cross-process boundary. Maximum-size
+question/definition regression cases and full-suite verification remain pending.

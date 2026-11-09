@@ -1,5 +1,5 @@
-import {open,constants,readdir} from 'node:fs/promises';
-import {join} from 'node:path';
+import {open,constants,readdir,mkdir,lstat} from 'node:fs/promises';
+import {join,dirname,basename,resolve} from 'node:path';
 import {safeDirectory,ensureSafeDirectory,publishImmutable} from './storage-files.mjs';
 import {sha256} from './source.mjs';
 import {normalizeChildMethod} from './child.mjs';
@@ -31,14 +31,27 @@ function validateState(s,projectId,ordinal,previousSha256){
 }
 /** Explicit project-local configuration, never authority, task queue or model execution. */
 export async function openSpecialistProfiles({directory,projectId,create=false}){
- if(!identifier(projectId)||typeof create!=='boolean')fail('SPECIALIST_SCOPE');directory=create?await ensureSafeDirectory(directory):await safeDirectory(directory);
+ if(!identifier(projectId)||typeof create!=='boolean')fail('SPECIALIST_SCOPE');directory=resolve(directory);
+ const parent=await safeDirectory(dirname(directory)),registration=join(parent,'.'+basename(directory)+'-registration');
+ let registered=true;try{await lstat(registration);}catch(e){if(e.code!=='ENOENT')throw e;registered=false;}
+ async function durable(dir,name,value){await publishImmutable(dir,name,Buffer.from(canonical(value)+'\n'));const d=await open(dir,'r');try{await d.sync();}finally{await d.close();}}
+ if(!registered){
+  if(!create)fail('ENOENT');
+  try{await lstat(directory);fail('SPECIALIST_REGISTRATION_MISSING');}catch(e){if(e.code!=='ENOENT')throw e;}
+  try{await mkdir(registration);}catch(e){if(e.code==='EEXIST')fail('SPECIALIST_CONFLICT');throw e;}
+  await durable(registration,'identity.json',{schemaVersion:'specialist-registration@1',projectId,directoryName:basename(directory)});
+  const d=await open(parent,'r');try{await d.sync();}finally{await d.close();}
+  await mkdir(directory);await publish({schemaVersion:'specialist-store@1',projectId,ordinal:1,previousSha256:null,profiles:[],presets:[]});
+ }
+ await safeDirectory(registration);const identity=await readJson(join(registration,'identity.json'));if(canonical(identity)!==canonical({schemaVersion:'specialist-registration@1',projectId,directoryName:basename(directory)}))fail('SPECIALIST_SCOPE');
+ directory=await safeDirectory(directory);
  async function read(){await safeDirectory(directory);const entries=await readdir(directory,{withFileTypes:true});const committed=entries.filter(e=>!e.name.startsWith('.'));
+  const seals=(await readdir(registration)).filter(n=>n!=='identity.json'&&!n.startsWith('.'));if(seals.length!==committed.length||seals.some(n=>!/^\d{8}\.json$/.test(n)))fail('SPECIALIST_HEAD_MISSING');
   if(!committed.length)fail('SPECIALIST_UNINITIALIZED');if(committed.length>MAX_GENERATIONS||committed.some(e=>!e.isFile()||!/^\d{8}\.json$/.test(e.name)))fail('SPECIALIST_CORRUPT');committed.sort((a,b)=>a.name.localeCompare(b.name));let last=null,previous=null;
-  for(const [i,e]of committed.entries()){if(e.name!==String(i+1).padStart(8,'0')+'.json')fail('SPECIALIST_CORRUPT');const record=await readJson(join(directory,e.name));exact(record,['state','stateSha256']);if(hash(record.state)!==record.stateSha256)fail('SPECIALIST_CORRUPT');validateState(record.state,projectId,i+1,previous);last=record.state;previous=record.stateSha256;}
+  for(const [i,e]of committed.entries()){if(e.name!==String(i+1).padStart(8,'0')+'.json')fail('SPECIALIST_CORRUPT');const seal=await readJson(join(registration,e.name));exact(seal,['ordinal','stateSha256']);const record=await readJson(join(directory,e.name));if(seal.ordinal!==i+1||seal.stateSha256!==record.stateSha256)fail('SPECIALIST_HEAD_CHANGED');exact(record,['state','stateSha256']);if(hash(record.state)!==record.stateSha256)fail('SPECIALIST_CORRUPT');validateState(record.state,projectId,i+1,previous);last=record.state;previous=record.stateSha256;}
   return{state:last,sha256:previous};
  }
- async function publish(state){const bytes=Buffer.from(canonical({state,stateSha256:hash(state)})+'\n');if(bytes.length>LIMIT)fail('SPECIALIST_LIMIT');try{await publishImmutable(directory,String(state.ordinal).padStart(8,'0')+'.json',bytes);}catch(e){if(e.code==='EEXIST')fail('SPECIALIST_CONFLICT');throw e;}const d=await open(directory,'r');try{await d.sync();}finally{await d.close();}}
- if(create){const existing=await readdir(directory);if(existing.length===0)await publish({schemaVersion:'specialist-store@1',projectId,ordinal:1,previousSha256:null,profiles:[],presets:[]});}
+ async function publish(state){const bytes=Buffer.from(canonical({state,stateSha256:hash(state)})+'\n');if(bytes.length>LIMIT)fail('SPECIALIST_LIMIT');const name=String(state.ordinal).padStart(8,'0')+'.json';try{await durable(registration,name,{ordinal:state.ordinal,stateSha256:hash(state)});await publishImmutable(directory,name,bytes);}catch(e){if(e.code==='EEXIST')fail('SPECIALIST_CONFLICT');throw e;}const d=await open(directory,'r');try{await d.sync();}finally{await d.close();}}
  await read();
  async function mutate(kind,recordId,expected,input,remove=false,createId){const {state,sha256:previousSha256}=await read();const plural=kind==='profile'?'profiles':'presets',idKey=kind+'Id',items=state[plural];let next;
   if(recordId===null){const parsed=kind==='profile'?profileInput(input):presetInput(input);if(!identifier(createId))fail('SPECIALIST_CREATE_ID_REQUIRED');const existing=items.find(p=>p[idKey]===createId);if(existing){if(existing.creationInputSha256!==hash(parsed))fail('SPECIALIST_CONFLICT');return structuredClone(existing);}next=sealed({...parsed,[idKey]:createId,revision:1,tombstone:false,creationInputSha256:hash(parsed)});}

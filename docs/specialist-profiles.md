@@ -51,3 +51,14 @@ safe transient read refusal. There is no hidden retry loop. A torn committed
 file fails closed; an uncommitted dot-prefixed publication temporary is not
 admitted. This is not a claim of exhaustive crash recovery or all-descendant
 process cleanup.
+
+The catalog now has a separate sibling registration directory
+`.specialists-registration` in its Project. Initialization registers once; an
+existing catalog with missing registration, or registered catalog missing data,
+cannot be initialized as a new empty store. Each generation's ordinal and hash
+are durably reserved there before its immutable data file is published. Both
+sequences must match on every read, so losing an acknowledged tail cannot silently
+roll back an edit or tombstone. A reserved seal with missing/incomplete data is
+uncertain and fails closed: no automatic ordinal reuse, rollback, replay, or
+repair is provided. Preserve both directories in a backup. This is not protection
+against simultaneous deletion or rewriting of all Project authority files.
