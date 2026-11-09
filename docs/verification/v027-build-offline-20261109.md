@@ -38,3 +38,16 @@ Real-provider acceptance of this changed execution/prompt policy remains pending
 Prior diagnostic batches, unknown Q02, failed T01 and subsequent T02 observations
 retain their exact original sources and boundaries; they are not pooled into a
 new fixed ten-task qualification result.
+
+## Final fixed-source rerun
+
+The corrected fixture commit `d2490f2b41785d0e611fb8d80efdc50886603c66`
+has the same executable source as the commit above. A fresh complete offline run
+finished with **1220/1220 passed, zero failed/skipped**, exit0, about207.8 seconds.
+All 778 tracked input files matched the fixed commit before the run and remained
+unchanged afterward. The actual build and built CLI smoke both exited0; all 98
+generated files matched their source bytes. This is a new complete execution,
+not a relabeling of the earlier five failures. No model calls were made.
+
+See the separate live qualification record for real-provider evidence and its
+remaining coverage boundaries. Offline success is not permission to publish.
