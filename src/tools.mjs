@@ -10,7 +10,7 @@ import {saveReport,REPORT_TEXT_MAX_BYTES,validateProtectedReportReceipt} from '.
 import { projectMemoryEffect } from './memory-effects.mjs';
 import { readFile, open, constants } from 'node:fs/promises';
 import { join } from 'node:path';
-import { createResultStore, validateSourceDescriptor, reportReferenceIssue } from './results.mjs';
+import { createResultStore, derivedDescriptor, validateSourceDescriptor, reportReferenceIssue } from './results.mjs';
 import { calculateChange } from './calculation.mjs';
 import { isDeepStrictEqual } from 'node:util';
 import { safeDirectory } from './storage-files.mjs';
@@ -77,7 +77,9 @@ export function assertWorkingInputToolSelection({allowedTools,contextBytes,compa
     throw Object.assign(new Error('Working input requires selected original/note reread tools'),{code:'WORKING_INPUT_TOOL_UNAVAILABLE'});
   }
 }
-export async function createToolHost({ directory, extensions = [], hooks, allowedTools, allowedDocuments, enableNotes=false, restore, pdfInput, ordinaryResponse, readOnly=false, documentAccess, documentCatalog, runIdentity, canOfferReferenceCorrection, answerDelivery=false }) {
+export async function createToolHost({ directory, extensions = [], hooks, allowedTools, allowedDocuments, enableNotes=false, restore, pdfInput, ordinaryResponse, readOnly=false, documentAccess, documentCatalog, runIdentity, canOfferReferenceCorrection, answerDelivery=false, hostProjection, projectionOwner, confirmDerivedConsumption }) {
+  if(hostProjection!==undefined&&hostProjection!=='host-results@1')fail('Invalid Host projection policy');
+  if(hostProjection&&(!projectionOwner||typeof confirmDerivedConsumption!=='function'))fail('Host projection owner required');
   if(typeof readOnly!=='boolean'||readOnly&&pdfInput!==undefined)fail('Invalid Host read mode');
   const protection=documentAccess===undefined?undefined:validateArtifactProtection(documentAccess.protection);
   if(protection&&(extensions.length||hooks||enableNotes||pdfInput!==undefined||ordinaryResponse||!['consume','dependencies','output','verifyQuery'].every(k=>typeof documentAccess[k]==='function')||!readOnly&&!['bind','register','query'].every(k=>typeof documentAccess[k]==='function')||JSON.stringify(allowedTools)!==JSON.stringify(['search_pages','read_page','read_result','create_csv','save_report'])))fail('Unsupported protected Host configuration');
@@ -89,7 +91,7 @@ export async function createToolHost({ directory, extensions = [], hooks, allowe
   const input = catalog ?? JSON.parse(await readFile(new URL('../fixtures/documents.json', import.meta.url), 'utf8'));
   if (allowedDocuments !== undefined && (!Array.isArray(allowedDocuments) || !allowedDocuments.length || allowedDocuments.some(id => id!==pdfDocumentId&&!input.documents.some(d => d.id === id)))) fail('Invalid document allowlist');
   const documents = new Map(input.documents.filter(d => allowedDocuments === undefined || allowedDocuments.includes(d.id)).map(d => [d.id, d]));
-  const results = await createResultStore({ directory, allowedDocuments, readOnly });
+  const results = await createResultStore({ directory, allowedDocuments, readOnly, ...(hostProjection?{derivedOwner:projectionOwner}:{}) });
   const methods = new Map();
   const artifacts = await openArtifactStore({directory,readOnly,protection});
   async function readSource(ref){const source=await results.read(ref);return protection?documentAccess.consume(validateProtectedSourcePayload(source),ref):source;}
@@ -248,6 +250,16 @@ export async function createToolHost({ directory, extensions = [], hooks, allowe
   if(enableNotes)bindings.read_note={historyCompaction:'read-only@1',description:'Read an acquired derived working note, never original evidence or permission.',parameters:{type:'object',properties:{resultRef:{type:'string',pattern:'^note:sha256:[a-f0-9]{64}$'}},required:['resultRef'],additionalProperties:false},validate(args){fields(args,['resultRef']);if(typeof args.resultRef!=='string'||!/^note:sha256:[a-f0-9]{64}$/.test(args.resultRef))fail('Invalid derived note ref');},async execute(args){return{...await results.readNote(args.resultRef),resultRef:args.resultRef};}};
   if(ordinaryResponse){if(typeof ordinaryResponse.confirm!=='function')fail('Invalid ordinary response owner');bindings.ask_response={...RESPONSE_TOOL,validate:args=>validateResponseCall({id:'validate',name:'ask_response',arguments:args}),execute:()=>{throw Object.assign(new Error('ORDINARY_RUNTIME_REQUIRED'),{code:'ORDINARY_RUNTIME_REQUIRED'});}};}
   if (!Array.isArray(extensions) || extensions.length > 16) fail('Invalid extension list');
+  if(hostProjection){
+    if(protection||hooks)fail('Unsupported Host projection composition');
+    bindings.read_result={
+      historyCompaction:'read-only@1',
+      description:'Read an acquired immutable original, or a Host-owned derived text page. Derived results are unreviewed, not source evidence. Offset/limit count Unicode code points; follow nextOffset for complete original text. No upstream fetch or Child replay.',
+      parameters:{type:'object',properties:{resultRef:{type:'string',pattern:'^(result|derived):sha256:[a-f0-9]{64}$'},selection:{type:'object',properties:{offset:{type:'integer',minimum:0},limit:{type:'integer',minimum:1,maximum:4096}},required:['offset','limit'],additionalProperties:false}},required:['resultRef'],additionalProperties:false},
+      validate(args){fields(args,args?.selection===undefined?['resultRef']:['resultRef','selection']);if(typeof args.resultRef!=='string'||!/^(result|derived):sha256:[a-f0-9]{64}$/.test(args.resultRef)||args.resultRef.startsWith('result:')&&args.selection!==undefined)fail('Invalid typed result read');if(args.selection!==undefined){fields(args.selection,['offset','limit']);if(!Number.isSafeInteger(args.selection.offset)||args.selection.offset<0||!Number.isSafeInteger(args.selection.limit)||args.selection.limit<1||args.selection.limit>4096)fail('Invalid derived selection');}},
+      async execute(args){if(args.resultRef.startsWith('result:'))return {...await readSource(args.resultRef),resultRef:args.resultRef};await ownedDerived(args.resultRef);return results.readDerivedSelection(args.resultRef,args.selection);}
+    };
+  }
   for (const binding of extensions) {
     if (!binding || typeof binding.name !== 'string' || !/^[a-z][a-z0-9_]{0,63}$/.test(binding.name)) fail('Invalid extension name');
     if (binding.name==='ask_response' || Object.hasOwn(bindings, binding.name)) fail('Duplicate extension or builtin collision');
@@ -285,12 +297,22 @@ export async function createToolHost({ directory, extensions = [], hooks, allowe
     saveAttempted=restore.saveAttempted||Boolean(protection&&documentAccess.pendingSave);receipt=structuredClone(restore.receipt);
     if(receipt){if(!saveAttempted)recoveryFail('Recovered receipt without save attempt');await validateReceipt(receipt);}
   }
-  async function rememberValue(binding,value,signal){
+  async function rememberValue(binding,value,signal,call){
     async function remember(source){const current=protection?validateProtectedSourcePayload(source):validateSource(source);if(current.web){const original=documents.get(current.documentId);if(!original?.web||webProvenanceSha256(original.web)!==webProvenanceSha256(current.web))fail('Web source outside original catalog');const bytes=webOriginalBytes(original.web,original.originalBase64);const stored=await artifacts.put({format:'web-original',content:bytes},{signal});if(stored.artifactId!==webOriginalArtifactId(current.web))fail('Web original artifact mismatch');}await verifyPdf(current);try{const ref=await results.add(current,{signal});if(protection)documentAccess.bind(current,ref.resultRef);return{...(protection?documentAccess.consume(current,ref.resultRef):current),resultRef:ref.resultRef};}catch(error){if(current.web)error.artifactEffects=[...(error.artifactEffects||[]),{kind:'artifact',artifactId:webOriginalArtifactId(current.web)}];if(current.pdf)error.artifactEffects=[...(error.artifactEffects||[]),{kind:'artifact',artifactId:current.pdf.originalArtifactId}];throw error;}}
     if(binding.sourceResult)value=await remember(value);
     if(binding.sourceResults){if(!Array.isArray(value?.sources)||value.sources.length>16)fail('Invalid batch sources');const validated=value.sources.map(validateSource),ids=new Map();for(const source of validated){const id=JSON.stringify(['documentId','name','version','page','sha256','mediaType'].map(key=>source[key]));if(ids.has(source.sourceId)&&ids.get(source.sourceId)!==id)fail('Conflicting batch source identity');ids.set(source.sourceId,id);}const imported=[];for(const source of validated)imported.push(await remember(source));value={...value,sources:imported};}
     if(binding.methodResult){if(!object(value)||!['id','name','text','sha256','version'].every(k=>typeof value[k]==='string')||value.sha256!==sha256(value.text)||Buffer.byteLength(value.text)>65536)fail('Invalid acquired method snapshot');if(methods.has(value.id)&&JSON.stringify(methods.get(value.id))!==JSON.stringify(value))fail('Method identity rebind conflict');methods.set(value.id,structuredClone(value));}
+    if(hostProjection&&call?.name==='delegate_child'&&value?.child){
+      if(typeof binding.verifyResult!=='function')fail('Derived producer owner missing');
+      await binding.verifyResult(value,{call});await results.addDerived({runId:projectionOwner.runId,rootId:projectionOwner.rootId,call:structuredClone(call),value:structuredClone(value)},{signal});
+    }
     return value;
+  }
+  function derivedView(record,ref){return {kind:'stored-derived-ref',derived:true,resultRef:ref,contentHash:sha256(record.value.child.summary),...(record.value.child.status?{status:record.value.child.status}:{}),...(record.value.child.code!==undefined?{code:record.value.child.code}:{}),...(record.value.child.limitations?{limitations:structuredClone(record.value.child.limitations)}:{}),producer:{runId:record.value.child.runId,parentRunId:record.runId,rootId:record.rootId,callId:record.call.id},method:{id:record.value.child.methodDescriptor.id,version:record.value.child.methodDescriptor.version},semanticStatus:'unreviewed',readWith:{name:'read_result',arguments:{resultRef:ref,selection:{offset:0,limit:1024}}}};}
+  async function ownedDerived(ref){
+    const record=await results.readDerived(ref),binding=bindings[record.call.name];
+    if(!binding?.verifyResult||await confirmDerivedConsumption(record)!==true)recoveryFail('Derived result lacks original consumed receipt');
+    await binding.verifyResult(record.value,{call:record.call});return record;
   }
   function verifyCalculationRejection(call,result){
     if(hooks||!Object.hasOwn(bindings,'calculate_change'))recoveryFail('Calculation correction scope mismatch');
@@ -366,8 +388,40 @@ export async function createToolHost({ directory, extensions = [], hooks, allowe
       await host.verifyResult(call,result);
       return true;
     },
+    lookupContextSource: id=>bindings.read_result?results.resolve(id):null,
+    async projectOwnedResult(call,result){
+      if(!hostProjection||!bindings.read_result||result.status!=='succeeded')return null;
+      await host.verifyResult(call,result);
+      if(call.name==='delegate_child'&&result.value?.child){
+        const input={runId:projectionOwner.runId,rootId:projectionOwner.rootId,call:structuredClone(call),value:structuredClone(result.value)},ref=derivedDescriptor(input).resultRef;
+        const record=await ownedDerived(ref);if(!isDeepStrictEqual(record,input))recoveryFail('Derived projection identity mismatch');
+        return {...structuredClone(result.value),child:derivedView(record,ref)};
+      }
+      if(call.name==='read_result'&&call.arguments.resultRef.startsWith('derived:'))return {kind:'stored-derived-page-ref',derived:true,resultRef:call.arguments.resultRef,coverage:structuredClone(result.value.coverage),readWith:{name:'read_result',arguments:structuredClone(call.arguments)}};
+      return null;
+    },
     snapshot: () => ({schemaVersion:protection?'tool-host-protected@1':'tool-host@2',...(protection?{protection:structuredClone(protection)}:{}),definitionsHash,...(historyCompaction?{historyCompaction:structuredClone(historyCompaction)}:{}),results:results.snapshot(),methods:structuredClone([...methods.values()]),saveAttempted,receipt:structuredClone(receipt)}),
-    async verifyWorkingInput(working){if(working.noteRef){const value=await results.readNote(working.noteRef);const projected=working.messages.find(m=>m.role==='tool'&&m.result?.value?.resultRef===working.noteRef)?.result.value;if(!projected||JSON.stringify({...value,resultRef:working.noteRef})!==JSON.stringify(projected))recoveryFail('Recovered working note mismatch');}},
+    async verifyWorkingInput(working){
+      for(const message of working.messages??[]){
+        const view=message.result?.value,child=view?.child;
+        if(child?.kind==='stored-derived-ref'){
+          if(!hostProjection||!bindings.read_result)recoveryFail('Unselected derived projection');
+          const record=await ownedDerived(child.resultRef),calls=working.messages.flatMap(m=>m.calls??[]).filter(c=>c.id===message.callId);
+          if(calls.length!==1||!isDeepStrictEqual(calls[0],record.call)||!Array.isArray(view.sources)||view.sources.length!==record.value.sources.length)recoveryFail('Working derived reference identity mismatch');
+          const sources=[];for(let i=0;i<record.value.sources.length;i++){
+            const original=record.value.sources[i],ref=await results.resolve(original.sourceId),projected={...ref,kind:'stored-source-ref',...(original.mcp?{acquisition:structuredClone(original.mcp)}:{}),readWith:{name:'read_result',arguments:{resultRef:ref.resultRef}}};
+            if(!isDeepStrictEqual(view.sources[i],original)&&!isDeepStrictEqual(view.sources[i],projected))recoveryFail('Working derived source projection mismatch');sources.push(view.sources[i]);
+          }
+          if(!isDeepStrictEqual(view,{...record.value,child:derivedView(record,child.resultRef),sources}))recoveryFail('Working derived projection payload mismatch');
+        }
+        if(view?.kind==='stored-derived-page-ref'){
+          if(!hostProjection||!bindings.read_result)recoveryFail('Unselected derived projection');
+          const calls=working.messages.flatMap(m=>m.calls??[]).filter(c=>c.id===message.callId);if(calls.length!==1||calls[0].name!=='read_result')recoveryFail('Working page call mismatch');
+          const call=calls[0];await ownedDerived(call.arguments.resultRef);const page=await results.readDerivedSelection(call.arguments.resultRef,call.arguments.selection);
+          if(!isDeepStrictEqual(view,{kind:'stored-derived-page-ref',derived:true,resultRef:call.arguments.resultRef,coverage:page.coverage,readWith:{name:'read_result',arguments:call.arguments}}))recoveryFail('Working page identity mismatch');
+        }
+      }
+      if(working.noteRef){const value=await results.readNote(working.noteRef);const projected=working.messages.find(m=>m.role==='tool'&&m.result?.value?.resultRef===working.noteRef)?.result.value;if(!projected||JSON.stringify({...value,resultRef:working.noteRef})!==JSON.stringify(projected))recoveryFail('Recovered working note mismatch');}},
     async verifyResult(call,result){
       if(result?.deliveryAssessment){await host.answerCandidate(call,result);return;}
       if(result?.validation?.schemaVersion==='specialist-group-refusal@1'){
@@ -388,7 +442,8 @@ export async function createToolHost({ directory, extensions = [], hooks, allowe
       }
       if(!binding)recoveryFail('Recovered tool binding mismatch');
       async function source(current){const stored=await readSource(current?.resultRef);if(protection){const {resultRef,...payload}=current;validateProtectedSourcePayload(payload);}for(const key of ['sourceId','documentId','name','version','page','text','sha256','mediaType'])if(stored[key]!==current[key])recoveryFail('Recovered source payload mismatch');if(!isDeepStrictEqual(stored.pdf,current.pdf))recoveryFail('PDF source provenance mismatch');if(!isDeepStrictEqual(stored.web,current.web))recoveryFail('Web source provenance mismatch');await verifyPdf(stored);}
-      if(binding.sourceResult||name==='read_result')await source(value);
+      if(binding.sourceResult||name==='read_result'&&(!hostProjection||!call.arguments.resultRef.startsWith('derived:')))await source(value);
+      if(name==='read_result'&&hostProjection&&call.arguments.resultRef.startsWith('derived:')){await ownedDerived(call.arguments.resultRef);const expected=await results.readDerivedSelection(call.arguments.resultRef,call.arguments.selection);if(!isDeepStrictEqual(value,expected))recoveryFail('Derived page identity mismatch');}
       if(binding.sourceResults){if(!Array.isArray(value?.sources))recoveryFail('Recovered sources mismatch');for(const item of value.sources)await source(item);}
       verifyKnowledgeResult(originalGroupOwners.get(name) ?? binding, result.effective || call, value);
       if(binding.methodResult){const method=methods.get(value?.id);if(!method||JSON.stringify(method)!==JSON.stringify(value))recoveryFail('Recovered method payload mismatch');}
@@ -427,7 +482,7 @@ export async function createToolHost({ directory, extensions = [], hooks, allowe
       if(!binding?.reconcile||typeof binding.recoveryVersion!=='string')return null;
       const result=await binding.reconcile(structuredClone(effective.arguments),{callId:call.id,signal:context.signal});
       if(!result)return null;
-      return {callId:call.id,status:'succeeded',dispatched:true,value:await rememberValue(binding,result,context.signal),durationMs:0,reconciled:true,recoveryVersion:binding.recoveryVersion,
+      return {callId:call.id,status:'succeeded',dispatched:true,value:await rememberValue(binding,result,context.signal,call),durationMs:0,reconciled:true,recoveryVersion:binding.recoveryVersion,
         ...(hooks?{original:structuredClone(call),effective:structuredClone(effective)}:{}),
         ...(hooks||['calculate_change','create_csv'].includes(call.name)||['calculate_change','create_csv'].includes(effective.name)?{requestHash:requestIdentity(call,effective,Boolean(hooks))}:{})};
     },
@@ -465,7 +520,7 @@ export async function createToolHost({ directory, extensions = [], hooks, allowe
       }
       try {
         let value = await binding.execute(call.arguments, { callId, signal });
-        value = await rememberValue(binding,value,signal);
+        value = await rememberValue(binding,value,signal,call);
         return finish({ callId, status: 'succeeded', dispatched: true, value });
       } catch (error) {
         return finish({ callId, status: 'failed', dispatched: true, error: error.code || error.message, partialPaths: error.partialPaths || [], ...(binding.artifactEffects&&projectArtifactEffects(error.artifactEffects)?{artifactEffects:projectArtifactEffects(error.artifactEffects)}:{}), ...(binding.memoryEffect&&projectMemoryEffect(error.memoryEffect)?{memoryEffect:projectMemoryEffect(error.memoryEffect)}:{}) });

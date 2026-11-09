@@ -82,7 +82,7 @@ function validateBindings(value) {
  }
 }
 function validateConfig(value, ordinary = false, protectedProfile = false, interaction = false) {
- fields(value, [], ['requireReport', 'allowedTools', 'allowedDocuments', 'documentCatalog', 'pdfSnapshot', 'contextBytes', 'taskId', 'workingInput', 'publication', 'taskTime', ...(ordinary ? ['ordinaryResponse'] : []), ...(interaction ? ['interaction'] : []), ...(protectedProfile ? ['documentProtection'] : [])]);
+ fields(value, [], ['requireReport', 'hostProjection', 'allowedTools', 'allowedDocuments', 'documentCatalog', 'pdfSnapshot', 'contextBytes', 'taskId', 'workingInput', 'publication', 'taskTime', ...(ordinary ? ['ordinaryResponse'] : []), ...(interaction ? ['interaction'] : []), ...(protectedProfile ? ['documentProtection'] : [])]);
  if(protectedProfile){if(value.documentCatalog!==undefined||value.pdfSnapshot!==undefined)fail('INVALID_PROTECTED_PROFILE');fields(value.documentProtection,['authorityId','libraryId']);if(!identifier(value.documentProtection.authorityId)||!identifier(value.documentProtection.libraryId)||!Array.isArray(value.allowedDocuments)||!value.allowedDocuments.length||value.workingInput!==undefined||value.ordinaryResponse!==undefined)fail('INVALID_PROTECTED_PROFILE');}
  if(value.documentCatalog!==undefined){fields(value.documentCatalog,['schemaVersion','id','sha256']);if(!['document-catalog@1','document-catalog@2'].includes(value.documentCatalog.schemaVersion)||!identifier(value.documentCatalog.id)||!hash(value.documentCatalog.sha256))fail('INVALID_DEFINITION');}
  if(value.pdfSnapshot!==undefined){const p=value.pdfSnapshot;fields(p,['schemaVersion','parser','parserWorkerSha256','originalSha256','originalBytes','snapshotSha256']);if(p.schemaVersion!=='pdf-input-snapshot@1'||p.parser!=='pdf2json@4.1.0'||!hash(p.parserWorkerSha256)||!hash(p.originalSha256)||!hash(p.snapshotSha256)||!Number.isSafeInteger(p.originalBytes)||p.originalBytes<5||p.originalBytes>1048576)fail('INVALID_DEFINITION');}
@@ -90,6 +90,7 @@ function validateConfig(value, ordinary = false, protectedProfile = false, inter
  if (value.publication !== undefined && value.publication !== 'publication@1') fail('INVALID_DEFINITION');
  if (value.requireReport !== undefined && typeof value.requireReport !== 'boolean') fail('INVALID_DEFINITION');
  for (const key of ['allowedTools', 'allowedDocuments']) if (value[key] !== undefined && (!Array.isArray(value[key]) || !value[key].length || value[key].length > 64 || new Set(value[key]).size !== value[key].length || value[key].some(v => !identifier(v)))) fail('INVALID_DEFINITION');
+ if(value.hostProjection!==undefined&&value.hostProjection!=='host-results@1')fail('INVALID_DEFINITION');
  if (value.contextBytes !== undefined && (!Number.isSafeInteger(value.contextBytes) || value.contextBytes < 1 || value.contextBytes > 1048576)) fail('INVALID_DEFINITION');
  if (value.taskId !== undefined && value.taskId !== null && !identifier(value.taskId)) fail('INVALID_DEFINITION');
  if (value.workingInput !== undefined) {
@@ -104,7 +105,7 @@ function validateConfig(value, ordinary = false, protectedProfile = false, inter
 }
 function definitionBytes(value, ordinary = false, protectedProfile = false, interaction = false) {
  fields(value, ['question', 'grantId', 'bindings', 'limits', 'rootLimits', 'deadlineAt', 'config']);
- if (typeof value.question !== 'string' || !value.question.trim() || Buffer.byteLength(value.question) > 16000 || !identifier(value.grantId) || !Number.isSafeInteger(value.deadlineAt) || value.deadlineAt < 1) fail('INVALID_DEFINITION');
+ if (typeof value.question !== 'string' || !value.question.trim() || (value.config?.hostProjection===undefined&&Buffer.byteLength(value.question) > 16000) || !identifier(value.grantId) || !Number.isSafeInteger(value.deadlineAt) || value.deadlineAt < 1) fail('INVALID_DEFINITION');
  fields(value.limits, ['maxRounds', 'maxTools', 'timeoutMs']); fields(value.rootLimits, ['model', 'tool']);
  for (const [key, n] of Object.entries(value.limits)) if (!Number.isSafeInteger(n) || n < 1 || n > (key === 'timeoutMs' ? 3600000 : 1000)) fail('INVALID_DEFINITION');
  for (const n of Object.values(value.rootLimits)) if (!Number.isSafeInteger(n) || n < 1 || n > 1000) fail('INVALID_DEFINITION');
