@@ -51,3 +51,9 @@ not a relabeling of the earlier five failures. No model calls were made.
 
 See the separate live qualification record for real-provider evidence and its
 remaining coverage boundaries. Offline success is not permission to publish.
+
+## Versioned reader correction final offline validation
+
+New host-results@2 adds disjoint source/derived reader schemas while preserving frozen @1 and absent-policy definitions. Five production files, one new reader test and two stale new-default assertions changed. Independent read-only review approved WIP. True old d249 binary created an @1 task checkpoint that the new binary resumed; new tasks freeze @2. Targeted suites passed 12/12, 7/7 and 13/13 with zero skips.
+
+The first full run exited 1; a diagnostic TAP run recorded 1,223/1,225 passing, with only two stale @1 new-task assertions failing. These records remain failures. After correcting only those assertions, a fresh final full run passed 1,225/1,225, zero failures/skips, exit 0; build exit 0. No model calls. This does not establish real provider acceptance of the new schema; S01's actual @1 failure remains documented separately.

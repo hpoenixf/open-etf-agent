@@ -76,3 +76,24 @@ workflow order. Some N03–N05 prose overstates relative-date ambiguity. These
 observations are not relabeled as Runtime failures or silently corrected in the
 original reports. N09/N10 preserve the twelve input statuses and conditions, and
 all report source labels match original source identities/order.
+
+## S01 follow-up: retained failure, not acceptance
+
+A fresh synthetic task used the existing16KiB configuration inherited by both
+Main and Child. The Child completed and its7,403-byte summary was consumed.
+All5 real requests were Go/adopted with reported additional cost0 and unknown0.
+The Main task nevertheless failed TOOL_REJECTED before producing a report:
+the model called read_result on original result: references with selection.
+That combination matched the published tool schema but the typed validator
+rejected it before dispatch. No successful derived-page read or cold recovery
+is claimed. The harness process exiting0 is not Runtime acceptance.
+
+This reveals a schema/validator contract defect. The intended correction is a
+versioned typed schema/description consistent with the existing validator, not
+permission expansion or ignoring selection. Old frozen task definitions and
+all earlier results must remain recoverable. A correction and fresh verification
+are required before any release claim that includes this reader contract.
+
+## Versioned reader correction
+
+New research tasks freeze `host-results@2`, whose public `read_result` schema separates original source refs (no selection) from derived refs (optional bounded selection). Existing @1 tool definitions and absent-policy tasks are preserved, including Child inheritance. Independent code review found no permission expansion. A real old d249 subprocess-created @1 task was resumed by the new binary in an offline fixture. This is compatibility evidence, not live provider schema acceptance. The original formal ten and S01 remain @1 evidence and are not regraded. Fresh @2 live verification is pending.

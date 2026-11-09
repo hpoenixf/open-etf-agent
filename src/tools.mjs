@@ -78,7 +78,7 @@ export function assertWorkingInputToolSelection({allowedTools,contextBytes,compa
   }
 }
 export async function createToolHost({ directory, extensions = [], hooks, allowedTools, allowedDocuments, enableNotes=false, restore, pdfInput, ordinaryResponse, readOnly=false, documentAccess, documentCatalog, runIdentity, canOfferReferenceCorrection, answerDelivery=false, hostProjection, projectionOwner, confirmDerivedConsumption }) {
-  if(hostProjection!==undefined&&hostProjection!=='host-results@1')fail('Invalid Host projection policy');
+  if(hostProjection!==undefined&&!['host-results@1','host-results@2'].includes(hostProjection))fail('Invalid Host projection policy');
   if(hostProjection&&(!projectionOwner||typeof confirmDerivedConsumption!=='function'))fail('Host projection owner required');
   if(typeof readOnly!=='boolean'||readOnly&&pdfInput!==undefined)fail('Invalid Host read mode');
   const protection=documentAccess===undefined?undefined:validateArtifactProtection(documentAccess.protection);
@@ -256,6 +256,18 @@ export async function createToolHost({ directory, extensions = [], hooks, allowe
       historyCompaction:'read-only@1',
       description:'Read an acquired immutable original, or a Host-owned derived text page. Derived results are unreviewed, not source evidence. Offset/limit count Unicode code points; follow nextOffset for complete original text. No upstream fetch or Child replay.',
       parameters:{type:'object',properties:{resultRef:{type:'string',pattern:'^(result|derived):sha256:[a-f0-9]{64}$'},selection:{type:'object',properties:{offset:{type:'integer',minimum:0},limit:{type:'integer',minimum:1,maximum:4096}},required:['offset','limit'],additionalProperties:false}},required:['resultRef'],additionalProperties:false},
+      validate(args){fields(args,args?.selection===undefined?['resultRef']:['resultRef','selection']);if(typeof args.resultRef!=='string'||!/^(result|derived):sha256:[a-f0-9]{64}$/.test(args.resultRef)||args.resultRef.startsWith('result:')&&args.selection!==undefined)fail('Invalid typed result read');if(args.selection!==undefined){fields(args.selection,['offset','limit']);if(!Number.isSafeInteger(args.selection.offset)||args.selection.offset<0||!Number.isSafeInteger(args.selection.limit)||args.selection.limit<1||args.selection.limit>4096)fail('Invalid derived selection');}},
+      async execute(args){if(args.resultRef.startsWith('result:'))return {...await readSource(args.resultRef),resultRef:args.resultRef};await ownedDerived(args.resultRef);return results.readDerivedSelection(args.resultRef,args.selection);}
+    };
+  }
+  if(hostProjection==='host-results@2'){
+    bindings.read_result={
+      historyCompaction:'read-only@1',
+      description:'Read an acquired immutable original with result:sha256:... using only resultRef: do not supply selection for source refs. For derived:sha256:... only, optional selection selects a Host-owned derived text page (default offset 0, limit 1024). Derived results are unreviewed, not source evidence. Derived offset/limit count Unicode code points; follow nextOffset for the complete derived text. No upstream fetch or Child replay.',
+      parameters:{type:'object',properties:{resultRef:{type:'string',pattern:'^(result|derived):sha256:[a-f0-9]{64}$'},selection:{type:'object',properties:{offset:{type:'integer',minimum:0},limit:{type:'integer',minimum:1,maximum:4096}},required:['offset','limit'],additionalProperties:false}},required:['resultRef'],additionalProperties:false,oneOf:[
+        {type:'object',properties:{resultRef:{type:'string',pattern:'^result:sha256:[a-f0-9]{64}$'}},required:['resultRef'],additionalProperties:false},
+        {type:'object',properties:{resultRef:{type:'string',pattern:'^derived:sha256:[a-f0-9]{64}$'},selection:{type:'object',properties:{offset:{type:'integer',minimum:0},limit:{type:'integer',minimum:1,maximum:4096}},required:['offset','limit'],additionalProperties:false}},required:['resultRef'],additionalProperties:false}
+      ]},
       validate(args){fields(args,args?.selection===undefined?['resultRef']:['resultRef','selection']);if(typeof args.resultRef!=='string'||!/^(result|derived):sha256:[a-f0-9]{64}$/.test(args.resultRef)||args.resultRef.startsWith('result:')&&args.selection!==undefined)fail('Invalid typed result read');if(args.selection!==undefined){fields(args.selection,['offset','limit']);if(!Number.isSafeInteger(args.selection.offset)||args.selection.offset<0||!Number.isSafeInteger(args.selection.limit)||args.selection.limit<1||args.selection.limit>4096)fail('Invalid derived selection');}},
       async execute(args){if(args.resultRef.startsWith('result:'))return {...await readSource(args.resultRef),resultRef:args.resultRef};await ownedDerived(args.resultRef);return results.readDerivedSelection(args.resultRef,args.selection);}
     };

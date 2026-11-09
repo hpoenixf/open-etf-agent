@@ -90,7 +90,7 @@ function validateConfig(value, ordinary = false, protectedProfile = false, inter
  if (value.publication !== undefined && value.publication !== 'publication@1') fail('INVALID_DEFINITION');
  if (value.requireReport !== undefined && typeof value.requireReport !== 'boolean') fail('INVALID_DEFINITION');
  for (const key of ['allowedTools', 'allowedDocuments']) if (value[key] !== undefined && (!Array.isArray(value[key]) || !value[key].length || value[key].length > 64 || new Set(value[key]).size !== value[key].length || value[key].some(v => !identifier(v)))) fail('INVALID_DEFINITION');
- if(value.hostProjection!==undefined&&value.hostProjection!=='host-results@1')fail('INVALID_DEFINITION');
+ if(value.hostProjection!==undefined&&!['host-results@1','host-results@2'].includes(value.hostProjection))fail('INVALID_DEFINITION');
  if (value.contextBytes !== undefined && (!Number.isSafeInteger(value.contextBytes) || value.contextBytes < 1 || value.contextBytes > 1048576)) fail('INVALID_DEFINITION');
  if (value.taskId !== undefined && value.taskId !== null && !identifier(value.taskId)) fail('INVALID_DEFINITION');
  if (value.workingInput !== undefined) {
