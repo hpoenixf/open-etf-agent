@@ -79,8 +79,8 @@ and actual observedAt. Invalid/future creation time is blocked. Original manual
 events remain unchanged. A root with an active Child or other unsupported state
 is reported blocked, never silently freed. No provider/billing history is reset.
 
-This stage is an explicit lazy maintenance command, not a daemon or an active
-request timer. It does not yet install Project-work entry/exit hooks, persist an
+The initial stage was an explicit lazy maintenance command, not a daemon or an active
+request timer. It did not install Project-work entry/exit hooks, persist an
 active-request stop intent, cancel a still-running Gateway or force lease
 revocation. Those paths require separate implementation and verification. Without
 a caller invoking maintenance, no promise of exactly-two-hour execution is made.
@@ -95,3 +95,26 @@ a caller invoking maintenance, no promise of exactly-two-hour execution is made.
 
 These are supporting principles, not guarantees that this library implements those
 services or that any provider request has been cancelled.
+
+## Phase 2 candidate, focused verification only
+
+The candidate wrapper adds a two-hour active-owner timer with an immutable
+stop event, original Session cancellation and a local Promise-race boundary. It is
+intended to retire the local waiter and deny late result adoption even if a Gateway
+ignores AbortSignal. It does not terminate remote HTTP execution. It conservatively
+excludes summary/Child requests, an active sibling, mismatching original working
+input, and unverified owner/fence. A stop committed before a later Session failure
+remains a dispatch/adoption gate; without real terminal Session proof the slot
+stays held. Existing manual and terminal-maintenance policy records remain intact.
+
+Project work entry/exit also invokes lazy maintenance for original
+Main tasks of that Project's registered route. No resident daemon is introduced.
+This paragraph is a candidate description, not test evidence or permission to
+apply it to an actual live pool. A focused synthetic suite passed 18/18, including actual deferred Gateway
+fulfillment after logical revocation and a first-arm already-due request with
+zero Gateway dispatch. The initial 17/18 failure (unhandled expiry rejection)
+was retained and corrected before that run. These are not full-product or live
+qualification. Active-Child and mismatching-lease timer branches, crash windows,
+and Project entry/exit integration still require targeted verification; the hook
+skips scheduled occurrence IDs and foreign/unlocatable Project tasks rather than
+claiming cross-schedule recovery. The earlier 16/16 result applies to stage 1.
