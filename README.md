@@ -132,7 +132,7 @@ The model proposes; code checks authority and executes. Session, Publication and
 - [Article-to-code mapping](docs/articles-and-code.md)
 
 <a id="roadmap"></a>
-[Roadmap](docs/plan/v1-to-v2.md): planned is not shipped. Web acquisition, isolated Python and richer PDF capabilities are separate candidates, not bundled promises.
+[Roadmap](docs/plan/v1-to-v2.md): planned is not shipped. v0.26 ships explicit public static-page acquisition; broader Web capabilities, isolated Python and richer PDF support remain separate candidates, not bundled promises.
 
 ## Author
 

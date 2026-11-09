@@ -132,7 +132,7 @@ npm run demo -- --case document-compare
 - [文章与代码对应关系](docs/articles-and-code.zh-CN.md)
 
 <a id="roadmap"></a>
-[完整路线](docs/plan/v1-to-v2.zh-CN.md)：规划不等于交付。Web 取材、隔离 Python 与更丰富 PDF 能力分别评估，不打包作已实现承诺。
+[完整路线](docs/plan/v1-to-v2.zh-CN.md)：规划不等于交付。v0.26 已提供显式公开静态网页取材；更广泛的 Web 能力、隔离 Python 与更丰富 PDF 支持仍分别评估，不打包作已实现承诺。
 
 ## 作者
 
