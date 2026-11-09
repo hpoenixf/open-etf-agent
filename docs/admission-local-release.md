@@ -128,3 +128,25 @@ fixture's attempt to inspect through its deliberately invalid reference. Restori
 the reference before observation corrected that assertion; the final scheduled
 case then passed 1/1. These results are not a same-input 24/24 or full-product/live
 qualification. No remote completion, refund or automatic request replay is implied.
+
+### Fixed-source complete regression
+
+Commit `1418b2b7b8e487b375a56fa5e16fa491f5c52553` subsequently passed its
+first complete single-concurrency test run: **1,023/1,023**, with no failures,
+skips or cancellations, followed by the native ESM build. Source, installed
+dependencies and Node input hashes were unchanged. Both registered test/build
+process groups finished normally. The isolated offline environment did not
+inherit provider credentials; no model requests or original live-pool operations
+were performed. The earlier 23/24 run and subsequent 1/1 targeted correction
+remain separate historical observations, not a combined pass count. This full
+regression establishes engineering verification for that fixed source, not live
+application, provider termination or settled billing.
+
+The scheduled confirmation check above applies specifically to automatic
+**Project work entry/exit discovery**: it rereads the original confirmation
+reference before mapping an occurrence back to its task. Explicit
+`capacity maintain --run <task-id>` is an operator-invoked local maintenance
+entry, not schedule execution. It uses the frozen task definition, original
+Session and exact original Admission ticket bindings; it does not independently
+repeat that work-hook confirmation-reference check. Neither entry replays the
+scheduled request, resolves remote unknowns or refunds its debit.
