@@ -3,7 +3,7 @@ import {open,constants} from 'node:fs/promises';
 import {resolve,dirname,join} from 'node:path';
 import {pathToFileURL} from 'node:url';
 import {safeDirectory} from './storage-files.mjs';
-import {createResearchProject,updateResearchProject,inspectResearchProject,readProjectJson,submitResearchTask,workResearchTask,inspectResearchTask,cancelResearchTask,respondResearchTask,readResearchOutput,applyProjectMemoryIntent,approveProjectMemoryIntent,listResearchInteractions,inspectResearchInteraction,inspectResearchChildren} from './research-project.mjs';
+import {openProjectSpecialists,createResearchProject,updateResearchProject,inspectResearchProject,readProjectJson,submitResearchTask,workResearchTask,inspectResearchTask,cancelResearchTask,respondResearchTask,readResearchOutput,applyProjectMemoryIntent,approveProjectMemoryIntent,listResearchInteractions,inspectResearchInteraction,inspectResearchChildren} from './research-project.mjs';
 import {importProjectSources,loadProjectSources} from './project-sources.mjs';
 import {inspectResearchKnowledge} from './research-project.mjs';
 import {inspectResearchCapacity} from './research-project.mjs';
@@ -15,11 +15,18 @@ Usage: node src/research-cli.mjs <group> <command> [options]
   project init --project DIR --config JSON_FILE
   project update --project DIR --config JSON_FILE --expected-config SHA256
   project inspect --project DIR
+  specialist init|list --project DIR
+  specialist create --project DIR --id ID --profile JSON_FILE
+  specialist read|remove --project DIR --id ID [--revision NUMBER (remove)]
+  specialist update --project DIR --id ID --revision NUMBER --profile JSON_FILE
+  preset create --project DIR --id ID --preset JSON_FILE
+  preset read|remove --project DIR --id ID [--revision NUMBER (remove)]
+  preset update --project DIR --id ID --revision NUMBER --preset JSON_FILE
   source import --project DIR --files JSON_FILE
   source list --project DIR --manifest SHA256
   run submit --project DIR --run ID --question TEXT_FILE --manifest SHA256
       [--approve-provider --approve-data --approve-cost]
-      [--memory-intents JSON_FILE] [--task-time JSON_FILE] [--schedule JSON_FILE]
+      [--specialists JSON_FILE] [--memory-intents JSON_FILE] [--task-time JSON_FILE] [--schedule JSON_FILE]
   schedule confirm --project DIR --run ID --question TEXT_FILE --manifest SHA256 --schedule JSON_FILE --confirm-once
       [--approve-provider --approve-data --approve-cost]
   schedule list --project DIR
@@ -57,6 +64,11 @@ for submit --memory-intents. Memory mutations require an explicit one-time inten
 All options are single-use. Unknown options and positional arguments are rejected.
 `;
 const specifications={
+ 'specialist init':['project'], 'specialist list':['project'],
+ 'specialist create':['project','id','profile'], 'specialist read':['project','id'],
+ 'specialist update':['project','id','revision','profile'], 'specialist remove':['project','id','revision'],
+ 'preset create':['project','id','preset'], 'preset read':['project','id'],
+ 'preset update':['project','id','revision','preset'], 'preset remove':['project','id','revision'],
  'schedule confirm':['project','run','question','manifest','schedule','confirm-once','approve-provider?','approve-data?','approve-cost?'],
  'schedule list':['project'], 'schedule inspect':['project','run'], 'schedule cancel':['project','run'],
  'schedule run-due':['project','limit?'],
@@ -68,7 +80,7 @@ const specifications={
  'project update':['project','config','expected-config'],
  'project init':['project','config'], 'project inspect':['project'],
  'source import':['project','files'], 'source list':['project','manifest'],
- 'run submit':['project','run','question','manifest','approve-provider?','approve-data?','approve-cost?','memory-intents?','task-time?','schedule?'],
+ 'run submit':['project','run','question','manifest','approve-provider?','approve-data?','approve-cost?','memory-intents?','task-time?','schedule?','specialists?'],
  'run work':['project','run'], 'run inspect':['project','run'], 'run cancel':['project','run'],
  'run respond':['project','run','question-id','response-id','text'],
  'run report':['project','run'], 'run serve':['project','run','port?'],
@@ -90,7 +102,7 @@ export function parseResearchArguments(args){
 async function textFile(path,limit){await safeDirectory(dirname(resolve(path)));const file=await open(path,constants.O_RDONLY|constants.O_NOFOLLOW|constants.O_NONBLOCK);try{const s=await file.stat();if(!s.isFile()||s.size>limit)fail('CLI_UNSAFE_TEXT_FILE');const bytes=Buffer.alloc(limit+1);let count=0;while(count<bytes.length){const{bytesRead}=await file.read(bytes,count,bytes.length-count);if(!bytesRead)break;count+=bytesRead;}if(count>limit)fail('CLI_UNSAFE_TEXT_FILE');let text;try{text=new TextDecoder('utf-8',{fatal:true}).decode(bytes.subarray(0,count));}catch{fail('CLI_INVALID_UTF8');}if(!text.trim()||text.includes('\0'))fail('CLI_EMPTY_OR_BINARY_TEXT');return text;}finally{await file.close();}}
 function integer(value,min,max){if(!/^(0|[1-9][0-9]*)$/.test(value))fail('CLI_INVALID_INTEGER');const n=Number(value);if(!Number.isSafeInteger(n)||n<min||n>max)fail('CLI_INVALID_INTEGER');return n;}
 function sourceResult(value){return{manifestSha256:value.manifestSha256,manifest:value.manifest};}
-function taskResult(value){const d=value.definition,r=value.run;return{...(r?.snapshot?{phase:r.snapshot.phase,...(r.snapshot.code?{code:r.snapshot.code}:{}),...(r.snapshot.phase==='awaiting-response'?{response:{deadlineAt:r.definition.deadlineAt,questionId:r.snapshot.responseQuestion,question:r.snapshot.proposal?.calls?.[r.snapshot.cursor]?.arguments?.question}}:{})}:{}),runId:d.runId,projectId:d.projectId,sourceManifestSha256:d.sourceManifestSha256,grantId:d.grantId,...(value.schedule?{schedule:value.schedule}:{}),run:r?Object.fromEntries(['runId','rootId','parentRunId','status','rootStatus','rootUsage','directory','revision','cancelled','createdAt','updatedAt'].filter(k=>r[k]!==undefined).map(k=>[k,r[k]])):null};}
+function taskResult(value){const d=value.definition,r=value.run;return{...(r?.snapshot?{phase:r.snapshot.phase,...(r.snapshot.code?{code:r.snapshot.code}:{}),...(r.snapshot.phase==='awaiting-response'?{response:{deadlineAt:r.definition.deadlineAt,questionId:r.snapshot.responseQuestion,question:r.snapshot.proposal?.calls?.[r.snapshot.cursor]?.arguments?.question}}:{})}:{}),runId:d.runId,projectId:d.projectId,sourceManifestSha256:d.sourceManifestSha256,grantId:d.grantId,...(d.specialistSelection?{specialistSelection:d.specialistSelection}:{}),...(value.schedule?{schedule:value.schedule}:{}),run:r?Object.fromEntries(['runId','rootId','parentRunId','status','rootStatus','rootUsage','directory','revision','cancelled','createdAt','updatedAt'].filter(k=>r[k]!==undefined).map(k=>[k,r[k]])):null};}
 // Never expose arbitrary exception messages, provider response bodies, or stacks.
 export function researchError(error){const code=typeof error?.code==='string'&&/^[A-Z][A-Z0-9_]{1,80}$/.test(error.code)?error.code:'RESEARCH_OPERATION_FAILED';return{error:code,hint:code==='RESEARCH_OPERATION_FAILED'?'Check explicit input files, project state and configuration. No provider error body is displayed.':'See help and verify the named operation inputs.'};}
 function redact(text,secret){let value=text;if(secret)value=value.split(secret).join('[REDACTED]');return value.replace(/\bBearer\s+[A-Za-z0-9._~+\/-]+=*/gi,'Bearer [REDACTED]').replace(/\bsk-[A-Za-z0-9_-]{8,}/g,'[REDACTED]');}
@@ -99,6 +111,15 @@ export async function runResearchCli(args,{stdout=process.stdout,stderr=process.
  try{
   const parsed=parseResearchArguments(args);if(parsed.help){stdout.write(RESEARCH_HELP);return 0;}
   const {command,options:o}=parsed,projectDir=resolve(o.project),runId=o.run;
+  if(command.startsWith('specialist ')||command.startsWith('preset ')){
+   const [kind,operation]=command.split(' '),store=await openProjectSpecialists({projectDir,create:command==='specialist init'});
+   if(operation==='init'||operation==='list'){emit(await store.list());return 0;}
+   const suffix=kind==='specialist'?'Profile':'Preset';
+   if(operation==='read')emit(await store['read'+suffix](o.id));
+   else if(operation==='remove')emit(await store['remove'+suffix](o.id,integer(o.revision,1,256)));
+   else{const input=await readProjectJson(o[kind==='specialist'?'profile':'preset'],65536);emit(operation==='create'?await store['create'+suffix](o.id,input):await store['update'+suffix](o.id,integer(o.revision,1,256),input));}
+   return 0;
+  }
   if(command==='schedule confirm'){
    emit(taskResult(await confirmScheduledTask({projectDir,runId,confirmOnce:o['confirm-once'],question:await textFile(o.question,16000),sourceManifestSha256:o.manifest,schedule:await readProjectJson(o.schedule),authorization:{providerApproved:o['approve-provider']===true,dataApproved:o['approve-data']===true,costApproved:o['approve-cost']===true}})));return 0;
   }
@@ -121,7 +142,7 @@ export async function runResearchCli(args,{stdout=process.stdout,stderr=process.
   if(command==='source list'){await inspectResearchProject({projectDir});emit(sourceResult(await loadProjectSources({projectDir,manifestSha256:o.manifest})));return 0;}
   if(command==='run submit'){
    const question=await textFile(o.question,16000),extra={};
-   for(const [key,arg]of [['memoryIntents','memory-intents'],['taskTime','task-time'],['schedule','schedule']])if(o[arg])extra[key]=await readProjectJson(o[arg]);
+   for(const [key,arg]of [['specialistSelection','specialists'],['memoryIntents','memory-intents'],['taskTime','task-time'],['schedule','schedule']])if(o[arg])extra[key]=await readProjectJson(o[arg]);
    await submitResearchTask({projectDir,runId,question,sourceManifestSha256:o.manifest,authorization:{providerApproved:o['approve-provider']===true,dataApproved:o['approve-data']===true,costApproved:o['approve-cost']===true},...extra});emit(taskResult(await inspectResearchTask({projectDir,runId})));return 0;
   }
   if(command==='run work'){

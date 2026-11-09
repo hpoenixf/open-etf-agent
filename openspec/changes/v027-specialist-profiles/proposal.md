@@ -39,3 +39,12 @@ No Python isolation, frontend, parallel experts, model-generated profiles,
 provider credentials, arbitrary tools, external installation or network fetching
 is introduced. Source selection and publication authority remain with their
 existing owners. Profile instructions are not source evidence or permissions.
+
+## Checkpoint 2
+
+Project submit/ACK and original cold Child/report consumption are connected, with
+an explicit operator CLI and stable create intent IDs. The catalog retains
+immutable historical generations but exposes only current records, not historical
+browsing. Focused process-CAS and partial-publication checks are added; no full
+suite, live qualification or v0.26 integration claim is made. The original
+checkpoint-1 create-ACK gap and first fixture argument rejection remain recorded.
