@@ -110,11 +110,21 @@ stays held. Existing manual and terminal-maintenance policy records remain intac
 Project work entry/exit also invokes lazy maintenance for original
 Main tasks of that Project's registered route. No resident daemon is introduced.
 This paragraph is a candidate description, not test evidence or permission to
-apply it to an actual live pool. A focused synthetic suite passed 18/18, including actual deferred Gateway
-fulfillment after logical revocation and a first-arm already-due request with
-zero Gateway dispatch. The initial 17/18 failure (unhandled expiry rejection)
-was retained and corrected before that run. These are not full-product or live
-qualification. Active-Child and mismatching-lease timer branches, crash windows,
-and Project entry/exit integration still require targeted verification; the hook
-skips scheduled occurrence IDs and foreign/unlocatable Project tasks rather than
-claiming cross-schedule recovery. The earlier 16/16 result applies to stage 1.
+apply it to an actual live pool. The initial focused suite passed 18/18, including actual deferred Gateway
+fulfillment after logical revocation and first-arm expiry before dispatch. The
+first-arm unhandled rejection RED was retained and corrected. Additional focused
+cases cover active Child and expired lease refusal, an Admission stop surviving
+an injected Session SQL cancellation failure, and original Project work entry/exit.
+Database close failure still runs post-work maintenance and closes the Session.
+A clock-jump fixture initially invalidated its own lease; the corrected Project
+fixture ages only its synthetic Admission row without claiming two hours elapsed.
+
+Scheduled occurrences resolve only through the same Project's bounded task list,
+validated definition, exact scheduleRunId and original confirmed Session reference.
+Invalid confirmation fails closed; missing/foreign mappings are not guessed. A
+scheduled terminal unknown is reclaimed without dispatching the original Run again.
+The latest whole focused file was 23/24, with the remaining failure in the negative
+fixture's attempt to inspect through its deliberately invalid reference. Restoring
+the reference before observation corrected that assertion; the final scheduled
+case then passed 1/1. These results are not a same-input 24/24 or full-product/live
+qualification. No remote completion, refund or automatic request replay is implied.

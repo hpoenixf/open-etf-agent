@@ -161,7 +161,7 @@ async function assemble(projectDir,definition,{gateway,apiKey,fetchImpl,hostSign
   const allowedTools=config.allowedTools??available;if(allowedTools.some(t=>!available.includes(t))||!allowedTools.includes('save_report'))fail('PROJECT_UNAVAILABLE_TOOL');
   if(caps.includes('child')&&(config.childExecution?normalizeChildExecution(config.childExecution).methods.flatMap(m=>m.allowedTools):config.childMethod?normalizeChildMethod(config.childMethod).allowedTools:['read_page']).some(t=>!allowedTools.includes(t)))fail('PROJECT_CHILD_TOOL_SCOPE');
   const limits=config.limits;const options={question:originalQuestion,documentCatalog:sources.catalog??undefined,pdfInput:sources.pdfSnapshot?{snapshot:sources.pdfSnapshot}:undefined,allowedDocuments:documents,allowedTools,publication:true,requireReport:true,ordinaryResponse:caps.includes('response'),...(config.interaction?{interaction:config.interaction}:{}),extensions,plugins,workingInput,taskTime:definition.taskTime?{anchorInstant:definition.taskTime.anchorInstant,timeZone:definition.taskTime.timeZone}:undefined,contextBytes:caps.includes('knowledge')?KNOWLEDGE_CONTEXT_BYTES:32000,gateway:wrapped,outputRoot:p.runs,limits:{maxRounds:limits.maxRounds,maxTools:limits.maxTools,timeoutMs:limits.timeoutMs},hostSignal,signal,durable:{store,runId,grantId:definition.grantId,rootLimits:{model:limits.model,tool:limits.tool},bindings:{gateway:gatewayBinding(config),plugins:inspected.bindings,adapters},onClaim:v=>{claim=v;},onCheckpoint}};
-  return{options,store,sources,runId,close:async()=>{for(const close of closers.reverse())await close();admission.close();store.close();}};
+  return{options,store,sources,runId,close:async()=>{try{for(const close of closers.reverse())await close();}finally{try{admission.close();}finally{store.close();}}}};
  }catch(error){admission?.close();store.close();throw error;}
 }
 export async function submitResearchTask({projectDir,runId,question,sourceManifestSha256,authorization,memoryIntents=[],taskTime,schedule}){
@@ -201,7 +201,7 @@ export async function materializeResearchScheduledTask({projectDir,runId}){
  const opened=await assemble(projectDir,definition);
  try{return await materializeScheduledRun(opened.options,await readProjectJson(join(projectDir,'tasks',runId+'.schedule.json')));}finally{await opened.close();}
 }
-export async function workResearchTask({projectDir,runId,requireFreshSchedule=false,...controls}){if(typeof requireFreshSchedule!=='boolean')fail('INVALID_SCHEDULE_OBSERVATION');projectDir=await safeDirectory(projectDir);const definition=await readTask(projectDir,runId);await maintainProjectRouteBeforeWork(projectDir,definition);const opened=await assemble(projectDir,definition,{...controls,dispatch:true});try{if(definition.schedule){const reference=await readProjectJson(join(projectDir,'tasks',runId+'.schedule.json'));const occurrence=await materializeScheduledRun(opened.options,reference,{reportFresh:requireFreshSchedule});if(!occurrence.runId||requireFreshSchedule&&occurrence.materializedNow!==true)return occurrence;}return await workRun(opened.options);}finally{await opened.close();await maintainProjectRouteBeforeWork(projectDir,definition);}}
+export async function workResearchTask({projectDir,runId,requireFreshSchedule=false,...controls}){if(typeof requireFreshSchedule!=='boolean')fail('INVALID_SCHEDULE_OBSERVATION');projectDir=await safeDirectory(projectDir);const definition=await readTask(projectDir,runId);await maintainProjectRouteBeforeWork(projectDir,definition);const opened=await assemble(projectDir,definition,{...controls,dispatch:true});try{if(definition.schedule){const reference=await readProjectJson(join(projectDir,'tasks',runId+'.schedule.json'));const occurrence=await materializeScheduledRun(opened.options,reference,{reportFresh:requireFreshSchedule});if(!occurrence.runId||requireFreshSchedule&&occurrence.materializedNow!==true)return occurrence;}return await workRun(opened.options);}finally{try{await opened.close();}finally{await maintainProjectRouteBeforeWork(projectDir,definition);}}}
 export async function inspectResearchTask({projectDir,runId}){const d=await readTask(projectDir,runId),p=paths(projectDir,runId);const store=await openSession({directory:p.session,...(profile(d.config)?{profile:profile(d.config)}:{}),readOnly:true});try{const actual=d.schedule?scheduleRunId(d.schedule):runId;if(d.schedule){const scheduled=store.inspectSchedule(await readProjectJson(join(projectDir,'tasks',runId+'.schedule.json')));if(!scheduled.runId)return {definition:d,schedule:scheduled,run:null};}const state=store.inspect(actual);return{definition:d,run:state};}finally{store.close();}}
 export async function cancelResearchTask({projectDir,runId}){const d=await readTask(projectDir,runId),store=await openSession({directory:paths(projectDir,runId).session,...(profile(d.config)?{profile:profile(d.config)}:{})});try{if(d.schedule)return store.cancelSchedule(await readProjectJson(join(projectDir,'tasks',runId+'.schedule.json')));return store.cancel(runId);}finally{store.close();}}
 export async function respondResearchTask({projectDir,runId,questionId,responseId,text}){const d=await readTask(projectDir,runId);if(!d.config.capabilities.includes('response'))fail('PROJECT_RESPONSE_NOT_ENABLED');const store=await openSession({directory:paths(projectDir,runId).session,profile:profile(d.config)});try{return store.receiveResponse({runId,questionId,responseId,text});}finally{store.close();}}
@@ -298,8 +298,18 @@ async function maintainProjectRouteBeforeWork(projectDir,definition){
  const admission=await createSharedAdmission({directory:join(projectDir,'admission',group.groupId),routeId:group.groupId,readOnly:true});let tickets;
  try{tickets=admission.snapshot().requests.filter(t=>t.state==='unknown'&&!t.localRelease&&t.runId===t.rootId);}finally{admission.close();}
  const ids=[...new Set(tickets.map(t=>t.rootId))];if(ids.length>1024)fail('PROJECT_CAPACITY_MAINTENANCE_LIMIT');
- for(const runId of ids){let original;try{original=await readTask(projectDir,runId);}catch(error){if(error.code==='ENOENT')continue;throw error;}
-  if(original.schedule||taskCapacity(original,project).groupId!==group.groupId)continue;
-  await maintainResearchUnknownCapacity({projectDir,runId});
+ let scheduled;
+ for(const runId of ids){let original,taskId=runId;try{original=await readTask(projectDir,runId);}catch(error){if(!['ENOENT','PROJECT_INVALID_ID'].includes(error.code))throw error;}
+  if(!original){
+   // Read only confirmed tasks in this Project. Never infer a Session path from
+   // an occurrence ID or look in a different Project/pool.
+   scheduled??=await listResearchScheduledTasks({projectDir});
+   const matches=scheduled.filter(item=>scheduleRunId(item.definition.schedule)===runId&&item.schedule.runId===runId);
+   if(matches.length>1)fail('PROJECT_SCHEDULE_AMBIGUOUS');if(matches.length===0)continue;
+   original=matches[0].definition;taskId=original.runId;
+  }
+  if(taskCapacity(original,project).groupId!==group.groupId)continue;
+  if(original.schedule&&scheduleRunId(original.schedule)!==runId)continue;
+  await maintainResearchUnknownCapacity({projectDir,runId:taskId});
  }
 }
