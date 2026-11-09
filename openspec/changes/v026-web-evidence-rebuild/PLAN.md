@@ -1,6 +1,6 @@
 # v0.26: bounded Web evidence acquisition
 
-Status: reconstruction started, not implementation or release qualification.
+Current status: 128 KiB page-budget increment in a separate candidate; not yet aggregate/public/live-qualified or released. Earlier checkpoints below remain historical.
 Baseline: released v0.25.0, `99485ed3e7d45d462f9908e53ff5653a8c0791c1`.
 
 ## One module and a usable path
@@ -97,3 +97,40 @@ dependency is added.
 ## Existing NO_PROXY compatibility increment
 
 The saved c4bcbeb2 profile completed 1,090 local tests and build. Its first new public operation was refused locally before HTTP because existing NO_PROXY CIDRs were unsupported. That durable zero-dispatch failure remains unchanged. A limited reviewed correction now parses bounded exclusion rules before claiming: matching host/address/CIDR still refuses; legal nonmatching CIDR does not erase configuration. Complete bare IPv6 is not truncated as a port. A separate 46-test targeted run passed after this correction, including the old platform/consumer cases and 22 new selector boundaries. It is not a new aggregate or a public-network success, and no model requests have been made.
+
+## 2026-11-08: 128 KiB explicit page-budget increment
+
+The user requested another doubling of the new Web logical-page budget. This
+candidate uses `utf8-text-json-pages@3` and the matching static HTML @3 profile:
+raw UTF-8, one JSON-string encoding and two JSON-string encodings each remain
+bounded by 131,072 bytes. Legacy @1 keeps 64,000 raw bytes; @2 permanently keeps
+65,536 bytes for each of those three representations. Existing immutable sources,
+profiles and cold readbacks are not upgraded or repaginated in place.
+
+The 262,144-byte extraction limit, original-body and catalog totals, 16-page
+ceiling, Unicode validity, HTTPS/robots contracts, 1 MiB configurable Project
+context and independent 1 MiB encoded Gateway request limit are not increased.
+Byte budgets are not model token windows. Request overhead still counts; an
+oversized full request must refuse before network dispatch rather than raise the
+Gateway cap or silently truncate evidence.
+
+The earlier 64 KiB generation completed ten independent normal Runs with all
+applicable Runtime contracts, thirty Go-zero responses and five minor content
+findings. Its original machine gate passed. That cohort remains a 64 KiB result,
+not evidence that this changed 128 KiB implementation has run live. The older
+7/10 cohort and three context-capacity failures remain unchanged as well.
+
+A focused offline increment executed 62 tests successfully after a separate RED
+proved the previous 64 KiB paginator still produces four rather than two pages
+for a 256 KiB plain-text input. The new consumer fixture read a 100,000-byte page
+through the original Source, Result and Project path; the explicit 32,000-byte
+context correctly refused, while the configured 1 MiB path completed. Old @2
+cold reads and oversized @2 rejection, Unicode/JSON bounds and the existing
+Gateway's zero-dispatch rejection were checked. These are bounded offline tests,
+not new full-suite, public-network or real-model qualification.
+
+Before publication, independently review the exact increment and close its
+remaining applicable validation gaps. A new real task plan, if required, must
+be prospective and separately allocated; do not pool successes across cohorts
+or expand the version/shared allowance. Keep all old allocation and unknown
+records. No new dependencies are introduced by this page-budget increment.

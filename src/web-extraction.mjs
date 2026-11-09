@@ -1,3 +1,4 @@
+import {paginateWebText,webTextProfile} from './web-text-pages.mjs';
 import {parse,defaultTreeAdapter} from 'parse5';
 import {webFailure,webLimits} from './web-policy.mjs';
 const OMIT=new Set(['script','style','template','noscript','svg','math','head','iframe','object','embed']);
@@ -45,7 +46,7 @@ export function extractWebText(body,contentType,{limits:input}={}){
  let source;try{source=new TextDecoder('utf-8',{fatal:true}).decode(body);}catch{throw webFailure('WEB_INVALID_UTF8');}
  if(source.includes('\0')||(/us-ascii/i.test(contentType)&&/[^\x00-\x7f]/.test(source)))throw webFailure('WEB_INVALID_UTF8');
  let text,parser,nodes=0;
- if(match[1].toLowerCase()==='text/plain'){text=source;parser='utf8-text@1';}
+ if(match[1].toLowerCase()==='text/plain'){text=source;parser=webTextProfile('text/plain');}
  else{
   const document=parse(source,{scriptingEnabled:false,treeAdapter:boundedTreeAdapter(limits)}),parts=[],stack=[{node:document,end:false}],inspect=[document];let size=0;
   while(inspect.length){const n=inspect.pop();if(++nodes>limits.nodes)throw webFailure('WEB_EXTRACTION_WORK_LIMIT');
@@ -58,9 +59,9 @@ export function extractWebText(body,contentType,{limits:input}={}){
    if(BLOCK.has(node.tagName)){append('\n');stack.push({node,end:true});}
    for(let i=(node.childNodes?.length??0)-1;i>=0;i--)stack.push({node:node.childNodes[i],end:false});
   }
-  text=parts.join('').replace(/[\t\f\r ]+/g,' ').replace(/ *\n */g,'\n').replace(/\n{3,}/g,'\n\n').trim();parser='static-html-parse5@8.1.0';
+  text=parts.join('').replace(/[\t\f\r ]+/g,' ').replace(/ *\n */g,'\n').replace(/\n{3,}/g,'\n\n').trim();parser=webTextProfile('text/html');
  }
  if(!text.trim())throw webFailure('WEB_TEXT_EMPTY');if(Buffer.byteLength(text)>limits.textBytes)throw webFailure('WEB_TEXT_LIMIT');
- const pages=[];let page='',size=0;for(const character of text){const n=Buffer.byteLength(character);if(size+n>64000){pages.push(page);page='';size=0;}page+=character;size+=n;}if(page)pages.push(page);
+ const pages=paginateWebText(text);
  return {text,pages,originalMediaType:match[1].toLowerCase(),extraction:{profile:parser,coverage:'static-text-only',visualInspection:'not-performed'}};
 }

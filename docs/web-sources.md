@@ -47,3 +47,9 @@ Access denials, rate limits and unknown effects still stop without fallback. No 
 ### Existing exclusion selectors
 
 The bounded `NO_PROXY` parser preserves exclusion intent even where the native proxy API ignores CIDR syntax. A matching host, address or strictly parsed CIDR refuses this profile; a valid nonmatching CIDR does not remove or rewrite the configuration. Complete bare IPv6 addresses are parsed before optional hostname-port rules. Malformed, mapped-family or unsupported/ambiguous selectors fail closed. This is compatibility with existing policy, not permission to route around an exclusion.
+
+### JSON-budgeted logical text pages
+
+New acquisitions use `utf8-text-json-pages@3` or `static-html-parse5@8.1.0-json-pages@3`. These are logical text pages, not physical/visual pages. Each page preserves complete Unicode codepoints and is bounded to 131,072 raw UTF-8 bytes, first JSON-string content bytes, and second JSON-string content bytes (excluding their fixed delimiters). At most 16 pages are allowed; an overflow fails with `WEB_PAGE_LIMIT`, never truncates. Concatenating pages exactly restores the extracted text. Original HTML/text bytes remain unchanged.
+
+Legacy `utf8-text@1`/HTML v1 profiles retain their original 64,000 raw-byte pages; JSON-pages `@2` retains all three 65,536-byte limits. Cold reads preserve those identities and never repaginate. The 262,144-byte per-body/text and 524,288-byte source-set limits are unchanged; the 16-page ceiling does not expand them. The new text budget is not a whole-request guarantee: provenance, questions, history, and tool-call metadata still consume context. New Projects default to a configurable, frozen 1MiB context budget; old tasks without that field retain their historical limits. Runtime and Gateway encoding guards can still refuse oversized input.

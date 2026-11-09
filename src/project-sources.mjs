@@ -1,3 +1,4 @@
+import {validWebTextPage} from './web-text-pages.mjs';
 import {open, constants, realpath, mkdir, lstat} from 'node:fs/promises';
 import {resolve, join, dirname, basename, extname} from 'node:path';
 import {sha256, normalizeDocumentCatalog, documentCatalogBinding} from './source.mjs';
@@ -171,7 +172,7 @@ async function loadWebEntries(dirs,manifest,documents,signal){
     if(['requestedUrl','finalUrl','retrievedAt','originalSha256','originalBytes','originalMediaType'].some(k=>transport[k]!==web[k])||!same(transport.extraction,web.extraction))fail('PROJECT_SOURCE_WEB_TRANSPORT_CHANGED');
     if(index>=prior.length&&(web.admissionSha256!==a.admissionSha256||web.requestedUrl!==plan.urls[index-prior.length]))fail('PROJECT_SOURCE_WEB_ADMISSION_CHANGED');
     const snapshot=await readObject(dirs,e.snapshotSha256,1048576,signal),identity=webDocumentIdentity(web);
-    if(!exact(snapshot,'id,name,version,pages')||snapshot.id!==identity.id||snapshot.version!==identity.version||!Array.isArray(snapshot.pages)||snapshot.pages.length!==web.pageMap.length||snapshot.pages.some((text,i)=>typeof text!=='string'||sha256(text)!==web.pageMap[i].sha256||Buffer.byteLength(text)!==web.pageMap[i].bytes)||sha256(snapshot.pages.join(''))!==transport.textSha256)fail('PROJECT_SOURCE_WEB_SNAPSHOT_CHANGED');
+    if(!exact(snapshot,'id,name,version,pages')||snapshot.id!==identity.id||snapshot.version!==identity.version||!Array.isArray(snapshot.pages)||snapshot.pages.length!==web.pageMap.length||snapshot.pages.some((text,i)=>!validWebTextPage(text,web.extraction.profile)||sha256(text)!==web.pageMap[i].sha256||Buffer.byteLength(text)!==web.pageMap[i].bytes)||sha256(snapshot.pages.join(''))!==transport.textSha256)fail('PROJECT_SOURCE_WEB_SNAPSHOT_CHANGED');
     const original=await readBounded(join(dirs.objects,`${web.originalSha256}.bin`),262144,signal);webOriginalBytes(web,original.toString('base64'));
     originalTotal+=original.length;textTotal+=snapshot.pages.reduce((n,text)=>n+Buffer.byteLength(text),0);
     if(originalTotal>ACQUISITION_LIMITS.originalBytes||textTotal>ACQUISITION_LIMITS.textBytes)fail('PROJECT_SOURCE_WEB_LIMIT');

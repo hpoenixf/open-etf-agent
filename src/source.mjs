@@ -1,3 +1,4 @@
+import {validWebTextPage,webTextPageLimit} from './web-text-pages.mjs';
 import {normalizeWebProvenance,webDocumentIdentity,webOriginalBytes,validateWebPage} from './web-source.mjs';
 import { readFile } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
@@ -6,7 +7,7 @@ export const READ_PAGE_SCHEMA = { type: 'object', additionalProperties: false, p
 const object = value => value !== null && typeof value === 'object' && !Array.isArray(value);
 const fail = message => { throw new Error(message); };
 export function validateSource(value) {
-  if (!object(value) || !['sourceId', 'documentId', 'name', 'version', 'text', 'sha256', 'mediaType'].every(k => typeof value[k] === 'string' && value[k].length > 0) || !Number.isSafeInteger(value.page) || value.page < 1 || Buffer.byteLength(value.text) > 64000 || value.sha256 !== sha256(value.text) || value.mediaType !== 'text/plain; charset=utf-8') fail('Invalid acquired source snapshot');
+  if (!object(value) || !['sourceId', 'documentId', 'name', 'version', 'text', 'sha256', 'mediaType'].every(k => typeof value[k] === 'string' && value[k].length > 0) || !Number.isSafeInteger(value.page) || value.page < 1 || Buffer.byteLength(value.text) > (value.web===undefined?64000:webTextPageLimit(normalizeWebProvenance(value.web).extraction.profile)) || value.sha256 !== sha256(value.text) || value.mediaType !== 'text/plain; charset=utf-8') fail('Invalid acquired source snapshot');
   if ([value.sourceId, value.documentId, value.name, value.version].some(s => s.length > 200 || /[\u0000-\u001f]/.test(s))) fail('Invalid source identity');
   if(value.pdf!==undefined){
     const p=value.pdf;
@@ -69,8 +70,8 @@ export function normalizeDocumentCatalog(value) {
  const seen=new Set();let bytes=0,originalBytes=0;
  const documents=value.documents.map(d=>{
   if(!object(d)||Object.keys(d).sort().join(',')!==(value.schemaVersion==='document-catalog@2'&&d.web!==undefined?'id,name,originalBase64,pages,version,web':'id,name,pages,version')||!protectedId(d.id)||seen.has(d.id)||!protectedId(d.version)||`${d.id}@${d.version}:p16`.length>200||typeof d.name!=='string'||!d.name||d.name.length>200||/[\u0000-\u001f]/.test(d.name)||!Array.isArray(d.pages)||d.pages.length<1||d.pages.length>16)invalid();
-  seen.add(d.id);const pages=d.pages.map(text=>{if(typeof text!=='string'||!text||Buffer.byteLength(text)>64000)invalid();bytes+=Buffer.byteLength(text);if(bytes>1048576)invalid();return text;});
-  let web;if(d.web!==undefined){web=normalizeWebProvenance(d.web);const identity=webDocumentIdentity(web);if(d.id!==identity.id||d.version!==identity.version||pages.length!==web.pageMap.length)invalid();for(const [i,text]of pages.entries())if(web.pageMap[i].sha256!==sha256(text)||web.pageMap[i].bytes!==Buffer.byteLength(text))invalid();originalBytes+=webOriginalBytes(web,d.originalBase64).length;if(originalBytes>524288)invalid();}
+  seen.add(d.id);const web=d.web===undefined?undefined:normalizeWebProvenance(d.web);const pageLimit=web?webTextPageLimit(web.extraction.profile):64000;const pages=d.pages.map(text=>{if(typeof text!=='string'||!text||Buffer.byteLength(text)>pageLimit)invalid();bytes+=Buffer.byteLength(text);if(bytes>1048576)invalid();return text;});
+  if(web){const identity=webDocumentIdentity(web);if(d.id!==identity.id||d.version!==identity.version||pages.length!==web.pageMap.length)invalid();for(const [i,text]of pages.entries())if(!validWebTextPage(text,web.extraction.profile)||web.pageMap[i].sha256!==sha256(text)||web.pageMap[i].bytes!==Buffer.byteLength(text))invalid();originalBytes+=webOriginalBytes(web,d.originalBase64).length;if(originalBytes>524288)invalid();}
   return Object.freeze({id:d.id,name:d.name,version:d.version,pages:Object.freeze(pages),...(web?{web,originalBase64:d.originalBase64}:{})});
  }).sort((a,b)=>a.id.localeCompare(b.id));
  if(value.schemaVersion==='document-catalog@2'&&bytes>524288)invalid();

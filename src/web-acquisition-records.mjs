@@ -1,3 +1,4 @@
+import {validWebTextProfile} from './web-text-pages.mjs';
 import {sha256} from './source.mjs';
 import {validateDnsAnswer} from './web-platform-profile.mjs';
 import {normalizeWebUrl, publicAddresses, WEB_LIMITS} from './web-policy.mjs';
@@ -22,7 +23,7 @@ export function normalizeWebAcquisitionPlan(value){
 export function validateWebTransportRecord(value,plan){
  const platform=value?.schemaVersion==='web-fetch-observation@2';
  if(platform!==(plan.schemaVersion==='web-acquisition-plan@2')||!exact(value,'schemaVersion,requestedUrl,finalUrl,retrievedAt,originalSha256,originalBytes,originalMediaType,extraction,textSha256,redirects,robots,requestCount'+(platform?',networkProfile,dnsObservations,receivedBytes,proxyConnectionAttempts':''))||(!platform&&value.schemaVersion!=='web-fetch-observation@1')||!plan.urls.includes(value.requestedUrl)||!plan.allowedUrls.includes(value.finalUrl)||!hex(value.originalSha256)||!hex(value.textSha256)||!Number.isSafeInteger(value.originalBytes)||value.originalBytes<1||value.originalBytes>WEB_LIMITS.bodyBytes||!['text/html','text/plain'].includes(value.originalMediaType)||!Number.isSafeInteger(value.requestCount)||value.requestCount<1||value.requestCount>ACQUISITION_LIMITS.requests)fail();
- if(typeof value.retrievedAt!=='string'||!Number.isFinite(Date.parse(value.retrievedAt))||new Date(value.retrievedAt).toISOString()!==value.retrievedAt||!exact(value.extraction,'profile,coverage,visualInspection')||value.extraction.profile!==(value.originalMediaType==='text/html'?'static-html-parse5@8.1.0':'utf8-text@1')||value.extraction.coverage!=='static-text-only'||value.extraction.visualInspection!=='not-performed')fail();
+ if(typeof value.retrievedAt!=='string'||!Number.isFinite(Date.parse(value.retrievedAt))||new Date(value.retrievedAt).toISOString()!==value.retrievedAt||!exact(value.extraction,'profile,coverage,visualInspection')||!validWebTextProfile(value.extraction.profile,value.originalMediaType)||value.extraction.coverage!=='static-text-only'||value.extraction.visualInspection!=='not-performed')fail();
  if(!Array.isArray(value.redirects)||value.redirects.length>WEB_LIMITS.redirects||!Array.isArray(value.robots)||!value.robots.length||value.robots.length>WEB_LIMITS.requests||acquisitionBytes(value).length>(platform?131072:32768))fail();
  const redirectStatuses=[301,302,303,307,308],origins=new Set();let current=value.requestedUrl;
  for(const r of value.redirects){if(!exact(r,'url,status,location')||r.url!==current||!redirectStatuses.includes(r.status)||!plan.allowedUrls.includes(r.location))fail();origins.add(new URL(current).origin);current=r.location;}
