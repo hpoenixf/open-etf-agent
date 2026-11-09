@@ -103,6 +103,10 @@
     "0.25": {
       "commit": "1afb49ae75c6322cd95442a1868d1ec90f7164cf",
       "tree": "5db2ec135c77e40df129e7ef208a4a2ecf5525da"
+    },
+    "0.26": {
+      "commit": "6139d7b8e70773a4f5aba4d366de9817fc0532ae",
+      "tree": "a8dffb9519afc02ef7351b2137aca11709c931e3"
     }
   },
   "targets": {

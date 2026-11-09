@@ -71,11 +71,12 @@ npm run demo -- --case document-compare
 <a id="versions"></a>
 ## Latest three modules
 
+**v0.26 adds bounded Web evidence acquisition**: explicitly acquire public static pages, preserve originals and provenance, and consume frozen pages through the existing Report/Reader path. [Usage](docs/web-sources.md) · [Dated Runtime 9/10 and retained failures](docs/verification/v026-release.md). One task remains unknown; model content defects remain separate. New Web pages use 128 KiB and new Projects default to 1 MiB serialized context, not a model token window. No autonomous crawl or browser rendering.
+
 **v0.25 adds finite once Scheduled tasks**: confirm, inspect, cancel and explicitly run due work through the original project and execution owners. [Commands](docs/scheduled-tasks.md) · [Runtime qualification and content limits](docs/verification/v025-release.md). Nine preplanned scenarios contain ten normal logical tasks: Runtime contracts passed 10/10 with 30 complete Go responses; two model content issues remain. No cron, background daemon or automatic recovery of unknown work.
 
 **v0.24 keeps Provider Admission capacity stable across project revisions**: the same normalized endpoint retains one original project-local owner when model or streaming configuration changes. [Usage](docs/provider-capacity.md) · [Ten-task evidence and limits](docs/verification/v024-release.md) · [Fixed tested source](https://github.com/hpoenixf/open-etf-agent/tree/0d47e318e0f5fb36d45d8be274324a06bdd20d5c). Mechanical and named Runtime contracts passed 10/10; model content caveats, including C09’s unrepaired citation error, remain. Not account-wide limiting or live-concurrency qualification.
 
-**v0.23 adds admitted Knowledge retrieval**: query explicitly imported text and keep whole original pages through Result, Report and Reader. [Usage](docs/knowledge.md) · [Layered evidence](docs/verification/v023-release.md) · [Fixed public source](https://github.com/hpoenixf/open-etf-agent/tree/4e893ead9ebe8cdd13146ddc96fe1d56a1e56365). Observed Runtime contracts passed 10/10; the frozen mechanical result remains 9/10 and strict complete-task quality 5/10. These are distinct measures, not ten perfect answers.
 
 **v0.23.1 maintenance:** original Session heartbeat through finalization and durable cancellation while waiting. [Fixes, 966/966 and evidence applicability](docs/verification/v0231-maintenance.md); original ten-task scores and later provider interruptions remain separate.
 
@@ -84,9 +85,9 @@ npm run demo -- --case document-compare
 
 | Module | What changes | Run and inspect |
 | --- | --- | --- |
+| v0.26 · Web evidence | Explicit acquisition, immutable originals and source-backed readback | [Usage](docs/web-sources.md) · [Evidence](docs/verification/v026-release.md) |
 | v0.25 · Once Scheduled tasks | Explicit confirmation and bounded due-work sweep; original lifecycle and unknown retention | [Usage](docs/scheduled-tasks.md) · [Evidence](docs/verification/v025-release.md) |
 | v0.24 · Project provider capacity | Stable original endpoint owner across revisions; unknown stays occupied | [Usage](docs/provider-capacity.md) · [Evidence](docs/verification/v024-release.md) |
-| v0.23 · Admitted Knowledge | Bounded lexical retrieval, original pages and same-Run readback | [Usage](docs/knowledge.md) · [Evidence](docs/verification/v023-release.md) |
 
 [All fixed versions and commands](docs/module-guide.md#versions) · [Machine-readable version lineage](versions.json) · [GitHub Releases](https://github.com/hpoenixf/open-etf-agent/releases)
 

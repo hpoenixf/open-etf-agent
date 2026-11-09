@@ -1,0 +1,37 @@
+{
+  "schemaVersion": "public-v026-runtime-evidence-summary@1",
+  "date": "2026-11-09",
+  "publicCodeCommit": "6139d7b8e70773a4f5aba4d366de9817fc0532ae",
+  "scope": "bounded public Web evidence acquisition; supporting existing-owner adaptations",
+  "currentDatedDecision": {
+    "logicalTasks": 10,
+    "runtimeSuccesses": 9,
+    "unknownTasks": 1,
+    "threshold": 0.9,
+    "physicalRequests": 32,
+    "completeAcceptedGoZeroResponses": 31,
+    "unknownRequests": 1,
+    "separateSafetyReview": "passed",
+    "mechanicalDeclarationCheck": "passed"
+  },
+  "historicalOutcomesPreserved": {
+    "firstRetainedBatch": "1/10, unchanged",
+    "missingTaskSupplement": "8/8, qualifiesRelease false unchanged",
+    "unknownTaskReplayed": false,
+    "retrospectivelySingleCampaign": false
+  },
+  "contentCorrectnessGuaranteed": false,
+  "reportGuidanceDiagnosticIncludedInScore": false,
+  "providerFree": {
+    "fullPassed": 1143,
+    "fullTotal": 1145,
+    "fullFailed": 2,
+    "buildPassed": true,
+    "laterTestOnlyFocusedPassed": 10,
+    "laterTestOnlyFocusedTotal": 10,
+    "newCombinedFullPassClaim": false
+  },
+  "candidateVersion": "0.26.0",
+  "publicationVerified": false,
+  "qualificationDeclarationSha256": "9fe21c8c86f07293be8a11f92b617eeb4f503ad6dede0f3b4890c0897c594762"
+}

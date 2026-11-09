@@ -2,6 +2,10 @@
 
 [项目首页](../README.zh-CN.md) · [English](module-guide.md)
 
+## Web 证据采集（v0.26）
+
+**v0.26 提供有界 Web 证据采集**：显式获取公开静态页面，保留原件与来源信息，再沿原 Report/Reader 消费冻结分页。[用法](web-sources.zh-CN.md) · [本次 Runtime 9/10 与保留失败](verification/v026-release.zh-CN.md)。一题仍为 unknown，模型内容瑕疵独立保留。新 Web 页为 128 KiB，新 Project 默认序列化上下文为 1 MiB，不是模型 token 窗口。不提供自主爬取或浏览器渲染。
+
 ## 一次性计划任务（v0.25）
 
 参见[命令与生命周期](scheduled-tasks.zh-CN.md)及[Runtime 资格与内容边界](verification/v025-release.zh-CN.md)。仅显式 once；正式发布状态另行核验。
@@ -266,6 +270,8 @@ node dist/src/session-cli.mjs publication-revisions --session runs/publication-d
 
 
 <a id="versions"></a>
+
+**v0.26 提供有界 Web 证据采集**：显式获取公开静态页面，保留原件与来源信息，再沿原 Report/Reader 消费冻结分页。[用法](web-sources.zh-CN.md) · [本次 Runtime 9/10 与保留失败](verification/v026-release.zh-CN.md)。一题仍为 unknown，模型内容瑕疵独立保留。新 Web 页为 128 KiB，新 Project 默认序列化上下文为 1 MiB，不是模型 token 窗口。不提供自主爬取或浏览器渲染。
 
 **v0.25 提供有限的一次性计划任务**：沿原项目与执行 Owner 确认、查看、取消，并显式运行到期工作。[命令](scheduled-tasks.zh-CN.md) · [Runtime 资格与内容边界](verification/v025-release.zh-CN.md)。九个事前场景包含十个正常逻辑任务，Runtime 合同通过 10/10，取得 30 份完整 Go 响应；保留两处模型内容问题。不提供 cron、后台常驻或未知工作自动恢复。
 
