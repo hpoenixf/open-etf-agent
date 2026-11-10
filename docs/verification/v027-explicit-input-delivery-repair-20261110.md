@@ -47,3 +47,23 @@ unexercised live pagination/projection remain historical facts. No paid request,
 new semantic score, real-provider qualification, main merge, tag or release is
 claimed by this change. Both new contracts need prospective real acceptance on
 fixed inputs, with original budget accounting preserved.
+
+## Fixed-source verification
+
+Executable and test source: `41d351ec337dcece833862b0e134ffeb6fcf87a6`.
+Node 26.11.1, serial full suite: **1,251 passed, zero failed, zero skipped**.
+All frozen source/test/script hashes matched after the run. Native ESM build
+and the built CLI's report-delivery option passed. Independent review found no
+remaining blocking issue within these two opt-in contracts.
+
+One earlier full run overlapped another local suite and failed the pre-existing
+30 ms wall-clock test: the Runtime correctly stopped with TIMEOUT, but reached
+one model turn rather than the test's expected three. That failed run is retained.
+The unchanged focused suite then passed 13/13 and the subsequent full run above
+passed with no other full suite running. No timeout or assertion was relaxed.
+This does not establish that the 30 ms test is immune to scheduling load.
+
+Remote WIP publication used only audited code, tests and engineering documents.
+The sixteen changed files were read back in full and the complete 799-leaf tree
+matched the reviewed local tree; other leaves were preserved. This is a WIP
+snapshot, not a main merge or release. No remote CI pass is claimed.
