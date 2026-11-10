@@ -5,7 +5,7 @@ import {join,resolve} from 'node:path';
 import {createHash} from 'node:crypto';
 import {createResearchProject,submitResearchTask,inspectResearchTask,workResearchTask} from '../src/research-project.mjs';
 import {importProjectSources} from '../src/project-sources.mjs';
-const profile='source-faithful-report@2';
+const profile='source-faithful-report@3';
 const canonical=v=>v===null||typeof v!=='object'?JSON.stringify(v):Array.isArray(v)?'['+v.map(canonical).join(',')+']':'{'+Object.keys(v).sort().map(k=>JSON.stringify(k)+':'+canonical(v[k])).join(',')+'}';
 const hash=v=>createHash('sha256').update(canonical(v)).digest('hex');
 async function fixture(t){await mkdir('test-output',{recursive:true});const root=await mkdtemp(resolve('test-output/report-guidance-'));t.after(()=>rm(root,{recursive:true,force:true}));await createResearchProject({directory:root,config:{schemaVersion:'research-project@1',gateway:{mode:'fixture',provider:'test',protocol:'fixture@1',model:'synthetic'},capabilities:['report']}});const path=join(root,'synthetic.txt');await writeFile(path,'Synthetic process: preserve the input label and stated conditions.\n');const bundle=await importProjectSources({projectDir:root,files:[path]});const request={projectDir:root,runId:'guidance',question:'Describe the supplied process with sources.',sourceManifestSha256:bundle.manifestSha256};return{root,request,file:join(root,'tasks/guidance.json')};}
@@ -45,4 +45,13 @@ test('real fixed v1 binary task resumes under v2 without upgrading frozen questi
  const prior=JSON.parse(await readFile(out));assert.equal(prior.definition.reportGuidance,'source-faithful-report@1');const original=prior.run.definition.question,bytes=await readFile(f.file);const seen=[];
  const done=await workResearchTask({...f.request,gateway:reportingGateway(null,seen)});assert.equal(done.run.status,'completed');assert.ok(seen.length>0);assert.ok(seen.every(ms=>ms[0].content===original));assert.deepEqual(await readFile(f.file),bytes);await submitResearchTask(f.request);assert.deepEqual(await readFile(f.file),bytes);
  const again=await workResearchTask({...f.request,gateway:{mode:'fixture',next(){throw Error('terminal replay')}}});assert.equal(again.run.status,'completed');assert.equal((await inspectResearchTask(f.request)).definition.reportGuidance,'source-faithful-report@1');
+});
+
+test('real fixed v2 binary task resumes under v3 without upgrading frozen question',{skip:!process.env.OLD_GUIDANCE_V2_BASELINE},async t=>{
+ const f=await fixture(t),baseline=resolve(process.env.OLD_GUIDANCE_V2_BASELINE),out=join(f.root,'old-state.json');
+ const script=`import * as p from ${JSON.stringify(pathToFileURL(join(baseline,'src/research-project.mjs')).href)};import {writeFile} from 'node:fs/promises';const args=${JSON.stringify(f.request)};await p.submitResearchTask(args);const abort=new AbortController();await p.workResearchTask({...args,hostSignal:abort.signal,onCheckpoint({phase}){if(phase==='result-consumed')abort.abort();},gateway:{mode:'fixture',async next({messages,tools}){const first=messages[0];const match=first.content.match(/\\"id\\":\\"(text:[^\\"]+)\\"/);return {kind:'calls',calls:[{id:'old-read',name:'read_page',arguments:{documentId:match[1],page:1}}]};}}});await writeFile(${JSON.stringify(out)},JSON.stringify(await p.inspectResearchTask(args)));`;
+ const old=spawnSync(process.execPath,['--input-type=module','-e',script],{encoding:'utf8',timeout:30000});assert.equal(old.status,0,old.stderr);
+ const prior=JSON.parse(await readFile(out));assert.equal(prior.definition.reportGuidance,'source-faithful-report@2');const original=prior.run.definition.question,bytes=await readFile(f.file);const seen=[];
+ const done=await workResearchTask({...f.request,gateway:reportingGateway(null,seen)});assert.equal(done.run.status,'completed');assert.ok(seen.length>0);assert.ok(seen.every(ms=>ms[0].content===original));assert.deepEqual(await readFile(f.file),bytes);await submitResearchTask(f.request);assert.deepEqual(await readFile(f.file),bytes);
+ const again=await workResearchTask({...f.request,gateway:{mode:'fixture',next(){throw Error('terminal replay')}}});assert.equal(again.run.status,'completed');assert.equal((await inspectResearchTask(f.request)).definition.reportGuidance,'source-faithful-report@2');
 });
