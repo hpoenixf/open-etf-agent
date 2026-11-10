@@ -1,0 +1,733 @@
+{
+  "schema": "open-etf-agent-branch-snapshots-v1",
+  "createdDate": "2026-11-10",
+  "purpose": "Preserve exact historical heads and paths while retiring obsolete branch references. Not a release or code integration.",
+  "mainBaseline": {
+    "head": "7c5c9f7e4efe71a79f229077c9fe2247be8d8a37",
+    "tree": "1c6ff8940987eb8b14228b466b2cc6d2eded74f0"
+  },
+  "archiveBranch": "archive/branch-snapshots-20261110",
+  "parents": [
+    "7c5c9f7e4efe71a79f229077c9fe2247be8d8a37",
+    "5bf970f6bc98bdc11ec8608747fbb83fa170941f",
+    "395545233adcd3da3d647abe073684c8509f16a0",
+    "28e276cb78b620139c8db89588edc34641a91854",
+    "8d7c2c692aa54748f7bb059fc98fb7961574f252",
+    "cd2401de8b06c829ca43eb355651ecdcdde37a63",
+    "8585ea047010c78fabaa6262b0187920152d3de6",
+    "d1d3fb45234997da1ac5456a139a96f8a1918f53",
+    "4c16338ea0cd1f2368f5f98ac73f4f69b90ed2f6",
+    "dfc66156b15fe3137ec31e52b832d82e38e73bc3",
+    "0d23b20496639f1dea8a7af8d1717b3b99d9077a",
+    "ca4a5b4043e31133c998b9c0e6c2422904c625b9",
+    "5c455238664ed9c1cd2834b7bf2e08e6558d2285",
+    "386da89dabc566da49f1a095d52a303605daf491",
+    "b07f223a8cafab746020a97cda24f9a433cd5f71",
+    "d1b1ab41760adf41d77ead455ad5b7756adee0f7",
+    "2b9fa955c96c7aaf202bad11131ef4680f0f97f3",
+    "e73b960b106db11aca31dfff0330093557b2aee3"
+  ],
+  "snapshots": [
+    {
+      "originalRef": "refs/heads/docs/versioned-evolution-plan",
+      "head": "5bf970f6bc98bdc11ec8608747fbb83fa170941f",
+      "tree": "8569c4e3979c0c6ef652e4a4c62a21ed1c9345ea",
+      "originalParentShas": [
+        "b6fffb2c8b56701b39bf5fa24022e42fa7848061"
+      ],
+      "preservation": "direct archive parent",
+      "treeUrl": "https://github.com/hpoenixf/open-etf-agent/tree/5bf970f6bc98bdc11ec8608747fbb83fa170941f",
+      "commitUrl": "https://github.com/hpoenixf/open-etf-agent/commit/5bf970f6bc98bdc11ec8608747fbb83fa170941f"
+    },
+    {
+      "originalRef": "refs/heads/feature/result-reference-consumption-20261027",
+      "head": "049c42f9d728b89840b10a492ceaa6b6c7655706",
+      "tree": "1d175d7bd11766d3f409a0d178a0f4439ae23f0b",
+      "originalParentShas": [
+        "e442f600891be79625fc78751e2d9f39905920da"
+      ],
+      "preservation": "ancestor of main",
+      "treeUrl": "https://github.com/hpoenixf/open-etf-agent/tree/049c42f9d728b89840b10a492ceaa6b6c7655706",
+      "commitUrl": "https://github.com/hpoenixf/open-etf-agent/commit/049c42f9d728b89840b10a492ceaa6b6c7655706"
+    },
+    {
+      "originalRef": "refs/heads/maintenance/ci-lineage-20261027",
+      "head": "bb8c52b867592ca060afc6c83d1019b29c9ca89f",
+      "tree": "c8b5a81ea8ac59f4aa7144b304c6f1a9fe310fd8",
+      "originalParentShas": [
+        "91c17377382c82dc78d22f4de02c7b7aa0aebc78"
+      ],
+      "preservation": "ancestor of main",
+      "treeUrl": "https://github.com/hpoenixf/open-etf-agent/tree/bb8c52b867592ca060afc6c83d1019b29c9ca89f",
+      "commitUrl": "https://github.com/hpoenixf/open-etf-agent/commit/bb8c52b867592ca060afc6c83d1019b29c9ca89f"
+    },
+    {
+      "originalRef": "refs/heads/maintenance/english-first-20261028",
+      "head": "56513731000f819d30186410f20ec720e1a19e9a",
+      "tree": "beae411fc473d0cdaf6bcbdbd3c98b0c7ef29328",
+      "originalParentShas": [
+        "1931d45ddf2c66dc6d015b775e1d21d234345522"
+      ],
+      "preservation": "ancestor of main",
+      "treeUrl": "https://github.com/hpoenixf/open-etf-agent/tree/56513731000f819d30186410f20ec720e1a19e9a",
+      "commitUrl": "https://github.com/hpoenixf/open-etf-agent/commit/56513731000f819d30186410f20ec720e1a19e9a"
+    },
+    {
+      "originalRef": "refs/heads/maintenance/v0.2-nullable-delta-20261102",
+      "head": "395545233adcd3da3d647abe073684c8509f16a0",
+      "tree": "d58b5b244b7de37522983171efa8e66bc97c19c0",
+      "originalParentShas": [
+        "8b9b32ebee747c835edc0fcbaf59c7fcfa45ffa6"
+      ],
+      "preservation": "direct archive parent",
+      "treeUrl": "https://github.com/hpoenixf/open-etf-agent/tree/395545233adcd3da3d647abe073684c8509f16a0",
+      "commitUrl": "https://github.com/hpoenixf/open-etf-agent/commit/395545233adcd3da3d647abe073684c8509f16a0"
+    },
+    {
+      "originalRef": "refs/heads/maintenance/v0.3-nullable-delta-20261102",
+      "head": "28e276cb78b620139c8db89588edc34641a91854",
+      "tree": "5c6851c64ea9171c0cd4fb33afa072a0918737e1",
+      "originalParentShas": [
+        "5b58400c4870b3b709f30550db4f1462d187cc2c"
+      ],
+      "preservation": "direct archive parent",
+      "treeUrl": "https://github.com/hpoenixf/open-etf-agent/tree/28e276cb78b620139c8db89588edc34641a91854",
+      "commitUrl": "https://github.com/hpoenixf/open-etf-agent/commit/28e276cb78b620139c8db89588edc34641a91854"
+    },
+    {
+      "originalRef": "refs/heads/maintenance/v0.4-nullable-delta-20261102",
+      "head": "8d7c2c692aa54748f7bb059fc98fb7961574f252",
+      "tree": "e4b1527e19798de63eb418f2b9c890c9d7c76f04",
+      "originalParentShas": [
+        "a58da2ebbc4000f88fa5a04568079870aba07312"
+      ],
+      "preservation": "direct archive parent",
+      "treeUrl": "https://github.com/hpoenixf/open-etf-agent/tree/8d7c2c692aa54748f7bb059fc98fb7961574f252",
+      "commitUrl": "https://github.com/hpoenixf/open-etf-agent/commit/8d7c2c692aa54748f7bb059fc98fb7961574f252"
+    },
+    {
+      "originalRef": "refs/heads/maintenance/v0.5-nullable-delta-20261102",
+      "head": "cd2401de8b06c829ca43eb355651ecdcdde37a63",
+      "tree": "b92e0e911e361215b408547e308178959f5e9aa3",
+      "originalParentShas": [
+        "05ccdf0ada8ca292ecd649a51f6a28ad4b41b9ec"
+      ],
+      "preservation": "direct archive parent",
+      "treeUrl": "https://github.com/hpoenixf/open-etf-agent/tree/cd2401de8b06c829ca43eb355651ecdcdde37a63",
+      "commitUrl": "https://github.com/hpoenixf/open-etf-agent/commit/cd2401de8b06c829ca43eb355651ecdcdde37a63"
+    },
+    {
+      "originalRef": "refs/heads/maintenance/v0.6-nullable-delta-20261102",
+      "head": "8585ea047010c78fabaa6262b0187920152d3de6",
+      "tree": "de3678dfb91bb9521edecf41297da22125b50a33",
+      "originalParentShas": [
+        "e64f42aecb491e5f13ac1c3b26ca734597ef6ec0"
+      ],
+      "preservation": "direct archive parent",
+      "treeUrl": "https://github.com/hpoenixf/open-etf-agent/tree/8585ea047010c78fabaa6262b0187920152d3de6",
+      "commitUrl": "https://github.com/hpoenixf/open-etf-agent/commit/8585ea047010c78fabaa6262b0187920152d3de6"
+    },
+    {
+      "originalRef": "refs/heads/maintenance/v0.7-nullable-delta-20261102",
+      "head": "d1d3fb45234997da1ac5456a139a96f8a1918f53",
+      "tree": "9fb35fa11efbceee36aee0ccae9984138b63442b",
+      "originalParentShas": [
+        "2eb31d03244591c47370eebcf77d7a4354e2e548"
+      ],
+      "preservation": "direct archive parent",
+      "treeUrl": "https://github.com/hpoenixf/open-etf-agent/tree/d1d3fb45234997da1ac5456a139a96f8a1918f53",
+      "commitUrl": "https://github.com/hpoenixf/open-etf-agent/commit/d1d3fb45234997da1ac5456a139a96f8a1918f53"
+    },
+    {
+      "originalRef": "refs/heads/maintenance/v0.8-nullable-delta-20261102",
+      "head": "4c16338ea0cd1f2368f5f98ac73f4f69b90ed2f6",
+      "tree": "c9d14688be2761a67a7bcc77f5799aa085d10099",
+      "originalParentShas": [
+        "5c8fe3c073dd8cf92aa7ce99ed6ccf51db09c1ba"
+      ],
+      "preservation": "direct archive parent",
+      "treeUrl": "https://github.com/hpoenixf/open-etf-agent/tree/4c16338ea0cd1f2368f5f98ac73f4f69b90ed2f6",
+      "commitUrl": "https://github.com/hpoenixf/open-etf-agent/commit/4c16338ea0cd1f2368f5f98ac73f4f69b90ed2f6"
+    },
+    {
+      "originalRef": "refs/heads/maintenance/v0.9-cancel-premise",
+      "head": "2ddd44fe5e6546c62d0347916bf11bb5f7cd2a9e",
+      "tree": "c397373cf71a103601313f882834ae1303d8f1ef",
+      "originalParentShas": [
+        "553f44602097cf2e568c9ffea4574e966dd23738"
+      ],
+      "preservation": "ancestor of main",
+      "treeUrl": "https://github.com/hpoenixf/open-etf-agent/tree/2ddd44fe5e6546c62d0347916bf11bb5f7cd2a9e",
+      "commitUrl": "https://github.com/hpoenixf/open-etf-agent/commit/2ddd44fe5e6546c62d0347916bf11bb5f7cd2a9e"
+    },
+    {
+      "originalRef": "refs/heads/maintenance/v0.9-nullable-delta-20261102",
+      "head": "dfc66156b15fe3137ec31e52b832d82e38e73bc3",
+      "tree": "e4f7b5cd926c6cc6baa634ee0c57958209fdf649",
+      "originalParentShas": [
+        "a2ae6a06630538a195c81427a9f2e105e720f7ab"
+      ],
+      "preservation": "direct archive parent",
+      "treeUrl": "https://github.com/hpoenixf/open-etf-agent/tree/dfc66156b15fe3137ec31e52b832d82e38e73bc3",
+      "commitUrl": "https://github.com/hpoenixf/open-etf-agent/commit/dfc66156b15fe3137ec31e52b832d82e38e73bc3"
+    },
+    {
+      "originalRef": "refs/heads/maintenance/v0.9-recovery-clock",
+      "head": "b2d91a2682873d0d63dc1de6db1cf396e2f3200d",
+      "tree": "b35a687b98157aa9786443e6dcdf7a0f1e120385",
+      "originalParentShas": [
+        "62b70d1a512ad97fc560ed0bf84351cc091ae048"
+      ],
+      "preservation": "ancestor of main",
+      "treeUrl": "https://github.com/hpoenixf/open-etf-agent/tree/b2d91a2682873d0d63dc1de6db1cf396e2f3200d",
+      "commitUrl": "https://github.com/hpoenixf/open-etf-agent/commit/b2d91a2682873d0d63dc1de6db1cf396e2f3200d"
+    },
+    {
+      "originalRef": "refs/heads/maintenance/v0.10-nullable-delta-20261102",
+      "head": "676d41467c4ae39731d65657994b8abad2ee631f",
+      "tree": "d0895e9d26c8428b8992c080dde8f38b6fd6d34d",
+      "originalParentShas": [
+        "ff5b9273ef0d239e804f61792702cd2e94174be7"
+      ],
+      "preservation": "ancestor of wip/fixed-core-v0.10-parity-20261102",
+      "treeUrl": "https://github.com/hpoenixf/open-etf-agent/tree/676d41467c4ae39731d65657994b8abad2ee631f",
+      "commitUrl": "https://github.com/hpoenixf/open-etf-agent/commit/676d41467c4ae39731d65657994b8abad2ee631f"
+    },
+    {
+      "originalRef": "refs/heads/maintenance/v0.11-nullable-delta-20261102",
+      "head": "e76b94063a1f228e6f423012a2a41ac8052a627e",
+      "tree": "4b886a0b7da6e91b093d769b99bde366244f78fb",
+      "originalParentShas": [
+        "e68c8a8ae93d0e72f088a29fa43fcef26d5df228"
+      ],
+      "preservation": "ancestor of wip/fixed-core-v0.11-parity-20261102",
+      "treeUrl": "https://github.com/hpoenixf/open-etf-agent/tree/e76b94063a1f228e6f423012a2a41ac8052a627e",
+      "commitUrl": "https://github.com/hpoenixf/open-etf-agent/commit/e76b94063a1f228e6f423012a2a41ac8052a627e"
+    },
+    {
+      "originalRef": "refs/heads/maintenance/v0.12-nullable-delta-20261102",
+      "head": "68828851ecbde9639772242d841c71629b5a5a67",
+      "tree": "9656d7f649f204715357c762ec89f4bb056ecc2d",
+      "originalParentShas": [
+        "46c2822be9865b99696bb70fb9e0ff1b5257ff35"
+      ],
+      "preservation": "ancestor of wip/fixed-core-v0.12-parity-20261102",
+      "treeUrl": "https://github.com/hpoenixf/open-etf-agent/tree/68828851ecbde9639772242d841c71629b5a5a67",
+      "commitUrl": "https://github.com/hpoenixf/open-etf-agent/commit/68828851ecbde9639772242d841c71629b5a5a67"
+    },
+    {
+      "originalRef": "refs/heads/maintenance/v0.13-nullable-delta-20261102",
+      "head": "36f0a38a87ae71aa6b99b019a283d04a6ae5b8eb",
+      "tree": "2854d850e2d25caa9ed9e7f16a32eaf524218542",
+      "originalParentShas": [
+        "300f78f7066ab76fcc4e9efb54137ff021ecc278"
+      ],
+      "preservation": "ancestor of wip/fixed-core-v0.13-parity-20261102",
+      "treeUrl": "https://github.com/hpoenixf/open-etf-agent/tree/36f0a38a87ae71aa6b99b019a283d04a6ae5b8eb",
+      "commitUrl": "https://github.com/hpoenixf/open-etf-agent/commit/36f0a38a87ae71aa6b99b019a283d04a6ae5b8eb"
+    },
+    {
+      "originalRef": "refs/heads/maintenance/v0.14-nullable-delta-20261102",
+      "head": "038d980651143b06a3baa895a029f7510d43d77c",
+      "tree": "314deb09b6e54fd453ce36da8760abc0faf9c37e",
+      "originalParentShas": [
+        "a3e1059a78cf8a4f70fe89d61563980f3d24bc15"
+      ],
+      "preservation": "ancestor of wip/fixed-core-v0.14-parity-20261102",
+      "treeUrl": "https://github.com/hpoenixf/open-etf-agent/tree/038d980651143b06a3baa895a029f7510d43d77c",
+      "commitUrl": "https://github.com/hpoenixf/open-etf-agent/commit/038d980651143b06a3baa895a029f7510d43d77c"
+    },
+    {
+      "originalRef": "refs/heads/phase/v0.1",
+      "head": "f9370b81beef84199293120ee23d245bb0129553",
+      "tree": "a2a04932819be17dd2994bbd5cf27f34253aaecc",
+      "originalParentShas": [
+        "94dd4b08d3ce4ae49fad237e238184a862260a76"
+      ],
+      "preservation": "ancestor of main",
+      "treeUrl": "https://github.com/hpoenixf/open-etf-agent/tree/f9370b81beef84199293120ee23d245bb0129553",
+      "commitUrl": "https://github.com/hpoenixf/open-etf-agent/commit/f9370b81beef84199293120ee23d245bb0129553"
+    },
+    {
+      "originalRef": "refs/heads/phase/v0.2",
+      "head": "66bb3916280aaa466e30833324e9a2905968b392",
+      "tree": "d62bede05ef90400bda6f7ad509645203d9251fc",
+      "originalParentShas": [
+        "a79e89bf709d4a2245b5a8652882a591ba467519"
+      ],
+      "preservation": "ancestor of maintenance/v0.2-nullable-delta-20261102",
+      "treeUrl": "https://github.com/hpoenixf/open-etf-agent/tree/66bb3916280aaa466e30833324e9a2905968b392",
+      "commitUrl": "https://github.com/hpoenixf/open-etf-agent/commit/66bb3916280aaa466e30833324e9a2905968b392"
+    },
+    {
+      "originalRef": "refs/heads/phase/v0.3",
+      "head": "c74ec2ac25ce404fab329b4c14f9ca5157635c5a",
+      "tree": "3aa7061e595d6eda4539e066d531a8204df4836e",
+      "originalParentShas": [
+        "5d57314826447f024d878674b98057742b4ce4cd"
+      ],
+      "preservation": "ancestor of maintenance/v0.3-nullable-delta-20261102",
+      "treeUrl": "https://github.com/hpoenixf/open-etf-agent/tree/c74ec2ac25ce404fab329b4c14f9ca5157635c5a",
+      "commitUrl": "https://github.com/hpoenixf/open-etf-agent/commit/c74ec2ac25ce404fab329b4c14f9ca5157635c5a"
+    },
+    {
+      "originalRef": "refs/heads/phase/v0.4",
+      "head": "3d1f688509cd8bd988afa77ae4caa082395bd198",
+      "tree": "9d7c4177ef5cc3a25f0a0f21a78cf6a8533ba9d1",
+      "originalParentShas": [
+        "ecf6cb45b4062586614e83aed917c92d704cb63b"
+      ],
+      "preservation": "ancestor of maintenance/v0.4-nullable-delta-20261102",
+      "treeUrl": "https://github.com/hpoenixf/open-etf-agent/tree/3d1f688509cd8bd988afa77ae4caa082395bd198",
+      "commitUrl": "https://github.com/hpoenixf/open-etf-agent/commit/3d1f688509cd8bd988afa77ae4caa082395bd198"
+    },
+    {
+      "originalRef": "refs/heads/phase/v0.5",
+      "head": "a1330008efb9435a1961237e8f74f8b1ccc870ad",
+      "tree": "dea5a4488243448bb2e1363994126e285491c5b9",
+      "originalParentShas": [
+        "d075068ac99a6c798d012c46bff4fe0c33eb9979"
+      ],
+      "preservation": "ancestor of maintenance/v0.5-nullable-delta-20261102",
+      "treeUrl": "https://github.com/hpoenixf/open-etf-agent/tree/a1330008efb9435a1961237e8f74f8b1ccc870ad",
+      "commitUrl": "https://github.com/hpoenixf/open-etf-agent/commit/a1330008efb9435a1961237e8f74f8b1ccc870ad"
+    },
+    {
+      "originalRef": "refs/heads/phase/v0.6",
+      "head": "38d5e620dc9e79893c98ce2656a484d955c27a19",
+      "tree": "a8f57bf1e971816c3fed6eb76fa0b10c0d9a37be",
+      "originalParentShas": [
+        "7480b656b18192e6d6b44aab65255b970d58e6f8"
+      ],
+      "preservation": "ancestor of maintenance/v0.6-nullable-delta-20261102",
+      "treeUrl": "https://github.com/hpoenixf/open-etf-agent/tree/38d5e620dc9e79893c98ce2656a484d955c27a19",
+      "commitUrl": "https://github.com/hpoenixf/open-etf-agent/commit/38d5e620dc9e79893c98ce2656a484d955c27a19"
+    },
+    {
+      "originalRef": "refs/heads/phase/v0.7",
+      "head": "5f70dc0b4760ad70ef211f4823828ab2fee5c525",
+      "tree": "bc1fe00f7e2d8bfefd99856d3c7c7c9b9cfdd16d",
+      "originalParentShas": [
+        "1191842f19eb77c981a01ebd96c4727d2c863a43"
+      ],
+      "preservation": "ancestor of main",
+      "treeUrl": "https://github.com/hpoenixf/open-etf-agent/tree/5f70dc0b4760ad70ef211f4823828ab2fee5c525",
+      "commitUrl": "https://github.com/hpoenixf/open-etf-agent/commit/5f70dc0b4760ad70ef211f4823828ab2fee5c525"
+    },
+    {
+      "originalRef": "refs/heads/phase/v0.8",
+      "head": "2c096ce47be2161f97531170af07ef255872f8b1",
+      "tree": "62ead44dcdb89fab9f6f6a38bd26634c94f7f802",
+      "originalParentShas": [
+        "cb735e40021ecb6916de9bc3e2ec086534baefba"
+      ],
+      "preservation": "ancestor of main",
+      "treeUrl": "https://github.com/hpoenixf/open-etf-agent/tree/2c096ce47be2161f97531170af07ef255872f8b1",
+      "commitUrl": "https://github.com/hpoenixf/open-etf-agent/commit/2c096ce47be2161f97531170af07ef255872f8b1"
+    },
+    {
+      "originalRef": "refs/heads/phase/v0.9",
+      "head": "dad9c6e64f32c3d7579aea96613776b40917ec6d",
+      "tree": "ed7018acf6ed5dab5d4496bcc7aa7d3bd7fe2702",
+      "originalParentShas": [
+        "0cf4b99e77bb77aa2530734d011e7f37985d1897"
+      ],
+      "preservation": "ancestor of main",
+      "treeUrl": "https://github.com/hpoenixf/open-etf-agent/tree/dad9c6e64f32c3d7579aea96613776b40917ec6d",
+      "commitUrl": "https://github.com/hpoenixf/open-etf-agent/commit/dad9c6e64f32c3d7579aea96613776b40917ec6d"
+    },
+    {
+      "originalRef": "refs/heads/phase/v0.10",
+      "head": "ff5b9273ef0d239e804f61792702cd2e94174be7",
+      "tree": "0d8f3c27a08a1da9bce0fe562683d5721d0d7a61",
+      "originalParentShas": [
+        "7dfb61735aa0f96166e16b7197b11b755b86bb35"
+      ],
+      "preservation": "ancestor of main",
+      "treeUrl": "https://github.com/hpoenixf/open-etf-agent/tree/ff5b9273ef0d239e804f61792702cd2e94174be7",
+      "commitUrl": "https://github.com/hpoenixf/open-etf-agent/commit/ff5b9273ef0d239e804f61792702cd2e94174be7"
+    },
+    {
+      "originalRef": "refs/heads/phase/v0.11",
+      "head": "e68c8a8ae93d0e72f088a29fa43fcef26d5df228",
+      "tree": "4f4183b7036a6311f7f8e506c40ebcb8e627a508",
+      "originalParentShas": [
+        "1de10d40b69db9a83ff990c32e8e272121052814"
+      ],
+      "preservation": "ancestor of main",
+      "treeUrl": "https://github.com/hpoenixf/open-etf-agent/tree/e68c8a8ae93d0e72f088a29fa43fcef26d5df228",
+      "commitUrl": "https://github.com/hpoenixf/open-etf-agent/commit/e68c8a8ae93d0e72f088a29fa43fcef26d5df228"
+    },
+    {
+      "originalRef": "refs/heads/phase/v0.12",
+      "head": "46c2822be9865b99696bb70fb9e0ff1b5257ff35",
+      "tree": "da7ca9a0ff215ecd2e0a0bb48bad4a1b9854d546",
+      "originalParentShas": [
+        "e68c8a8ae93d0e72f088a29fa43fcef26d5df228"
+      ],
+      "preservation": "ancestor of main",
+      "treeUrl": "https://github.com/hpoenixf/open-etf-agent/tree/46c2822be9865b99696bb70fb9e0ff1b5257ff35",
+      "commitUrl": "https://github.com/hpoenixf/open-etf-agent/commit/46c2822be9865b99696bb70fb9e0ff1b5257ff35"
+    },
+    {
+      "originalRef": "refs/heads/phase/v0.13",
+      "head": "300f78f7066ab76fcc4e9efb54137ff021ecc278",
+      "tree": "a09e1c560efec54a0c8e28701f3a38afc3bd1a50",
+      "originalParentShas": [
+        "26ace789114a9065503f254dbb5bb2a242594e91"
+      ],
+      "preservation": "ancestor of main",
+      "treeUrl": "https://github.com/hpoenixf/open-etf-agent/tree/300f78f7066ab76fcc4e9efb54137ff021ecc278",
+      "commitUrl": "https://github.com/hpoenixf/open-etf-agent/commit/300f78f7066ab76fcc4e9efb54137ff021ecc278"
+    },
+    {
+      "originalRef": "refs/heads/phase/v0.14",
+      "head": "a3e1059a78cf8a4f70fe89d61563980f3d24bc15",
+      "tree": "433d3dd224ca9ac4daa6e76044faef2aba1b57a2",
+      "originalParentShas": [
+        "314de1b7246ff25f8fdd71d94ee21e46a9748fa3"
+      ],
+      "preservation": "ancestor of main",
+      "treeUrl": "https://github.com/hpoenixf/open-etf-agent/tree/a3e1059a78cf8a4f70fe89d61563980f3d24bc15",
+      "commitUrl": "https://github.com/hpoenixf/open-etf-agent/commit/a3e1059a78cf8a4f70fe89d61563980f3d24bc15"
+    },
+    {
+      "originalRef": "refs/heads/phase/v0.15",
+      "head": "74bd5aa455ccaeb2994eb22aa744affde660bfa2",
+      "tree": "b971586f04864809c6544edefd05b3a4719509d5",
+      "originalParentShas": [
+        "c77eefb950dfdc31a56a7669c5fb4bfc0db90f67"
+      ],
+      "preservation": "ancestor of main",
+      "treeUrl": "https://github.com/hpoenixf/open-etf-agent/tree/74bd5aa455ccaeb2994eb22aa744affde660bfa2",
+      "commitUrl": "https://github.com/hpoenixf/open-etf-agent/commit/74bd5aa455ccaeb2994eb22aa744affde660bfa2"
+    },
+    {
+      "originalRef": "refs/heads/release/v0.10-result-consumption",
+      "head": "ae82c26e6511c1dac9d67e864284b55eee6a82c2",
+      "tree": "e6e33c628bad9a093247a5cc2d02c8b9526aafcd",
+      "originalParentShas": [
+        "ff5b9273ef0d239e804f61792702cd2e94174be7"
+      ],
+      "preservation": "ancestor of main",
+      "treeUrl": "https://github.com/hpoenixf/open-etf-agent/tree/ae82c26e6511c1dac9d67e864284b55eee6a82c2",
+      "commitUrl": "https://github.com/hpoenixf/open-etf-agent/commit/ae82c26e6511c1dac9d67e864284b55eee6a82c2"
+    },
+    {
+      "originalRef": "refs/heads/release/v0.16.0-qualified-20261102",
+      "head": "35f244f2e06da447c110325d2ac5a5c39f36e842",
+      "tree": "bc127865a46b172ef0884257e4ad9d5a32a5d862",
+      "originalParentShas": [
+        "91ff2631a621b907d361d397d33f78b7b8bfd673"
+      ],
+      "preservation": "ancestor of main",
+      "treeUrl": "https://github.com/hpoenixf/open-etf-agent/tree/35f244f2e06da447c110325d2ac5a5c39f36e842",
+      "commitUrl": "https://github.com/hpoenixf/open-etf-agent/commit/35f244f2e06da447c110325d2ac5a5c39f36e842"
+    },
+    {
+      "originalRef": "refs/heads/release/v0.17.0-qualified-20261103",
+      "head": "8137e592b0a07bcb0dfdd8756409c5bbc7d909ce",
+      "tree": "182381c980924790262bcee403c322d716c43a2b",
+      "originalParentShas": [
+        "39ccdf8bc0faaa1d639342b90404dbadff7fcabd"
+      ],
+      "preservation": "ancestor of main",
+      "treeUrl": "https://github.com/hpoenixf/open-etf-agent/tree/8137e592b0a07bcb0dfdd8756409c5bbc7d909ce",
+      "commitUrl": "https://github.com/hpoenixf/open-etf-agent/commit/8137e592b0a07bcb0dfdd8756409c5bbc7d909ce"
+    },
+    {
+      "originalRef": "refs/heads/release/v0.18.0-qualified-20261103",
+      "head": "b1d2431a6b86bd0120f2fe5acb531ef928e92de2",
+      "tree": "6743403885eeda0552f9ad1ebf7e84989c6fc525",
+      "originalParentShas": [
+        "4a19962a753ba84b2106b244a1c45da10db09981"
+      ],
+      "preservation": "ancestor of main",
+      "treeUrl": "https://github.com/hpoenixf/open-etf-agent/tree/b1d2431a6b86bd0120f2fe5acb531ef928e92de2",
+      "commitUrl": "https://github.com/hpoenixf/open-etf-agent/commit/b1d2431a6b86bd0120f2fe5acb531ef928e92de2"
+    },
+    {
+      "originalRef": "refs/heads/release/v0.19.0-qualified-20261103",
+      "head": "9b6ae0adf1df7efd4fd138b8d2957103b8fd9132",
+      "tree": "13739de4e3062df5674710e5a1709dbf28a07f9f",
+      "originalParentShas": [
+        "d6f407501c6c08810aa193384c6e9859eb58c737"
+      ],
+      "preservation": "ancestor of main",
+      "treeUrl": "https://github.com/hpoenixf/open-etf-agent/tree/9b6ae0adf1df7efd4fd138b8d2957103b8fd9132",
+      "commitUrl": "https://github.com/hpoenixf/open-etf-agent/commit/9b6ae0adf1df7efd4fd138b8d2957103b8fd9132"
+    },
+    {
+      "originalRef": "refs/heads/release/v0.20.0-layered-20261103",
+      "head": "a5cef6d5cf1a4597f0f1271025cd6cc16be151e5",
+      "tree": "2754193800cea4ed5865d34e986e582444a2528e",
+      "originalParentShas": [
+        "4fa9e81975058896e09f74c13f401f53648d65f8"
+      ],
+      "preservation": "ancestor of main",
+      "treeUrl": "https://github.com/hpoenixf/open-etf-agent/tree/a5cef6d5cf1a4597f0f1271025cd6cc16be151e5",
+      "commitUrl": "https://github.com/hpoenixf/open-etf-agent/commit/a5cef6d5cf1a4597f0f1271025cd6cc16be151e5"
+    },
+    {
+      "originalRef": "refs/heads/release/v0.21.0-qualified-20261103",
+      "head": "427315b5554b1c9af8fa50b8ab622747045e691a",
+      "tree": "8e0649c2fa6c7d1610cd680fe4b4362988a48cff",
+      "originalParentShas": [
+        "88afb84958ed8de9108d756cdc0d63e6d2fbee24"
+      ],
+      "preservation": "ancestor of main",
+      "treeUrl": "https://github.com/hpoenixf/open-etf-agent/tree/427315b5554b1c9af8fa50b8ab622747045e691a",
+      "commitUrl": "https://github.com/hpoenixf/open-etf-agent/commit/427315b5554b1c9af8fa50b8ab622747045e691a"
+    },
+    {
+      "originalRef": "refs/heads/wip/fixed-core-v0.10-parity-20261102",
+      "head": "0d23b20496639f1dea8a7af8d1717b3b99d9077a",
+      "tree": "527e921e1f52995387439692c52435f923930753",
+      "originalParentShas": [
+        "676d41467c4ae39731d65657994b8abad2ee631f"
+      ],
+      "preservation": "direct archive parent",
+      "treeUrl": "https://github.com/hpoenixf/open-etf-agent/tree/0d23b20496639f1dea8a7af8d1717b3b99d9077a",
+      "commitUrl": "https://github.com/hpoenixf/open-etf-agent/commit/0d23b20496639f1dea8a7af8d1717b3b99d9077a"
+    },
+    {
+      "originalRef": "refs/heads/wip/fixed-core-v0.11-parity-20261102",
+      "head": "ca4a5b4043e31133c998b9c0e6c2422904c625b9",
+      "tree": "52ad760efaaa08e0edc573f2077179d30a84b9a7",
+      "originalParentShas": [
+        "e76b94063a1f228e6f423012a2a41ac8052a627e"
+      ],
+      "preservation": "direct archive parent",
+      "treeUrl": "https://github.com/hpoenixf/open-etf-agent/tree/ca4a5b4043e31133c998b9c0e6c2422904c625b9",
+      "commitUrl": "https://github.com/hpoenixf/open-etf-agent/commit/ca4a5b4043e31133c998b9c0e6c2422904c625b9"
+    },
+    {
+      "originalRef": "refs/heads/wip/fixed-core-v0.12-parity-20261102",
+      "head": "5c455238664ed9c1cd2834b7bf2e08e6558d2285",
+      "tree": "681e22c0e83afa85f8208ebe56221da07ed442a3",
+      "originalParentShas": [
+        "68828851ecbde9639772242d841c71629b5a5a67"
+      ],
+      "preservation": "direct archive parent",
+      "treeUrl": "https://github.com/hpoenixf/open-etf-agent/tree/5c455238664ed9c1cd2834b7bf2e08e6558d2285",
+      "commitUrl": "https://github.com/hpoenixf/open-etf-agent/commit/5c455238664ed9c1cd2834b7bf2e08e6558d2285"
+    },
+    {
+      "originalRef": "refs/heads/wip/fixed-core-v0.13-parity-20261102",
+      "head": "386da89dabc566da49f1a095d52a303605daf491",
+      "tree": "6b949677958ab253c0073c5e91652f3eabc6839e",
+      "originalParentShas": [
+        "36f0a38a87ae71aa6b99b019a283d04a6ae5b8eb"
+      ],
+      "preservation": "direct archive parent",
+      "treeUrl": "https://github.com/hpoenixf/open-etf-agent/tree/386da89dabc566da49f1a095d52a303605daf491",
+      "commitUrl": "https://github.com/hpoenixf/open-etf-agent/commit/386da89dabc566da49f1a095d52a303605daf491"
+    },
+    {
+      "originalRef": "refs/heads/wip/fixed-core-v0.14-parity-20261102",
+      "head": "b07f223a8cafab746020a97cda24f9a433cd5f71",
+      "tree": "dc15c61907af7aaa691852cd9811f22a5276be16",
+      "originalParentShas": [
+        "038d980651143b06a3baa895a029f7510d43d77c"
+      ],
+      "preservation": "direct archive parent",
+      "treeUrl": "https://github.com/hpoenixf/open-etf-agent/tree/b07f223a8cafab746020a97cda24f9a433cd5f71",
+      "commitUrl": "https://github.com/hpoenixf/open-etf-agent/commit/b07f223a8cafab746020a97cda24f9a433cd5f71"
+    },
+    {
+      "originalRef": "refs/heads/wip/fixed-core-v0.15-parity-20261102",
+      "head": "d1b1ab41760adf41d77ead455ad5b7756adee0f7",
+      "tree": "be948960de0340ed888725116215dfd7238bdeb0",
+      "originalParentShas": [
+        "74bd5aa455ccaeb2994eb22aa744affde660bfa2"
+      ],
+      "preservation": "direct archive parent",
+      "treeUrl": "https://github.com/hpoenixf/open-etf-agent/tree/d1b1ab41760adf41d77ead455ad5b7756adee0f7",
+      "commitUrl": "https://github.com/hpoenixf/open-etf-agent/commit/d1b1ab41760adf41d77ead455ad5b7756adee0f7"
+    },
+    {
+      "originalRef": "refs/heads/wip/v018-schedule-occurrence-20261102",
+      "head": "2b9fa955c96c7aaf202bad11131ef4680f0f97f3",
+      "tree": "e2db54122d7e5565ddb9ce4d4c336aa9c90e83e5",
+      "originalParentShas": [
+        "0cbd487f2ad5cefc668ff72afbff65d46bb2afa3"
+      ],
+      "preservation": "direct archive parent",
+      "treeUrl": "https://github.com/hpoenixf/open-etf-agent/tree/2b9fa955c96c7aaf202bad11131ef4680f0f97f3",
+      "commitUrl": "https://github.com/hpoenixf/open-etf-agent/commit/2b9fa955c96c7aaf202bad11131ef4680f0f97f3"
+    },
+    {
+      "originalRef": "refs/heads/wip/v026-report-guidance-20261109",
+      "head": "e73b960b106db11aca31dfff0330093557b2aee3",
+      "tree": "cbff4a0edff2c323b0a5650cc0f6e5215092b143",
+      "originalParentShas": [
+        "99485ed3e7d45d462f9908e53ff5653a8c0791c1"
+      ],
+      "preservation": "direct archive parent",
+      "treeUrl": "https://github.com/hpoenixf/open-etf-agent/tree/e73b960b106db11aca31dfff0330093557b2aee3",
+      "commitUrl": "https://github.com/hpoenixf/open-etf-agent/commit/e73b960b106db11aca31dfff0330093557b2aee3"
+    }
+  ],
+  "retainedRefs": [
+    {
+      "name": "book-companion-r5",
+      "head": "a78316c43054bf8dfbc068b6e7443685cec50ee7",
+      "reason": "Historical README line 13 tells printed-book readers to switch to this exact branch."
+    },
+    {
+      "name": "main",
+      "head": "7c5c9f7e4efe71a79f229077c9fe2247be8d8a37",
+      "reason": "默认主线"
+    },
+    {
+      "name": "maintenance/v0.2-source-boundary",
+      "head": "a10d4f1bd1ecc39224272156221fe29792b64094",
+      "reason": "现行中英文module-guide明确要求使用此命名入口；与nullable分支分叉"
+    },
+    {
+      "name": "wip/v027-specialist-profiles-20261109",
+      "head": "6906cbc70ae0cde35d6843482f512a82715034ee",
+      "reason": "当前指定保留的活跃开发/最新WIP"
+    }
+  ],
+  "releaseTags": [
+    {
+      "name": "v0.26.0",
+      "commit": "bcc12995c83abfbd5b37b9792f5a86ab74aa788e"
+    },
+    {
+      "name": "v0.25.0",
+      "commit": "99485ed3e7d45d462f9908e53ff5653a8c0791c1"
+    },
+    {
+      "name": "v0.24.0",
+      "commit": "afbfb9865539c18c9358ac65c822f929aaa6e872"
+    },
+    {
+      "name": "v0.23.1",
+      "commit": "05c61e9c55ef55aab487834fff0397fe20caa367"
+    },
+    {
+      "name": "v0.22.0",
+      "commit": "051bba49ff7c3adbfbe76bc07eba675bd7e7b465"
+    },
+    {
+      "name": "v0.21.0",
+      "commit": "b22c43633101a10a50fc5b09ecc5ecba038f873a"
+    },
+    {
+      "name": "v0.20.0",
+      "commit": "88afb84958ed8de9108d756cdc0d63e6d2fbee24"
+    },
+    {
+      "name": "v0.19.0",
+      "commit": "fbefc074f161ae8de5b93060beae5b542de31038"
+    },
+    {
+      "name": "v0.18.0",
+      "commit": "fde28d8f192adf8b8799a3516d1250b56146db63"
+    },
+    {
+      "name": "v0.17.0",
+      "commit": "4a19962a753ba84b2106b244a1c45da10db09981"
+    },
+    {
+      "name": "v0.16.0",
+      "commit": "96b4b4672defe37e5fe329509e32a01075fdef65"
+    },
+    {
+      "name": "v0.15.2",
+      "commit": "34124cefc6df289e08518173789210b45a716451"
+    },
+    {
+      "name": "v0.15.1",
+      "commit": "8ba24a15cb1ce6ad3a0ebd48141be0549bfda35a"
+    },
+    {
+      "name": "v0.6.1",
+      "commit": "38d5e620dc9e79893c98ce2656a484d955c27a19"
+    },
+    {
+      "name": "v0.5.1",
+      "commit": "a1330008efb9435a1961237e8f74f8b1ccc870ad"
+    },
+    {
+      "name": "v0.4.1",
+      "commit": "3d1f688509cd8bd988afa77ae4caa082395bd198"
+    },
+    {
+      "name": "v0.3.1",
+      "commit": "c74ec2ac25ce404fab329b4c14f9ca5157635c5a"
+    },
+    {
+      "name": "v0.2.1",
+      "commit": "66bb3916280aaa466e30833324e9a2905968b392"
+    },
+    {
+      "name": "v0.15.0",
+      "commit": "74bd5aa455ccaeb2994eb22aa744affde660bfa2"
+    },
+    {
+      "name": "v0.14.0",
+      "commit": "a3e1059a78cf8a4f70fe89d61563980f3d24bc15"
+    },
+    {
+      "name": "v0.13.0",
+      "commit": "300f78f7066ab76fcc4e9efb54137ff021ecc278"
+    },
+    {
+      "name": "v0.12.0",
+      "commit": "46c2822be9865b99696bb70fb9e0ff1b5257ff35"
+    },
+    {
+      "name": "v0.11.0",
+      "commit": "e68c8a8ae93d0e72f088a29fa43fcef26d5df228"
+    },
+    {
+      "name": "v0.10.0",
+      "commit": "ff5b9273ef0d239e804f61792702cd2e94174be7"
+    },
+    {
+      "name": "v0.9.0",
+      "commit": "dad9c6e64f32c3d7579aea96613776b40917ec6d"
+    },
+    {
+      "name": "v0.8.0",
+      "commit": "2c096ce47be2161f97531170af07ef255872f8b1"
+    },
+    {
+      "name": "v0.7.0-dev.0",
+      "commit": "5f70dc0b4760ad70ef211f4823828ab2fee5c525"
+    },
+    {
+      "name": "v0.6.0-dev.0",
+      "commit": "7480b656b18192e6d6b44aab65255b970d58e6f8"
+    },
+    {
+      "name": "v0.5.0-dev.0",
+      "commit": "d075068ac99a6c798d012c46bff4fe0c33eb9979"
+    },
+    {
+      "name": "v0.4.0-dev.0",
+      "commit": "ecf6cb45b4062586614e83aed917c92d704cb63b"
+    },
+    {
+      "name": "v0.3.0-dev.0",
+      "commit": "5d57314826447f024d878674b98057742b4ce4cd"
+    },
+    {
+      "name": "v0.2.0-dev.0",
+      "commit": "a79e89bf709d4a2245b5a8652882a591ba467519"
+    },
+    {
+      "name": "v0.1.0-dev.0",
+      "commit": "f9370b81beef84199293120ee23d245bb0129553"
+    }
+  ],
+  "constraints": [
+    "No modification to main or active v027.",
+    "Original historical content stays at its original path within its original commit tree; it is not copied into a merged worktree.",
+    "Branch removal is a separate operation after independent readback. This index records archived identities, not a claim every old reference has already been removed.",
+    "No local unpublished working-tree changes, credentials, raw logs, databases, dependencies, or caches are uploaded by this archive operation."
+  ]
+}

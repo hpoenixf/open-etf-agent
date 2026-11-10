@@ -1,209 +1,98 @@
-<p align="center"><strong>English</strong> | <a href="README.zh-CN.md">简体中文</a></p>
-
-# Open ETF Agent
-
-**Read an Agent architecture article. Run its corresponding implementation. Open a report and trace it back to sources, fixed code and evidence.**
-
-A learning-by-building research Agent: each module explains one engineering decision and keeps a runnable implementation. Start with the offline synthetic-document comparison—no model key required. This is not a live fund-research or trading service.
-
-For developers learning Agent engineering, and readers who want to check an architecture article against runnable code—not investors looking for fund recommendations.
-
-**[Quickstart](#quickstart) · [Read all articles](https://hpoenixf.com/eff-agent-article/en/open-etf-agent)**
-
-[Latest modules](#versions) · [Architecture](#architecture) · [Scope and safety](#scope) · [Full documentation](#documentation) · [Contribute](#feedback-and-contributions)
-
-<a id="reading"></a>
-**Latest module articles** (module order, not publication dates):
-
-[v0.18 · Scheduled Research Beyond a Conversation](https://hpoenixf.com/eff-agent-article/en/articles/agent-autonomous-scheduled-research) · [v0.17 · Why the Next Model Request Still Queues After HTTP 200](https://hpoenixf.com/eff-agent-article/en/articles/agent-provider-admission-capacity-lease) · [v0.16 · RAG: Revocation and Historical Replay](https://hpoenixf.com/eff-agent-article/en/articles/027-rag-revocation-publish-replay)
-
-<p align="center">
-  <a href="https://github.com/hpoenixf/open-etf-agent/actions/workflows/verify.yml?query=branch%3Amain"><img src="https://github.com/hpoenixf/open-etf-agent/actions/workflows/verify.yml/badge.svg?branch=main" alt="Verify (main)" height="20" /></a>
-  <a href="https://github.com/hpoenixf/open-etf-agent/releases/latest"><img src="https://img.shields.io/github/v/release/hpoenixf/open-etf-agent?label=release" alt="Latest release" height="20" /></a>
-  <a href="https://github.com/hpoenixf/open-etf-agent/blob/main/LICENSE"><img src="https://img.shields.io/github/license/hpoenixf/open-etf-agent" alt="MIT license" height="20" /></a>
-  <br />
-  <a href="https://github.com/hpoenixf/open-etf-agent/blob/main/package.json"><img src="https://img.shields.io/badge/JavaScript-ESM-F7DF1E?logo=javascript&amp;logoColor=black" alt="JavaScript" height="20" /></a>
-  <a href="https://github.com/hpoenixf/open-etf-agent/blob/main/package.json"><img src="https://img.shields.io/badge/Node.js-%3E%3D26.8.1%20%3C27-339933?logo=nodedotjs&amp;logoColor=white" alt="Node.js 26.8.1 to 26.x" height="20" /></a>
-  <a href="https://github.com/hpoenixf/open-etf-agent/stargazers"><img src="https://img.shields.io/github/stars/hpoenixf/open-etf-agent?style=flat" alt="GitHub stars" height="20" /></a>
-</p>
-<p align="center">
-  <a href="https://hub.xerj.org/contributors/hpoenixf"><img src="https://hub.xerj.org/contributors/hpoenixf/badge.svg" alt="XERJ contributor badge" height="20" /></a><br />
-  <small>The v0.9 standalone CLI Worker implementation was selected for <a href="https://hub.xerj.org/corpus/hpoenixf--open-etf-agent">XERJ Corpus Hub</a>.</small>
-</p>
-
-<a id="quickstart"></a>
-## Quickstart
-
-Requires **Node.js 26.8.1–26.x** and npm. Default examples need no model key. Dependency installation may access npm; the installed examples run offline.
-
-```sh
-# main already contains the current stable development snapshot
-git clone https://github.com/hpoenixf/open-etf-agent.git
-cd open-etf-agent
-
-npm ci --ignore-scripts --no-audit --no-fund
-npm run build
-npm test
-npm run demo -- --case document-compare
-```
-
-`build` checks and copies native ESM and example data; it is not a TypeScript typecheck. The comparison keeps all four questions. Each Run creates a separate directory under `runs/` with `report.md`, `manifest.json` and `run.jsonl`. The CLI prints the actual directory. Inspect a Run with `node src/cli.mjs --observe runs/<run-id>`, replacing the placeholder with that ID.
-
-[Try seven more mechanism examples →](docs/module-guide.md#try-seven-more-kinds-of-example)
-
-**What does delivery look like?** This is a historical T1 excerpt from the [v0.5 synthetic receipts](https://github.com/hpoenixf/open-etf-agent/blob/05c0dd2dc550f4f7e5da034340ff5c3159768fcf/docs/verification/v05-demo-receipts.json), not a new execution. v0.6 adds immutable Artifact / Revision IDs and attachment identity; see its [delivery readback](https://github.com/hpoenixf/open-etf-agent/blob/7480b656b18192e6d6b44aab65255b970d58e6f8/docs/verification/v06-delivery-receipts.safe.json).
-
-```json
-{
-  "caseId": "T1",
-  "status": "completed",
-  "semanticStatus": "unreviewed",
-  "receipt": {
-    "path": "report.md",
-    "bytes": 933,
-    "mediaType": "text/markdown; charset=utf-8"
-  }
-}
-```
-
-`completed` describes execution; `semanticStatus: unreviewed` leaves answer quality unreviewed. Full receipts also include hashes and actual source references. Tests reopen the files after the producing process exits.
-
-<a id="versions"></a>
-## Latest three modules
-
-**v0.26 adds bounded Web evidence acquisition**: explicitly acquire public static pages, preserve originals and provenance, and consume frozen pages through the existing Report/Reader path. [Usage](docs/web-sources.md) · [Dated Runtime 9/10 and retained failures](docs/verification/v026-release.md). One task remains unknown; model content defects remain separate. New Web pages use 128 KiB and new Projects default to 1 MiB serialized context, not a model token window. No autonomous crawl or browser rendering.
-
-**v0.25 adds finite once Scheduled tasks**: confirm, inspect, cancel and explicitly run due work through the original project and execution owners. [Commands](docs/scheduled-tasks.md) · [Runtime qualification and content limits](docs/verification/v025-release.md). Nine preplanned scenarios contain ten normal logical tasks: Runtime contracts passed 10/10 with 30 complete Go responses; two model content issues remain. No cron, background daemon or automatic recovery of unknown work.
-
-**v0.24 keeps Provider Admission capacity stable across project revisions**: the same normalized endpoint retains one original project-local owner when model or streaming configuration changes. [Usage](docs/provider-capacity.md) · [Ten-task evidence and limits](docs/verification/v024-release.md) · [Fixed tested source](https://github.com/hpoenixf/open-etf-agent/tree/0d47e318e0f5fb36d45d8be274324a06bdd20d5c). Mechanical and named Runtime contracts passed 10/10; model content caveats, including C09’s unrepaired citation error, remain. Not account-wide limiting or live-concurrency qualification.
-
-
-**v0.23.1 maintenance:** original Session heartbeat through finalization and durable cancellation while waiting. [Fixes, 966/966 and evidence applicability](docs/verification/v0231-maintenance.md); original ten-task scores and later provider interruptions remain separate.
-
-
-**2026-11-02 foundation repair:** [Working-input admission, cancellation facts, Child settlement and no-saving summary precheck](docs/verification/foundation-repair-20261102.md). Provider-free regressions passed; this is not a new release or live qualification.
-
-| Module | What changes | Run and inspect |
-| --- | --- | --- |
-| v0.26 · Web evidence | Explicit acquisition, immutable originals and source-backed readback | [Usage](docs/web-sources.md) · [Evidence](docs/verification/v026-release.md) |
-| v0.25 · Once Scheduled tasks | Explicit confirmation and bounded due-work sweep; original lifecycle and unknown retention | [Usage](docs/scheduled-tasks.md) · [Evidence](docs/verification/v025-release.md) |
-| v0.24 · Project provider capacity | Stable original endpoint owner across revisions; unknown stays occupied | [Usage](docs/provider-capacity.md) · [Evidence](docs/verification/v024-release.md) |
-
-[All fixed versions and commands](docs/module-guide.md#versions) · [Machine-readable version lineage](versions.json) · [GitHub Releases](https://github.com/hpoenixf/open-etf-agent/releases)
-
-<a id="architecture"></a>
-## Architecture: follow one execution path
-
-```text
-Question → Runtime ⇄ Gateway
-              │ Context: the next bounded input
-              ▼
-           Tool Host → read / calculate / save
-              ├─ ResultStore: original sources and exact references
-              └─ Artifact / Revision: report, files and receipts
-                       └─ Reader: reopen the delivered bytes
-```
-
-The model proposes; code checks authority and executes. Session, Publication and the single-Run Worker extend this path rather than adding a second executor. Original sources, working notes and explicitly authorized Memory remain separate.
-
-[Owner responsibilities and limitations](docs/module-guide.md#architecture) · [Design evolution](docs/evolution/evidence-index.md)
-
-<a id="scope"></a>
-## Scope and safety
-
-- **Use it to learn and reproduce:** local, single-user synthetic examples. Default demos use scripted Gateway fixtures, not live model judgment, real holdings or market data. No trading or investment advice.
-- **Read the qualification literally:** `completed` means execution finished; model quality remains unreviewed. Offline tests and CI are not production, security, financial-semantic or live-recovery certification.
-- **Keep authority explicit:** trusted Plugins run local JavaScript and are not sandboxed. The PDF parser is not a hostile-file security sandbox; no OCR, visual/table interpretation or active-PDF recovery is offered. Python isolation and broader Web capabilities are not implied by the examples.
-- **Respect original identity and effects:** unknown dispatched requests are not automatically retried; host stop is not user cancellation. SQLite fencing does not provide general external exactly-once effects. [Finish or isolate incompatible active Runs before upgrade](docs/upgrade-guide.md).
-
-**v0.15 real-mechanism evidence:** [Three retained batches](openspec/changes/serial-specialist-child/live-evidence.safe.json): 10 physical attempts; 9 responses explicitly report zero Go balance charge, while 1 response has unknown usage and cost—not presumed free or refunded. Only bounded synthetic-source comparison passed, not general model quality, financial semantics or live-recovery certification. Unknown dispatched requests are not automatically retried; active Runs from the older WIP template have no cross-template recovery promise. The public CLI remains an offline fixture with no model-key option.
-
-<a id="live-evidence"></a>
-**Real model calls:** [16 historical HTTP requests across v0.1–v0.5](docs/module-guide.md#live-evidence) are distinct from current offline demos. HTTP 200 or a saved report does not certify task quality.
-
-<a id="live-entry"></a>
-**Live runner:** the demo CLI refuses `--live`. The [separate runner](docs/live-validation.md) needs your own provider, data and cost authorization, fixed inputs and a shared budget. Other operators' credentials or authorization are not inherited; unknown outcomes stop execution.
-
-<a id="documentation"></a>
-## Go deeper
-
-- [Full module commands and version history](docs/module-guide.md)
-- [Verification evidence index](docs/verification/README.md)
-- [Article-to-code mapping](docs/articles-and-code.md)
-
-<a id="roadmap"></a>
-[Roadmap](docs/plan/v1-to-v2.md): planned is not shipped. v0.26 ships explicit public static-page acquisition; broader Web capabilities, isolated Python and richer PDF support remain separate candidates, not bundled promises.
-
-## Author
-
-**By hpoenixf: 10 years of software development experience, including 5 years building financial business systems.** A frontend-leaning full-stack developer focused on Agent engineering, connecting system design with runnable implementations and verification evidence. [Personal blog](https://hpoenixf.com/) · [Engineering articles](https://hpoenixf.com/eff-agent-article/en/)
-
-## License
-
-Original code and accompanying original documentation are [MIT](LICENSE), Copyright © 2026 Huang Pengfei. Third-party dependencies, the accompanying Evidence Kit and NOTICE retain their own licenses and attribution. This license does not cover external private source, manuscripts or other outside content. `private: true` prevents accidental npm publication; it does not restrict MIT rights.
-
-### Feedback and contributions
-
-See the [repository maintenance acceptance requirements](docs/verification/README.md#repository-maintenance).
-
-Open an [issue](https://github.com/hpoenixf/open-etf-agent/issues) with the **stage/commit, Node version, minimal reproduction, expected behavior and actual result**. Do not include keys, private material, databases, real holdings or unsanitized logs. For improvements, explain the concrete problem and how the change can be verified.
-
-<details>
-<summary>Older section bookmarks (expand)</summary>
-
-## Moved section links
-
-Existing bookmarks continue to resolve; each link opens its corresponding guide section.
-
-<a id="what-you-can-inspect"></a>
-[What you can inspect](docs/module-guide.md#what-you-can-inspect)
-
-<a id="v013--one-durable-ordinary-reply"></a>
-[v0.13 · One durable ordinary reply](docs/module-guide.md#v013--one-durable-ordinary-reply)
-
-<a id="v012--fixed-task-time"></a>
-[v0.12 · Fixed task time](docs/module-guide.md#v012--fixed-task-time)
-
-<a id="v011-one-local-pdf-one-physical-page-original-bytes-retained"></a>
-[v0.11: one local PDF, one physical page, original bytes retained](docs/module-guide.md#v011-one-local-pdf-one-physical-page-original-bytes-retained)
-
-<a id="v010-one-source-selection-one-result-one-report-and-csv"></a>
-[v0.10: one source selection, one result, one report and CSV](docs/module-guide.md#v010-one-source-selection-one-result-one-report-and-csv)
-
-<a id="v09-another-process-continues-the-original-run"></a>
-[v0.9: another process continues the original Run](docs/module-guide.md#v09-another-process-continues-the-original-run)
-
-<a id="v06-read-download-and-verify-over-real-http"></a>
-[v0.6: read, download and verify over real HTTP](docs/module-guide.md#v06-read-download-and-verify-over-real-http)
-
-<a id="v07-trusted-contributions-and-same-run-continuation"></a>
-[v0.7: trusted contributions and same-Run continuation](docs/module-guide.md#v07-trusted-contributions-and-same-run-continuation)
-
-<a id="v08-commit-and-read-back-one-answer-block"></a>
-[v0.8: commit and read back one answer block](docs/module-guide.md#v08-commit-and-read-back-one-answer-block)
-
-<a id="version-history-ten-fixed-snapshots"></a>
-[Complete version history](docs/module-guide.md#versions)
-
-<a id="architecture-keep-responsibilities-visible"></a>
-[Architecture: keep responsibilities visible](docs/module-guide.md#architecture-keep-responsibilities-visible)
-
-<a id="evidence-and-its-limits"></a>
-[Evidence and its limits](docs/module-guide.md#evidence-and-its-limits)
-
-<a id="real-calls-16-http-requests-not-16-capability-certifications"></a>
-[Real calls: 16 HTTP requests, not 16 capability certifications](docs/module-guide.md#real-calls-16-http-requests-not-16-capability-certifications)
-
-<a id="restricted-live-runner-separate-from-the-demo-cli"></a>
-[Restricted live runner: separate from the demo CLI](docs/module-guide.md#restricted-live-runner-separate-from-the-demo-cli)
-
-<a id="articles-and-code"></a>
-[Articles and code](docs/module-guide.md#articles-and-code)
-
-<a id="roadmap-planned-is-not-shipped"></a>
-[Roadmap: planned is not shipped](docs/module-guide.md#roadmap-planned-is-not-shipped)
-
-<a id="english"></a>
-[English](docs/module-guide.md#english)
-
-</details>
+# Historical branch snapshots / 历史分支归档
+
+This branch preserves exact Git histories during the 2026-11-10 branch cleanup. **It is an archive, not a development branch, release, or integration of the source snapshots.** Use [main](https://github.com/hpoenixf/open-etf-agent/tree/main) for the current released development line.
+
+本分支保存清理前的原始提交、目录树与完整历史，不表示候选已验收，也不把各版本的文件混合成一个实现。下面每条“Files”链接直接打开该分支原头的目录与文件；“History”链接打开原提交历史。旧分支引用只会在独立回读核验后清理。
+
+## Retained live names / 保留的原名
+
+- [main](https://github.com/hpoenixf/open-etf-agent/tree/main): default development line.
+- [wip/v027-specialist-profiles-20261109](https://github.com/hpoenixf/open-etf-agent/tree/wip/v027-specialist-profiles-20261109): current development WIP, not a release qualification.
+- [book-companion-r5](https://github.com/hpoenixf/open-etf-agent/tree/book-companion-r5): printed-book reader entry; its historical README explicitly asks readers to switch to this name.
+- [maintenance/v0.2-source-boundary](https://github.com/hpoenixf/open-etf-agent/tree/maintenance/v0.2-source-boundary): corrected v0.2 entry explicitly used by the module guide.
+
+Existing release tags and releases are retained unchanged. Fixed-commit links continue to identify their original content.
+
+## Browse the original snapshots / 查看原始快照
+
+| Original branch | Files at original head | Original history | Original tree SHA |
+| --- | --- | --- | --- |
+| `docs/versioned-evolution-plan` | [5bf970f6bc98](https://github.com/hpoenixf/open-etf-agent/tree/5bf970f6bc98bdc11ec8608747fbb83fa170941f) | [History](https://github.com/hpoenixf/open-etf-agent/commits/5bf970f6bc98bdc11ec8608747fbb83fa170941f) | `8569c4e3979c0c6ef652e4a4c62a21ed1c9345ea` |
+| `feature/result-reference-consumption-20261027` | [049c42f9d728](https://github.com/hpoenixf/open-etf-agent/tree/049c42f9d728b89840b10a492ceaa6b6c7655706) | [History](https://github.com/hpoenixf/open-etf-agent/commits/049c42f9d728b89840b10a492ceaa6b6c7655706) | `1d175d7bd11766d3f409a0d178a0f4439ae23f0b` |
+| `maintenance/ci-lineage-20261027` | [bb8c52b86759](https://github.com/hpoenixf/open-etf-agent/tree/bb8c52b867592ca060afc6c83d1019b29c9ca89f) | [History](https://github.com/hpoenixf/open-etf-agent/commits/bb8c52b867592ca060afc6c83d1019b29c9ca89f) | `c8b5a81ea8ac59f4aa7144b304c6f1a9fe310fd8` |
+| `maintenance/english-first-20261028` | [56513731000f](https://github.com/hpoenixf/open-etf-agent/tree/56513731000f819d30186410f20ec720e1a19e9a) | [History](https://github.com/hpoenixf/open-etf-agent/commits/56513731000f819d30186410f20ec720e1a19e9a) | `beae411fc473d0cdaf6bcbdbd3c98b0c7ef29328` |
+| `maintenance/v0.2-nullable-delta-20261102` | [395545233adc](https://github.com/hpoenixf/open-etf-agent/tree/395545233adcd3da3d647abe073684c8509f16a0) | [History](https://github.com/hpoenixf/open-etf-agent/commits/395545233adcd3da3d647abe073684c8509f16a0) | `d58b5b244b7de37522983171efa8e66bc97c19c0` |
+| `maintenance/v0.3-nullable-delta-20261102` | [28e276cb78b6](https://github.com/hpoenixf/open-etf-agent/tree/28e276cb78b620139c8db89588edc34641a91854) | [History](https://github.com/hpoenixf/open-etf-agent/commits/28e276cb78b620139c8db89588edc34641a91854) | `5c6851c64ea9171c0cd4fb33afa072a0918737e1` |
+| `maintenance/v0.4-nullable-delta-20261102` | [8d7c2c692aa5](https://github.com/hpoenixf/open-etf-agent/tree/8d7c2c692aa54748f7bb059fc98fb7961574f252) | [History](https://github.com/hpoenixf/open-etf-agent/commits/8d7c2c692aa54748f7bb059fc98fb7961574f252) | `e4b1527e19798de63eb418f2b9c890c9d7c76f04` |
+| `maintenance/v0.5-nullable-delta-20261102` | [cd2401de8b06](https://github.com/hpoenixf/open-etf-agent/tree/cd2401de8b06c829ca43eb355651ecdcdde37a63) | [History](https://github.com/hpoenixf/open-etf-agent/commits/cd2401de8b06c829ca43eb355651ecdcdde37a63) | `b92e0e911e361215b408547e308178959f5e9aa3` |
+| `maintenance/v0.6-nullable-delta-20261102` | [8585ea047010](https://github.com/hpoenixf/open-etf-agent/tree/8585ea047010c78fabaa6262b0187920152d3de6) | [History](https://github.com/hpoenixf/open-etf-agent/commits/8585ea047010c78fabaa6262b0187920152d3de6) | `de3678dfb91bb9521edecf41297da22125b50a33` |
+| `maintenance/v0.7-nullable-delta-20261102` | [d1d3fb452349](https://github.com/hpoenixf/open-etf-agent/tree/d1d3fb45234997da1ac5456a139a96f8a1918f53) | [History](https://github.com/hpoenixf/open-etf-agent/commits/d1d3fb45234997da1ac5456a139a96f8a1918f53) | `9fb35fa11efbceee36aee0ccae9984138b63442b` |
+| `maintenance/v0.8-nullable-delta-20261102` | [4c16338ea0cd](https://github.com/hpoenixf/open-etf-agent/tree/4c16338ea0cd1f2368f5f98ac73f4f69b90ed2f6) | [History](https://github.com/hpoenixf/open-etf-agent/commits/4c16338ea0cd1f2368f5f98ac73f4f69b90ed2f6) | `c9d14688be2761a67a7bcc77f5799aa085d10099` |
+| `maintenance/v0.9-cancel-premise` | [2ddd44fe5e65](https://github.com/hpoenixf/open-etf-agent/tree/2ddd44fe5e6546c62d0347916bf11bb5f7cd2a9e) | [History](https://github.com/hpoenixf/open-etf-agent/commits/2ddd44fe5e6546c62d0347916bf11bb5f7cd2a9e) | `c397373cf71a103601313f882834ae1303d8f1ef` |
+| `maintenance/v0.9-nullable-delta-20261102` | [dfc66156b15f](https://github.com/hpoenixf/open-etf-agent/tree/dfc66156b15fe3137ec31e52b832d82e38e73bc3) | [History](https://github.com/hpoenixf/open-etf-agent/commits/dfc66156b15fe3137ec31e52b832d82e38e73bc3) | `e4f7b5cd926c6cc6baa634ee0c57958209fdf649` |
+| `maintenance/v0.9-recovery-clock` | [b2d91a268287](https://github.com/hpoenixf/open-etf-agent/tree/b2d91a2682873d0d63dc1de6db1cf396e2f3200d) | [History](https://github.com/hpoenixf/open-etf-agent/commits/b2d91a2682873d0d63dc1de6db1cf396e2f3200d) | `b35a687b98157aa9786443e6dcdf7a0f1e120385` |
+| `maintenance/v0.10-nullable-delta-20261102` | [676d41467c4a](https://github.com/hpoenixf/open-etf-agent/tree/676d41467c4ae39731d65657994b8abad2ee631f) | [History](https://github.com/hpoenixf/open-etf-agent/commits/676d41467c4ae39731d65657994b8abad2ee631f) | `d0895e9d26c8428b8992c080dde8f38b6fd6d34d` |
+| `maintenance/v0.11-nullable-delta-20261102` | [e76b94063a1f](https://github.com/hpoenixf/open-etf-agent/tree/e76b94063a1f228e6f423012a2a41ac8052a627e) | [History](https://github.com/hpoenixf/open-etf-agent/commits/e76b94063a1f228e6f423012a2a41ac8052a627e) | `4b886a0b7da6e91b093d769b99bde366244f78fb` |
+| `maintenance/v0.12-nullable-delta-20261102` | [68828851ecbd](https://github.com/hpoenixf/open-etf-agent/tree/68828851ecbde9639772242d841c71629b5a5a67) | [History](https://github.com/hpoenixf/open-etf-agent/commits/68828851ecbde9639772242d841c71629b5a5a67) | `9656d7f649f204715357c762ec89f4bb056ecc2d` |
+| `maintenance/v0.13-nullable-delta-20261102` | [36f0a38a87ae](https://github.com/hpoenixf/open-etf-agent/tree/36f0a38a87ae71aa6b99b019a283d04a6ae5b8eb) | [History](https://github.com/hpoenixf/open-etf-agent/commits/36f0a38a87ae71aa6b99b019a283d04a6ae5b8eb) | `2854d850e2d25caa9ed9e7f16a32eaf524218542` |
+| `maintenance/v0.14-nullable-delta-20261102` | [038d98065114](https://github.com/hpoenixf/open-etf-agent/tree/038d980651143b06a3baa895a029f7510d43d77c) | [History](https://github.com/hpoenixf/open-etf-agent/commits/038d980651143b06a3baa895a029f7510d43d77c) | `314deb09b6e54fd453ce36da8760abc0faf9c37e` |
+| `phase/v0.1` | [f9370b81beef](https://github.com/hpoenixf/open-etf-agent/tree/f9370b81beef84199293120ee23d245bb0129553) | [History](https://github.com/hpoenixf/open-etf-agent/commits/f9370b81beef84199293120ee23d245bb0129553) | `a2a04932819be17dd2994bbd5cf27f34253aaecc` |
+| `phase/v0.2` | [66bb3916280a](https://github.com/hpoenixf/open-etf-agent/tree/66bb3916280aaa466e30833324e9a2905968b392) | [History](https://github.com/hpoenixf/open-etf-agent/commits/66bb3916280aaa466e30833324e9a2905968b392) | `d62bede05ef90400bda6f7ad509645203d9251fc` |
+| `phase/v0.3` | [c74ec2ac25ce](https://github.com/hpoenixf/open-etf-agent/tree/c74ec2ac25ce404fab329b4c14f9ca5157635c5a) | [History](https://github.com/hpoenixf/open-etf-agent/commits/c74ec2ac25ce404fab329b4c14f9ca5157635c5a) | `3aa7061e595d6eda4539e066d531a8204df4836e` |
+| `phase/v0.4` | [3d1f688509cd](https://github.com/hpoenixf/open-etf-agent/tree/3d1f688509cd8bd988afa77ae4caa082395bd198) | [History](https://github.com/hpoenixf/open-etf-agent/commits/3d1f688509cd8bd988afa77ae4caa082395bd198) | `9d7c4177ef5cc3a25f0a0f21a78cf6a8533ba9d1` |
+| `phase/v0.5` | [a1330008efb9](https://github.com/hpoenixf/open-etf-agent/tree/a1330008efb9435a1961237e8f74f8b1ccc870ad) | [History](https://github.com/hpoenixf/open-etf-agent/commits/a1330008efb9435a1961237e8f74f8b1ccc870ad) | `dea5a4488243448bb2e1363994126e285491c5b9` |
+| `phase/v0.6` | [38d5e620dc9e](https://github.com/hpoenixf/open-etf-agent/tree/38d5e620dc9e79893c98ce2656a484d955c27a19) | [History](https://github.com/hpoenixf/open-etf-agent/commits/38d5e620dc9e79893c98ce2656a484d955c27a19) | `a8f57bf1e971816c3fed6eb76fa0b10c0d9a37be` |
+| `phase/v0.7` | [5f70dc0b4760](https://github.com/hpoenixf/open-etf-agent/tree/5f70dc0b4760ad70ef211f4823828ab2fee5c525) | [History](https://github.com/hpoenixf/open-etf-agent/commits/5f70dc0b4760ad70ef211f4823828ab2fee5c525) | `bc1fe00f7e2d8bfefd99856d3c7c7c9b9cfdd16d` |
+| `phase/v0.8` | [2c096ce47be2](https://github.com/hpoenixf/open-etf-agent/tree/2c096ce47be2161f97531170af07ef255872f8b1) | [History](https://github.com/hpoenixf/open-etf-agent/commits/2c096ce47be2161f97531170af07ef255872f8b1) | `62ead44dcdb89fab9f6f6a38bd26634c94f7f802` |
+| `phase/v0.9` | [dad9c6e64f32](https://github.com/hpoenixf/open-etf-agent/tree/dad9c6e64f32c3d7579aea96613776b40917ec6d) | [History](https://github.com/hpoenixf/open-etf-agent/commits/dad9c6e64f32c3d7579aea96613776b40917ec6d) | `ed7018acf6ed5dab5d4496bcc7aa7d3bd7fe2702` |
+| `phase/v0.10` | [ff5b9273ef0d](https://github.com/hpoenixf/open-etf-agent/tree/ff5b9273ef0d239e804f61792702cd2e94174be7) | [History](https://github.com/hpoenixf/open-etf-agent/commits/ff5b9273ef0d239e804f61792702cd2e94174be7) | `0d8f3c27a08a1da9bce0fe562683d5721d0d7a61` |
+| `phase/v0.11` | [e68c8a8ae93d](https://github.com/hpoenixf/open-etf-agent/tree/e68c8a8ae93d0e72f088a29fa43fcef26d5df228) | [History](https://github.com/hpoenixf/open-etf-agent/commits/e68c8a8ae93d0e72f088a29fa43fcef26d5df228) | `4f4183b7036a6311f7f8e506c40ebcb8e627a508` |
+| `phase/v0.12` | [46c2822be986](https://github.com/hpoenixf/open-etf-agent/tree/46c2822be9865b99696bb70fb9e0ff1b5257ff35) | [History](https://github.com/hpoenixf/open-etf-agent/commits/46c2822be9865b99696bb70fb9e0ff1b5257ff35) | `da7ca9a0ff215ecd2e0a0bb48bad4a1b9854d546` |
+| `phase/v0.13` | [300f78f7066a](https://github.com/hpoenixf/open-etf-agent/tree/300f78f7066ab76fcc4e9efb54137ff021ecc278) | [History](https://github.com/hpoenixf/open-etf-agent/commits/300f78f7066ab76fcc4e9efb54137ff021ecc278) | `a09e1c560efec54a0c8e28701f3a38afc3bd1a50` |
+| `phase/v0.14` | [a3e1059a78cf](https://github.com/hpoenixf/open-etf-agent/tree/a3e1059a78cf8a4f70fe89d61563980f3d24bc15) | [History](https://github.com/hpoenixf/open-etf-agent/commits/a3e1059a78cf8a4f70fe89d61563980f3d24bc15) | `433d3dd224ca9ac4daa6e76044faef2aba1b57a2` |
+| `phase/v0.15` | [74bd5aa455cc](https://github.com/hpoenixf/open-etf-agent/tree/74bd5aa455ccaeb2994eb22aa744affde660bfa2) | [History](https://github.com/hpoenixf/open-etf-agent/commits/74bd5aa455ccaeb2994eb22aa744affde660bfa2) | `b971586f04864809c6544edefd05b3a4719509d5` |
+| `release/v0.10-result-consumption` | [ae82c26e6511](https://github.com/hpoenixf/open-etf-agent/tree/ae82c26e6511c1dac9d67e864284b55eee6a82c2) | [History](https://github.com/hpoenixf/open-etf-agent/commits/ae82c26e6511c1dac9d67e864284b55eee6a82c2) | `e6e33c628bad9a093247a5cc2d02c8b9526aafcd` |
+| `release/v0.16.0-qualified-20261102` | [35f244f2e06d](https://github.com/hpoenixf/open-etf-agent/tree/35f244f2e06da447c110325d2ac5a5c39f36e842) | [History](https://github.com/hpoenixf/open-etf-agent/commits/35f244f2e06da447c110325d2ac5a5c39f36e842) | `bc127865a46b172ef0884257e4ad9d5a32a5d862` |
+| `release/v0.17.0-qualified-20261103` | [8137e592b0a0](https://github.com/hpoenixf/open-etf-agent/tree/8137e592b0a07bcb0dfdd8756409c5bbc7d909ce) | [History](https://github.com/hpoenixf/open-etf-agent/commits/8137e592b0a07bcb0dfdd8756409c5bbc7d909ce) | `182381c980924790262bcee403c322d716c43a2b` |
+| `release/v0.18.0-qualified-20261103` | [b1d2431a6b86](https://github.com/hpoenixf/open-etf-agent/tree/b1d2431a6b86bd0120f2fe5acb531ef928e92de2) | [History](https://github.com/hpoenixf/open-etf-agent/commits/b1d2431a6b86bd0120f2fe5acb531ef928e92de2) | `6743403885eeda0552f9ad1ebf7e84989c6fc525` |
+| `release/v0.19.0-qualified-20261103` | [9b6ae0adf1df](https://github.com/hpoenixf/open-etf-agent/tree/9b6ae0adf1df7efd4fd138b8d2957103b8fd9132) | [History](https://github.com/hpoenixf/open-etf-agent/commits/9b6ae0adf1df7efd4fd138b8d2957103b8fd9132) | `13739de4e3062df5674710e5a1709dbf28a07f9f` |
+| `release/v0.20.0-layered-20261103` | [a5cef6d5cf1a](https://github.com/hpoenixf/open-etf-agent/tree/a5cef6d5cf1a4597f0f1271025cd6cc16be151e5) | [History](https://github.com/hpoenixf/open-etf-agent/commits/a5cef6d5cf1a4597f0f1271025cd6cc16be151e5) | `2754193800cea4ed5865d34e986e582444a2528e` |
+| `release/v0.21.0-qualified-20261103` | [427315b5554b](https://github.com/hpoenixf/open-etf-agent/tree/427315b5554b1c9af8fa50b8ab622747045e691a) | [History](https://github.com/hpoenixf/open-etf-agent/commits/427315b5554b1c9af8fa50b8ab622747045e691a) | `8e0649c2fa6c7d1610cd680fe4b4362988a48cff` |
+| `wip/fixed-core-v0.10-parity-20261102` | [0d23b2049663](https://github.com/hpoenixf/open-etf-agent/tree/0d23b20496639f1dea8a7af8d1717b3b99d9077a) | [History](https://github.com/hpoenixf/open-etf-agent/commits/0d23b20496639f1dea8a7af8d1717b3b99d9077a) | `527e921e1f52995387439692c52435f923930753` |
+| `wip/fixed-core-v0.11-parity-20261102` | [ca4a5b4043e3](https://github.com/hpoenixf/open-etf-agent/tree/ca4a5b4043e31133c998b9c0e6c2422904c625b9) | [History](https://github.com/hpoenixf/open-etf-agent/commits/ca4a5b4043e31133c998b9c0e6c2422904c625b9) | `52ad760efaaa08e0edc573f2077179d30a84b9a7` |
+| `wip/fixed-core-v0.12-parity-20261102` | [5c455238664e](https://github.com/hpoenixf/open-etf-agent/tree/5c455238664ed9c1cd2834b7bf2e08e6558d2285) | [History](https://github.com/hpoenixf/open-etf-agent/commits/5c455238664ed9c1cd2834b7bf2e08e6558d2285) | `681e22c0e83afa85f8208ebe56221da07ed442a3` |
+| `wip/fixed-core-v0.13-parity-20261102` | [386da89dabc5](https://github.com/hpoenixf/open-etf-agent/tree/386da89dabc566da49f1a095d52a303605daf491) | [History](https://github.com/hpoenixf/open-etf-agent/commits/386da89dabc566da49f1a095d52a303605daf491) | `6b949677958ab253c0073c5e91652f3eabc6839e` |
+| `wip/fixed-core-v0.14-parity-20261102` | [b07f223a8caf](https://github.com/hpoenixf/open-etf-agent/tree/b07f223a8cafab746020a97cda24f9a433cd5f71) | [History](https://github.com/hpoenixf/open-etf-agent/commits/b07f223a8cafab746020a97cda24f9a433cd5f71) | `dc15c61907af7aaa691852cd9811f22a5276be16` |
+| `wip/fixed-core-v0.15-parity-20261102` | [d1b1ab41760a](https://github.com/hpoenixf/open-etf-agent/tree/d1b1ab41760adf41d77ead455ad5b7756adee0f7) | [History](https://github.com/hpoenixf/open-etf-agent/commits/d1b1ab41760adf41d77ead455ad5b7756adee0f7) | `be948960de0340ed888725116215dfd7238bdeb0` |
+| `wip/v018-schedule-occurrence-20261102` | [2b9fa955c96c](https://github.com/hpoenixf/open-etf-agent/tree/2b9fa955c96c7aaf202bad11131ef4680f0f97f3) | [History](https://github.com/hpoenixf/open-etf-agent/commits/2b9fa955c96c7aaf202bad11131ef4680f0f97f3) | `e2db54122d7e5565ddb9ce4d4c336aa9c90e83e5` |
+| `wip/v026-report-guidance-20261109` | [e73b960b106d](https://github.com/hpoenixf/open-etf-agent/tree/e73b960b106db11aca31dfff0330093557b2aee3) | [History](https://github.com/hpoenixf/open-etf-agent/commits/e73b960b106db11aca31dfff0330093557b2aee3) | `cbff4a0edff2c323b0a5650cc0f6e5215092b143` |
+
+## Recovery / 恢复方式
+
+[BRANCH-SNAPSHOTS.json](BRANCH-SNAPSHOTS.json) records full head and tree SHAs, original parents, retained names, and independent release tags.
+
+The archive commit has main baseline `7c5c9f7e4efe71a79f229077c9fe2247be8d8a37` as its first parent and these 17 original heads as additional parents:
+
+- `docs/versioned-evolution-plan`: `5bf970f6bc98bdc11ec8608747fbb83fa170941f`
+- `maintenance/v0.2-nullable-delta-20261102`: `395545233adcd3da3d647abe073684c8509f16a0`
+- `maintenance/v0.3-nullable-delta-20261102`: `28e276cb78b620139c8db89588edc34641a91854`
+- `maintenance/v0.4-nullable-delta-20261102`: `8d7c2c692aa54748f7bb059fc98fb7961574f252`
+- `maintenance/v0.5-nullable-delta-20261102`: `cd2401de8b06c829ca43eb355651ecdcdde37a63`
+- `maintenance/v0.6-nullable-delta-20261102`: `8585ea047010c78fabaa6262b0187920152d3de6`
+- `maintenance/v0.7-nullable-delta-20261102`: `d1d3fb45234997da1ac5456a139a96f8a1918f53`
+- `maintenance/v0.8-nullable-delta-20261102`: `4c16338ea0cd1f2368f5f98ac73f4f69b90ed2f6`
+- `maintenance/v0.9-nullable-delta-20261102`: `dfc66156b15fe3137ec31e52b832d82e38e73bc3`
+- `wip/fixed-core-v0.10-parity-20261102`: `0d23b20496639f1dea8a7af8d1717b3b99d9077a`
+- `wip/fixed-core-v0.11-parity-20261102`: `ca4a5b4043e31133c998b9c0e6c2422904c625b9`
+- `wip/fixed-core-v0.12-parity-20261102`: `5c455238664ed9c1cd2834b7bf2e08e6558d2285`
+- `wip/fixed-core-v0.13-parity-20261102`: `386da89dabc566da49f1a095d52a303605daf491`
+- `wip/fixed-core-v0.14-parity-20261102`: `b07f223a8cafab746020a97cda24f9a433cd5f71`
+- `wip/fixed-core-v0.15-parity-20261102`: `d1b1ab41760adf41d77ead455ad5b7756adee0f7`
+- `wip/v018-schedule-occurrence-20261102`: `2b9fa955c96c7aaf202bad11131ef4680f0f97f3`
+- `wip/v026-report-guidance-20261109`: `e73b960b106db11aca31dfff0330093557b2aee3`
+
+These parent links preserve every listed original commit, tree, blob, and ancestor. The archive's top-level tree is the fixed main tree with only this README and the snapshot index changed. The source snapshots have not been rewritten; choose their fixed links above to see original paths and files.
+
+To inspect a snapshot locally, fetch this archive branch normally, then check out a new worktree at the full original head SHA from the index. Do not reset, clean, or overwrite a working directory containing unpublished work. A historical branch name can be recreated from that exact commit if needed, after checking current ownership and permissions.
+
+No local unpublished changes were imported by this operation. In particular, the old v026 working copy and its pending changes remain outside this archive. Backup and reference cleanup do not certify tests, semantics, deployment, or release readiness.
