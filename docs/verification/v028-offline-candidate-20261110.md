@@ -21,3 +21,9 @@ Review accepts bounded Markdown revisions and original source text. Attachments 
 ## WIP object scope
 
 Only reviewed source, tests, synthetic fixtures and engineering documentation are new objects. Lockfile, dependencies, databases, raw logs, environment files and credentials are excluded. Existing remote base objects are retained by identity. Publication must use a distinct WIP branch and must not replace main or the v0.27 branch.
+
+## Complete regression of saved WIP
+
+A subsequent serial aggregate run against the saved `fa4c77c90fee514d13af68db86d3f01d76d0e2d0` file set, including both added owner-integration regressions, exited 0: **1,256 tests, 1,253 passed, zero failed, three skipped**, 255.067 seconds. All twelve changed-file hashes matched the saved WIP before this run; no product or test edits occurred during execution. Build subsequently passed and was separately rerun successfully. The skips retain the existing old-binary compatibility boundary. This supersedes the missing aggregate-after-two-tests limitation, not any live semantic gate.
+
+Readback confirmed that the independent WIP ref still named `fa4c77c`; its original twelve changed blob bodies had been verified byte-for-byte, with all other base objects retained. No GitHub workflow run or combined status existed at that readback. This added paragraph is documentation-only evidence after the tested commit, not another product version.
