@@ -71,6 +71,7 @@ export function validateGatewayOutcomeCheckpoint(state) {
 export function validateRuntimeCheckpoint(state, definition) {
   if(definition.config?.ordinaryResponse===INTERACTION_PROFILE)validateInteractionCheckpoint(state,definition.config.interaction.maxQuestions);else validateResponseCheckpoint(state,definition.config?.ordinaryResponse===RESPONSE_PROFILE);
   validateGatewayOutcomeCheckpoint(state);validateControlObservations(state);
+  if(definition.config?.reportDelivery==='artifact-required@1'&&state?.status==='completed'&&!state.host?.receipt)throw failure('INVALID_REPORT_DELIVERY_OUTCOME');
   if(state?.schemaVersion!=='runtime-checkpoint@1'||!Array.isArray(state.messages)||state.messages[0]?.role!=='user'||state.messages[0]?.content!==definition.question||!Array.isArray(state.usedIds)||new Set(state.usedIds).size!==state.usedIds.length||state.usedIds.some(id=>typeof id!=='string')||!Number.isSafeInteger(state.rounds)||state.rounds<0||state.rounds>definition.limits.maxRounds||!Number.isSafeInteger(state.toolsDispatched)||state.toolsDispatched<0||state.toolsDispatched>definition.limits.maxTools||!Number.isSafeInteger(state.cursor)||state.cursor<0||!Array.isArray(state.partialEffects)||!Array.isArray(state.unknownEffects)||!Array.isArray(state.hookErrors))throw failure('INVALID_RUNTIME_CHECKPOINT');
   if(['proposal-sealed','awaiting-response','tool-dispatched','result-committed','result-consumed'].includes(state.phase)){validateProposal(state.proposal);if(state.proposal.kind==='calls'&&state.cursor>state.proposal.calls.length)throw failure('INVALID_RUNTIME_CHECKPOINT');}
   if(state.phase==='result-committed'&&state.result?.callId!==state.proposal.calls[state.cursor]?.id)throw failure('INVALID_RUNTIME_CHECKPOINT');
@@ -111,7 +112,7 @@ export function materializeScheduledRun(options, reference, observation = {}) {
  const prior=options.durable.store.inspectSchedule(reference);
  return drive(options, true, {kind:'materialize',schedule:prior.envelope.schedule,reference,reportFresh:observation.reportFresh===true});
 }
-async function drive({ question, gateway, outputRoot='runs', requireReport=false, signal, hostSignal, limits={}, extensions=[], hooks, plugins, rootBudget, allowedTools, allowedDocuments, taskId=null, contextBytes, workingInput, durable, publication = false, pdfInput, taskTime, ordinaryResponse = false, documentProtection = false, documentCatalog, interaction, hostProjection }, submitting, scheduleOperation) {
+async function drive({ question, gateway, outputRoot='runs', requireReport=false, reportDelivery, signal, hostSignal, limits={}, extensions=[], hooks, plugins, rootBudget, allowedTools, allowedDocuments, taskId=null, contextBytes, workingInput, durable, publication = false, pdfInput, taskTime, ordinaryResponse = false, documentProtection = false, documentCatalog, interaction, hostProjection }, submitting, scheduleOperation) {
   if(pdfInput?.snapshot!==undefined){if(Object.keys(pdfInput).length!==1)throw failure('PDF_INVALID_INPUT');pdfInput=Object.freeze({snapshot:normalizePdfSnapshot(pdfInput.snapshot)});}
   documentCatalog=documentCatalog===undefined?undefined:normalizeDocumentCatalog(documentCatalog);
   if(documentCatalog&&documentProtection)throw failure('CUSTOM_PROTECTED_CATALOG_UNSUPPORTED');
@@ -126,6 +127,7 @@ async function drive({ question, gateway, outputRoot='runs', requireReport=false
   if (taskTime !== undefined && (!taskTime || typeof taskTime !== 'object' || Array.isArray(taskTime) || Object.keys(taskTime).some(key => !['anchorInstant', 'timeZone'].includes(key)))) throw failure('INVALID_TASK_TIME_INPUT');
   const budget={maxRounds:24,maxTools:64,timeoutMs:120000,...limits};
   for(const [key,value] of Object.entries(budget))if(!['maxRounds','maxTools','timeoutMs'].includes(key)||!Number.isSafeInteger(value)||value<1||value>(key==='timeoutMs'?3600000:1000))throw failure('INVALID_LIMIT');
+  if(reportDelivery!==undefined&&(reportDelivery!=='artifact-required@1'||!requireReport||!publication||!durable||durable.parentRunId||durable.store?.schemaVersion===5||documentProtection||scheduleOperation))throw failure('INVALID_REPORT_DELIVERY');
   if(hostProjection!==undefined&&!['host-results@1','host-results@2','host-results@3'].includes(hostProjection))throw failure('INVALID_HOST_PROJECTION');
   if(contextBytes!==undefined&&(!Number.isSafeInteger(contextBytes)||contextBytes<1||contextBytes>1048576))throw failure('INVALID_CONTEXT_LIMIT');
   if(workingInput!==undefined&&(!workingInput||typeof workingInput!=='object'||Object.keys(workingInput).some(key=>!['memoryLibrary','compaction'].includes(key))))throw failure('INVALID_WORKING_INPUT');
@@ -200,7 +202,7 @@ async function drive({ question, gateway, outputRoot='runs', requireReport=false
       } catch (error) { if (error.code !== 'UNKNOWN_RUN') throw error; }
     }
     if (!temporal && taskTime !== undefined) temporal = createTaskTime(taskTime);
-    const config={requireReport,...(hostProjection?{hostProjection}:{}),...(pdfInput?.snapshot?{pdfSnapshot:pdfSnapshotBinding(pdfInput.snapshot)}:{}),...(documentCatalog?{documentCatalog:documentCatalogBinding(documentCatalog)}:{}),...(protectedMode?{documentProtection:{authorityId:authority.authorityId,libraryId:authority.libraryId}}:{}),...(ordinaryResponse?{ordinaryResponse:multiResponse?INTERACTION_PROFILE:RESPONSE_PROFILE,...(multiResponse?{interaction}:{})}:{}),...(temporal?{taskTime:temporal}:{}),...(publication?{publication:PUBLICATION_BINDING.version}:{}),...(allowedTools?{allowedTools}:{}),...(allowedDocuments?{allowedDocuments}:{}),...(contextBytes===undefined?{}:{contextBytes}),taskId,...(workingInput?{workingInput:{...(workingInput.memoryLibrary?{memoryLibraryId:workingInput.memoryLibrary.libraryId}:{}),...(workingInput.compaction?{compaction:{thresholdBytes:workingInput.compaction.thresholdBytes,summaryTimeoutMs:workingInput.compaction.summaryTimeoutMs??2000,version:workingInput.compaction.mode==='gateway'?'gateway-history-compaction@2':'history-compaction@1',...(workingInput.compaction.mode==='gateway'?{maxSummaryRounds:workingInput.compaction.maxSummaryRounds??6}:{})}}:{})}}:{})};
+    const config={requireReport,...(reportDelivery===undefined?{}:{reportDelivery}),...(hostProjection?{hostProjection}:{}),...(pdfInput?.snapshot?{pdfSnapshot:pdfSnapshotBinding(pdfInput.snapshot)}:{}),...(documentCatalog?{documentCatalog:documentCatalogBinding(documentCatalog)}:{}),...(protectedMode?{documentProtection:{authorityId:authority.authorityId,libraryId:authority.libraryId}}:{}),...(ordinaryResponse?{ordinaryResponse:multiResponse?INTERACTION_PROFILE:RESPONSE_PROFILE,...(multiResponse?{interaction}:{})}:{}),...(temporal?{taskTime:temporal}:{}),...(publication?{publication:PUBLICATION_BINDING.version}:{}),...(allowedTools?{allowedTools}:{}),...(allowedDocuments?{allowedDocuments}:{}),...(contextBytes===undefined?{}:{contextBytes}),taskId,...(workingInput?{workingInput:{...(workingInput.memoryLibrary?{memoryLibraryId:workingInput.memoryLibrary.libraryId}:{}),...(workingInput.compaction?{compaction:{thresholdBytes:workingInput.compaction.thresholdBytes,summaryTimeoutMs:workingInput.compaction.summaryTimeoutMs??2000,version:workingInput.compaction.mode==='gateway'?'gateway-history-compaction@2':'history-compaction@1',...(workingInput.compaction.mode==='gateway'?{maxSummaryRounds:workingInput.compaction.maxSummaryRounds??6}:{})}}:{})}}:{})};
     let stored,claim,directory,runId,boundChild=false,deadlineAt=Date.now()+budget.timeoutMs;
     let state={schemaVersion:'runtime-checkpoint@1',phase:'ready',messages:[{role:'user',content:question}],usedIds:[],rounds:0,toolsDispatched:0,proposal:null,cursor:0,result:null,host:null,working:null,gatewayOutcome:'settled',answer:'',status:'failed',code:null,unknownEffects:[],partialEffects:[],hookErrors:[]};
     function verifyCorrectionHistory(host){
@@ -382,7 +384,7 @@ async function drive({ question, gateway, outputRoot='runs', requireReport=false
           const candidate=await host.answerCandidate(call,result);
           const decision=decideRunControl({kind:'tool-result',succeeded:false,dispatched:false,answerProved:Boolean(candidate)},{singleCall:state.proposal?.calls?.length===1,hooks:!!hooks,partial:state.partialEffects.length>0,unknown:gatewayUnsettled||state.unknownEffects.length>0});
           if(decision.action!=='publish-answer')throw failure(decision.reason);
-          state.answer=candidate.text;await publishAnswer(candidate.assessment);state.status='completed';state.code=null;break;
+          state.answer=candidate.text;await publishAnswer(candidate.assessment);const finalDecision=decideRunControl({kind:'sealed-final',reportPresent:!!host.receipt,publicationCommitted:Boolean(state.publication)},{requireReport,reportDelivery,unknown:gatewayUnsettled||state.unknownEffects.length>0});if(finalDecision.action==='stop')throw failure(finalDecision.reason);state.status='completed';state.code=null;break;
         }
         if(['ready','working-input'].includes(state.phase)){
           if(state.rounds>=budget.maxRounds)throw failure('ROUND_LIMIT');
@@ -450,7 +452,7 @@ async function drive({ question, gateway, outputRoot='runs', requireReport=false
           state.answer=state.proposal.text;
           if(protectedMode&&requireReport&&!host.receipt)throw failure('REPORT_REQUIRED');
           if(publication)await publishAnswer();
-          const finalDecision=decideRunControl({kind:'sealed-final',reportPresent:!!host.receipt,publicationCommitted:Boolean(state.publication)},{requireReport,unknown:gatewayUnsettled||state.unknownEffects.length>0});if(finalDecision.action==='stop')throw failure(finalDecision.reason);state.status='completed';state.code=null;break;
+          const finalDecision=decideRunControl({kind:'sealed-final',reportPresent:!!host.receipt,publicationCommitted:Boolean(state.publication)},{requireReport,reportDelivery,unknown:gatewayUnsettled||state.unknownEffects.length>0});if(finalDecision.action==='stop')throw failure(finalDecision.reason);state.status='completed';state.code=null;break;
         }
         if(claim&&state.phase==='proposal-sealed'&&state.cursor===0&&!hooks&&!state.partialEffects.length&&!state.unknownEffects.length&&state.gatewayOutcome==='settled'){
           const refused=host.rejectProposalGroup(state.proposal.calls);

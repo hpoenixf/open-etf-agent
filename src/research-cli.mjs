@@ -30,7 +30,7 @@ Usage: node src/research-cli.mjs <group> <command> [options]
   source acquisition --project DIR --acquisition ID
   run submit --project DIR --run ID --question TEXT_FILE --manifest SHA256
       [--approve-provider --approve-data --approve-cost]
-      [--specialists JSON_FILE] [--memory-intents JSON_FILE] [--task-time JSON_FILE] [--schedule JSON_FILE]
+      [--report-delivery artifact-required@1] [--specialists JSON_FILE] [--memory-intents JSON_FILE] [--task-time JSON_FILE] [--schedule JSON_FILE]
   schedule confirm --project DIR --run ID --question TEXT_FILE --manifest SHA256 --schedule JSON_FILE --confirm-once
       [--approve-provider --approve-data --approve-cost]
   schedule list --project DIR
@@ -94,7 +94,7 @@ const specifications={
  'source import':['project','files'], 'source list':['project','manifest'],
  'source acquire':['project','acquisition','urls','approve-public-fetch','redirects?','base-manifest?','network-profile?'],
  'source acquisition':['project','acquisition'],
- 'run submit':['project','run','question','manifest','approve-provider?','approve-data?','approve-cost?','memory-intents?','task-time?','schedule?','specialists?'],
+ 'run submit':['project','run','question','manifest','approve-provider?','approve-data?','approve-cost?','memory-intents?','task-time?','schedule?','specialists?','report-delivery?'],
  'run work':['project','run'], 'run inspect':['project','run'], 'run cancel':['project','run'],
  'run respond':['project','run','question-id','response-id','text'],
  'run report':['project','run'], 'run serve':['project','run','port?'],
@@ -165,7 +165,7 @@ export async function runResearchCli(args,{stdout=process.stdout,stderr=process.
    try{const result=await acquireProjectWebSources({projectDir,acquisitionId:o.acquisition,urls:await readProjectJson(o.urls,32768),allowedRedirectUrls:o.redirects?await readProjectJson(o.redirects,32768):[],baseManifestSha256:o['base-manifest']??null,approvePublicFetch:o['approve-public-fetch']===true,networkProfile:o['network-profile']??'system-direct@1',signal:controller.signal});emit({...sourceResult(result),acquisition:result.acquisition});}finally{signals.off('SIGINT',stop);signals.off('SIGTERM',stop);}return 0;
   }
   if(command==='run submit'){
-   const question=await textFile(o.question,16000),extra={};
+   const question=await textFile(o.question,16000),extra={...(o['report-delivery']===undefined?{}:{reportDelivery:o['report-delivery']})};
    for(const [key,arg]of [['specialistSelection','specialists'],['memoryIntents','memory-intents'],['taskTime','task-time'],['schedule','schedule']])if(o[arg])extra[key]=await readProjectJson(o[arg]);
    await submitResearchTask({projectDir,runId,question,sourceManifestSha256:o.manifest,authorization:{providerApproved:o['approve-provider']===true,dataApproved:o['approve-data']===true,costApproved:o['approve-cost']===true},...extra});emit(taskResult(await inspectResearchTask({projectDir,runId})));return 0;
   }
