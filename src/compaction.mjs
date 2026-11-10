@@ -10,15 +10,20 @@ async function boundedSummary(summarize,input,parentSignal,timeoutMs){
   finally{clearTimeout(timer);parentSignal?.removeEventListener('abort',abort);if(stop)controller.signal.removeEventListener('abort',stop);}
 }
 const identityKeys=['sourceId','documentId','name','version','page','sha256','mediaType'];
-export async function compactWorkingView({messages,maxBytes,lookupSource,rootBudget,summarize,saveNote,signal,lookupMemoryState,canCompactHistory,summaryTimeoutMs=2000,reserveSummary,frontier,readNote,allowSummary=true,summaryInputFits}={}){
+export async function compactWorkingView({messages,maxBytes,lookupSource,projectOwnedResult,projectOwnedCall,additionalBudget,rootBudget,summarize,saveNote,signal,lookupMemoryState,canCompactHistory,summaryTimeoutMs=2000,reserveSummary,frontier,readNote,allowSummary=true,summaryInputFits}={}){
   if(!Number.isSafeInteger(summaryTimeoutMs)||summaryTimeoutMs<1||summaryTimeoutMs>120000)throw new Error('Invalid summary timeout');
   if(typeof summarize!=='function'||typeof saveNote!=='function'||typeof rootBudget?.claim!=='function')throw new Error('Invalid compaction configuration');
   if(typeof allowSummary!=='boolean')throw new Error('Invalid summary allowance');
   const basis=sha256(JSON.stringify(messages));
-  // This baseline is exactly the v0.4 policy, not hypothetical removed bytes.
-  const baseline=await projectContext({messages,maxBytes,lookupSource});
+  // Reuse this Run's frozen Host projection. Keep the original raw-budget
+  // baseline for summary material: applying Main's encoded budget here would
+  // turn more source bodies into references and change summary input/dispatch.
+  // Every returned view must still satisfy the encoded request budget below.
+  const context={maxBytes,lookupSource,projectOwnedResult,projectOwnedCall,additionalBudget};
+  const baseline=await projectContext({messages,maxBytes,lookupSource,projectOwnedResult,projectOwnedCall});
+  const fits=view=>{if(bytes(view)>maxBytes)return false;if(!additionalBudget)return true;const size=additionalBudget.measure(view);if(!Number.isSafeInteger(size)||size<0)throw new Error('Invalid encoded context measurement');return size<=additionalBudget.maxBytes;};
   let retainedFrontier=null;
-  const fallback=async(status,extra={})=>({messages:await projectContext({messages:lookupMemoryState?await projectMemory({messages,lookupState:lookupMemoryState}):messages,maxBytes,lookupSource}),observation:{status,...extra},noteRef:null,frontier:retainedFrontier?structuredClone(retainedFrontier):null});
+  const fallback=async(status,extra={})=>({messages:await projectContext({messages:lookupMemoryState?await projectMemory({messages,lookupState:lookupMemoryState}):messages,...context}),observation:{status,...extra},noteRef:null,frontier:retainedFrontier?structuredClone(retainedFrontier):null});
   if(signal?.aborted)return fallback('cancelled');
   const groups=[];
   for(let i=0;i<baseline.length;i++)if(baseline[i].role==='assistant'&&Array.isArray(baseline[i].calls)){const start=i;const count=baseline[i].calls.length;groups.push({start,end:i+count,values:baseline.slice(i+1,i+count+1)});i+=count;}
@@ -70,7 +75,7 @@ export async function compactWorkingView({messages,maxBytes,lookupSource,rootBud
     for(const ref of note.memoryRefs){const current=await lookupMemoryState?.(ref);if(!current||!current.active||current.libraryId!==ref.libraryId||current.id!==ref.id||current.revision!==ref.revision||ref.sha256!==undefined&&current.sha256!==ref.sha256)return fallback('memory-stale');}
     retainedFrontier=structuredClone(frontier);
     const projection=view(note,frontier.noteRef,covered);
-    if(bytes(projection)<=maxBytes)reused={messages:projection,observation:{status:'reused',beforeBytes:bytes(baseline),afterBytes:bytes(projection)},noteRef:frontier.noteRef,frontier:structuredClone(frontier)};
+    if(fits(projection))reused={messages:projection,observation:{status:'reused',beforeBytes:bytes(baseline),afterBytes:bytes(projection)},noteRef:frontier.noteRef,frontier:structuredClone(frontier)};
     const novel=[...sourceRefs.keys()].some(key=>!oldSources.has(key))||[...memoryRefs.keys()].some(key=>!oldMemories.has(key));
     if(!novel)return reused??fallback('frontier-no-new-evidence');
   }
@@ -79,7 +84,7 @@ export async function compactWorkingView({messages,maxBytes,lookupSource,rootBud
   // candidate envelope, not an estimated saving that ignores its provenance.
   // Passing this bound is not approval: the actual summary is checked below.
   const minimum=view(noteFor('x'),provisional);
-  if(bytes(minimum)>=bytes(baseline)||bytes(minimum)>maxBytes)return fallback('no-net-saving');
+  if(bytes(minimum)>=bytes(baseline)||!fits(minimum))return fallback('no-net-saving');
   const summaryInput={groups:structuredClone(eligible.map(group=>baseline.slice(group.start,group.end+1)))};let reservation;
   if(summaryInputFits!==undefined){if(typeof summaryInputFits!=='function')throw new Error('Invalid summary input measurement');if(!summaryInputFits(summaryInput))return fallback('summary-input-capacity');}
   try{if(reserveSummary!==undefined){if(typeof reserveSummary!=='function')throw new Error('Invalid summary reservation');reservation=await reserveSummary(summaryInput);}else rootBudget.claim('model');}catch(error){if(error?.code!=='ROOT_BUDGET_EXHAUSTED'&&reserveSummary!==undefined)throw error;return fallback('budget-exhausted');}
@@ -89,7 +94,7 @@ export async function compactWorkingView({messages,maxBytes,lookupSource,rootBud
   if(!await memoriesCurrent())return fallback('memory-stale');
   if(typeof text!=='string'||!text.trim()||Buffer.byteLength(text)>4096)return fallback('invalid-summary');
   const note=noteFor(text);
-  const candidate=view(note,provisional);if(bytes(candidate)>=bytes(baseline)||bytes(candidate)>maxBytes)return fallback('no-net-saving');
+  const candidate=view(note,provisional);if(bytes(candidate)>=bytes(baseline)||!fits(candidate))return fallback('no-net-saving');
   let receipt;try{receipt=await saveNote(structuredClone(note),{signal});}catch{return fallback(signal?.aborted?'cancelled':'persistence-failed');}
   if(signal?.aborted)return fallback('cancelled',{persistedNoteRef:receipt?.resultRef});if(sha256(JSON.stringify(messages))!==basis)return fallback('stale',{persistedNoteRef:receipt?.resultRef});
   if(!await memoriesCurrent())return fallback('memory-stale',{persistedNoteRef:receipt?.resultRef});
