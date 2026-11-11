@@ -16,6 +16,7 @@ export function decideRunControl(fact, context = {}) {
  }
  if(fact.kind==='sealed-final'){
   if(context.unknown)return stop('OUTCOME_UNKNOWN');
+  if(context.reportDelivery==='artifact-required@1'&&!fact.reportPresent)return stop('REPORT_ARTIFACT_REQUIRED');
   if(context.requireReport&&!fact.reportPresent&&!fact.publicationCommitted)return stop('REPORT_REQUIRED');
   return {action:'finalize',reason:'SEALED_FINAL'};
  }

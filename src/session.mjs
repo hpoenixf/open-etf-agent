@@ -18,10 +18,20 @@ import { ensureSafeDirectory } from './storage-files.mjs';
 import { prepareSessionRecovery } from './session-recovery.mjs';
 
 // Only an original writable Session instance can hold the terminal proof lock.
-const terminalAdmissionOwners=new WeakMap();
+const terminalAdmissionOwners=new WeakMap(),activeAdmissionOwners=new WeakMap();
 export function withTerminalAdmissionOwner(session,ticket,operation){
  const check=terminalAdmissionOwners.get(session);if(!check||typeof operation!=='function')throw Object.assign(new Error('ADMISSION_SESSION_AUTHORITY_REQUIRED'),{code:'ADMISSION_SESSION_AUTHORITY_REQUIRED'});
  return check(ticket,operation);
+}
+
+export function revokeActiveAdmissionOwner(session,ticket,persistStop){
+ const revoke=activeAdmissionOwners.get(session);if(!revoke||typeof persistStop!=='function')throw Object.assign(new Error('ADMISSION_SESSION_AUTHORITY_REQUIRED'),{code:'ADMISSION_SESSION_AUTHORITY_REQUIRED'});
+ return revoke(ticket,persistStop);
+}
+
+export function fenceExpiredAdmissionOwner(session,ticket,persistStop){
+ const revoke=activeAdmissionOwners.get(session);if(!revoke||typeof persistStop!=="function")throw Object.assign(new Error("ADMISSION_SESSION_AUTHORITY_REQUIRED"),{code:"ADMISSION_SESSION_AUTHORITY_REQUIRED"});
+ return revoke(ticket,persistStop,true);
 }
 
 const APP_ID = 0x4f455446;
@@ -72,14 +82,16 @@ function validateBindings(value) {
  }
 }
 function validateConfig(value, ordinary = false, protectedProfile = false, interaction = false) {
- fields(value, [], ['requireReport', 'allowedTools', 'allowedDocuments', 'documentCatalog', 'pdfSnapshot', 'contextBytes', 'taskId', 'workingInput', 'publication', 'taskTime', ...(ordinary ? ['ordinaryResponse'] : []), ...(interaction ? ['interaction'] : []), ...(protectedProfile ? ['documentProtection'] : [])]);
+ fields(value, [], ['requireReport', 'reportDelivery', 'hostProjection', 'allowedTools', 'allowedDocuments', 'documentCatalog', 'pdfSnapshot', 'contextBytes', 'taskId', 'workingInput', 'publication', 'taskTime', ...(ordinary ? ['ordinaryResponse'] : []), ...(interaction ? ['interaction'] : []), ...(protectedProfile ? ['documentProtection'] : [])]);
  if(protectedProfile){if(value.documentCatalog!==undefined||value.pdfSnapshot!==undefined)fail('INVALID_PROTECTED_PROFILE');fields(value.documentProtection,['authorityId','libraryId']);if(!identifier(value.documentProtection.authorityId)||!identifier(value.documentProtection.libraryId)||!Array.isArray(value.allowedDocuments)||!value.allowedDocuments.length||value.workingInput!==undefined||value.ordinaryResponse!==undefined)fail('INVALID_PROTECTED_PROFILE');}
  if(value.documentCatalog!==undefined){fields(value.documentCatalog,['schemaVersion','id','sha256']);if(!['document-catalog@1','document-catalog@2'].includes(value.documentCatalog.schemaVersion)||!identifier(value.documentCatalog.id)||!hash(value.documentCatalog.sha256))fail('INVALID_DEFINITION');}
  if(value.pdfSnapshot!==undefined){const p=value.pdfSnapshot;fields(p,['schemaVersion','parser','parserWorkerSha256','originalSha256','originalBytes','snapshotSha256']);if(p.schemaVersion!=='pdf-input-snapshot@1'||p.parser!=='pdf2json@4.1.0'||!hash(p.parserWorkerSha256)||!hash(p.originalSha256)||!hash(p.snapshotSha256)||!Number.isSafeInteger(p.originalBytes)||p.originalBytes<5||p.originalBytes>1048576)fail('INVALID_DEFINITION');}
  if (value.taskTime !== undefined) validateTaskTime(value.taskTime);
  if (value.publication !== undefined && value.publication !== 'publication@1') fail('INVALID_DEFINITION');
+ if(value.reportDelivery!==undefined&&(value.reportDelivery!=='artifact-required@1'||protectedProfile||value.requireReport!==true||value.publication!=='publication@1'))fail('INVALID_DEFINITION');
  if (value.requireReport !== undefined && typeof value.requireReport !== 'boolean') fail('INVALID_DEFINITION');
  for (const key of ['allowedTools', 'allowedDocuments']) if (value[key] !== undefined && (!Array.isArray(value[key]) || !value[key].length || value[key].length > 64 || new Set(value[key]).size !== value[key].length || value[key].some(v => !identifier(v)))) fail('INVALID_DEFINITION');
+ if(value.hostProjection!==undefined&&!['host-results@1','host-results@2','host-results@3'].includes(value.hostProjection))fail('INVALID_DEFINITION');
  if (value.contextBytes !== undefined && (!Number.isSafeInteger(value.contextBytes) || value.contextBytes < 1 || value.contextBytes > 1048576)) fail('INVALID_DEFINITION');
  if (value.taskId !== undefined && value.taskId !== null && !identifier(value.taskId)) fail('INVALID_DEFINITION');
  if (value.workingInput !== undefined) {
@@ -94,7 +106,7 @@ function validateConfig(value, ordinary = false, protectedProfile = false, inter
 }
 function definitionBytes(value, ordinary = false, protectedProfile = false, interaction = false) {
  fields(value, ['question', 'grantId', 'bindings', 'limits', 'rootLimits', 'deadlineAt', 'config']);
- if (typeof value.question !== 'string' || !value.question.trim() || Buffer.byteLength(value.question) > 16000 || !identifier(value.grantId) || !Number.isSafeInteger(value.deadlineAt) || value.deadlineAt < 1) fail('INVALID_DEFINITION');
+ if (typeof value.question !== 'string' || !value.question.trim() || (value.config?.hostProjection===undefined&&Buffer.byteLength(value.question) > 16000) || !identifier(value.grantId) || !Number.isSafeInteger(value.deadlineAt) || value.deadlineAt < 1) fail('INVALID_DEFINITION');
  fields(value.limits, ['maxRounds', 'maxTools', 'timeoutMs']); fields(value.rootLimits, ['model', 'tool']);
  for (const [key, n] of Object.entries(value.limits)) if (!Number.isSafeInteger(n) || n < 1 || n > (key === 'timeoutMs' ? 3600000 : 1000)) fail('INVALID_DEFINITION');
  for (const n of Object.values(value.rootLimits)) if (!Number.isSafeInteger(n) || n < 1 || n > 1000) fail('INVALID_DEFINITION');
@@ -717,6 +729,16 @@ export async function openSession({ directory, clock = Date.now, leaseMs = 1000,
   close() { if (!closed) { db.close(); closed = true; } }
  };
  if(readOnly)return Object.freeze({directory,schemaVersion:scheduled?5:protectedProfile?4:interaction?6:ordinary?3:2,readOnly:true,publication:store.publication,publicationRevisions:store.publicationRevisions,publicationEvent:store.publicationEvent,confirmPublication:store.confirmPublication,inspect:store.inspect,findChild:store.findChild,listChildren:store.listChildren,...(ordinary?{response:store.response,responseStatus:store.responseStatus,responseHistory:store.responseHistory}:{}),...(scheduled?{inspectSchedule:store.inspectSchedule,publication:store.publication,publicationRevisions:store.publicationRevisions,publicationEvent:store.publicationEvent}:{}),...(protectedProfile?{publication:store.publication,publicationRevisions:store.publicationRevisions,publicationEvent:store.publicationEvent,verifyProtectedQueryResult:store.verifyProtectedQueryResult,protectedOutput:store.protectedOutput,consumeProtectedSource:store.consumeProtectedSource,protectedDependencies:store.protectedDependencies,readProtectedOutput:store.readProtectedOutput,listProtectedOutputs:store.listProtectedOutputs}:{}),close:store.close});
+ activeAdmissionOwners.set(store,(ticket,persistStop,expired=false)=>transaction(()=>{
+  const current=view(getRun(ticket.runId));
+  if(ticket.runId!==ticket.rootId||current.parentRunId!==null||current.snapshot.purpose!==undefined)fail('ADMISSION_RELEASE_SCOPE_UNSUPPORTED');
+  if(current.rootId!==ticket.rootId||current.status!=='active'||current.rootStatus!=='active'||current.snapshot.phase!=='model-reserved'||current.owner!==ticket.owner||current.fence!==ticket.fence||(expired?current.leaseUntil>now():current.leaseUntil<=now()))fail('ADMISSION_ACTIVE_OWNER_MISMATCH');
+  if(db.prepare("SELECT 1 FROM runs WHERE root_id=? AND run_id<>? AND (status='active' OR owner IS NOT NULL OR lease_until<>0)").get(ticket.rootId,ticket.runId))fail('ADMISSION_ACTIVE_CHILD_BLOCKED');
+  const input=current.snapshot.working;if(current.snapshot.gatewayOutcome!=='unknown'||current.snapshot.rounds!==ticket.round||current.rootUsage.model!==ticket.modelOrdinal||input?.hash!==ticket.inputHash||!Array.isArray(input.messages)||digest(JSON.stringify(input.messages))!==ticket.inputHash)fail('ADMISSION_TERMINAL_RESERVATION_MISMATCH');
+  // Admission's durable gate commits first. If Session commit fails, the gate
+  // remains and no release is authorized; later writes/dispatch still stop.
+  const event=persistStop();cancelRoot(ticket.rootId);return event;
+ }));
  terminalAdmissionOwners.set(store,(ticket,operation)=>transaction(()=>{
   const current=view(getRun(ticket.runId)),root=view(getRun(ticket.rootId));
   if(ticket.runId!==ticket.rootId||current.parentRunId!==null||current.snapshot.purpose!==undefined)fail('ADMISSION_RELEASE_SCOPE_UNSUPPORTED');

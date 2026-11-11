@@ -23,17 +23,18 @@ export function normalizeChildExecution(input){
  const methods=input.methods.map(normalizeChildMethod);if(new Set(methods.map(m=>m.id)).size!==methods.length)fail('DUPLICATE_CHILD_METHOD');
  return Object.freeze({schemaVersion:'child-execution@1',maxChildren:input.maxChildren,methods:Object.freeze(methods)});
 }
-function scope({question,documents,documentCatalog,execution}){
+function scope({question,documents,documentCatalog,execution,projection}){
+ if(projection!==undefined&&projection!=='host-context@1')fail('INVALID_CHILD_PROJECTION');
  const catalog=documentCatalog===undefined?undefined:normalizeDocumentCatalog(documentCatalog),allowed=catalog?.documents.map(d=>d.id)??['atlas-a','atlas-b'];
- if(typeof question!=='string'||!question.trim()||Buffer.byteLength(question)>16000||!Array.isArray(documents)||!documents.length||documents.length>64||new Set(documents).size!==documents.length||documents.some(d=>!allowed.includes(d)))fail('INVALID_CHILD_EXECUTION_SCOPE');
- return {question,documents:[...documents],...(catalog?{documentCatalog:catalog}:{}),execution:normalizeChildExecution(execution)};
+ if(typeof question!=='string'||!question.trim()||(projection===undefined&&Buffer.byteLength(question)>16000)||!Array.isArray(documents)||!documents.length||documents.length>64||new Set(documents).size!==documents.length||documents.some(d=>!allowed.includes(d)))fail('INVALID_CHILD_EXECUTION_SCOPE');
+ return {question,...(projection===undefined?{}:{projection}),documents:[...documents],...(catalog?{documentCatalog:catalog}:{}),execution:normalizeChildExecution(execution)};
 }
 export function childExecutionBinding(input){return Object.freeze({id:'serial-child-execution',version:'1',contentSha256:sha256(canonical(scope(input)))});}
 function select(value,selected){
  if(!exact(value,['methodId','question','documents']))fail('INVALID_CHILD_EXECUTION_ARGUMENTS');
  const method=selected.execution.methods.find(m=>m.id===value.methodId);
- if(!method||typeof value.question!=='string'||!value.question.trim()||Buffer.byteLength(value.question)>method.input.maxQuestionBytes||!Array.isArray(value.documents)||!value.documents.length||value.documents.length>method.input.maxDocuments||new Set(value.documents).size!==value.documents.length||value.documents.some(id=>!selected.documents.includes(id)))fail('INVALID_CHILD_EXECUTION_ARGUMENTS');
- return {method,question:selected.question,localQuestion:value.question,documents:[...value.documents],...(selected.documentCatalog?{documentCatalog:selected.documentCatalog}:{})};
+ if(!method||typeof value.question!=='string'||!value.question.trim()||(selected.projection===undefined&&Buffer.byteLength(value.question)>method.input.maxQuestionBytes)||!Array.isArray(value.documents)||!value.documents.length||(selected.projection===undefined&&value.documents.length>method.input.maxDocuments)||new Set(value.documents).size!==value.documents.length||value.documents.some(id=>!selected.documents.includes(id)))fail('INVALID_CHILD_EXECUTION_ARGUMENTS');
+ return {method,...(selected.projection===undefined?{}:{projection:selected.projection}),question:selected.question,localQuestion:value.question,documents:[...value.documents],...(selected.documentCatalog?{documentCatalog:selected.documentCatalog}:{})};
 }
 // A missing/wrong-shaped field is local input feedback, not permission to guess
 // a method or document. Unknown identities, expanded fields and bounds stay hard.
@@ -42,9 +43,9 @@ function inputShapeIssue(value,selected){
  if(!object(value)||Object.keys(value).some(k=>!keys.includes(k)))return null;
  const method=selected.execution.methods.find(m=>m.id===value.methodId);
  if(typeof value.methodId==='string'&&!method)return null;
- if(typeof value.question==='string'&&Buffer.byteLength(value.question)>(method?.input.maxQuestionBytes??Math.min(...selected.execution.methods.map(m=>m.input.maxQuestionBytes))))return null;
+ if(selected.projection===undefined&&typeof value.question==='string'&&Buffer.byteLength(value.question)>(method?.input.maxQuestionBytes??Math.min(...selected.execution.methods.map(m=>m.input.maxQuestionBytes))))return null;
  if(typeof value.documents==='string'&&!selected.documents.includes(value.documents))return null;
- if(Array.isArray(value.documents)&&(value.documents.some(id=>typeof id==='string'&&!selected.documents.includes(id))||value.documents.length>(method?.input.maxDocuments??Math.min(...selected.execution.methods.map(m=>m.input.maxDocuments)))||new Set(value.documents).size!==value.documents.length))return null;
+ if(Array.isArray(value.documents)&&(value.documents.some(id=>typeof id==='string'&&!selected.documents.includes(id))||(selected.projection===undefined&&value.documents.length>(method?.input.maxDocuments??Math.min(...selected.execution.methods.map(m=>m.input.maxDocuments))))||new Set(value.documents).size!==value.documents.length))return null;
  for(const field of keys)if(!Object.hasOwn(value,field))return{code:'CHILD_ARGUMENT_REQUIRED',field};
  if(typeof value.methodId!=='string')return{code:'CHILD_ARGUMENT_SHAPE',field:'methodId'};
  if(typeof value.question!=='string'||!value.question.trim())return{code:'CHILD_ARGUMENT_SHAPE',field:'question'};
@@ -55,6 +56,7 @@ function inputShapeIssue(value,selected){
 function childBindings(bindings){return {...bindings,adapters:bindings.adapters.filter(b=>canonical(b)!==canonical(PUBLICATION_BINDING))};}
 function parentAuthority(parent,selected){
  validateRuntimeCheckpoint(parent.snapshot,parent.definition);
+ if(selected.projection!==undefined&&!['host-results@1','host-results@2','host-results@3'].includes(parent.definition.config.hostProjection))fail('CHILD_EXECUTION_BINDING_MISMATCH');
  if(parent.parentRunId!==null||parent.rootId!==parent.runId||parent.definition.question!==selected.question||parent.definition.bindings.plugins.length||!parent.definition.bindings.adapters.some(b=>canonical(b)===canonical(childExecutionBinding(selected)))||canonical(parent.definition.config.documentCatalog??null)!==canonical(selected.documentCatalog?documentCatalogBinding(selected.documentCatalog):null))fail('CHILD_EXECUTION_BINDING_MISMATCH');
 }
 function originalCall(parent,callId,selected){
@@ -68,7 +70,7 @@ function requestedScope(parent,chosen){
 function validateChild(parent,child,call,chosen){
  requestedScope(parent,chosen);
  validateRuntimeCheckpoint(child.snapshot,child.definition);
- const expectedConfig={requireReport:false,...(chosen.documentCatalog?{documentCatalog:documentCatalogBinding(chosen.documentCatalog)}:{}),allowedTools:chosen.method.allowedTools,allowedDocuments:chosen.documents,taskId:taskId(call.id)};
+ const expectedConfig={requireReport:false,...(chosen.projection===undefined?{}:{hostProjection:parent.definition.config.hostProjection,contextBytes:parent.definition.config.contextBytes}),...(chosen.documentCatalog?{documentCatalog:documentCatalogBinding(chosen.documentCatalog)}:{}),allowedTools:chosen.method.allowedTools,allowedDocuments:chosen.documents,taskId:taskId(call.id)};
  if(child.parentRunId!==parent.runId||child.rootId!==parent.rootId||child.definition.grantId!==parent.definition.grantId||child.definition.deadlineAt>parent.definition.deadlineAt||canonical(child.definition.rootLimits)!==canonical(parent.definition.rootLimits)||canonical(child.definition.bindings)!==canonical(childBindings(parent.definition.bindings))||canonical(child.definition.config)!==canonical(expectedConfig)||canonical(child.definition.limits)!==canonical(chosen.method.limits)||child.definition.question!==childMethodQuestion({...chosen,callId:call.id}))fail('CHILD_EXECUTION_IDENTITY_MISMATCH');
 }
 function executionRows(store,parent,selected){
@@ -87,8 +89,8 @@ async function handoff(parent,child,call,chosen,selected){
  const out=child.snapshot.outcome;
  if(!['completed','failed'].includes(child.status)||!out||out.runId!==child.runId||out.rootId!==child.rootId||out.directory!==child.directory||out.taskId!==taskId(call.id)||out.status!==child.status||out.code!==child.snapshot.code)fail('CHILD_EXECUTION_OUTCOME_UNAVAILABLE');
  if(out.status==='completed'&&out.code!==null)fail('CHILD_EXECUTION_OUTCOME_MISMATCH');
- if(typeof out.answer!=='string'||Buffer.byteLength(out.answer)>chosen.method.output.maxSummaryBytes)fail('CHILD_METHOD_OUTPUT_LIMIT');
- const host=await createToolHost({directory:child.directory,documentCatalog:chosen.documentCatalog,allowedTools:chosen.method.allowedTools,allowedDocuments:chosen.documents,restore:child.snapshot.host,readOnly:true});
+ if(typeof out.answer!=='string')fail('CHILD_EXECUTION_OUTCOME_MISMATCH');
+ const host=await createToolHost({...(child.definition.config.hostProjection?{hostProjection:child.definition.config.hostProjection,projectionOwner:{runId:child.runId,rootId:child.rootId},confirmDerivedConsumption:async()=>false}:{}),directory:child.directory,documentCatalog:chosen.documentCatalog,allowedTools:chosen.method.allowedTools,allowedDocuments:chosen.documents,restore:child.snapshot.host,readOnly:true});
  const owned=await host.getResultRefs();if(canonical(owned)!==canonical(out.resultRefs))fail('CHILD_EXECUTION_SOURCE_IDENTITY');
  const originals=await readChildSources({directory:child.directory,refs:owned.map(r=>r.resultRef),allowedDocuments:chosen.documents,readOnly:true});
  return {sources:originals.map((s,i)=>({...s,resultRef:owned[i].resultRef})),child:{schemaVersion:'child-execution-handoff@1',parentRunId:parent.runId,rootId:child.rootId,runId:child.runId,taskId:taskId(call.id),callId:call.id,binding:childExecutionBinding(selected),methodDescriptor:chosen.method,documents:chosen.documents,status:out.status,code:out.code,derived:true,summary:out.answer,limitations:out.status==='completed'?['derived and semantically unreviewed']:['child failed; only independently validated original sources may be used'],partialEffects:structuredClone(out.partialEffects),mode:child.definition.bindings.gateway.mode,semanticStatus:'unreviewed'}};
@@ -121,7 +123,7 @@ export function createChildExecutionBinding({store,parentClaim,parentRunId,outpu
  function current(value,callId){const {saved,token}=parent(),p=saved.snapshot.proposal;
   if(!p||p.kind!=='calls'||p.calls.length!==1||saved.snapshot.cursor!==0||p.calls[0].name!=='delegate_child'||callId!==undefined&&p.calls[0].id!==callId||canonical(p.calls[0].arguments)!==canonical(value))fail('SPECIALIST_SINGLE_CALL_REQUIRED');
   let chosen;try{chosen=select(value,selected);}catch(error){if(error.code==='INVALID_CHILD_EXECUTION_ARGUMENTS'&&inputShapeIssue(value,selected))inputErrors.set(error,canonical(p.calls[0]));throw error;}
-  requestedScope(saved,chosen);if(Buffer.byteLength(childMethodQuestion({...chosen,callId:p.calls[0].id}))>16000)fail('CHILD_EXECUTION_INPUT_LIMIT');
+  requestedScope(saved,chosen);if(chosen.projection===undefined&&Buffer.byteLength(childMethodQuestion({...chosen,callId:p.calls[0].id}))>16000)fail('CHILD_EXECUTION_INPUT_LIMIT');
   return {saved,token,call:p.calls[0],chosen};
  }
  function writable(saved,token){
@@ -142,10 +144,10 @@ export function createChildExecutionBinding({store,parentClaim,parentRunId,outpu
  async function drive({saved,token,call,chosen},signal,existing){
   saved=writable(saved,token);signal?.throwIfAborted();
   const gateway=gatewayFactory();if(gateway?.mode!==saved.definition.bindings.gateway.mode||typeof gateway?.next!=='function')fail('CHILD_EXECUTION_GATEWAY_BINDING');
-  await runMethodChild({...chosen,taskId:taskId(call.id),callId:call.id,gateway,outputRoot,signal,durable:{store,...(existing?{runId:existing.runId}:{}),parentRunId:saved.runId,parentClaim:token,rootId:saved.rootId,grantId:saved.definition.grantId,bindings:childBindings(saved.definition.bindings),rootLimits:saved.definition.rootLimits,deadlineAt:existing?.definition.deadlineAt??Math.min(saved.definition.deadlineAt,Date.now()+chosen.method.limits.timeoutMs),onCheckpoint}});
+  await runMethodChild({...chosen,...(chosen.projection===undefined?{}:{hostProjection:saved.definition.config.hostProjection,contextBytes:saved.definition.config.contextBytes}),taskId:taskId(call.id),callId:call.id,gateway,outputRoot,signal,durable:{store,...(existing?{runId:existing.runId}:{}),parentRunId:saved.runId,parentClaim:token,rootId:saved.rootId,grantId:saved.definition.grantId,bindings:childBindings(saved.definition.bindings),rootLimits:saved.definition.rootLimits,deadlineAt:existing?.definition.deadlineAt??Math.min(saved.definition.deadlineAt,Date.now()+chosen.method.limits.timeoutMs),onCheckpoint}});
   signal?.throwIfAborted();return readChildExecutionHandoff({store,parentRunId:saved.runId,...selected,callId:call.id});
  }
- const binding={name:'delegate_child',description:'Delegate one bounded read-only task to an admitted method and source subset. Methods: '+selected.execution.methods.map(m=>m.id+'@'+m.version+' (at most '+m.input.maxDocuments+' documents, '+m.input.maxQuestionBytes+' UTF-8 question bytes, '+m.limits.maxTools+' reader calls)').join(', ')+'. Maximum '+selected.execution.maxChildren+' executions per original Run, serial only. Call as the sole tool in this response. Child has independent context and shares the original root budget; Main owns Memory and final publication. Do not strengthen the original question or invent decision states in the delegation. Treat Child summaries as semantically unreviewed: independently review the inference, not only citation accuracy, retaining each claim\'s conditions and modality before publication. Different states do not by themselves establish mutually exclusive claims.',parameters:{type:'object',properties:{methodId:{type:'string',enum:selected.execution.methods.map(m=>m.id)},question:{type:'string',minLength:1,maxLength:2000},documents:{type:'array',items:{type:'string',enum:selected.documents},minItems:1,maxItems:2,uniqueItems:true}},required:['methodId','question','documents'],additionalProperties:false},sourceResults:true,recoveryVersion:'child-execution-handoff@1',
+ const binding={name:'delegate_child',description:'Delegate one bounded read-only task to an admitted method and source subset. Methods: '+selected.execution.methods.map(m=>m.id+'@'+m.version+(selected.projection===undefined?' (at most '+m.input.maxDocuments+' documents, '+m.input.maxQuestionBytes+' UTF-8 question bytes, '+m.limits.maxTools+' reader calls)':' (authorized source subset; '+m.limits.maxTools+' reader calls; shared Host input capacity)')+(m.schemaVersion==='child-method@2'?' [independent evidence: Main question is audit-only; Child receives the frozen original question]':'')).join(', ')+'. Maximum '+selected.execution.maxChildren+' executions per original Run, serial only. Call as the sole tool in this response. Child has independent context and shares the original root budget; Main owns Memory and final publication. Do not strengthen the original question or invent decision states in the delegation. Treat Child summaries as semantically unreviewed: independently review the inference, not only citation accuracy, retaining each claim\'s conditions and modality before publication. Different states do not by themselves establish mutually exclusive claims.',parameters:{type:'object',properties:{methodId:{type:'string',enum:selected.execution.methods.map(m=>m.id)},question:{type:'string',minLength:1,...(selected.projection===undefined?{maxLength:2000}:{description:'Complete local task text; actual UTF-8 serialized request capacity is enforced by Host.'})},documents:{type:'array',items:{type:'string',enum:selected.documents},minItems:1,maxItems:selected.projection===undefined?2:selected.documents.length,uniqueItems:true}},required:['methodId','question','documents'],additionalProperties:false},sourceResults:true,recoveryVersion:'child-execution-handoff@1',
   validate(value){const {saved,call}=current(value);admit(saved,call);},
   async execute(value,{callId,signal}){const context=current(value,callId);context.saved=writable(context.saved,context.token);signal?.throwIfAborted();const exhausted=capacity(context.saved,context.call,context.chosen);return exhausted??drive(context,signal);},
   async reconcile(value,{callId,signal}){const context=current(value,callId);let child=store.findChild(context.saved.runId,taskId(callId));if(!child){context.saved=writable(context.saved,context.token);signal?.throwIfAborted();return capacity(context.saved,context.call,context.chosen);}validateChild(context.saved,child,context.call,context.chosen);

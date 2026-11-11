@@ -86,8 +86,8 @@ test('22.14 reconciliation waits for the original Child lease instead of failing
 test('22.15 missing parent tool capability refuses Child before physical request',async t=>{
  const h=await harness(t,{tools:['delegate_child'],main:()=>delegate('first')});assert.equal(h.result.status,'failed',h.result.code);assert.equal(h.childCalls,0);assert.equal(h.store.listChildren(h.result.runId).length,0);
 });
-test('22.16 per-method output bound is enforced without silently truncating a valid result',async t=>{
- let step=0;const h=await harness(t,{selected:{...selection,execution:{...execution,methods:[{...CLAIM_COMPARISON_METHOD,output:{maxSummaryBytes:4}}]}},main:()=>step++===0?delegate('first'):{kind:'final',text:'Must not consume oversized result.'}});assert.equal(h.result.status,'failed',h.result.code);assert.equal(h.mainCalls,1);assert.equal(h.store.inspect(h.result.runId).snapshot.messages.at(-1).result.error,'CHILD_METHOD_OUTPUT_LIMIT');
+test('22.16 legacy output metadata no longer rejects or truncates a result',async t=>{
+ let step=0;const h=await harness(t,{selected:{...selection,execution:{...execution,methods:[{...CLAIM_COMPARISON_METHOD,output:{maxSummaryBytes:4}}]}},main:()=>step++===0?delegate('first'):{kind:'final',text:'Consumed full summary.'}});assert.equal(h.result.status,'completed');assert.equal((await h.handoff('first')).child.summary,'Derived observation.');
 });
 test('22.17 immutable source readback refuses forged Child summary or altered original bytes',async t=>{
  let step=0;const h=await harness(t,{main:()=>step++===0?delegate('first'):{kind:'final',text:'Consumed.'}});const value=await h.handoff('first');const binding=createChildExecutionBinding({store:h.store,parentRunId:h.result.runId,parentClaim:()=>undefined,...selection,outputRoot:join(h.directory,'runs'),gatewayFactory:()=>({mode:'fixture',next(){throw Error('No dispatch');}})});await binding.verifyResult(value);
@@ -96,7 +96,7 @@ test('22.17 immutable source readback refuses forged Child summary or altered or
 test('22.18 method-specific input limits are visible before the model chooses a delegation',()=>{
  const method={...CLAIM_COMPARISON_METHOD,input:{maxQuestionBytes:200,maxDocuments:1},limits:{...CLAIM_COMPARISON_METHOD.limits,maxTools:3}};
  const binding=createChildExecutionBinding({store:{},parentClaim:()=>null,gatewayFactory:()=>null,...selection,execution:{schemaVersion:'child-execution@1',maxChildren:1,methods:[method]}});
- assert.match(binding.description,/claim-comparison@2 \(at most 1 documents, 200 UTF-8 question bytes, 3 reader calls\)/);
+ assert.match(binding.description,/claim-comparison@3 \(at most 1 documents, 200 UTF-8 question bytes, 3 reader calls\)/);
 });
 
 test('22.19 arbitrary extensions cannot mint or recover original Child group-owner proofs',async t=>{
@@ -145,4 +145,23 @@ test('22.23 a dispatched capacity observation reconciles only already exhausted 
  const dispatch={callId:call.id,name:call.name,effective:call};const state={...before.snapshot,phase:'tool-dispatched',toolsDispatched:before.snapshot.toolsDispatched+1,usedIds:[...before.snapshot.usedIds,call.id],inFlight:dispatch};claim.reserve('tool',state);
  let factories=0;const binding=createChildExecutionBinding({store:h.store,parentRunId:h.result.runId,parentClaim:()=>claim,...selected,outputRoot:join(h.directory,'runs'),gatewayFactory(){factories++;assert.fail('no new Child for capacity observation');}});
  try{const value=await binding.reconcile(call.arguments,{callId:call.id,signal:new AbortController().signal});assert.equal(value.childAdmission.reason,'execution-limit');assert.deepEqual(value.sources,[]);assert.equal(factories,0);assert.equal(h.childCalls,2);assert.equal(h.store.listChildren(h.result.runId).length,1);assert.equal(h.store.inspect(h.result.runId).rootUsage.tool,3);}finally{claim.release();}
+});
+
+
+for(const [label,output] of [['legacy4000',{maxSummaryBytes:4000}],['legacy8000',{maxSummaryBytes:8000}],['legacy16000',{maxSummaryBytes:16000}],['new',{}]])test('summary delivery without byte ceiling '+label,async t=>{
+ const selected={...selection,execution:{...execution,methods:[{...CLAIM_COMPARISON_METHOD,output}]}};
+ const answer='中'.repeat(6000);let step=0;
+ const h=await harness(t,{selected,main:()=>step++===0?delegate('first'):{kind:'final',text:'Consumed.'},child:input=>input.messages.some(m=>m.role==='tool')?{kind:'final',text:answer}:onePage(input)});
+ assert.equal(Buffer.byteLength(answer),18000);assert.equal(h.result.status,'completed');
+ const before=h.store.inspect(h.result.runId),history=await h.history();assert.equal(history.items[0].consumption,'consumed');assert.equal(history.items[0].result.child.summary,answer);assert.deepEqual(history.items[0].result.child.methodDescriptor.output,output);
+ await h.restart();assert.deepEqual(await h.history(),history);assert.deepEqual(h.store.inspect(h.result.runId),before);
+});
+test('malformed terminal answer fails original checkpoint validation',async t=>{
+ let step=0;const h=await harness(t,{main:()=>step++===0?delegate('first'):{kind:'final',text:'Consumed.'}});
+ const original=h.store.listChildren(h.result.runId)[0];
+ for(const answer of [null,3,{},[]]){
+  const child=structuredClone(original);child.snapshot.outcome.answer=answer;
+  const proxy=new Proxy({},{get(_,key){if(key==='listChildren')return()=>[child];const value=h.store[key];return typeof value==='function'?value.bind(h.store):value;}});
+  await assert.rejects(inspectChildExecutions({store:proxy,parentRunId:h.result.runId,...selection}),{code:'INVALID_TERMINAL_OUTCOME'});
+ }
 });

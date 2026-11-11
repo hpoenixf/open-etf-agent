@@ -13,8 +13,7 @@ async function verifySavedFile(directory,name,expected){
  await safeDirectory(directory);const file=await open(join(directory,name),constants.O_RDONLY|constants.O_NOFOLLOW);
  try{const stat=await file.stat();if(!stat.isFile()||stat.size!==expected.length||stat.size>5242880)throw Object.assign(new Error('PROTECTED_REPORT_FILE_MISMATCH'),{code:'PROTECTED_REPORT_FILE_MISMATCH'});const bytes=Buffer.alloc(expected.length+1);let at=0;while(at<bytes.length){const {bytesRead}=await file.read(bytes,at,bytes.length-at);if(!bytesRead)break;at+=bytesRead;}if(at!==expected.length||!bytes.subarray(0,at).equals(expected))throw Object.assign(new Error('PROTECTED_REPORT_FILE_MISMATCH'),{code:'PROTECTED_REPORT_FILE_MISMATCH'});}finally{await file.close();}
 }
-export async function saveReport({directory,store,text,selected,resultRefs,calculations,methods,attachmentIds=[],callId,signal,protectedOutput}){
- if(store.protection&&(typeof protectedOutput?.register!=='function'||!Array.isArray(protectedOutput.dependencies)))throw Object.assign(new Error('PROTECTED_REPORT_OWNER_REQUIRED'),{code:'PROTECTED_REPORT_OWNER_REQUIRED'});
+export function renderReportContent({text,selected,resultRefs,calculations,attachmentIds=[]}){
  const citations=selected.map((s,i)=>`- [${i+1}] ${s.sourceId}: ${s.name}, version ${s.version}, physical page ${s.page}; SHA-256 ${s.sha256}; ResultRef ${resultRefs[i].resultRef}${s.pdf?`; original PDF SHA-256 ${s.pdf.originalSha256}; ${s.pdf.originalBytes} bytes; ${s.pdf.originalArtifactId}; parser ${s.pdf.parser}; selected physical page ${s.page}/${s.pdf.pageCount}; text-layer only, visual inspection not performed`:""}${s.web?`; Web acquisition ${s.web.acquisitionId}; requested ${s.web.requestedUrl}; final ${s.web.finalUrl}; retrieved ${s.web.retrievedAt}; original ${s.web.originalMediaType} SHA-256 ${s.web.originalSha256}; ${s.web.originalBytes} bytes; ${webOriginalArtifactId(s.web)}; extraction ${s.web.extraction.profile}; ${s.web.extraction.coverage}; visual inspection not performed`:''}`).join('\n');
  const numeric=calculations.map((c,i)=>{
   const b=c.value.binding;
@@ -22,7 +21,11 @@ export async function saveReport({directory,store,text,selected,resultRefs,calcu
   return `- [C${i+1}] ${c.value.calculation}: inputs ${JSON.stringify(c.value.inputs)}; difference ${c.value.difference} ${c.value.unit}; current/baseline ${c.value.ratio}; increase/baseline ${c.value.increaseRatio}; ${c.ref.resultRef}${provenance}`;
  }).join('\n');
  const links=attachmentIds.length?'\n\n## Registered attachments\n\n'+attachmentIds.map(id=>'- '+id).join('\n'):'';
- const content=text+'\n\n## Acquired sources\n\n'+citations+(numeric?'\n\n## Actual numeric derivations\n\n'+numeric:'')+links+'\n';const bytes=Buffer.from(content);const partialPaths=[];const artifactEffects=[];
+ const content=text+'\n\n## Acquired sources\n\n'+citations+(numeric?'\n\n## Actual numeric derivations\n\n'+numeric:'')+links+'\n';return content;
+}
+export async function saveReport({directory,store,text,selected,resultRefs,calculations,methods,attachmentIds=[],callId,signal,protectedOutput}){
+ if(store.protection&&(typeof protectedOutput?.register!=='function'||!Array.isArray(protectedOutput.dependencies)))throw Object.assign(new Error('PROTECTED_REPORT_OWNER_REQUIRED'),{code:'PROTECTED_REPORT_OWNER_REQUIRED'});
+ const content=renderReportContent({text,selected,resultRefs,calculations,attachmentIds});const bytes=Buffer.from(content);const partialPaths=[];const artifactEffects=[];
  try{
   const artifact=await store.put({format:'markdown',content},{signal});artifactEffects.push({kind:'artifact',artifactId:artifact.artifactId});
   const revision=await store.revise({reportId:artifact.artifactId,attachmentIds,sources:selected,...(store.protection?{dependencies:protectedOutput.dependencies}:{})},{signal});artifactEffects.push({kind:'revision',revisionId:revision.revisionId});

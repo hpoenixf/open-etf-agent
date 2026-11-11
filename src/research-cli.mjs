@@ -3,7 +3,7 @@ import {open,constants} from 'node:fs/promises';
 import {resolve,dirname,join} from 'node:path';
 import {pathToFileURL} from 'node:url';
 import {safeDirectory} from './storage-files.mjs';
-import {releaseResearchUnknownCapacity,createResearchProject,updateResearchProject,inspectResearchProject,readProjectJson,submitResearchTask,workResearchTask,inspectResearchTask,cancelResearchTask,respondResearchTask,readResearchOutput,applyProjectMemoryIntent,approveProjectMemoryIntent,listResearchInteractions,inspectResearchInteraction,inspectResearchChildren} from './research-project.mjs';
+import {openProjectSpecialists,maintainResearchUnknownCapacity,releaseResearchUnknownCapacity,createResearchProject,updateResearchProject,inspectResearchProject,readProjectJson,submitResearchTask,workResearchTask,inspectResearchTask,cancelResearchTask,respondResearchTask,readResearchOutput,applyProjectMemoryIntent,approveProjectMemoryIntent,listResearchInteractions,inspectResearchInteraction,inspectResearchChildren} from './research-project.mjs';
 import {importProjectSources,loadProjectSources} from './project-sources.mjs';
 import {inspectResearchKnowledge} from './research-project.mjs';
 import {inspectResearchCapacity} from './research-project.mjs';
@@ -16,6 +16,13 @@ Usage: node src/research-cli.mjs <group> <command> [options]
   project init --project DIR --config JSON_FILE
   project update --project DIR --config JSON_FILE --expected-config SHA256
   project inspect --project DIR
+  specialist init|list --project DIR
+  specialist create --project DIR --id ID --profile JSON_FILE
+  specialist read|remove --project DIR --id ID [--revision NUMBER (remove)]
+  specialist update --project DIR --id ID --revision NUMBER --profile JSON_FILE
+  preset create --project DIR --id ID --preset JSON_FILE
+  preset read|remove --project DIR --id ID [--revision NUMBER (remove)]
+  preset update --project DIR --id ID --revision NUMBER --preset JSON_FILE
   source import --project DIR --files JSON_FILE
   source list --project DIR --manifest SHA256
   source acquire --project DIR --acquisition ID --urls JSON_FILE --approve-public-fetch
@@ -23,7 +30,7 @@ Usage: node src/research-cli.mjs <group> <command> [options]
   source acquisition --project DIR --acquisition ID
   run submit --project DIR --run ID --question TEXT_FILE --manifest SHA256
       [--approve-provider --approve-data --approve-cost]
-      [--memory-intents JSON_FILE] [--task-time JSON_FILE] [--schedule JSON_FILE]
+      [--report-delivery artifact-required@1] [--specialists JSON_FILE] [--memory-intents JSON_FILE] [--task-time JSON_FILE] [--schedule JSON_FILE]
   schedule confirm --project DIR --run ID --question TEXT_FILE --manifest SHA256 --schedule JSON_FILE --confirm-once
       [--approve-provider --approve-data --approve-cost]
   schedule list --project DIR
@@ -33,7 +40,7 @@ Usage: node src/research-cli.mjs <group> <command> [options]
   run inspect|cancel --project DIR --run ID
   child list --project DIR --run ID
   knowledge inspect --project DIR --run ID
-  capacity inspect --project DIR --run ID
+  capacity inspect|maintain --project DIR --run ID
   capacity release-unknown --project DIR --run ID --release JSON_FILE
       --preserve-unknown --no-replay --no-refund
   interaction list --project DIR [--run ID] [--limit NUMBER] [--after CURSOR]
@@ -68,10 +75,15 @@ for submit --memory-intents. Memory mutations require an explicit one-time inten
 All options are single-use. Unknown options and positional arguments are rejected.
 `;
 const specifications={
+ 'specialist init':['project'], 'specialist list':['project'],
+ 'specialist create':['project','id','profile'], 'specialist read':['project','id'],
+ 'specialist update':['project','id','revision','profile'], 'specialist remove':['project','id','revision'],
+ 'preset create':['project','id','preset'], 'preset read':['project','id'],
+ 'preset update':['project','id','revision','preset'], 'preset remove':['project','id','revision'],
  'schedule confirm':['project','run','question','manifest','schedule','confirm-once','approve-provider?','approve-data?','approve-cost?'],
  'schedule list':['project'], 'schedule inspect':['project','run'], 'schedule cancel':['project','run'],
  'schedule run-due':['project','limit?'],
- 'capacity inspect':['project','run'],
+ 'capacity inspect':['project','run'], 'capacity maintain':['project','run'],
  'capacity release-unknown':['project','run','release','preserve-unknown','no-replay','no-refund'],
  'knowledge inspect':['project','run'],
  'child list':['project','run'],
@@ -82,7 +94,7 @@ const specifications={
  'source import':['project','files'], 'source list':['project','manifest'],
  'source acquire':['project','acquisition','urls','approve-public-fetch','redirects?','base-manifest?','network-profile?'],
  'source acquisition':['project','acquisition'],
- 'run submit':['project','run','question','manifest','approve-provider?','approve-data?','approve-cost?','memory-intents?','task-time?','schedule?'],
+ 'run submit':['project','run','question','manifest','approve-provider?','approve-data?','approve-cost?','memory-intents?','task-time?','schedule?','specialists?','report-delivery?'],
  'run work':['project','run'], 'run inspect':['project','run'], 'run cancel':['project','run'],
  'run respond':['project','run','question-id','response-id','text'],
  'run report':['project','run'], 'run serve':['project','run','port?'],
@@ -104,8 +116,14 @@ export function parseResearchArguments(args){
 async function textFile(path,limit){await safeDirectory(dirname(resolve(path)));const file=await open(path,constants.O_RDONLY|constants.O_NOFOLLOW|constants.O_NONBLOCK);try{const s=await file.stat();if(!s.isFile()||s.size>limit)fail('CLI_UNSAFE_TEXT_FILE');const bytes=Buffer.alloc(limit+1);let count=0;while(count<bytes.length){const{bytesRead}=await file.read(bytes,count,bytes.length-count);if(!bytesRead)break;count+=bytesRead;}if(count>limit)fail('CLI_UNSAFE_TEXT_FILE');let text;try{text=new TextDecoder('utf-8',{fatal:true}).decode(bytes.subarray(0,count));}catch{fail('CLI_INVALID_UTF8');}if(!text.trim()||text.includes('\0'))fail('CLI_EMPTY_OR_BINARY_TEXT');return text;}finally{await file.close();}}
 function integer(value,min,max){if(!/^(0|[1-9][0-9]*)$/.test(value))fail('CLI_INVALID_INTEGER');const n=Number(value);if(!Number.isSafeInteger(n)||n<min||n>max)fail('CLI_INVALID_INTEGER');return n;}
 function sourceResult(value){return{manifestSha256:value.manifestSha256,manifest:value.manifest};}
-function taskResult(value){const d=value.definition,r=value.run;return{...(r?.snapshot?{phase:r.snapshot.phase,...(r.snapshot.code?{code:r.snapshot.code}:{}),...(r.snapshot.phase==='awaiting-response'?{response:{deadlineAt:r.definition.deadlineAt,questionId:r.snapshot.responseQuestion,question:r.snapshot.proposal?.calls?.[r.snapshot.cursor]?.arguments?.question}}:{})}:{}),runId:d.runId,projectId:d.projectId,sourceManifestSha256:d.sourceManifestSha256,grantId:d.grantId,...(value.schedule?{schedule:value.schedule}:{}),run:r?Object.fromEntries(['runId','rootId','parentRunId','status','rootStatus','rootUsage','directory','revision','cancelled','createdAt','updatedAt'].filter(k=>r[k]!==undefined).map(k=>[k,r[k]])):null};}
+function taskResult(value){const d=value.definition,r=value.run;return{...(r?.snapshot?{phase:r.snapshot.phase,...(r.snapshot.code?{code:r.snapshot.code}:{}),...(r.snapshot.phase==='awaiting-response'?{response:{deadlineAt:r.definition.deadlineAt,questionId:r.snapshot.responseQuestion,question:r.snapshot.proposal?.calls?.[r.snapshot.cursor]?.arguments?.question}}:{})}:{}),runId:d.runId,projectId:d.projectId,sourceManifestSha256:d.sourceManifestSha256,grantId:d.grantId,...(d.specialistSelection?{specialistSelection:d.specialistSelection}:{}),...(value.schedule?{schedule:value.schedule}:{}),run:r?Object.fromEntries(['runId','rootId','parentRunId','status','rootStatus','rootUsage','directory','revision','cancelled','createdAt','updatedAt'].filter(k=>r[k]!==undefined).map(k=>[k,r[k]])):null};}
 // Never expose arbitrary exception messages, provider response bodies, or stacks.
+async function readableWorkResult(projectDir,runId){
+ const task=taskResult(await inspectResearchTask({projectDir,runId}));let output;
+ try{output=await readResearchOutput({projectDir,runId});}
+ catch(error){output={kind:'unavailable',report:null,answer:null,...researchError(error),deliveryWarning:'尚无可读交付内容，或已保存内容未通过读回核验。原任务状态和错误保持不变；未生成替代报告。'};}
+ return {...task,output};
+}
 export function researchError(error){const code=typeof error?.code==='string'&&/^[A-Z][A-Z0-9_]{1,80}$/.test(error.code)?error.code:'RESEARCH_OPERATION_FAILED';return{error:code,hint:code==='RESEARCH_OPERATION_FAILED'?'Check explicit input files, project state and configuration. No provider error body is displayed.':'See help and verify the named operation inputs.'};}
 function redact(text,secret){let value=text;if(secret)value=value.split(secret).join('[REDACTED]');return value.replace(/\bBearer\s+[A-Za-z0-9._~+\/-]+=*/gi,'Bearer [REDACTED]').replace(/\bsk-[A-Za-z0-9_-]{8,}/g,'[REDACTED]');}
 export async function runResearchCli(args,{stdout=process.stdout,stderr=process.stderr,signals=process}={}){
@@ -113,6 +131,15 @@ export async function runResearchCli(args,{stdout=process.stdout,stderr=process.
  try{
   const parsed=parseResearchArguments(args);if(parsed.help){stdout.write(RESEARCH_HELP);return 0;}
   const {command,options:o}=parsed,projectDir=resolve(o.project),runId=o.run;
+  if(command.startsWith('specialist ')||command.startsWith('preset ')){
+   const [kind,operation]=command.split(' '),store=await openProjectSpecialists({projectDir,create:command==='specialist init'});
+   if(operation==='init'||operation==='list'){emit(await store.list());return 0;}
+   const suffix=kind==='specialist'?'Profile':'Preset';
+   if(operation==='read')emit(await store['read'+suffix](o.id));
+   else if(operation==='remove')emit(await store['remove'+suffix](o.id,integer(o.revision,1,256)));
+   else{const input=await readProjectJson(o[kind==='specialist'?'profile':'preset'],65536);emit(operation==='create'?await store['create'+suffix](o.id,input):await store['update'+suffix](o.id,integer(o.revision,1,256),input));}
+   return 0;
+  }
   if(command==='schedule confirm'){
    emit(taskResult(await confirmScheduledTask({projectDir,runId,confirmOnce:o['confirm-once'],question:await textFile(o.question,16000),sourceManifestSha256:o.manifest,schedule:await readProjectJson(o.schedule),authorization:{providerApproved:o['approve-provider']===true,dataApproved:o['approve-data']===true,costApproved:o['approve-cost']===true}})));return 0;
   }
@@ -127,6 +154,7 @@ export async function runResearchCli(args,{stdout=process.stdout,stderr=process.
    const intent=await readProjectJson(o.release,8192);if(!intent||typeof intent!=='object'||Array.isArray(intent)||Object.keys(intent).sort().join(',')!==['operationId','identity','expectedTicketSha256','reason'].sort().join(','))fail('CLI_RELEASE_FIELDS');
    emit(await releaseResearchUnknownCapacity({projectDir,runId,...intent,acknowledgements:{preserveUnknown:o['preserve-unknown']===true,noReplay:o['no-replay']===true,noRefund:o['no-refund']===true}}));return 0;
   }
+  if(command==='capacity maintain'){emit(await maintainResearchUnknownCapacity({projectDir,runId}));return 0;}
   if(command==='capacity inspect'){emit(await inspectResearchCapacity({projectDir,runId}));return 0;}
   if(command==='knowledge inspect'){emit(await inspectResearchKnowledge({projectDir,runId}));return 0;}
   if(command==='child list'){emit(await inspectResearchChildren({projectDir,runId}));return 0;}
@@ -143,14 +171,14 @@ export async function runResearchCli(args,{stdout=process.stdout,stderr=process.
    try{const result=await acquireProjectWebSources({projectDir,acquisitionId:o.acquisition,urls:await readProjectJson(o.urls,32768),allowedRedirectUrls:o.redirects?await readProjectJson(o.redirects,32768):[],baseManifestSha256:o['base-manifest']??null,approvePublicFetch:o['approve-public-fetch']===true,networkProfile:o['network-profile']??'system-direct@1',signal:controller.signal});emit({...sourceResult(result),acquisition:result.acquisition});}finally{signals.off('SIGINT',stop);signals.off('SIGTERM',stop);}return 0;
   }
   if(command==='run submit'){
-   const question=await textFile(o.question,16000),extra={};
-   for(const [key,arg]of [['memoryIntents','memory-intents'],['taskTime','task-time'],['schedule','schedule']])if(o[arg])extra[key]=await readProjectJson(o[arg]);
+   const question=await textFile(o.question,16000),extra={...(o['report-delivery']===undefined?{}:{reportDelivery:o['report-delivery']})};
+   for(const [key,arg]of [['specialistSelection','specialists'],['memoryIntents','memory-intents'],['taskTime','task-time'],['schedule','schedule']])if(o[arg])extra[key]=await readProjectJson(o[arg]);
    await submitResearchTask({projectDir,runId,question,sourceManifestSha256:o.manifest,authorization:{providerApproved:o['approve-provider']===true,dataApproved:o['approve-data']===true,costApproved:o['approve-cost']===true},...extra});emit(taskResult(await inspectResearchTask({projectDir,runId})));return 0;
   }
   if(command==='run work'){
    const {definition:{config}}=await inspectResearchTask({projectDir,runId});if(config.gateway.mode!=='live')fail('CLI_LIVE_WORK_REQUIRED');secret=process.env[config.gateway.apiKeyEnv];if(!secret)fail('CLI_API_KEY_ENV_REQUIRED');
    const host=new AbortController(),stop=()=>host.abort();signals.on('SIGINT',stop);signals.on('SIGTERM',stop);
-   try{await workResearchTask({projectDir,runId,apiKey:secret,hostSignal:host.signal});emit(taskResult(await inspectResearchTask({projectDir,runId})));}finally{signals.off('SIGINT',stop);signals.off('SIGTERM',stop);}return 0;
+   try{await workResearchTask({projectDir,runId,apiKey:secret,hostSignal:host.signal});emit(await readableWorkResult(projectDir,runId));}finally{signals.off('SIGINT',stop);signals.off('SIGTERM',stop);}return 0;
   }
   if(command==='run inspect'){emit(taskResult(await inspectResearchTask({projectDir,runId})));return 0;}
   if(command==='run cancel'){await cancelResearchTask({projectDir,runId});emit(taskResult(await inspectResearchTask({projectDir,runId})));return 0;}
@@ -158,7 +186,7 @@ export async function runResearchCli(args,{stdout=process.stdout,stderr=process.
   if(command==='run report'||command==='report inspect'){emit(await readResearchOutput({projectDir,runId}));return 0;}
   if(command.endsWith(' serve')){
    const port=o.port===undefined?0:integer(o.port,0,65535),report=await readResearchOutput({projectDir,runId});
-   const reader=await startReader({directory:report.directory,port,...(['degraded-answer','published-answer'].includes(report.kind)?{readAnswer:()=>readResearchOutput({projectDir,runId})}:{})});
+   const reader=await startReader({directory:report.directory,port,readOutput:()=>readResearchOutput({projectDir,runId})});
    try{await new Promise(resolve=>{const stop=()=>{signals.off('SIGINT',stop);signals.off('SIGTERM',stop);resolve();};signals.on('SIGINT',stop);signals.on('SIGTERM',stop);emit({runId,origin:reader.origin,directory:report.directory,receipt:report.receipt,...(['degraded-answer','published-answer'].includes(report.kind)?{kind:report.kind,publicationStatus:report.publicationStatus}:{} )});});}finally{await reader.close();}return 0;
   }
   if(command==='memory inspect'){

@@ -58,3 +58,11 @@ Response+Child、Schedule+Child、PDF+Child 和 trusted-plugin+Child 仍显式�
 
 ## 验证证据
 [分阶段验收](verification/v022-release.zh-CN.md)、[设计](../openspec/changes/v022-child-execution/proposal.md)与[证据沿革](../openspec/changes/v022-child-execution/evidence.md)保留来源及执行阶段。接受口径为十题九个原机械成功，C06 原测量失败与独立成功补证同时保留，不是一次连续 10/10。免费测试、远端 CI 与实际发布分别核验。
+
+## Child 摘要交付大小
+
+新方法使用 `output: {}`，不再设置 Child 摘要专用字节上限。内置比较方法为版本 3。不会截断摘要，也不会将原来的 4000 改成另一个固定阈值。
+
+旧 `child-method@1` 中的 `output.maxSummaryBytes` 仍按原合法值（1–16000）读回，作为不可变身份元数据保留，**不再限制交付**。旧任务的 descriptor、绑定与存储问句不被改写；为精确恢复，旧问句里已有的字节提示仍原样重建，但不代表当前 Host 执行该上限。新方法提示不再包含该字节上限。旧失败任务仍是失败，不会因升级自动重跑或变成成功。
+
+这不取消 Runtime 最终回答容量、Gateway 请求容量、上下文、文档权限、调用次数、时间或费用边界。很长的完整 Child 回答仍可能触发独立上下文容量拒绝；本改动没有分页交付、自动续跑或自动截断功能。

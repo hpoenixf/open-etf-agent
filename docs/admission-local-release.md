@@ -62,3 +62,91 @@ Project API/CLI, which resolves the immutable task's registered route and exact
 Session directory; do not substitute an arbitrary independently constructed
 Session with matching identifiers. Coordinated rewriting of all database authority
 is outside this local integrity contract.
+
+## Two-hour terminal maintenance: first stage
+
+`capacity maintain --project DIR --run ID` (API
+`maintainResearchUnknownCapacity`) applies the standing policy to eligible
+terminal unknown Main tickets of that original task. It is not another manual
+confirmation: its event explicitly says `two-hour-local-release@1`. The invariant
+acknowledgements describe the standing no-replay/no-refund/retain-unknown policy,
+not a newly clicked operator approval.
+
+The immutable original `createdAt` is enqueue time and includes queue waiting.
+Only elapsed time **strictly greater than 7,200,000 ms** qualifies. Equality is not
+due; updates and heartbeats do not move the origin. The event retains both dueAt
+and actual observedAt. Invalid/future creation time is blocked. Original manual
+events remain unchanged. A root with an active Child or other unsupported state
+is reported blocked, never silently freed. No provider/billing history is reset.
+
+The initial stage was an explicit lazy maintenance command, not a daemon or an active
+request timer. It did not install Project-work entry/exit hooks, persist an
+active-request stop intent, cancel a still-running Gateway or force lease
+revocation. Those paths require separate implementation and verification. Without
+a caller invoking maintenance, no promise of exactly-two-hour execution is made.
+
+### First-party design references
+
+- [AWS SQS visibility timeout](https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-visibility-timeout.html): local visibility/possession is distinct from completion; its redelivery semantics are **not** copied into model request replay.
+- [Temporal activity failure detection](https://docs.temporal.io/encyclopedia/detecting-activity-failures): heartbeat/timeout/cancellation mechanisms require an executing owner; an abort signal alone is not a stop receipt.
+- [Azure Service Bus locks and settlement](https://learn.microsoft.com/en-us/azure/service-bus-messaging/message-transfers-locks-settlement): releasing a lock does not establish business settlement.
+- [etcd concurrency API](https://etcd.io/docs/v3.6/dev-guide/api_concurrency_reference_v3/): identity/revision checks belong in the mutation transaction; they cannot recall remote computation.
+- [AWS idempotent API guidance](https://aws.amazon.com/builders-library/making-retries-safe-with-idempotent-APIs/): an idempotent local release operation does not establish provider-side request idempotency.
+
+These are supporting principles, not guarantees that this library implements those
+services or that any provider request has been cancelled.
+
+## Phase 2 candidate, focused verification only
+
+The candidate wrapper adds a two-hour active-owner timer with an immutable
+stop event, original Session cancellation and a local Promise-race boundary. It is
+intended to retire the local waiter and deny late result adoption even if a Gateway
+ignores AbortSignal. It does not terminate remote HTTP execution. It conservatively
+excludes summary/Child requests, an active sibling, mismatching original working
+input, and unverified owner/fence. A stop committed before a later Session failure
+remains a dispatch/adoption gate; without real terminal Session proof the slot
+stays held. Existing manual and terminal-maintenance policy records remain intact.
+
+Project work entry/exit also invokes lazy maintenance for original
+Main tasks of that Project's registered route. No resident daemon is introduced.
+This paragraph is a candidate description, not test evidence or permission to
+apply it to an actual live pool. The initial focused suite passed 18/18, including actual deferred Gateway
+fulfillment after logical revocation and first-arm expiry before dispatch. The
+first-arm unhandled rejection RED was retained and corrected. Additional focused
+cases cover active Child and expired lease refusal, an Admission stop surviving
+an injected Session SQL cancellation failure, and original Project work entry/exit.
+Database close failure still runs post-work maintenance and closes the Session.
+A clock-jump fixture initially invalidated its own lease; the corrected Project
+fixture ages only its synthetic Admission row without claiming two hours elapsed.
+
+Scheduled occurrences resolve only through the same Project's bounded task list,
+validated definition, exact scheduleRunId and original confirmed Session reference.
+Invalid confirmation fails closed; missing/foreign mappings are not guessed. A
+scheduled terminal unknown is reclaimed without dispatching the original Run again.
+The latest whole focused file was 23/24, with the remaining failure in the negative
+fixture's attempt to inspect through its deliberately invalid reference. Restoring
+the reference before observation corrected that assertion; the final scheduled
+case then passed 1/1. These results are not a same-input 24/24 or full-product/live
+qualification. No remote completion, refund or automatic request replay is implied.
+
+### Fixed-source complete regression
+
+Commit `1418b2b7b8e487b375a56fa5e16fa491f5c52553` subsequently passed its
+first complete single-concurrency test run: **1,023/1,023**, with no failures,
+skips or cancellations, followed by the native ESM build. Source, installed
+dependencies and Node input hashes were unchanged. Both registered test/build
+process groups finished normally. The isolated offline environment did not
+inherit provider credentials; no model requests or original live-pool operations
+were performed. The earlier 23/24 run and subsequent 1/1 targeted correction
+remain separate historical observations, not a combined pass count. This full
+regression establishes engineering verification for that fixed source, not live
+application, provider termination or settled billing.
+
+The scheduled confirmation check above applies specifically to automatic
+**Project work entry/exit discovery**: it rereads the original confirmation
+reference before mapping an occurrence back to its task. Explicit
+`capacity maintain --run <task-id>` is an operator-invoked local maintenance
+entry, not schedule execution. It uses the frozen task definition, original
+Session and exact original Admission ticket bindings; it does not independently
+repeat that work-hook confirmation-reference check. Neither entry replays the
+scheduled request, resolves remote unknowns or refunds its debit.

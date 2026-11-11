@@ -9,7 +9,7 @@ import { validateNote, noteRef } from './working-note.mjs';
 import { validateCalculation } from './calculation.mjs';
 const identityKeys=['sourceId','documentId','name','version','page','sha256','mediaType'];
 const identity=source=>({...Object.fromEntries(identityKeys.map(key=>[key,source[key]])),...(source.web?{webSha256:webProvenanceSha256(source.web)}:{})});
-const refPattern=/^(?:result|calculation|note):sha256:[a-f0-9]{64}$/;
+const refPattern=/^(?:result|calculation|note|derived):sha256:[a-f0-9]{64}$/;
 const exact=(value,keys)=>value && typeof value==='object' && !Array.isArray(value) && Object.keys(value).sort().join(',')===keys.slice().sort().join(',');
 const validSelection=value=>exact(value,['offset','limit'])&&Number.isSafeInteger(value.offset)&&value.offset>=0&&value.offset<32&&Number.isSafeInteger(value.limit)&&value.limit>=1&&value.limit<=32;
 function comparisonRows(text) {
@@ -28,7 +28,13 @@ function comparisonRows(text) {
 }
 const unavailable=(code,facts={})=>({available:false,kind:'comparison-unavailable',code,...facts});
 
+export function validateDerived(value) {
+ if(!exact(value,['runId','rootId','call','value'])||typeof value.runId!=='string'||typeof value.rootId!=='string'||!value.runId||!value.rootId||!exact(value.call,['id','name','arguments'])||value.call.name!=='delegate_child'||typeof value.call.id!=='string'||!value.call.arguments||typeof value.call.arguments!=='object'||Array.isArray(value.call.arguments)||!value.value||!Array.isArray(value.value.sources)||value.value.child?.schemaVersion!=='child-execution-handoff@1'||value.value.child.derived!==true||typeof value.value.child.runId!=='string'||!value.value.child.runId||typeof value.value.child.methodDescriptor?.id!=='string'||typeof value.value.child.methodDescriptor?.version!=='string'||typeof value.value.child.summary!=='string'||value.value.child.parentRunId!==value.runId||value.value.child.rootId!==value.rootId||value.value.child.callId!==value.call.id)throw new Error('Invalid derived result identity');
+ return structuredClone(value);
+}
+export function derivedDescriptor(value){validateDerived(value);return {kind:'derived',resultRef:'derived:sha256:'+sha256(JSON.stringify(value,(_,v)=>v&&typeof v==='object'&&!Array.isArray(v)?Object.fromEntries(Object.keys(v).sort().map(k=>[k,v[k]])):v))};}
 function baseDescriptor(kind,value) {
+  if(kind==='derived')return derivedDescriptor(value);
   if(kind==='source') { const fields=identity(value); return {kind,...fields,resultRef:'result:sha256:'+sha256(JSON.stringify(fields))}; }
   if(kind==='note')return {kind:'note',resultRef:noteRef(value)};
   return {kind:'calculation',calculation:value.calculation,resultRef:'calculation:sha256:'+sha256(JSON.stringify({kind:'calculation',value}))};
@@ -66,7 +72,7 @@ export function reportReferenceIssue(args,basis) {
  for(const m of args.text.matchAll(/\[(C?)([0-9]+)\]/g)){const n=Number(m[2]);if(n<1||n>(m[1]?count:args.sourceIds.length))return 'REPORT_CITATION_OUT_OF_RANGE';}
  return null;
 }
-export async function createResultStore({directory,allowedDocuments,readOnly=false}={}) {
+export async function createResultStore({directory,allowedDocuments,readOnly=false,derivedOwner}={}) {
   if(typeof readOnly!=='boolean')throw new Error('Invalid result read mode');
   directory=await safeDirectory(directory); const records=await(readOnly?safeDirectory:ensureSafeDirectory)(join(directory,'results'));
   if(allowedDocuments!==undefined&&(!Array.isArray(allowedDocuments)||!allowedDocuments.length||allowedDocuments.some(id=>typeof id!=='string'))) throw new Error('Invalid result document scope');
@@ -75,10 +81,11 @@ export async function createResultStore({directory,allowedDocuments,readOnly=fal
   catch(error) { if(error.code!=='ENOENT'||readOnly) throw error; if((await readdir(records)).length) throw new Error('Missing content index for nonempty original records'); entries=[]; await writeIndex(directory,entries); }
   const bySource=new Map(),byRef=new Map();
   for(const item of entries) {
-    if(!item||!['source','calculation','note'].includes(item.kind)||!refPattern.test(item.resultRef)||item.recordPath!==recordPath(item.resultRef)||!/^[a-f0-9]{64}$/.test(item.recordSha256)||byRef.has(item.resultRef)) throw new Error('Corrupt content index identity');
+    if(!item||!['source','calculation','note','derived'].includes(item.kind)||!refPattern.test(item.resultRef)||item.recordPath!==recordPath(item.resultRef)||!/^[a-f0-9]{64}$/.test(item.recordSha256)||byRef.has(item.resultRef)) throw new Error('Corrupt content index identity');
     if(item.kind==='source') {
       validateSourceDescriptor(item);if(bySource.has(item.sourceId))throw new Error('Corrupt source index identity');
       bySource.set(item.sourceId,structuredClone(item));
+    } else if(item.kind==='derived'){if(!item.resultRef.startsWith('derived:')||!exact(item,['kind','resultRef','recordPath','recordSha256']))throw new Error('Corrupt derived index');
     } else if(item.kind==='note'){if(!item.resultRef.startsWith('note:')||Object.keys(item).sort().join(',')!==['kind','resultRef','recordPath','recordSha256'].sort().join(','))throw new Error('Corrupt note index');
     } else if(item.calculation!=='calculate_change@1'||!item.resultRef.startsWith('calculation:')||Object.keys(item).sort().join(',')!==['kind','calculation','resultRef','recordPath','recordSha256'].sort().join(',')) throw new Error('Corrupt calculation index');
     byRef.set(item.resultRef,structuredClone(item));
@@ -88,7 +95,8 @@ export async function createResultStore({directory,allowedDocuments,readOnly=fal
     const expected=byRef.get(resultRef); if(!expected||expected.kind!==kind||!refPattern.test(resultRef)) throw new Error('Unknown or invalid typed result ref'); scope(expected);
     await safeDirectory(records); const bytes=await boundedBytes(join(directory,recordPath(resultRef)),524288); if(sha256(bytes)!==expected.recordSha256) throw new Error('Corrupt record snapshot hash');
     const record=parse(bytes); if(record.schemaVersion!=='research-result@1'||record.kind!==kind||record.resultRef!==resultRef) throw new Error('Corrupt result record identity');
-    const value=kind==='source'?validateSource(record.value):kind==='note'?validateNote(record.value):validateCalculation(record.value); if(kind==='source'&&value.derived===true) throw new Error('Derived observation is not an original source');
+    const value=kind==='source'?validateSource(record.value):kind==='note'?validateNote(record.value):kind==='derived'?validateDerived(record.value):validateCalculation(record.value); if(kind==='source'&&value.derived===true) throw new Error('Derived observation is not an original source');
+    if(kind==='derived'){if(!derivedOwner||value.runId!==derivedOwner.runId||value.rootId!==derivedOwner.rootId)throw new Error('Foreign derived owner');for(const source of value.value.sources){const original=await readRecord(source.resultRef,'source');if(!isDeepStrictEqual({...original,resultRef:source.resultRef},source))throw new Error('Derived source identity mismatch');}}
     if(kind==='note')for(const ref of value.sourceRefs){const owned=byRef.get(ref.resultRef);if(!owned||owned.kind!=='source'||identityKeys.some(key=>owned[key]!==ref[key]))throw new Error('Unknown note source ref');scope(owned);}
     if(kind==='calculation'&&value.binding)await verifyComparison(value);
     const base=baseDescriptor(kind,value); if(base.resultRef!==resultRef||Object.keys(base).some(key=>base[key]!==expected[key])) throw new Error('Corrupt result snapshot identity'); return value;
@@ -142,6 +150,14 @@ export async function createResultStore({directory,allowedDocuments,readOnly=fal
     queue=operation.catch(()=>{}); return operation;
   }
   return {
+    async addDerived(input,{signal}={}){const value=validateDerived(input);if(!derivedOwner||value.runId!==derivedOwner.runId||value.rootId!==derivedOwner.rootId)throw new Error('Foreign derived owner');for(const source of value.value.sources){const original=await readRecord(source.resultRef,'source');if(!isDeepStrictEqual({...original,resultRef:source.resultRef},source))throw new Error('Derived source identity mismatch');}return addRecord('derived',value,signal);},
+    readDerived:ref=>readRecord(ref,'derived'),
+    async readDerivedSelection(ref,selection={offset:0,limit:1024}) {
+      if(!exact(selection,['offset','limit'])||!Number.isSafeInteger(selection.offset)||selection.offset<0||!Number.isSafeInteger(selection.limit)||selection.limit<1||selection.limit>4096)throw new Error('Invalid derived selection');
+      const value=await readRecord(ref,'derived'),chars=Array.from(value.value.child.summary);if(selection.offset>chars.length)throw new Error('Invalid derived offset');
+      const text=chars.slice(selection.offset,selection.offset+selection.limit).join(''),end=selection.offset+Array.from(text).length;
+      return {...(value.value.child.status?{status:value.value.child.status}:{}),...(value.value.child.code!==undefined?{code:value.value.child.code}:{}),...(value.value.child.limitations?{limitations:structuredClone(value.value.child.limitations)}:{}),method:{id:value.value.child.methodDescriptor.id,version:value.value.child.methodDescriptor.version},kind:'derived-text-page',derived:true,resultRef:ref,contentHash:sha256(value.value.child.summary),text,coverage:{unit:'Unicode code points',offset:selection.offset,returned:end-selection.offset,total:chars.length,nextOffset:end<chars.length?end:null,complete:selection.offset===0&&end===chars.length},sourceRefs:value.value.sources.map(s=>s.resultRef),producer:{runId:value.value.child.runId,parentRunId:value.runId,rootId:value.rootId,callId:value.call.id},semanticStatus:'unreviewed'};
+    },
     snapshot: () => structuredClone([...byRef.values()]),
     async referenceBasis() {
       await queue;const basis=structuredClone([...byRef.values()]);

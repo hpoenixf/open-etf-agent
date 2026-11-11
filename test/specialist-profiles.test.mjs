@@ -1,0 +1,54 @@
+import {randomUUID} from 'node:crypto';
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {mkdtemp,rm,readFile,writeFile,symlink} from 'node:fs/promises';
+import {tmpdir} from 'node:os';
+import {join} from 'node:path';
+import {openSpecialistProfiles,recoverSpecialistProfiles} from '../src/specialist-profiles.mjs';
+import {CLAIM_COMPARISON_METHOD} from '../src/child.mjs';
+const method=structuredClone(CLAIM_COMPARISON_METHOD);
+async function fixture(t){const root=await mkdtemp(join(process.env.V027_TEST_ROOT??tmpdir(),'profiles-'));t.after(()=>rm(root,{recursive:true,force:true}));return{root,directory:join(root,'specialists'),projectId:'project-a'};}
+const input={name:'Claim comparison',description:'Compare source claims',enabled:true,method};
+test('explicit initialization, profile lifecycle and durable scope',async t=>{const f=await fixture(t);await assert.rejects(openSpecialistProfiles(f),e=>e.code==='ENOENT');const s=await openSpecialistProfiles({...f,create:true});const p=await s.createProfile(randomUUID(),input);assert.equal(p.revision,1);assert.notEqual(p.profileId,p.method.id);const v2=await s.updateProfile(p.profileId,1,{...input,name:'Updated'});assert.equal(v2.revision,2);await assert.rejects(s.updateProfile(p.profileId,1,input),e=>e.code==='SPECIALIST_CONFLICT');const reopened=await openSpecialistProfiles(f);assert.equal((await reopened.readProfile(p.profileId)).name,'Updated');await assert.rejects(openSpecialistProfiles({...f,projectId:'other'}),e=>e.code==='SPECIALIST_SCOPE');const removed=await s.removeProfile(p.profileId,2);assert.equal(removed.tombstone,true);assert.equal((await s.list()).profiles.length,0);assert.equal((await s.readProfile(p.profileId)).tombstone,true);await assert.rejects(s.updateProfile(p.profileId,3,input),e=>e.code==='SPECIALIST_REMOVED');});
+test('preset keeps ordered exact revision refs, stale/disabled selection rejects',async t=>{const f=await fixture(t),s=await openSpecialistProfiles({...f,create:true});const a=await s.createProfile(randomUUID(),input),b=await s.createProfile(randomUUID(),{...input,name:'Second',method:{...method,id:'second'}});const refs=[{profileId:b.profileId,revision:b.revision},{profileId:a.profileId,revision:a.revision}];const preset=await s.createPreset(randomUUID(),{name:'Both',profiles:refs});const selection=await s.resolveSelection({presetId:preset.presetId,revision:1,maxChildren:2});assert.deepEqual(selection.execution.methods.map(x=>x.id),['second',method.id]);assert.equal(selection.metadata.profiles[0].profileId,b.profileId);assert.equal(JSON.stringify(selection.metadata).includes(method.text),false);await s.updateProfile(a.profileId,1,{...input,enabled:false});await assert.rejects(s.resolveSelection({presetId:preset.presetId,revision:1,maxChildren:2}),e=>e.code==='SPECIALIST_STALE_PROFILE');assert.equal((await s.readPreset(preset.presetId)).profiles[1].revision,1);});
+test('duplicate method identity does not get renamed; profile authority cannot expand',async t=>{const f=await fixture(t),s=await openSpecialistProfiles({...f,create:true});const a=await s.createProfile(randomUUID(),input),b=await s.createProfile(randomUUID(),{...input,name:'Same method'});await assert.rejects(s.resolveSelection({profiles:[{profileId:a.profileId,revision:1},{profileId:b.profileId,revision:1}],maxChildren:2}),e=>e.code==='DUPLICATE_CHILD_METHOD');await assert.rejects(s.createProfile(randomUUID(),{...input,method:{...method,allowedTools:['save_report']}}),e=>e.code==='INVALID_CHILD_METHOD');await assert.rejects(s.resolveSelection({profiles:[{profileId:a.profileId,revision:1}],maxChildren:1,extra:true}),e=>e.code==='SPECIALIST_FIELDS');});
+test('concurrent CAS one wins, state tamper and unsafe path reject',async t=>{const f=await fixture(t),s=await openSpecialistProfiles({...f,create:true});const a=await s.createProfile(randomUUID(),input);const values=await Promise.allSettled([s.updateProfile(a.profileId,1,{...input,name:'A'}),s.updateProfile(a.profileId,1,{...input,name:'B'})]);assert.equal(values.filter(x=>x.status==='fulfilled').length,1);assert.equal(values.filter(x=>x.status==='rejected').length,1);const bad=join(f.root,'alias');await symlink(f.directory,bad);await assert.rejects(openSpecialistProfiles({...f,directory:bad}));const path=join(f.directory,'00000003.json');const raw=await readFile(path);await writeFile(path,Buffer.from(raw.toString().replace('Compare source claims','Tampered source claims')));await assert.rejects(s.list(),e=>e.code==='SPECIALIST_CORRUPT');});
+
+test('separate process CAS has one winner; uncommitted temp ignored and torn commit fails closed',async t=>{
+ const {spawn}=await import('node:child_process');const {pathToFileURL}=await import('node:url');
+ const f=await fixture(t),s=await openSpecialistProfiles({...f,create:true}),p=await s.createProfile(randomUUID(),input);
+ const moduleUrl=pathToFileURL(join(process.cwd(),'src/specialist-profiles.mjs')).href;
+ const script=`import {openSpecialistProfiles,recoverSpecialistProfiles} from ${JSON.stringify(moduleUrl)};const s=await openSpecialistProfiles(${JSON.stringify({directory:f.directory,projectId:f.projectId})});process.send('ready');process.once('message',async()=>{try{await s.updateProfile(${JSON.stringify(p.profileId)},1,${JSON.stringify(input)});process.send('won');}catch(e){process.send('rejected');}process.disconnect();});`;
+ const children=[0,1].map(()=>spawn(process.execPath,['--input-type=module','--eval',script],{stdio:['ignore','ignore','pipe','ipc']}));
+ const outcomes=children.map(c=>new Promise((resolve,reject)=>{let result,ready=false,stderr='';c.stderr.on('data',b=>stderr+=b);c.on('message',m=>{if(m==='ready'){ready=true;c.emit('ready');}else result=m;});c.on('error',reject);c.on('exit',code=>code===0&&ready&&result?resolve(result):reject(new Error('CAS child '+code+' '+stderr)));}));
+ await Promise.all(children.map(c=>new Promise(r=>c.once('ready',r))));children.forEach(c=>c.send('go'));assert.deepEqual((await Promise.all(outcomes)).sort(),['rejected','won']);assert.equal((await s.readProfile(p.profileId)).revision,2);
+ await writeFile(join(f.directory,'.interrupted-publication'),'{');assert.equal((await (await openSpecialistProfiles(f)).readProfile(p.profileId)).revision,2);
+ await writeFile(join(f.directory,'00000004.json'),'{');await assert.rejects(openSpecialistProfiles(f));
+});
+
+test('create intent ID survives lost ACK, edit and remove; another body cannot reuse it',async t=>{
+ const f=await fixture(t),s=await openSpecialistProfiles({...f,create:true});const a=await s.createProfile('stable-intent',input);const replay=await (await openSpecialistProfiles(f)).createProfile('stable-intent',input);assert.deepEqual(replay,a);assert.equal((await s.list()).profiles.length,1);
+ await assert.rejects(s.createProfile('stable-intent',{...input,name:'Other'}),e=>e.code==='SPECIALIST_CONFLICT');await s.updateProfile(a.profileId,1,{...input,name:'Edited'});assert.equal((await s.createProfile('stable-intent',input)).revision,2);
+ const presetInput={name:'One',profiles:[{profileId:a.profileId,revision:2}]};const preset=await s.createPreset('preset-intent',presetInput);assert.deepEqual(await s.createPreset('preset-intent',presetInput),preset);
+ await s.removeProfile(a.profileId,2);assert.equal((await s.createProfile('stable-intent',input)).tombstone,true);assert.equal((await s.list()).profiles.length,0);
+ await s.removePreset(preset.presetId,1);assert.equal((await s.createPreset('preset-intent',presetInput)).tombstone,true);await assert.rejects(s.createPreset('preset-intent',{...presetInput,name:'Other'}),e=>e.code==='SPECIALIST_CONFLICT');
+});
+
+test('initialized catalog disappearance cannot reuse an old ID and revision',async t=>{
+ const {rename}=await import('node:fs/promises');const f=await fixture(t),s=await openSpecialistProfiles({...f,create:true});await s.createProfile('stable',input);await rename(f.directory,f.directory+'-lost');
+ await assert.rejects(openSpecialistProfiles({...f,create:true}));
+});
+test('missing acknowledged tail cannot roll back a tombstone',async t=>{
+ const {unlink}=await import('node:fs/promises');const f=await fixture(t),s=await openSpecialistProfiles({...f,create:true});await s.createProfile('stable',input);await s.removeProfile('stable',1);await unlink(join(f.directory,'00000003.json'));await assert.rejects(openSpecialistProfiles(f),e=>e.code==='SPECIALIST_RECOVERY_NEEDED');const recovered=await recoverSpecialistProfiles(f);assert.equal((await recovered.readProfile('stable')).tombstone,true);assert.equal((await recovered.list()).profiles.length,0);
+});
+
+test('reserved generation without data stays uncertain and cannot be reclaimed by init',async t=>{
+ const {dirname,basename}=await import('node:path');const f=await fixture(t),s=await openSpecialistProfiles({...f,create:true});await s.createProfile('stable',input);
+ const registration=join(dirname(f.directory),'.'+basename(f.directory)+'-registration');const seal=join(registration,'00000003.json');await writeFile(seal,JSON.stringify({ordinal:3,stateSha256:'a'.repeat(64)}));const before=await readFile(seal);
+ await assert.rejects(s.createProfile('new',input),e=>e.code==='SPECIALIST_HEAD_MISSING');await assert.rejects(openSpecialistProfiles({...f,create:true}),e=>e.code==='SPECIALIST_HEAD_MISSING');assert.deepEqual(await readFile(seal),before);
+});
+
+test('already opened store refuses registration directory replaced by an alias',async t=>{
+ const {rename}=await import('node:fs/promises');const {dirname,basename}=await import('node:path');const f=await fixture(t),s=await openSpecialistProfiles({...f,create:true});const p=await s.createProfile('stable',input);const registration=join(dirname(f.directory),'.'+basename(f.directory)+'-registration');await rename(registration,registration+'-moved');await symlink(registration+'-moved',registration);
+ await assert.rejects(s.list());await assert.rejects(s.readProfile(p.profileId));await assert.rejects(s.resolveSelection({profiles:[{profileId:p.profileId,revision:1}],maxChildren:1}));
+});
