@@ -2,6 +2,10 @@
 
 [项目首页](../README.zh-CN.md) · [English](module-guide.md)
 
+## 项目专家配置（v0.27）
+
+参见[范围、命令与边界](v027-specialist-profiles.zh-CN.md)。继续沿用原 Child 执行链与 Root 限制。
+
 ## Web 证据采集（v0.26）
 
 **v0.26 提供有界 Web 证据采集**：显式获取公开静态页面，保留原件与来源信息，再沿原 Report/Reader 消费冻结分页。[用法](web-sources.zh-CN.md) · [本次 Runtime 9/10 与保留失败](verification/v026-release.zh-CN.md)。一题仍为 unknown，模型内容瑕疵独立保留。新 Web 页为 128 KiB，新 Project 默认序列化上下文为 1 MiB，不是模型 token 窗口。不提供自主爬取或浏览器渲染。

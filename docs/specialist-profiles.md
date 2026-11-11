@@ -1,9 +1,9 @@
-# Project specialist profiles (v0.27 candidate)
+# Project specialist profiles (v0.27)
 
-This candidate adds a project-local operator catalog, not another Agent or an
-execution router. It is based on released v0.25.0; integration with the pending
-v0.26 Web/context changes requires separate verification. No live qualification
-or release is claimed here.
+This module adds a project-local operator catalog, not another Agent or an
+execution router. The current version integrates the v0.26 baseline and the
+existing Host working-view path. See the [v0.27 scope and release boundary](v027-specialist-profiles.md)
+and [中文说明](v027-specialist-profiles.zh-CN.md). Profile configuration does not establish model answer quality.
 
 Enable the existing `child` capability, then use `specialist init --project DIR`.
 `specialist create --project DIR --id YOUR_STABLE_ID --profile FILE` accepts JSON
@@ -100,3 +100,26 @@ New methods use `output: {}` with no dedicated Child summary byte ceiling. The b
 Legacy `child-method@1` descriptors retain their original valid `output.maxSummaryBytes` value (1–16000) as immutable identity metadata, **not a delivery limit**. Stored descriptors, bindings and questions are not rewritten. Legacy questions reconstruct their original byte-bound wording for exact recovery; that wording does not reinstate enforcement. New methods omit that wording. Previously failed tasks stay failed and are not automatically rerun or relabeled as successful.
 
 Runtime final-answer capacity, Gateway request capacity, context, source authority, execution counts, time and cost boundaries remain separate and enforced. A large intact Child answer may still exceed context capacity. This change adds no paginated handoff, automatic continuation or truncation.
+
+## Explicit independent evidence input
+
+An operator may choose `schemaVersion: "child-method@2"` and add
+`mode: "independent-evidence"` to the method's existing `input` object. All other
+method fields, hash validation, reader allowlist and budget limits remain the
+same. This is an explicit profile revision, not a silent update of old methods.
+`child-method@1` keeps its exact historical task construction and local question.
+
+For this mode, the original Child executor constructs input from the frozen
+original research question, operator-authored method and Main's authorized
+source subset. Main's free-form delegation question stays in the original parent
+audit history but is omitted from the Child task, preventing that interpretation
+from becoming a premise of the independent pass. Main still selects the admitted
+method and document subset, so this is not independence from source selection.
+The original shared Root budget, source grants, deadlines and recovery owner
+remain unchanged. No new execution system or automatic extra model call is added.
+
+The mode prevents one observed input-contamination route. It does not validate
+semantic truth, fix independent model reasoning errors, or prevent Main from
+strengthening a correct handoff later. Handoffs remain semantically unreviewed.
+Use an operator-authored method appropriate to the immutable original question;
+a narrow subtask needing a local question should keep the existing v1 contract.

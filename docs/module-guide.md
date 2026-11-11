@@ -2,6 +2,10 @@
 
 [Project home](../README.md) · [简体中文](module-guide.zh-CN.md)
 
+## Project specialist profiles (v0.27)
+
+See [scope, commands and boundaries](v027-specialist-profiles.md). Original Child execution and Root limits remain authoritative.
+
 ## Web evidence acquisition (v0.26)
 
 **v0.26 adds bounded Web evidence acquisition**: explicitly acquire public static pages, preserve originals and provenance, and consume frozen pages through the existing Report/Reader path. [Usage](web-sources.md) · [Dated Runtime 9/10 and retained failures](verification/v026-release.md). One task remains unknown; model content defects remain separate. New Web pages use 128 KiB and new Projects default to 1 MiB serialized context, not a model token window. No autonomous crawl or browser rendering.

@@ -1,4 +1,4 @@
-import { createHash } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 // Serialized arguments and transport framing are not provider token windows.
 export const MAX_TOOL_ARGUMENT_BYTES = 2 * 1048576;
 export const DEFAULT_PROVIDER_RESPONSE_BYTES = 16 * 1048576;
@@ -66,16 +66,28 @@ export function createChatGateway({ endpoint, model, apiKey, authorization, stre
   const url = new URL(endpoint);
   if (url.protocol !== 'https:' || url.username || url.password || url.search || url.hash || !url.pathname.endsWith('/chat/completions')) throw new Error('Invalid trusted endpoint');
   if (typeof model !== 'string' || !model || typeof apiKey !== 'string' || !apiKey) throw new Error('Missing trusted provider configuration');
+  // Provider conversation metadata is not an authorization or an execution owner.
+  // Native reservations bind Main/Child/reopen to one Root. Direct non-durable
+  // callers get one opaque conversation per gateway instance, never per request.
+  const go = url.href === 'https://opencode.ai/zen/go/v1/chat/completions';
+  const directSession = go ? randomUUID() : null;
+  function requestHeaders(reservation) {
+    const headers = { 'content-type': 'application/json', authorization: `Bearer ${apiKey}` };
+    if (!go) return headers;
+    const identity = reservation === undefined ? directSession : reservation?.rootId;
+    if (typeof identity !== 'string' || !identity.trim() || identity.length > 256) throw Object.assign(new Error('GO_NATIVE_ROOT_REQUIRED'), { code: 'GO_NATIVE_ROOT_REQUIRED' });
+    return { ...headers, 'user-agent': 'open-etf-agent/0.27', 'x-opencode-session': 'open-etf-agent-' + createHash('sha256').update(identity).digest('hex') };
+  }
   const encodeInput = ({messages,tools}) => JSON.stringify({ model, stream, ...(stream ? { stream_options: { include_usage: true } } : {}), n: 1, messages: encodeMessages(messages), tools: tools.map(t => ({ type: 'function', function: t })) });
   return {
     mode: 'live',
     inputBudget: Object.freeze({maxBytes:maxInputBytes,measure:input=>Buffer.byteLength(encodeInput(input))}),
-    async next({ messages, tools, signal }) {
+    async next({ messages, tools, signal, reservation }) {
       const body = encodeInput({messages,tools});
       if (Buffer.byteLength(body) > maxInputBytes) throw new Error('PROVIDER_INPUT_BYTE_LIMIT');
       const response = await fetchImpl(url, {
         method: 'POST', redirect: 'error', signal,
-        headers: { 'content-type': 'application/json', authorization: `Bearer ${apiKey}` },
+        headers: requestHeaders(reservation),
         body
       });
       if (!response.ok) throw new Error(`PROVIDER_HTTP_${response.status}`);

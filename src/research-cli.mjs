@@ -30,7 +30,7 @@ Usage: node src/research-cli.mjs <group> <command> [options]
   source acquisition --project DIR --acquisition ID
   run submit --project DIR --run ID --question TEXT_FILE --manifest SHA256
       [--approve-provider --approve-data --approve-cost]
-      [--specialists JSON_FILE] [--memory-intents JSON_FILE] [--task-time JSON_FILE] [--schedule JSON_FILE]
+      [--report-delivery artifact-required@1] [--specialists JSON_FILE] [--memory-intents JSON_FILE] [--task-time JSON_FILE] [--schedule JSON_FILE]
   schedule confirm --project DIR --run ID --question TEXT_FILE --manifest SHA256 --schedule JSON_FILE --confirm-once
       [--approve-provider --approve-data --approve-cost]
   schedule list --project DIR
@@ -94,7 +94,7 @@ const specifications={
  'source import':['project','files'], 'source list':['project','manifest'],
  'source acquire':['project','acquisition','urls','approve-public-fetch','redirects?','base-manifest?','network-profile?'],
  'source acquisition':['project','acquisition'],
- 'run submit':['project','run','question','manifest','approve-provider?','approve-data?','approve-cost?','memory-intents?','task-time?','schedule?','specialists?'],
+ 'run submit':['project','run','question','manifest','approve-provider?','approve-data?','approve-cost?','memory-intents?','task-time?','schedule?','specialists?','report-delivery?'],
  'run work':['project','run'], 'run inspect':['project','run'], 'run cancel':['project','run'],
  'run respond':['project','run','question-id','response-id','text'],
  'run report':['project','run'], 'run serve':['project','run','port?'],
@@ -118,6 +118,12 @@ function integer(value,min,max){if(!/^(0|[1-9][0-9]*)$/.test(value))fail('CLI_IN
 function sourceResult(value){return{manifestSha256:value.manifestSha256,manifest:value.manifest};}
 function taskResult(value){const d=value.definition,r=value.run;return{...(r?.snapshot?{phase:r.snapshot.phase,...(r.snapshot.code?{code:r.snapshot.code}:{}),...(r.snapshot.phase==='awaiting-response'?{response:{deadlineAt:r.definition.deadlineAt,questionId:r.snapshot.responseQuestion,question:r.snapshot.proposal?.calls?.[r.snapshot.cursor]?.arguments?.question}}:{})}:{}),runId:d.runId,projectId:d.projectId,sourceManifestSha256:d.sourceManifestSha256,grantId:d.grantId,...(d.specialistSelection?{specialistSelection:d.specialistSelection}:{}),...(value.schedule?{schedule:value.schedule}:{}),run:r?Object.fromEntries(['runId','rootId','parentRunId','status','rootStatus','rootUsage','directory','revision','cancelled','createdAt','updatedAt'].filter(k=>r[k]!==undefined).map(k=>[k,r[k]])):null};}
 // Never expose arbitrary exception messages, provider response bodies, or stacks.
+async function readableWorkResult(projectDir,runId){
+ const task=taskResult(await inspectResearchTask({projectDir,runId}));let output;
+ try{output=await readResearchOutput({projectDir,runId});}
+ catch(error){output={kind:'unavailable',report:null,answer:null,...researchError(error),deliveryWarning:'尚无可读交付内容，或已保存内容未通过读回核验。原任务状态和错误保持不变；未生成替代报告。'};}
+ return {...task,output};
+}
 export function researchError(error){const code=typeof error?.code==='string'&&/^[A-Z][A-Z0-9_]{1,80}$/.test(error.code)?error.code:'RESEARCH_OPERATION_FAILED';return{error:code,hint:code==='RESEARCH_OPERATION_FAILED'?'Check explicit input files, project state and configuration. No provider error body is displayed.':'See help and verify the named operation inputs.'};}
 function redact(text,secret){let value=text;if(secret)value=value.split(secret).join('[REDACTED]');return value.replace(/\bBearer\s+[A-Za-z0-9._~+\/-]+=*/gi,'Bearer [REDACTED]').replace(/\bsk-[A-Za-z0-9_-]{8,}/g,'[REDACTED]');}
 export async function runResearchCli(args,{stdout=process.stdout,stderr=process.stderr,signals=process}={}){
@@ -165,14 +171,14 @@ export async function runResearchCli(args,{stdout=process.stdout,stderr=process.
    try{const result=await acquireProjectWebSources({projectDir,acquisitionId:o.acquisition,urls:await readProjectJson(o.urls,32768),allowedRedirectUrls:o.redirects?await readProjectJson(o.redirects,32768):[],baseManifestSha256:o['base-manifest']??null,approvePublicFetch:o['approve-public-fetch']===true,networkProfile:o['network-profile']??'system-direct@1',signal:controller.signal});emit({...sourceResult(result),acquisition:result.acquisition});}finally{signals.off('SIGINT',stop);signals.off('SIGTERM',stop);}return 0;
   }
   if(command==='run submit'){
-   const question=await textFile(o.question,16000),extra={};
+   const question=await textFile(o.question,16000),extra={...(o['report-delivery']===undefined?{}:{reportDelivery:o['report-delivery']})};
    for(const [key,arg]of [['specialistSelection','specialists'],['memoryIntents','memory-intents'],['taskTime','task-time'],['schedule','schedule']])if(o[arg])extra[key]=await readProjectJson(o[arg]);
    await submitResearchTask({projectDir,runId,question,sourceManifestSha256:o.manifest,authorization:{providerApproved:o['approve-provider']===true,dataApproved:o['approve-data']===true,costApproved:o['approve-cost']===true},...extra});emit(taskResult(await inspectResearchTask({projectDir,runId})));return 0;
   }
   if(command==='run work'){
    const {definition:{config}}=await inspectResearchTask({projectDir,runId});if(config.gateway.mode!=='live')fail('CLI_LIVE_WORK_REQUIRED');secret=process.env[config.gateway.apiKeyEnv];if(!secret)fail('CLI_API_KEY_ENV_REQUIRED');
    const host=new AbortController(),stop=()=>host.abort();signals.on('SIGINT',stop);signals.on('SIGTERM',stop);
-   try{await workResearchTask({projectDir,runId,apiKey:secret,hostSignal:host.signal});emit(taskResult(await inspectResearchTask({projectDir,runId})));}finally{signals.off('SIGINT',stop);signals.off('SIGTERM',stop);}return 0;
+   try{await workResearchTask({projectDir,runId,apiKey:secret,hostSignal:host.signal});emit(await readableWorkResult(projectDir,runId));}finally{signals.off('SIGINT',stop);signals.off('SIGTERM',stop);}return 0;
   }
   if(command==='run inspect'){emit(taskResult(await inspectResearchTask({projectDir,runId})));return 0;}
   if(command==='run cancel'){await cancelResearchTask({projectDir,runId});emit(taskResult(await inspectResearchTask({projectDir,runId})));return 0;}
@@ -180,7 +186,7 @@ export async function runResearchCli(args,{stdout=process.stdout,stderr=process.
   if(command==='run report'||command==='report inspect'){emit(await readResearchOutput({projectDir,runId}));return 0;}
   if(command.endsWith(' serve')){
    const port=o.port===undefined?0:integer(o.port,0,65535),report=await readResearchOutput({projectDir,runId});
-   const reader=await startReader({directory:report.directory,port,...(['degraded-answer','published-answer'].includes(report.kind)?{readAnswer:()=>readResearchOutput({projectDir,runId})}:{})});
+   const reader=await startReader({directory:report.directory,port,readOutput:()=>readResearchOutput({projectDir,runId})});
    try{await new Promise(resolve=>{const stop=()=>{signals.off('SIGINT',stop);signals.off('SIGTERM',stop);resolve();};signals.on('SIGINT',stop);signals.on('SIGTERM',stop);emit({runId,origin:reader.origin,directory:report.directory,receipt:report.receipt,...(['degraded-answer','published-answer'].includes(report.kind)?{kind:report.kind,publicationStatus:report.publicationStatus}:{} )});});}finally{await reader.close();}return 0;
   }
   if(command==='memory inspect'){

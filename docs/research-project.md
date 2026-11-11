@@ -171,3 +171,26 @@ An optional, explicitly versioned `interaction` configuration is being verified 
 ## Configurable context bytes
 
 New Projects persist `contextBytes: 1048576`. Existing absent-field configurations keep their original fallback; explicit CAS revisions affect future admissions only. See [context byte budget and encoded-request limits](project-context.md).
+
+### Explicit report-artifact completion contract
+
+For a new task that must deliver a report file, pass
+`reportDelivery: "artifact-required@1"` to `submitResearchTask`, or use
+`run submit ... --report-delivery artifact-required@1`. The contract is frozen in
+both the task and its original Session definition, and the model receives the
+requirement. Repeated submission must retain the same contract; it cannot upgrade
+or reopen an existing task. This option is currently unsupported for schedules and protected execution.
+
+A durable Publication alone remains a valid saved answer, but does not complete
+such a task. Both a final answer without a report and citation-degraded delivery
+end with `REPORT_ARTIFACT_REQUIRED` while preserving the committed answer and
+original diagnostics. Successful original report persistence still completes
+normally. There is no automatic retry, invented citation or synthesized report.
+Tasks without the option retain their original Publication-compatible behavior.
+This requirement proves neither semantic correctness nor real-provider coverage.
+
+### Visible delivery and execution status
+
+`run work` includes a readable `output` by default, alongside the original task status and error code. A saved report remains available even if a later tool call fails. `run report` preserves its full verified body and adds a separate execution warning; a later typed-reference error does not invalidate all existing report citations. If no persisted content is available, or readback verification fails, `output.kind` is `unavailable` with an explicit explanation rather than a fabricated report.
+
+`run serve` / `report serve` show the verified report inline as escaped text, with the execution warning and existing artifact downloads. Already-published citation-degraded answers remain readable with their original unverified citation markers and warnings. HTML in model text is never executed. The original Runtime status, report bytes, source checks and protected Reader rules are unchanged; refreshing a page does not call a model.
