@@ -2,6 +2,10 @@
 
 [项目首页](../README.zh-CN.md) · [English](module-guide.md)
 
+## 显式报告复核（v0.28）
+
+复核冻结报告与原始来源，给出建议而不改写或认证报告。[命令与边界](report-review.zh-CN.md)。
+
 ## 项目专家配置（v0.27）
 
 参见[范围、命令与边界](v027-specialist-profiles.zh-CN.md)。继续沿用原 Child 执行链与 Root 限制。

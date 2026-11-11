@@ -282,7 +282,7 @@ export async function createToolHost({ directory, extensions = [], hooks, allowe
   }
   if(catalog?.documents.some(d=>d.web))for(const [name,binding]of Object.entries(bindings))if(binding.sourceResult||binding.sourceResults)bindings[name]={...binding,artifactEffects:true};
   if (allowedTools !== undefined) {
-    if (!Array.isArray(allowedTools) || !allowedTools.length || new Set(allowedTools).size !== allowedTools.length || allowedTools.some(name => !Object.hasOwn(bindings, name))) fail('Invalid tool allowlist');
+    if (!Array.isArray(allowedTools) || new Set(allowedTools).size !== allowedTools.length || allowedTools.some(name => !Object.hasOwn(bindings, name))) fail('Invalid tool allowlist');
     for (const name of Object.keys(bindings)) if (!allowedTools.includes(name)) delete bindings[name];
   }
   const originalGroupOwners=new Map(extensions.filter(b=>Object.hasOwn(bindings,b.name)).map(b=>[b.name,b]));

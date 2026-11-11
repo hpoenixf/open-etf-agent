@@ -2,6 +2,10 @@
 
 [Project home](../README.md) · [简体中文](module-guide.zh-CN.md)
 
+## Explicit report Review (v0.28)
+
+Review frozen report and source text without rewriting or certifying the report. [Commands and boundaries](report-review.md).
+
 ## Project specialist profiles (v0.27)
 
 See [scope, commands and boundaries](v027-specialist-profiles.md). Original Child execution and Root limits remain authoritative.
