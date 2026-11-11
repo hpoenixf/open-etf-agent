@@ -15,11 +15,11 @@ function start(args){
  const child=fork(new URL('./fixtures/correction-child.mjs',import.meta.url),args,{stdio:['ignore','ignore','pipe','ipc'],execArgv:['--max-old-space-size=256']});
  let stderr='';child.stderr.on('data',b=>{stderr=(stderr+b).slice(-4096);});let closed=false;const exit=new Promise(resolve=>child.once('exit',(code,signal)=>{closed=true;resolve({code,signal});}));
  const queue=[];let notify;child.on('message',m=>{queue.push(m);notify?.();});
- return{child,exit,async wait(kind){const end=Date.now()+4000;while(Date.now()<end){const m=queue.find(x=>x.kind===kind);if(m)return m;if(closed)throw new Error('Synthetic helper exited before '+kind+': '+stderr);await new Promise(r=>{notify=r;setTimeout(r,20);});}throw new Error('Synthetic helper deadline');},async close(){if(!closed)child.kill('SIGKILL');return exit;}};
+ return{child,exit,async wait(kind){const end=Date.now()+4000;while(Date.now()<end){const m=queue.find(x=>x.kind===kind);if(m)return m;if(closed)throw new Error('Synthetic helper exited before '+kind+' (code='+child.exitCode+', signal='+child.signalCode+'): '+stderr);await new Promise(r=>{notify=r;setTimeout(r,20);});}throw new Error('Synthetic helper deadline');},async close(){if(!closed)child.kill('SIGKILL');return exit;}};
 }
 for(const [phase,mode,expected,models,tools] of [['result-committed','correct',null,3,1],['result-consumed','reject','CORRECTION_LIMIT',2,0],['model-reserved','correct','MODEL_OUTCOME_UNKNOWN',2,0]])test('real process death at '+phase+' retains correction accounting and never replays unknown work',{timeout:5000},async()=>{
  const d=await directory(),first=start([d,phase,'',mode]);let point;
- try{point=await first.wait('stop');}finally{const death=await first.close();assert.equal(death.signal,'SIGKILL');}
+ let checkpointError;try{point=await first.wait('stop');}catch(error){checkpointError=error;}finally{const death=await first.close();if(checkpointError)throw checkpointError;assert.equal(death.signal,'SIGKILL');}
  const inspect=await openSession({directory:d});let tick;try{tick=inspect.inspect(point.runId).leaseUntil+1;}finally{inspect.close();}
  const second=start([d,'',point.runId,mode,String(tick)]);
  try{const {result,calls}=await second.wait('outcome');assert.equal((await second.exit).code,0);assert.notEqual(first.child.pid,second.child.pid);assert.equal(result.runId,point.runId);assert.equal(result.code,expected);assert.equal(result.status,expected?'failed':'completed');assert.deepEqual(result.rootUsage,{model:models,tool:tools});assert.equal(calls,phase==='model-reserved'?0:phase==='result-consumed'?1:2);

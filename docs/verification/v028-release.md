@@ -19,3 +19,7 @@ The cohort is not a financial research benchmark or proof of broad model quality
 固定十题使用合成报告与来源，真实模型调用的 Runtime 完成、结构校验、原始输出保存和独立进程读回均为 10/10；再次读取/执行终态没有新增模型请求。十份回执均确认使用既有 Go 套餐且额外费用为零，旧失败和 unknown 保留。
 
 这不是答案质量满分。独立逐主张复核发现部分“缺少支持”被说成“已被否定”，以及标签与解释不一致。Review 只提供建议，不改写或认证原报告，也不授予新权限。正式 tag、Release 与最终提交 CI 需另行核实。
+
+## Original CI and test-fixture repair
+
+PR CI 42971438293 on a6fed960 passed 1278 tests, skipped four and failed the existing result-committed process-death fixture: the helper exited without the expected SIGKILL. That failure remains recorded; the exact prior exit cause was masked by the cleanup assertion. The fixture now uses a fixed per-process Session clock, with the second process explicitly advanced beyond the saved lease, and preserves real SIGKILL, fence, accounting and unknown-no-replay assertions. Helper exit diagnostics are no longer masked. This is a test-only timing repair, not a production Runtime change or a rerun of the real-model cohort. Final fixed-commit CI is reported separately.

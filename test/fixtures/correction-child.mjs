@@ -1,7 +1,10 @@
 import {run} from '../../src/runtime.mjs';
 import {openSession} from '../../src/session.mjs';
 const [directory,stop='',runId='',mode='correct',logicalTick='']=process.argv.slice(2);
-const clock=logicalTick?()=>Number(logicalTick):Date.now;
+// Crash-boundary fixture, not a wall-clock heartbeat test.
+// Recovery explicitly advances beyond the original leaseUntil.
+const initialTick=logicalTick?Number(logicalTick):Date.now();
+const clock=()=>initialTick;
 const store=await openSession({directory,leaseMs:150,clock});
 const question='Synthetic durable calculation correction.';
 const bindings={gateway:{mode:'fixture',provider:'synthetic',protocol:'fixture@1',model:'scripted',version:'1'},plugins:[],adapters:[]};
