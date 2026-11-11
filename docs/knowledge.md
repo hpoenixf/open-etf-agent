@@ -65,3 +65,11 @@ node --test test/knowledge.test.mjs test/knowledge-project.test.mjs
 ```
 
 These tests include the real Chat encoder/parser with an injected local transport, process exit/recovery, actual loopback Reader bytes and capacity/refusal cases. They do **not** contact a model service or establish real-model qualification. Semantic answer review, provider execution, full-suite/build/install and release each retain separate evidence.
+
+## Punctuation-aware lexical revision
+
+Newly admitted tasks freeze `knowledgeVersion: admitted-lexical-pages@2`. Compounds such as `S&P`, `U.S.` and possessives no longer inject isolated single-letter fragments into ranking; genuinely standalone letters remain searchable. This remains lexical retrieval, not semantic search.
+
+Tasks admitted by the v0.28 executable without this field retain `admitted-lexical-pages@1`, its original tokenizer, index identity and result-verification behavior. Repeated admission preserves the task bytes; inspection reports the frozen version. Unknown explicit versions fail before dispatch. This compatibility applies to the tokenizer change only: older unrelated guidance/binding changes still require their original executable.
+
+A fixed VOO question in two languages over unchanged original source snapshots recovered three expected numerical facts in top-1 instead of none. The Chinese default returned source text fell from 128000 to 64000 bytes. This bounded retrieval observation is not a model-answer quality score, token reduction or monetary saving; no model calls were made for it.

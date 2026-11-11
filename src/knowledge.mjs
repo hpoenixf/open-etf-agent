@@ -1,7 +1,8 @@
 import {isDeepStrictEqual} from 'node:util';
 import {normalizeDocumentCatalog, documentCatalogBinding, readCatalogPage, sha256} from './source.mjs';
 
-export const KNOWLEDGE_VERSION = 'admitted-lexical-pages@1';
+export const LEGACY_KNOWLEDGE_VERSION = 'admitted-lexical-pages@1';
+export const KNOWLEDGE_VERSION = 'admitted-lexical-pages@2';
 // Leave space in the application's 1 MiB context for the original question,
 // call pairing, registered ResultRefs and retained historical metadata.
 export const KNOWLEDGE_RESPONSE_BYTES = 768000;
@@ -19,7 +20,7 @@ const integer = (v, min, max) => Number.isSafeInteger(v) && v >= min && v <= max
 
 // Unicode word terms plus overlapping Han bigrams. This is bounded lexical
 // matching, not semantic embeddings, stemming or a language quality guarantee.
-function terms(text) {
+function legacyTerms(text) {
   const result = [];
   for (const part of text.normalize('NFKC').toLocaleLowerCase('en-US').match(/[\p{Script=Han}]+|[\p{L}\p{N}]+/gu) ?? []) {
     if (/^[\p{Script=Han}]+$/u.test(part)) {
@@ -30,6 +31,22 @@ function terms(text) {
   }
   return result;
 }
+function terms(text) {
+  const result = [];
+  for (const part of text.normalize('NFKC').replaceAll('’', "'").toLocaleLowerCase('en-US').match(/[\p{Script=Han}]+|[\p{L}\p{N}]+(?:[.'&][\p{L}]+)*/gu) ?? []) {
+    if (/^[\p{Script=Han}]+$/u.test(part)) {
+      const chars = [...part];
+      if (chars.length === 1) result.push(part);
+      else for (let i = 0; i < chars.length - 1; i++) result.push(chars[i] + chars[i + 1]);
+    } else {
+      result.push(part);
+      // Keep exact compounds and useful words, but not stray S/P from
+      // S&P, U.S. or possessives. A genuinely standalone letter still matches.
+      if (/[.'&]/.test(part)) for (const word of part.split(/[.'&]/)) if (word.length > 1) result.push(word);
+    }
+  }
+  return result;
+}
 export function normalizeKnowledgeConfig(value = {}) {
   if (!object(value) || Object.keys(value).some(k => !['maxResults', 'maxSourceBytes'].includes(k))) fail('KNOWLEDGE_CONFIG');
   const config = {maxResults: value.maxResults ?? 4, maxSourceBytes: value.maxSourceBytes ?? 128000};
@@ -37,8 +54,10 @@ export function normalizeKnowledgeConfig(value = {}) {
   if (!integer(config.maxResults, 1, 8) || !integer(config.maxSourceBytes, 64000, 512000)) fail('KNOWLEDGE_CONFIG');
   return Object.freeze(config);
 }
-export function createKnowledgeIndex({catalog, allowedDocuments, config, signal} = {}) {
+export function createKnowledgeIndex({catalog, allowedDocuments, config, signal, version = KNOWLEDGE_VERSION} = {}) {
   cancelled(signal);
+  if (![LEGACY_KNOWLEDGE_VERSION, KNOWLEDGE_VERSION].includes(version)) fail('KNOWLEDGE_VERSION');
+  const tokenize = version === LEGACY_KNOWLEDGE_VERSION ? legacyTerms : terms;
   catalog = normalizeDocumentCatalog(catalog);
   config = normalizeKnowledgeConfig(config);
   if (!Array.isArray(allowedDocuments) || !allowedDocuments.length || new Set(allowedDocuments).size !== allowedDocuments.length || allowedDocuments.some(id => !catalog.documents.some(d => d.id === id))) fail('KNOWLEDGE_DOCUMENT_SCOPE');
@@ -48,13 +67,13 @@ export function createKnowledgeIndex({catalog, allowedDocuments, config, signal}
     for (let index = 0; index < document.pages.length; index++) {
       cancelled(signal);
       const counts = new Map();
-      for (const term of terms(document.pages[index])) counts.set(term, (counts.get(term) ?? 0) + 1);
+      for (const term of tokenize(document.pages[index])) counts.set(term, (counts.get(term) ?? 0) + 1);
       pages.push({documentId: document.id, page: index + 1, counts});
     }
   }
-  const identity = {version: KNOWLEDGE_VERSION, catalog: Object.freeze(documentCatalogBinding(catalog)), allowedDocuments: selected, config};
+  const identity = {version, catalog: Object.freeze(documentCatalogBinding(catalog)), allowedDocuments: selected, config};
   const index = Object.freeze({...identity, indexSha256: digest(identity), documents: selected.length, pages: pages.length});
-  indexes.set(index, {catalog, pages});
+  indexes.set(index, {catalog, pages, tokenize});
   return index;
 }
 function queryArguments(args, config) {
@@ -65,7 +84,7 @@ export function queryKnowledge(index, args, {signal} = {}) {
   cancelled(signal);
   const data = indexes.get(index);
   if (!data) fail('KNOWLEDGE_INDEX_REQUIRED');
-  const {query, limit} = queryArguments(args, index.config), tokens = [...new Set(terms(query))], matches = [];
+  const {query, limit} = queryArguments(args, index.config), tokens = [...new Set(data.tokenize(query))], matches = [];
   for (const page of data.pages) {
     cancelled(signal);
     const score = tokens.reduce((sum, token) => sum + (page.counts.get(token) ?? 0), 0);
@@ -74,7 +93,7 @@ export function queryKnowledge(index, args, {signal} = {}) {
   matches.sort((a, b) => b.score - a.score || (a.documentId < b.documentId ? -1 : a.documentId > b.documentId ? 1 : a.page - b.page));
   const sources = [], hits = []; let sourceBytes = 0, byteLimited = false, encodingLimited = false;
   const output = () => ({
-    kind: 'knowledge-evidence', version: KNOWLEDGE_VERSION,
+    kind: 'knowledge-evidence', version: index.version,
     status: !matches.length ? 'no-evidence' : sources.length < matches.length ? 'partial' : 'complete',
     indexSha256: index.indexSha256, catalog: structuredClone(index.catalog), querySha256: sha256(query),
     coverage: {scope: 'admitted-immutable-text-collection', documents: index.documents, pages: index.pages, matched: matches.length, returned: sources.length, limit, sourceBytes, maxSourceBytes: index.config.maxSourceBytes, maxResponseBytes: KNOWLEDGE_RESPONSE_BYTES, limitReached: matches.length > limit, byteLimited, encodingLimited, completeWithinCollection: sources.length === matches.length},
@@ -94,7 +113,7 @@ export function queryKnowledge(index, args, {signal} = {}) {
 }
 export function knowledgeBinding(index) {
   if (!indexes.has(index)) fail('KNOWLEDGE_INDEX_REQUIRED');
-  return {id: 'knowledge', version: KNOWLEDGE_VERSION, contentSha256: index.indexSha256};
+  return {id: 'knowledge', version: index.version, contentSha256: index.indexSha256};
 }
 export function createKnowledgeTool(index) {
   knowledgeBinding(index);
