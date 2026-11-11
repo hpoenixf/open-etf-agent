@@ -43,9 +43,9 @@ Each finding distinguishes material support from citation correspondence, and fa
 
 ## Verification
 
-`test/report-review*.test.mjs` exercises the actual Runtime/Session/Gateway/Artifact composition. `fixtures/report-review-cases.json` contains ten synthetic report/source input seeds and expected human checks: supported claim, numeric error, risk inversion, wrong period, wrong currency, omitted condition, missing evidence, Unicode, citation mismatch and prompt injection. Scripted expected outputs are explicitly not model results. These seeds are not a frozen executable live cohort: Gateway configuration, task identities and original budget reservations remain unspecified. R09 places A/B in one text; it does not construct two independently bound source identities and does not establish citation-correspondence coverage. A future live harness must create separate original sources and exact citation mappings before freezing that case.
+`test/report-review*.test.mjs` exercises the actual Runtime/Session/Gateway/Artifact composition. `fixtures/report-review-cases.json` contains ten synthetic report/source input seeds and expected human checks: supported claim, numeric error, risk inversion, wrong period, wrong currency, omitted condition, missing evidence, Unicode, citation mismatch and prompt injection. Scripted expected outputs are explicitly not model results. The seed file is not itself the executable live cohort. The later frozen qualification creates distinct task identities and, for R09, separately bound original sources with an actual wrong-source citation. See the integrated qualification below.
 
-Live semantic acceptance has **not run**: the complete cumulative budget ledger was unavailable. Do not interpret offline passes as real reviewer effectiveness or full release qualification. The original private post-hoc review owner informed this adaptation; automatic in-research Reviewer cadence and private authorization-lineage features are not claimed as implemented.
+The initial offline candidate had no live qualification. The later integrated cohort is recorded separately below; its semantic errors remain visible and offline passes are not reviewer-effectiveness evidence. The original private post-hoc review owner informed this adaptation; automatic in-research Reviewer cadence and private authorization-lineage features are not claimed as implemented.
 
 ### Cross-version owner integration
 
@@ -53,4 +53,8 @@ Live semantic acceptance has **not run**: the complete cumulative budget ledger 
 
 A separate regression creates an unknown Gateway settlement in one process, exits, reads it through a fresh CLI process, then attempts execution through another CLI process. The terminal unknown record and original model debit remain unchanged; the supplied Gateway factory is never invoked. It is an injected lost-settlement fixture, not evidence of a real provider failure or a remote cancellation.
 
-All these transports and model replies are synthetic. **Real external Web access and real-provider semantic review remain unverified.** Passing the composed workflow does not certify the scripted finding or remove the live budget/admission gate.
+The composition tests in this section use synthetic transports and model replies. They do not qualify real external Web acquisition or certify findings. The separate real-provider cohort below does not remove future budget/admission checks.
+
+## Integrated Runtime qualification
+
+The fixed integrated candidate completed ten real model reviews over synthetic report/source fixtures, with original output and cold readback. Semantic limitations remain. [Dated evidence and boundaries](verification/v028-release.md). The offline fixture examples above remain synthetic and do not become real-provider examples.
