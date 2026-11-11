@@ -33,7 +33,7 @@ function legacyTerms(text) {
 }
 function terms(text) {
   const result = [];
-  for (const part of text.normalize('NFKC').replaceAll('’', "'").toLocaleLowerCase('en-US').match(/[\p{Script=Han}]+|[\p{L}\p{N}]+(?:[.'&][\p{L}]+)*/gu) ?? []) {
+  for (const part of text.normalize('NFKC').replaceAll('’', "'").toLocaleLowerCase('en-US').match(/[\p{Script=Han}]+|(?:(?!\p{Script=Han})[\p{L}\p{N}])+(?:[.'&](?:(?!\p{Script=Han})\p{L})+)*/gu) ?? []) {
     if (/^[\p{Script=Han}]+$/u.test(part)) {
       const chars = [...part];
       if (chars.length === 1) result.push(part);
