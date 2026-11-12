@@ -70,11 +70,11 @@ npm run demo -- --case document-compare
 <a id="最近三个模块"></a>
 ## 最近版本与开发状态
 
-最新已核实正式 Release 仍为 **[v0.28.0](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.28.0)**。本次 **[v0.29 Conversation](https://github.com/hpoenixf/open-etf-agent/pull/5)** 已完成固定十个真实工作流验证，等待合并/Release 最终状态核验；版本元数据不等于正式发布。[本轮证据与质量边界](docs/verification/v029-release.md)。
+最新已核实正式 Release 为 **[v0.29.0 · Conversation](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.29.0)**，发布自合并提交 `cb7ebfa`。固定十个真实工作流验证已通过；Runtime 完成不等于答案质量认证。[本轮证据与质量边界](docs/verification/v029-release.md)。
 
 | 最近版本 / 状态 | 能做什么 | 用法与边界 |
 | --- | --- | --- |
-| v0.29 · Conversation（待发布） | 明确继续、持久澄清、安全恢复、交接与撤销，保留原始产物 | [研究对话](docs/conversations.zh-CN.md) |
+| [v0.29 · Conversation](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.29.0) | 明确继续、持久澄清、安全恢复、交接与撤销，保留原始产物 | [研究对话](docs/conversations.zh-CN.md) |
 | [v0.28 · 报告复核](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.28.0) | 根据冻结报告和来源给出建议，保留原报告与冷读 | [Report Review](docs/report-review.zh-CN.md) |
 | [v0.27 · 项目专家配置](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.27.0) | 在准入时冻结 profile / preset，通过原 Child 执行 | [Specialist Profiles](docs/v027-specialist-profiles.zh-CN.md) |
 

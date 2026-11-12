@@ -70,11 +70,11 @@ npm run demo -- --case document-compare
 <a id="latest-three-modules"></a>
 ## Releases and development status
 
-The latest verified formal Release remains **[v0.28.0](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.28.0)**. This **[v0.29 Conversation change](https://github.com/hpoenixf/open-etf-agent/pull/5)** completed its fixed ten-workflow real qualification; final merge/Release status is tracked separately. Version metadata is not formal publication. [Evidence and quality limits](docs/verification/v029-release.md).
+The latest verified formal Release is **[v0.29.0 · Conversation](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.29.0)**, published from merge commit `cb7ebfa`. Its fixed ten-workflow real qualification passed; Runtime completion is not answer-quality certification. [Evidence and quality limits](docs/verification/v029-release.md).
 
 | Recent version / status | What it enables | Usage and boundaries |
 | --- | --- | --- |
-| v0.29 · Conversation (pending release) | Explicit Continue, persisted clarification, safe resume/handoff and revocation with original outputs | [Conversation](docs/conversations.md) |
+| [v0.29 · Conversation](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.29.0) | Explicit Continue, persisted clarification, safe resume/handoff and revocation with original outputs | [Conversation](docs/conversations.md) |
 | [v0.28 · Report Review](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.28.0) | Advisory findings over frozen report/source text; original report and cold readback remain intact | [Report Review](docs/report-review.md) |
 | [v0.27 · Project specialist profiles](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.27.0) | Freeze profiles/presets at admission and use the original Child execution path | [Specialist Profiles](docs/v027-specialist-profiles.md) |
 
