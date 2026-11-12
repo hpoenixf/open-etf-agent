@@ -17,3 +17,8 @@ The two completed reports are synthetic-data exercises, not real investment rese
 Main and Child correctly shared one endpoint slot. However, the original project adapter limited local waiting to 30 seconds even when an admitted Child still had time under its original deadline. Main timed out, and its cleanup cancelled the in-flight Child. A longer local waiting window for the asynchronous contract must preserve capacity one, FIFO, cancellation, the original deadlines, unknown accounting and non-replay. This is not permission to increase provider concurrency or renew a task.
 
 Any corrected candidate requires separate fixed-version validation. This original batch remains unsuccessful and must not be relabeled by later results.
+
+
+## Corrected-candidate qualification update
+
+Separate candidate `2bfe816` now passed the frozen ten-workflow Runtime cohort, 89 zero-extra-cost requests and no new unknown. Earlier candidate statements above remain historical. [Qualification and semantic limits](v030-release.md). This update does not itself assert tag/Release publication.

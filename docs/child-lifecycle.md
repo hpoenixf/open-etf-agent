@@ -47,3 +47,8 @@ Main and all Children compete for the same original Root budget. Child cancellat
 ## Qualification boundary
 
 Synthetic checks cover simultaneous Children, cancellation isolation, immutable observations, original source projection, parent drain, commit/consume restart, cold CLI and noncooperative Host stop. Full regression and frozen real-workflow acceptance are separate gates. This candidate does not claim private-service parity, nested Children, peer messaging, broad partial-result streaming, independent provider routing, or new Response/Schedule/PDF/plugin composition support.
+
+
+## Corrected-candidate qualification update
+
+Separate candidate `2bfe816` now passed the frozen ten-workflow Runtime cohort, 89 zero-extra-cost requests and no new unknown. Earlier candidate statements above remain historical. [Qualification and semantic limits](verification/v030-release.md). This update does not itself assert tag/Release publication.

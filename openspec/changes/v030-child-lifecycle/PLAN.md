@@ -30,3 +30,8 @@ Stop one admitted Child without cancelling its original parent or unrelated work
 The candidate now implements both serial `delegate_child` and opt-in `child-execution@2` model-visible spawn/inspect/cancel. The original Session owns immutable operation receipts, shared Root admission, terminal drain and cold recovery. Inspect may deliver only original qualified Child sources; running/cancelled observations do not become evidence. Host stop before admission is safe, and noncooperative Child effects remain unknown with `effectsStopped:false` rather than being declared stopped.
 
 Targeted synthetic checks cover concurrent Children, cancellation isolation, historical observation immutability, Root exhaustion, original commit/consume recovery, cold research CLI and result projection. These are not real-model qualification or full private parity. Parallel peers and broad partial-result delivery are not claimed. Full regression, frozen real workflows, documentation and release qualification remain outstanding.
+
+
+## Corrected-candidate qualification update
+
+Separate candidate `2bfe816` now passed the frozen ten-workflow Runtime cohort, 89 zero-extra-cost requests and no new unknown. Earlier candidate statements above remain historical. [Qualification and semantic limits](../../../docs/verification/v030-release.md). This update does not itself assert tag/Release publication.

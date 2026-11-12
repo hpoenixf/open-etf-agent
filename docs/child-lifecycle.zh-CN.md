@@ -47,3 +47,8 @@ Main 与所有 Child 竞争同一个原始 Root 预算。取消 Child 不退还�
 ## 验证边界
 
 合成检查覆盖并发 Child、取消隔离、不可变观察、原来源投影、父终结等待、提交/消费检查点恢复、冷 CLI 与不配合中断的 Host 停止。全量回归与固定真实工作流验收是独立门槛。本候选不声称追平 private，不提供嵌套 Child、peer 消息、广泛部分结果流、独立提供方路由或新的 Response/Schedule/PDF/plugin 组合支持。
+
+
+## Corrected-candidate qualification update
+
+Separate candidate `2bfe816` now passed the frozen ten-workflow Runtime cohort, 89 zero-extra-cost requests and no new unknown. Earlier candidate statements above remain historical. [Qualification and semantic limits](verification/v030-release.md). This update does not itself assert tag/Release publication.

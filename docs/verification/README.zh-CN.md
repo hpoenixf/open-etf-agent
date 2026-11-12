@@ -242,3 +242,8 @@
 ## v0.15 · 串行专家 Child
 
 [合同、失败与边界](../../openspec/changes/serial-specialist-child/evidence.md) · [最终源码与 full-suite 结构化资格](../../openspec/changes/serial-specialist-child/final-verification.safe.json) · [真实调用三批摘要](../../openspec/changes/serial-specialist-child/live-evidence.safe.json)。前两批失败保留；第三批机制与有界合成来源核对通过。10 次请求中 9 个返回明确 Go 余额收费为 0，1 次费用/用量未知。该证据不是旧 Child coverage 回执的升级，也不代表通用语义或 live 恢复认证。
+
+
+## v0.30 Child lifecycle
+
+[10/10 corrected-candidate Runtime cohort, original failed batch and quality limits](v030-release.md).
