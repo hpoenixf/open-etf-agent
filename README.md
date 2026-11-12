@@ -70,13 +70,13 @@ npm run demo -- --case document-compare
 <a id="latest-three-modules"></a>
 ## Releases and development status
 
-The current release is **[v0.28.0](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.28.0)**. `main` additionally includes a post-release RAG compatibility fix; it is not byte-identical to that release. **The [v0.29 Conversation PR](https://github.com/hpoenixf/open-etf-agent/pull/5) is still Draft, unmerged and unreleased**; it is not available as a main-branch feature.
+The latest verified formal Release remains **[v0.28.0](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.28.0)**. This **[v0.29 Conversation change](https://github.com/hpoenixf/open-etf-agent/pull/5)** completed its fixed ten-workflow real qualification; final merge/Release status is tracked separately. Version metadata is not formal publication. [Evidence and quality limits](docs/verification/v029-release.md).
 
-| Recent release | What it enables | Usage and boundaries |
+| Recent version / status | What it enables | Usage and boundaries |
 | --- | --- | --- |
+| v0.29 · Conversation (pending release) | Explicit Continue, persisted clarification, safe resume/handoff and revocation with original outputs | [Conversation](docs/conversations.md) |
 | [v0.28 · Report Review](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.28.0) | Advisory findings over frozen report/source text; original report and cold readback remain intact | [Report Review](docs/report-review.md) |
 | [v0.27 · Project specialist profiles](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.27.0) | Freeze profiles/presets at admission and use the original Child execution path | [Specialist Profiles](docs/v027-specialist-profiles.md) |
-| [v0.26 · Web evidence](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.26.0) | Explicitly acquire public static pages and retain source provenance | [Web Sources](docs/web-sources.md) |
 
 [All fixed versions and commands](docs/module-guide.md#versions) · [Version lineage](versions.json) · [All releases](https://github.com/hpoenixf/open-etf-agent/releases) · [Verification records](docs/verification/README.md)
 

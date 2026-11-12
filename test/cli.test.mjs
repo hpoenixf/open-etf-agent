@@ -4,11 +4,12 @@ import { spawnSync } from 'node:child_process';
 import { mkdir, mkdtemp, readFile, readdir } from 'node:fs/promises';
 import { resolve, join } from 'node:path';
 import { createHash } from 'node:crypto';
-const execute = args => spawnSync(process.execPath, args, { encoding: 'utf8', timeout: 10000, env: { ...process.env, NODE_OPTIONS: '--max-old-space-size=256' } });
+const execute = (args, timeout = 10000) => spawnSync(process.execPath, args, { encoding: 'utf8', timeout, env: { ...process.env, NODE_OPTIONS: '--max-old-space-size=256' } });
 const hash = bytes => createHash('sha256').update(bytes).digest('hex');
 async function output() { await mkdir('test-output', { recursive: true }); return mkdtemp(resolve('test-output/cli-')); }
 test('1.5 built package runs independently with its own fixtures', async () => {
-  const build = execute(['scripts/build.mjs']); assert.equal(build.status, 0, build.stderr);
+  // Syntax checks spawn once per module; installation growth is not a demo deadline.
+  const build = execute(['scripts/build.mjs'], 30000); assert.equal(build.status, 0, build.stderr);
   const root = await output();
   const demo = execute(['dist/src/cli.mjs', '--case', 'document-compare', '--output', root]);
   assert.equal(demo.status, 0, demo.stderr);

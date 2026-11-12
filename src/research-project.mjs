@@ -172,11 +172,12 @@ async function assemble(projectDir,definition,{gateway,apiKey,fetchImpl,hostSign
   return{options,store,sources,runId,close:async()=>{try{for(const close of closers.reverse())await close();}finally{try{admission.close();}finally{store.close();}}}};
  }catch(error){admission?.close();store.close();throw error;}
 }
-export async function submitResearchTask({projectDir,runId,question,sourceManifestSha256,authorization,memoryIntents=[],taskTime,schedule,specialistSelection,reportDelivery}){
+export async function submitResearchTask({projectDir,runId,question,sourceManifestSha256,authorization,memoryIntents=[],taskTime,schedule,specialistSelection,reportDelivery,expectedConfigSha256}){
  projectDir=await safeDirectory(projectDir);id(runId);if(typeof question!=='string'||!question.trim()||!hex(sourceManifestSha256))fail('PROJECT_TASK_INPUT');
  if(reportDelivery!==undefined&&reportDelivery!=='artifact-required@1')fail('PROJECT_REPORT_DELIVERY');
  if(reportDelivery!==undefined&&schedule)fail('PROJECT_REPORT_DELIVERY_SCHEDULE_UNSUPPORTED');
  const project=await inspectResearchProject({projectDir});
+ if(expectedConfigSha256!==undefined&&project.configSha256!==expectedConfigSha256)fail('PROJECT_CONFIG_CONFLICT');
  let prior;try{prior=await readTask(projectDir,runId);}catch(error){if(error.code!=='ENOENT')throw error;}
  let config=project.config,selectionMetadata;
  if(prior?.specialistSelection!==undefined){if(canonical(specialistSelection)!==canonical(prior.specialistSelection.selection))fail('PROJECT_TASK_ALREADY_DEFINED');config=prior.config;selectionMetadata=prior.specialistSelection;}
@@ -191,7 +192,7 @@ export async function submitResearchTask({projectDir,runId,question,sourceManife
  let memoryLibraryId=null;if(config.capabilities.includes('memory')){const lib=await openMemoryLibrary({directory:join(projectDir,'memory'),writable:true});memoryLibraryId=lib.libraryId;await lib.close();}
  const definition={...(prior?(Object.hasOwn(prior,'knowledgeVersion')?{knowledgeVersion:prior.knowledgeVersion}:{}):config.capabilities.includes('knowledge')?{knowledgeVersion:KNOWLEDGE_VERSION}:{}),...(reportDelivery===undefined?{}:{reportDelivery}),...(prior?(Object.hasOwn(prior,'hostProjection')?{hostProjection:prior.hostProjection}:{}):{hostProjection:'host-results@3'}),...(prior?(Object.hasOwn(prior,'childInputProjection')?{childInputProjection:prior.childInputProjection}:{}):config.childExecution?{childInputProjection:'host-context@1'}:{}),...(prior?(Object.hasOwn(prior,'reportGuidance')?{reportGuidance:prior.reportGuidance}:{}):{reportGuidance:REPORT_GUIDANCE_PROFILE}),schemaVersion:project.schemaVersion===PROJECT_V2?'research-task@2':'research-task@1',...(project.schemaVersion===PROJECT_V2?{admission:capacityBinding(config,project.schemaVersion)}:{}),runId,projectId:project.projectId,config,question,sourceManifestSha256,...(selectionMetadata?{specialistSelection:selectionMetadata}:{}),grantId:prior?.grantId??('project-'+randomUUID()),authorization:config.gateway.mode==='live'?{providerApproved:true,dataApproved:true,costApproved:true}:null,memoryLibraryId,memoryIntents:structuredClone(memoryIntents),...(config.capabilities.includes('task-time')?{taskTime:schedule?createTaskTime({anchorInstant:schedule.scheduledInstant,timeZone:schedule.timeZone}):taskTime?createTaskTime({...taskTime,...(prior?.taskTime&&taskTime.anchorInstant===undefined?{anchorInstant:prior.taskTime.anchorInstant}:{})}):(prior?.taskTime??createTaskTime({timeZone:config.timeZone??'UTC'}))}:{}),...(schedule?{schedule:structuredClone(schedule)}:{})};
  if(prior&&hash(prior)!==hash(definition))fail('PROJECT_TASK_ALREADY_DEFINED');
- const opened=await assemble(projectDir,definition);try{if(!prior){try{await immutableJson(join(projectDir,'tasks'),runId+'.json',{definition,definitionSha256:hash(definition)});}catch(error){if(error.code!=='EEXIST')throw error;return submitResearchTask({projectDir,runId,question,sourceManifestSha256,authorization,memoryIntents,taskTime,schedule,specialistSelection,reportDelivery});}}if(schedule){const confirmed=await confirmScheduledRun(opened.options,schedule);try{await immutableJson(join(projectDir,'tasks'),runId+'.schedule.json',confirmed.reference);}catch(error){if(error.code!=='EEXIST')throw error;const saved=await readProjectJson(join(projectDir,'tasks',runId+'.schedule.json'));if(hash(saved)!==hash(confirmed.reference))fail('PROJECT_SCHEDULE_CHANGED');}return confirmed;}return await submitRun(opened.options);}finally{await opened.close();}
+ const opened=await assemble(projectDir,definition);try{if(!prior){try{await immutableJson(join(projectDir,'tasks'),runId+'.json',{definition,definitionSha256:hash(definition)});}catch(error){if(error.code!=='EEXIST')throw error;return submitResearchTask({projectDir,runId,question,sourceManifestSha256,authorization,memoryIntents,taskTime,schedule,specialistSelection,reportDelivery,expectedConfigSha256});}}if(schedule){const confirmed=await confirmScheduledRun(opened.options,schedule);try{await immutableJson(join(projectDir,'tasks'),runId+'.schedule.json',confirmed.reference);}catch(error){if(error.code!=='EEXIST')throw error;const saved=await readProjectJson(join(projectDir,'tasks',runId+'.schedule.json'));if(hash(saved)!==hash(confirmed.reference))fail('PROJECT_SCHEDULE_CHANGED');}return confirmed;}return await submitRun(opened.options);}finally{await opened.close();}
 }
 // Bounded enumeration of original immutable task records, not a second job queue.
 export async function listResearchScheduledTasks({projectDir}){
@@ -334,4 +335,28 @@ async function maintainProjectRouteBeforeWork(projectDir,definition){
   if(original.schedule&&scheduleRunId(original.schedule)!==runId)continue;
   await maintainResearchUnknownCapacity({projectDir,runId:taskId});
  }
+}
+
+// Finish admission of an already frozen ordinary task; never dispatch or rebind it.
+export async function resumeResearchTaskAdmission({projectDir,runId,question,sourceManifestSha256,expectedConfigSha256}){
+ projectDir=await safeDirectory(projectDir);const definition=await readTask(projectDir,runId);
+ if(definition.schedule||definition.question!==question||definition.sourceManifestSha256!==sourceManifestSha256||hash(definition.config)!==expectedConfigSha256)fail('PROJECT_TASK_ALREADY_DEFINED');
+ const opened=await assemble(projectDir,definition);try{return await submitRun(opened.options);}finally{await opened.close();}
+}
+
+export async function inspectResearchControl({projectDir,runId}){
+ const d=await readTask(projectDir,runId),store=await openSession({directory:paths(projectDir,runId).session,profile:profile(d.config),readOnly:true});
+ try{return store.controlFact(runId);}finally{store.close();}
+}
+export async function controlResearchTask({projectDir,runId,kind,controlId,targetRunId}){
+ const d=await readTask(projectDir,runId);
+ if(d.schedule)fail('PROJECT_CONTROL_SCHEDULE_UNSUPPORTED');
+ const store=await openSession({directory:paths(projectDir,runId).session,profile:profile(d.config)});
+ try{
+  const prior=store.controlFact(runId),state=store.inspect(runId);
+  const options={controlId,expectedDefinitionHash:hash(state.definition),expectedCheckpointHash:prior?.controlId===controlId?prior.sourceCheckpointHash:hash(state.snapshot)};
+  if(kind==='revoke')return store.revoke(runId,options);
+  if(kind==='continuation-handoff')return store.prepareContinuation(runId,{...options,targetRunId});
+  fail('PROJECT_CONTROL_KIND');
+ }finally{store.close();}
 }
