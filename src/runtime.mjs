@@ -1,3 +1,4 @@
+import {settleAsyncChildExecutions} from './child-execution.mjs';
 import {publicReportAssessment} from './report-assessment.mjs';
 import {INTERACTION_PROFILE, hasInteractionBinding, validateInteractionCheckpoint, validateInteractionConfig} from './human-interaction.mjs';
 import { decideRunControl, validateControlObservations, controlErrorCode } from './run-control.mjs';
@@ -296,7 +297,7 @@ async function drive({ question, gateway, outputRoot='runs', requireReport=false
     const cancel=()=>{
       // New explicit Child execution binding preserves cooperative Host stops.
       // Cancellation, stale writers and deadlines retain their original authority.
-      if(boundChild&&signal?.reason?.code==='HOST_STOPPED'&&durable.bindings.adapters.some(b=>b.id==='serial-child-execution'&&b.version==='1')){stop();return;}
+      if(boundChild&&signal?.reason?.code==='HOST_STOPPED'&&durable.bindings.adapters.some(b=>['serial-child-execution','async-child-execution'].includes(b.id)&&b.version==='1')){stop();return;}
       if(claim&&!boundChild){try{durable.store.cancel(runId);}catch{}}
       controller.abort(boundChild?(signal?.reason instanceof Error?signal.reason:failure('INTERRUPTED')):failure('CANCELLED'));
     };
@@ -335,6 +336,7 @@ async function drive({ question, gateway, outputRoot='runs', requireReport=false
       }
     }
     async function publishAnswer(assessment){
+      await settleAsyncChildExecutions(extensions,{phase:'before-final',signal:controller.signal});
       controller.signal.throwIfAborted();if(gatewayUnsettled||state.gatewayOutcome!=='settled'||state.unknownEffects.length)throw failure('OUTCOME_UNKNOWN');
       const committed=claim.publish(preparePublication({runId,rootId:claim.rootId,text:state.answer,...(assessment?{assessment:publicReportAssessment(assessment,state.answer)}:{})}));
       state.publication=committed.receipt;
@@ -454,7 +456,7 @@ async function drive({ question, gateway, outputRoot='runs', requireReport=false
         if(state.proposal.kind==='final'){
           state.answer=state.proposal.text;
           if(protectedMode&&requireReport&&!host.receipt)throw failure('REPORT_REQUIRED');
-          if(publication)await publishAnswer();
+          if(publication)await publishAnswer();else await settleAsyncChildExecutions(extensions,{phase:'before-final',signal:controller.signal});
           const finalDecision=decideRunControl({kind:'sealed-final',reportPresent:!!host.receipt,publicationCommitted:Boolean(state.publication)},{requireReport,reportDelivery,unknown:gatewayUnsettled||state.unknownEffects.length>0});if(finalDecision.action==='stop')throw failure(finalDecision.reason);state.status='completed';state.code=null;break;
         }
         if(claim&&state.phase==='proposal-sealed'&&state.cursor===0&&!hooks&&!state.partialEffects.length&&!state.unknownEffects.length&&state.gatewayOutcome==='settled'){
@@ -523,6 +525,7 @@ async function drive({ question, gateway, outputRoot='runs', requireReport=false
     }finally{
       clearTimeout(timer);
       if(interrupted)effectsStopped=await drainStoppedEffect();
+      try{const cleanup=await settleAsyncChildExecutions(extensions,{phase:'close',interrupted});if(cleanup.effectsStopped===false)effectsStopped=false;}catch{effectsStopped=false;secondary('child-cleanup','CHILD_CLEANUP_FAILED');}
       if(pdfInput!==undefined){try{await host?.close();}catch{secondary('pdf-cleanup','PDF_CLEANUP_FAILED');}}
       if(allowedTools&&host){try{sourceSnapshots=await host.getSources();resultRefs=await host.getResultRefs();}catch{secondary('result-readback','RESULT_READBACK_FAILED');}}
       if(log){try{await record(awaitingResponse?'run_yielded':interrupted?'worker_interrupted':'run_finished',{settlementPhase:'pre-settlement',terminalAuthority:claim?'Session.finish':'Runtime.return',status:awaitingResponse?'awaiting-response':interrupted?'interrupted':state.status,code:state.code,toolsDispatched:state.toolsDispatched,receipt:host?.receipt,unknownEffects:state.unknownEffects,partialEffects:state.partialEffects});}catch{secondary('log','LOG_WRITE_FAILED',false);}await log.close().catch(()=>logErrors.push('LOG_CLOSE_FAILED'));}

@@ -156,6 +156,24 @@ function controlFactFrom(connection,runId){
  if(!row||!root||row.parent_run_id!==null||row.root_id!==runId||f.schemaVersion!=='session-control-fact@1'||!['revoke','continuation-handoff'].includes(f.kind)||f.runId!==runId||f.rootId!==runId||f.controlId!==item.control_id||!identifier(f.controlId)||f.targetRunId!==item.target_run_id||!(f.kind==='revoke'?f.targetRunId===null:identifier(f.targetRunId)&&f.targetRunId!==runId)||!hash(f.definitionHash)||!hash(f.sourceCheckpointHash)||!hash(f.terminalCheckpointHash)||!Number.isSafeInteger(f.createdAt)||f.createdAt<0||!['completed','failed','cancelled'].includes(f.terminalStatus)||row.status!==f.terminalStatus||root.status!==f.terminalStatus||(f.kind==='continuation-handoff'&&f.terminalStatus!=='cancelled')||f.definitionHash!==digest(canonical(parsed(row.definition,65536)))||f.terminalCheckpointHash!==digest(canonical(parsed(row.snapshot,MAX_CHECKPOINT_JSON)))||canonical(f.rootUsage)!==canonical({model:root.model_used,tool:root.tool_used}))fail('INVALID_CONTROL_FACT');
  return structuredClone(f);
 }
+// Optional immutable Child observations. Runs remain the only lifecycle state owner.
+const childOperationSchema = `CREATE TABLE child_operation_receipts (parent_run_id TEXT NOT NULL REFERENCES runs(run_id), call_id TEXT NOT NULL, child_run_id TEXT NOT NULL REFERENCES runs(run_id), fact TEXT NOT NULL, PRIMARY KEY(parent_run_id,call_id)) STRICT`;
+const childOperationCallId=value=>typeof value==='string'&&value.length>0&&value.length<=200&&!/[\u0000-\u001f]/.test(value);
+function hasChildOperationTable(connection){return !!connection.prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name='child_operation_receipts'").get();}
+function childOperationFactFrom(connection,parentRunId,callId){
+ if(!hasChildOperationTable(connection))return null;
+ const item=connection.prepare('SELECT * FROM child_operation_receipts WHERE parent_run_id=? AND call_id=?').get(parentRunId,callId);if(!item)return null;
+ const f=parsed(item.fact,MAX_CHECKPOINT_JSON);
+ fields(f,['schemaVersion','parentRunId','rootId','callId','childRunId','call','requestHash','parentDefinitionHash','childDefinitionHash','value','valueHash','createdAt'],[],'INVALID_CHILD_OPERATION_RECEIPT');
+ const parent=connection.prepare('SELECT * FROM runs WHERE run_id=?').get(parentRunId),child=connection.prepare('SELECT * FROM runs WHERE run_id=?').get(item.child_run_id);
+ if(!parent||!child||parent.parent_run_id!==null||parent.root_id!==parentRunId||child.parent_run_id!==parentRunId||child.root_id!==parent.root_id||f.schemaVersion!=='child-operation-receipt@1'||f.parentRunId!==parentRunId||f.rootId!==parent.root_id||f.callId!==callId||f.childRunId!==item.child_run_id||!Number.isSafeInteger(f.createdAt)||f.createdAt<0)fail('INVALID_CHILD_OPERATION_RECEIPT');
+ fields(f.call,['id','name','arguments'],[],'INVALID_CHILD_OPERATION_RECEIPT');
+ const calls=parsed(parent.snapshot,MAX_CHECKPOINT_JSON).messages?.flatMap(m=>m.calls??[]).filter(c=>c.id===callId)??[];
+ const childDefinition=parsed(child.definition,65536);
+ if(!childOperationCallId(callId)||f.call.id!==callId||!['spawn_child','inspect_child','cancel_child'].includes(f.call.name)||!object(f.call.arguments)||calls.length!==1||canonical(calls[0])!==canonical(f.call)||f.requestHash!==digest(canonical(f.call))||f.parentDefinitionHash!==digest(canonical(parsed(parent.definition,65536)))||f.childDefinitionHash!==digest(canonical(childDefinition))||!object(f.value)||f.valueHash!==digest(canonical(f.value)))fail('INVALID_CHILD_OPERATION_RECEIPT');
+ if(f.call.name==='spawn_child'?childDefinition.config.taskId!=='execution-'+digest(callId).slice(0,48):f.call.arguments.childRunId!==f.childRunId)fail('INVALID_CHILD_OPERATION_RECEIPT');
+ json(f,MAX_CHECKPOINT_JSON);return structuredClone(f);
+}
 const interactionSchema = `CREATE TABLE human_interactions (run_id TEXT NOT NULL REFERENCES runs(run_id), ordinal INTEGER NOT NULL, question_id TEXT NOT NULL UNIQUE, response_id TEXT UNIQUE, fact TEXT NOT NULL, PRIMARY KEY(run_id,ordinal)) STRICT`;
 const responseSchema = `CREATE TABLE ordinary_responses (run_id TEXT PRIMARY KEY REFERENCES runs(run_id), question_id TEXT NOT NULL UNIQUE, response_id TEXT UNIQUE, fact TEXT NOT NULL) STRICT`;
 
@@ -274,8 +292,9 @@ export async function openSession({ directory, clock = Date.now, leaseMs = 1000,
  function validateSchema(connection) {
   const version = connection.prepare('PRAGMA user_version').get().user_version; const app = connection.prepare('PRAGMA application_id').get().application_id;
   const actual = connection.prepare("SELECT sql FROM sqlite_master WHERE name NOT LIKE 'sqlite_%' ORDER BY name").all().map(row => row.sql);
-  if (!(scheduled ? version===5 : protectedProfile ? version===4 : [2,3,6].includes(version)) || (profile === RESPONSE_PROFILE && version !== 3) || (profile === INTERACTION_PROFILE && version !== 6) || app !== APP_ID || JSON.stringify(actual) !== JSON.stringify([...(hasControlTable(connection)?[controlSchema]:[]),...(version===5?[...schemas,...scheduleSchemas]:version===4?[...schemas,...protectedSchemas]:version === 6 ? [...schemas,interactionSchema] : version === 3 ? [...schemas,responseSchema] : schemas)].sort())) fail('UNSUPPORTED_SESSION_SCHEMA');
+  if (!(scheduled ? version===5 : protectedProfile ? version===4 : [2,3,6].includes(version)) || (profile === RESPONSE_PROFILE && version !== 3) || (profile === INTERACTION_PROFILE && version !== 6) || app !== APP_ID || JSON.stringify(actual) !== JSON.stringify([...(hasControlTable(connection)?[controlSchema]:[]),...(hasChildOperationTable(connection)?[childOperationSchema]:[]),...(version===5?[...schemas,...scheduleSchemas]:version===4?[...schemas,...protectedSchemas]:version === 6 ? [...schemas,interactionSchema] : version === 3 ? [...schemas,responseSchema] : schemas)].sort())) fail('UNSUPPORTED_SESSION_SCHEMA');
   if(hasControlTable(connection))for(const row of connection.prepare('SELECT run_id FROM session_control_facts').iterate())controlFactFrom(connection,row.run_id);
+  if(hasChildOperationTable(connection))for(const row of connection.prepare('SELECT parent_run_id,call_id FROM child_operation_receipts').iterate())childOperationFactFrom(connection,row.parent_run_id,row.call_id);
   interaction = version === 6; ordinary = version === 3 || interaction;
   if(protectedProfile)validateProtectedDatabase(connection);
   if(scheduled)validateScheduleDatabase(connection);
@@ -625,6 +644,25 @@ export async function openSession({ directory, clock = Date.now, leaseMs = 1000,
     const matches = children.filter(row => parsed(row.definition, 65536).config.taskId === taskId); if (matches.length > 1) fail('CORRUPT_CHILD_RELATION'); return matches.length ? view(matches[0]) : null;
    });
   },
+  childOperation(parentRunId,callId){return transaction(()=>{getRun(parentRunId);if(!childOperationCallId(callId))fail('INVALID_CHILD_OPERATION_REQUEST');return childOperationFactFrom(db,parentRunId,callId);});},
+  commitChildOperation(parentClaim,input){return transaction(()=>{
+   fields(input,['call','childRunId','value'],[],'INVALID_CHILD_OPERATION_REQUEST');
+   fields(parentClaim,['runId','owner','fence'],['rootId'],'INVALID_CHILD_OPERATION_REQUEST');
+   if(!identifier(parentClaim.runId)||!identifier(parentClaim.owner)||!Number.isSafeInteger(parentClaim.fence)||parentClaim.fence<1)fail('INVALID_CHILD_OPERATION_REQUEST');
+   const {call,childRunId,value}=input;fields(call,['id','name','arguments'],[],'INVALID_CHILD_OPERATION_REQUEST');
+   if(!childOperationCallId(call.id)||!identifier(childRunId)||!['spawn_child','inspect_child','cancel_child'].includes(call.name)||!object(call.arguments)||!object(value))fail('INVALID_CHILD_OPERATION_REQUEST');
+   json(input,MAX_CHECKPOINT_JSON);
+   const parent=writer(parentClaim.runId,parentClaim.owner,parentClaim.fence),child=getRun(childRunId),p=view(parent),c=view(child);
+   if(parent.parent_run_id!==null||parent.root_id!==parent.run_id||child.parent_run_id!==parent.run_id||child.root_id!==parent.root_id||(parentClaim.rootId!==undefined&&parentClaim.rootId!==parent.root_id))fail('CHILD_OPERATION_SCOPE_MISMATCH');
+   const old=childOperationFactFrom(db,parent.run_id,call.id);
+   if(old){if(old.childRunId!==childRunId||canonical(old.call)!==canonical(call)||canonical(old.value)!==canonical(value))fail('CHILD_OPERATION_CONFLICT');return old;}
+   const snapshot=p.snapshot,current=snapshot.proposal?.calls?.[snapshot.cursor],calls=snapshot.messages?.flatMap(m=>m.calls??[]).filter(x=>x.id===call.id)??[];
+   if(snapshot.phase!=='tool-dispatched'||canonical(current)!==canonical(call)||calls.length!==1||canonical(calls[0])!==canonical(call)||snapshot.inFlight?.callId!==call.id||snapshot.inFlight?.name!==call.name)fail('CHILD_OPERATION_CALL_MISMATCH');
+   if(call.name==='spawn_child'?c.definition.config.taskId!=='execution-'+digest(call.id).slice(0,48):call.arguments.childRunId!==childRunId)fail('CHILD_OPERATION_SCOPE_MISMATCH');
+   const fact={schemaVersion:'child-operation-receipt@1',parentRunId:p.runId,rootId:p.rootId,callId:call.id,childRunId,call:structuredClone(call),requestHash:digest(canonical(call)),parentDefinitionHash:digest(canonical(p.definition)),childDefinitionHash:digest(canonical(c.definition)),value:structuredClone(value),valueHash:digest(canonical(value)),createdAt:now()};
+   const encoded=json(fact,MAX_CHECKPOINT_JSON);if(!hasChildOperationTable(db))db.exec(childOperationSchema);
+   db.prepare('INSERT INTO child_operation_receipts VALUES(?,?,?,?)').run(p.runId,call.id,childRunId,encoded);return childOperationFactFrom(db,p.runId,call.id);
+  });},
   controlFact(runId){return transaction(()=>{getRun(runId);return controlFactFrom(db,runId);});},
   revoke(runId,options){return controlRun(runId,options,'revoke');},
   prepareContinuation(runId,options){return controlRun(runId,options,'continuation-handoff');},
@@ -778,7 +816,7 @@ export async function openSession({ directory, clock = Date.now, leaseMs = 1000,
   },
   close() { if (!closed) { db.close(); closed = true; } }
  };
- if(readOnly)return Object.freeze({directory,schemaVersion:scheduled?5:protectedProfile?4:interaction?6:ordinary?3:2,readOnly:true,controlFact:store.controlFact,publication:store.publication,publicationRevisions:store.publicationRevisions,publicationEvent:store.publicationEvent,confirmPublication:store.confirmPublication,inspect:store.inspect,findChild:store.findChild,listChildren:store.listChildren,...(ordinary?{response:store.response,responseStatus:store.responseStatus,responseHistory:store.responseHistory}:{}),...(scheduled?{inspectSchedule:store.inspectSchedule,publication:store.publication,publicationRevisions:store.publicationRevisions,publicationEvent:store.publicationEvent}:{}),...(protectedProfile?{publication:store.publication,publicationRevisions:store.publicationRevisions,publicationEvent:store.publicationEvent,verifyProtectedQueryResult:store.verifyProtectedQueryResult,protectedOutput:store.protectedOutput,consumeProtectedSource:store.consumeProtectedSource,protectedDependencies:store.protectedDependencies,readProtectedOutput:store.readProtectedOutput,listProtectedOutputs:store.listProtectedOutputs}:{}),close:store.close});
+ if(readOnly)return Object.freeze({directory,schemaVersion:scheduled?5:protectedProfile?4:interaction?6:ordinary?3:2,readOnly:true,childOperation:store.childOperation,controlFact:store.controlFact,publication:store.publication,publicationRevisions:store.publicationRevisions,publicationEvent:store.publicationEvent,confirmPublication:store.confirmPublication,inspect:store.inspect,findChild:store.findChild,listChildren:store.listChildren,...(ordinary?{response:store.response,responseStatus:store.responseStatus,responseHistory:store.responseHistory}:{}),...(scheduled?{inspectSchedule:store.inspectSchedule,publication:store.publication,publicationRevisions:store.publicationRevisions,publicationEvent:store.publicationEvent}:{}),...(protectedProfile?{publication:store.publication,publicationRevisions:store.publicationRevisions,publicationEvent:store.publicationEvent,verifyProtectedQueryResult:store.verifyProtectedQueryResult,protectedOutput:store.protectedOutput,consumeProtectedSource:store.consumeProtectedSource,protectedDependencies:store.protectedDependencies,readProtectedOutput:store.readProtectedOutput,listProtectedOutputs:store.listProtectedOutputs}:{}),close:store.close});
  activeAdmissionOwners.set(store,(ticket,persistStop,expired=false)=>transaction(()=>{
   const current=view(getRun(ticket.runId));
   if(ticket.runId!==ticket.rootId||current.parentRunId!==null||current.snapshot.purpose!==undefined)fail('ADMISSION_RELEASE_SCOPE_UNSUPPORTED');

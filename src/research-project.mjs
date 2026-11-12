@@ -1,6 +1,6 @@
 import {openSpecialistProfiles,verifySpecialistSelection} from './specialist-profiles.mjs';
 import {REPORT_GUIDANCE_PROFILE,reportGuidanceFor} from './report-guidance.mjs';
-import {normalizeChildExecution,childExecutionBinding,createChildExecutionBinding,inspectChildExecutions} from './child-execution.mjs';
+import {normalizeChildExecution,childExecutionBinding,createChildExecutionBinding,createAsyncChildExecutionBindings,inspectChildExecutions} from './child-execution.mjs';
 import {KNOWLEDGE_VERSION,LEGACY_KNOWLEDGE_VERSION,normalizeKnowledgeConfig,createKnowledgeIndex,knowledgeBinding,createKnowledgeTool,KNOWLEDGE_CONTEXT_BYTES,KNOWLEDGE_TASK_GUIDANCE} from './knowledge.mjs';
 import {readdir,mkdir} from 'node:fs/promises';
 import {INTERACTION_PROFILE, INTERACTION_BINDING, validateInteractionConfig} from './human-interaction.mjs';
@@ -162,7 +162,9 @@ async function assemble(projectDir,definition,{gateway,apiKey,fetchImpl,hostSign
   if(caps.includes('child')){const childDocuments=sources.catalog?.documents.map(d=>d.id)??[];if(!childDocuments.length||childDocuments.length>(config.childExecution?64:2))fail('PROJECT_CHILD_DOCUMENT_SCOPE');
    const selected={question:originalQuestion,...(definition.childInputProjection===undefined?{}:{projection:definition.childInputProjection}),documents:childDocuments,documentCatalog:sources.catalog,...(config.childExecution?{execution:config.childExecution}:config.childMethod?{method:config.childMethod}:{})};
    adapters.push(config.childExecution?childExecutionBinding(selected):sourceCheckBinding(selected));
-   extensions.push((config.childExecution?createChildExecutionBinding:createSpecialistChildBinding)({store,parentRunId:runId,parentClaim:()=>claim,...selected,gatewayFactory:()=>wrapped,outputRoot:p.runs,...(config.childExecution?{onCheckpoint}:{})}));
+   const childOptions={store,parentRunId:runId,parentClaim:()=>claim,...selected,gatewayFactory:()=>wrapped,outputRoot:p.runs,...(config.childExecution?{onCheckpoint}:{})};
+   if(config.childExecution?.schemaVersion==='child-execution@2')extensions.push(...createAsyncChildExecutionBindings(childOptions));
+   else extensions.push((config.childExecution?createChildExecutionBinding:createSpecialistChildBinding)(childOptions));
   }
   const available=['read_result','save_report',...(caps.includes('compaction')?['read_note']:[]),...(sources.catalog?['read_page']:[]),...(sources.pdfSnapshot?['read_pdf_page']:[]),...(caps.includes('calculation')?['calculate_change']:[]),...(caps.includes('csv')?['create_csv']:[]),...(caps.includes('response')?['ask_response']:[]),...extensions.map(t=>t.name)];
   const inspected=await inspectTrustedPlugins({plugins,signal});available.push(...inspected.extensions.map(t=>t.name));

@@ -19,7 +19,7 @@ Stop one admitted Child without cancelling its original parent or unrelated work
 ## Completion work
 
 - [x] Original Session cancellation, Runtime fence check, adapter control consumption, research CLI entry.
-- [ ] Model-visible asynchronous spawn/inspect/cancel design and implementation on the existing Session owner, with fixed-reference result consumption; keep serial delegate compatibility.
+- [x] Model-visible asynchronous spawn/inspect/cancel design and implementation on the existing Session owner, with fixed-reference result consumption; keep serial delegate compatibility.
 - [ ] Final independent code review and complete regression suite.
 - [ ] Cold CLI, late-result, parent commit/consume recovery and shared-budget qualification finalized.
 - [ ] Frozen real ten-workflow qualification using the independently authorized Open budget, with all failures/unknown retained.
@@ -27,4 +27,6 @@ Stop one admitted Child without cancelling its original parent or unrelated work
 
 ## Deliberate boundary
 
-The current candidate closes independently controlled lifecycle on the existing serial `delegate_child` path; this is an implementation checkpoint, not the complete 0.30 release scope. It does not claim asynchronous model-visible spawn/inspect/cancel, parallel peers, broad partial-result delivery or complete private Child parity. The asynchronous lifecycle surface still requires design and verification before this module is qualified; an unknown cancelled Child is not silently transformed into success.
+The candidate now implements both serial `delegate_child` and opt-in `child-execution@2` model-visible spawn/inspect/cancel. The original Session owns immutable operation receipts, shared Root admission, terminal drain and cold recovery. Inspect may deliver only original qualified Child sources; running/cancelled observations do not become evidence. Host stop before admission is safe, and noncooperative Child effects remain unknown with `effectsStopped:false` rather than being declared stopped.
+
+Targeted synthetic checks cover concurrent Children, cancellation isolation, historical observation immutability, Root exhaustion, original commit/consume recovery, cold research CLI and result projection. These are not real-model qualification or full private parity. Parallel peers and broad partial-result delivery are not claimed. Full regression, frozen real workflows, documentation and release qualification remain outstanding.

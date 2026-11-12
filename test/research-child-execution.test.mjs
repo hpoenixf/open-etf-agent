@@ -57,3 +57,21 @@ test('30.project cold CLI cancels only the selected Child without source adoptio
  const repeated=invoke();assert.equal(repeated.status,0,repeated.stderr);assert.deepEqual(JSON.parse(repeated.stdout),history);
  assert.equal(calls,1);
 });
+test('30.project async Child tools share original Host projection and persist a source-backed report',async t=>{
+ await mkdir('test-output',{recursive:true});const directory=await mkdtemp(resolve('test-output/async-child-project-'));t.after(()=>rm(directory,{recursive:true,force:true}));
+ const projectDir=join(directory,'project'),file=join(directory,'source.md');await writeFile(file,'Synthetic observation: 20 units.');
+ await createResearchProject({directory:projectDir,config:{...config,childExecution:{...execution,schemaVersion:'child-execution@2',maxConcurrent:2}}});const source=await importProjectSources({projectDir,files:[file]}),documentId=source.catalog.documents[0].id;
+ await submitResearchTask({projectDir,runId:'async-project',question:'Inspect synthetic evidence.',sourceManifestSha256:source.manifestSha256});
+ let childCalls=0;const gateway={mode:'fixture',next:({messages,reservation})=>{const values=messages.filter(m=>m.role==='tool').map(m=>m.result.value);
+  if(reservation.runId!=='async-project'){childCalls++;return values.length?{kind:'final',text:'Synthetic observation: 20 units.'}:call('page','read_page',{documentId,page:1});}
+  if(!values.length)return call('spawn','spawn_child',{methodId:'claim-comparison',question:'Inspect original source.',documents:[documentId]});
+  const inspected=values.find(v=>v.childControl?.action==='inspect'&&v.childControl.status==='completed');if(!inspected)return call('inspect-'+values.length,'inspect_child',{childRunId:values[0].childControl.childRunId,waitMs:1000});
+  assert.ok(inspected.child.kind==='stored-derived-ref'||inspected.child.schemaVersion==='child-execution-handoff@1',JSON.stringify(inspected.child));if(!values.some(v=>v?.path==='report.md'))return call('save','save_report',{text:'# Synthetic observation\n20 units, not a real investment fact.',sourceIds:inspected.sources.map(s=>s.sourceId)});
+  return{kind:'final',text:'Original synthetic report retained.'};
+ }};
+ const worked=await workResearchTask({projectDir,runId:'async-project',gateway});assert.equal(worked.run.status,'completed',worked.observationCode);assert.equal(childCalls,2);
+ const report=await readResearchReport({projectDir,runId:'async-project'});assert.match(report.report.text,/20 units/);
+ const history=await inspectResearchChildren({projectDir,runId:'async-project'});assert.equal(history.items[0].consumption,'consumed');
+ const cold=spawnSync(process.execPath,['src/research-cli.mjs','child','list','--project',projectDir,'--run','async-project'],{encoding:'utf8',timeout:10000});assert.equal(cold.status,0,cold.stderr);assert.deepEqual(JSON.parse(cold.stdout),history);
+ const recovered=await workResearchTask({projectDir,runId:'async-project',gateway:{mode:'fixture',next(){throw Error('Unexpected replay');}}});assert.equal(recovered.run.status,'completed');
+});
