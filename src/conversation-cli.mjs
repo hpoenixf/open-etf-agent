@@ -1,15 +1,16 @@
 import {resolve} from 'node:path';
-import {createConversation,inspectConversation,submitConversationMessage,workConversationMessage,cancelConversationMessage,readConversationMessage,respondConversationQuestion,inspectConversationQuestion,listConversationQuestions,resumeConversationMessage} from './conversation.mjs';
+import {createConversation,inspectConversation,submitConversationMessage,workConversationMessage,cancelConversationMessage,readConversationMessage,respondConversationQuestion,inspectConversationQuestion,listConversationQuestions,resumeConversationMessage,revokeConversationExecution} from './conversation.mjs';
 import {readProjectJson,inspectResearchTask} from './research-project.mjs';
 try{
  const [action,...args]=process.argv.slice(2),opts={};
- if(!['create','list','submit','work','cancel','read','respond','question','questions','resume'].includes(action))throw Error('CONVERSATION_ARGUMENTS');
+ if(!['create','list','submit','work','cancel','read','respond','question','questions','resume','revoke'].includes(action))throw Error('CONVERSATION_ARGUMENTS');
  for(let i=0;i<args.length;i+=2){if(!['--project','--conversation','--message','--input','--question'].includes(args[i])||Object.hasOwn(opts,args[i])||!args[i+1]||args[i+1].startsWith('--'))throw Error('CONVERSATION_ARGUMENTS');opts[args[i]]=args[i+1];}
- const required=['--project','--conversation',...(['work','resume','cancel','read','questions'].includes(action)?['--message']:['submit','respond'].includes(action)?['--input']:action==='question'?['--message','--question']:[])].sort();if(JSON.stringify(Object.keys(opts).sort())!==JSON.stringify(required))throw Error('CONVERSATION_ARGUMENTS');
+ const required=['--project','--conversation',...(['work','resume','cancel','read','questions'].includes(action)?['--message']:['submit','respond','revoke'].includes(action)?['--input']:action==='question'?['--message','--question']:[])].sort();if(JSON.stringify(Object.keys(opts).sort())!==JSON.stringify(required))throw Error('CONVERSATION_ARGUMENTS');
  const common={projectDir:resolve(opts['--project']),conversationId:opts['--conversation']};let result;
  if(action==='create')result=await createConversation(common);
  else if(action==='list')result=await inspectConversation(common);
  else if(action==='submit'){const input=await readProjectJson(resolve(opts['--input']),65536);const allowed=['messageId','text','sourceManifestSha256','parent','review','continuationOfMessageId','authorization'];if(!input||typeof input!=='object'||Array.isArray(input)||Object.keys(input).some(k=>!allowed.includes(k)))throw Error('CONVERSATION_INPUT');result=await submitConversationMessage({...common,...input});}
+ else if(action==='revoke'){const input=await readProjectJson(resolve(opts['--input']),65536);if(!input||typeof input!=='object'||Array.isArray(input)||JSON.stringify(Object.keys(input).sort())!==JSON.stringify(['messageId','revocationId','expectedDigest','reason'].sort()))throw Error('CONVERSATION_INPUT');result=await revokeConversationExecution({...common,...input});}
  else if(action==='respond'){const input=await readProjectJson(resolve(opts['--input']),65536);if(!input||typeof input!=='object'||Array.isArray(input)||JSON.stringify(Object.keys(input).sort())!==JSON.stringify(['messageId','questionId','responseId','text'].sort()))throw Error('CONVERSATION_INPUT');result=await respondConversationQuestion({...common,...input});}
  else if(action==='questions')result=await listConversationQuestions({...common,messageId:opts['--message']});
  else if(action==='question')result=await inspectConversationQuestion({...common,messageId:opts['--message'],questionId:opts['--question']});

@@ -343,3 +343,20 @@ export async function resumeResearchTaskAdmission({projectDir,runId,question,sou
  if(definition.schedule||definition.question!==question||definition.sourceManifestSha256!==sourceManifestSha256||hash(definition.config)!==expectedConfigSha256)fail('PROJECT_TASK_ALREADY_DEFINED');
  const opened=await assemble(projectDir,definition);try{return await submitRun(opened.options);}finally{await opened.close();}
 }
+
+export async function inspectResearchControl({projectDir,runId}){
+ const d=await readTask(projectDir,runId),store=await openSession({directory:paths(projectDir,runId).session,profile:profile(d.config),readOnly:true});
+ try{return store.controlFact(runId);}finally{store.close();}
+}
+export async function controlResearchTask({projectDir,runId,kind,controlId,targetRunId}){
+ const d=await readTask(projectDir,runId);
+ if(d.schedule)fail('PROJECT_CONTROL_SCHEDULE_UNSUPPORTED');
+ const store=await openSession({directory:paths(projectDir,runId).session,profile:profile(d.config)});
+ try{
+  const prior=store.controlFact(runId),state=store.inspect(runId);
+  const options={controlId,expectedDefinitionHash:hash(state.definition),expectedCheckpointHash:prior?.controlId===controlId?prior.sourceCheckpointHash:hash(state.snapshot)};
+  if(kind==='revoke')return store.revoke(runId,options);
+  if(kind==='continuation-handoff')return store.prepareContinuation(runId,{...options,targetRunId});
+  fail('PROJECT_CONTROL_KIND');
+ }finally{store.close();}
+}

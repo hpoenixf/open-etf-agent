@@ -27,6 +27,8 @@ test('clarification binds exact original question, same Run, idempotent reply an
  let calls=0;const g={mode:'fixture',async next(input){calls++;const results=input.messages.filter(m=>m.role==='tool').map(m=>m.result.value);if(!results.some(r=>r.kind==='human-interaction@1'))return {kind:'calls',calls:[{id:'ask',name:'ask_response',arguments:{question:'Which fund?'}}]};return gateway(f).next({...input,messages:input.messages.filter(m=>m.role!=='tool'||m.result.value.kind!=='human-interaction@1')});}};
  await workConversationMessage({...f,messageId:'ask',gateway:g});
  const q=(await listResearchInteractions({projectDir:f.projectDir})).items[0];const before=calls;
+ await assert.rejects(submitConversationMessage({...f,messageId:'cannot-skip-question',text:'Continue without answering.',continuationOfMessageId:'ask'}),/CONTINUATION_UNSAFE/);
+ assert.equal((await inspectResearchTask({projectDir:f.projectDir,runId:admitted.runId})).run.status,'active');
  const input={...f,messageId:'ask',questionId:q.questionId,responseId:'reply1',text:'Alpha'};
  const first=await respondConversationQuestion(input);assert.deepEqual(await respondConversationQuestion(input),first);
  await assert.rejects(respondConversationQuestion({...input,text:'Beta'}),/CONVERSATION_ID_CONFLICT/);
@@ -111,4 +113,75 @@ test('two-hop continuation retains the root user goal, not only the word continu
  const task=await inspectResearchTask({projectDir:f.projectDir,runId:third.runId});
  assert.match(task.definition.question,/"rootGoal":\{"messageId":"root"/);
  assert.match(task.definition.question,/Compare fees and investment uncertainty/);
+});
+test('explicit revocation binds accepted intent and cancels original grant without a new dispatch',async()=>{
+ const {revokeConversationExecution,resumeConversationMessage}=await import('../src/conversation.mjs');
+ const f=await setup(),first=await submitConversationMessage({...f,messageId:'one',text:'Compare.'});
+ const rev={...f,messageId:'one',revocationId:'withdraw',expectedDigest:first.digest,reason:'Operator withdrew execution permission.'};
+ await assert.rejects(revokeConversationExecution({...rev,expectedDigest:'0'.repeat(64)}),/REVOCATION_IDENTITY_CHANGED/);
+ const result=await revokeConversationExecution(rev);assert.equal(result.status,'cancelled');assert.equal(result.remoteEffectsRecalled,false);
+ assert.deepEqual(await revokeConversationExecution(rev),result);
+ await assert.rejects(revokeConversationExecution({...rev,reason:'Different intent.'}),/ID_CONFLICT/);
+ let calls=0;await workConversationMessage({...f,messageId:'one',gateway:gateway(f,()=>calls++)});assert.equal(calls,0);
+ await assert.rejects(resumeConversationMessage({...f,messageId:'one',gateway:gateway(f)}),/RESUME_NOT_SAFE/);
+});
+test('revocation never hides already published degraded answer',async()=>{
+ const {revokeConversationExecution}=await import('../src/conversation.mjs');
+ const f=await setup(),first=await submitConversationMessage({...f,messageId:'one',text:'Compare.'});
+ await workConversationMessage({...f,messageId:'one',gateway:gateway(f)});
+ const before=await readConversationMessage({...f,messageId:'one'});
+ await revokeConversationExecution({...f,messageId:'one',revocationId:'late',expectedDigest:first.digest,reason:'No further execution.'});
+ const after=await readConversationMessage({...f,messageId:'one'});assert.deepEqual(after.output,before.output);
+});
+test('interrupted safe parent hands off once to a new Run; different target or input is refused',async()=>{
+ const {inspectResearchControl}=await import('../src/research-project.mjs');
+ const f=await setup(),parent=await submitConversationMessage({...f,messageId:'parent',text:'Compare the original fees and risks.'});
+ const stop=new AbortController();await workConversationMessage({...f,messageId:'parent',gateway:gateway(f),hostSignal:stop.signal,onCheckpoint:s=>{if(s.phase==='proposal-sealed')stop.abort();}});
+ const child=await submitConversationMessage({...f,messageId:'child',text:'Continue the interrupted research.',continuationOfMessageId:'parent'});
+ const receipt=await inspectResearchControl({projectDir:f.projectDir,runId:parent.runId});
+ assert.equal(receipt.kind,'continuation-handoff');assert.equal(receipt.targetRunId,child.runId);
+ assert.equal((await inspectResearchTask({projectDir:f.projectDir,runId:parent.runId})).run.status,'cancelled');
+ assert.equal((await submitConversationMessage({...f,messageId:'child',text:'Continue the interrupted research.',continuationOfMessageId:'parent'})).runId,child.runId);
+ await assert.rejects(submitConversationMessage({...f,messageId:'other',text:'Continue the interrupted research.',continuationOfMessageId:'parent'}),/CONTINUATION_NOT_ELIGIBLE|HANDOFF_TARGET_CONFLICT/);
+ await workConversationMessage({...f,messageId:'child',gateway:gateway(f)});
+ assert.equal((await inspectResearchTask({projectDir:f.projectDir,runId:child.runId})).run.status,'completed');
+});
+test('cold retry after parent handoff before child admission uses the same target and rejects changed intent',async()=>{
+ const {cp}=await import('node:fs/promises'),{execFile}=await import('node:child_process'),{promisify}=await import('node:util');
+ const f=await setup();await submitConversationMessage({...f,messageId:'parent',text:'Compare fees.'});
+ const stop=new AbortController();await workConversationMessage({...f,messageId:'parent',gateway:gateway(f),hostSignal:stop.signal,onCheckpoint:s=>{if(s.phase==='proposal-sealed')stop.abort();}});
+ const input={messageId:'child',text:'Continue checking original fees.',sourceManifestSha256:f.sourceManifestSha256,continuationOfMessageId:'parent'};
+ const child=await submitConversationMessage({...f,...input});
+ const clone=f.projectDir+'-handoff-crash';
+ await cp(f.projectDir,clone,{recursive:true,filter:path=>!path.startsWith(join(f.projectDir,'sessions',child.runId))&&!path.endsWith('/tasks/'+child.runId+'.json')&&!path.endsWith('/messages/child.json')&&!path.endsWith('/child.admitted.json')});
+ await assert.rejects(submitConversationMessage({...f,projectDir:clone,...input,text:'Changed after parent froze.'}),/CONTINUATION_NOT_ELIGIBLE|HANDOFF_PREPARED_CONFLICT|ID_CONFLICT/);
+ const changed=await inspectResearchProject({projectDir:clone});await updateResearchProject({projectDir:clone,expectedConfigSha256:changed.configSha256,config:{...changed.config,limits:{...changed.config.limits,model:changed.config.limits.model-1}}});
+ const file=join(clone,'submit.json');await writeFile(file,JSON.stringify(input));
+ const {stdout}=await promisify(execFile)(process.execPath,['src/conversation-cli.mjs','submit','--project',clone,'--conversation',f.conversationId,'--input',file]);
+ assert.equal(JSON.parse(stdout).runId,child.runId);assert.equal((await inspectResearchTask({projectDir:clone,runId:child.runId})).run.snapshot.phase,'ready');
+});
+test('competing parents for one new message cannot freeze the losing parent',async()=>{
+ const f=await setup();
+ const completed=await submitConversationMessage({...f,messageId:'done',text:'Compare.'});await workConversationMessage({...f,messageId:'done',gateway:gateway(f)});
+ const active=await submitConversationMessage({...f,messageId:'paused',text:'Compare another.'}),stop=new AbortController();
+ await workConversationMessage({...f,messageId:'paused',gateway:gateway(f),hostSignal:stop.signal,onCheckpoint:s=>{if(s.phase==='proposal-sealed')stop.abort();}});
+ const requests=['done','paused'].map(continuationOfMessageId=>({...f,messageId:'shared',text:'Continue.',continuationOfMessageId}));
+ const outcomes=await Promise.allSettled(requests.map(submitConversationMessage));assert.equal(outcomes.filter(x=>x.status==='fulfilled').length,1);assert.equal(outcomes.filter(x=>x.status==='rejected').length,1);
+ const winning=outcomes.findIndex(x=>x.status==='fulfilled'),state=await inspectResearchTask({projectDir:f.projectDir,runId:active.runId});
+ assert.equal(state.run.status,winning===0?'active':'cancelled');
+});
+test('unproven plugin effects cannot be repeated by completed or interrupted Continue',async()=>{
+ const {createHash}=await import('node:crypto');
+ const f=await setup(),project=await inspectResearchProject(f),modulePath=join(f.projectDir,'plugin.mjs');
+ const code="import {readFileSync} from 'node:fs';import {createHash} from 'node:crypto';export default {id:'test-plugin',version:'1.0.0',schemaVersion:'trusted-plugin@1',sourceUrl:import.meta.url,contentSha256:createHash('sha256').update(readFileSync(new URL(import.meta.url))).digest('hex'),tools:[]};";
+ await writeFile(modulePath,code);await updateResearchProject({projectDir:f.projectDir,expectedConfigSha256:project.configSha256,config:{...project.config,capabilities:['report','trusted-tools'],trustedPackages:[{modulePath,sha256:createHash('sha256').update(code).digest('hex'),trustedCodeApproved:true}]}});
+ for(const messageId of ['done','paused']){
+  const admitted=await submitConversationMessage({...f,messageId,text:'Compare.'});
+  if(messageId==='done')await workConversationMessage({...f,messageId,gateway:gateway(f)});
+  else{const stop=new AbortController();await workConversationMessage({...f,messageId,gateway:gateway(f),hostSignal:stop.signal,onCheckpoint:s=>{if(s.phase==='proposal-sealed')stop.abort();}});}
+  await assert.rejects(submitConversationMessage({...f,messageId:'continue-'+messageId,text:'Continue.',continuationOfMessageId:messageId}),/EFFECT_LINEAGE_UNSUPPORTED/);
+  assert.equal((await inspectResearchTask({projectDir:f.projectDir,runId:admitted.runId})).run.status,messageId==='done'?'completed':'active');
+ }
+ // Ordinary new intent still admits; this is not a blanket plugin ban.
+ await submitConversationMessage({...f,messageId:'new-intent',text:'An explicitly new comparison.'});
 });

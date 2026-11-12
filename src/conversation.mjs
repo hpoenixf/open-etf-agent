@@ -2,7 +2,7 @@ import {join} from 'node:path';
 import {readdir} from 'node:fs/promises';
 import {sha256} from './source.mjs';
 import {safeDirectory,ensureSafeDirectory,publishImmutable} from './storage-files.mjs';
-import {readProjectJson,inspectResearchProject,submitResearchTask,inspectResearchTask,workResearchTask,cancelResearchTask,readResearchReport,readResearchOutput,resumeResearchTaskAdmission,respondResearchTask,inspectResearchInteraction,listResearchInteractions} from './research-project.mjs';
+import {readProjectJson,inspectResearchProject,submitResearchTask,inspectResearchTask,workResearchTask,cancelResearchTask,readResearchReport,readResearchOutput,resumeResearchTaskAdmission,respondResearchTask,inspectResearchInteraction,listResearchInteractions,controlResearchTask,inspectResearchControl} from './research-project.mjs';
 import {readReportReview} from './report-review.mjs';
 const fail=code=>{throw Object.assign(new Error(code),{code});};
 const id=v=>{if(typeof v!=='string'||!/^[A-Za-z0-9_-]{1,48}$/.test(v))fail('CONVERSATION_INVALID_ID');return v;};
@@ -23,19 +23,37 @@ export async function submitConversationMessage({projectDir,conversationId,messa
  if(parent!==null&&(!parent||typeof parent!=='object'||Array.isArray(parent)||!same(Object.keys(parent).sort(),['end','messageId','start'])||parent.messageId===messageId||!Number.isSafeInteger(parent.start)||!Number.isSafeInteger(parent.end)||parent.start<0||parent.end<=parent.start))fail('CONVERSATION_INVALID_PARENT');
  if(review!==null&&(!parent||!review||typeof review!=='object'||!same(Object.keys(review).sort(),['directory','runId'])||typeof review.directory!=='string'||typeof review.runId!=='string'))fail('CONVERSATION_INVALID_REVIEW');
  if(continuationOfMessageId!==null){id(continuationOfMessageId);if(continuationOfMessageId===messageId||parent||review)fail('CONVERSATION_INVALID_CONTINUATION');}
- const input={text,sourceManifestSha256,parent,review,...(continuationOfMessageId===null?{}:{continuationOfMessageId})};const admittedProject=await inspectResearchProject({projectDir:loc.projectDir});let record;
+ const input={text,sourceManifestSha256,parent,review,...(continuationOfMessageId===null?{}:{continuationOfMessageId})};await immutable(loc.directory,messageId+'.request.json',{schemaVersion:'conversation-request@1',projectId:loc.meta.projectId,conversationId,messageId,input});const admittedProject=await inspectResearchProject({projectDir:loc.projectDir});let record;
  try{record=await intent(loc,messageId);if(!same(record.input,input))fail('CONVERSATION_ID_CONFLICT');}catch(e){if(e.code!=='ENOENT')throw e;}
  if(!record){
   if(admittedProject.config.capabilities.includes('schedule'))fail('CONVERSATION_SCHEDULE_UNSUPPORTED');
   let context=null,advice=null,continuation=null,continuationRoot=null;
   if(continuationOfMessageId!==null){
-   const prior=await intent(loc,continuationOfMessageId),state=await checkedTask(loc,prior),snapshot=state.run.snapshot;
-   if(state.run.status!=='completed'||state.run.rootStatus!=='completed'||snapshot.gatewayOutcome==='unknown'||snapshot.unknownEffects?.length||snapshot.inFlight||snapshot.rounds<1)fail('CONVERSATION_CONTINUATION_NOT_ELIGIBLE');
+   const prior=await intent(loc,continuationOfMessageId);let state=await checkedTask(loc,prior),snapshot=state.run.snapshot;
+   if(state.definition.config.trustedPackages?.length)fail('CONVERSATION_EFFECT_LINEAGE_UNSUPPORTED');
+   if(snapshot.gatewayOutcome==='unknown'||snapshot.unknownEffects?.length||snapshot.partialEffects?.length||snapshot.inFlight||snapshot.rounds<1)fail('CONVERSATION_CONTINUATION_NOT_ELIGIBLE');
    if(!authorityNarrows(state.definition.config,admittedProject.config)||prior.input.sourceManifestSha256!==sourceManifestSha256)fail('CONVERSATION_CONTINUATION_AUTHORITY_CHANGED');
-   const original=await conversationOutput(loc.projectDir,prior.runId);
+   const targetRunId='conversation-'+hash([loc.meta.projectId,conversationId,messageId]).slice(0,40);
+   let prepared;try{prepared=await readProjectJson(join(loc.directory,messageId+'.handoff-prepared.json'));}catch(e){if(e.code!=='ENOENT')throw e;}
+   if(prepared){const {digest,...body}=prepared;if(digest!==hash(body)||body.schemaVersion!=='conversation-handoff-prepared@1'||body.projectId!==loc.meta.projectId||body.conversationId!==conversationId||body.messageId!==messageId||body.targetRunId!==targetRunId||body.parentDigest!==prior.digest||!same(body.input,input)||hash(canonical(body.config))!==body.configSha256)fail('CONVERSATION_HANDOFF_PREPARED_CONFLICT');if(!authorityNarrows(body.config,admittedProject.config))fail('CONVERSATION_CONTINUATION_AUTHORITY_CHANGED');}
+   const handoffId='handoff-'+hash([conversationId,messageId,input,prepared?.configSha256??admittedProject.configSha256]).slice(0,40);
+   let handoff=await inspectResearchControl({projectDir:loc.projectDir,runId:prior.runId});
+   if(handoff&&(handoff.kind!=='continuation-handoff'||handoff.controlId!==handoffId))fail('CONVERSATION_CONTINUATION_NOT_ELIGIBLE');
+   if(state.run.status==='active'){
+    let preview=null;try{preview=await conversationOutput(loc.projectDir,prior.runId);}catch(e){if(e.code!=='PROJECT_REPORT_NOT_READY')throw e;}
+    const rootPreview=prior.continuationRoot??{messageId:prior.messageId,runId:prior.runId,text:prior.input.text,textHash:sha256(prior.input.text)};
+    if(Buffer.byteLength(JSON.stringify({request:text,root:rootPreview,original:prior.input.text,output:preview?.report?.text??''}))+6000>16000)fail('CONVERSATION_CONTEXT_TOO_LARGE');
+    if(admittedProject.config.gateway.mode==='live'&&(!authorization?.providerApproved||!authorization?.dataApproved||!authorization?.costApproved))fail('PROJECT_LIVE_APPROVAL_REQUIRED');
+    if(!prepared){const body={schemaVersion:'conversation-handoff-prepared@1',projectId:loc.meta.projectId,conversationId,messageId,targetRunId,parentDigest:prior.digest,input,config:admittedProject.config,configSha256:admittedProject.configSha256};prepared={...body,digest:hash(body)};await immutable(loc.directory,messageId+'.handoff-prepared.json',prepared);}
+    handoff=await controlResearchTask({projectDir:loc.projectDir,runId:prior.runId,kind:'continuation-handoff',controlId:handoffId,targetRunId});
+    state=await checkedTask(loc,prior);snapshot=state.run.snapshot;
+   }
+   if(handoff){if(handoff.targetRunId!==targetRunId||handoff.kind!=='continuation-handoff')fail('CONVERSATION_HANDOFF_TARGET_CONFLICT');}
+   else if(state.run.status!=='completed'||state.run.rootStatus!=='completed')fail('CONVERSATION_CONTINUATION_NOT_ELIGIBLE');
+   let original;try{original=await conversationOutput(loc.projectDir,prior.runId);}catch(e){if(!handoff||e.code!=='PROJECT_REPORT_NOT_READY')throw e;original={kind:'no-published-output',report:{text:'',sha256:sha256('')},citationStatus:'no-output; original task goal only'};}
    if(prior.input.continuationOfMessageId&&!prior.continuationRoot)fail('CONVERSATION_CONTINUATION_ROOT_UNAVAILABLE');
    continuationRoot=prior.continuationRoot??{messageId:prior.messageId,runId:prior.runId,text:prior.input.text,textHash:sha256(prior.input.text)};
-   continuation={schemaVersion:'conversation-continuation@1',rootGoal:continuationRoot,parentMessageId:prior.messageId,parentRunId:prior.runId,parentIntentDigest:prior.digest,parentTaskDefinitionHash:hash(canonical(state.definition)),originalRequest:prior.input.text,originalRequestHash:sha256(prior.input.text),originalQuestionHash:sha256(state.definition.question),sourceManifestSha256,authority:'historical-only; new explicit task approval required',revisionId:original.revision?.revisionId??null,reportSha256:original.report.sha256,outputKind:original.kind,citationStatus:original.citationStatus,reportText:original.report.text};
+   continuation={schemaVersion:'conversation-continuation@1',rootGoal:continuationRoot,handoff,parentMessageId:prior.messageId,parentRunId:prior.runId,parentIntentDigest:prior.digest,parentTaskDefinitionHash:hash(canonical(state.definition)),originalRequest:prior.input.text,originalRequestHash:sha256(prior.input.text),originalQuestionHash:sha256(state.definition.question),sourceManifestSha256,authority:'historical-only; new explicit task approval required',revisionId:original.revision?.revisionId??null,reportSha256:original.report.sha256,outputKind:original.kind,citationStatus:original.citationStatus,reportText:original.report.text};
   }
   if(parent){const prior=await intent(loc,parent.messageId);const state=await checkedTask(loc,prior);if(state.run?.status!=='completed')fail('CONVERSATION_PARENT_NOT_COMPLETED');const original=await conversationOutput(loc.projectDir,prior.runId);if(parent.end>original.report.text.length)fail('CONVERSATION_INVALID_EXCERPT');const excerpt=original.report.text.slice(parent.start,parent.end);if(Buffer.from(excerpt).toString('utf8')!==excerpt)fail('CONVERSATION_INVALID_EXCERPT');context={messageId:parent.messageId,runId:prior.runId,revisionId:original.revision?.revisionId??null,reportSha256:original.report.sha256,outputKind:original.kind,citationStatus:original.citationStatus,start:parent.start,end:parent.end,text:excerpt};
    if(review){const r=await readReportReview({directory:review.directory,runId:review.runId});if(r.status!=='completed'||r.revisionId!==context.revisionId||r.reportHash!==context.reportSha256)fail('CONVERSATION_REVIEW_MISMATCH');advice={runId:r.runId,packetHash:r.packetHash,authority:'advisory-only',findings:r.findings,unchecked:r.unchecked};}
@@ -118,4 +136,20 @@ export async function resumeConversationMessage({projectDir,conversationId,messa
  const state=task.run,snapshot=state.snapshot;
  if(state.status!=='active'||state.rootStatus!=='active'||snapshot.gatewayOutcome==='unknown'||snapshot.unknownEffects?.length||snapshot.inFlight||['model-reserved','tool-dispatched'].includes(snapshot.phase))fail('CONVERSATION_RESUME_NOT_SAFE');
  return workResearchTask({...controls,projectDir:loc.projectDir,runId:record.runId});
+}
+
+// Explicit authority withdrawal, unlike config revision (future admissions).
+// The original Session cancellation/fence is authoritative; this record only
+// binds the operator's intent. Remote in-flight effects are not recalled.
+export async function revokeConversationExecution({projectDir,conversationId,messageId,revocationId,expectedDigest,reason}){
+ const loc=await location(projectDir,conversationId),record=await intent(loc,messageId);
+ id(revocationId);if(expectedDigest!==record.digest)fail('CONVERSATION_REVOCATION_IDENTITY_CHANGED');
+ if(typeof reason!=='string'||!reason.trim()||reason.includes('\0')||Buffer.byteLength(reason)>2000)fail('CONVERSATION_INVALID_REVOCATION');
+ await checkedTask(loc,record);
+ const directory=await ensureSafeDirectory(join(loc.directory,'revocations'));
+ const fact={schemaVersion:'conversation-revocation@1',revocationId,messageId,runId:record.runId,intentDigest:record.digest,reason};
+ await immutable(directory,revocationId+'.json',fact);
+ const receipt=await controlResearchTask({projectDir:loc.projectDir,runId:record.runId,kind:'revoke',controlId:'revoke-'+hash([conversationId,revocationId]).slice(0,40)});
+ const current=await checkedTask(loc,record);
+ return {...fact,receipt,status:current.run.status,rootStatus:current.run.rootStatus,remoteEffectsRecalled:false,unknownEffectsPreserved:true};
 }

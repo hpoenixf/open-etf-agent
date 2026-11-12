@@ -144,6 +144,18 @@ const scheduleSchemas = [
  `CREATE TABLE schedule_occurrences (schedule_id TEXT PRIMARY KEY REFERENCES schedule_definitions(schedule_id), state TEXT NOT NULL, run_id TEXT UNIQUE REFERENCES runs(run_id), decided_at INTEGER, materialized_at INTEGER) STRICT`
 ];
 
+// Optional owner control extension: installed only by an explicit control transaction.
+// Older binaries reject the extra table instead of silently ignoring its authority.
+const controlSchema = `CREATE TABLE session_control_facts (run_id TEXT PRIMARY KEY REFERENCES runs(run_id), control_id TEXT NOT NULL UNIQUE, target_run_id TEXT UNIQUE, fact TEXT NOT NULL) STRICT`;
+function hasControlTable(connection){return !!connection.prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name='session_control_facts'").get();}
+function controlFactFrom(connection,runId){
+ if(!hasControlTable(connection))return null;
+ const item=connection.prepare('SELECT * FROM session_control_facts WHERE run_id=?').get(runId);if(!item)return null;
+ const f=parsed(item.fact,8192);fields(f,['schemaVersion','kind','runId','rootId','controlId','targetRunId','definitionHash','sourceCheckpointHash','terminalCheckpointHash','terminalStatus','rootUsage','createdAt'],[],'INVALID_CONTROL_FACT');
+ const row=connection.prepare('SELECT * FROM runs WHERE run_id=?').get(runId),root=row&&connection.prepare('SELECT * FROM roots WHERE root_id=?').get(row.root_id);
+ if(!row||!root||row.parent_run_id!==null||row.root_id!==runId||f.schemaVersion!=='session-control-fact@1'||!['revoke','continuation-handoff'].includes(f.kind)||f.runId!==runId||f.rootId!==runId||f.controlId!==item.control_id||!identifier(f.controlId)||f.targetRunId!==item.target_run_id||!(f.kind==='revoke'?f.targetRunId===null:identifier(f.targetRunId)&&f.targetRunId!==runId)||!hash(f.definitionHash)||!hash(f.sourceCheckpointHash)||!hash(f.terminalCheckpointHash)||!Number.isSafeInteger(f.createdAt)||f.createdAt<0||!['completed','failed','cancelled'].includes(f.terminalStatus)||row.status!==f.terminalStatus||root.status!==f.terminalStatus||(f.kind==='continuation-handoff'&&f.terminalStatus!=='cancelled')||f.definitionHash!==digest(canonical(parsed(row.definition,65536)))||f.terminalCheckpointHash!==digest(canonical(parsed(row.snapshot,MAX_CHECKPOINT_JSON)))||canonical(f.rootUsage)!==canonical({model:root.model_used,tool:root.tool_used}))fail('INVALID_CONTROL_FACT');
+ return structuredClone(f);
+}
 const interactionSchema = `CREATE TABLE human_interactions (run_id TEXT NOT NULL REFERENCES runs(run_id), ordinal INTEGER NOT NULL, question_id TEXT NOT NULL UNIQUE, response_id TEXT UNIQUE, fact TEXT NOT NULL, PRIMARY KEY(run_id,ordinal)) STRICT`;
 const responseSchema = `CREATE TABLE ordinary_responses (run_id TEXT PRIMARY KEY REFERENCES runs(run_id), question_id TEXT NOT NULL UNIQUE, response_id TEXT UNIQUE, fact TEXT NOT NULL) STRICT`;
 
@@ -262,7 +274,8 @@ export async function openSession({ directory, clock = Date.now, leaseMs = 1000,
  function validateSchema(connection) {
   const version = connection.prepare('PRAGMA user_version').get().user_version; const app = connection.prepare('PRAGMA application_id').get().application_id;
   const actual = connection.prepare("SELECT sql FROM sqlite_master WHERE name NOT LIKE 'sqlite_%' ORDER BY name").all().map(row => row.sql);
-  if (!(scheduled ? version===5 : protectedProfile ? version===4 : [2,3,6].includes(version)) || (profile === RESPONSE_PROFILE && version !== 3) || (profile === INTERACTION_PROFILE && version !== 6) || app !== APP_ID || JSON.stringify(actual) !== JSON.stringify([...(version===5?[...schemas,...scheduleSchemas]:version===4?[...schemas,...protectedSchemas]:version === 6 ? [...schemas,interactionSchema] : version === 3 ? [...schemas,responseSchema] : schemas)].sort())) fail('UNSUPPORTED_SESSION_SCHEMA');
+  if (!(scheduled ? version===5 : protectedProfile ? version===4 : [2,3,6].includes(version)) || (profile === RESPONSE_PROFILE && version !== 3) || (profile === INTERACTION_PROFILE && version !== 6) || app !== APP_ID || JSON.stringify(actual) !== JSON.stringify([...(hasControlTable(connection)?[controlSchema]:[]),...(version===5?[...schemas,...scheduleSchemas]:version===4?[...schemas,...protectedSchemas]:version === 6 ? [...schemas,interactionSchema] : version === 3 ? [...schemas,responseSchema] : schemas)].sort())) fail('UNSUPPORTED_SESSION_SCHEMA');
+  if(hasControlTable(connection))for(const row of connection.prepare('SELECT run_id FROM session_control_facts').iterate())controlFactFrom(connection,row.run_id);
   interaction = version === 6; ordinary = version === 3 || interaction;
   if(protectedProfile)validateProtectedDatabase(connection);
   if(scheduled)validateScheduleDatabase(connection);
@@ -430,6 +443,28 @@ export async function openSession({ directory, clock = Date.now, leaseMs = 1000,
   }
   db.prepare("UPDATE roots SET status='cancelled' WHERE root_id=?").run(rootId);
  }
+ function controlRun(runId,options,kind){return transaction(()=>{
+  fields(options,['controlId','expectedDefinitionHash','expectedCheckpointHash',...(kind==='continuation-handoff'?['targetRunId']:[])],[],'INVALID_CONTROL_REQUEST');
+  const {controlId,expectedDefinitionHash,expectedCheckpointHash}=options,targetRunId=options.targetRunId??null;
+  if(!identifier(controlId)||!hash(expectedDefinitionHash)||!hash(expectedCheckpointHash)||(kind==='continuation-handoff'&&(!identifier(targetRunId)||targetRunId===runId)))fail('INVALID_CONTROL_REQUEST');
+  if(scheduled||kind==='continuation-handoff'&&protectedProfile)fail('CONTROL_PROFILE_UNSUPPORTED');
+  const row=getRun(runId),state=view(row);if(row.parent_run_id!==null||row.root_id!==runId)fail('CONTROL_ROOT_REQUIRED');
+  const old=controlFactFrom(db,runId);if(old){if(old.kind!==kind||old.controlId!==controlId||old.targetRunId!==targetRunId||old.definitionHash!==expectedDefinitionHash||old.sourceCheckpointHash!==expectedCheckpointHash)fail('CONTROL_CONFLICT');return old;}
+  if(kind==='continuation-handoff')active(row);
+  if(digest(canonical(state.definition))!==expectedDefinitionHash||digest(canonical(state.snapshot))!==expectedCheckpointHash)fail('CONTROL_STATE_CHANGED');
+  if(kind==='continuation-handoff'){
+   const safe=s=>['ready','proposal-sealed','result-committed','result-consumed'].includes(s.phase)&&s.gatewayOutcome!=='unknown'&&!s.inFlight&&!s.unknownEffects?.length&&!s.partialEffects?.length;
+   if(row.owner!==null&&row.lease_until>now())fail('CONTROL_LEASE_BUSY');
+   if(!safe(state.snapshot))fail('CONTINUATION_UNSAFE');
+   for(const child of db.prepare('SELECT * FROM runs WHERE root_id=? AND run_id<>?').all(runId,runId)){const c=view(child);if(c.status==='active'||c.snapshot.gatewayOutcome==='unknown'||c.snapshot.inFlight||c.snapshot.unknownEffects?.length||c.snapshot.partialEffects?.length)fail('CONTINUATION_CHILD_UNSAFE');}
+   if(db.prepare('SELECT 1 FROM runs WHERE run_id=?').get(targetRunId))fail('CONTROL_TARGET_EXISTS');
+  }
+  if(!hasControlTable(db))db.exec(controlSchema);
+  if(db.prepare('SELECT 1 FROM session_control_facts WHERE control_id=? OR (target_run_id IS NOT NULL AND target_run_id=?)').get(controlId,targetRunId))fail('CONTROL_CONFLICT');
+  cancelRoot(runId);
+  const terminal=view(getRun(runId)),fact={schemaVersion:'session-control-fact@1',kind,runId,rootId:runId,controlId,targetRunId,definitionHash:expectedDefinitionHash,sourceCheckpointHash:expectedCheckpointHash,terminalCheckpointHash:digest(canonical(terminal.snapshot)),terminalStatus:terminal.status,rootUsage:terminal.rootUsage,createdAt:now()};
+  db.prepare('INSERT INTO session_control_facts VALUES(?,?,?,?)').run(runId,controlId,targetRunId,json(fact,8192));return controlFactFrom(db,runId);
+ });}
  function insertRun({ runId = 'run-' + randomUUID(), rootId, parentRunId = null, parentClaim, directory: runDirectory, definition, snapshot }) {
    const encodedDefinition = encodeDefinition(definition); const encodedSnapshot = encodeCheckpoint(snapshot); if(protectedProfile&&parentRunId!==null)fail('PROTECTED_CHILD_UNSUPPORTED'); if (ordinary && parentRunId !== null) fail('ORDINARY_CHILD_UNSUPPORTED'); if (snapshot.phase !== 'ready' || !identifier(runId)) fail('INVALID_CHECKPOINT'); runDirectory = safeExistingDirectory(runDirectory);
     if(protectedProfile){const a=authorityFrom(db);if(canonical(definition.config.documentProtection)!==canonical({authorityId:a.authorityId,libraryId:a.libraryId}))fail('PROTECTED_SCOPE_MISMATCH');for(const documentId of definition.config.allowedDocuments)grantFrom(db,documentId);}
@@ -590,6 +625,9 @@ export async function openSession({ directory, clock = Date.now, leaseMs = 1000,
     const matches = children.filter(row => parsed(row.definition, 65536).config.taskId === taskId); if (matches.length > 1) fail('CORRUPT_CHILD_RELATION'); return matches.length ? view(matches[0]) : null;
    });
   },
+  controlFact(runId){return transaction(()=>{getRun(runId);return controlFactFrom(db,runId);});},
+  revoke(runId,options){return controlRun(runId,options,'revoke');},
+  prepareContinuation(runId,options){return controlRun(runId,options,'continuation-handoff');},
   cancel(runId) { return transaction(() => { const row = getRun(runId); cancelRoot(row.root_id); return view(getRun(runId)); }); },
   claim(runId, owner) {
    if (!identifier(owner)) fail('INVALID_OWNER');
@@ -728,7 +766,7 @@ export async function openSession({ directory, clock = Date.now, leaseMs = 1000,
   },
   close() { if (!closed) { db.close(); closed = true; } }
  };
- if(readOnly)return Object.freeze({directory,schemaVersion:scheduled?5:protectedProfile?4:interaction?6:ordinary?3:2,readOnly:true,publication:store.publication,publicationRevisions:store.publicationRevisions,publicationEvent:store.publicationEvent,confirmPublication:store.confirmPublication,inspect:store.inspect,findChild:store.findChild,listChildren:store.listChildren,...(ordinary?{response:store.response,responseStatus:store.responseStatus,responseHistory:store.responseHistory}:{}),...(scheduled?{inspectSchedule:store.inspectSchedule,publication:store.publication,publicationRevisions:store.publicationRevisions,publicationEvent:store.publicationEvent}:{}),...(protectedProfile?{publication:store.publication,publicationRevisions:store.publicationRevisions,publicationEvent:store.publicationEvent,verifyProtectedQueryResult:store.verifyProtectedQueryResult,protectedOutput:store.protectedOutput,consumeProtectedSource:store.consumeProtectedSource,protectedDependencies:store.protectedDependencies,readProtectedOutput:store.readProtectedOutput,listProtectedOutputs:store.listProtectedOutputs}:{}),close:store.close});
+ if(readOnly)return Object.freeze({directory,schemaVersion:scheduled?5:protectedProfile?4:interaction?6:ordinary?3:2,readOnly:true,controlFact:store.controlFact,publication:store.publication,publicationRevisions:store.publicationRevisions,publicationEvent:store.publicationEvent,confirmPublication:store.confirmPublication,inspect:store.inspect,findChild:store.findChild,listChildren:store.listChildren,...(ordinary?{response:store.response,responseStatus:store.responseStatus,responseHistory:store.responseHistory}:{}),...(scheduled?{inspectSchedule:store.inspectSchedule,publication:store.publication,publicationRevisions:store.publicationRevisions,publicationEvent:store.publicationEvent}:{}),...(protectedProfile?{publication:store.publication,publicationRevisions:store.publicationRevisions,publicationEvent:store.publicationEvent,verifyProtectedQueryResult:store.verifyProtectedQueryResult,protectedOutput:store.protectedOutput,consumeProtectedSource:store.consumeProtectedSource,protectedDependencies:store.protectedDependencies,readProtectedOutput:store.readProtectedOutput,listProtectedOutputs:store.listProtectedOutputs}:{}),close:store.close});
  activeAdmissionOwners.set(store,(ticket,persistStop,expired=false)=>transaction(()=>{
   const current=view(getRun(ticket.runId));
   if(ticket.runId!==ticket.rootId||current.parentRunId!==null||current.snapshot.purpose!==undefined)fail('ADMISSION_RELEASE_SCOPE_UNSUPPORTED');
