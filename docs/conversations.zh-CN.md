@@ -64,3 +64,7 @@ node src/conversation-cli.mjs revoke --project PROJECT --conversation fees --inp
 Open 使用自己的安全检查点和同 Run Interaction 合同，不宣称逐项复制 private 所有 Main 终态与历史结果结构。每个固定候选单独验收；旧十题不能覆盖新增 Owner 改动。
 
 questions 命令支持可选的 `--limit 1..50`（默认 50）与 `--after CURSOR`。将返回的 `nextAfter` 原样传入读取下一页，直到 null；这些冷读不会调用模型，也不会采用回复。
+
+已完成任务的 Continue 可携带最多两项有来源绑定的计算，历史投影总计不超过 2 KiB。原 Result owner 核验冻结结果基准和选定操作数，来源字节须匹配同一已准入文本清单；保留单位、币种、截止日和选择覆盖范围，不传递旧结果句柄、路径和工具调用 ID。未绑定算术、Web/PDF、笔记、Child/plugin 结果和中断交接暂不覆盖。缺失或损坏的可选结果标记不可用，新任务仍须取得自己的当前证据。这不等于完整跨 Run 历史结果对齐。
+
+当前支持的 comparison-table 计算属于明确标注的合成数据；历史上下文保留该标记，不得表述为真实金融表现。

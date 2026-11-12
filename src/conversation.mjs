@@ -1,3 +1,4 @@
+import {readConversationCalculations} from './conversation-history.mjs';
 import {join} from 'node:path';
 import {readdir} from 'node:fs/promises';
 import {sha256} from './source.mjs';
@@ -57,6 +58,14 @@ export async function submitConversationMessage({projectDir,conversationId,messa
   }
   if(parent){const prior=await intent(loc,parent.messageId);const state=await checkedTask(loc,prior);if(state.run?.status!=='completed')fail('CONVERSATION_PARENT_NOT_COMPLETED');const original=await conversationOutput(loc.projectDir,prior.runId);if(parent.end>original.report.text.length)fail('CONVERSATION_INVALID_EXCERPT');const excerpt=original.report.text.slice(parent.start,parent.end);if(Buffer.from(excerpt).toString('utf8')!==excerpt)fail('CONVERSATION_INVALID_EXCERPT');context={messageId:parent.messageId,runId:prior.runId,revisionId:original.revision?.revisionId??null,reportSha256:original.report.sha256,outputKind:original.kind,citationStatus:original.citationStatus,start:parent.start,end:parent.end,text:excerpt};
    if(review){const r=await readReportReview({directory:review.directory,runId:review.runId});if(r.status!=='completed'||r.revisionId!==context.revisionId||r.reportHash!==context.reportSha256)fail('CONVERSATION_REVIEW_MISMATCH');advice={runId:r.runId,packetHash:r.packetHash,authority:'advisory-only',findings:r.findings,unchecked:r.unchecked};}
+  }
+  if(continuation&&!continuation.handoff&&admittedProject.config.capabilities.includes('calculation')){
+   const prior=await intent(loc,continuation.parentMessageId),task=await checkedTask(loc,prior);
+   const historicalCalculations=await readConversationCalculations({projectDir:loc.projectDir,task});
+   const frame={request:text,previousReport:context,advisoryReview:advice,continuation:{...continuation,historicalCalculations}};
+   // Optional history cannot crowd out the explicitly requested report/goal.
+   if(Buffer.byteLength(PREFIX+JSON.stringify(frame))<=16000)continuation.historicalCalculations=historicalCalculations;
+   else {const unavailable={schemaVersion:'conversation-calculations@1',validity:'historical-only-not-current-evidence',items:[],unavailable:'context-capacity'};if(Buffer.byteLength(PREFIX+JSON.stringify({...frame,continuation:{...continuation,historicalCalculations:unavailable}}))<=16000)continuation.historicalCalculations=unavailable;}
   }
   const question=PREFIX+JSON.stringify({request:text,previousReport:context,advisoryReview:advice,...(continuation?{continuation}: {})});if(Buffer.byteLength(question)>16000)fail('CONVERSATION_CONTEXT_TOO_LARGE');
   const body={schemaVersion:'conversation-message@1',projectId:loc.meta.projectId,configSha256:admittedProject.configSha256,conversationId,messageId,runId:'conversation-'+hash([loc.meta.projectId,conversationId,messageId]).slice(0,40),input,question,...(continuationRoot?{continuationRoot}:{})};record={...body,digest:hash(body)};await immutable(join(loc.directory,'messages'),messageId+'.json',record);

@@ -64,3 +64,7 @@ Changing project configuration is not this operation: it normally affects future
 Open uses its own safe checkpoint and same-Run Interaction contracts. It does not claim to reproduce every private Main terminal status or historical-result structure. Qualification is recorded separately for each fixed candidate; earlier ten-task cohorts do not qualify new Owner changes.
 
 The questions command accepts optional `--limit 1..50` (default 50) and `--after CURSOR`. Pass the returned `nextAfter` unchanged to read the next page; stop at null. These cold reads do not execute the model or adopt a response.
+
+Completed Continue may retain up to two source-bound calculations within a 2 KiB historical projection. The original Result owner verifies the frozen result basis and selected operands; source bytes must match the same admitted text manifest. Units, currency, cutoff and selection coverage remain attached. Old result handles, paths and tool-call IDs are not transferred. Unbound arithmetic, Web/PDF, notes, Child/plugin results and interrupted handoffs are not covered. Missing or corrupt optional results are marked unavailable; the new task must still acquire its own current evidence. This is not full cross-run historical-result parity.
+
+The supported comparison-table calculation is explicitly synthetic; that label is retained in historical context and must not be presented as real financial performance.

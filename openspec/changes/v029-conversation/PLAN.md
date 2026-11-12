@@ -44,3 +44,7 @@ Qualification and remaining boundaries:
 
 ## Next version, separate module
 Proposed v0.30: A07 Child execution lifecycle depth, not part of v0.29. Assess independent cancellation/failure isolation/result recovery, bounded parallel/background execution and parent wait/wake under shared Root budget. Qualify PDF/Knowledge/Interaction/trusted-tool combinations explicitly. Peer/nested/independent-provider gaps must remain visible; do not publish a smaller slice as a complete module merely to ship.
+
+## Restricted historical calculation projection
+
+Completed explicit Continue now reads a bounded historical projection through the original Result owner. It verifies the frozen Host result basis and source-bound selected operands against the same admitted text manifest; at most two items and 2 KiB carry arithmetic, source version, currency/cutoff and coverage, without old executable handles. Unbound calculations, notes, Web/PDF and Child/plugin results, and interrupted handoffs remain excluded. Missing optional original records yield an explicit unavailable result rather than invented provenance. This is a scoped implementation, not full historical-result parity. New runtime tests cover bound transfer, unbound exclusion, byte tampering, budget bounds and frozen child inspection.
