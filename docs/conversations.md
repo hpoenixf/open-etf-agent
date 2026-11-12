@@ -55,3 +55,14 @@ Optional `review: {"directory":"REVIEW_SESSION","runId":"review-ID"}` must refer
 ## Qualification
 
 This is an implementation candidate. Focused fixture results, complete regression, independent review and real-model acceptance are recorded separately. No v0.28 real-model qualification is borrowed; no new version is released by this document.
+
+## Expanded candidate: clarification and explicit continuation
+
+This increment is not covered by the original ten-task live cohort. The original Interaction owner provides persisted questions: use CLI `questions --message MESSAGE`, `question --message MESSAGE --question QUESTION`, and `respond --input reply.json` together with the same project/conversation flags. The reply file contains messageId, questionId, caller-chosen stable responseId, and text. Keep all fields unchanged on retry. The hashed response ID in the underlying receipt is not a replacement caller ID.
+
+Received is not adopted. Explicitly work the original message to adopt the response in the same Run, preserving its budget and deadline. This differs structurally from private's new-Run human-interaction continuation.
+
+Use continuationOfMessageId for explicit completed-parent continuation, separately from a report-history parent. It freezes original goal, task identity, source manifest and report bytes, requires non-expanding configuration and fresh live approval, and creates a new Run/grant. Private's narrowly qualified owner-loss/disconnect continuation is not yet aligned. Failed, cancelled or unknown work is not automatically restarted. Expanded qualification remains pending; do not treat this as a released complete module.
+
+
+Update: explicit Continue preserves the root goal through multiple hops. Use the resume command for original-Run safe-checkpoint recovery. New Continue may narrow capability/tool subsets and lower limits; other configuration and source manifest remain unchanged. A published answer without an Artifact may be carried as explicitly unverified historical text, never a fabricated revision or verified citation. Configuration checks occur at execution entry, not as atomic in-flight revocation. Cancel and settle original work before permission changes; already dispatched requests cannot be recalled.

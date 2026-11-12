@@ -16,5 +16,99 @@ test('work cannot override the checked message runId',async()=>{const f=await se
 test('empty Session admission states are visible and recover through original owner',async()=>{const {cp}=await import('node:fs/promises'),{openSession}=await import('../src/session.mjs');const f=await setup(),input={...f,messageId:'one',text:'First.'};const first=await submitConversationMessage(input);for(const kind of ['directory','database']){const clone=f.projectDir+'-'+kind;await cp(f.projectDir,clone,{recursive:true,filter:path=>!path.startsWith(join(f.projectDir,'sessions'))&&!path.endsWith('.admitted.json')});await mkdir(join(clone,'sessions',first.runId),{recursive:true});if(kind==='database'){const session=await openSession({directory:join(clone,'sessions',first.runId)});session.close();}assert.equal((await inspectConversation({...f,projectDir:clone})).messages[0].status,'admission-pending');assert.equal((await submitConversationMessage({...input,projectDir:clone})).runId,first.runId);}});
 test('cold CLI reads original completed conversation without calls',async()=>{const {execFile}=await import('node:child_process'),{promisify}=await import('node:util');const f=await setup();await submitConversationMessage({...f,messageId:'one',text:'Compare.'});await workConversationMessage({...f,messageId:'one',gateway:gateway(f)});const cmd=promisify(execFile);const {stdout}=await cmd(process.execPath,['src/conversation-cli.mjs','read','--project',f.projectDir,'--conversation',f.conversationId,'--message','one']);assert.match(JSON.parse(stdout).output.report.text,/Alpha fee/);});
 test('unknown result is retained and is never a new dispatch on repeated work',async()=>{const f=await setup();await submitConversationMessage({...f,messageId:'one',text:'Compare.'});let calls=0;const g={mode:'fixture',next:async()=>{calls++;throw Error('Synthetic unknown transport');}};await workConversationMessage({...f,messageId:'one',gateway:g});await workConversationMessage({...f,messageId:'one',gateway:g});assert.equal(calls,1);assert.notEqual((await inspectConversation(f)).messages[0].status,'completed');});
-test('citation-degraded published answer remains visible without a report artifact',async()=>{const f=await setup();await submitConversationMessage({...f,messageId:'one',text:'Compare.'});let calls=0;await workConversationMessage({...f,messageId:'one',gateway:{mode:'fixture',next:async({messages})=>{calls++;if(calls===1)return {kind:'calls',calls:[{id:'r',name:'read_page',arguments:{documentId:f.documentId,page:1}}]};if(calls===2){const source=messages.find(x=>x.role==='tool').result.value;return {kind:'calls',calls:[{id:'s',name:'save_report',arguments:{text:'Visible answer with unverified [C1].',sourceIds:[source.sourceId]}}]};}return {kind:'final',text:'Finished.'};}}});const view=await readConversationMessage({...f,messageId:'one'});assert.equal(view.output.kind,'degraded-answer');assert.match(view.output.answer.text,/Visible answer/);});
+test('citation-degraded published answer remains visible without a report artifact',async()=>{const f=await setup();await submitConversationMessage({...f,messageId:'one',text:'Compare.'});let calls=0;await workConversationMessage({...f,messageId:'one',gateway:{mode:'fixture',next:async({messages})=>{calls++;if(calls===1)return {kind:'calls',calls:[{id:'r',name:'read_page',arguments:{documentId:f.documentId,page:1}}]};if(calls===2){const source=messages.find(x=>x.role==='tool').result.value;return {kind:'calls',calls:[{id:'s',name:'save_report',arguments:{text:'Visible answer with unverified [C1].',sourceIds:[source.sourceId]}}]};}return {kind:'final',text:'Finished.'};}}});const view=await readConversationMessage({...f,messageId:'one'});assert.equal(view.output.kind,'degraded-answer');assert.match(view.output.answer.text,/Visible answer/);const continued=await submitConversationMessage({...f,messageId:'degraded-follow',text:'Check this answer again.',continuationOfMessageId:'one'});const next=await inspectResearchTask({projectDir:f.projectDir,runId:continued.runId});assert.match(next.definition.question,/unverified-historical-answer/);assert.match(next.definition.question,/Visible answer/);assert.equal((await readConversationMessage({...f,messageId:'one'})).output.answer.sha256,view.output.answer.sha256);});
 test('admitted receipt with lost Task and Session never recreates an execution',async()=>{const {cp,access}=await import('node:fs/promises');const f=await setup(),input={...f,messageId:'one',text:'Compare.'};const first=await submitConversationMessage(input);const clone=f.projectDir+'-missing';await cp(f.projectDir,clone,{recursive:true,filter:path=>!path.startsWith(join(f.projectDir,'sessions'))&&!path.endsWith('/tasks/'+first.runId+'.json')});await assert.rejects(submitConversationMessage({...input,projectDir:clone}),/CONVERSATION_ADMITTED_SESSION_UNAVAILABLE/);await assert.rejects(access(join(clone,'tasks',first.runId+'.json')),{code:'ENOENT'});});
+test('clarification binds exact original question, same Run, idempotent reply and cold read',async()=>{
+ const {respondConversationQuestion,inspectConversationQuestion}=await import('../src/conversation.mjs');
+ const {listResearchInteractions}=await import('../src/research-project.mjs');
+ const f=await setup();const project=await inspectResearchProject(f);
+ await updateResearchProject({projectDir:f.projectDir,expectedConfigSha256:project.configSha256,config:{...config,capabilities:['report','response'],interaction:{schemaVersion:'human-interaction@1'}}});
+ const admitted=await submitConversationMessage({...f,messageId:'ask',text:'Ask which fund first, then compare.'});
+ let calls=0;const g={mode:'fixture',async next(input){calls++;const results=input.messages.filter(m=>m.role==='tool').map(m=>m.result.value);if(!results.some(r=>r.kind==='human-interaction@1'))return {kind:'calls',calls:[{id:'ask',name:'ask_response',arguments:{question:'Which fund?'}}]};return gateway(f).next({...input,messages:input.messages.filter(m=>m.role!=='tool'||m.result.value.kind!=='human-interaction@1')});}};
+ await workConversationMessage({...f,messageId:'ask',gateway:g});
+ const q=(await listResearchInteractions({projectDir:f.projectDir})).items[0];const before=calls;
+ const input={...f,messageId:'ask',questionId:q.questionId,responseId:'reply1',text:'Alpha'};
+ const first=await respondConversationQuestion(input);assert.deepEqual(await respondConversationQuestion(input),first);
+ await assert.rejects(respondConversationQuestion({...input,text:'Beta'}),/CONVERSATION_ID_CONFLICT/);
+ assert.equal(calls,before);assert.equal((await inspectConversationQuestion(input)).receipt.text,'Alpha');
+ await workConversationMessage({...f,messageId:'ask',gateway:g});
+ assert.equal((await inspectResearchTask({projectDir:f.projectDir,runId:admitted.runId})).run.status,'completed');
+ assert.equal((await inspectConversation(f)).messages.length,1);
+});
+test('clarification cannot cross message identity, cancelled question, or change response target',async()=>{
+ const {respondConversationQuestion,listConversationQuestions}=await import('../src/conversation.mjs');
+ const f=await setup(),p=await inspectResearchProject(f);
+ await updateResearchProject({projectDir:f.projectDir,expectedConfigSha256:p.configSha256,config:{...config,capabilities:['report','response'],interaction:{schemaVersion:'human-interaction@1'}}});
+ const questions={};
+ for(const messageId of ['one','two','three']){
+  await submitConversationMessage({...f,messageId,text:'Ask.'});
+  await workConversationMessage({...f,messageId,gateway:{mode:'fixture',next:async()=>({kind:'calls',calls:[{id:'ask',name:'ask_response',arguments:{question:'Which?'}}]})}});
+  questions[messageId]=(await listConversationQuestions({...f,messageId})).items[0].questionId;
+ }
+ await assert.rejects(respondConversationQuestion({...f,messageId:'one',questionId:questions.two,responseId:'foreign',text:'A'}),/UNKNOWN_QUESTION/);
+ await respondConversationQuestion({...f,messageId:'one',questionId:questions.one,responseId:'stable',text:'A'});
+ await assert.rejects(respondConversationQuestion({...f,messageId:'two',questionId:questions.two,responseId:'stable',text:'A'}),/CONVERSATION_ID_CONFLICT/);
+ assert.equal((await listConversationQuestions({...f,messageId:'two'})).items[0].state,'awaiting-response');
+ await cancelConversationMessage({...f,messageId:'three'});
+ await assert.rejects(respondConversationQuestion({...f,messageId:'three',questionId:questions.three,responseId:'cancelled',text:'A'}));
+ assert.equal((await listConversationQuestions({...f,messageId:'three'})).items[0].state,'unavailable');
+});
+test('explicit continuation differs from history: binds original goal and authority, never revives parent',async()=>{
+ const f=await setup(),first=await submitConversationMessage({...f,messageId:'one',text:'Original fee comparison goal.'});
+ await assert.rejects(submitConversationMessage({...f,messageId:'early',text:'Continue.',continuationOfMessageId:'one'}),/CONTINUATION_NOT_ELIGIBLE/);
+ await workConversationMessage({...f,messageId:'one',gateway:gateway(f)});
+ const original=await inspectResearchTask({projectDir:f.projectDir,runId:first.runId});
+ const next=await submitConversationMessage({...f,messageId:'two',text:'Continue checking the difference.',continuationOfMessageId:'one'});
+ const task=await inspectResearchTask({projectDir:f.projectDir,runId:next.runId});
+ assert.match(task.definition.question,/Original fee comparison goal/);assert.match(task.definition.question,/conversation-continuation@1/);
+ assert.notEqual(task.definition.grantId,original.definition.grantId);assert.notEqual(next.runId,first.runId);
+ assert.deepEqual((await inspectResearchTask({projectDir:f.projectDir,runId:first.runId})).run.snapshot,original.run.snapshot);
+ const project=await inspectResearchProject(f);await updateResearchProject({projectDir:f.projectDir,expectedConfigSha256:project.configSha256,config:{...config,gateway:{...config.gateway,model:'changed'}}});
+ await assert.rejects(submitConversationMessage({...f,messageId:'three',text:'Continue.',continuationOfMessageId:'one'}),/CONTINUATION_AUTHORITY_CHANGED/);
+ assert.equal((await submitConversationMessage({...f,messageId:'two',text:'Continue checking the difference.',continuationOfMessageId:'one'})).runId,next.runId);
+});
+test('reply recovered after receipt-file interruption does not dispatch or lose cancelled replay',async()=>{
+ const {respondConversationQuestion,listConversationQuestions}=await import('../src/conversation.mjs');
+ const {cp,readFile}=await import('node:fs/promises');
+ const f=await setup(),p=await inspectResearchProject(f);
+ await updateResearchProject({projectDir:f.projectDir,expectedConfigSha256:p.configSha256,config:{...config,capabilities:['report','response'],interaction:{schemaVersion:'human-interaction@1'}}});
+ await submitConversationMessage({...f,messageId:'one',text:'Ask first.'});
+ await workConversationMessage({...f,messageId:'one',gateway:{mode:'fixture',next:async()=>({kind:'calls',calls:[{id:'ask',name:'ask_response',arguments:{question:'Which fund?'}}]})}});
+ const questionId=(await listConversationQuestions({...f,messageId:'one'})).items[0].questionId;
+ const input={...f,messageId:'one',questionId,responseId:'reply',text:'Alpha'};
+ const original=await respondConversationQuestion(input);
+ const clone=f.projectDir+'-receipt-recovery';await cp(f.projectDir,clone,{recursive:true,filter:path=>!path.endsWith('.received.json')});
+ await cancelConversationMessage({...f,projectDir:clone,messageId:'one'});
+ const {execFile}=await import('node:child_process'),{promisify}=await import('node:util');
+ const json=join(clone,'reply.json');await writeFile(json,JSON.stringify({messageId:'one',questionId,responseId:'reply',text:'Alpha'}));
+ const {stdout}=await promisify(execFile)(process.execPath,['src/conversation-cli.mjs','respond','--project',clone,'--conversation',f.conversationId,'--input',json]);
+ assert.deepEqual(JSON.parse(stdout),original);
+ assert.deepEqual(JSON.parse(await readFile(join(clone,'conversations',f.conversationId,'responses/reply.received.json'),'utf8')).receipt,original.receipt);
+});
+test('host interruption resumes original known checkpoint without a new Run or model replay',async()=>{
+ const {resumeConversationMessage}=await import('../src/conversation.mjs');
+ const f=await setup(),admitted=await submitConversationMessage({...f,messageId:'one',text:'Compare.'});
+ const stop=new AbortController();let calls=0;const g=gateway(f,()=>calls++);
+ const paused=await workConversationMessage({...f,messageId:'one',gateway:g,hostSignal:stop.signal,onCheckpoint:s=>{if(s.phase==='proposal-sealed')stop.abort();}});
+ assert.equal(paused.workerStatus,'interrupted');const count=calls,usage=paused.run.rootUsage.model;
+ const done=await resumeConversationMessage({...f,messageId:'one',gateway:g});
+ assert.equal(done.run.status,'completed');assert.equal(done.run.runId,admitted.runId);assert.ok(done.run.rootUsage.model>=usage);assert.equal(count,1);assert.equal(calls,3);
+ await assert.rejects(resumeConversationMessage({...f,messageId:'one',gateway:g}),/RESUME_NOT_SAFE/);
+});
+test('continuation accepts lowered limits and rejects authority expansion',async()=>{
+ const f=await setup();await submitConversationMessage({...f,messageId:'one',text:'Compare.'});await workConversationMessage({...f,messageId:'one',gateway:gateway(f)});
+ const p=await inspectResearchProject(f),lower={...p.config,limits:{...p.config.limits,model:p.config.limits.model-1}};
+ await updateResearchProject({projectDir:f.projectDir,expectedConfigSha256:p.configSha256,config:lower});
+ const next=await submitConversationMessage({...f,messageId:'two',text:'Continue.',continuationOfMessageId:'one'});
+ assert.equal((await inspectResearchTask({projectDir:f.projectDir,runId:next.runId})).definition.config.limits.model,lower.limits.model);
+ const q=await inspectResearchProject(f);await updateResearchProject({projectDir:f.projectDir,expectedConfigSha256:q.configSha256,config:{...lower,limits:{...lower.limits,model:p.config.limits.model+1}}});
+ await assert.rejects(submitConversationMessage({...f,messageId:'three',text:'Continue.',continuationOfMessageId:'one'}),/AUTHORITY_CHANGED/);
+});
+test('two-hop continuation retains the root user goal, not only the word continue',async()=>{
+ const f=await setup();await submitConversationMessage({...f,messageId:'root',text:'Compare fees and investment uncertainty.'});await workConversationMessage({...f,messageId:'root',gateway:gateway(f)});
+ await submitConversationMessage({...f,messageId:'next',text:'Continue.',continuationOfMessageId:'root'});await workConversationMessage({...f,messageId:'next',gateway:gateway(f)});
+ const third=await submitConversationMessage({...f,messageId:'third',text:'Continue again.',continuationOfMessageId:'next'});
+ const task=await inspectResearchTask({projectDir:f.projectDir,runId:third.runId});
+ assert.match(task.definition.question,/"rootGoal":\{"messageId":"root"/);
+ assert.match(task.definition.question,/Compare fees and investment uncertainty/);
+});
