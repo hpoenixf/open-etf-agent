@@ -13,9 +13,20 @@ For developers learning Agent engineering, and readers who want to check an arch
 [Latest modules](#versions) · [Architecture](#architecture) · [Scope and safety](#scope) · [Full documentation](#documentation) · [Contribute](#feedback-and-contributions)
 
 <a id="reading"></a>
-**Latest module articles** (module order, not publication dates):
+## Start with a question, not a version number
 
-[v0.18 · Scheduled Research Beyond a Conversation](https://hpoenixf.com/eff-agent-article/en/articles/agent-autonomous-scheduled-research) · [v0.17 · Why the Next Model Request Still Queues After HTTP 200](https://hpoenixf.com/eff-agent-article/en/articles/agent-provider-admission-capacity-lease) · [v0.16 · RAG: Revocation and Historical Replay](https://hpoenixf.com/eff-agent-article/en/articles/027-rag-revocation-publish-replay)
+| What you want to do | Read / run next |
+| --- | --- |
+| Understand one Agent workflow | [Agent in fifteen minutes](https://hpoenixf.com/eff-agent-article/en/articles/agent-in-15-minutes) → [Execution identities](https://hpoenixf.com/eff-agent-article/en/articles/agent-task-session-run-worker-schedule) |
+| Research your own documents | [Research project workshop](https://hpoenixf.com/eff-agent-article/en/articles/open-etf-agent-research-project-workshop) → [Project CLI](docs/research-project.md) |
+| Gather evidence, delegate and review | [Report review workshop](https://hpoenixf.com/eff-agent-article/en/articles/open-etf-agent-report-review-workshop) → [Specialist profiles](docs/v027-specialist-profiles.md) · [Report review](docs/report-review.md) |
+| Check what an article actually implements | [Fixed-version coverage](docs/articles-and-code.md) · [All articles](https://hpoenixf.com/eff-agent-article/en/open-etf-agent) |
+
+Articles can describe a broader system than the public module. Coverage records qualify historical fixed versions, not the full capability set of latest main.
+
+**Recently updated reading**
+
+[Spec-Driven Agent Development](https://hpoenixf.com/eff-agent-article/en/articles/agent-spec-driven-development-panorama) · [Execution Identities: Conversation to Model Turns](https://hpoenixf.com/eff-agent-article/en/articles/agent-task-session-run-worker-schedule) · [Engineering Half-Hour Research](https://hpoenixf.com/eff-agent-article/en/articles/agent-half-hour-research-engineering-practice)
 
 <p align="center">
   <a href="https://github.com/hpoenixf/open-etf-agent/actions/workflows/verify.yml?query=branch%3Amain"><img src="https://github.com/hpoenixf/open-etf-agent/actions/workflows/verify.yml/badge.svg?branch=main" alt="Verify (main)" height="20" /></a>
@@ -37,7 +48,7 @@ For developers learning Agent engineering, and readers who want to check an arch
 Requires **Node.js 26.8.1–26.x** and npm. Default examples need no model key. Dependency installation may access npm; the installed examples run offline.
 
 ```sh
-# main already contains the current stable development snapshot
+# Clone main for current development; use a release tag for a fixed version
 git clone https://github.com/hpoenixf/open-etf-agent.git
 cd open-etf-agent
 
@@ -51,45 +62,23 @@ npm run demo -- --case document-compare
 
 [Try seven more mechanism examples →](docs/module-guide.md#try-seven-more-kinds-of-example)
 
-**What does delivery look like?** This is a historical T1 excerpt from the [v0.5 synthetic receipts](https://github.com/hpoenixf/open-etf-agent/blob/05c0dd2dc550f4f7e5da034340ff5c3159768fcf/docs/verification/v05-demo-receipts.json), not a new execution. v0.6 adds immutable Artifact / Revision IDs and attachment identity; see its [delivery readback](https://github.com/hpoenixf/open-etf-agent/blob/7480b656b18192e6d6b44aab65255b970d58e6f8/docs/verification/v06-delivery-receipts.safe.json).
+**What should you inspect?** Open `report.md` in the directory printed by the CLI, then trace sources and execution through `manifest.json` and the observe command. A readable report, a completed task and a correct conclusion are different outcomes.
 
-```json
-{
-  "caseId": "T1",
-  "status": "completed",
-  "semanticStatus": "unreviewed",
-  "receipt": {
-    "path": "report.md",
-    "bytes": 933,
-    "mediaType": "text/markdown; charset=utf-8"
-  }
-}
-```
-
-`completed` describes execution; `semanticStatus: unreviewed` leaves answer quality unreviewed. Full receipts also include hashes and actual source references. Tests reopen the files after the producing process exits.
+**Ready to use a real model?** Do not add `--live` to the demo command. Use the [research project entry](docs/research-project.md): first import and submit without model calls, then configure your authorized provider and budget. The [report review entry](docs/report-review.md) also distinguishes fixture lifecycle runs from real model judgment.
 
 <a id="versions"></a>
-## Latest three modules
+<a id="latest-three-modules"></a>
+## Releases and development status
 
-**v0.28 adds explicit report review**: inspect a frozen report and its original source text without rewriting it. Review returns advisory findings, separates source support from citation correspondence, and preserves original output and restart readback. [Commands and boundaries](docs/report-review.md). Findings can be wrong and never certify a report.
+The current release is **[v0.28.0](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.28.0)**. `main` additionally includes a post-release RAG compatibility fix; it is not byte-identical to that release. **The [v0.29 Conversation PR](https://github.com/hpoenixf/open-etf-agent/pull/5) is still Draft, unmerged and unreleased**; it is not available as a main-branch feature.
 
-**v0.27 adds project specialist profiles**: select exact operator-authored profile revisions and presets at task admission, then execute them through the original bounded Child owner. [Scope, commands and boundaries](docs/v027-specialist-profiles.md). Supporting Host working-view, report-artifact and Go protocol changes preserve original sources, Root budgets and recovery identities; they do not guarantee answer quality.
-
-**v0.26 adds bounded Web evidence acquisition**: explicitly acquire public static pages, preserve originals and provenance, and consume frozen pages through the existing Report/Reader path. [Usage](docs/web-sources.md) · [Dated Runtime 9/10 and retained failures](docs/verification/v026-release.md). One task remains unknown; model content defects remain separate. New Web pages use 128 KiB and new Projects default to 1 MiB serialized context, not a model token window. No autonomous crawl or browser rendering.
-
-
-**v0.23.1 maintenance:** original Session heartbeat through finalization and durable cancellation while waiting. [Fixes, 966/966 and evidence applicability](docs/verification/v0231-maintenance.md); original ten-task scores and later provider interruptions remain separate.
-
-
-**2026-11-02 foundation repair:** [Working-input admission, cancellation facts, Child settlement and no-saving summary precheck](docs/verification/foundation-repair-20261102.md). Provider-free regressions passed; this is not a new release or live qualification.
-
-| Module | What changes | Run and inspect |
+| Recent release | What it enables | Usage and boundaries |
 | --- | --- | --- |
-| v0.28 · Report Review | Frozen report/source inspection, advisory findings and original readback | [Usage and boundaries](docs/report-review.md) |
-| v0.27 · Project specialist profiles | Frozen operator selection and original bounded Child execution | [Usage and boundaries](docs/v027-specialist-profiles.md) |
-| v0.26 · Web evidence | Explicit acquisition, immutable originals and source-backed readback | [Usage](docs/web-sources.md) · [Evidence](docs/verification/v026-release.md) |
+| [v0.28 · Report Review](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.28.0) | Advisory findings over frozen report/source text; original report and cold readback remain intact | [Report Review](docs/report-review.md) |
+| [v0.27 · Project specialist profiles](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.27.0) | Freeze profiles/presets at admission and use the original Child execution path | [Specialist Profiles](docs/v027-specialist-profiles.md) |
+| [v0.26 · Web evidence](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.26.0) | Explicitly acquire public static pages and retain source provenance | [Web Sources](docs/web-sources.md) |
 
-[All fixed versions and commands](docs/module-guide.md#versions) · [Machine-readable version lineage](versions.json) · [GitHub Releases](https://github.com/hpoenixf/open-etf-agent/releases)
+[All fixed versions and commands](docs/module-guide.md#versions) · [Version lineage](versions.json) · [All releases](https://github.com/hpoenixf/open-etf-agent/releases) · [Verification records](docs/verification/README.md)
 
 <a id="architecture"></a>
 ## Architecture: follow one execution path
@@ -116,13 +105,11 @@ The model proposes; code checks authority and executes. Session, Publication and
 - **Keep authority explicit:** trusted Plugins run local JavaScript and are not sandboxed. The PDF parser is not a hostile-file security sandbox; no OCR, visual/table interpretation or active-PDF recovery is offered. Python isolation and broader Web capabilities are not implied by the examples.
 - **Respect original identity and effects:** unknown dispatched requests are not automatically retried; host stop is not user cancellation. SQLite fencing does not provide general external exactly-once effects. [Finish or isolate incompatible active Runs before upgrade](docs/upgrade-guide.md).
 
-**v0.15 real-mechanism evidence:** [Three retained batches](openspec/changes/serial-specialist-child/live-evidence.safe.json): 10 physical attempts; 9 responses explicitly report zero Go balance charge, while 1 response has unknown usage and cost—not presumed free or refunded. Only bounded synthetic-source comparison passed, not general model quality, financial semantics or live-recovery certification. Unknown dispatched requests are not automatically retried; active Runs from the older WIP template have no cross-template recovery promise. The public CLI remains an offline fixture with no model-key option.
-
 <a id="live-evidence"></a>
-**Real model calls:** [16 historical HTTP requests across v0.1–v0.5](docs/module-guide.md#live-evidence) are distinct from current offline demos. HTTP 200 or a saved report does not certify task quality.
+**Qualification is separate from demos:** the [v0.28 real-model review record over fixed synthetic material](docs/verification/v028-release.md) qualifies only its stated Runtime paths and retains judgment limitations. It is not financial accuracy or production certification. Earlier successes, failures and unknowns remain in the [evidence index](docs/verification/README.md).
 
 <a id="live-entry"></a>
-**Live runner:** the demo CLI refuses `--live`. The [separate runner](docs/live-validation.md) needs your own provider, data and cost authorization, fixed inputs and a shared budget. Other operators' credentials or authorization are not inherited; unknown outcomes stop execution.
+**Choose the right execution entry:** the demo CLI rejects `--live`; the project CLI can use an explicitly authorized provider. The [separate validation runner](docs/live-validation.md) is for fixed-input verification, not the default product entry. Other operators' keys, data and cost authorization are not inherited.
 
 <a id="documentation"></a>
 ## Go deeper
