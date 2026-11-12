@@ -11,11 +11,12 @@ const execution={schemaVersion:'child-execution@2',maxChildren:2,maxConcurrent:2
 const selection={question,documents,execution};
 const call=(id,name,args)=>({kind:'calls',calls:[{id,name,arguments:args}]});
 const spawn=id=>call(id,'spawn_child',{methodId:'claim-comparison',question:'Read the original evidence.',documents:['atlas-a']});
-async function harness(t,{main,child=()=>({kind:'final',text:'Derived answer.'}),onCheckpoint,hostSignal,rootLimits={model:24,tool:24}}){
+async function harness(t,{main,child=()=>({kind:'final',text:'Derived answer.'}),onCheckpoint,hostSignal,executionConfig=execution,rootLimits={model:24,tool:24}}){
+ const selection={question,documents,execution:executionConfig};
  await mkdir('test-output',{recursive:true});const directory=await mkdtemp(resolve('test-output/async-child-'));let store=await openSession({directory,leaseMs:1000}),token,mainCalls=0,childCalls=0;
  t.after(()=>{store.close();return rm(directory,{recursive:true,force:true});});
  const bindings={gateway:{mode:'fixture',provider:'synthetic',protocol:'fixture@1',model:'async-child',version:'1'},plugins:[],adapters:[childExecutionBinding(selection)]};
- function options(runId,controls={}){const extensions=createAsyncChildExecutionBindings({store,parentRunId:runId,parentClaim:()=>token,...selection,outputRoot:join(directory,'runs'),gatewayFactory:()=>({mode:'fixture',next:async input=>{childCalls++;return child(input);}}),onCheckpoint:controls.onCheckpoint});return{question,gateway:{mode:'fixture',next:async input=>{mainCalls++;return main(input);}},extensions,allowedTools:['spawn_child','inspect_child','cancel_child','read_page'],allowedDocuments:documents,requireReport:false,outputRoot:join(directory,'runs'),limits:{maxRounds:20,maxTools:20,timeoutMs:10000},...controls,durable:{store,...(runId?{runId}:{}),grantId:'synthetic-async-child',bindings,rootLimits,onClaim:t=>token=t,onCheckpoint:controls.onCheckpoint}};}
+ function options(runId,controls={}){const extensions=createAsyncChildExecutionBindings({store,parentRunId:runId,parentClaim:()=>token,...selection,outputRoot:join(directory,'runs'),gatewayFactory:()=>({mode:'fixture',next:async input=>{childCalls++;return child(input);}}),onCheckpoint:controls.onCheckpoint});return{question,gateway:{mode:'fixture',next:async input=>{mainCalls++;return main(input,{store,token,selection});}},extensions,allowedTools:['spawn_child','inspect_child','cancel_child','read_page'],allowedDocuments:documents,requireReport:false,outputRoot:join(directory,'runs'),limits:{maxRounds:20,maxTools:20,timeoutMs:10000},...controls,durable:{store,...(runId?{runId}:{}),grantId:'synthetic-async-child',bindings,rootLimits,onClaim:t=>token=t,onCheckpoint:controls.onCheckpoint}};}
  const result=await run(options(undefined,{onCheckpoint,hostSignal}));return{result,directory,get store(){return store;},get mainCalls(){return mainCalls;},get childCalls(){return childCalls;},restart:async()=>{store.close();store=await openSession({directory,leaseMs:1000});token=undefined;},resume:controls=>run(options(result.runId,controls)),history:()=>inspectChildExecutions({store,parentRunId:result.runId,...selection})};
 }
 test('30.async spawn returns identity, inspect delivers originals, final drains, cold history uses receipts',async t=>{
@@ -55,4 +56,14 @@ test('30.async noncooperative Child preserves unstopped effect and unknown debit
  const stop=new AbortController();let started;const childStarted=new Promise(r=>started=r);let rootId;
  const h=await harness(t,{hostSignal:stop.signal,child:()=>{started();return new Promise(()=>{});},main:()=>spawn('a'),onCheckpoint:async e=>{rootId??=e.runId;if(e.runId===rootId&&e.phase==='result-consumed'){await childStarted;stop.abort();}}});
  assert.equal(h.result.status,'interrupted');assert.equal(h.result.interruption.effectsStopped,false);assert.equal(h.childCalls,1);assert.equal(h.store.listChildren(h.result.runId)[0].snapshot.gatewayOutcome,'unknown');assert.ok(h.result.rootUsage.model>=2);
+});
+
+test('30.async history admission follows concurrency rather than serial unsettled rules',async t=>{
+ let release;const gate=new Promise(r=>release=r);let started;const ready=new Promise(r=>started=r),seen=[];
+ const h=await harness(t,{executionConfig:{...execution,maxChildren:3},child:async()=>{started();await gate;return{kind:'final',text:'Done.'};},main:async({messages},{store,token,selection})=>{
+  const values=messages.filter(m=>m.role==='tool').map(m=>m.result.value);
+  if(!values.length)return spawn('a');await ready;
+  seen.push((await inspectChildExecutions({store,parentRunId:token.runId,...selection})).admissionBlocked);
+  if(values.length===1)return spawn('b');release();return{kind:'final',text:'Drained.'};
+ }});assert.equal(h.result.status,'completed');assert.deepEqual(seen,[null,'concurrency-limit']);
 });
