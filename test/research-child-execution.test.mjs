@@ -69,7 +69,26 @@ test('30.project async Child tools share original Host projection and persist a 
   assert.ok(inspected.child.kind==='stored-derived-ref'||inspected.child.schemaVersion==='child-execution-handoff@1',JSON.stringify(inspected.child));if(!values.some(v=>v?.path==='report.md'))return call('save','save_report',{text:'# Synthetic observation\n20 units, not a real investment fact.',sourceIds:inspected.sources.map(s=>s.sourceId)});
   return{kind:'final',text:'Original synthetic report retained.'};
  }};
- const worked=await workResearchTask({projectDir,runId:'async-project',gateway});assert.equal(worked.run.status,'completed',worked.observationCode);assert.equal(childCalls,2);
+ const worked=await workResearchTask({projectDir,runId:'async-project',gateway});assert.equal(worked.run.status,'completed',worked.run.snapshot.code);assert.equal(childCalls,2);
+ const report=await readResearchReport({projectDir,runId:'async-project'});assert.match(report.report.text,/20 units/);
+ const history=await inspectResearchChildren({projectDir,runId:'async-project'});assert.equal(history.items[0].consumption,'consumed');
+ const cold=spawnSync(process.execPath,['src/research-cli.mjs','child','list','--project',projectDir,'--run','async-project'],{encoding:'utf8',timeout:10000});assert.equal(cold.status,0,cold.stderr);assert.deepEqual(JSON.parse(cold.stdout),history);
+ const recovered=await workResearchTask({projectDir,runId:'async-project',gateway:{mode:'fixture',next(){throw Error('Unexpected replay');}}});assert.equal(recovered.run.status,'completed');
+});
+
+test('30.project async parent waits beyond legacy 30s queue without expanding provider concurrency',async t=>{
+ await mkdir('test-output',{recursive:true});const directory=await mkdtemp(resolve('test-output/async-child-project-'));t.after(()=>rm(directory,{recursive:true,force:true}));
+ const projectDir=join(directory,'project'),file=join(directory,'source.md');await writeFile(file,'Synthetic observation: 20 units.');
+ await createResearchProject({directory:projectDir,config:{...config,childExecution:{...execution,schemaVersion:'child-execution@2',maxConcurrent:2}}});const source=await importProjectSources({projectDir,files:[file]}),documentId=source.catalog.documents[0].id;
+ await submitResearchTask({projectDir,runId:'async-project',question:'Inspect synthetic evidence.',sourceManifestSha256:source.manifestSha256});
+ let started;const childStarted=new Promise(r=>started=r);let held=0,maxHeld=0,childCalls=0;const gateway={mode:'fixture',next:async({messages,reservation})=>{const values=messages.filter(m=>m.role==='tool').map(m=>m.result.value);
+  if(reservation.runId!=='async-project'){childCalls++;if(childCalls===1){held++;maxHeld=Math.max(maxHeld,held);started();await new Promise(r=>setTimeout(r,31500));held--;}return values.length?{kind:'final',text:'Synthetic observation: 20 units.'}:call('page','read_page',{documentId,page:1});}
+  assert.equal(held,0,'Main cannot dispatch over Child slot');if(!values.length)return call('spawn','spawn_child',{methodId:'claim-comparison',question:'Inspect original source.',documents:[documentId]});
+  const inspected=values.find(v=>v.childControl?.action==='inspect'&&v.childControl.status==='completed');if(!inspected)return call('inspect-'+values.length,'inspect_child',{childRunId:values[0].childControl.childRunId,waitMs:1000});
+  assert.ok(inspected.child.kind==='stored-derived-ref'||inspected.child.schemaVersion==='child-execution-handoff@1',JSON.stringify(inspected.child));if(!values.some(v=>v?.path==='report.md'))return call('save','save_report',{text:'# Synthetic observation\n20 units, not a real investment fact.',sourceIds:inspected.sources.map(s=>s.sourceId)});
+  return{kind:'final',text:'Original synthetic report retained.'};
+ }};
+ const worked=await workResearchTask({projectDir,runId:'async-project',gateway,onCheckpoint:async e=>{if(e.runId==='async-project'&&e.phase==='result-consumed')await childStarted;}});assert.equal(worked.run.status,'completed',worked.run.snapshot.code);assert.equal(childCalls,2);assert.equal(maxHeld,1);
  const report=await readResearchReport({projectDir,runId:'async-project'});assert.match(report.report.text,/20 units/);
  const history=await inspectResearchChildren({projectDir,runId:'async-project'});assert.equal(history.items[0].consumption,'consumed');
  const cold=spawnSync(process.execPath,['src/research-cli.mjs','child','list','--project',projectDir,'--run','async-project'],{encoding:'utf8',timeout:10000});assert.equal(cold.status,0,cold.stderr);assert.deepEqual(JSON.parse(cold.stdout),history);
