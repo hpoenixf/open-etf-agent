@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {mkdir,mkdtemp,rm} from 'node:fs/promises';
 import {resolve,join} from 'node:path';
+import {spawnSync} from 'node:child_process';
 import {run} from '../src/runtime.mjs';
 import {openSession} from '../src/session.mjs';
 import {CLAIM_COMPARISON_METHOD} from '../src/child.mjs';
@@ -26,8 +27,8 @@ async function harness(t,{main,child=onePage,selected=selection,tools=['delegate
  t.after(async()=>{store.close();await rm(directory,{recursive:true,force:true});});
  const bindings={gateway:{mode:'fixture',provider:'synthetic',protocol:'fixture@1',model:'bounded-child',version:'1'},plugins:[],adapters:[childExecutionBinding(selected)]};
  function options(runId,controls={}){
-  const binding=createChildExecutionBinding({store,parentRunId:runId,parentClaim:()=>token,...selected,outputRoot:join(directory,'runs'),gatewayFactory:()=>({mode:'fixture',next:input=>{childCalls++;return child(input);}}),onCheckpoint:controls.onCheckpoint?e=>controls.onCheckpoint(e,store):undefined});
-  return {question,gateway:{mode:'fixture',next:input=>{mainCalls++;return main(input);}},extensions:[binding],allowedTools:tools,allowedDocuments:documents,requireReport:false,outputRoot:join(directory,'runs'),limits:{maxRounds:12,maxTools:10,timeoutMs:15000},...controls,durable:{store,...(runId?{runId}:{}),grantId:'synthetic-child-execution',bindings,rootLimits,onClaim:t=>token=t,onCheckpoint:controls.onCheckpoint?e=>controls.onCheckpoint(e,store):undefined}};
+  const binding=createChildExecutionBinding({store,parentRunId:runId,parentClaim:()=>token,...selected,outputRoot:join(directory,'runs'),gatewayFactory:()=>({mode:'fixture',next:input=>{childCalls++;return child(input);}}),onCheckpoint:controls.onCheckpoint?e=>controls.onCheckpoint(e,store,directory):undefined});
+  return {question,gateway:{mode:'fixture',next:input=>{mainCalls++;return main(input);}},extensions:[binding],allowedTools:tools,allowedDocuments:documents,requireReport:false,outputRoot:join(directory,'runs'),limits:{maxRounds:12,maxTools:10,timeoutMs:15000},...controls,durable:{store,...(runId?{runId}:{}),grantId:'synthetic-child-execution',bindings,rootLimits,onClaim:t=>token=t,onCheckpoint:controls.onCheckpoint?e=>controls.onCheckpoint(e,store,directory):undefined}};
  }
  const result=await run(options(undefined,{onCheckpoint,signal,hostSignal}));
  return {result,directory,get store(){return store;},get mainCalls(){return mainCalls;},get childCalls(){return childCalls;},async restart(){store.close();store=await openSession({directory,leaseMs});token=undefined;},resume:controls=>run(options(result.runId,controls)),history:()=>inspectChildExecutions({store,parentRunId:result.runId,...selected}),handoff:callId=>readChildExecutionHandoff({store,parentRunId:result.runId,callId,...selected})};
@@ -201,8 +202,8 @@ test('30.2 cancellation at the reservation boundary prevents dispatch without re
  assert.equal(child.status,'cancelled');assert.equal(child.gatewayOutcome,'unknown');assert.equal(child.consumption,'consumed');assert.deepEqual(child.result.sources,[]);
 });
 test('30.3 a late Child answer cannot overwrite independent cancellation or become evidence',async t=>{
- let rootId,childId,store;
- const h=await harness(t,{main:({messages})=>messages.some(m=>m.role==='tool')?{kind:'final',text:'Uncertain cancellation retained.'}:delegate('first'),onCheckpoint:(e,s)=>{store=s;rootId??=e.runId;if(e.runId!==rootId)childId=e.runId;},child:()=>{store.cancelChild(rootId,childId);return{kind:'final',text:'LATE ANSWER MUST NOT BE ADOPTED'};}});
+ let rootId,childId,store,sessionDirectory;
+ const h=await harness(t,{main:({messages})=>messages.some(m=>m.role==='tool')?{kind:'final',text:'Uncertain cancellation retained.'}:delegate('first'),onCheckpoint:(e,s,directory)=>{store=s;sessionDirectory=directory;rootId??=e.runId;if(e.runId!==rootId)childId=e.runId;},child:async()=>{const code=`import {openSession} from ${JSON.stringify(new URL('../src/session.mjs',import.meta.url).href)};const s=await openSession({directory:${JSON.stringify(sessionDirectory)}});s.cancelChild(${JSON.stringify(rootId)},${JSON.stringify(childId)});s.close();`;const other=spawnSync(process.execPath,['--input-type=module','-e',code],{encoding:'utf8',timeout:10000});assert.equal(other.status,0,other.stderr);await new Promise(resolve=>setTimeout(resolve,30));return{kind:'final',text:'LATE ANSWER MUST NOT BE ADOPTED'};}});
  assert.equal(h.result.status,'completed',h.result.code);assert.equal(h.childCalls,1);
  const child=h.store.inspect(childId);assert.equal(child.status,'cancelled');assert.equal(child.snapshot.gatewayOutcome,'unknown');
  const handoff=await h.handoff('first');assert.equal(handoff.child.summary,'');assert.deepEqual(handoff.sources,[]);assert.equal(JSON.stringify(handoff).includes('LATE ANSWER'),false);

@@ -19,6 +19,7 @@ Stop one admitted Child without cancelling its original parent or unrelated work
 ## Completion work
 
 - [x] Original Session cancellation, Runtime fence check, adapter control consumption, research CLI entry.
+- [ ] Model-visible asynchronous spawn/inspect/cancel design and implementation on the existing Session owner, with fixed-reference result consumption; keep serial delegate compatibility.
 - [ ] Final independent code review and complete regression suite.
 - [ ] Cold CLI, late-result, parent commit/consume recovery and shared-budget qualification finalized.
 - [ ] Frozen real ten-workflow qualification using the independently authorized Open budget, with all failures/unknown retained.
@@ -26,4 +27,4 @@ Stop one admitted Child without cancelling its original parent or unrelated work
 
 ## Deliberate boundary
 
-This closes independently controlled lifecycle on the existing serial `delegate_child` path. It does not claim asynchronous model-visible spawn/inspect/cancel, parallel peers, broad partial-result delivery or complete private Child parity. Those broader execution surfaces require their own design and verification; an unknown cancelled Child is not silently transformed into success.
+The current candidate closes independently controlled lifecycle on the existing serial `delegate_child` path; this is an implementation checkpoint, not the complete 0.30 release scope. It does not claim asynchronous model-visible spawn/inspect/cancel, parallel peers, broad partial-result delivery or complete private Child parity. The asynchronous lifecycle surface still requires design and verification before this module is qualified; an unknown cancelled Child is not silently transformed into success.
