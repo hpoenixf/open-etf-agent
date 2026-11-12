@@ -1,0 +1,17 @@
+import {resolve} from 'node:path';
+import {createConversation,inspectConversation,submitConversationMessage,workConversationMessage,cancelConversationMessage,readConversationMessage} from './conversation.mjs';
+import {readProjectJson,inspectResearchTask} from './research-project.mjs';
+try{
+ const [action,...args]=process.argv.slice(2),opts={};
+ if(!['create','list','submit','work','cancel','read'].includes(action))throw Error('CONVERSATION_ARGUMENTS');
+ for(let i=0;i<args.length;i+=2){if(!['--project','--conversation','--message','--input'].includes(args[i])||Object.hasOwn(opts,args[i])||!args[i+1]||args[i+1].startsWith('--'))throw Error('CONVERSATION_ARGUMENTS');opts[args[i]]=args[i+1];}
+ const required=['--project','--conversation',...(['work','cancel','read'].includes(action)?['--message']:action==='submit'?['--input']:[])].sort();if(JSON.stringify(Object.keys(opts).sort())!==JSON.stringify(required))throw Error('CONVERSATION_ARGUMENTS');
+ const common={projectDir:resolve(opts['--project']),conversationId:opts['--conversation']};let result;
+ if(action==='create')result=await createConversation(common);
+ else if(action==='list')result=await inspectConversation(common);
+ else if(action==='submit'){const input=await readProjectJson(resolve(opts['--input']),65536);const allowed=['messageId','text','sourceManifestSha256','parent','review','authorization'];if(!input||typeof input!=='object'||Array.isArray(input)||Object.keys(input).some(k=>!allowed.includes(k)))throw Error('CONVERSATION_INPUT');result=await submitConversationMessage({...common,...input});}
+ else if(action==='read')result=await readConversationMessage({...common,messageId:opts['--message']});
+ else if(action==='cancel')result=await cancelConversationMessage({...common,messageId:opts['--message']});
+ else{const overview=await inspectConversation(common),item=overview.messages.find(m=>m.messageId===opts['--message']);if(!item)throw Error('CONVERSATION_UNKNOWN_MESSAGE');const task=await inspectResearchTask({projectDir:common.projectDir,runId:item.runId});if(task.definition.config.gateway.mode!=='live')throw Error('CONVERSATION_FIXTURE_REQUIRES_TEST_API');const apiKey=process.env[task.definition.config.gateway.apiKeyEnv];if(!apiKey)throw Error('CONVERSATION_CREDENTIAL_UNAVAILABLE');const controller=new AbortController(),stop=()=>controller.abort();process.on('SIGINT',stop);process.on('SIGTERM',stop);try{result=await workConversationMessage({...common,messageId:opts['--message'],apiKey,hostSignal:controller.signal});}finally{process.off('SIGINT',stop);process.off('SIGTERM',stop);}}
+ process.stdout.write(JSON.stringify(result,null,2)+'\n');
+}catch(error){process.stderr.write((error.code??'CONVERSATION_COMMAND_FAILED')+'\n');process.exitCode=2;}
