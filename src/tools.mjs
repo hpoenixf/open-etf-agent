@@ -315,7 +315,7 @@ export async function createToolHost({ directory, extensions = [], hooks, allowe
     if(binding.sourceResult)value=await remember(value);
     if(binding.sourceResults){if(!Array.isArray(value?.sources)||value.sources.length>16)fail('Invalid batch sources');const validated=value.sources.map(validateSource),ids=new Map();for(const source of validated){const id=JSON.stringify(['documentId','name','version','page','sha256','mediaType'].map(key=>source[key]));if(ids.has(source.sourceId)&&ids.get(source.sourceId)!==id)fail('Conflicting batch source identity');ids.set(source.sourceId,id);}const imported=[];for(const source of validated)imported.push(await remember(source));value={...value,sources:imported};}
     if(binding.methodResult){if(!object(value)||!['id','name','text','sha256','version'].every(k=>typeof value[k]==='string')||value.sha256!==sha256(value.text)||Buffer.byteLength(value.text)>65536)fail('Invalid acquired method snapshot');if(methods.has(value.id)&&JSON.stringify(methods.get(value.id))!==JSON.stringify(value))fail('Method identity rebind conflict');methods.set(value.id,structuredClone(value));}
-    if(hostProjection&&call?.name==='delegate_child'&&value?.child){
+    if(hostProjection&&['delegate_child','inspect_child'].includes(call?.name)&&value?.child){
       if(typeof binding.verifyResult!=='function')fail('Derived producer owner missing');
       await binding.verifyResult(value,{call});await results.addDerived({runId:projectionOwner.runId,rootId:projectionOwner.rootId,call:structuredClone(call),value:structuredClone(value)},{signal});
     }
@@ -405,7 +405,7 @@ export async function createToolHost({ directory, extensions = [], hooks, allowe
     async projectOwnedResult(call,result){
       if(!hostProjection||!bindings.read_result||result.status!=='succeeded')return null;
       await host.verifyResult(call,result);
-      if(call.name==='delegate_child'&&result.value?.child){
+      if(['delegate_child','inspect_child'].includes(call.name)&&result.value?.child){
         const input={runId:projectionOwner.runId,rootId:projectionOwner.rootId,call:structuredClone(call),value:structuredClone(result.value)},ref=derivedDescriptor(input).resultRef;
         const record=await ownedDerived(ref);if(!isDeepStrictEqual(record,input))recoveryFail('Derived projection identity mismatch');
         return {...structuredClone(result.value),child:derivedView(record,ref)};

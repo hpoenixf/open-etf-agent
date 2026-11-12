@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {mkdir,mkdtemp,rm} from 'node:fs/promises';
 import {resolve,join} from 'node:path';
+import {spawnSync} from 'node:child_process';
 import {run} from '../src/runtime.mjs';
 import {openSession} from '../src/session.mjs';
 import {CLAIM_COMPARISON_METHOD} from '../src/child.mjs';
@@ -26,8 +27,8 @@ async function harness(t,{main,child=onePage,selected=selection,tools=['delegate
  t.after(async()=>{store.close();await rm(directory,{recursive:true,force:true});});
  const bindings={gateway:{mode:'fixture',provider:'synthetic',protocol:'fixture@1',model:'bounded-child',version:'1'},plugins:[],adapters:[childExecutionBinding(selected)]};
  function options(runId,controls={}){
-  const binding=createChildExecutionBinding({store,parentRunId:runId,parentClaim:()=>token,...selected,outputRoot:join(directory,'runs'),gatewayFactory:()=>({mode:'fixture',next:input=>{childCalls++;return child(input);}}),onCheckpoint:controls.onCheckpoint});
-  return {question,gateway:{mode:'fixture',next:input=>{mainCalls++;return main(input);}},extensions:[binding],allowedTools:tools,allowedDocuments:documents,requireReport:false,outputRoot:join(directory,'runs'),limits:{maxRounds:12,maxTools:10,timeoutMs:15000},...controls,durable:{store,...(runId?{runId}:{}),grantId:'synthetic-child-execution',bindings,rootLimits,onClaim:t=>token=t,onCheckpoint:controls.onCheckpoint}};
+  const binding=createChildExecutionBinding({store,parentRunId:runId,parentClaim:()=>token,...selected,outputRoot:join(directory,'runs'),gatewayFactory:()=>({mode:'fixture',next:input=>{childCalls++;return child(input);}}),onCheckpoint:controls.onCheckpoint?e=>controls.onCheckpoint(e,store,directory):undefined});
+  return {question,gateway:{mode:'fixture',next:input=>{mainCalls++;return main(input);}},extensions:[binding],allowedTools:tools,allowedDocuments:documents,requireReport:false,outputRoot:join(directory,'runs'),limits:{maxRounds:12,maxTools:10,timeoutMs:15000},...controls,durable:{store,...(runId?{runId}:{}),grantId:'synthetic-child-execution',bindings,rootLimits,onClaim:t=>token=t,onCheckpoint:controls.onCheckpoint?e=>controls.onCheckpoint(e,store,directory):undefined}};
  }
  const result=await run(options(undefined,{onCheckpoint,signal,hostSignal}));
  return {result,directory,get store(){return store;},get mainCalls(){return mainCalls;},get childCalls(){return childCalls;},async restart(){store.close();store=await openSession({directory,leaseMs});token=undefined;},resume:controls=>run(options(result.runId,controls)),history:()=>inspectChildExecutions({store,parentRunId:result.runId,...selected}),handoff:callId=>readChildExecutionHandoff({store,parentRunId:result.runId,callId,...selected})};
@@ -165,4 +166,66 @@ test('malformed terminal answer fails original checkpoint validation',async t=>{
   const proxy=new Proxy({},{get(_,key){if(key==='listChildren')return()=>[child];const value=h.store[key];return typeof value==='function'?value.bind(h.store):value;}});
   await assert.rejects(inspectChildExecutions({store:proxy,parentRunId:h.result.runId,...selection}),{code:'INVALID_TERMINAL_OUTCOME'});
  }
+});
+
+for(const phase of ['result-consumed','model-reserved'])test('30.1 explicit Child cancellation isolates parent and preserves '+phase,async t=>{
+ const stop=new AbortController();let rootId,stopped=false;
+ const h=await harness(t,{hostSignal:stop.signal,main:({messages})=>{
+  const results=messages.filter(m=>m.role==='tool');
+  return !results.length?delegate('first'):results.length===1?delegate('second','source-observation',['atlas-b']):{kind:'final',text:'Original cancellation retained; sibling used.'};
+ },onCheckpoint:e=>{rootId??=e.runId;if(!stopped&&e.runId!==rootId&&e.phase===phase){stopped=true;stop.abort();}}});
+ assert.equal(h.result.status,'interrupted',h.result.code);
+ const child=h.store.listChildren(h.result.runId)[0],usage=h.store.inspect(h.result.runId).rootUsage;
+ const stale=h.store.claim(child.runId,'synthetic-cancelled-worker');
+ assert.throws(()=>h.store.cancelChild(child.runId,h.result.runId),/SCOPE_MISMATCH/);
+ const cancelled=h.store.cancelChild(h.result.runId,child.runId);
+ assert.equal(cancelled.status,'cancelled');assert.equal(cancelled.rootStatus,'active');
+ assert.deepEqual(cancelled.rootUsage,usage);assert.throws(()=>h.store.readClaim(stale),/RUN_CANCELLED/);
+ assert.deepEqual(h.store.cancelChild(h.result.runId,child.runId),cancelled);
+ const receipt=await h.handoff('first');assert.deepEqual(receipt.sources,[]);assert.equal(receipt.child.summary,'');assert.equal(receipt.child.controlOnly,true);
+ assert.equal(receipt.child.gatewayOutcome,phase==='model-reserved'?'unknown':'settled');
+ await h.restart();const result=await h.resume();assert.equal(result.status,'completed',result.code);
+ const children=h.store.listChildren(h.result.runId);assert.equal(children.length,2);assert.equal(children.find(c=>c.runId===child.runId).status,'cancelled');
+ assert.equal(children.find(c=>c.runId!==child.runId).status,'completed');
+ assert.deepEqual(await h.handoff('first'),receipt);assert.equal((await h.history()).items.find(c=>c.runId===child.runId).consumption,'consumed');
+ assert.equal(h.childCalls,phase==='model-reserved'?2:3);
+ await h.restart();assert.equal((await h.resume()).status,'completed');assert.equal(h.childCalls,phase==='model-reserved'?2:3);
+});
+
+test('30.2 cancellation at the reservation boundary prevents dispatch without refunding it',async t=>{
+ let rootId,cancelled=false;
+ const h=await harness(t,{main:({messages})=>messages.some(m=>m.role==='tool')?{kind:'final',text:'Cancellation observed.'}:delegate('first'),onCheckpoint:(e,store)=>{
+  rootId??=e.runId;if(!cancelled&&e.runId!==rootId&&e.phase==='model-reserved'){cancelled=true;store.cancelChild(rootId,e.runId);}
+ }});
+ assert.equal(h.result.status,'completed',h.result.code);assert.equal(h.childCalls,0);assert.equal(h.mainCalls,2);
+ assert.deepEqual(h.result.rootUsage,{model:3,tool:1});const child=(await h.history()).items[0];
+ assert.equal(child.status,'cancelled');assert.equal(child.gatewayOutcome,'unknown');assert.equal(child.consumption,'consumed');assert.deepEqual(child.result.sources,[]);
+});
+test('30.3 a late Child answer cannot overwrite independent cancellation or become evidence',async t=>{
+ let rootId,childId,store,sessionDirectory;
+ const h=await harness(t,{main:({messages})=>messages.some(m=>m.role==='tool')?{kind:'final',text:'Uncertain cancellation retained.'}:delegate('first'),onCheckpoint:(e,s,directory)=>{store=s;sessionDirectory=directory;rootId??=e.runId;if(e.runId!==rootId)childId=e.runId;},child:async()=>{const code=`import {openSession} from ${JSON.stringify(new URL('../src/session.mjs',import.meta.url).href)};const s=await openSession({directory:${JSON.stringify(sessionDirectory)}});s.cancelChild(${JSON.stringify(rootId)},${JSON.stringify(childId)});s.close();`;const other=spawnSync(process.execPath,['--input-type=module','-e',code],{encoding:'utf8',timeout:10000});assert.equal(other.status,0,other.stderr);await new Promise(resolve=>setTimeout(resolve,30));return{kind:'final',text:'LATE ANSWER MUST NOT BE ADOPTED'};}});
+ assert.equal(h.result.status,'completed',h.result.code);assert.equal(h.childCalls,1);
+ const child=h.store.inspect(childId);assert.equal(child.status,'cancelled');assert.equal(child.snapshot.gatewayOutcome,'unknown');
+ const handoff=await h.handoff('first');assert.equal(handoff.child.summary,'');assert.deepEqual(handoff.sources,[]);assert.equal(JSON.stringify(handoff).includes('LATE ANSWER'),false);
+ await h.restart();assert.equal((await h.resume()).status,'completed');assert.equal(h.childCalls,1);
+});
+test('30.4 cancelling a completed Child is an immutable no-op',async t=>{
+ const h=await harness(t,{main:({messages})=>messages.some(m=>m.role==='tool')?{kind:'final',text:'Complete.'}:delegate('first')});
+ const before=h.store.listChildren(h.result.runId)[0],receipt=await h.handoff('first');
+ assert.deepEqual(h.store.cancelChild(h.result.runId,before.runId),before);assert.deepEqual(await h.handoff('first'),receipt);
+});
+test('30.5 cancelled unknown Child does not refund exhausted Root budget',async t=>{
+ let rootId,cancelled=false;
+ const h=await harness(t,{rootLimits:{model:2,tool:20},main:()=>delegate('first'),onCheckpoint:(e,store)=>{rootId??=e.runId;if(!cancelled&&e.runId!==rootId&&e.phase==='model-reserved'){cancelled=true;store.cancelChild(rootId,e.runId);}}});
+ assert.equal(h.result.status,'failed');assert.equal(h.mainCalls,1);assert.equal(h.childCalls,0);assert.deepEqual(h.result.rootUsage,{model:2,tool:1});
+ assert.equal(h.store.listChildren(h.result.runId)[0].snapshot.gatewayOutcome,'unknown');
+});
+for(const phase of ['result-committed','result-consumed'])test('30.6 cancelled control survives parent '+phase+' cold restart',async t=>{
+ const stop=new AbortController();let rootId,cancelled=false,stopped=false;
+ const h=await harness(t,{hostSignal:stop.signal,main:({messages})=>messages.some(m=>m.role==='tool')?{kind:'final',text:'Cancelled control recovered.'}:delegate('first'),onCheckpoint:(e,store)=>{
+  rootId??=e.runId;if(!cancelled&&e.runId!==rootId&&e.phase==='model-reserved'){cancelled=true;store.cancelChild(rootId,e.runId);}
+  if(cancelled&&!stopped&&e.runId===rootId&&e.phase===phase){stopped=true;stop.abort();}
+ }});
+ assert.equal(h.result.status,'interrupted');const receipt=await h.handoff('first');
+ await h.restart();assert.equal((await h.resume()).status,'completed');assert.equal(h.childCalls,0);assert.equal(h.mainCalls,2);assert.deepEqual(await h.handoff('first'),receipt);
 });

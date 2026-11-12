@@ -1,6 +1,6 @@
 import {openSpecialistProfiles,verifySpecialistSelection} from './specialist-profiles.mjs';
 import {REPORT_GUIDANCE_PROFILE,reportGuidanceFor} from './report-guidance.mjs';
-import {normalizeChildExecution,childExecutionBinding,createChildExecutionBinding,inspectChildExecutions} from './child-execution.mjs';
+import {normalizeChildExecution,childExecutionBinding,createChildExecutionBinding,createAsyncChildExecutionBindings,inspectChildExecutions} from './child-execution.mjs';
 import {KNOWLEDGE_VERSION,LEGACY_KNOWLEDGE_VERSION,normalizeKnowledgeConfig,createKnowledgeIndex,knowledgeBinding,createKnowledgeTool,KNOWLEDGE_CONTEXT_BYTES,KNOWLEDGE_TASK_GUIDANCE} from './knowledge.mjs';
 import {readdir,mkdir} from 'node:fs/promises';
 import {INTERACTION_PROFILE, INTERACTION_BINDING, validateInteractionConfig} from './human-interaction.mjs';
@@ -151,7 +151,7 @@ async function assemble(projectDir,definition,{gateway,apiKey,fetchImpl,hostSign
   const requestContext=new AsyncLocalStorage();
   if(!selectedGateway){if(!dispatch)selectedGateway={mode:config.gateway.mode,next(){fail('PROJECT_SUBMIT_MUST_NOT_DISPATCH');}};else{if(config.gateway.mode!=='live')fail('PROJECT_FIXTURE_GATEWAY_REQUIRED');selectedGateway=createChatGateway({endpoint:config.gateway.endpoint,model:config.gateway.model,apiKey,authorization:definition.authorization,stream:config.gateway.stream??false,fetchImpl:fetchImpl?((url,options)=>fetchImpl(url,options,requestContext.getStore())):undefined});}}
   const originalGateway=selectedGateway;selectedGateway={mode:originalGateway.mode,...(originalGateway.inputBudget?{inputBudget:originalGateway.inputBudget}:{}),next(input){const r=input.reservation;const context=r?Object.freeze({role:r.purpose==='compaction'?'summary':r.runId===r.rootId?'main':'child',rootId:r.rootId,runId:r.runId,modelOrdinal:r.modelOrdinal,purpose:r.purpose??'main',inputHash:r.inputHash}):null;return requestContext.run(context,async()=>{try{const result=await originalGateway.next(input);if(config.gateway.mode==='live'&&typeof apiKey==='string'&&apiKey&&containsSecret(result,apiKey))fail('PROJECT_CREDENTIAL_ECHO');return result;}catch(error){if(config.gateway.mode==='live'&&typeof apiKey==='string'&&apiKey&&(String(error?.message).includes(apiKey)||String(error?.code).includes(apiKey)))fail('PROJECT_CREDENTIAL_ECHO');throw error;}});}};
-  admission=await createSharedAdmission({directory:join(projectDir,'admission',group.groupId),routeId:group.groupId,existingOnly:group.policy==='project-endpoint-capacity@1',queueTimeoutMs:Math.min(config.limits.timeoutMs,30000),pollMs:10});
+  admission=await createSharedAdmission({directory:join(projectDir,'admission',group.groupId),routeId:group.groupId,existingOnly:group.policy==='project-endpoint-capacity@1',queueTimeoutMs:Math.min(config.limits.timeoutMs,config.childExecution?.schemaVersion==='child-execution@2'?300000:30000),pollMs:10});
   const runId=definition.schedule?scheduleRunId(definition.schedule):definition.runId;const wrapped=admission.wrap(selectedGateway,{session:store,runId});
   const adapters=[PUBLICATION_BINDING],extensions=[];let workingInput;const plugins=await loadProjectPlugins({projectDir,config});
   if(caps.includes('knowledge')){if(!sources.catalog)fail('PROJECT_KNOWLEDGE_TEXT_REQUIRED');const index=createKnowledgeIndex({catalog:sources.catalog,allowedDocuments:sources.catalog.documents.map(d=>d.id),config:config.knowledge,signal,version:taskKnowledgeVersion(definition)});adapters.push(knowledgeBinding(index));extensions.push(createKnowledgeTool(index));}
@@ -162,7 +162,9 @@ async function assemble(projectDir,definition,{gateway,apiKey,fetchImpl,hostSign
   if(caps.includes('child')){const childDocuments=sources.catalog?.documents.map(d=>d.id)??[];if(!childDocuments.length||childDocuments.length>(config.childExecution?64:2))fail('PROJECT_CHILD_DOCUMENT_SCOPE');
    const selected={question:originalQuestion,...(definition.childInputProjection===undefined?{}:{projection:definition.childInputProjection}),documents:childDocuments,documentCatalog:sources.catalog,...(config.childExecution?{execution:config.childExecution}:config.childMethod?{method:config.childMethod}:{})};
    adapters.push(config.childExecution?childExecutionBinding(selected):sourceCheckBinding(selected));
-   extensions.push((config.childExecution?createChildExecutionBinding:createSpecialistChildBinding)({store,parentRunId:runId,parentClaim:()=>claim,...selected,gatewayFactory:()=>wrapped,outputRoot:p.runs,...(config.childExecution?{onCheckpoint}:{})}));
+   const childOptions={store,parentRunId:runId,parentClaim:()=>claim,...selected,gatewayFactory:()=>wrapped,outputRoot:p.runs,...(config.childExecution?{onCheckpoint}:{})};
+   if(config.childExecution?.schemaVersion==='child-execution@2')extensions.push(...createAsyncChildExecutionBindings(childOptions));
+   else extensions.push((config.childExecution?createChildExecutionBinding:createSpecialistChildBinding)(childOptions));
   }
   const available=['read_result','save_report',...(caps.includes('compaction')?['read_note']:[]),...(sources.catalog?['read_page']:[]),...(sources.pdfSnapshot?['read_pdf_page']:[]),...(caps.includes('calculation')?['calculate_change']:[]),...(caps.includes('csv')?['create_csv']:[]),...(caps.includes('response')?['ask_response']:[]),...extensions.map(t=>t.name)];
   const inspected=await inspectTrustedPlugins({plugins,signal});available.push(...inspected.extensions.map(t=>t.name));
@@ -261,6 +263,14 @@ export async function inspectResearchChildren({projectDir,runId}){
  const d=await readTask(projectDir,runId);if(!d.config.childExecution)fail('PROJECT_CHILD_EXECUTION_REQUIRED');
  const sources=await loadProjectSources({projectDir,manifestSha256:d.sourceManifestSha256}),store=await openSession({directory:paths(projectDir,runId).session,readOnly:true});
  try{return await inspectChildExecutions({store,parentRunId:runId,question:frozenTaskQuestion(d,sources),documents:sources.catalog.documents.map(doc=>doc.id),documentCatalog:sources.catalog,execution:d.config.childExecution,...(d.childInputProjection===undefined?{}:{projection:d.childInputProjection})});}finally{store.close();}
+}
+
+// User-selected direct Child only; never inherit today's project authority.
+export async function cancelResearchChild({projectDir,runId,childRunId}){
+ const d=await readTask(projectDir,runId);if(!d.config.childExecution)fail('PROJECT_CHILD_EXECUTION_REQUIRED');
+ const store=await openSession({directory:paths(projectDir,runId).session});
+ try{store.cancelChild(runId,childRunId);}finally{store.close();}
+ return inspectResearchChildren({projectDir,runId});
 }
 
 // Inspect the original admitted collection, never today's changed project config.

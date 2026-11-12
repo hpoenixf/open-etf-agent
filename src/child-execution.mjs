@@ -13,15 +13,17 @@ const canonical=v=>JSON.stringify(v,(_,x)=>object(x)?Object.fromEntries(Object.k
 const exact=(v,keys)=>object(v)&&Object.keys(v).sort().join(',')===[...keys].sort().join(',');
 const taskId=callId=>'execution-'+sha256(callId).slice(0,48);
 // Only this original factory can mint its group owner proof. Extensions may read, not register.
-const groupOwners=new WeakMap(),groupHistoryOwners=new WeakMap(),inputOwners=new WeakMap();
+const groupOwners=new WeakMap(),groupHistoryOwners=new WeakMap(),inputOwners=new WeakMap(),asyncOwners=new WeakMap();
+export async function settleAsyncChildExecutions(bindings,options){const owners=new Set(bindings.map(b=>asyncOwners.get(b)).filter(Boolean));let effectsStopped=true;for(const owner of owners){const result=await owner(options);if(result?.effectsStopped===false)effectsStopped=false;}return{effectsStopped};}
 // Read-only lookup of this factory's original validator, never a registration API.
 export function childExecutionInputRefusal(binding,call,context){return inputOwners.get(binding)?.(call,context)??null;}
 export function childExecutionGroupRefusal(binding,calls,historical=false){return groupOwners.get(binding)?.(calls,historical)??null;}
 export function childExecutionHistoricalGroup(binding,callId){return groupHistoryOwners.get(binding)?.(callId)??null;}
 export function normalizeChildExecution(input){
- if(!exact(input,['schemaVersion','maxChildren','methods'])||input.schemaVersion!=='child-execution@1'||!Number.isSafeInteger(input.maxChildren)||input.maxChildren<1||input.maxChildren>8||!Array.isArray(input.methods)||!input.methods.length||input.methods.length>8)fail('INVALID_CHILD_EXECUTION');
+ if(!exact(input,input?.schemaVersion==='child-execution@2'?['schemaVersion','maxChildren','maxConcurrent','methods']:['schemaVersion','maxChildren','methods'])||!['child-execution@1','child-execution@2'].includes(input.schemaVersion)||!Number.isSafeInteger(input.maxChildren)||input.maxChildren<1||input.maxChildren>8||!Array.isArray(input.methods)||!input.methods.length||input.methods.length>8)fail('INVALID_CHILD_EXECUTION');
+ if(input.schemaVersion==='child-execution@2'&&(!Number.isSafeInteger(input.maxConcurrent)||input.maxConcurrent<1||input.maxConcurrent>input.maxChildren))fail('INVALID_CHILD_CONCURRENCY');
  const methods=input.methods.map(normalizeChildMethod);if(new Set(methods.map(m=>m.id)).size!==methods.length)fail('DUPLICATE_CHILD_METHOD');
- return Object.freeze({schemaVersion:'child-execution@1',maxChildren:input.maxChildren,methods:Object.freeze(methods)});
+ return Object.freeze({schemaVersion:input.schemaVersion,maxChildren:input.maxChildren,...(input.schemaVersion==='child-execution@2'?{maxConcurrent:input.maxConcurrent}:{}),methods:Object.freeze(methods)});
 }
 function scope({question,documents,documentCatalog,execution,projection}){
  if(projection!==undefined&&projection!=='host-context@1')fail('INVALID_CHILD_PROJECTION');
@@ -29,7 +31,7 @@ function scope({question,documents,documentCatalog,execution,projection}){
  if(typeof question!=='string'||!question.trim()||(projection===undefined&&Buffer.byteLength(question)>16000)||!Array.isArray(documents)||!documents.length||documents.length>64||new Set(documents).size!==documents.length||documents.some(d=>!allowed.includes(d)))fail('INVALID_CHILD_EXECUTION_SCOPE');
  return {question,...(projection===undefined?{}:{projection}),documents:[...documents],...(catalog?{documentCatalog:catalog}:{}),execution:normalizeChildExecution(execution)};
 }
-export function childExecutionBinding(input){return Object.freeze({id:'serial-child-execution',version:'1',contentSha256:sha256(canonical(scope(input)))});}
+export function childExecutionBinding(input){return Object.freeze({id:input.execution?.schemaVersion==='child-execution@2'?'async-child-execution':'serial-child-execution',version:'1',contentSha256:sha256(canonical(scope(input)))});}
 function select(value,selected){
  if(!exact(value,['methodId','question','documents']))fail('INVALID_CHILD_EXECUTION_ARGUMENTS');
  const method=selected.execution.methods.find(m=>m.id===value.methodId);
@@ -61,7 +63,7 @@ function parentAuthority(parent,selected){
 }
 function originalCall(parent,callId,selected){
  const calls=parent.snapshot.messages.flatMap(m=>m.calls??[]).filter(c=>c.id===callId);
- if(calls.length!==1||calls[0].name!=='delegate_child')fail('CHILD_EXECUTION_CALL_IDENTITY');
+ if(calls.length!==1||calls[0].name!==(selected.execution.schemaVersion==='child-execution@2'?'spawn_child':'delegate_child'))fail('CHILD_EXECUTION_CALL_IDENTITY');
  return {call:calls[0],chosen:select(calls[0].arguments,selected)};
 }
 function requestedScope(parent,chosen){
@@ -77,7 +79,7 @@ function executionRows(store,parent,selected){
  const rows=store.listChildren(parent.runId);
  if(rows.length>selected.execution.maxChildren)fail('CHILD_EXECUTION_LIMIT_CHANGED');
  return rows.map(child=>{
-  const candidates=parent.snapshot.messages.flatMap(m=>m.calls??[]).filter(c=>c.name==='delegate_child'&&taskId(c.id)===child.definition.config.taskId);
+  const candidates=parent.snapshot.messages.flatMap(m=>m.calls??[]).filter(c=>c.name===(selected.execution.schemaVersion==='child-execution@2'?'spawn_child':'delegate_child')&&taskId(c.id)===child.definition.config.taskId);
   if(candidates.length!==1)fail('CHILD_EXECUTION_CALL_IDENTITY');
   const {call,chosen}=originalCall(parent,candidates[0].id,selected);validateChild(parent,child,call,chosen);return{child,call,chosen};
  });
@@ -85,6 +87,9 @@ function executionRows(store,parent,selected){
 function unknown(child){return child.snapshot.unknownEffects.length>0||['MODEL_OUTCOME_UNKNOWN','TOOL_OUTCOME_UNKNOWN'].includes(child.snapshot.code)||child.snapshot.gatewayOutcome==='unknown'||(child.snapshot.gatewayOutcome===undefined&&child.status!=='completed'&&Boolean(child.snapshot.working));}
 async function handoff(parent,child,call,chosen,selected){
  if(child.status==='active'||child.snapshot.phase!=='terminal')fail('CHILD_EXECUTION_UNSETTLED');
+ // Cancellation is a control observation, never a derived answer or source handoff.
+ // Unknown dispatch remains explicit and budgeted; no cancelled execution is replayed.
+ if(child.status==='cancelled')return {sources:[],child:{schemaVersion:'child-execution-handoff@1',parentRunId:parent.runId,rootId:child.rootId,runId:child.runId,taskId:taskId(call.id),callId:call.id,binding:childExecutionBinding(selected),methodDescriptor:chosen.method,documents:chosen.documents,status:'cancelled',code:'CANCELLED',derived:true,summary:'',controlOnly:true,gatewayOutcome:child.snapshot.gatewayOutcome??'legacy-unspecified',unknownEffects:structuredClone(child.snapshot.unknownEffects),limitations:['child cancelled; no answer or source is adopted','remote termination is not confirmed; unknown dispatch and budget usage remain retained'],partialEffects:structuredClone(child.snapshot.partialEffects),mode:child.definition.bindings.gateway.mode,semanticStatus:'unreviewed'}};
  if(unknown(child))fail('CHILD_EXECUTION_EFFECT_UNKNOWN');
  const out=child.snapshot.outcome;
  if(!['completed','failed'].includes(child.status)||!out||out.runId!==child.runId||out.rootId!==child.rootId||out.directory!==child.directory||out.taskId!==taskId(call.id)||out.status!==child.status||out.code!==child.snapshot.code)fail('CHILD_EXECUTION_OUTCOME_UNAVAILABLE');
@@ -105,23 +110,25 @@ export async function inspectChildExecutions({store,parentRunId,...input}){
  const selected=scope(input),parent=store.inspect(parentRunId);parentAuthority(parent,selected);
  const items=[];
  for(const {child,call,chosen} of executionRows(store,parent,selected)){
-  const consumed=parent.snapshot.messages.filter(m=>m.role==='tool'&&m.callId===call.id&&m.result.status==='succeeded');
-  const committed=parent.snapshot.result?.callId===call.id&&parent.snapshot.result.status==='succeeded'?parent.snapshot.result:null;
-  if(consumed.length>1)fail('CHILD_EXECUTION_CONSUMPTION_IDENTITY');
+  const asyncMode=selected.execution.schemaVersion==='child-execution@2';
+  const consumed=parent.snapshot.messages.filter(m=>m.role==='tool'&&m.result.status==='succeeded'&&(asyncMode?m.result.value?.child?.runId===child.runId:m.callId===call.id));
+  const pending=parent.snapshot.result;const committed=pending?.status==='succeeded'&&(asyncMode?pending.value?.child?.runId===child.runId:pending.callId===call.id)?pending:null;
+  if(!asyncMode&&consumed.length>1)fail('CHILD_EXECUTION_CONSUMPTION_IDENTITY');
   let result=null;
-  if(['completed','failed'].includes(child.status)&&!unknown(child))result=await handoff(parent,child,call,chosen,selected);
-  if(consumed.length||committed){if(!result)fail('CHILD_EXECUTION_CONSUMPTION_IDENTITY');for(const r of [...consumed.map(m=>m.result),...(committed?[committed]:[])])if(canonical(r.value?.child)!==canonical(result.child)||canonical(r.value?.sources)!==canonical(result.sources))fail('CHILD_EXECUTION_CONSUMPTION_IDENTITY');}
+  if(child.status==='cancelled'||['completed','failed'].includes(child.status)&&!unknown(child))result=await handoff(parent,child,call,chosen,selected);
+  if(consumed.length||committed){if(!result)fail('CHILD_EXECUTION_CONSUMPTION_IDENTITY');for(const r of [...consumed.map(m=>m.result),...(committed?[committed]:[])])if(asyncMode?canonical(store.childOperation(parent.runId,r.callId)?.value)!==canonical(r.value):canonical(r.value?.child)!==canonical(result.child)||canonical(r.value?.sources)!==canonical(result.sources))fail('CHILD_EXECUTION_CONSUMPTION_IDENTITY');}
   items.push({runId:child.runId,parentRunId:parent.runId,rootId:child.rootId,callId:call.id,taskId:child.definition.config.taskId,methodId:chosen.method.id,documents:chosen.documents,status:child.status,phase:child.snapshot.phase,code:child.snapshot.code,deadlineAt:child.definition.deadlineAt,rounds:child.snapshot.rounds,toolsDispatched:child.snapshot.toolsDispatched,gatewayOutcome:child.snapshot.gatewayOutcome??'legacy-unspecified',unknownEffects:structuredClone(child.snapshot.unknownEffects),consumption:consumed.length?'consumed':committed?'committed-not-consumed':'not-consumed',...(result?{result}:{})});
  }
  const remainingChildren=Math.max(0,selected.execution.maxChildren-items.length);
- const admissionBlocked=parent.status!=='active'||parent.rootStatus!=='active'?'parent-terminal':Date.now()>=parent.definition.deadlineAt?'deadline-expired':items.some(i=>i.status==='active'||i.gatewayOutcome==='unknown'||i.unknownEffects.length)?'child-unsettled':remainingChildren===0?'execution-limit':null;
+ const capacityBlock=selected.execution.schemaVersion==='child-execution@2'?(remainingChildren===0?'execution-limit':items.filter(i=>i.status==='active').length>=selected.execution.maxConcurrent?'concurrency-limit':null):items.some(i=>i.status==='active'||i.status!=='cancelled'&&(i.gatewayOutcome==='unknown'||i.unknownEffects.length))?'child-unsettled':remainingChildren===0?'execution-limit':null;
+ const admissionBlocked=parent.status!=='active'||parent.rootStatus!=='active'?'parent-terminal':Date.now()>=parent.definition.deadlineAt?'deadline-expired':capacityBlock;
  return {schemaVersion:'child-execution-history@1',parentRunId:parent.runId,rootId:parent.rootId,maxChildren:selected.execution.maxChildren,remainingChildren,admissionBlocked,rootUsage:parent.rootUsage,items};
 }
 export function createChildExecutionBinding({store,parentClaim,parentRunId,outputRoot,gatewayFactory,onCheckpoint,...input}){
- const selected=scope(input),inputErrors=new WeakMap();if(typeof parentClaim!=='function'||typeof gatewayFactory!=='function')fail('INVALID_CHILD_EXECUTION_ADAPTER');
+ const selected=scope(input),inputErrors=new WeakMap();if(selected.execution.schemaVersion!=='child-execution@1')fail('ASYNC_CHILD_FACTORY_REQUIRED');if(typeof parentClaim!=='function'||typeof gatewayFactory!=='function')fail('INVALID_CHILD_EXECUTION_ADAPTER');
  function parent(){const token=parentClaim(),id=token?.runId??parentRunId;if(!id)fail('CHILD_EXECUTION_PARENT_REQUIRED');const saved=store.inspect(id);parentAuthority(saved,selected);return {saved,token};}
  function current(value,callId){const {saved,token}=parent(),p=saved.snapshot.proposal;
-  if(!p||p.kind!=='calls'||p.calls.length!==1||saved.snapshot.cursor!==0||p.calls[0].name!=='delegate_child'||callId!==undefined&&p.calls[0].id!==callId||canonical(p.calls[0].arguments)!==canonical(value))fail('SPECIALIST_SINGLE_CALL_REQUIRED');
+  if(!p||p.kind!=='calls'||p.calls.length!==1||saved.snapshot.cursor!==0||p.calls[0].name!==(selected.execution.schemaVersion==='child-execution@2'?'spawn_child':'delegate_child')||callId!==undefined&&p.calls[0].id!==callId||canonical(p.calls[0].arguments)!==canonical(value))fail('SPECIALIST_SINGLE_CALL_REQUIRED');
   let chosen;try{chosen=select(value,selected);}catch(error){if(error.code==='INVALID_CHILD_EXECUTION_ARGUMENTS'&&inputShapeIssue(value,selected))inputErrors.set(error,canonical(p.calls[0]));throw error;}
   requestedScope(saved,chosen);if(chosen.projection===undefined&&Buffer.byteLength(childMethodQuestion({...chosen,callId:p.calls[0].id}))>16000)fail('CHILD_EXECUTION_INPUT_LIMIT');
   return {saved,token,call:p.calls[0],chosen};
@@ -134,7 +141,7 @@ export function createChildExecutionBinding({store,parentClaim,parentRunId,outpu
   if(fresh.runId!==saved.runId||canonical(fresh.snapshot.proposal)!==canonical(saved.snapshot.proposal)||fresh.snapshot.cursor!==saved.snapshot.cursor||fresh.snapshot.phase!==saved.snapshot.phase)fail('STALE_CHILD_EXECUTION_PARENT');
   if(Date.now()>=fresh.definition.deadlineAt)fail('TIMEOUT');return fresh;
  }
- function admit(saved,call){const rows=executionRows(store,saved,selected);if(rows.some(r=>r.call.id===call.id))fail('CHILD_EXECUTION_ALREADY_ADMITTED');if(rows.some(r=>!['completed','failed'].includes(r.child.status)||r.child.snapshot.phase!=='terminal'||unknown(r.child)))fail('CHILD_EXECUTION_UNSETTLED');return rows;}
+ function admit(saved,call){const rows=executionRows(store,saved,selected);if(rows.some(r=>r.call.id===call.id))fail('CHILD_EXECUTION_ALREADY_ADMITTED');if(rows.some(r=>!['completed','failed','cancelled'].includes(r.child.status)||r.child.snapshot.phase!=='terminal'||r.child.status!=='cancelled'&&unknown(r.child)))fail('CHILD_EXECUTION_UNSETTLED');return rows;}
  // This is a successful local observation of the original owner's exhausted
  // slots, not a Child admission, handoff, source acquisition or retry permission.
  function capacity(saved,call,chosen){
@@ -206,4 +213,79 @@ export function createChildExecutionBinding({store,parentClaim,parentRunId,outpu
   return {schemaVersion:'specialist-group-refusal@1',runId:saved.runId,ownerBinding:childExecutionBinding(selected),groupHash:sha256(canonical(calls)),callIds:calls.map(c=>c.id),ownerCallId:call.id};
  });
  return binding;
+}
+
+// One Session remains the durable owner. This map only coordinates work in the
+// current Worker; original operation receipts, not current status, verify history.
+export function createAsyncChildExecutionBindings({store,parentClaim,parentRunId,outputRoot,gatewayFactory,onCheckpoint,...input}){
+ const selected=scope(input);if(selected.execution.schemaVersion!=='child-execution@2'||typeof parentClaim!=='function'||typeof gatewayFactory!=='function')fail('INVALID_ASYNC_CHILD_EXECUTION');
+ const jobs=new Map();let closing=false,effectsStopped=true;
+ function parent(writable=false){const token=parentClaim(),id=token?.runId??parentRunId;if(!id)fail('CHILD_EXECUTION_PARENT_REQUIRED');const saved=writable?store.readClaim(token):store.inspect(id);parentAuthority(saved,selected);return{saved,token};}
+ function current(name,args,callId,writable=false){const {saved,token}=parent(writable),p=saved.snapshot.proposal,call=p?.calls?.[saved.snapshot.cursor];
+  if(p?.kind!=='calls'||p.calls.length!==1||saved.snapshot.cursor!==0||call?.name!==name||callId!==undefined&&call.id!==callId||canonical(call.arguments)!==canonical(args))fail('ASYNC_CHILD_SINGLE_CALL_REQUIRED');
+  return{saved,token,call};
+ }
+ function target(saved,args){if(!exact(args,Object.hasOwn(args??{},'waitMs')?['childRunId','waitMs']:['childRunId'])||typeof args.childRunId!=='string'||args.waitMs!==undefined&&(!Number.isSafeInteger(args.waitMs)||args.waitMs<0||args.waitMs>1000))fail('INVALID_ASYNC_CHILD_ARGUMENTS');
+  const rows=executionRows(store,saved,selected),row=rows.find(r=>r.child.runId===args.childRunId);if(!row)fail('CHILD_EXECUTION_NOT_FOUND');return row;
+ }
+ const control=(action,row)=>({schemaVersion:'async-child-control@1',action,parentRunId:row.child.parentRunId,rootId:row.child.rootId,childRunId:row.child.runId,spawnCallId:row.call.id,definitionSha256:sha256(canonical(row.child.definition))});
+ async function start(saved,token,call,chosen,existing){
+  const key=taskId(call.id);if(jobs.has(key))return jobs.get(key).admitted;
+  if(closing)fail('ASYNC_CHILD_OWNER_CLOSED');parent(true);
+  if(existing?.status!=='active'&&existing)return existing;
+  if(existing?.owner&&existing.leaseUntil>Date.now())return existing;
+  const gateway=gatewayFactory();if(gateway?.mode!==saved.definition.bindings.gateway.mode||typeof gateway?.next!=='function')fail('CHILD_EXECUTION_GATEWAY_BINDING');
+  const controller=new AbortController();let resolveAdmission,rejectAdmission;
+  const admitted=new Promise((resolve,reject)=>{resolveAdmission=resolve;rejectAdmission=reject;});
+  const job={controller,admitted,runId:existing?.runId,promise:null};jobs.set(key,job);
+  job.promise=runMethodChild({...chosen,...(chosen.projection===undefined?{}:{hostProjection:saved.definition.config.hostProjection,contextBytes:saved.definition.config.contextBytes}),taskId:key,callId:call.id,gateway,outputRoot,signal:controller.signal,durable:{store,...(existing?{runId:existing.runId}:{}),parentRunId:saved.runId,parentClaim:token,rootId:saved.rootId,grantId:saved.definition.grantId,bindings:childBindings(saved.definition.bindings),rootLimits:saved.definition.rootLimits,deadlineAt:existing?.definition.deadlineAt??Math.min(saved.definition.deadlineAt,Date.now()+chosen.method.limits.timeoutMs),onClaim:claim=>{job.runId=claim.runId;resolveAdmission(store.inspect(claim.runId));},onCheckpoint}}).then(out=>{if(out.interruption?.effectsStopped===false)effectsStopped=false;if(!job.runId)rejectAdmission(Object.assign(new Error('CHILD_ADMISSION_FAILED'),{code:out.code??'CHILD_ADMISSION_FAILED'}));return out;},error=>{rejectAdmission(error);return{status:'failed',code:error.code??'CHILD_EXECUTION_FAILED'};}).finally(()=>{jobs.delete(key);});
+  return admitted;
+ }
+ async function observe(context,args,signal){let row=target(context.saved,args),end=Date.now()+(args.waitMs??0);
+  if(row.child.status==='active')await start(context.saved,context.token,row.call,row.chosen,row.child);
+  while(row.child.status==='active'&&Date.now()<end){signal?.throwIfAborted();parent(true);await waitForLease(Math.max(1,Math.min(25,end-Date.now())),undefined,{signal});row=target(context.saved,args);if(row.child.status==='active'&&!jobs.has(taskId(row.call.id)))await start(context.saved,context.token,row.call,row.chosen,row.child);}
+  row=target(context.saved,args);const c=row.child;
+  const result=c.status==='cancelled'||['completed','failed'].includes(c.status)&&!unknown(c)?await handoff(context.saved,c,row.call,row.chosen,selected):{sources:[]};
+  return{...result,childControl:{...control('inspect',row),status:c.status,phase:c.snapshot.phase,code:c.snapshot.code,gatewayOutcome:c.snapshot.gatewayOutcome??'legacy-unspecified',unknownEffects:structuredClone(c.snapshot.unknownEffects),partialEffects:structuredClone(c.snapshot.partialEffects),semanticStatus:'unreviewed'}};
+ }
+ const definitions=[
+  {name:'spawn_child',description:'Start one independently scoped read-only Child and return its stable reference. Use inspect_child to obtain original results; admission is not completion. Root budget is shared.',parameters:{type:'object',properties:{methodId:{type:'string',enum:selected.execution.methods.map(m=>m.id)},question:{type:'string'},documents:{type:'array',items:{type:'string',enum:selected.documents},minItems:1,uniqueItems:true}},required:['methodId','question','documents'],additionalProperties:false}},
+  {name:'inspect_child',description:'Observe one original Child. Optional bounded wait does not grant budget or retry unknown work. Historical observations remain immutable; only completed source handoffs contain evidence.',parameters:{type:'object',properties:{childRunId:{type:'string'},waitMs:{type:'integer',minimum:0,maximum:1000}},required:['childRunId'],additionalProperties:false}},
+  {name:'cancel_child',description:'Cancel one original Child, not the Root. No answer or source is adopted. Unknown remote outcomes remain charged and are not replayed.',parameters:{type:'object',properties:{childRunId:{type:'string'}},required:['childRunId'],additionalProperties:false}}
+ ];
+ const bindings=definitions.map(def=>{
+  async function execute(args,{callId,signal}){const context=current(def.name,args,callId,true);const prior=store.childOperation(context.saved.runId,callId);if(prior)return prior.value;
+   let row,value;
+   if(def.name==='spawn_child'){
+    const chosen=select(args,selected);requestedScope(context.saved,chosen);const rows=executionRows(store,context.saved,selected);row=rows.find(r=>r.call.id===callId);
+    if(!row){if(rows.length>=selected.execution.maxChildren)fail('CHILD_EXECUTION_LIMIT');if(rows.filter(r=>r.child.status==='active').length>=selected.execution.maxConcurrent)fail('CHILD_CONCURRENCY_LIMIT');const child=await start(context.saved,context.token,context.call,chosen);row={child,call:context.call,chosen};}
+    value={sources:[],childControl:{...control('spawn',row),status:'admitted'}};
+   }else{
+    row=target(context.saved,args);
+    if(def.name==='cancel_child'){if(Object.hasOwn(args,'waitMs'))fail('INVALID_ASYNC_CHILD_ARGUMENTS');store.cancelChild(context.saved.runId,row.child.runId);jobs.get(taskId(row.call.id))?.controller.abort(Object.assign(new Error('CANCELLED'),{code:'CANCELLED'}));row=target(context.saved,args);value={sources:[],childControl:{...control('cancel',row),status:row.child.status,gatewayOutcome:row.child.snapshot.gatewayOutcome??'legacy-unspecified',unknownEffects:structuredClone(row.child.snapshot.unknownEffects),partialEffects:structuredClone(row.child.snapshot.partialEffects),remoteTerminationConfirmed:false}};
+    }else value=await observe(context,args,signal);
+   }
+   parent(true);return store.commitChildOperation(context.token,{call:context.call,childRunId:row.child.runId,value}).value;
+  }
+  return {...def,sourceResults:true,recoveryVersion:'async-child-operation@1',validate(args){const {saved}=current(def.name,args);if(def.name==='spawn_child'){const chosen=select(args,selected);requestedScope(saved,chosen);}else{target(saved,args);if(def.name==='cancel_child'&&Object.hasOwn(args,'waitMs'))fail('INVALID_ASYNC_CHILD_ARGUMENTS');}},execute,reconcile:execute,
+   async verifyResult(value,{call}={}){if(!call||call.name!==def.name)fail('ASYNC_CHILD_RECEIPT_MISMATCH');const {saved}=parent();const receipt=store.childOperation(saved.runId,call.id);if(!receipt||canonical(receipt.call)!==canonical(call)||canonical(receipt.value)!==canonical(value))fail('ASYNC_CHILD_RECEIPT_MISMATCH');}}
+ });
+ const settle=async({phase,signal,interrupted}={})=>{
+  if(phase==='before-final'){
+   const {saved,token}=parent();
+   for(const row of executionRows(store,saved,selected))if(row.child.status==='active')await start(saved,token,row.call,row.chosen,row.child);
+   while(store.listChildren(saved.runId).some(c=>c.status==='active')){signal?.throwIfAborted();parent(true);await waitForLease(25,undefined,{signal});for(const row of executionRows(store,saved,selected))if(row.child.status==='active'&&!jobs.has(taskId(row.call.id)))await start(saved,token,row.call,row.chosen,row.child);}
+   return;
+  }
+  closing=true;
+  try{
+   if(parentClaim()?.runId??parentRunId){const {saved}=parent();if(!interrupted)for(const child of store.listChildren(saved.runId))if(child.status==='active')store.cancelChild(saved.runId,child.runId);}
+  }finally{
+  const pending=[...jobs.values()];
+  for(const job of pending)job.controller.abort(Object.assign(new Error(interrupted?'HOST_STOPPED':'CANCELLED'),{code:interrupted?'HOST_STOPPED':'CANCELLED'}));
+  await Promise.all(pending.map(j=>j.promise));
+  }
+  return{effectsStopped};
+ };
+ for(const b of bindings)asyncOwners.set(b,settle);return bindings;
 }

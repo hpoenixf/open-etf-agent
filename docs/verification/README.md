@@ -246,3 +246,8 @@ The later [main CI failure](https://github.com/hpoenixf/open-etf-agent/actions/r
 ## v0.15 · Serial specialist Child
 
 [Contract, failures and boundaries](../../openspec/changes/serial-specialist-child/evidence.md) · [Final source and structured full-suite qualification](../../openspec/changes/serial-specialist-child/final-verification.safe.json) · [Three real-call batch summaries](../../openspec/changes/serial-specialist-child/live-evidence.safe.json). The first two failures remain; the third mechanism and bounded synthetic-source comparison passed. Of 10 attempts, 9 responses explicitly report zero Go balance charge and 1 has unknown usage/cost. This does not upgrade the older Child coverage receipt or certify general semantics or live recovery.
+
+
+## v0.30 Child lifecycle
+
+[10/10 corrected-candidate Runtime cohort, original failed batch and quality limits](v030-release.md).
