@@ -62,3 +62,5 @@ node src/conversation-cli.mjs revoke --project PROJECT --conversation fees --inp
 - 整个项目一起备份；其中可能含私人资料，不当作公开代码上传。
 
 Open 使用自己的安全检查点和同 Run Interaction 合同，不宣称逐项复制 private 所有 Main 终态与历史结果结构。每个固定候选单独验收；旧十题不能覆盖新增 Owner 改动。
+
+questions 命令支持可选的 `--limit 1..50`（默认 50）与 `--after CURSOR`。将返回的 `nextAfter` 原样传入读取下一页，直到 null；这些冷读不会调用模型，也不会采用回复。

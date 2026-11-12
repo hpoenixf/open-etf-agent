@@ -62,3 +62,5 @@ Changing project configuration is not this operation: it normally affects future
 - Back up the entire project together. Conversation and Session data may contain private source material and must not be uploaded as public code.
 
 Open uses its own safe checkpoint and same-Run Interaction contracts. It does not claim to reproduce every private Main terminal status or historical-result structure. Qualification is recorded separately for each fixed candidate; earlier ten-task cohorts do not qualify new Owner changes.
+
+The questions command accepts optional `--limit 1..50` (default 50) and `--after CURSOR`. Pass the returned `nextAfter` unchanged to read the next page; stop at null. These cold reads do not execute the model or adopt a response.

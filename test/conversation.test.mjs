@@ -185,3 +185,25 @@ test('unproven plugin effects cannot be repeated by completed or interrupted Con
  // Ordinary new intent still admits; this is not a blanket plugin ban.
  await submitConversationMessage({...f,messageId:'new-intent',text:'An explicitly new comparison.'});
 });
+test('cold questions CLI pages persisted clarification history without dispatch',async()=>{
+ const {respondConversationQuestion,listConversationQuestions}=await import('../src/conversation.mjs');
+ const {execFile}=await import('node:child_process'),{promisify}=await import('node:util');
+ const f=await setup(),p=await inspectResearchProject(f);
+ await updateResearchProject({projectDir:f.projectDir,expectedConfigSha256:p.configSha256,config:{...config,capabilities:['report','response'],interaction:{schemaVersion:'human-interaction@1'}}});
+ await submitConversationMessage({...f,messageId:'ask',text:'Clarify fund and period.'});
+ let calls=0;const g={mode:'fixture',async next(input){calls++;const count=input.messages.filter(m=>m.role==='tool'&&m.result.value?.kind==='human-interaction@1').length;return {kind:'calls',calls:[{id:'ask-'+count,name:'ask_response',arguments:{question:count?'Which period?':'Which fund?'}}]};}};
+ await workConversationMessage({...f,messageId:'ask',gateway:g});
+ const first=(await listConversationQuestions({...f,messageId:'ask'})).items[0];
+ await respondConversationQuestion({...f,messageId:'ask',questionId:first.questionId,responseId:'fund',text:'Alpha'});
+ await workConversationMessage({...f,messageId:'ask',gateway:g});
+ const before=calls,run=promisify(execFile),base=['src/conversation-cli.mjs','questions','--project',f.projectDir,'--conversation',f.conversationId,'--message','ask'];
+ const page=JSON.parse((await run(process.execPath,[...base,'--limit','1'])).stdout);
+ assert.equal(page.items.length,1);assert.ok(page.nextAfter);assert.equal(page.items[0].questionId,first.questionId);
+ const next=JSON.parse((await run(process.execPath,[...base,'--limit','1','--after',page.nextAfter])).stdout);
+ assert.equal(next.items.length,1);assert.equal(next.items[0].question,'Which period?');assert.equal(next.nextAfter,null);
+ assert.equal(calls,before);
+ for(const value of ['0','51','1.5','NaN','1e0'])await assert.rejects(run(process.execPath,[...base,'--limit',value]));
+ await assert.rejects(run(process.execPath,[...base,'--after','x'.repeat(401)]));
+ await assert.rejects(run(process.execPath,[...base,'--limit','1','--limit','2']));
+ await assert.rejects(run(process.execPath,['src/conversation-cli.mjs','list','--project',f.projectDir,'--conversation',f.conversationId,'--limit','1']));
+});
