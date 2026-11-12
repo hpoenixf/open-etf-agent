@@ -2,6 +2,10 @@
 
 [项目首页](../README.zh-CN.md) · [English](module-guide.md)
 
+## 显式研究对话（v0.29）
+
+[命令、恢复与权限边界](conversations.zh-CN.md) · [本轮验证](verification/v029-release.md)
+
 ## 显式报告复核（v0.28）
 
 复核冻结报告与原始来源，给出建议而不改写或认证报告。[命令与边界](report-review.zh-CN.md)。
@@ -278,6 +282,8 @@ node dist/src/session-cli.mjs publication-revisions --session runs/publication-d
 
 
 <a id="versions"></a>
+
+[v0.29 Conversation](conversations.zh-CN.md) · [v0.28 Review](report-review.md) · [v0.27 Profiles](v027-specialist-profiles.md)
 
 **v0.26 提供有界 Web 证据采集**：显式获取公开静态页面，保留原件与来源信息，再沿原 Report/Reader 消费冻结分页。[用法](web-sources.zh-CN.md) · [本次 Runtime 9/10 与保留失败](verification/v026-release.zh-CN.md)。一题仍为 unknown，模型内容瑕疵独立保留。新 Web 页为 128 KiB，新 Project 默认序列化上下文为 1 MiB，不是模型 token 窗口。不提供自主爬取或浏览器渲染。
 

@@ -2,6 +2,10 @@
 
 [Project home](../README.md) · [简体中文](module-guide.zh-CN.md)
 
+## Explicit research conversations (v0.29)
+
+[Commands, recovery and permission boundaries](conversations.md) · [Qualification](verification/v029-release.md)
+
 ## Explicit report Review (v0.28)
 
 Review frozen report and source text without rewriting or certifying the report. [Commands and boundaries](report-review.md).
@@ -281,6 +285,8 @@ This is a real local SQLite/process flow with synthetic replies and no model cal
 
 
 <a id="versions"></a>
+
+[v0.29 Conversation](conversations.md) · [v0.28 Review](report-review.md) · [v0.27 Profiles](v027-specialist-profiles.md)
 
 **v0.26 adds bounded Web evidence acquisition**: explicitly acquire public static pages, preserve originals and provenance, and consume frozen pages through the existing Report/Reader path. [Usage](web-sources.md) · [Dated Runtime 9/10 and retained failures](verification/v026-release.md). One task remains unknown; model content defects remain separate. New Web pages use 128 KiB and new Projects default to 1 MiB serialized context, not a model token window. No autonomous crawl or browser rendering.
 

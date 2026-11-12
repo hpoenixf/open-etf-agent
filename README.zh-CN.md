@@ -71,11 +71,12 @@ npm run demo -- --case document-compare
 <a id="versions"></a>
 ## 最近三个模块
 
+**v0.29 新增显式研究对话**：区分新消息、持久澄清和明确继续；保留原报告、来源、权限与可恢复执行身份。支持安全暂停恢复、单一目标交接与撤销；历史计算只做有边界的投影，不等于当前证据。[命令与边界](docs/conversations.zh-CN.md) · [本轮真实 Runtime 10/10 与质量边界](docs/verification/v029-release.md)。
+
 **v0.28 提供显式报告复核**：读取冻结的报告与原始来源，给出建议，不改写原文。复核分别判断材料支持与引用对应关系，保留原始输出并支持重启读回。[命令与边界](docs/report-review.zh-CN.md)。复核建议可能出错，不是报告认证。
 
 **v0.27 提供项目专家配置**：任务准入时选择操作者编写的准确配置修订与预设，再由原有受限 Child Owner 执行。[范围、命令与边界](docs/v027-specialist-profiles.zh-CN.md)。配套 Host 工作视图、报告工件合同与 Go 协议适配保留原始来源、Root 预算和恢复身份，不保证答案质量。
 
-**v0.26 提供有界 Web 证据采集**：显式获取公开静态页面，保留原件与来源信息，再沿原 Report/Reader 消费冻结分页。[用法](docs/web-sources.zh-CN.md) · [本次 Runtime 9/10 与保留失败](docs/verification/v026-release.zh-CN.md)。一题仍为 unknown，模型内容瑕疵独立保留。新 Web 页为 128 KiB，新 Project 默认序列化上下文为 1 MiB，不是模型 token 窗口。不提供自主爬取或浏览器渲染。
 
 
 **v0.23.1 维护：** 原 Session 心跳覆盖最终收尾，等待期间正确返回持久化取消。[修复、966/966 与证据适用性](docs/verification/v0231-maintenance.zh-CN.md)；原十题分数与后续提供方中断分别保留。
@@ -85,9 +86,9 @@ npm run demo -- --case document-compare
 
 | 模块 | 解决什么 | 运行与核对 |
 | --- | --- | --- |
+| v0.29 · 研究对话 | 明确继续、原始产物、安全恢复与撤销 | [用法与边界](docs/conversations.zh-CN.md) |
 | v0.28 · 报告复核 | 冻结报告与来源、建议性发现和原始读回 | [用法与边界](docs/report-review.zh-CN.md) |
 | v0.27 · 项目专家配置 | 冻结操作者选择，复用原受限 Child 执行链 | [用法与边界](docs/v027-specialist-profiles.zh-CN.md) |
-| v0.26 · Web 证据 | 显式采集、不可变原件与带来源读回 | [用法](docs/web-sources.zh-CN.md) · [证据](docs/verification/v026-release.zh-CN.md) |
 
 [完整固定版本与运行说明](docs/module-guide.zh-CN.md#versions) · [机器可读版本谱系](versions.json) · [GitHub Releases](https://github.com/hpoenixf/open-etf-agent/releases)
 
