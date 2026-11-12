@@ -66,19 +66,18 @@ npm run demo -- --case document-compare
 
 **Ready to use a real model?** Do not add `--live` to the demo command. Use the [research project entry](docs/research-project.md): first import and submit without model calls, then configure your authorized provider and budget. The [report review entry](docs/report-review.md) also distinguishes fixture lifecycle runs from real model judgment.
 
-**v0.30 Child lifecycle release preparation:** fixed-candidate Runtime 10/10; original failures and semantic limitations retained. [Usage](docs/child-lifecycle.md) · [Qualification](docs/verification/v030-release.md). Tag/Release publication is separate.
 
 <a id="versions"></a>
 <a id="latest-three-modules"></a>
 ## Releases and development status
 
-The latest verified formal Release is **[v0.29.0 · Conversation](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.29.0)**, published from merge commit `cb7ebfa`. Its fixed ten-workflow real qualification passed; Runtime completion is not answer-quality certification. [Evidence and quality limits](docs/verification/v029-release.md).
+The latest verified formal Release is **[v0.30.0 · Child lifecycle](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.30.0)**, published from merge commit `8b940515`. Ten independently frozen live-model workflows over synthetic evidence passed; Runtime completion is not answer-quality certification. [Evidence and quality limits](docs/verification/v030-release.md).
 
 | Recent version / status | What it enables | Usage and boundaries |
 | --- | --- | --- |
+| [v0.30 · Child lifecycle](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.30.0) | Original-Session spawn/inspect/cancel, immutable observations, source consumption and cold recovery | [Child lifecycle](docs/child-lifecycle.md) |
 | [v0.29 · Conversation](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.29.0) | Explicit Continue, persisted clarification, safe resume/handoff and revocation with original outputs | [Conversation](docs/conversations.md) |
 | [v0.28 · Report Review](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.28.0) | Advisory findings over frozen report/source text; original report and cold readback remain intact | [Report Review](docs/report-review.md) |
-| [v0.27 · Project specialist profiles](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.27.0) | Freeze profiles/presets at admission and use the original Child execution path | [Specialist Profiles](docs/v027-specialist-profiles.md) |
 
 [All fixed versions and commands](docs/module-guide.md#versions) · [Version lineage](versions.json) · [All releases](https://github.com/hpoenixf/open-etf-agent/releases) · [Verification records](docs/verification/README.md)
 

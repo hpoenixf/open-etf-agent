@@ -1,8 +1,8 @@
 [English](child-lifecycle.md) | **简体中文**
 
-# 异步 Child 生命周期（0.30 候选）
+# 异步 Child 生命周期（v0.30）
 
-这是开发候选，尚未发布，也未完成真实模型验收。原有 `child-execution@1` 的[串行 Child 契约](child-execution.zh-CN.md)保持支持。
+已作为 v0.30.0 发布并通过有边界的 Runtime 验收；语义质量限制见下方修复版独立证据。原有 `child-execution@1` 的[串行 Child 契约](child-execution.zh-CN.md)保持支持。
 
 ## 用户价值
 

@@ -66,19 +66,18 @@ npm run demo -- --case document-compare
 
 **准备接入真实模型？** 不要给演示命令加 `--live`。使用[研究项目入口](docs/research-project.zh-CN.md)，先完成零模型资料导入与提交，再配置自己已授权的提供方和预算；[报告复核入口](docs/report-review.zh-CN.md)也区分 fixture 生命周期与真实模型判断。
 
-**v0.30 Child 生命周期发布准备：**固定候选 Runtime 10/10，保留原失败与语义质量边界。[用法](docs/child-lifecycle.zh-CN.md) · [资格证据](docs/verification/v030-release.md)。Tag/Release 发布另行核验。
 
 <a id="versions"></a>
 <a id="最近三个模块"></a>
 ## 最近版本与开发状态
 
-最新已核实正式 Release 为 **[v0.29.0 · Conversation](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.29.0)**，发布自合并提交 `cb7ebfa`。固定十个真实工作流验证已通过；Runtime 完成不等于答案质量认证。[本轮证据与质量边界](docs/verification/v029-release.md)。
+最新已核实正式 Release 为 **[v0.30.0 · Child 生命周期](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.30.0)**，发布自合并提交 `8b940515`。独立冻结十个真实模型合成材料工作流通过；Runtime 完成不等于答案质量认证。[证据与质量边界](docs/verification/v030-release.md)。
 
 | 最近版本 / 状态 | 能做什么 | 用法与边界 |
 | --- | --- | --- |
+| [v0.30 · Child 生命周期](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.30.0) | 原 Session 中独立 spawn/inspect/cancel、不可变观察、来源消费与冷恢复 | [Child 生命周期](docs/child-lifecycle.zh-CN.md) |
 | [v0.29 · Conversation](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.29.0) | 明确继续、持久澄清、安全恢复、交接与撤销，保留原始产物 | [研究对话](docs/conversations.zh-CN.md) |
 | [v0.28 · 报告复核](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.28.0) | 根据冻结报告和来源给出建议，保留原报告与冷读 | [Report Review](docs/report-review.zh-CN.md) |
-| [v0.27 · 项目专家配置](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.27.0) | 在准入时冻结 profile / preset，通过原 Child 执行 | [Specialist Profiles](docs/v027-specialist-profiles.zh-CN.md) |
 
 [全部固定版本与命令](docs/module-guide.zh-CN.md#versions) · [版本谱系](versions.json) · [全部 Release](https://github.com/hpoenixf/open-etf-agent/releases) · [验证记录](docs/verification/README.zh-CN.md)
 

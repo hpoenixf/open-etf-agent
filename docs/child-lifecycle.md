@@ -1,8 +1,8 @@
 **English** | [简体中文](child-lifecycle.zh-CN.md)
 
-# Asynchronous Child lifecycle (0.30 candidate)
+# Asynchronous Child lifecycle (v0.30)
 
-This is a development candidate, not a released or real-model-qualified version. The [serial Child contract](child-execution.md) remains supported unchanged by `child-execution@1`.
+Released as v0.30.0 with bounded Runtime qualification; see the corrected-candidate evidence below for semantic limitations. The [serial Child contract](child-execution.md) remains supported unchanged by `child-execution@1`.
 
 ## User outcome
 
