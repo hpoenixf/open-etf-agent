@@ -13,9 +13,20 @@
 [最近版本](#versions) · [架构职责](#architecture) · [适用与安全边界](#scope) · [完整资料](#documentation) · [反馈与参与](#反馈与参与) · [微信公众号](#wechat-public-account)
 
 <a id="reading"></a>
-**最近模块文章**（按模块演进排序，不代表文章发布日期）：
+## 从问题进入，而不是从版本号开始
 
-[v0.18 · 定时研究：会话结束后继续](https://hpoenixf.com/eff-agent-article/articles/agent-autonomous-scheduled-research) · [v0.17 · 模型返回 HTTP 200，为什么下一次还要排队](https://hpoenixf.com/eff-agent-article/articles/agent-provider-admission-capacity-lease) · [v0.16 · RAG：文档撤权与历史回放](https://hpoenixf.com/eff-agent-article/articles/027-rag-revocation-publish-replay)
+| 你想做什么 | 先读 / 先运行 |
+| --- | --- |
+| 看懂 Agent 的一次工作 | [十五分钟入门](https://hpoenixf.com/eff-agent-article/articles/agent-in-15-minutes) → [运行身份全景](https://hpoenixf.com/eff-agent-article/articles/agent-task-session-run-worker-schedule) |
+| 用自己的资料做研究 | [研究项目练手篇](https://hpoenixf.com/eff-agent-article/articles/open-etf-agent-research-project-workshop) → [项目 CLI](docs/research-project.zh-CN.md) |
+| 查证、分工，再复核报告 | [报告复核练手篇](https://hpoenixf.com/eff-agent-article/articles/open-etf-agent-report-review-workshop) → [专家配置](docs/v027-specialist-profiles.zh-CN.md) · [报告复核](docs/report-review.zh-CN.md) |
+| 核对文章到底实现了什么 | [固定版本覆盖记录](docs/articles-and-code.zh-CN.md) · [全部文章](https://hpoenixf.com/eff-agent-article/open-etf-agent) |
+
+文章讲解的系统可能比公开模块更完整；覆盖记录是固定版本的历史资格，不是最新 main 的能力总表。
+
+**近期更新的阅读素材**
+
+[Spec 驱动的 Agent 研发全景](https://hpoenixf.com/eff-agent-article/articles/agent-spec-driven-development-panorama) · [Agent 运行身份全景](https://hpoenixf.com/eff-agent-article/articles/agent-task-session-run-worker-schedule) · [持续研究半小时的工程实践](https://hpoenixf.com/eff-agent-article/articles/agent-half-hour-research-engineering-practice)
 
 <p align="center">
   <a href="https://github.com/hpoenixf/open-etf-agent/actions/workflows/verify.yml?query=branch%3Amain"><img src="https://github.com/hpoenixf/open-etf-agent/actions/workflows/verify.yml/badge.svg?branch=main" alt="Verify (main)" height="20" /></a>
@@ -37,7 +48,7 @@
 需要 **Node.js 26.8.1–26.x** 与 npm。默认示例不需要模型密钥；安装依赖可能访问 npm，安装后的示例离线运行。
 
 ```sh
-# 默认 main 已包含最新已验证稳定代码，无需切换阶段分支
+# main 是持续演进的开发分支；复现固定版本时使用对应 Release tag
 git clone https://github.com/hpoenixf/open-etf-agent.git
 cd open-etf-agent
 
@@ -51,46 +62,23 @@ npm run demo -- --case document-compare
 
 [另有 7 个机制示例 →](docs/module-guide.zh-CN.md#继续体验另外七类示例)
 
-**交付长什么样？** 以下保留 [v0.5 合成示例回执](https://github.com/hpoenixf/open-etf-agent/blob/05c0dd2dc550f4f7e5da034340ff5c3159768fcf/docs/verification/v05-demo-receipts.json)中 T1 的历史字段节选，不是新的运行结果。v0.6 在此基础上新增不可变 Artifact / Revision ID 与附件身份；完整记录见 [v0.6 交付回读](https://github.com/hpoenixf/open-etf-agent/blob/7480b656b18192e6d6b44aab65255b970d58e6f8/docs/verification/v06-delivery-receipts.safe.json)。
+**运行后看什么？** 打开 CLI 输出目录里的 `report.md`，再用 `manifest.json` 和观察命令追到来源与执行记录。报告是否可读、任务是否完成、结论是否正确是三个不同问题。
 
-```json
-{
-  "caseId": "T1",
-  "status": "completed",
-  "semanticStatus": "unreviewed",
-  "receipt": {
-    "path": "report.md",
-    "bytes": 933,
-    "mediaType": "text/markdown; charset=utf-8"
-  }
-}
-```
-
-`completed` 说明这次执行完成；`semanticStatus: unreviewed` 仍保留答案语义待复核。完整回执还包括文件哈希与实际原文引用，测试会在进程退出后重新读取文件。
+**准备接入真实模型？** 不要给演示命令加 `--live`。使用[研究项目入口](docs/research-project.zh-CN.md)，先完成零模型资料导入与提交，再配置自己已授权的提供方和预算；[报告复核入口](docs/report-review.zh-CN.md)也区分 fixture 生命周期与真实模型判断。
 
 <a id="versions"></a>
-## 最近三个模块
+<a id="最近三个模块"></a>
+## 最近版本与开发状态
 
-**v0.29 新增显式研究对话**：区分新消息、持久澄清和明确继续；保留原报告、来源、权限与可恢复执行身份。支持安全暂停恢复、单一目标交接与撤销；历史计算只做有边界的投影，不等于当前证据。[命令与边界](docs/conversations.zh-CN.md) · [本轮真实 Runtime 10/10 与质量边界](docs/verification/v029-release.md)。
+最新已核实正式 Release 仍为 **[v0.28.0](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.28.0)**。本次 **[v0.29 Conversation](https://github.com/hpoenixf/open-etf-agent/pull/5)** 已完成固定十个真实工作流验证，等待合并/Release 最终状态核验；版本元数据不等于正式发布。[本轮证据与质量边界](docs/verification/v029-release.md)。
 
-**v0.28 提供显式报告复核**：读取冻结的报告与原始来源，给出建议，不改写原文。复核分别判断材料支持与引用对应关系，保留原始输出并支持重启读回。[命令与边界](docs/report-review.zh-CN.md)。复核建议可能出错，不是报告认证。
-
-**v0.27 提供项目专家配置**：任务准入时选择操作者编写的准确配置修订与预设，再由原有受限 Child Owner 执行。[范围、命令与边界](docs/v027-specialist-profiles.zh-CN.md)。配套 Host 工作视图、报告工件合同与 Go 协议适配保留原始来源、Root 预算和恢复身份，不保证答案质量。
-
-
-
-**v0.23.1 维护：** 原 Session 心跳覆盖最终收尾，等待期间正确返回持久化取消。[修复、966/966 与证据适用性](docs/verification/v0231-maintenance.zh-CN.md)；原十题分数与后续提供方中断分别保留。
-
-
-**2026-11-02 底座修复：**[工作输入准入、取消事实、Child 结算与无收益摘要预检查](docs/verification/foundation-repair-20261102.md)。零真实模型调用的回归已通过；不是新增 Release，也不是新一批实测资格。
-
-| 模块 | 解决什么 | 运行与核对 |
+| 最近版本 / 状态 | 能做什么 | 用法与边界 |
 | --- | --- | --- |
-| v0.29 · 研究对话 | 明确继续、原始产物、安全恢复与撤销 | [用法与边界](docs/conversations.zh-CN.md) |
-| v0.28 · 报告复核 | 冻结报告与来源、建议性发现和原始读回 | [用法与边界](docs/report-review.zh-CN.md) |
-| v0.27 · 项目专家配置 | 冻结操作者选择，复用原受限 Child 执行链 | [用法与边界](docs/v027-specialist-profiles.zh-CN.md) |
+| v0.29 · Conversation（待发布） | 明确继续、持久澄清、安全恢复、交接与撤销，保留原始产物 | [研究对话](docs/conversations.zh-CN.md) |
+| [v0.28 · 报告复核](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.28.0) | 根据冻结报告和来源给出建议，保留原报告与冷读 | [Report Review](docs/report-review.zh-CN.md) |
+| [v0.27 · 项目专家配置](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.27.0) | 在准入时冻结 profile / preset，通过原 Child 执行 | [Specialist Profiles](docs/v027-specialist-profiles.zh-CN.md) |
 
-[完整固定版本与运行说明](docs/module-guide.zh-CN.md#versions) · [机器可读版本谱系](versions.json) · [GitHub Releases](https://github.com/hpoenixf/open-etf-agent/releases)
+[全部固定版本与命令](docs/module-guide.zh-CN.md#versions) · [版本谱系](versions.json) · [全部 Release](https://github.com/hpoenixf/open-etf-agent/releases) · [验证记录](docs/verification/README.zh-CN.md)
 
 <a id="architecture"></a>
 ## 架构：沿一条执行链理解
@@ -117,13 +105,11 @@ npm run demo -- --case document-compare
 - **授权必须显式：** 可信 Plugin 是有本地进程权限的 JavaScript，不是沙箱。PDF 解析器也不是恶意文件安全沙箱；不包含 OCR、视觉/表格理解或活跃 PDF 恢复。示例不暗示已具备 Python 隔离或更广泛 Web 能力。
 - **尊重原身份与副作用：** 未知已派发请求不自动重试，宿主停止不等于用户取消；SQLite fence 不提供通用外部恰好一次保证。[升级前完成或隔离不兼容的活跃 Run](docs/upgrade-guide.md)。
 
-**v0.15 真实机制证据：** [三批记录](openspec/changes/serial-specialist-child/live-evidence.safe.json)：共 10 次物理请求，9 个返回明确 Go 余额收费为 0，1 次响应的用量与费用未知，未视为免费或退款。仅合成来源的有界核对通过，不代表通用模型质量、金融语义或 live 恢复认证。未知已派发请求不自动重试；旧 WIP 模板的活动 Run 不承诺跨模板恢复。默认公开 CLI 仍为离线 fixture，不提供模型密钥参数。
-
 <a id="live-evidence"></a>
-**真实模型调用：** [v0.1–v0.5 的 16 次历史 HTTP 请求](docs/module-guide.zh-CN.md#live-evidence)与当前离线演示分开；HTTP 200 或保存报告都不是任务质量认证。
+**真实验收与演示分开：** [v0.28 固定合成材料的真实模型复核记录](docs/verification/v028-release.md)只证明所列 Runtime 路径，保留模型判断局限；不代表金融准确率或生产资格。更早的成功、失败和 unknown 均保留在[历史证据索引](docs/verification/README.zh-CN.md)。
 
 <a id="live-entry"></a>
-**受限 live 入口：** 演示 CLI 拒绝 `--live`。[独立 runner](docs/live-validation.md)要求你自己的 provider、数据、费用授权、固定输入与共享预算；不继承别人的凭据或授权，未知结果停止执行。
+**选择正确执行入口：** 演示 CLI 拒绝 `--live`，项目 CLI 可以在显式授权后接入真实提供方；[独立验证 runner](docs/live-validation.md)用于固定输入的验证，不是默认产品入口。不要继承别人的密钥、数据或费用授权。
 
 <a id="documentation"></a>
 ## 完整资料入口
