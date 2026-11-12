@@ -19,3 +19,7 @@ Historical calculations remain synthetic, historical-only, verified against the 
 ## 中文摘要
 
 本轮固定十个真实工作流完整通过 10/10，共 60 次真实模型请求，全部确认为既有 Go 套餐、零额外费用。每项均包含原始研究及后续对话、独立冷读取、原报告不变；旧 unknown 与失败批次保留。该成绩仅说明有边界的 Runtime 与交付合同，不代表内容质量满分。合成数据、历史证据、日期和权限边界仍有效；发布 tag/Release 状态须另行核实。
+
+## Final CI fixture observation
+
+CI 43186501666 retained one failure: the Child reconciliation test used a 150 ms real lease and its initial setup took 177 ms, producing STALE_WRITER before the intended interrupted checkpoint. The test now allows a 1,500 ms real lease while requiring at least 1,000 ms of actual reconciliation wait, a new fence and no repeated Child model calls. Production lease logic is unchanged; the real Conversation cohort remains bound to unchanged production source.
