@@ -85,6 +85,9 @@ function executionRows(store,parent,selected){
 function unknown(child){return child.snapshot.unknownEffects.length>0||['MODEL_OUTCOME_UNKNOWN','TOOL_OUTCOME_UNKNOWN'].includes(child.snapshot.code)||child.snapshot.gatewayOutcome==='unknown'||(child.snapshot.gatewayOutcome===undefined&&child.status!=='completed'&&Boolean(child.snapshot.working));}
 async function handoff(parent,child,call,chosen,selected){
  if(child.status==='active'||child.snapshot.phase!=='terminal')fail('CHILD_EXECUTION_UNSETTLED');
+ // Cancellation is a control observation, never a derived answer or source handoff.
+ // Unknown dispatch remains explicit and budgeted; no cancelled execution is replayed.
+ if(child.status==='cancelled')return {sources:[],child:{schemaVersion:'child-execution-handoff@1',parentRunId:parent.runId,rootId:child.rootId,runId:child.runId,taskId:taskId(call.id),callId:call.id,binding:childExecutionBinding(selected),methodDescriptor:chosen.method,documents:chosen.documents,status:'cancelled',code:'CANCELLED',derived:true,summary:'',controlOnly:true,gatewayOutcome:child.snapshot.gatewayOutcome??'legacy-unspecified',unknownEffects:structuredClone(child.snapshot.unknownEffects),limitations:['child cancelled; no answer or source is adopted','remote termination is not confirmed; unknown dispatch and budget usage remain retained'],partialEffects:structuredClone(child.snapshot.partialEffects),mode:child.definition.bindings.gateway.mode,semanticStatus:'unreviewed'}};
  if(unknown(child))fail('CHILD_EXECUTION_EFFECT_UNKNOWN');
  const out=child.snapshot.outcome;
  if(!['completed','failed'].includes(child.status)||!out||out.runId!==child.runId||out.rootId!==child.rootId||out.directory!==child.directory||out.taskId!==taskId(call.id)||out.status!==child.status||out.code!==child.snapshot.code)fail('CHILD_EXECUTION_OUTCOME_UNAVAILABLE');
@@ -109,12 +112,12 @@ export async function inspectChildExecutions({store,parentRunId,...input}){
   const committed=parent.snapshot.result?.callId===call.id&&parent.snapshot.result.status==='succeeded'?parent.snapshot.result:null;
   if(consumed.length>1)fail('CHILD_EXECUTION_CONSUMPTION_IDENTITY');
   let result=null;
-  if(['completed','failed'].includes(child.status)&&!unknown(child))result=await handoff(parent,child,call,chosen,selected);
+  if(child.status==='cancelled'||['completed','failed'].includes(child.status)&&!unknown(child))result=await handoff(parent,child,call,chosen,selected);
   if(consumed.length||committed){if(!result)fail('CHILD_EXECUTION_CONSUMPTION_IDENTITY');for(const r of [...consumed.map(m=>m.result),...(committed?[committed]:[])])if(canonical(r.value?.child)!==canonical(result.child)||canonical(r.value?.sources)!==canonical(result.sources))fail('CHILD_EXECUTION_CONSUMPTION_IDENTITY');}
   items.push({runId:child.runId,parentRunId:parent.runId,rootId:child.rootId,callId:call.id,taskId:child.definition.config.taskId,methodId:chosen.method.id,documents:chosen.documents,status:child.status,phase:child.snapshot.phase,code:child.snapshot.code,deadlineAt:child.definition.deadlineAt,rounds:child.snapshot.rounds,toolsDispatched:child.snapshot.toolsDispatched,gatewayOutcome:child.snapshot.gatewayOutcome??'legacy-unspecified',unknownEffects:structuredClone(child.snapshot.unknownEffects),consumption:consumed.length?'consumed':committed?'committed-not-consumed':'not-consumed',...(result?{result}:{})});
  }
  const remainingChildren=Math.max(0,selected.execution.maxChildren-items.length);
- const admissionBlocked=parent.status!=='active'||parent.rootStatus!=='active'?'parent-terminal':Date.now()>=parent.definition.deadlineAt?'deadline-expired':items.some(i=>i.status==='active'||i.gatewayOutcome==='unknown'||i.unknownEffects.length)?'child-unsettled':remainingChildren===0?'execution-limit':null;
+ const admissionBlocked=parent.status!=='active'||parent.rootStatus!=='active'?'parent-terminal':Date.now()>=parent.definition.deadlineAt?'deadline-expired':items.some(i=>i.status==='active'||i.status!=='cancelled'&&(i.gatewayOutcome==='unknown'||i.unknownEffects.length))?'child-unsettled':remainingChildren===0?'execution-limit':null;
  return {schemaVersion:'child-execution-history@1',parentRunId:parent.runId,rootId:parent.rootId,maxChildren:selected.execution.maxChildren,remainingChildren,admissionBlocked,rootUsage:parent.rootUsage,items};
 }
 export function createChildExecutionBinding({store,parentClaim,parentRunId,outputRoot,gatewayFactory,onCheckpoint,...input}){
@@ -134,7 +137,7 @@ export function createChildExecutionBinding({store,parentClaim,parentRunId,outpu
   if(fresh.runId!==saved.runId||canonical(fresh.snapshot.proposal)!==canonical(saved.snapshot.proposal)||fresh.snapshot.cursor!==saved.snapshot.cursor||fresh.snapshot.phase!==saved.snapshot.phase)fail('STALE_CHILD_EXECUTION_PARENT');
   if(Date.now()>=fresh.definition.deadlineAt)fail('TIMEOUT');return fresh;
  }
- function admit(saved,call){const rows=executionRows(store,saved,selected);if(rows.some(r=>r.call.id===call.id))fail('CHILD_EXECUTION_ALREADY_ADMITTED');if(rows.some(r=>!['completed','failed'].includes(r.child.status)||r.child.snapshot.phase!=='terminal'||unknown(r.child)))fail('CHILD_EXECUTION_UNSETTLED');return rows;}
+ function admit(saved,call){const rows=executionRows(store,saved,selected);if(rows.some(r=>r.call.id===call.id))fail('CHILD_EXECUTION_ALREADY_ADMITTED');if(rows.some(r=>!['completed','failed','cancelled'].includes(r.child.status)||r.child.snapshot.phase!=='terminal'||r.child.status!=='cancelled'&&unknown(r.child)))fail('CHILD_EXECUTION_UNSETTLED');return rows;}
  // This is a successful local observation of the original owner's exhausted
  // slots, not a Child admission, handoff, source acquisition or retry permission.
  function capacity(saved,call,chosen){

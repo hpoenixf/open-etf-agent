@@ -3,7 +3,7 @@ import {open,constants} from 'node:fs/promises';
 import {resolve,dirname,join} from 'node:path';
 import {pathToFileURL} from 'node:url';
 import {safeDirectory} from './storage-files.mjs';
-import {openProjectSpecialists,maintainResearchUnknownCapacity,releaseResearchUnknownCapacity,createResearchProject,updateResearchProject,inspectResearchProject,readProjectJson,submitResearchTask,workResearchTask,inspectResearchTask,cancelResearchTask,respondResearchTask,readResearchOutput,applyProjectMemoryIntent,approveProjectMemoryIntent,listResearchInteractions,inspectResearchInteraction,inspectResearchChildren} from './research-project.mjs';
+import {openProjectSpecialists,maintainResearchUnknownCapacity,releaseResearchUnknownCapacity,createResearchProject,updateResearchProject,inspectResearchProject,readProjectJson,submitResearchTask,workResearchTask,inspectResearchTask,cancelResearchTask,respondResearchTask,readResearchOutput,applyProjectMemoryIntent,approveProjectMemoryIntent,listResearchInteractions,inspectResearchInteraction,inspectResearchChildren,cancelResearchChild} from './research-project.mjs';
 import {importProjectSources,loadProjectSources} from './project-sources.mjs';
 import {inspectResearchKnowledge} from './research-project.mjs';
 import {inspectResearchCapacity} from './research-project.mjs';
@@ -39,6 +39,7 @@ Usage: node src/research-cli.mjs <group> <command> [options]
   run work --project DIR --run ID
   run inspect|cancel --project DIR --run ID
   child list --project DIR --run ID
+  child cancel --project DIR --run ID --child ID
   knowledge inspect --project DIR --run ID
   capacity inspect|maintain --project DIR --run ID
   capacity release-unknown --project DIR --run ID --release JSON_FILE
@@ -86,7 +87,7 @@ const specifications={
  'capacity inspect':['project','run'], 'capacity maintain':['project','run'],
  'capacity release-unknown':['project','run','release','preserve-unknown','no-replay','no-refund'],
  'knowledge inspect':['project','run'],
- 'child list':['project','run'],
+ 'child list':['project','run'], 'child cancel':['project','run','child'],
  'interaction list':['project','run?','limit?','after?'],
  'interaction inspect':['project','run','question-id'],
  'project update':['project','config','expected-config'],
@@ -157,6 +158,7 @@ export async function runResearchCli(args,{stdout=process.stdout,stderr=process.
   if(command==='capacity maintain'){emit(await maintainResearchUnknownCapacity({projectDir,runId}));return 0;}
   if(command==='capacity inspect'){emit(await inspectResearchCapacity({projectDir,runId}));return 0;}
   if(command==='knowledge inspect'){emit(await inspectResearchKnowledge({projectDir,runId}));return 0;}
+  if(command==='child cancel'){emit(await cancelResearchChild({projectDir,runId,childRunId:o.child}));return 0;}
   if(command==='child list'){emit(await inspectResearchChildren({projectDir,runId}));return 0;}
   if(command==='interaction list'){emit(await listResearchInteractions({projectDir,runId,limit:o.limit===undefined?50:integer(o.limit,1,50),after:o.after}));return 0;}
   if(command==='interaction inspect'){emit(await inspectResearchInteraction({projectDir,runId,questionId:o['question-id']}));return 0;}

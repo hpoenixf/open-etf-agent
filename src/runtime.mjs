@@ -328,6 +328,9 @@ async function drive({ question, gateway, outputRoot='runs', requireReport=false
         let reservedView;
         try{if(reserve){reservedView=claim.reserve(reserve,state);if(reserve==='model')gatewayUnsettled=true;}else claim.checkpoint(state);}catch(error){state.phase=previousPhase;throw error;}
         if(durable.onCheckpoint)await bounded(Promise.resolve().then(()=>durable.onCheckpoint({phase,runId,directory,cursor:state.cursor,callId:state.proposal?.calls?.[state.cursor]?.id,noteRef:state.working?.noteRef,workingHash:state.working?.hash,fence:claim.fence})),controller.signal);
+        // Recheck the original fence after asynchronous observation/control.
+        // An independently cancelled Child must not dispatch after this await.
+        claim.read();
         return reservedView;
       }
     }

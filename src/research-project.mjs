@@ -263,6 +263,14 @@ export async function inspectResearchChildren({projectDir,runId}){
  try{return await inspectChildExecutions({store,parentRunId:runId,question:frozenTaskQuestion(d,sources),documents:sources.catalog.documents.map(doc=>doc.id),documentCatalog:sources.catalog,execution:d.config.childExecution,...(d.childInputProjection===undefined?{}:{projection:d.childInputProjection})});}finally{store.close();}
 }
 
+// User-selected direct Child only; never inherit today's project authority.
+export async function cancelResearchChild({projectDir,runId,childRunId}){
+ const d=await readTask(projectDir,runId);if(!d.config.childExecution)fail('PROJECT_CHILD_EXECUTION_REQUIRED');
+ const store=await openSession({directory:paths(projectDir,runId).session});
+ try{store.cancelChild(runId,childRunId);}finally{store.close();}
+ return inspectResearchChildren({projectDir,runId});
+}
+
 // Inspect the original admitted collection, never today's changed project config.
 // This does not acquire sources, run a query, call a model or mint a receipt.
 export async function inspectResearchKnowledge({projectDir,runId}){

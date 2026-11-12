@@ -37,3 +37,23 @@ test('report guidance execution Child cold inspection: 22.project three-source p
  const cli=spawnSync(process.execPath,['src/research-cli.mjs','child','list','--project',projectDir,'--run','original'],{encoding:'utf8',timeout:10000,env:{PATH:process.env.PATH,LANG:'C.UTF-8',TZ:'UTC'}});assert.equal(cli.status,0,cli.stderr);assert.deepEqual(JSON.parse(cli.stdout),history);
  const previous=await inspectResearchProject({projectDir});await updateResearchProject({projectDir,config:{...config,childExecution:{...execution,maxChildren:3}},expectedConfigSha256:previous.configSha256});assert.equal((await inspectResearchTask({projectDir,runId:'original'})).definition.config.childExecution.maxChildren,2);assert.deepEqual(await inspectResearchChildren({projectDir,runId:'original'}),history);
 });
+
+test('30.project cold CLI cancels only the selected Child without source adoption',async t=>{
+ await mkdir('test-output',{recursive:true});const directory=await mkdtemp(resolve('test-output/child-cancel-project-'));t.after(()=>rm(directory,{recursive:true,force:true}));
+ const projectDir=join(directory,'project'),file=join(directory,'source.md');await writeFile(file,'Synthetic observation: 20 units.');
+ await createResearchProject({directory:projectDir,config});const imported=await importProjectSources({projectDir,files:[file]});
+ const documentId=imported.catalog.documents[0].id;
+ await submitResearchTask({projectDir,runId:'cancel-project',question:'Inspect synthetic evidence.',sourceManifestSha256:imported.manifestSha256});
+ const stop=new AbortController();let rootId,stopped=false,calls=0;
+ const gateway={mode:'fixture',next:({messages,reservation})=>{calls++;return reservation.runId==='cancel-project'?call('first','delegate_child',{methodId:'claim-comparison',question:'Inspect original source.',documents:[documentId]}):{kind:'final',text:'Should not execute before cancellation.'};}};
+ const started=await workResearchTask({projectDir,runId:'cancel-project',gateway,hostSignal:stop.signal,onCheckpoint:e=>{rootId??=e.runId;if(!stopped&&e.runId!==rootId&&e.phase==='model-reserved'){stopped=true;stop.abort();}}});
+ assert.equal(started.workerStatus,'interrupted');
+ const child=(await inspectResearchChildren({projectDir,runId:'cancel-project'})).items[0];
+ const args=['src/research-cli.mjs','child','cancel','--project',projectDir,'--run','cancel-project','--child',child.runId];
+ const invoke=()=>spawnSync(process.execPath,args,{encoding:'utf8',timeout:10000});
+ const cancelled=invoke();assert.equal(cancelled.status,0,cancelled.stderr);const history=JSON.parse(cancelled.stdout);
+ assert.equal(history.items[0].status,'cancelled');assert.equal(history.items[0].gatewayOutcome,'unknown');assert.deepEqual(history.items[0].result.sources,[]);
+ assert.equal((await inspectResearchTask({projectDir,runId:'cancel-project'})).run.status,'active');
+ const repeated=invoke();assert.equal(repeated.status,0,repeated.stderr);assert.deepEqual(JSON.parse(repeated.stdout),history);
+ assert.equal(calls,1);
+});

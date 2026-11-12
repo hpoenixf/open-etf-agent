@@ -628,6 +628,18 @@ export async function openSession({ directory, clock = Date.now, leaseMs = 1000,
   controlFact(runId){return transaction(()=>{getRun(runId);return controlFactFrom(db,runId);});},
   revoke(runId,options){return controlRun(runId,options,'revoke');},
   prepareContinuation(runId,options){return controlRun(runId,options,'continuation-handoff');},
+  // Explicit operator control of one direct Child. Root cancellation remains separate.
+  // Fence revocation and unknown-dispatch retention use the original Session owner.
+  cancelChild(parentRunId,childRunId) { return transaction(() => {
+   const parent=getRun(parentRunId),child=getRun(childRunId);
+   if(parent.parent_run_id!==null||parent.root_id!==parent.run_id||child.parent_run_id!==parentRunId||child.root_id!==parent.root_id)fail('CHILD_CANCEL_SCOPE_MISMATCH');
+   view(parent);view(child);
+   if(child.status!=='active')return view(child);
+   active(parent);
+   const snapshot=cancelRuntimeCheckpoint(parsed(child.snapshot,MAX_CHECKPOINT_JSON));
+   db.prepare("UPDATE runs SET snapshot=?,status='cancelled',owner=NULL,lease_until=0 WHERE run_id=?").run(encodeCheckpoint(snapshot,true),childRunId);
+   return view(getRun(childRunId));
+  }); },
   cancel(runId) { return transaction(() => { const row = getRun(runId); cancelRoot(row.root_id); return view(getRun(runId)); }); },
   claim(runId, owner) {
    if (!identifier(owner)) fail('INVALID_OWNER');
