@@ -26,7 +26,8 @@ Articles can describe a broader system than the public module. Coverage records 
 
 **Recently updated reading**
 
-[Spec-Driven Agent Development](https://hpoenixf.com/eff-agent-article/en/articles/agent-spec-driven-development-panorama) · [Execution Identities: Conversation to Model Turns](https://hpoenixf.com/eff-agent-article/en/articles/agent-task-session-run-worker-schedule) · [Engineering Half-Hour Research](https://hpoenixf.com/eff-agent-article/en/articles/agent-half-hour-research-engineering-practice)
+<!-- Recent reading source: hpoenixf/eff-agent-article@249f0b866f9446f33b57f186fbc6d35b5d82c119 README.md; Chinese-source Git history order, translated editions are not separate entries. -->
+[Subagent Panorama](https://hpoenixf.com/eff-agent-article/en/articles/agent-subagent-context-specialization) · [Start with a Report You Can Read Back](https://hpoenixf.com/eff-agent-article/en/articles/open-etf-agent-v01-first-readable-report) · [Spec-Driven Agent Development](https://hpoenixf.com/eff-agent-article/en/articles/agent-spec-driven-development-panorama)
 
 <p align="center">
   <a href="https://github.com/hpoenixf/open-etf-agent/actions/workflows/verify.yml?query=branch%3Amain"><img src="https://github.com/hpoenixf/open-etf-agent/actions/workflows/verify.yml/badge.svg?branch=main" alt="Verify (main)" height="20" /></a>

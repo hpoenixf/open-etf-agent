@@ -26,7 +26,8 @@
 
 **近期更新的阅读素材**
 
-[Spec 驱动的 Agent 研发全景](https://hpoenixf.com/eff-agent-article/articles/agent-spec-driven-development-panorama) · [Agent 运行身份全景](https://hpoenixf.com/eff-agent-article/articles/agent-task-session-run-worker-schedule) · [持续研究半小时的工程实践](https://hpoenixf.com/eff-agent-article/articles/agent-half-hour-research-engineering-practice)
+<!-- Recent reading source: hpoenixf/eff-agent-article@249f0b866f9446f33b57f186fbc6d35b5d82c119 README.md; Chinese-source Git history order, translated editions are not separate entries. -->
+[Subagent 全景](https://hpoenixf.com/eff-agent-article/articles/agent-subagent-context-specialization) · [从第一份可回读报告开始](https://hpoenixf.com/eff-agent-article/articles/open-etf-agent-v01-first-readable-report) · [Spec 驱动的 Agent 研发全景](https://hpoenixf.com/eff-agent-article/articles/agent-spec-driven-development-panorama)
 
 <p align="center">
   <a href="https://github.com/hpoenixf/open-etf-agent/actions/workflows/verify.yml?query=branch%3Amain"><img src="https://github.com/hpoenixf/open-etf-agent/actions/workflows/verify.yml/badge.svg?branch=main" alt="Verify (main)" height="20" /></a>
