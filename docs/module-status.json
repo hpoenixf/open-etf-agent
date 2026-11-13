@@ -139,7 +139,15 @@
       },
       "status": "bounded",
       "source": "src/cli.mjs",
-      "kind": "module"
+      "kind": "module",
+      "article": {
+        "slug": "agent-in-15-minutes",
+        "kind": "overview",
+        "title": {
+          "zh": "十五分钟入门 Agent",
+          "en": "Agents in 15 Minutes"
+        }
+      }
     },
     {
       "id": "project",
@@ -156,7 +164,15 @@
       },
       "status": "bounded",
       "source": "src/research-project.mjs",
-      "kind": "module"
+      "kind": "module",
+      "article": {
+        "slug": "open-etf-agent-research-project-workshop",
+        "kind": "workshop",
+        "title": {
+          "zh": "把自己的资料交给 Agent：从第一份报告到可恢复的研究项目",
+          "en": "Bring Your Own Documents to an Agent: From the First Report to a Resumable Research Project"
+        }
+      }
     },
     {
       "id": "schedule",
@@ -173,7 +189,15 @@
       },
       "status": "bounded",
       "source": "src/scheduled-tasks.mjs",
-      "kind": "module"
+      "kind": "module",
+      "article": {
+        "slug": "agent-autonomous-scheduled-research",
+        "kind": "module-article",
+        "title": {
+          "zh": "Agent 不必一直在线思考：我们怎样让研究在对话结束后按时继续？",
+          "en": "Agents Don't Need to Think Continuously: How Research Continues on Schedule After a Conversation Ends"
+        }
+      }
     },
     {
       "id": "session",
@@ -190,7 +214,15 @@
       },
       "status": "bounded",
       "source": "src/session.mjs",
-      "kind": "module"
+      "kind": "module",
+      "article": {
+        "slug": "agent-task-session-run-worker-schedule",
+        "kind": "overview",
+        "title": {
+          "zh": "Agent 运行身份全景：从一次聊天到 Model Turn，系统到底在继续什么？",
+          "en": "Agent Execution Identity Panorama: From a Conversation to Model Turns—What Actually Continues?"
+        }
+      }
     },
     {
       "id": "conversation",
@@ -207,7 +239,15 @@
       },
       "status": "bounded",
       "source": "src/conversation.mjs",
-      "kind": "module"
+      "kind": "module",
+      "article": {
+        "slug": "agent-conversation-admission-task-continuation",
+        "kind": "module-article",
+        "title": {
+          "zh": "“接着聊”不等于“接着执行”：Agent 对话接纳与任务接续的设计",
+          "en": "Keep Chatting Is Not Keep Executing: Agent Conversation Admission and Task Continuation"
+        }
+      }
     },
     {
       "id": "temporal",
@@ -224,7 +264,15 @@
       },
       "status": "bounded",
       "source": "src/temporal.mjs",
-      "kind": "module"
+      "kind": "module",
+      "article": {
+        "slug": "agent-temporal-semantics-market-calendar",
+        "kind": "module-article",
+        "title": {
+          "zh": "Agent 说“今天”时，到底是哪一天：任务时间、用户时间与市场交易日",
+          "en": "When an Agent Says “Today,” Which Day Does It Mean? Task Time, User Time, and Market Sessions"
+        }
+      }
     },
     {
       "id": "context",
@@ -241,7 +289,15 @@
       },
       "status": "bounded",
       "source": "src/context.mjs",
-      "kind": "module"
+      "kind": "module",
+      "article": {
+        "slug": "agent-context-governance-actions",
+        "kind": "overview",
+        "title": {
+          "zh": "Agent 上下文治理全景·行动篇：从首轮输入到长期记忆，怎样真正落地",
+          "en": "Agent Context Governance Panorama · Practice: From the First Request to Long-Term Memory"
+        }
+      }
     },
     {
       "id": "compact",
@@ -258,7 +314,15 @@
       },
       "status": "bounded",
       "source": "src/compaction.mjs",
-      "kind": "module"
+      "kind": "module",
+      "article": {
+        "slug": "agent-main-run-context-compaction",
+        "kind": "module-article",
+        "title": {
+          "zh": "上下文快满时，为什么不能直接把历史交给模型摘要？",
+          "en": "When Context Is Nearly Full, Why Can't We Simply Ask a Model to Summarize History?"
+        }
+      }
     },
     {
       "id": "memory",
@@ -275,7 +339,15 @@
       },
       "status": "bounded",
       "source": "src/memory.mjs",
-      "kind": "module"
+      "kind": "module",
+      "article": {
+        "slug": "026-agent-memory-forget-durable-effects",
+        "kind": "module-article",
+        "title": {
+          "zh": "Agent Memory 的完整生命周期：从记住偏好到安全遗忘",
+          "en": "The Full Lifecycle of Agent Memory: From Remembering Preferences to Safe Forgetting"
+        }
+      }
     },
     {
       "id": "hil",
@@ -292,7 +364,15 @@
       },
       "status": "bounded",
       "source": "src/human-interaction.mjs",
-      "kind": "module"
+      "kind": "module",
+      "article": {
+        "slug": "agent-durable-human-interaction-response-adoption",
+        "kind": "module-article",
+        "title": {
+          "zh": "Agent 问完用户之后：持久人机交互如何接回原研究",
+          "en": "After an Agent Asks the User: Returning a Durable Human Response to the Original Research"
+        }
+      }
     },
     {
       "id": "profiles",
@@ -309,7 +389,15 @@
       },
       "status": "bounded",
       "source": "src/specialist-profiles.mjs",
-      "kind": "module"
+      "kind": "module",
+      "article": {
+        "slug": "agent-custom-expert-from-prompt-to-recovery",
+        "kind": "module-article",
+        "title": {
+          "zh": "自定义专家，不应该只是一个 Prompt 输入框",
+          "en": "A Custom Expert Should Be More Than a Prompt Field"
+        }
+      }
     },
     {
       "id": "skill",
@@ -326,7 +414,15 @@
       },
       "status": "bounded",
       "source": "src/skills.mjs",
-      "kind": "module"
+      "kind": "module",
+      "article": {
+        "slug": "agent-skill-from-markdown-to-callable-research",
+        "kind": "module-article",
+        "title": {
+          "zh": "Skill 与普通 Prompt 有什么不同？从按需加载到脚本执行",
+          "en": "How Is a Skill Different from a Prompt? From Loading to Script Execution"
+        }
+      }
     },
     {
       "id": "worker",
@@ -343,7 +439,15 @@
       },
       "status": "bounded",
       "source": "src/worker.mjs",
-      "kind": "module"
+      "kind": "module",
+      "article": {
+        "slug": "open-etf-agent-v010-system-design",
+        "kind": "open-walkthrough",
+        "title": {
+          "zh": "Agent 深入：从一份报告到持续执行与专家协作",
+          "en": "Agent Deep Dive: From One Report to Durable Execution and Specialist Collaboration"
+        }
+      }
     },
     {
       "id": "admission",
@@ -360,7 +464,15 @@
       },
       "status": "bounded",
       "source": "src/admission.mjs",
-      "kind": "module"
+      "kind": "module",
+      "article": {
+        "slug": "agent-provider-admission-capacity-lease",
+        "kind": "module-article",
+        "title": {
+          "zh": "模型返回了 HTTP 200，为什么下一次请求还得排队？Provider 容量准入的租约与未知占用",
+          "en": "Why the Next Model Request Still Queues After HTTP 200: Provider Admission, Leases and Unknown Occupancy"
+        }
+      }
     },
     {
       "id": "gateway",
@@ -377,7 +489,15 @@
       },
       "status": "bounded",
       "source": "src/gateway.mjs",
-      "kind": "module"
+      "kind": "module",
+      "article": {
+        "slug": "agent-provider-architecture-and-admission",
+        "kind": "module-article",
+        "title": {
+          "zh": "Agent 供应商模块精讲：为什么统一接口之后，还需要共享准入",
+          "en": "Inside an Agent’s Provider Layer: Why a Unified API Still Needs Shared Admission"
+        }
+      }
     },
     {
       "id": "runtime",
@@ -394,7 +514,15 @@
       },
       "status": "bounded",
       "source": "src/runtime.mjs",
-      "kind": "module"
+      "kind": "module",
+      "article": {
+        "slug": "etf-agent-model-harness-research-loop",
+        "kind": "overview",
+        "title": {
+          "zh": "投研 Agent 的关键不是多调用工具：从 Model、Harness 到会修正判断的 Loop",
+          "en": "A Research Agent Needs More Than Tools: How Model, Harness, and Loop Work Together"
+        }
+      }
     },
     {
       "id": "hooks",
@@ -411,7 +539,15 @@
       },
       "status": "bounded",
       "source": "src/hooks.mjs",
-      "kind": "module"
+      "kind": "module",
+      "article": {
+        "slug": "agent-multi-ecosystem-hook-execution",
+        "kind": "module-article",
+        "title": {
+          "zh": "从 Claude、Pi 到 Codex：我们如何在自己的 Agent Runtime 中实现多生态 Hook？",
+          "en": "From Claude and Pi to Codex: Running Multi-Ecosystem Hooks Inside Our Agent Runtime"
+        }
+      }
     },
     {
       "id": "control",
@@ -428,7 +564,15 @@
       },
       "status": "bounded",
       "source": "src/run-control.mjs",
-      "kind": "module"
+      "kind": "module",
+      "article": {
+        "slug": "agent-veto-authority-and-run-termination",
+        "kind": "module-article",
+        "title": {
+          "zh": "当每个模块都能说“不”：Agent 的终结权、阶段预算与安全恢复",
+          "en": "When Every Module Can Say No: Agent Run Termination, Stage Budgets, and Safe Recovery"
+        }
+      }
     },
     {
       "id": "mainchild",
@@ -445,7 +589,15 @@
       },
       "status": "enhanced",
       "source": "src/child-execution.mjs",
-      "kind": "call-site"
+      "kind": "call-site",
+      "article": {
+        "slug": "agent-subagent-context-specialization",
+        "kind": "overview",
+        "title": {
+          "zh": "Subagent 全景：独立上下文、专业协作与真实成果交接",
+          "en": "Subagent Panorama: Independent Context, Specialist Work and Real Handoffs"
+        }
+      }
     },
     {
       "id": "child",
@@ -462,7 +614,15 @@
       },
       "status": "enhanced",
       "source": "src/child-execution.mjs",
-      "kind": "module"
+      "kind": "module",
+      "article": {
+        "slug": "agent-subagent-context-specialization",
+        "kind": "overview",
+        "title": {
+          "zh": "Subagent 全景：独立上下文、专业协作与真实成果交接",
+          "en": "Subagent Panorama: Independent Context, Specialist Work and Real Handoffs"
+        }
+      }
     },
     {
       "id": "host",
@@ -479,7 +639,15 @@
       },
       "status": "bounded",
       "source": "src/tools.mjs",
-      "kind": "module"
+      "kind": "module",
+      "article": {
+        "slug": "agent-tool-lifecycle-and-model-input",
+        "kind": "module-article",
+        "title": {
+          "zh": "从工具调用到模型输入：把 Agent 的观测链路接起来",
+          "en": "From Tool Invocation to Model Input: Connecting an Agent's Observability Chain"
+        }
+      }
     },
     {
       "id": "mcp",
@@ -496,7 +664,15 @@
       },
       "status": "bounded",
       "source": "src/mcp.mjs",
-      "kind": "module"
+      "kind": "module",
+      "article": {
+        "slug": "mcp-host-from-discovery-to-consumption",
+        "kind": "module-article",
+        "title": {
+          "zh": "从接上 MCP 到真正用上工具：Agent 的接入链路怎样构建",
+          "en": "From Connecting MCP to Actually Using Its Tools: Building an End-to-End Agent Integration Path"
+        }
+      }
     },
     {
       "id": "plugin",
@@ -513,7 +689,15 @@
       },
       "status": "bounded",
       "source": "src/plugins.mjs",
-      "kind": "module"
+      "kind": "module",
+      "article": {
+        "slug": "020-agent-extension-host-smartphone",
+        "kind": "module-article",
+        "title": {
+          "zh": "Agent 扩展如何接入 Host：插件生命周期与运行时边界",
+          "en": "How Agent Extensions Enter the Host: Plugin Lifecycle and Runtime Boundaries"
+        }
+      }
     },
     {
       "id": "web",
@@ -530,7 +714,15 @@
       },
       "status": "bounded",
       "source": "src/web-acquisition.mjs",
-      "kind": "module"
+      "kind": "module",
+      "article": {
+        "slug": "021-agent-web-research-from-search-to-deep-reading",
+        "kind": "module-article",
+        "title": {
+          "zh": "从“搜得到”到“读得下去”：我们怎样让 Agent 学会浏览网页",
+          "en": "From Finding Pages to Reading Further: How We Taught an Agent to Browse the Web"
+        }
+      }
     },
     {
       "id": "pdf",
@@ -547,7 +739,15 @@
       },
       "status": "bounded",
       "source": "src/pdf-input.mjs",
-      "kind": "module"
+      "kind": "module",
+      "article": {
+        "slug": "024-agent-pdf-from-text-to-evidence",
+        "kind": "module-article",
+        "title": {
+          "zh": "从能读取到能研究：我们如何把 PDF 阅读升级为可追溯的多模态能力",
+          "en": "From Being Able to Read to Being Able to Research: Evolving PDF into Traceable Multimodal Evidence"
+        }
+      }
     },
     {
       "id": "result",
@@ -564,7 +764,15 @@
       },
       "status": "bounded",
       "source": "src/results.mjs",
-      "kind": "module"
+      "kind": "module",
+      "article": {
+        "slug": "tool-results-outside-model-context",
+        "kind": "module-article",
+        "title": {
+          "zh": "工具查到的数据，为什么不一定要给大模型看？",
+          "en": "Why Tool Results Should Not All Enter Model Context"
+        }
+      }
     },
     {
       "id": "retrieval",
@@ -581,7 +789,15 @@
       },
       "status": "bounded",
       "source": "src/retrieval.mjs",
-      "kind": "module"
+      "kind": "module",
+      "article": {
+        "slug": "agent-knowledge-retrieval-end-to-end",
+        "kind": "overview",
+        "title": {
+          "zh": "RAG 全链路：从文档入库到可引用回答",
+          "en": "The RAG Lifecycle: From Document Ingestion to Cited Answers"
+        }
+      }
     },
     {
       "id": "knowledge",
@@ -598,7 +814,15 @@
       },
       "status": "bounded",
       "source": "src/knowledge.mjs",
-      "kind": "module"
+      "kind": "module",
+      "article": {
+        "slug": "agent-knowledge-retrieval-end-to-end",
+        "kind": "module-article",
+        "title": {
+          "zh": "RAG 全链路：从文档入库到可引用回答",
+          "en": "The RAG Lifecycle: From Document Ingestion to Cited Answers"
+        }
+      }
     },
     {
       "id": "calc",
@@ -615,7 +839,15 @@
       },
       "status": "bounded",
       "source": "src/calculation.mjs",
-      "kind": "module"
+      "kind": "module",
+      "article": {
+        "slug": "open-etf-agent-v010-system-design",
+        "kind": "open-walkthrough",
+        "title": {
+          "zh": "Agent 深入：从一份报告到持续执行与专家协作",
+          "en": "Agent Deep Dive: From One Report to Durable Execution and Specialist Collaboration"
+        }
+      }
     },
     {
       "id": "childresult",
@@ -632,7 +864,15 @@
       },
       "status": "bounded",
       "source": "src/child-results.mjs",
-      "kind": "module"
+      "kind": "module",
+      "article": {
+        "slug": "agent-subagent-contribution-evidence",
+        "kind": "module-article",
+        "title": {
+          "zh": "多专家 Agent：怎么证明专家的结论真的被主 Agent 用到了？",
+          "en": "How Do We Know the Main Agent Actually Used a Specialist’s Findings?"
+        }
+      }
     },
     {
       "id": "save",
@@ -649,7 +889,15 @@
       },
       "status": "bounded",
       "source": "src/report.mjs",
-      "kind": "call-site"
+      "kind": "call-site",
+      "article": {
+        "slug": "open-etf-agent-v01-first-readable-report",
+        "kind": "open-walkthrough",
+        "title": {
+          "zh": "从第一份可回读报告开始：Open ETF Agent v0.1",
+          "en": "Start with a Report You Can Read Back: Open ETF Agent v0.1"
+        }
+      }
     },
     {
       "id": "report",
@@ -666,7 +914,15 @@
       },
       "status": "bounded",
       "source": "src/report.mjs",
-      "kind": "module"
+      "kind": "module",
+      "article": {
+        "slug": "open-etf-agent-v01-first-readable-report",
+        "kind": "open-walkthrough",
+        "title": {
+          "zh": "从第一份可回读报告开始：Open ETF Agent v0.1",
+          "en": "Start with a Report You Can Read Back: Open ETF Agent v0.1"
+        }
+      }
     },
     {
       "id": "artifact",
@@ -683,7 +939,15 @@
       },
       "status": "bounded",
       "source": "src/artifacts.mjs",
-      "kind": "module"
+      "kind": "module",
+      "article": {
+        "slug": "agent-artifact-version-access-sharing",
+        "kind": "module-article",
+        "title": {
+          "zh": "报告已经生成，为什么还不能直接分享？",
+          "en": "A Report Is Generated: Why Can’t It Be Shared Yet?"
+        }
+      }
     },
     {
       "id": "publication",
@@ -700,7 +964,15 @@
       },
       "status": "bounded",
       "source": "src/publication.mjs",
-      "kind": "module"
+      "kind": "module",
+      "article": {
+        "slug": "019-agent-answer-publication",
+        "kind": "module-article",
+        "title": {
+          "zh": "Agent 已经生成答案，为什么还需要一个独立的发布系统？",
+          "en": "The Agent Has Generated an Answer. Why Does It Still Need a Separate Publication System?"
+        }
+      }
     },
     {
       "id": "review",
@@ -717,7 +989,15 @@
       },
       "status": "bounded",
       "source": "src/report-review.mjs",
-      "kind": "module"
+      "kind": "module",
+      "article": {
+        "slug": "open-etf-agent-report-review-workshop",
+        "kind": "workshop",
+        "title": {
+          "zh": "报告写完以后：让 Agent 查证、协作，再独立复核",
+          "en": "After the report: source checks, specialist work, and independent review"
+        }
+      }
     },
     {
       "id": "reader",
@@ -734,7 +1014,15 @@
       },
       "status": "bounded",
       "source": "src/reader.mjs",
-      "kind": "module"
+      "kind": "module",
+      "article": {
+        "slug": "open-etf-agent-v010-system-design",
+        "kind": "open-walkthrough",
+        "title": {
+          "zh": "Agent 深入：从一份报告到持续执行与专家协作",
+          "en": "Agent Deep Dive: From One Report to Durable Execution and Specialist Collaboration"
+        }
+      }
     },
     {
       "id": "readcli",
@@ -751,7 +1039,16 @@
       },
       "status": "bounded",
       "source": "src/observe.mjs",
-      "kind": "call-site"
+      "kind": "call-site",
+      "article": {
+        "slug": "open-etf-agent-v01-first-readable-report",
+        "kind": "open-walkthrough",
+        "title": {
+          "zh": "从第一份可回读报告开始：Open ETF Agent v0.1",
+          "en": "Start with a Report You Can Read Back: Open ETF Agent v0.1"
+        }
+      }
     }
-  ]
+  ],
+  "articleNavigationSource": "249f0b866f9446f33b57f186fbc6d35b5d82c119"
 }

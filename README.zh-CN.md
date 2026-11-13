@@ -31,11 +31,22 @@
 
 [![六层地图：输入、身份上下文、决策运行、工具、交付、界面；每层列出公开模块与限制](docs/assets/module-map.zh-CN.svg)](docs/assets/module-map.zh-CN.svg)
 
-[打开原尺寸模块矩阵（可放大）](docs/assets/module-map.zh-CN.svg) · [逐模块文字与源码索引](docs/module-status.zh-CN.md)
+[交互模块图：逐卡打开文章](https://hpoenixf.com/eff-agent-article/open-etf-agent#module-map) · [打开原尺寸模块矩阵（可放大）](docs/assets/module-map.zh-CN.svg) · [逐模块文字与源码索引](docs/module-status.zh-CN.md)
+
+GitHub 将 SVG 当作一张图片，不能在缩略图里逐卡点击；下表每个模块名直接打开对应文章。
+
+| 职责层 | 模块与能力 → 对应文章 |
+| --- | --- |
+| L1 任务输入与触发 | [CLI](https://hpoenixf.com/eff-agent-article/articles/agent-in-15-minutes) · [Research Project](https://hpoenixf.com/eff-agent-article/articles/open-etf-agent-research-project-workshop) · [Schedule](https://hpoenixf.com/eff-agent-article/articles/agent-autonomous-scheduled-research) |
+| L2 身份、会话与上下文 | [Session](https://hpoenixf.com/eff-agent-article/articles/agent-task-session-run-worker-schedule) · [Conversation](https://hpoenixf.com/eff-agent-article/articles/agent-conversation-admission-task-continuation) · [Temporal](https://hpoenixf.com/eff-agent-article/articles/agent-temporal-semantics-market-calendar) · [Context](https://hpoenixf.com/eff-agent-article/articles/agent-context-governance-actions) · [Compaction](https://hpoenixf.com/eff-agent-article/articles/agent-main-run-context-compaction) · [Memory](https://hpoenixf.com/eff-agent-article/articles/026-agent-memory-forget-durable-effects) · [Human Interaction](https://hpoenixf.com/eff-agent-article/articles/agent-durable-human-interaction-response-adoption) · [Specialist Profile](https://hpoenixf.com/eff-agent-article/articles/agent-custom-expert-from-prompt-to-recovery) · [Skill](https://hpoenixf.com/eff-agent-article/articles/agent-skill-from-markdown-to-callable-research) |
+| L3 Agent 决策与运行 | [Worker](https://hpoenixf.com/eff-agent-article/articles/open-etf-agent-v010-system-design) · [Admission](https://hpoenixf.com/eff-agent-article/articles/agent-provider-admission-capacity-lease) · [Gateway](https://hpoenixf.com/eff-agent-article/articles/agent-provider-architecture-and-admission) · [Runtime](https://hpoenixf.com/eff-agent-article/articles/etf-agent-model-harness-research-loop) · [Hooks](https://hpoenixf.com/eff-agent-article/articles/agent-multi-ecosystem-hook-execution) · [Run Control](https://hpoenixf.com/eff-agent-article/articles/agent-veto-authority-and-run-termination) · [Main → Child](https://hpoenixf.com/eff-agent-article/articles/agent-subagent-context-specialization) · [Child Lifecycle](https://hpoenixf.com/eff-agent-article/articles/agent-subagent-context-specialization) |
+| L4 工具与领域能力 | [Tool Host](https://hpoenixf.com/eff-agent-article/articles/agent-tool-lifecycle-and-model-input) · [MCP](https://hpoenixf.com/eff-agent-article/articles/mcp-host-from-discovery-to-consumption) · [Trusted Plugin](https://hpoenixf.com/eff-agent-article/articles/020-agent-extension-host-smartphone) · [Web Acquisition](https://hpoenixf.com/eff-agent-article/articles/021-agent-web-research-from-search-to-deep-reading) · [PDF](https://hpoenixf.com/eff-agent-article/articles/024-agent-pdf-from-text-to-evidence) · [Result / ResultRef](https://hpoenixf.com/eff-agent-article/articles/tool-results-outside-model-context) · [Retrieval](https://hpoenixf.com/eff-agent-article/articles/agent-knowledge-retrieval-end-to-end) · [Knowledge](https://hpoenixf.com/eff-agent-article/articles/agent-knowledge-retrieval-end-to-end) · [Calculation](https://hpoenixf.com/eff-agent-article/articles/open-etf-agent-v010-system-design) · [Child Results](https://hpoenixf.com/eff-agent-article/articles/agent-subagent-contribution-evidence) |
+| L5 结果发布与交付 | [Main → Report](https://hpoenixf.com/eff-agent-article/articles/open-etf-agent-v01-first-readable-report) · [Report](https://hpoenixf.com/eff-agent-article/articles/open-etf-agent-v01-first-readable-report) · [Artifact / Revision](https://hpoenixf.com/eff-agent-article/articles/agent-artifact-version-access-sharing) · [Publication](https://hpoenixf.com/eff-agent-article/articles/019-agent-answer-publication) · [Report Review](https://hpoenixf.com/eff-agent-article/articles/open-etf-agent-report-review-workshop) |
+| L6 用户界面 | [Loopback Reader](https://hpoenixf.com/eff-agent-article/articles/open-etf-agent-v010-system-design) · [CLI Readback](https://hpoenixf.com/eff-agent-article/articles/open-etf-agent-v01-first-readable-report) |
 
 **当前地图: v0.30.0** · [模块、源码与证据](docs/module-status.zh-CN.md) · [六层文章原文](https://github.com/hpoenixf/eff-agent-article/blob/249f0b866f9446f33b57f186fbc6d35b5d82c119/articles/open-etf-agent-v010-system-design.md)
 
-图中是公开实现范围，不是全功能完成率。真实模型验证只覆盖[各版记录](docs/verification/README.md)中的指定路径；金融语义、生产与浏览器体验不因此获得认证。
+文章关联是阅读导航，不等于实现全文能力或覆盖资格。图中是公开实现范围，不是全功能完成率。真实模型验证只覆盖[各版记录](docs/verification/README.md)中的指定路径；金融语义、生产与浏览器体验不因此获得认证。
 <!-- module-map:end -->
 
 <a id="reading"></a>

@@ -2,14 +2,14 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFile,writeFile,mkdir,mkdtemp,rename,symlink} from 'node:fs/promises';
 import {join,dirname} from 'node:path';
-import {validate,svg,block,sync} from '../scripts/sync-module-map.mjs';
+import {validate,svg,block,sync,articleUrl} from '../scripts/sync-module-map.mjs';
 const manifest=JSON.parse(await readFile(new URL('../docs/module-status.json',import.meta.url),'utf8'));
 test('map requires reviewed current version, bilingual rows and six unique layers',()=>{
  validate(manifest,manifest.reviewedVersion);
- for(const mutate of [m=>m.reviewedVersion='99.0.0',m=>m.layers[1].id='L1',m=>delete m.layers[1].title.zh,m=>m.cards[0].source='../secret',m=>m.reviewedSource='main',m=>m.cards[0].name='x'.repeat(58),m=>m.cards[1].id=m.cards[0].id,m=>m.cards[0].group='unknown',m=>m.cards[0].status='passed']){const m=structuredClone(manifest);mutate(m);assert.throws(()=>validate(m,manifest.reviewedVersion));}
+ for(const mutate of [m=>m.reviewedVersion='99.0.0',m=>m.layers[1].id='L1',m=>delete m.layers[1].title.zh,m=>m.cards[0].source='../secret',m=>m.reviewedSource='main',m=>m.cards[0].name='x'.repeat(58),m=>m.cards[1].id=m.cards[0].id,m=>m.cards[0].group='unknown',m=>m.cards[0].status='passed',m=>delete m.cards[0].article,m=>m.cards[0].article.slug='../fake']){const m=structuredClone(manifest);mutate(m);assert.throws(()=>validate(m,manifest.reviewedVersion));}
 });
 test('both presentations have accessible text, fixed source and scope limits',()=>{
- for(const lang of ['en','zh']){const s=svg(manifest,lang),b=block(manifest,lang);assert.match(s,/<title id="title">/);assert.match(s,/<desc id="desc">/);assert.equal((s.match(/<a href=/g)||[]).length,manifest.cards.length);assert.ok(b.includes(manifest.articleSource));assert.ok(b.includes('docs/verification/README.md'));assert.ok(!s.includes('<script'));}
+ for(const lang of ['en','zh']){const s=svg(manifest,lang),b=block(manifest,lang);assert.match(s,/<title id="title">/);assert.match(s,/<desc id="desc">/);assert.equal((s.match(/<a href=/g)||[]).length,manifest.cards.length);assert.ok(b.includes(manifest.articleSource));assert.ok(b.includes('docs/verification/README.md'));assert.ok(!s.includes('<script'));for(const c of manifest.cards){assert.ok(s.includes(`href="${articleUrl(c,lang)}"`));assert.ok(b.includes(`[${c.name}](${articleUrl(c,lang)})`));}assert.ok(b.includes('open-etf-agent#module-map'));}
  const m=structuredClone(manifest);m.cards[0].name='<script>&';assert.ok(svg(m,'en').includes('&lt;script&gt;&amp;'));
 });
 test('generation is deterministic; drift, missing links and version changes fail closed',async()=>{
