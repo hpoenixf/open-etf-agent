@@ -1,0 +1,176 @@
+{
+  "schemaVersion": 1,
+  "reviewedVersion": "0.30.0",
+  "reviewedSource": "46f7d95bbce20757a884b54cea41f8ebbf6d2540",
+  "articleSource": "https://github.com/hpoenixf/eff-agent-article/blob/249f0b866f9446f33b57f186fbc6d35b5d82c119/articles/017-prompt-to-answer-six-layer-panorama-v3.md",
+  "evidence": "docs/verification/v030-release.md",
+  "layers": [
+    {
+      "id": "L1",
+      "title": {
+        "en": "Inputs & triggers",
+        "zh": "任务输入与触发"
+      },
+      "modules": "CLI · Research Project · Schedule",
+      "summary": {
+        "zh": "项目提交、一次计划执行与显式继续",
+        "en": "Project submission, finite once schedules, explicit continuation"
+      },
+      "boundary": {
+        "zh": "本地单用户；非周期调度或常驻后台服务",
+        "en": "Local single-user; no recurring or resident scheduler"
+      },
+      "sources": [
+        "src/research-cli.mjs",
+        "src/scheduled-tasks.mjs",
+        "src/conversation-cli.mjs",
+        "src/temporal.mjs",
+        "src/research-project.mjs"
+      ],
+      "guide": {
+        "en": "docs/scheduled-tasks.md",
+        "zh": "docs/scheduled-tasks.zh-CN.md"
+      }
+    },
+    {
+      "id": "L2",
+      "title": {
+        "en": "Identity, session & context",
+        "zh": "身份、会话与上下文"
+      },
+      "modules": "Session · Context · Memory · Skill · Conversation",
+      "summary": {
+        "en": "Original identity, bounded context, explicit memory",
+        "zh": "原任务身份、资料窗口与显式记忆"
+      },
+      "boundary": {
+        "en": "Memory is not original evidence or new authority",
+        "zh": "记忆不是原始证据；不扩展授权"
+      },
+      "sources": [
+        "src/session.mjs",
+        "src/context.mjs",
+        "src/memory.mjs",
+        "src/skills.mjs",
+        "src/compaction.mjs",
+        "src/conversation.mjs",
+        "src/human-interaction.mjs"
+      ],
+      "guide": {
+        "en": "docs/project-context.md",
+        "zh": "docs/project-context.zh-CN.md"
+      }
+    },
+    {
+      "id": "L3",
+      "title": {
+        "en": "Agent decisions & execution",
+        "zh": "Agent 决策与运行"
+      },
+      "modules": "Runtime · Gateway · Worker · Child · Admission",
+      "summary": {
+        "en": "Resume, shared budgets, independent Child cancellation",
+        "zh": "接续、共享预算、子任务独立取消"
+      },
+      "boundary": {
+        "en": "Completion is not accuracy; unknown requests retained",
+        "zh": "运行完成 ≠ 答案准确；未知请求保留"
+      },
+      "sources": [
+        "src/runtime.mjs",
+        "src/gateway.mjs",
+        "src/worker.mjs",
+        "src/child-execution.mjs",
+        "src/hooks.mjs",
+        "src/admission.mjs",
+        "src/specialist-profiles.mjs"
+      ],
+      "guide": {
+        "en": "docs/child-lifecycle.md",
+        "zh": "docs/child-lifecycle.zh-CN.md"
+      }
+    },
+    {
+      "id": "L4",
+      "title": {
+        "en": "Tools & domain capabilities",
+        "zh": "工具与领域能力"
+      },
+      "modules": "Tools · MCP · Plugin · Result · Knowledge · Web / PDF",
+      "summary": {
+        "en": "Read originals, reread sources, bounded calculations",
+        "zh": "原文读取、来源回读、受限计算"
+      },
+      "boundary": {
+        "en": "Static Web / PDF text, not live financial data",
+        "zh": "静态网页 / PDF文本；非实时金融数据"
+      },
+      "sources": [
+        "src/tools.mjs",
+        "src/mcp.mjs",
+        "src/results.mjs",
+        "src/web-acquisition.mjs",
+        "src/pdf-input.mjs",
+        "src/calculation.mjs",
+        "src/plugins.mjs",
+        "src/retrieval.mjs",
+        "src/knowledge.mjs"
+      ],
+      "guide": {
+        "en": "docs/web-sources.md",
+        "zh": "docs/web-sources.zh-CN.md"
+      }
+    },
+    {
+      "id": "L5",
+      "title": {
+        "en": "Publication & delivery",
+        "zh": "结果发布与交付"
+      },
+      "modules": "Report · Artifact · Publication · Review",
+      "summary": {
+        "en": "Immutable revisions, accepted body, advisory review",
+        "zh": "不可变版本、正文接纳与复核建议"
+      },
+      "boundary": {
+        "en": "Saving, publication and quality are separate claims",
+        "zh": "保存、发布、质量结论分别核验"
+      },
+      "sources": [
+        "src/report.mjs",
+        "src/artifacts.mjs",
+        "src/publication.mjs",
+        "src/report-review.mjs"
+      ],
+      "guide": {
+        "en": "docs/report-review.md",
+        "zh": "docs/report-review.zh-CN.md"
+      }
+    },
+    {
+      "id": "L6",
+      "title": {
+        "en": "User interfaces",
+        "zh": "用户界面"
+      },
+      "modules": "CLI · Loopback Reader",
+      "summary": {
+        "en": "CLI operations, local report and attachment readback",
+        "zh": "命令行操作、本机报告与附件回读"
+      },
+      "boundary": {
+        "en": "Not a full Web workspace; no browser qualification",
+        "zh": "不是完整 Web 工作台；无浏览器验收声明"
+      },
+      "sources": [
+        "src/cli.mjs",
+        "src/reader.mjs",
+        "src/reader-cli.mjs"
+      ],
+      "guide": {
+        "en": "docs/module-guide.md",
+        "zh": "docs/module-guide.zh-CN.md"
+      }
+    }
+  ]
+}

@@ -1,3 +1,6 @@
+import { sync } from './sync-module-map.mjs';
+// Refresh the reviewed module presentation during normal release builds.
+await sync();
 import { mkdir, readdir, copyFile, lstat } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import { spawnSync } from 'node:child_process';

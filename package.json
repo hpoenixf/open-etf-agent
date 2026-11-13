@@ -15,7 +15,9 @@
     "evaluate": "node src/evaluate-cli.mjs",
     "session": "node src/session-cli.mjs",
     "temporal": "node src/temporal-cli.mjs",
-    "research": "node src/research-cli.mjs"
+    "research": "node src/research-cli.mjs",
+    "docs:sync": "node scripts/sync-module-map.mjs",
+    "docs:check": "node scripts/sync-module-map.mjs --check"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "1.32.2",

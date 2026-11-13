@@ -2,33 +2,6 @@
 
 # Open ETF Agent
 
-**读一篇 Agent 架构文章，运行对应实现，打开一份报告，再追到原始来源、固定代码与验证证据。**
-
-这是一个逐模块构建研究 Agent 的开源项目：每个模块讲清一个工程选择，留下能运行、能对照的实现。先跑离线合成文档比较，不需要模型密钥；它不是实时基金研究或交易服务。
-
-适合正在学习 Agent 工程的开发者，以及想把架构文章与可运行代码对照阅读的人；不是面向寻找基金推荐的投资者。
-
-**[快速运行](#quickstart) · [阅读全部文章](https://hpoenixf.com/eff-agent-article/open-etf-agent)**
-
-[最近版本](#versions) · [架构职责](#architecture) · [适用与安全边界](#scope) · [完整资料](#documentation) · [反馈与参与](#反馈与参与) · [微信公众号](#wechat-public-account)
-
-<a id="reading"></a>
-## 从问题进入，而不是从版本号开始
-
-| 你想做什么 | 先读 / 先运行 |
-| --- | --- |
-| 看懂 Agent 的一次工作 | [十五分钟入门](https://hpoenixf.com/eff-agent-article/articles/agent-in-15-minutes) → [运行身份全景](https://hpoenixf.com/eff-agent-article/articles/agent-task-session-run-worker-schedule) |
-| 用自己的资料做研究 | [研究项目练手篇](https://hpoenixf.com/eff-agent-article/articles/open-etf-agent-research-project-workshop) → [项目 CLI](docs/research-project.zh-CN.md) |
-| 查证、分工，再复核报告 | [报告复核练手篇](https://hpoenixf.com/eff-agent-article/articles/open-etf-agent-report-review-workshop) → [专家配置](docs/v027-specialist-profiles.zh-CN.md) · [报告复核](docs/report-review.zh-CN.md) |
-| 核对文章到底实现了什么 | [固定版本覆盖记录](docs/articles-and-code.zh-CN.md) · [全部文章](https://hpoenixf.com/eff-agent-article/open-etf-agent) |
-
-文章讲解的系统可能比公开模块更完整；覆盖记录是固定版本的历史资格，不是最新 main 的能力总表。
-
-**近期更新的阅读素材**
-
-<!-- Recent reading source: hpoenixf/eff-agent-article@249f0b866f9446f33b57f186fbc6d35b5d82c119 README.md; Chinese-source Git history order, translated editions are not separate entries. -->
-[Subagent 全景](https://hpoenixf.com/eff-agent-article/articles/agent-subagent-context-specialization) · [从第一份可回读报告开始](https://hpoenixf.com/eff-agent-article/articles/open-etf-agent-v01-first-readable-report) · [Spec 驱动的 Agent 研发全景](https://hpoenixf.com/eff-agent-article/articles/agent-spec-driven-development-panorama)
-
 <p align="center">
   <a href="https://github.com/hpoenixf/open-etf-agent/actions/workflows/verify.yml?query=branch%3Amain"><img src="https://github.com/hpoenixf/open-etf-agent/actions/workflows/verify.yml/badge.svg?branch=main" alt="Verify (main)" height="20" /></a>
   <a href="https://github.com/hpoenixf/open-etf-agent/releases/latest"><img src="https://img.shields.io/github/v/release/hpoenixf/open-etf-agent?label=release" alt="Latest release" height="20" /></a>
@@ -42,6 +15,48 @@
   <a href="https://hub.xerj.org/contributors/hpoenixf"><img src="https://hub.xerj.org/contributors/hpoenixf/badge.svg" alt="XERJ 贡献者徽章" height="20" /></a><br />
   <small>v0.9 独立 CLI Worker 实现收录于 <a href="https://hub.xerj.org/corpus/hpoenixf--open-etf-agent">XERJ Corpus Hub</a>。</small>
 </p>
+
+
+**读一篇 Agent 架构文章，运行对应实现，打开一份报告，再追到原始来源、固定代码与验证证据。**
+
+面向 Agent 工程开发者的可运行学习项目。先用离线合成资料生成报告，再按六层地图阅读模块和证据。不需要模型密钥；不是实时基金研究、交易或投资建议服务。
+
+**[快速运行](#quickstart) · [阅读全部文章](https://hpoenixf.com/eff-agent-article/open-etf-agent)**
+
+[最近版本](#versions) · [架构职责](#architecture) · [适用与安全边界](#scope) · [完整资料](#documentation) · [反馈与参与](#反馈与参与) · [微信公众号](#wechat-public-account)
+
+<!-- module-map:start -->
+<a id="module-map"></a>
+## 现在有哪些模块，做到哪了？
+
+[![六层地图：输入、身份上下文、决策运行、工具、交付、界面；每层列出公开模块与限制](docs/assets/module-map.zh-CN.svg)](docs/module-status.zh-CN.md)
+
+**当前地图: v0.30.0** · [模块、源码与证据](docs/module-status.zh-CN.md) · [六层文章原文](https://github.com/hpoenixf/eff-agent-article/blob/249f0b866f9446f33b57f186fbc6d35b5d82c119/articles/017-prompt-to-answer-six-layer-panorama-v3.md)
+
+图中是公开实现范围，不是全功能完成率。真实模型验证只覆盖[各版记录](docs/verification/README.md)中的指定路径；金融语义、生产与浏览器体验不因此获得认证。
+<!-- module-map:end -->
+
+<a id="reading"></a>
+## 从问题进入，而不是从版本号开始
+
+<details>
+<summary>按问题选阅读与练手路径</summary>
+
+| 你想做什么 | 先读 / 先运行 |
+| --- | --- |
+| 看懂 Agent 的一次工作 | [十五分钟入门](https://hpoenixf.com/eff-agent-article/articles/agent-in-15-minutes) → [运行身份全景](https://hpoenixf.com/eff-agent-article/articles/agent-task-session-run-worker-schedule) |
+| 用自己的资料做研究 | [研究项目练手篇](https://hpoenixf.com/eff-agent-article/articles/open-etf-agent-research-project-workshop) → [项目 CLI](docs/research-project.zh-CN.md) |
+| 查证、分工，再复核报告 | [报告复核练手篇](https://hpoenixf.com/eff-agent-article/articles/open-etf-agent-report-review-workshop) → [专家配置](docs/v027-specialist-profiles.zh-CN.md) · [报告复核](docs/report-review.zh-CN.md) |
+| 核对文章到底实现了什么 | [固定版本覆盖记录](docs/articles-and-code.zh-CN.md) · [全部文章](https://hpoenixf.com/eff-agent-article/open-etf-agent) |
+
+文章讲解的系统可能比公开模块更完整；覆盖记录是固定版本的历史资格，不是最新 main 的能力总表。
+
+</details>
+
+**近期更新的阅读素材**
+
+<!-- Recent reading source: hpoenixf/eff-agent-article@249f0b866f9446f33b57f186fbc6d35b5d82c119 README.md; Chinese-source Git history order, translated editions are not separate entries. -->
+[Subagent 全景](https://hpoenixf.com/eff-agent-article/articles/agent-subagent-context-specialization) · [从第一份可回读报告开始](https://hpoenixf.com/eff-agent-article/articles/open-etf-agent-v01-first-readable-report) · [Spec 驱动的 Agent 研发全景](https://hpoenixf.com/eff-agent-article/articles/agent-spec-driven-development-panorama)
 
 <a id="quickstart"></a>
 ## 快速运行 · Quickstart
@@ -85,6 +100,11 @@ npm run demo -- --case document-compare
 <a id="architecture"></a>
 ## 架构：沿一条执行链理解
 
+![问题、研究、交付：从合成资料到可回读报告](docs/assets/report-path.zh-CN.svg)
+
+<details>
+<summary>文字版执行路径</summary>
+
 ```text
 问题 → Runtime ⇄ Gateway
           │ Context：下一次有界输入
@@ -94,6 +114,8 @@ npm run demo -- --case document-compare
           └─ Artifact / Revision：报告、文件与回执
                    └─ Reader：重新打开实际交付字节
 ```
+
+</details>
 
 模型提出动作，代码检查授权并执行。Session、Publication 与单 Run Worker 接回同一条链，不另造执行器；原始来源、工作笔记与显式授权的 Memory 保持分离。
 

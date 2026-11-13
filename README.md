@@ -2,33 +2,6 @@
 
 # Open ETF Agent
 
-**Read an Agent architecture article. Run its corresponding implementation. Open a report and trace it back to sources, fixed code and evidence.**
-
-A learning-by-building research Agent: each module explains one engineering decision and keeps a runnable implementation. Start with the offline synthetic-document comparison—no model key required. This is not a live fund-research or trading service.
-
-For developers learning Agent engineering, and readers who want to check an architecture article against runnable code—not investors looking for fund recommendations.
-
-**[Quickstart](#quickstart) · [Read all articles](https://hpoenixf.com/eff-agent-article/en/open-etf-agent)**
-
-[Latest modules](#versions) · [Architecture](#architecture) · [Scope and safety](#scope) · [Full documentation](#documentation) · [Contribute](#feedback-and-contributions)
-
-<a id="reading"></a>
-## Start with a question, not a version number
-
-| What you want to do | Read / run next |
-| --- | --- |
-| Understand one Agent workflow | [Agent in fifteen minutes](https://hpoenixf.com/eff-agent-article/en/articles/agent-in-15-minutes) → [Execution identities](https://hpoenixf.com/eff-agent-article/en/articles/agent-task-session-run-worker-schedule) |
-| Research your own documents | [Research project workshop](https://hpoenixf.com/eff-agent-article/en/articles/open-etf-agent-research-project-workshop) → [Project CLI](docs/research-project.md) |
-| Gather evidence, delegate and review | [Report review workshop](https://hpoenixf.com/eff-agent-article/en/articles/open-etf-agent-report-review-workshop) → [Specialist profiles](docs/v027-specialist-profiles.md) · [Report review](docs/report-review.md) |
-| Check what an article actually implements | [Fixed-version coverage](docs/articles-and-code.md) · [All articles](https://hpoenixf.com/eff-agent-article/en/open-etf-agent) |
-
-Articles can describe a broader system than the public module. Coverage records qualify historical fixed versions, not the full capability set of latest main.
-
-**Recently updated reading**
-
-<!-- Recent reading source: hpoenixf/eff-agent-article@249f0b866f9446f33b57f186fbc6d35b5d82c119 README.md; Chinese-source Git history order, translated editions are not separate entries. -->
-[Subagent Panorama](https://hpoenixf.com/eff-agent-article/en/articles/agent-subagent-context-specialization) · [Start with a Report You Can Read Back](https://hpoenixf.com/eff-agent-article/en/articles/open-etf-agent-v01-first-readable-report) · [Spec-Driven Agent Development](https://hpoenixf.com/eff-agent-article/en/articles/agent-spec-driven-development-panorama)
-
 <p align="center">
   <a href="https://github.com/hpoenixf/open-etf-agent/actions/workflows/verify.yml?query=branch%3Amain"><img src="https://github.com/hpoenixf/open-etf-agent/actions/workflows/verify.yml/badge.svg?branch=main" alt="Verify (main)" height="20" /></a>
   <a href="https://github.com/hpoenixf/open-etf-agent/releases/latest"><img src="https://img.shields.io/github/v/release/hpoenixf/open-etf-agent?label=release" alt="Latest release" height="20" /></a>
@@ -42,6 +15,48 @@ Articles can describe a broader system than the public module. Coverage records 
   <a href="https://hub.xerj.org/contributors/hpoenixf"><img src="https://hub.xerj.org/contributors/hpoenixf/badge.svg" alt="XERJ contributor badge" height="20" /></a><br />
   <small>The v0.9 standalone CLI Worker implementation was selected for <a href="https://hub.xerj.org/corpus/hpoenixf--open-etf-agent">XERJ Corpus Hub</a>.</small>
 </p>
+
+
+**Read an Agent architecture article. Run its corresponding implementation. Open a report and trace it back to sources, fixed code and evidence.**
+
+A runnable learning project for Agent developers. Start with an offline report over synthetic documents, then explore the modules and evidence. No model key required; not a live fund-research, trading or investment-advice service.
+
+**[Quickstart](#quickstart) · [Read all articles](https://hpoenixf.com/eff-agent-article/en/open-etf-agent)**
+
+[Latest modules](#versions) · [Architecture](#architecture) · [Scope and safety](#scope) · [Full documentation](#documentation) · [Contribute](#feedback-and-contributions)
+
+<!-- module-map:start -->
+<a id="module-map"></a>
+## What is here, and how far does it go?
+
+[![Six layers: inputs, identity/context, execution, tools, delivery and interfaces, with public modules and limits](docs/assets/module-map.svg)](docs/module-status.md)
+
+**Current map: v0.30.0** · [Modules, source & evidence](docs/module-status.md) · [Six-layer article (Chinese original)](https://github.com/hpoenixf/eff-agent-article/blob/249f0b866f9446f33b57f186fbc6d35b5d82c119/articles/017-prompt-to-answer-six-layer-panorama-v3.md)
+
+This maps public implementation, not completion percentages. Live-model evidence qualifies only the paths in [version records](docs/verification/README.md), not financial accuracy, production or browser experience.
+<!-- module-map:end -->
+
+<a id="reading"></a>
+## Start with a question, not a version number
+
+<details>
+<summary>Choose a reading and hands-on path</summary>
+
+| What you want to do | Read / run next |
+| --- | --- |
+| Understand one Agent workflow | [Agent in fifteen minutes](https://hpoenixf.com/eff-agent-article/en/articles/agent-in-15-minutes) → [Execution identities](https://hpoenixf.com/eff-agent-article/en/articles/agent-task-session-run-worker-schedule) |
+| Research your own documents | [Research project workshop](https://hpoenixf.com/eff-agent-article/en/articles/open-etf-agent-research-project-workshop) → [Project CLI](docs/research-project.md) |
+| Gather evidence, delegate and review | [Report review workshop](https://hpoenixf.com/eff-agent-article/en/articles/open-etf-agent-report-review-workshop) → [Specialist profiles](docs/v027-specialist-profiles.md) · [Report review](docs/report-review.md) |
+| Check what an article actually implements | [Fixed-version coverage](docs/articles-and-code.md) · [All articles](https://hpoenixf.com/eff-agent-article/en/open-etf-agent) |
+
+Articles can describe a broader system than the public module. Coverage records qualify historical fixed versions, not the full capability set of latest main.
+
+</details>
+
+**Recently updated reading**
+
+<!-- Recent reading source: hpoenixf/eff-agent-article@249f0b866f9446f33b57f186fbc6d35b5d82c119 README.md; Chinese-source Git history order, translated editions are not separate entries. -->
+[Subagent Panorama](https://hpoenixf.com/eff-agent-article/en/articles/agent-subagent-context-specialization) · [Start with a Report You Can Read Back](https://hpoenixf.com/eff-agent-article/en/articles/open-etf-agent-v01-first-readable-report) · [Spec-Driven Agent Development](https://hpoenixf.com/eff-agent-article/en/articles/agent-spec-driven-development-panorama)
 
 <a id="quickstart"></a>
 ## Quickstart
@@ -85,6 +100,11 @@ The latest verified formal Release is **[v0.30.0 · Child lifecycle](https://git
 <a id="architecture"></a>
 ## Architecture: follow one execution path
 
+![Question, research, delivery: from synthetic sources to report readback](docs/assets/report-path.svg)
+
+<details>
+<summary>Text execution path</summary>
+
 ```text
 Question → Runtime ⇄ Gateway
               │ Context: the next bounded input
@@ -94,6 +114,8 @@ Question → Runtime ⇄ Gateway
               └─ Artifact / Revision: report, files and receipts
                        └─ Reader: reopen the delivered bytes
 ```
+
+</details>
 
 The model proposes; code checks authority and executes. Session, Publication and the single-Run Worker extend this path rather than adding a second executor. Original sources, working notes and explicitly authorized Memory remain separate.
 

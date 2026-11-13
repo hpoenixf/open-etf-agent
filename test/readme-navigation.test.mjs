@@ -4,7 +4,7 @@ import { readFileSync, existsSync } from 'node:fs'
 import { dirname, resolve, relative } from 'node:path'
 import { fileURLToPath } from 'node:url'
 const root = fileURLToPath(new URL('../', import.meta.url))
-const files = ['README.md', 'README.zh-CN.md', 'docs/module-guide.md', 'docs/module-guide.zh-CN.md']
+const files = ['README.md', 'README.zh-CN.md', 'docs/module-guide.md', 'docs/module-guide.zh-CN.md', 'docs/module-status.md', 'docs/module-status.zh-CN.md']
 const documents = new Map(files.map(path => [path, readFileSync(resolve(root, path), 'utf8')]))
 function anchors(source) {
   const ids = new Set([...source.matchAll(/<a\s+id="([^"]+)"\s*>/g)].map(match => match[1]))
@@ -49,7 +49,7 @@ test('both homepages expose extra examples and keep old section links in a close
     const extra = localLinks(source, file).find(link => /seven-more|另外七类/.test(link.fragment || ''))
     assert.ok(extra, `${file}: examples entry`)
     assert.ok(anchors(documents.get(extra.file)).has(extra.fragment))
-    const disclosure = source.match(/<details>\s*<summary>[^<]+<\/summary>([\s\S]*?)<\/details>/)
+    const disclosure = source.match(/<details>\s*<summary>(?:Older section bookmarks \(expand\)|旧章节精确入口（展开）)<\/summary>([\s\S]*?)<\/details>/)
     assert.ok(disclosure, `${file}: closed native disclosure`)
     const oldLinks = localLinks(disclosure[1], file).filter(link => documents.has(link.file) && link.fragment)
     assert.ok(oldLinks.length > 0)
