@@ -1,3 +1,5 @@
+import fs from 'node:fs/promises';
+import {syncBuiltinESMExports} from 'node:module';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {mkdir,mkdtemp,rm} from 'node:fs/promises';
@@ -66,4 +68,20 @@ test('30.async history admission follows concurrency rather than serial unsettle
   seen.push((await inspectChildExecutions({store,parentRunId:token.runId,...selection})).admissionBlocked);
   if(values.length===1)return spawn('b');release();return{kind:'final',text:'Drained.'};
  }});assert.equal(h.result.status,'completed');assert.deepEqual(seen,[null,'concurrency-limit']);
+});
+
+for(const mode of ['budget-cancellation','host-stop'])test('30.async parent retains Child unfinished initialization cleanup after '+mode,{timeout:4000},async t=>{
+ const stop=new AbortController();
+ let entered,release,reads=0;const started=new Promise(r=>entered=r),gate=new Promise(r=>release=r);
+ const read=fs.readFile;
+ const mocked=t.mock.method(fs,'readFile',async function(path,...args){
+  if(path instanceof URL&&path.pathname.endsWith('/fixtures/documents.json')&&++reads===2){entered();await gate;throw new Error('SYNTHETIC_LATE_INIT_FAILURE');}
+  return read.call(this,path,...args);
+ });syncBuiltinESMExports();
+ try{
+  const h=await harness(t,{rootLimits:{model:1,tool:10},hostSignal:stop.signal,main:()=>spawn('a'),onCheckpoint:async checkpoint=>{if(checkpoint.phase==='result-committed'&&checkpoint.callId==='a'){await started;if(mode==='host-stop')stop.abort();}}});
+  assert.equal(h.result.status,mode==='host-stop'?'interrupted':'failed');assert.equal(h.result.rootUsage.model,1);
+  assert.equal(h.result.cleanup?.effectsStopped,false);assert.equal(h.childCalls,0);
+  if(mode==='host-stop'){assert.equal(h.result.interruption.effectsStopped,false);assert.equal(h.result.interruption.leaseReleased,false);}else assert.equal(h.store.listChildren(h.result.runId).some(c=>c.status==='active'),false);
+ }finally{release();mocked.mock.restore();syncBuiltinESMExports();}
 });

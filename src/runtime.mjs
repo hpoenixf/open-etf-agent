@@ -292,7 +292,7 @@ async function drive({ question, gateway, outputRoot='runs', requireReport=false
     if(claim&&gateway.admission==='shared-admission@1'&&typeof gateway.bindRun==='function')gateway=gateway.bindRun({session:durable.store,runId});
     rootBudget=claim?.rootBudget??rootBudget??createRootBudget({model:budget.maxRounds,tool:budget.maxTools});
     const controller=new AbortController();
-    let interrupted=false,effectsStopped=true,pendingEffect,awaitingResponse=false;
+    let interrupted=false,effectsStopped=true,pendingEffect,hostInitialization,hostInitializationAbandoned=false,awaitingResponse=false;
     const stop=()=>{if(!controller.signal.aborted){interrupted=true;controller.abort(failure('HOST_STOPPED'));}};
     const cancel=()=>{
       // New explicit Child execution binding preserves cooperative Host stops.
@@ -363,7 +363,7 @@ async function drive({ question, gateway, outputRoot='runs', requireReport=false
       // plugin owner activates only for an admitted active execution.
       if(plugins)selected=await effect(activateTrustedPlugins({plugins,expectedBindings:durable?.bindings.plugins,signal:controller.signal}));
       if(claim&&durable.onClaim)await bounded(Promise.resolve().then(()=>durable.onClaim({runId,rootId:claim.rootId,owner:claim.owner,fence:claim.fence})),controller.signal);
-      host=await effect(createToolHost({directory,...(hostProjection?{hostProjection,projectionOwner:{runId,rootId:durable?.store.inspect(runId).rootId??runId},confirmDerivedConsumption:async record=>{const groups=state.messages.filter(m=>m.role==='assistant'&&m.calls?.some(c=>c.id===record.call.id));const pairs=state.messages.filter(m=>m.role==='tool'&&m.callId===record.call.id);return groups.length===1&&pairs.length===1&&canonical(groups[0].calls.find(c=>c.id===record.call.id))===canonical(record.call)&&pairs[0].result.status==='succeeded'&&canonical(pairs[0].result.value)===canonical(record.value);}}:{}),answerDelivery:publication&&!protectedMode,runIdentity:claim?{runId,grantId:claim.read().definition.grantId}:undefined,canOfferReferenceCorrection:claim?()=>{const s=claim.read().snapshot;return s.phase==='proposal-sealed'&&s.cursor===0&&s.proposal?.calls?.length===1&&!s.inFlight&&!s.partialEffects.length&&!s.unknownEffects.length&&s.gatewayOutcome==='settled';}:undefined,documentCatalog,ordinaryResponse:ordinaryResponse?{confirm:(call,result)=>durable.store.confirmResponse(runId,call,result)}:undefined,extensions,hooks,allowedTools,allowedDocuments,enableNotes:!!workingInput?.compaction,restore:state.host??undefined,pdfInput,...(protectedMode?{documentAccess:protectedAccess(claim.read(),claim)}:{})}));
+      host=await effect(hostInitialization=createToolHost({directory,...(hostProjection?{hostProjection,projectionOwner:{runId,rootId:durable?.store.inspect(runId).rootId??runId},confirmDerivedConsumption:async record=>{const groups=state.messages.filter(m=>m.role==='assistant'&&m.calls?.some(c=>c.id===record.call.id));const pairs=state.messages.filter(m=>m.role==='tool'&&m.callId===record.call.id);return groups.length===1&&pairs.length===1&&canonical(groups[0].calls.find(c=>c.id===record.call.id))===canonical(record.call)&&pairs[0].result.status==='succeeded'&&canonical(pairs[0].result.value)===canonical(record.value);}}:{}),answerDelivery:publication&&!protectedMode,runIdentity:claim?{runId,grantId:claim.read().definition.grantId}:undefined,canOfferReferenceCorrection:claim?()=>{const s=claim.read().snapshot;return s.phase==='proposal-sealed'&&s.cursor===0&&s.proposal?.calls?.length===1&&!s.inFlight&&!s.partialEffects.length&&!s.unknownEffects.length&&s.gatewayOutcome==='settled';}:undefined,documentCatalog,ordinaryResponse:ordinaryResponse?{confirm:(call,result)=>durable.store.confirmResponse(runId,call,result)}:undefined,extensions,hooks,allowedTools,allowedDocuments,enableNotes:!!workingInput?.compaction,restore:state.host??undefined,pdfInput,...(protectedMode?{documentAccess:protectedAccess(claim.read(),claim)}:{})}));
       if(durable?.runId)for(const message of state.messages)if(message.role==='tool'){const call=state.messages.flatMap(m=>m.calls||[]).find(c=>c.id===message.callId);await host.verifyResult(call,message.result);}
       verifyCorrectionHistory(host);
       if(state.working)await host.verifyWorkingInput(state.working,state.messages);
@@ -524,7 +524,17 @@ async function drive({ question, gateway, outputRoot='runs', requireReport=false
       retainUnknownDispatch(state,inFlight);
     }finally{
       clearTimeout(timer);
-      if(interrupted)effectsStopped=await drainStoppedEffect();
+      // Initialization owns local filesystem work even when abort wins the race.
+      // Keep the existing bounded stop; a timeout is not proof that effects stopped.
+      if(hostInitialization&&!host){
+        effectsStopped=await drainStoppedEffect();
+        if(effectsStopped){try{host=await hostInitialization;}catch{/* Original failure remains authoritative. */}}
+        else{
+          hostInitializationAbandoned=true;
+          // Never adopt a late Host or dispatch through it; close lazy resources only.
+          void hostInitialization.then(late=>late.close?.(),()=>{}).catch(()=>{});
+        }
+      }else if(interrupted)effectsStopped=await drainStoppedEffect();
       try{const cleanup=await settleAsyncChildExecutions(extensions,{phase:'close',interrupted});if(cleanup.effectsStopped===false)effectsStopped=false;}catch{effectsStopped=false;secondary('child-cleanup','CHILD_CLEANUP_FAILED');}
       if(pdfInput!==undefined){try{await host?.close();}catch{secondary('pdf-cleanup','PDF_CLEANUP_FAILED');}}
       if(allowedTools&&host){try{sourceSnapshots=await host.getSources();resultRefs=await host.getResultRefs();}catch{secondary('result-readback','RESULT_READBACK_FAILED');}}
@@ -537,7 +547,7 @@ async function drive({ question, gateway, outputRoot='runs', requireReport=false
     signal?.removeEventListener('abort',cancel);hostSignal?.removeEventListener('abort',stop);
     if(protectedMode&&state.status!=='completed')state.answer='';
     state.gatewayOutcome=gatewayUnsettled?'unknown':'settled';
-    const outcome={...(state.controlObservations?{controlObservations:structuredClone(state.controlObservations)}:{}),runId,rootId:rootBudget.rootId,directory:resolve(directory),status:state.status,code:state.code,gatewayOutcome:state.gatewayOutcome,answer:state.answer,...(state.publication?{publication:structuredClone(state.publication)}:{}),receipt:host?.receipt??null,toolsDispatched:state.toolsDispatched,rounds:state.rounds,logErrors,unknownEffects:state.unknownEffects,partialEffects:state.partialEffects,hookErrors:state.hookErrors,rootUsage:rootBudget.snapshot(),taskId,...(allowedTools?{sources:sourceSnapshots,resultRefs}:{}),semanticStatus:'unreviewed'};
+    const outcome={...(!effectsStopped?{cleanup:{effectsStopped:false,...(hostInitializationAbandoned?{pending:'host-initialization'}:{})}}:{}),...(state.controlObservations?{controlObservations:structuredClone(state.controlObservations)}:{}),runId,rootId:rootBudget.rootId,directory:resolve(directory),status:state.status,code:state.code,gatewayOutcome:state.gatewayOutcome,answer:state.answer,...(state.publication?{publication:structuredClone(state.publication)}:{}),receipt:host?.receipt??null,toolsDispatched:state.toolsDispatched,rounds:state.rounds,logErrors,unknownEffects:state.unknownEffects,partialEffects:state.partialEffects,hookErrors:state.hookErrors,rootUsage:rootBudget.snapshot(),taskId,...(allowedTools?{sources:sourceSnapshots,resultRefs}:{}),semanticStatus:'unreviewed'};
     if(awaitingResponse){
       try{
         claim.release();

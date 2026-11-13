@@ -21,6 +21,7 @@ export async function workRun(options) {
   publication: body?.receipt ?? null,
   observationCode: outcome.code,
   ...(outcome.status==='awaiting-response'?{questionId:outcome.questionId,deadlineAt:outcome.deadlineAt}:{}),
+  ...(outcome.cleanup ? { cleanup: outcome.cleanup } : {}),
   ...(outcome.interruption ? { interruption: outcome.interruption } : {})
  };
 }

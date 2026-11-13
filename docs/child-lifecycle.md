@@ -42,6 +42,8 @@ node src/research-cli.mjs run work --project research-projects/my-project --run 
 
 Main finalization drains admitted Children under the original deadline. Host stop interrupts local workers and preserves the recovery checkpoint; it is not Root cancellation. A noncooperative provider can remain unknown after a local worker returns. In that case `effectsStopped:false` is retained, and a claim is not released merely because its local promise completed. Unknown dispatched requests remain charged and are not replayed. `run cancel` still cancels the whole Root.
 
+Host initialization also owns local filesystem work. If cancellation wins before initialization settles, the Runtime gives that work the existing bounded 500 ms drain window. A late Host is closed, never adopted for dispatch. If initialization or an admitted Child still has unconfirmed cleanup when the worker returns, the outcome includes `cleanup.effectsStopped:false` (and `pending:"host-initialization"` for its own initialization); this observation propagates to the parent and Worker summary. Do not delete or reuse the output directory on that observation. `workerStatus:"settled"` only means the Run is terminal, not that all local IO stopped. Host-stop retains its existing no-release rule for unstopped effects; ordinary cancellation retains its existing terminal semantics. This cleanup field is a current-worker observation, not a persisted recovery receipt: a later cancelled-Run read does not establish that earlier IO stopped.
+
 Main and all Children compete for the same original Root budget. Child cancellation does not refund dispatched work, grant a replacement slot, renew a deadline or adopt a late answer.
 
 ## Qualification boundary
