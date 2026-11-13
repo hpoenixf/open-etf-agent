@@ -29,9 +29,11 @@
 <a id="module-map"></a>
 ## 现在有哪些模块，做到哪了？
 
-[![六层地图：输入、身份上下文、决策运行、工具、交付、界面；每层列出公开模块与限制](docs/assets/module-map.zh-CN.svg)](docs/module-status.zh-CN.md)
+[![六层地图：输入、身份上下文、决策运行、工具、交付、界面；每层列出公开模块与限制](docs/assets/module-map.zh-CN.svg)](docs/assets/module-map.zh-CN.svg)
 
-**当前地图: v0.30.0** · [模块、源码与证据](docs/module-status.zh-CN.md) · [六层文章原文](https://github.com/hpoenixf/eff-agent-article/blob/249f0b866f9446f33b57f186fbc6d35b5d82c119/articles/017-prompt-to-answer-six-layer-panorama-v3.md)
+[打开原尺寸模块矩阵（可放大）](docs/assets/module-map.zh-CN.svg) · [逐模块文字与源码索引](docs/module-status.zh-CN.md)
+
+**当前地图: v0.30.0** · [模块、源码与证据](docs/module-status.zh-CN.md) · [六层文章原文](https://github.com/hpoenixf/eff-agent-article/blob/249f0b866f9446f33b57f186fbc6d35b5d82c119/articles/open-etf-agent-v010-system-design.md)
 
 图中是公开实现范围，不是全功能完成率。真实模型验证只覆盖[各版记录](docs/verification/README.md)中的指定路径；金融语义、生产与浏览器体验不因此获得认证。
 <!-- module-map:end -->

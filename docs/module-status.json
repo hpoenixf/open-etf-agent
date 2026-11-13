@@ -1,8 +1,8 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "reviewedVersion": "0.30.0",
-  "reviewedSource": "46f7d95bbce20757a884b54cea41f8ebbf6d2540",
-  "articleSource": "https://github.com/hpoenixf/eff-agent-article/blob/249f0b866f9446f33b57f186fbc6d35b5d82c119/articles/017-prompt-to-answer-six-layer-panorama-v3.md",
+  "reviewedSource": "ba527fb502aebbe8bd601fd2115a4282cd10b94c",
+  "articleSource": "https://github.com/hpoenixf/eff-agent-article/blob/249f0b866f9446f33b57f186fbc6d35b5d82c119/articles/open-etf-agent-v010-system-design.md",
   "evidence": "docs/verification/v030-release.md",
   "layers": [
     {
@@ -11,22 +11,6 @@
         "en": "Inputs & triggers",
         "zh": "任务输入与触发"
       },
-      "modules": "CLI · Research Project · Schedule",
-      "summary": {
-        "zh": "项目提交、一次计划执行与显式继续",
-        "en": "Project submission, finite once schedules, explicit continuation"
-      },
-      "boundary": {
-        "zh": "本地单用户；非周期调度或常驻后台服务",
-        "en": "Local single-user; no recurring or resident scheduler"
-      },
-      "sources": [
-        "src/research-cli.mjs",
-        "src/scheduled-tasks.mjs",
-        "src/conversation-cli.mjs",
-        "src/temporal.mjs",
-        "src/research-project.mjs"
-      ],
       "guide": {
         "en": "docs/scheduled-tasks.md",
         "zh": "docs/scheduled-tasks.zh-CN.md"
@@ -38,24 +22,6 @@
         "en": "Identity, session & context",
         "zh": "身份、会话与上下文"
       },
-      "modules": "Session · Context · Memory · Skill · Conversation",
-      "summary": {
-        "en": "Original identity, bounded context, explicit memory",
-        "zh": "原任务身份、资料窗口与显式记忆"
-      },
-      "boundary": {
-        "en": "Memory is not original evidence or new authority",
-        "zh": "记忆不是原始证据；不扩展授权"
-      },
-      "sources": [
-        "src/session.mjs",
-        "src/context.mjs",
-        "src/memory.mjs",
-        "src/skills.mjs",
-        "src/compaction.mjs",
-        "src/conversation.mjs",
-        "src/human-interaction.mjs"
-      ],
       "guide": {
         "en": "docs/project-context.md",
         "zh": "docs/project-context.zh-CN.md"
@@ -67,24 +33,6 @@
         "en": "Agent decisions & execution",
         "zh": "Agent 决策与运行"
       },
-      "modules": "Runtime · Gateway · Worker · Child · Admission",
-      "summary": {
-        "en": "Resume, shared budgets, independent Child cancellation",
-        "zh": "接续、共享预算、子任务独立取消"
-      },
-      "boundary": {
-        "en": "Completion is not accuracy; unknown requests retained",
-        "zh": "运行完成 ≠ 答案准确；未知请求保留"
-      },
-      "sources": [
-        "src/runtime.mjs",
-        "src/gateway.mjs",
-        "src/worker.mjs",
-        "src/child-execution.mjs",
-        "src/hooks.mjs",
-        "src/admission.mjs",
-        "src/specialist-profiles.mjs"
-      ],
       "guide": {
         "en": "docs/child-lifecycle.md",
         "zh": "docs/child-lifecycle.zh-CN.md"
@@ -96,26 +44,6 @@
         "en": "Tools & domain capabilities",
         "zh": "工具与领域能力"
       },
-      "modules": "Tools · MCP · Plugin · Result · Knowledge · Web / PDF",
-      "summary": {
-        "en": "Read originals, reread sources, bounded calculations",
-        "zh": "原文读取、来源回读、受限计算"
-      },
-      "boundary": {
-        "en": "Static Web / PDF text, not live financial data",
-        "zh": "静态网页 / PDF文本；非实时金融数据"
-      },
-      "sources": [
-        "src/tools.mjs",
-        "src/mcp.mjs",
-        "src/results.mjs",
-        "src/web-acquisition.mjs",
-        "src/pdf-input.mjs",
-        "src/calculation.mjs",
-        "src/plugins.mjs",
-        "src/retrieval.mjs",
-        "src/knowledge.mjs"
-      ],
       "guide": {
         "en": "docs/web-sources.md",
         "zh": "docs/web-sources.zh-CN.md"
@@ -127,21 +55,6 @@
         "en": "Publication & delivery",
         "zh": "结果发布与交付"
       },
-      "modules": "Report · Artifact · Publication · Review",
-      "summary": {
-        "en": "Immutable revisions, accepted body, advisory review",
-        "zh": "不可变版本、正文接纳与复核建议"
-      },
-      "boundary": {
-        "en": "Saving, publication and quality are separate claims",
-        "zh": "保存、发布、质量结论分别核验"
-      },
-      "sources": [
-        "src/report.mjs",
-        "src/artifacts.mjs",
-        "src/publication.mjs",
-        "src/report-review.mjs"
-      ],
       "guide": {
         "en": "docs/report-review.md",
         "zh": "docs/report-review.zh-CN.md"
@@ -153,24 +66,692 @@
         "en": "User interfaces",
         "zh": "用户界面"
       },
-      "modules": "CLI · Loopback Reader",
-      "summary": {
-        "en": "CLI operations, local report and attachment readback",
-        "zh": "命令行操作、本机报告与附件回读"
-      },
-      "boundary": {
-        "en": "Not a full Web workspace; no browser qualification",
-        "zh": "不是完整 Web 工作台；无浏览器验收声明"
-      },
-      "sources": [
-        "src/cli.mjs",
-        "src/reader.mjs",
-        "src/reader-cli.mjs"
-      ],
       "guide": {
         "en": "docs/module-guide.md",
         "zh": "docs/module-guide.zh-CN.md"
       }
+    }
+  ],
+  "groups": [
+    {
+      "id": "task",
+      "title": {
+        "zh": "任务与 Session",
+        "en": "Tasks & Session"
+      }
+    },
+    {
+      "id": "loop",
+      "title": {
+        "zh": "Context / Loop",
+        "en": "Context / Loop"
+      }
+    },
+    {
+      "id": "main",
+      "title": {
+        "zh": "Main 决策",
+        "en": "Main decisions"
+      }
+    },
+    {
+      "id": "child",
+      "title": {
+        "zh": "Child 专家",
+        "en": "Child specialists"
+      }
+    },
+    {
+      "id": "tools",
+      "title": {
+        "zh": "工具与边界",
+        "en": "Tools & boundaries"
+      }
+    },
+    {
+      "id": "result",
+      "title": {
+        "zh": "结果与复算",
+        "en": "Results & calculation"
+      }
+    },
+    {
+      "id": "delivery",
+      "title": {
+        "zh": "报告与回读",
+        "en": "Reports & readback"
+      }
+    }
+  ],
+  "cards": [
+    {
+      "id": "cli",
+      "layer": "L1",
+      "group": "task",
+      "name": "CLI",
+      "summary": {
+        "zh": "接收任务",
+        "en": "Task entry"
+      },
+      "boundary": {
+        "zh": "离线演示 / 显式提交",
+        "en": "Offline demo / explicit submit"
+      },
+      "status": "bounded",
+      "source": "src/cli.mjs",
+      "kind": "module"
+    },
+    {
+      "id": "project",
+      "layer": "L1",
+      "group": "task",
+      "name": "Research Project",
+      "summary": {
+        "zh": "导入并提交研究",
+        "en": "Import and submit research"
+      },
+      "boundary": {
+        "zh": "自有资料与固定任务",
+        "en": "Owned sources, frozen task"
+      },
+      "status": "bounded",
+      "source": "src/research-project.mjs",
+      "kind": "module"
+    },
+    {
+      "id": "schedule",
+      "layer": "L1",
+      "group": "task",
+      "name": "Schedule",
+      "summary": {
+        "zh": "一次计划执行",
+        "en": "Finite once schedule"
+      },
+      "boundary": {
+        "zh": "非周期常驻服务",
+        "en": "Not a resident scheduler"
+      },
+      "status": "bounded",
+      "source": "src/scheduled-tasks.mjs",
+      "kind": "module"
+    },
+    {
+      "id": "session",
+      "layer": "L2",
+      "group": "task",
+      "name": "Session",
+      "summary": {
+        "zh": "保留原 Run 身份",
+        "en": "Preserve original Run"
+      },
+      "boundary": {
+        "zh": "身份、预算与截止不重置",
+        "en": "No identity / budget reset"
+      },
+      "status": "bounded",
+      "source": "src/session.mjs",
+      "kind": "module"
+    },
+    {
+      "id": "conversation",
+      "layer": "L2",
+      "group": "task",
+      "name": "Conversation",
+      "summary": {
+        "zh": "澄清与显式继续",
+        "en": "Clarify and continue"
+      },
+      "boundary": {
+        "zh": "收到回复 ≠ 已采用",
+        "en": "Received ≠ adopted"
+      },
+      "status": "bounded",
+      "source": "src/conversation.mjs",
+      "kind": "module"
+    },
+    {
+      "id": "temporal",
+      "layer": "L2",
+      "group": "task",
+      "name": "Temporal",
+      "summary": {
+        "zh": "固定任务时间",
+        "en": "Pin task time"
+      },
+      "boundary": {
+        "zh": "时区锚点；非市场日历",
+        "en": "Zone anchor, not market calendar"
+      },
+      "status": "bounded",
+      "source": "src/temporal.mjs",
+      "kind": "module"
+    },
+    {
+      "id": "context",
+      "layer": "L2",
+      "group": "loop",
+      "name": "Context",
+      "summary": {
+        "zh": "投影本轮材料",
+        "en": "Project this turn’s input"
+      },
+      "boundary": {
+        "zh": "原文不随窗口改写",
+        "en": "Do not rewrite originals"
+      },
+      "status": "bounded",
+      "source": "src/context.mjs",
+      "kind": "module"
+    },
+    {
+      "id": "compact",
+      "layer": "L2",
+      "group": "loop",
+      "name": "Compaction",
+      "summary": {
+        "zh": "压缩工作上下文",
+        "en": "Compact working context"
+      },
+      "boundary": {
+        "zh": "摘要不代替原始证据",
+        "en": "Notes are not source evidence"
+      },
+      "status": "bounded",
+      "source": "src/compaction.mjs",
+      "kind": "module"
+    },
+    {
+      "id": "memory",
+      "layer": "L2",
+      "group": "loop",
+      "name": "Memory",
+      "summary": {
+        "zh": "明确保存与遗忘",
+        "en": "Explicit save and forget"
+      },
+      "boundary": {
+        "zh": "跨任务偏好单独授权",
+        "en": "Separate cross-task authority"
+      },
+      "status": "bounded",
+      "source": "src/memory.mjs",
+      "kind": "module"
+    },
+    {
+      "id": "hil",
+      "layer": "L2",
+      "group": "main",
+      "name": "Human Interaction",
+      "summary": {
+        "zh": "提问、收取与采用",
+        "en": "Ask, receive and adopt"
+      },
+      "boundary": {
+        "zh": "显式恢复；非通用审批",
+        "en": "Explicit resume, not approval engine"
+      },
+      "status": "bounded",
+      "source": "src/human-interaction.mjs",
+      "kind": "module"
+    },
+    {
+      "id": "profiles",
+      "layer": "L2",
+      "group": "child",
+      "name": "Specialist Profile",
+      "summary": {
+        "zh": "冻结专家配置",
+        "en": "Freeze specialist profiles"
+      },
+      "boundary": {
+        "zh": "继承原任务边界",
+        "en": "Inherit original task boundaries"
+      },
+      "status": "bounded",
+      "source": "src/specialist-profiles.mjs",
+      "kind": "module"
+    },
+    {
+      "id": "skill",
+      "layer": "L2",
+      "group": "tools",
+      "name": "Skill",
+      "summary": {
+        "zh": "按任务加载方法",
+        "en": "Load task methods"
+      },
+      "boundary": {
+        "zh": "方法说明不扩大工具权",
+        "en": "Instructions add no authority"
+      },
+      "status": "bounded",
+      "source": "src/skills.mjs",
+      "kind": "module"
+    },
+    {
+      "id": "worker",
+      "layer": "L3",
+      "group": "task",
+      "name": "Worker",
+      "summary": {
+        "zh": "接手续跑原任务",
+        "en": "Resume original work"
+      },
+      "boundary": {
+        "zh": "仅支持的检查点",
+        "en": "Supported checkpoints only"
+      },
+      "status": "bounded",
+      "source": "src/worker.mjs",
+      "kind": "module"
+    },
+    {
+      "id": "admission",
+      "layer": "L3",
+      "group": "task",
+      "name": "Admission",
+      "summary": {
+        "zh": "接纳与容量排队",
+        "en": "Admission and capacity"
+      },
+      "boundary": {
+        "zh": "公平等待，不放大并发",
+        "en": "Queue, do not expand concurrency"
+      },
+      "status": "bounded",
+      "source": "src/admission.mjs",
+      "kind": "module"
+    },
+    {
+      "id": "gateway",
+      "layer": "L3",
+      "group": "loop",
+      "name": "Gateway",
+      "summary": {
+        "zh": "编码与接收模型动作",
+        "en": "Encode / receive model actions"
+      },
+      "boundary": {
+        "zh": "不完整响应不作动作",
+        "en": "Incomplete response is not action"
+      },
+      "status": "bounded",
+      "source": "src/gateway.mjs",
+      "kind": "module"
+    },
+    {
+      "id": "runtime",
+      "layer": "L3",
+      "group": "loop",
+      "name": "Runtime",
+      "summary": {
+        "zh": "推进同一工具循环",
+        "en": "Drive the same tool loop"
+      },
+      "boundary": {
+        "zh": "未知派发不盲目重放",
+        "en": "Do not replay unknown dispatch"
+      },
+      "status": "bounded",
+      "source": "src/runtime.mjs",
+      "kind": "module"
+    },
+    {
+      "id": "hooks",
+      "layer": "L3",
+      "group": "loop",
+      "name": "Hooks",
+      "summary": {
+        "zh": "执行点扩展",
+        "en": "Execution hooks"
+      },
+      "boundary": {
+        "zh": "受原控制面约束",
+        "en": "Original control plane applies"
+      },
+      "status": "bounded",
+      "source": "src/hooks.mjs",
+      "kind": "module"
+    },
+    {
+      "id": "control",
+      "layer": "L3",
+      "group": "main",
+      "name": "Run Control",
+      "summary": {
+        "zh": "继续或停止的决策",
+        "en": "Continue or stop decision"
+      },
+      "boundary": {
+        "zh": "Host stop ≠ 用户取消",
+        "en": "Host stop ≠ user cancellation"
+      },
+      "status": "bounded",
+      "source": "src/run-control.mjs",
+      "kind": "module"
+    },
+    {
+      "id": "mainchild",
+      "layer": "L3",
+      "group": "main",
+      "name": "Main → Child",
+      "summary": {
+        "zh": "委派、观察与取消",
+        "en": "Delegate, inspect, cancel"
+      },
+      "boundary": {
+        "zh": "原 Session 与 Root 预算",
+        "en": "Original Session / Root budget"
+      },
+      "status": "enhanced",
+      "source": "src/child-execution.mjs",
+      "kind": "call-site"
+    },
+    {
+      "id": "child",
+      "layer": "L3",
+      "group": "child",
+      "name": "Child Lifecycle",
+      "summary": {
+        "zh": "独立子执行生命周期",
+        "en": "Independent child lifecycle"
+      },
+      "boundary": {
+        "zh": "晚到结果隔离 / 冷恢复",
+        "en": "Late-result fence / cold recovery"
+      },
+      "status": "enhanced",
+      "source": "src/child-execution.mjs",
+      "kind": "module"
+    },
+    {
+      "id": "host",
+      "layer": "L4",
+      "group": "tools",
+      "name": "Tool Host",
+      "summary": {
+        "zh": "核权再执行",
+        "en": "Check authority, then execute"
+      },
+      "boundary": {
+        "zh": "参数、路径与来源约束",
+        "en": "Argument, path and source bounds"
+      },
+      "status": "bounded",
+      "source": "src/tools.mjs",
+      "kind": "module"
+    },
+    {
+      "id": "mcp",
+      "layer": "L4",
+      "group": "tools",
+      "name": "MCP",
+      "summary": {
+        "zh": "连接外部工具",
+        "en": "Connect external tools"
+      },
+      "boundary": {
+        "zh": "接入不等于授予全权",
+        "en": "Connection is not blanket authority"
+      },
+      "status": "bounded",
+      "source": "src/mcp.mjs",
+      "kind": "module"
+    },
+    {
+      "id": "plugin",
+      "layer": "L4",
+      "group": "tools",
+      "name": "Trusted Plugin",
+      "summary": {
+        "zh": "受信任本地扩展",
+        "en": "Trusted local extension"
+      },
+      "boundary": {
+        "zh": "不是 JavaScript 沙箱",
+        "en": "Not a JavaScript sandbox"
+      },
+      "status": "bounded",
+      "source": "src/plugins.mjs",
+      "kind": "module"
+    },
+    {
+      "id": "web",
+      "layer": "L4",
+      "group": "tools",
+      "name": "Web Acquisition",
+      "summary": {
+        "zh": "采集公开静态页",
+        "en": "Acquire public static pages"
+      },
+      "boundary": {
+        "zh": "无浏览器渲染与爬虫",
+        "en": "No browser rendering or crawler"
+      },
+      "status": "bounded",
+      "source": "src/web-acquisition.mjs",
+      "kind": "module"
+    },
+    {
+      "id": "pdf",
+      "layer": "L4",
+      "group": "tools",
+      "name": "PDF",
+      "summary": {
+        "zh": "保留文件并提取文本",
+        "en": "Retain file, extract text"
+      },
+      "boundary": {
+        "zh": "无 OCR / 视觉表格解析",
+        "en": "No OCR / visual table parsing"
+      },
+      "status": "bounded",
+      "source": "src/pdf-input.mjs",
+      "kind": "module"
+    },
+    {
+      "id": "result",
+      "layer": "L4",
+      "group": "result",
+      "name": "Result / ResultRef",
+      "summary": {
+        "zh": "留存原文与精确引用",
+        "en": "Originals and exact references"
+      },
+      "boundary": {
+        "zh": "来源版本与选择不混同",
+        "en": "Source version ≠ selection"
+      },
+      "status": "bounded",
+      "source": "src/results.mjs",
+      "kind": "module"
+    },
+    {
+      "id": "retrieval",
+      "layer": "L4",
+      "group": "result",
+      "name": "Retrieval",
+      "summary": {
+        "zh": "查找并回读来源",
+        "en": "Find and reread sources"
+      },
+      "boundary": {
+        "zh": "检索命中 ≠ 已取得原文",
+        "en": "Search hit ≠ acquired original"
+      },
+      "status": "bounded",
+      "source": "src/retrieval.mjs",
+      "kind": "module"
+    },
+    {
+      "id": "knowledge",
+      "layer": "L4",
+      "group": "result",
+      "name": "Knowledge",
+      "summary": {
+        "zh": "材料接入与来源核对",
+        "en": "Material and source checks"
+      },
+      "boundary": {
+        "zh": "语义质量另行看证据",
+        "en": "Semantic quality has separate evidence"
+      },
+      "status": "bounded",
+      "source": "src/knowledge.mjs",
+      "kind": "module"
+    },
+    {
+      "id": "calc",
+      "layer": "L4",
+      "group": "result",
+      "name": "Calculation",
+      "summary": {
+        "zh": "选区到结果可复算",
+        "en": "Recompute selected inputs"
+      },
+      "boundary": {
+        "zh": "非行情 / 交易服务",
+        "en": "Not market data or trading"
+      },
+      "status": "bounded",
+      "source": "src/calculation.mjs",
+      "kind": "module"
+    },
+    {
+      "id": "childresult",
+      "layer": "L4",
+      "group": "child",
+      "name": "Child Results",
+      "summary": {
+        "zh": "交回原文与派生意见",
+        "en": "Return sources and advice"
+      },
+      "boundary": {
+        "zh": "建议不能冒充原证据",
+        "en": "Advice is not original evidence"
+      },
+      "status": "bounded",
+      "source": "src/child-results.mjs",
+      "kind": "module"
+    },
+    {
+      "id": "save",
+      "layer": "L5",
+      "group": "main",
+      "name": "Main → Report",
+      "summary": {
+        "zh": "接回来源后保存报告",
+        "en": "Consume sources, save report"
+      },
+      "boundary": {
+        "zh": "完成宣称要有回执",
+        "en": "Completion claims need receipts"
+      },
+      "status": "bounded",
+      "source": "src/report.mjs",
+      "kind": "call-site"
+    },
+    {
+      "id": "report",
+      "layer": "L5",
+      "group": "delivery",
+      "name": "Report",
+      "summary": {
+        "zh": "生成带来源的正文",
+        "en": "Compose source-linked report"
+      },
+      "boundary": {
+        "zh": "读得懂 ≠ 金融结论准确",
+        "en": "Readable ≠ financially accurate"
+      },
+      "status": "bounded",
+      "source": "src/report.mjs",
+      "kind": "module"
+    },
+    {
+      "id": "artifact",
+      "layer": "L5",
+      "group": "delivery",
+      "name": "Artifact / Revision",
+      "summary": {
+        "zh": "保存不可变版本",
+        "en": "Save immutable revisions"
+      },
+      "boundary": {
+        "zh": "文件存在 ≠ 正式发布",
+        "en": "File exists ≠ published answer"
+      },
+      "status": "bounded",
+      "source": "src/artifacts.mjs",
+      "kind": "module"
+    },
+    {
+      "id": "publication",
+      "layer": "L5",
+      "group": "delivery",
+      "name": "Publication",
+      "summary": {
+        "zh": "接纳回答正文",
+        "en": "Accept answer body"
+      },
+      "boundary": {
+        "zh": "原版本与提交回执",
+        "en": "Original revision and commit receipt"
+      },
+      "status": "bounded",
+      "source": "src/publication.mjs",
+      "kind": "module"
+    },
+    {
+      "id": "review",
+      "layer": "L5",
+      "group": "result",
+      "name": "Report Review",
+      "summary": {
+        "zh": "对冻结正文提复核意见",
+        "en": "Review frozen report text"
+      },
+      "boundary": {
+        "zh": "建议性复核，不作认证",
+        "en": "Advisory review, not certification"
+      },
+      "status": "bounded",
+      "source": "src/report-review.mjs",
+      "kind": "module"
+    },
+    {
+      "id": "reader",
+      "layer": "L6",
+      "group": "delivery",
+      "name": "Loopback Reader",
+      "summary": {
+        "zh": "回读报告和附件",
+        "en": "Read reports and attachments"
+      },
+      "boundary": {
+        "zh": "本机 HTTP；非完整 Web UI",
+        "en": "Local HTTP, not full Web UI"
+      },
+      "status": "bounded",
+      "source": "src/reader.mjs",
+      "kind": "module"
+    },
+    {
+      "id": "readcli",
+      "layer": "L6",
+      "group": "task",
+      "name": "CLI Readback",
+      "summary": {
+        "zh": "按身份观察原任务",
+        "en": "Inspect original task by identity"
+      },
+      "boundary": {
+        "zh": "浏览器交互未宣称验收",
+        "en": "No browser qualification claim"
+      },
+      "status": "bounded",
+      "source": "src/observe.mjs",
+      "kind": "call-site"
     }
   ]
 }

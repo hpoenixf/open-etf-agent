@@ -29,9 +29,11 @@ A runnable learning project for Agent developers. Start with an offline report o
 <a id="module-map"></a>
 ## What is here, and how far does it go?
 
-[![Six layers: inputs, identity/context, execution, tools, delivery and interfaces, with public modules and limits](docs/assets/module-map.svg)](docs/module-status.md)
+[![Six layers: inputs, identity/context, execution, tools, delivery and interfaces, with public modules and limits](docs/assets/module-map.svg)](docs/assets/module-map.svg)
 
-**Current map: v0.30.0** · [Modules, source & evidence](docs/module-status.md) · [Six-layer article (Chinese original)](https://github.com/hpoenixf/eff-agent-article/blob/249f0b866f9446f33b57f186fbc6d35b5d82c119/articles/017-prompt-to-answer-six-layer-panorama-v3.md)
+[Open full-size module matrix (zoomable)](docs/assets/module-map.svg) · [Per-module text and source index](docs/module-status.md)
+
+**Current map: v0.30.0** · [Modules, source & evidence](docs/module-status.md) · [Six-layer article (Chinese original)](https://github.com/hpoenixf/eff-agent-article/blob/249f0b866f9446f33b57f186fbc6d35b5d82c119/articles/open-etf-agent-v010-system-design.md)
 
 This maps public implementation, not completion percentages. Live-model evidence qualifies only the paths in [version records](docs/verification/README.md), not financial accuracy, production or browser experience.
 <!-- module-map:end -->
