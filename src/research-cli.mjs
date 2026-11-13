@@ -30,7 +30,7 @@ Usage: node src/research-cli.mjs <group> <command> [options]
   source acquisition --project DIR --acquisition ID
   run submit --project DIR --run ID --question TEXT_FILE --manifest SHA256
       [--approve-provider --approve-data --approve-cost]
-      [--report-delivery artifact-required@1] [--specialists JSON_FILE] [--memory-intents JSON_FILE] [--task-time JSON_FILE] [--schedule JSON_FILE]
+      [--knowledge-vectors JSON_FILE] [--report-delivery artifact-required@1] [--specialists JSON_FILE] [--memory-intents JSON_FILE] [--task-time JSON_FILE] [--schedule JSON_FILE]
   schedule confirm --project DIR --run ID --question TEXT_FILE --manifest SHA256 --schedule JSON_FILE --confirm-once
       [--approve-provider --approve-data --approve-cost]
   schedule list --project DIR
@@ -65,6 +65,9 @@ redirect allowlist. Static HTML/UTF-8 text only; no login, JavaScript or search.
 An acquisition ID is never replayed, including after interruption. Inspection
 reads saved local evidence and does not fetch. Only complete immutable manifests
 can become task input. --base-manifest explicitly retains existing local sources.
+Optional --knowledge-vectors imports bounded frozen query/page embeddings for a
+hybrid knowledge config; no provider acquisition is performed. Exact query hashes
+not in the snapshot fall back to BM25. Provider labels are not authenticated.
 Submit does not call a model. Live submit requires all three explicit approvals:
 configured provider, selected source/question/Memory data, and configured cost limit.
 Work uses only the environment variable named by gateway.apiKeyEnv. Fixture projects
@@ -95,7 +98,7 @@ const specifications={
  'source import':['project','files'], 'source list':['project','manifest'],
  'source acquire':['project','acquisition','urls','approve-public-fetch','redirects?','base-manifest?','network-profile?'],
  'source acquisition':['project','acquisition'],
- 'run submit':['project','run','question','manifest','approve-provider?','approve-data?','approve-cost?','memory-intents?','task-time?','schedule?','specialists?','report-delivery?'],
+ 'run submit':['project','run','question','manifest','approve-provider?','approve-data?','approve-cost?','memory-intents?','task-time?','schedule?','specialists?','report-delivery?','knowledge-vectors?'],
  'run work':['project','run'], 'run inspect':['project','run'], 'run cancel':['project','run'],
  'run respond':['project','run','question-id','response-id','text'],
  'run report':['project','run'], 'run serve':['project','run','port?'],
@@ -174,7 +177,7 @@ export async function runResearchCli(args,{stdout=process.stdout,stderr=process.
   }
   if(command==='run submit'){
    const question=await textFile(o.question,16000),extra={...(o['report-delivery']===undefined?{}:{reportDelivery:o['report-delivery']})};
-   for(const [key,arg]of [['specialistSelection','specialists'],['memoryIntents','memory-intents'],['taskTime','task-time'],['schedule','schedule']])if(o[arg])extra[key]=await readProjectJson(o[arg]);
+   for(const [key,arg]of [['knowledgeVectorEvidence','knowledge-vectors'],['specialistSelection','specialists'],['memoryIntents','memory-intents'],['taskTime','task-time'],['schedule','schedule']])if(o[arg])extra[key]=await readProjectJson(o[arg]);
    await submitResearchTask({projectDir,runId,question,sourceManifestSha256:o.manifest,authorization:{providerApproved:o['approve-provider']===true,dataApproved:o['approve-data']===true,costApproved:o['approve-cost']===true},...extra});emit(taskResult(await inspectResearchTask({projectDir,runId})));return 0;
   }
   if(command==='run work'){

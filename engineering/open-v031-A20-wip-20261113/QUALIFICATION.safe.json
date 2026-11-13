@@ -1,0 +1,28 @@
+{
+  "schemaVersion": "a20-wip-qualification@1",
+  "sourceCommit": "52b5f1d6934fdfaa1d27305b8fbb56bbb181ba07",
+  "remoteBase": "8d56f52bfbb16bab4b45c5e68bf4d9bdfab8872c",
+  "status": "work-in-progress-not-release",
+  "offline": {
+    "passed": 1379,
+    "failed": 0,
+    "skipped": 4,
+    "build": "passed",
+    "docsCheck": "passed",
+    "initialFailureRetained": "A prior full run had one control-boundary fixture failure; test clock regression was fixed without weakening runtime leases."
+  },
+  "mechanism": {
+    "passed": 10,
+    "total": 10,
+    "realChatRequests": 32,
+    "newUnknown": 0,
+    "extraCharge": 0,
+    "originalSourceAndColdRead": true
+  },
+  "limits": [
+    "Synthetic documents and hand-authored vectors; no semantic retrieval-quality certification.",
+    "Independent prose review found partial-coverage misstatement and unrequested calculation; content acceptance not complete.",
+    "No online embedding acquisition, full A20 parity, release, or product acceptance asserted.",
+    "This WIP preserves audited code/test/docs only; no raw model responses, project state, credentials, databases, dependencies, or lockfile changes."
+  ]
+}
