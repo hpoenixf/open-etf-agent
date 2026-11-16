@@ -21,8 +21,8 @@ test('trusted module uses exact snapshot URL and original inspector accepts entr
 }));
 test('modified original after snapshot publication is never imported',()=>setup(async dir=>{
  const config=await selected(dir),directory=join(dir,'plugins');await mkdir(directory);const filename=config.trustedPackages[0].sha256+'.mjs';
- let changedOriginal=false;const watcher=watch(directory,(event,name)=>{if(name===filename){writeFileSync(config.trustedPackages[0].modulePath,'throw new Error("MODIFIED ORIGINAL EXECUTED");');changedOriginal=true;}});
- try{const plugins=await loadProjectPlugins({projectDir:dir,config});assert.equal(plugins.length,1);assert.equal(changedOriginal,true);assert.equal(sha256(await readFile(join(directory,filename))),config.trustedPackages[0].sha256);}finally{watcher.close();}
+ let changedOriginal=false,notifyChanged,timer;const changed=new Promise(resolve=>{notifyChanged=resolve;});const watcher=watch(directory,(event,name)=>{if(name===filename){writeFileSync(config.trustedPackages[0].modulePath,'throw new Error("MODIFIED ORIGINAL EXECUTED");');changedOriginal=true;notifyChanged();}});
+ try{const plugins=await loadProjectPlugins({projectDir:dir,config});assert.equal(plugins.length,1);await Promise.race([changed,new Promise((_,reject)=>{timer=setTimeout(()=>reject(Error('Snapshot publication event not observed')),2000);})]);assert.equal(changedOriginal,true);assert.equal(plugins[0].sourceUrl,pathToFileURL(join(directory,filename)).href);assert.equal((await loadProjectPlugins({projectDir:dir,config}))[0],plugins[0]);assert.equal(sha256(await readFile(join(directory,filename))),config.trustedPackages[0].sha256);}finally{clearTimeout(timer);watcher.close();}
 }));
 test('changed input, polluted existing snapshot and symlink input never execute',()=>setup(async dir=>{
  const config=await selected(dir);await writeFile(config.trustedPackages[0].modulePath,'throw Error("bad");');await assert.rejects(loadProjectPlugins({projectDir:dir,config}),changed);

@@ -27,6 +27,16 @@ const grant={providerApproved:true,dataApproved:true,costApproved:true};
 const reply=(id,name,args)=>Response.json({choices:[{index:0,finish_reason:'tool_calls',message:{role:'assistant',content:null,tool_calls:[{id,type:'function',function:{name,arguments:JSON.stringify(args)}}]}}]});
 const done=()=>Response.json({choices:[{index:0,finish_reason:'stop',message:{role:'assistant',content:'Saved original evidence.'}}]});
 
+test('new Knowledge task ends with the complete literal user request after Host material',async t=>{
+ await mkdir('test-output',{recursive:true});const root=await mkdtemp(resolve('test-output/literal-task-'));t.after(()=>rm(root,{recursive:true,force:true}));
+ await createResearchProject({directory:root,config:{schemaVersion:'research-project@1',gateway:{mode:'fixture',provider:'test',protocol:'fixture@1',model:'offline'},capabilities:['report','knowledge'],knowledge:{algorithm:'bm25'}}});
+ const file=join(root,'source.md');await writeFile(file,'Synthetic release notes.');const bundle=await importProjectSources({projectDir:root,files:[file]});
+ const question='Query Release.V3 EXACT. Explain the original statement without changing the query.';
+ await submitResearchTask({projectDir:root,runId:'literal',question,sourceManifestSha256:bundle.manifestSha256});
+ const task=await inspectResearchTask({projectDir:root,runId:'literal'});assert.equal(task.definition.reportGuidance,'source-faithful-report@5');assert.equal(task.definition.question,question);
+ assert.ok(task.run.definition.question.endsWith('\n\nOriginal user request (literal query and requested format):\n'+question));
+});
+
 for(const knowledge of [false,true])test('actual project wire preserves question and scopes guidance: '+knowledge,async t=>{
  await mkdir('test-output',{recursive:true});const root=await mkdtemp(resolve('test-output/knowledge-guidance-'));t.after(()=>rm(root,{recursive:true,force:true}));
  await createResearchProject({directory:root,config:{schemaVersion:'research-project@1',gateway:route,capabilities:['report',...(knowledge?['knowledge']:[])]}});
@@ -39,7 +49,7 @@ for(const knowledge of [false,true])test('actual project wire preserves question
  let count=0,observedSource;const stop=new AbortController();
  const fetchImpl=async(url,options)=>{
   assert.equal(String(url),route.endpoint);const wire=JSON.parse(options.body);count++;
-  const original=wire.messages.find(m=>m.role==='user');assert.equal(original.content,expectedOldQuestion+(knowledge?'\n'+KNOWLEDGE_TASK_GUIDANCE:'')+frozenReportGuidance);
+  const original=wire.messages.find(m=>m.role==='user');assert.equal(original.content,expectedOldQuestion+(knowledge?'\n'+KNOWLEDGE_TASK_GUIDANCE:'')+frozenReportGuidance+(knowledge?'\n\nOriginal user request (literal query and requested format):\n'+question:''));
   const tool=wire.tools.find(t=>t.function.name==='knowledge_query');assert.equal(Boolean(tool),knowledge);if(knowledge)assert.ok(tool.function.description.includes(KNOWLEDGE_QUERY_GUIDANCE));
   const values=wire.messages.filter(m=>m.role==='tool').map(m=>JSON.parse(m.content));
   if(!values.length)return knowledge?reply('read','knowledge_query',{query,limit:1}):reply('read','read_page',{documentId:bundle.catalog.documents[0].id,page:1});
