@@ -5,7 +5,7 @@ import {join,resolve} from 'node:path';
 import {createHash} from 'node:crypto';
 import {createResearchProject,submitResearchTask,inspectResearchTask,workResearchTask} from '../src/research-project.mjs';
 import {importProjectSources} from '../src/project-sources.mjs';
-const profile='source-faithful-report@3';
+const profile='source-faithful-report@4';
 const canonical=v=>v===null||typeof v!=='object'?JSON.stringify(v):Array.isArray(v)?'['+v.map(canonical).join(',')+']':'{'+Object.keys(v).sort().map(k=>JSON.stringify(k)+':'+canonical(v[k])).join(',')+'}';
 const hash=v=>createHash('sha256').update(canonical(v)).digest('hex');
 async function fixture(t){await mkdir('test-output',{recursive:true});const root=await mkdtemp(resolve('test-output/report-guidance-'));t.after(()=>rm(root,{recursive:true,force:true}));await createResearchProject({directory:root,config:{schemaVersion:'research-project@1',gateway:{mode:'fixture',provider:'test',protocol:'fixture@1',model:'synthetic'},capabilities:['report']}});const path=join(root,'synthetic.txt');await writeFile(path,'Synthetic process: preserve the input label and stated conditions.\n');const bundle=await importProjectSources({projectDir:root,files:[path]});const request={projectDir:root,runId:'guidance',question:'Describe the supplied process with sources.',sourceManifestSha256:bundle.manifestSha256};return{root,request,file:join(root,'tasks/guidance.json')};}
@@ -33,7 +33,7 @@ test('new Host projection preserves guidance and full question beyond the legacy
 test('historic v1 bytes and absent profile are immutable; v2 is a generic reasoning aid',()=>{
  const old='\nReport fidelity guidance: For conclusions involving ordered operations, comparisons or conditions, preserve the source operand identities, execution order and prerequisites. When useful, check a simple illustrative derivation against the source and explicitly label it as your own illustration rather than source evidence. Before saving, check that the report body and summary agree, and cite only passages that support the associated claims. If the source is ambiguous or insufficient, state that limitation instead of silently choosing an interpretation. This is guidance for your reasoning, not a claim of Host semantic verification; it does not require extra tool or model calls or grant any new permissions.';
  assert.equal(reportGuidanceFor({reportGuidance:'source-faithful-report@1'}),old);
- assert.equal(reportGuidanceFor({}),'');const next=reportGuidanceFor({reportGuidance:profile});assert.ok(next.startsWith(old));assert.match(next,/necessary from sufficient/);assert.match(next,/unconfirmed, not confirmed false/);assert.match(next,/footnote/);assert.match(next,/Child conclusions are derived analysis/);assert.doesNotMatch(next,/P03|P07|P11|retest/i);
+ assert.equal(reportGuidanceFor({}),'');const next=reportGuidanceFor({reportGuidance:'source-faithful-report@3'});assert.ok(next.startsWith(old));assert.match(next,/necessary from sufficient/);assert.match(next,/unconfirmed, not confirmed false/);assert.match(next,/footnote/);assert.match(next,/Child conclusions are derived analysis/);assert.doesNotMatch(next,/P03|P07|P11|retest/i);
 });
 
 import {spawnSync} from 'node:child_process';

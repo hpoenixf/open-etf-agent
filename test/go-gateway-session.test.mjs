@@ -4,7 +4,7 @@ import {createHash} from 'node:crypto';
 import {mkdir,mkdtemp,writeFile,rm} from 'node:fs/promises';
 import {resolve,join} from 'node:path';
 import {createChatGateway} from '../src/gateway.mjs';
-import {createResearchProject,submitResearchTask,workResearchTask,readResearchReport,inspectResearchChildren} from '../src/research-project.mjs';
+import {createResearchProject,submitResearchTask,workResearchTask,readResearchReport,inspectResearchChildren,inspectResearchTask,inspectResearchCapacity} from '../src/research-project.mjs';
 import {importProjectSources} from '../src/project-sources.mjs';
 import {CLAIM_COMPARISON_METHOD} from '../src/child.mjs';
 const endpoint='https://opencode.ai/zen/go/v1/chat/completions';
@@ -12,7 +12,30 @@ const authorization={providerApproved:true,dataApproved:true,costApproved:true};
 const input={messages:[{role:'user',content:'Synthetic question'}],tools:[]};
 const final=()=>new Response(JSON.stringify({choices:[{message:{role:'assistant',content:'Done'},finish_reason:'stop'}]}),{status:200});
 const expected=root=>'open-etf-agent-'+createHash('sha256').update(root).digest('hex');
+test('current official Go endpoint receives native root metadata without a wrapper',async()=>{
+ const sent=[];const current='https://opencode.ai/inference/go/openai/v1/chat/completions';
+ const g=gateway(async(url,options)=>{sent.push(options);return final();},{endpoint:current});
+ await g.next({...input,reservation:{rootId:'current-root',runId:'current-root'}});
+ await g.next({...input,reservation:{rootId:'current-root',runId:'current-child'}});
+ for(const s of sent){assert.equal(new Headers(s.headers).get('x-opencode-session'),expected('current-root'));assert.equal(new Headers(s.headers).get('user-agent'),'open-etf-agent/0.27');assert.equal(s.redirect,'error');}
+});
+test('HTTP authentication failure retains its actionable code without exposing provider body',async()=>{
+ let calls=0;const g=gateway(async()=>{calls++;return new Response(JSON.stringify({error:{message:'private provider detail'}}),{status:401});});
+ await assert.rejects(g.next(input),e=>{assert.equal(e.code,'PROVIDER_HTTP_401');assert.equal(e.message,'PROVIDER_HTTP_401');assert.ok(!JSON.stringify(e).includes('private'));return true;});
+ assert.equal(calls,1);
+});
 function gateway(fetchImpl,extra={}){return createChatGateway({endpoint,model:'synthetic',apiKey:'synthetic-test-key',authorization,fetchImpl,...extra});}
+test('Project exposes authentication failure and preserves unknown reservation with no terminal replay',async t=>{
+ await mkdir('test-output',{recursive:true});const projectDir=await mkdtemp(resolve('test-output/go-auth-'));t.after(()=>rm(projectDir,{recursive:true,force:true}));
+ await createResearchProject({directory:projectDir,config:{schemaVersion:'research-project@1',gateway:{mode:'live',provider:'opencode-go',protocol:'chat-completions',model:'synthetic',endpoint,apiKeyEnv:'GO_TEST_KEY'},capabilities:['report']}});
+ const file=join(projectDir,'source.md');await writeFile(file,'Synthetic fact.');const bundle=await importProjectSources({projectDir,files:[file]});
+ const request={projectDir,runId:'expired-key',question:'Read.',sourceManifestSha256:bundle.manifestSha256,authorization};await submitResearchTask(request);
+ let calls=0;const fetchImpl=async()=>{calls++;return new Response('{}',{status:401});};
+ await workResearchTask({...request,apiKey:'synthetic-test-key',fetchImpl});
+ const {run}=await inspectResearchTask(request);assert.equal(run.status,'failed');assert.equal(run.snapshot.code,'PROVIDER_HTTP_401');assert.equal(run.snapshot.gatewayOutcome,'unknown');assert.equal(run.rootUsage.model,1);
+ const [ticket]=(await inspectResearchCapacity(request)).requests;assert.equal(ticket.state,'unknown');assert.equal(ticket.localRelease,undefined);
+ await workResearchTask({...request,apiKey:'synthetic-test-key',fetchImpl});assert.equal(calls,1);assert.deepEqual((await inspectResearchTask(request)).run,run);
+});
 test('Go default adapter uses the same native Root session across Main, Child and reopened gateway without body changes',async()=>{
  const sent=[];const fetchImpl=async(url,options)=>{sent.push(options);return final();};
  const g=gateway(fetchImpl);await g.next({...input,reservation:{rootId:'root-a',runId:'root-a'}});await g.next({...input,reservation:{rootId:'root-a',runId:'child-a'}});await gateway(fetchImpl).next({...input,reservation:{rootId:'root-a',runId:'root-a'}});await g.next({...input,reservation:{rootId:'root-b',runId:'root-b'}});

@@ -69,7 +69,7 @@ export function createChatGateway({ endpoint, model, apiKey, authorization, stre
   // Provider conversation metadata is not an authorization or an execution owner.
   // Native reservations bind Main/Child/reopen to one Root. Direct non-durable
   // callers get one opaque conversation per gateway instance, never per request.
-  const go = url.href === 'https://opencode.ai/zen/go/v1/chat/completions';
+  const go = ['https://opencode.ai/zen/go/v1/chat/completions','https://opencode.ai/inference/go/openai/v1/chat/completions'].includes(url.href);
   const directSession = go ? randomUUID() : null;
   function requestHeaders(reservation) {
     const headers = { 'content-type': 'application/json', authorization: `Bearer ${apiKey}` };
@@ -90,7 +90,10 @@ export function createChatGateway({ endpoint, model, apiKey, authorization, stre
         headers: requestHeaders(reservation),
         body
       });
-      if (!response.ok) throw new Error(`PROVIDER_HTTP_${response.status}`);
+      if (!response.ok) {
+        const code = `PROVIDER_HTTP_${response.status}`;
+        throw Object.assign(new Error(code), {code});
+      }
       if (stream) {
         if (!response.headers.get('content-type')?.startsWith('text/event-stream')) throw new Error('PROVIDER_STREAM_CONTENT_TYPE');
         const { readChatStream, projectStreamProtocolDiagnostic } = await import('./stream.mjs');
