@@ -44,7 +44,7 @@ GitHub 将 SVG 当作一张图片，不能在缩略图里逐卡点击；下表�
 | L5 结果发布与交付 | [Main → Report](https://hpoenixf.com/eff-agent-article/articles/open-etf-agent-v01-first-readable-report) · [Report](https://hpoenixf.com/eff-agent-article/articles/open-etf-agent-v01-first-readable-report) · [Artifact / Revision](https://hpoenixf.com/eff-agent-article/articles/agent-artifact-version-access-sharing) · [Publication](https://hpoenixf.com/eff-agent-article/articles/019-agent-answer-publication) · [Report Review](https://hpoenixf.com/eff-agent-article/articles/open-etf-agent-report-review-workshop) |
 | L6 用户界面 | [Loopback Reader](https://hpoenixf.com/eff-agent-article/articles/open-etf-agent-v010-system-design) · [CLI Readback](https://hpoenixf.com/eff-agent-article/articles/open-etf-agent-v01-first-readable-report) |
 
-**当前地图: v0.30.0** · [模块、源码与证据](docs/module-status.zh-CN.md) · [六层文章原文](https://github.com/hpoenixf/eff-agent-article/blob/249f0b866f9446f33b57f186fbc6d35b5d82c119/articles/open-etf-agent-v010-system-design.md)
+**当前地图: v0.31.0** · [模块、源码与证据](docs/module-status.zh-CN.md) · [六层文章原文](https://github.com/hpoenixf/eff-agent-article/blob/249f0b866f9446f33b57f186fbc6d35b5d82c119/articles/open-etf-agent-v010-system-design.md)
 
 文章关联是阅读导航，不等于实现全文能力或覆盖资格。图中是公开实现范围，不是全功能完成率。真实模型验证只覆盖[各版记录](docs/verification/README.md)中的指定路径；金融语义、生产与浏览器体验不因此获得认证。
 <!-- module-map:end -->
@@ -68,7 +68,7 @@ GitHub 将 SVG 当作一张图片，不能在缩略图里逐卡点击；下表�
 
 **近期更新的阅读素材**
 
-<!-- Recent reading source: hpoenixf/eff-agent-article@249f0b866f9446f33b57f186fbc6d35b5d82c119 README.md; Chinese-source Git history order, translated editions are not separate entries. -->
+<!-- Recent reading source: hpoenixf/eff-agent-article@c95f6ad07cce340969900adb2eb1dccf4effa7eb README.md; Chinese-source Git history order, translated editions are not separate entries. -->
 [Subagent 全景](https://hpoenixf.com/eff-agent-article/articles/agent-subagent-context-specialization) · [从第一份可回读报告开始](https://hpoenixf.com/eff-agent-article/articles/open-etf-agent-v01-first-readable-report) · [Spec 驱动的 Agent 研发全景](https://hpoenixf.com/eff-agent-article/articles/agent-spec-driven-development-panorama)
 
 <a id="quickstart"></a>
@@ -100,13 +100,13 @@ npm run demo -- --case document-compare
 <a id="最近三个模块"></a>
 ## 最近版本与开发状态
 
-最新已核实正式 Release 为 **[v0.30.0 · Child 生命周期](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.30.0)**，发布自合并提交 `8b940515`。独立冻结十个真实模型合成材料工作流通过；Runtime 完成不等于答案质量认证。[证据与质量边界](docs/verification/v030-release.md)。
+**[v0.31.0 · 本地知识](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.31.0)** 提供显式文本导入、BM25 自由查询与原始来源回读。独立冻结的真实模型批次完成 9/10 Runtime 工作流；模型指令与正文质量另评。[证据与边界](docs/verification/v031-release.zh-CN.md)。
 
 | 最近版本 / 状态 | 能做什么 | 用法与边界 |
 | --- | --- | --- |
+| [v0.31 · 本地知识](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.31.0) | 导入选定文本、运行新 BM25 查询并检查原始字节，无需模型密钥 | [本地知识](docs/local-knowledge.zh-CN.md) |
 | [v0.30 · Child 生命周期](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.30.0) | 原 Session 中独立 spawn/inspect/cancel、不可变观察、来源消费与冷恢复 | [Child 生命周期](docs/child-lifecycle.zh-CN.md) |
 | [v0.29 · Conversation](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.29.0) | 明确继续、持久澄清、安全恢复、交接与撤销，保留原始产物 | [研究对话](docs/conversations.zh-CN.md) |
-| [v0.28 · 报告复核](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.28.0) | 根据冻结报告和来源给出建议，保留原报告与冷读 | [Report Review](docs/report-review.zh-CN.md) |
 
 [全部固定版本与命令](docs/module-guide.zh-CN.md#versions) · [版本谱系](versions.json) · [全部 Release](https://github.com/hpoenixf/open-etf-agent/releases) · [验证记录](docs/verification/README.zh-CN.md)
 
@@ -143,7 +143,7 @@ npm run demo -- --case document-compare
 - **尊重原身份与副作用：** 未知已派发请求不自动重试，宿主停止不等于用户取消；SQLite fence 不提供通用外部恰好一次保证。[升级前完成或隔离不兼容的活跃 Run](docs/upgrade-guide.md)。
 
 <a id="live-evidence"></a>
-**真实验收与演示分开：** [v0.28 固定合成材料的真实模型复核记录](docs/verification/v028-release.md)只证明所列 Runtime 路径，保留模型判断局限；不代表金融准确率或生产资格。更早的成功、失败和 unknown 均保留在[历史证据索引](docs/verification/README.zh-CN.md)。
+**真实验收与演示分开：** [v0.31 固定合成材料的 Runtime 记录](docs/verification/v031-release.zh-CN.md)只证明所列 Runtime 路径，保留模型判断局限；不代表金融准确率或生产资格。更早的成功、失败和 unknown 均保留在[历史证据索引](docs/verification/README.zh-CN.md)。
 
 <a id="live-entry"></a>
 **选择正确执行入口：** 演示 CLI 拒绝 `--live`，项目 CLI 可以在显式授权后接入真实提供方；[独立验证 runner](docs/live-validation.md)用于固定输入的验证，不是默认产品入口。不要继承别人的密钥、数据或费用授权。

@@ -1,9 +1,9 @@
 {
   "schemaVersion": 2,
-  "reviewedVersion": "0.30.0",
-  "reviewedSource": "ba527fb502aebbe8bd601fd2115a4282cd10b94c",
+  "reviewedVersion": "0.31.0",
+  "reviewedSource": "18af35f3f84eb962e83f7eff7c48befc79e316f9",
   "articleSource": "https://github.com/hpoenixf/eff-agent-article/blob/249f0b866f9446f33b57f186fbc6d35b5d82c119/articles/open-etf-agent-v010-system-design.md",
-  "evidence": "docs/verification/v030-release.md",
+  "evidence": "docs/verification/v031-release.md",
   "layers": [
     {
       "id": "L1",
@@ -45,8 +45,8 @@
         "zh": "工具与领域能力"
       },
       "guide": {
-        "en": "docs/web-sources.md",
-        "zh": "docs/web-sources.zh-CN.md"
+        "en": "docs/local-knowledge.md",
+        "zh": "docs/local-knowledge.zh-CN.md"
       }
     },
     {
@@ -587,7 +587,7 @@
         "zh": "原 Session 与 Root 预算",
         "en": "Original Session / Root budget"
       },
-      "status": "enhanced",
+      "status": "bounded",
       "source": "src/child-execution.mjs",
       "kind": "call-site",
       "article": {
@@ -612,7 +612,7 @@
         "zh": "晚到结果隔离 / 冷恢复",
         "en": "Late-result fence / cold recovery"
       },
-      "status": "enhanced",
+      "status": "bounded",
       "source": "src/child-execution.mjs",
       "kind": "module",
       "article": {
@@ -805,15 +805,15 @@
       "group": "result",
       "name": "Knowledge",
       "summary": {
-        "zh": "材料接入与来源核对",
-        "en": "Material and source checks"
+        "zh": "导入、BM25 查询与原文",
+        "en": "Import, BM25, original text"
       },
       "boundary": {
-        "zh": "语义质量另行看证据",
-        "en": "Semantic quality has separate evidence"
+        "zh": "仅文本；语义质量另评",
+        "en": "Text only; semantics separate"
       },
-      "status": "bounded",
-      "source": "src/knowledge.mjs",
+      "status": "enhanced",
+      "source": "src/local-knowledge.mjs",
       "kind": "module",
       "article": {
         "slug": "agent-knowledge-retrieval-end-to-end",

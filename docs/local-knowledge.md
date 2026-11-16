@@ -2,7 +2,7 @@
 
 [简体中文](local-knowledge.zh-CN.md)
 
-The v0.31 candidate offers a small local workflow: import explicitly selected text, search it with BM25, and inspect the original source bytes. **No API key, model, database or local HTTP server is required.** This is retrieval, not an automatically authored research report or semantic vector search.
+v0.31 offers a small local workflow: import explicitly selected text, search it with BM25, and inspect the original source bytes. **No API key, model, database or local HTTP server is required.** This is retrieval, not an automatically authored research report or semantic vector search.
 
 ## Run from the repository root
 
@@ -41,4 +41,4 @@ Defaults are at most 4 whole pages and 128000 source bytes, with an additional e
 
 Start with `.txt`, `.md` and `.markdown`. The underlying importer retains its existing PDF behavior, but this search indexes text only. PDF-only selections fail explicitly. Existing research-task interfaces remain unchanged.
 
-Local search does not generate model answers, reports or Host ResultRefs. Hybrid retrieval, dynamic embeddings and full private A20 parity are outside this simplified release scope. This is candidate documentation, not a release receipt. Focused tests and a working reader example do not replace independent review, the real-task gate or verified remote publication.
+Local search does not generate model answers, reports or Host ResultRefs. Hybrid retrieval, dynamic embeddings and full private A20 parity are outside this simplified release scope. See the [Runtime qualification and separate model-quality limits](verification/v031-release.md). Local search itself makes no model requests.

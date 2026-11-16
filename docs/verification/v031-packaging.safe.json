@@ -1,0 +1,68 @@
+{
+  "schemaVersion": "v031-release-packaging@1",
+  "version": "0.31.0",
+  "implementationSource": "18af35f3f84eb962e83f7eff7c48befc79e316f9",
+  "executionCI": {
+    "runId": 43900041374,
+    "expectedHead": "18af35f3f84eb962e83f7eff7c48befc79e316f9",
+    "status": "success",
+    "url": "https://github.com/hpoenixf/open-etf-agent/actions/runs/43900041374",
+    "tests": {
+      "tests": 1400,
+      "pass": 1396,
+      "fail": 0,
+      "skipped": 4
+    },
+    "platform": "ubuntu-latest",
+    "node": "26.11.1",
+    "logSha256": "ab619db4205b7631178971bd588524bd36e437a4935961e93ba1a4359aacb767"
+  },
+  "sourceEquivalence": {
+    "srcTree": "0d1918e37241000c35f9e69a7057cf79d0c7ba81",
+    "runtimeSourceChanged": false,
+    "lockedDependencyVersionsChanged": false,
+    "executionInputDifferences": [
+      "package.json root version: 0.30.0 -> 0.31.0",
+      "package-lock.json root versions: 0.30.0 -> 0.31.0"
+    ],
+    "scope": "Release metadata and documentation only; live Runtime qualification remains bound to its original execution source.",
+    "checked": true
+  },
+  "independentInstall": {
+    "schemaVersion": "v031-independent-install@1",
+    "node": "v26.11.1",
+    "packageVersion": "0.31.0",
+    "implementationSource": "18af35f3f84eb962e83f7eff7c48befc79e316f9",
+    "lockedDependencyInstall": "passed; lifecycle scripts disabled",
+    "build": "passed",
+    "moduleMap": "passed",
+    "distCliHelp": "passed",
+    "selectedTextImport": "passed",
+    "bm25Query": "passed",
+    "originalSnapshotAfterInputMutation": "passed",
+    "exactNoMatch": "passed",
+    "manifestSha256": "8e897181efba07ac2bbf8998d06665a0137aa99055f9f5a03dd58287ae013a84",
+    "originalSha256": "867c6fef29302bdf3022e837d15c55e30b09fa20172c749eb466a233577cf8e4",
+    "modelCalls": 0,
+    "scope": "Offline independent install/readback only; not live or semantic evidence."
+  },
+  "releaseCI": {
+    "required": true,
+    "authority": "Actual final release commit check runs and immutable Actions URL in GitHub Release notes; this file does not self-certify its own CI."
+  },
+  "articleMaintenance": {
+    "readSource": "c95f6ad07cce340969900adb2eb1dccf4effa7eb",
+    "inspected": [
+      "book.mjs full directory and paired language slugs",
+      "articles/agent-knowledge-retrieval-end-to-end.md",
+      "en/articles/agent-knowledge-retrieval-end-to-end.md",
+      "articles/open-etf-agent-v01-first-readable-report.md",
+      "en/articles/open-etf-agent-v01-first-readable-report.md",
+      "open-etf-topic.mjs"
+    ],
+    "latestThreeReadingEntriesUnchanged": true,
+    "externalWrites": false,
+    "status": "separate-follow-up",
+    "reason": "Code publication is authorized. Article/blog repositories and deployment are outside this task write scope; their v0.30 dated entries and fixed historical case links are retained. No article parity or website update is claimed."
+  }
+}

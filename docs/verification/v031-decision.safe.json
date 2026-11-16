@@ -1,0 +1,257 @@
+{
+  "schemaVersion": "v031-runtime-scoped-release-declaration@1",
+  "version": "0.31.0",
+  "sourceCommit": "18af35f3f84eb962e83f7eff7c48befc79e316f9",
+  "sourceTree": "8867758a303034e79a1254d695a7c17ab9c9a3cc",
+  "executionIdentity": "ab5b165db8fd9f0f182cb7742562da1576c41dac9dabeb7db5b119691acd0f59",
+  "realProviderApplicability": "supported",
+  "normalGate": {
+    "planned": 10,
+    "requiredSuccesses": 9,
+    "threshold": 0.9,
+    "taskIds": [
+      "B01",
+      "B02",
+      "B03",
+      "B04",
+      "B05",
+      "B06",
+      "B07",
+      "B08",
+      "B09",
+      "B10"
+    ],
+    "attempted": 10,
+    "notRun": 0,
+    "successes": 9,
+    "observedRate": 0.9,
+    "tasks": [
+      {
+        "id": "B01",
+        "status": "success",
+        "eligibleSuccess": true,
+        "runtimeAccepted": true,
+        "workflowCompleted": true,
+        "deliveryReadback": true,
+        "onTime": true,
+        "unknownEffects": false,
+        "realProvider": true,
+        "physicalRequests": 3,
+        "executionIdentity": "ab5b165db8fd9f0f182cb7742562da1576c41dac9dabeb7db5b119691acd0f59",
+        "outputSha256": "54aeee9e81711d18cf0a42d1c0815951ce08091f0cca4d0e9b2cc90f9636d877",
+        "runtimeCode": null
+      },
+      {
+        "id": "B02",
+        "status": "success",
+        "eligibleSuccess": true,
+        "runtimeAccepted": true,
+        "workflowCompleted": true,
+        "deliveryReadback": true,
+        "onTime": true,
+        "unknownEffects": false,
+        "realProvider": true,
+        "physicalRequests": 3,
+        "executionIdentity": "ab5b165db8fd9f0f182cb7742562da1576c41dac9dabeb7db5b119691acd0f59",
+        "outputSha256": "afaaa65d8cf9fc0504b6dbe58cbdeb38a9021510223a346f8267dff8c9aaf602",
+        "runtimeCode": null
+      },
+      {
+        "id": "B03",
+        "status": "failure",
+        "eligibleSuccess": false,
+        "runtimeAccepted": false,
+        "workflowCompleted": false,
+        "deliveryReadback": false,
+        "onTime": true,
+        "unknownEffects": false,
+        "realProvider": true,
+        "physicalRequests": 1,
+        "executionIdentity": "ab5b165db8fd9f0f182cb7742562da1576c41dac9dabeb7db5b119691acd0f59",
+        "outputSha256": null,
+        "runtimeCode": "TOOL_REJECTED"
+      },
+      {
+        "id": "B04",
+        "status": "success",
+        "eligibleSuccess": true,
+        "runtimeAccepted": true,
+        "workflowCompleted": true,
+        "deliveryReadback": true,
+        "onTime": true,
+        "unknownEffects": false,
+        "realProvider": true,
+        "physicalRequests": 3,
+        "executionIdentity": "ab5b165db8fd9f0f182cb7742562da1576c41dac9dabeb7db5b119691acd0f59",
+        "outputSha256": "7872971a9dca4cd9f4d4390fd866a79fbd48461f3b1e5d48be189d8e075eeee9",
+        "runtimeCode": null
+      },
+      {
+        "id": "B05",
+        "status": "success",
+        "eligibleSuccess": true,
+        "runtimeAccepted": true,
+        "workflowCompleted": true,
+        "deliveryReadback": true,
+        "onTime": true,
+        "unknownEffects": false,
+        "realProvider": true,
+        "physicalRequests": 3,
+        "executionIdentity": "ab5b165db8fd9f0f182cb7742562da1576c41dac9dabeb7db5b119691acd0f59",
+        "outputSha256": "16a28cf0e3700d852ff3716e3eff98e9af244174082977f85dc5cb4b1d540878",
+        "runtimeCode": null
+      },
+      {
+        "id": "B06",
+        "status": "success",
+        "eligibleSuccess": true,
+        "runtimeAccepted": true,
+        "workflowCompleted": true,
+        "deliveryReadback": true,
+        "onTime": true,
+        "unknownEffects": false,
+        "realProvider": true,
+        "physicalRequests": 3,
+        "executionIdentity": "ab5b165db8fd9f0f182cb7742562da1576c41dac9dabeb7db5b119691acd0f59",
+        "outputSha256": "6b816f54c169d5b0da7942993808ed297cfa6a34a90b574055018571a8f0d8d0",
+        "runtimeCode": null
+      },
+      {
+        "id": "B07",
+        "status": "success",
+        "eligibleSuccess": true,
+        "runtimeAccepted": true,
+        "workflowCompleted": true,
+        "deliveryReadback": true,
+        "onTime": true,
+        "unknownEffects": false,
+        "realProvider": true,
+        "physicalRequests": 3,
+        "executionIdentity": "ab5b165db8fd9f0f182cb7742562da1576c41dac9dabeb7db5b119691acd0f59",
+        "outputSha256": "bc8fb6108d2bbf9fe149f653a4a194d1a5da45dc98e013b6497881193e6b6cb0",
+        "runtimeCode": null
+      },
+      {
+        "id": "B08",
+        "status": "success",
+        "eligibleSuccess": true,
+        "runtimeAccepted": true,
+        "workflowCompleted": true,
+        "deliveryReadback": true,
+        "onTime": true,
+        "unknownEffects": false,
+        "realProvider": true,
+        "physicalRequests": 3,
+        "executionIdentity": "ab5b165db8fd9f0f182cb7742562da1576c41dac9dabeb7db5b119691acd0f59",
+        "outputSha256": "cd43a32b68c01c4582902afff200b58ca23c0352f00d572720ea8720997b03b1",
+        "runtimeCode": null
+      },
+      {
+        "id": "B09",
+        "status": "success",
+        "eligibleSuccess": true,
+        "runtimeAccepted": true,
+        "workflowCompleted": true,
+        "deliveryReadback": true,
+        "onTime": true,
+        "unknownEffects": false,
+        "realProvider": true,
+        "physicalRequests": 2,
+        "executionIdentity": "ab5b165db8fd9f0f182cb7742562da1576c41dac9dabeb7db5b119691acd0f59",
+        "outputSha256": "e975f0f629581c2b803466379da02437d15876a63fbb6521b401b77b6073c26b",
+        "runtimeCode": null
+      },
+      {
+        "id": "B10",
+        "status": "success",
+        "eligibleSuccess": true,
+        "runtimeAccepted": true,
+        "workflowCompleted": true,
+        "deliveryReadback": true,
+        "onTime": true,
+        "unknownEffects": false,
+        "realProvider": true,
+        "physicalRequests": 3,
+        "executionIdentity": "ab5b165db8fd9f0f182cb7742562da1576c41dac9dabeb7db5b119691acd0f59",
+        "outputSha256": "fc243123768ba03a2e14f40d0924380dc231e309b7090b18f3078089b651c170",
+        "runtimeCode": null
+      }
+    ]
+  },
+  "separateSafetyGatePassed": true,
+  "safetyEvidence": {
+    "fullSuite": {
+      "sourceCommit": "18af35f3f84eb962e83f7eff7c48befc79e316f9",
+      "node": "26.11.1",
+      "platform": "darwin-arm64",
+      "pass": 1396,
+      "fail": 0,
+      "skip": 4,
+      "logSha256": "919fbf5407d7dfce1e21e279e2957776d0566c0322f8b42f2da8240f1c5582d6"
+    },
+    "independentReview": "No implementation blocker found; Go endpoint documentation finding fixed and re-reviewed.",
+    "historicalSkipScope": "Four optional historical binary baseline compatibility checks. Skips are not passes."
+  },
+  "scope": [
+    "explicitly selected text import",
+    "BM25 free queries",
+    "original source bytes and cold readback"
+  ],
+  "modelEvidence": {
+    "service": "OpenCode Go",
+    "requestedModel": "gpt-6-luna",
+    "observedModels": [
+      "gpt-6-luna"
+    ],
+    "syntheticDocuments": true,
+    "physicalRequests": 27,
+    "newUnknown": 0,
+    "confirmedAdditionalCostUsd": 0,
+    "billingSource": "go"
+  },
+  "modelQuality": {
+    "strictOriginalInstructionScore": 8,
+    "denominator": 10,
+    "notRuntimeGate": true,
+    "issues": [
+      "B03 proposed limit 5 although maximum was 4; correct rejection, original failure retained.",
+      "B10 rewrote the specified query while delivering the correct source-backed location statement.",
+      "B04 retains an extra statement about other operations; no general semantic-quality certification."
+    ]
+  },
+  "policyClarification": {
+    "date": "2026-11-16",
+    "decision": "Model errors are separately recorded and do not block release; Runtime/delivery retains exactly ten tasks and at least nine successes.",
+    "failedTaskPromoted": false,
+    "strictInstructionScoreUnchanged": true
+  },
+  "history": [
+    {
+      "sourceCommit": "a18317f5067873df1c50bd9cbeb2ef571e977147",
+      "runtimeCompletions": 8,
+      "planned": 10,
+      "strictInstructionSuccesses": 6,
+      "physicalRequests": 26,
+      "unknownCostRequests": 1
+    },
+    {
+      "sourceCommit": "ab8669024cebf4a69a0a2382e915dd5016583d79",
+      "runtimeCompletions": 10,
+      "planned": 10,
+      "strictInstructionSuccesses": 9,
+      "physicalRequests": 29
+    },
+    {
+      "sourceCommit": "4e73c2460fbedb3e7577a0cced6af323571c3eb3",
+      "runtimeCompletions": 8,
+      "planned": 10,
+      "attempted": 9,
+      "notRun": 1,
+      "physicalRequests": 28,
+      "failure": "B09 CORRECTION_LIMIT; B10 not run"
+    }
+  ],
+  "accounting": "All failed/unknown physical attempts, old reservations and batch allocations remain retained locally. No balances were inferred, reset, refunded or replayed. No raw logs or credentials are published.",
+  "continuation": "After settled B03 invalid-argument refusal with no unknown/partial effects, continued only pre-frozen B04-B10; original B03 failure and STOP receipt retained. No source, model, question, limit or denominator change.",
+  "qualificationScope": "Declared Runtime/source consumption/cold delivery on synthetic material; not content, financial, browser or production certification."
+}
