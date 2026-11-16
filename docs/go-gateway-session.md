@@ -1,6 +1,11 @@
 # OpenCode Go conversation metadata
 
-The default Chat Completions gateway adds provider-required conversation headers only for `https://opencode.ai/zen/go/v1/chat/completions`:
+The default Chat Completions gateway adds provider-required conversation headers only for these exact official Go endpoints:
+
+- `https://opencode.ai/zen/go/v1/chat/completions` (retained legacy endpoint).
+- `https://opencode.ai/inference/go/openai/v1/chat/completions` (current endpoint).
+
+The caller explicitly selects the endpoint; the gateway does not switch endpoints after a refusal. Both receive:
 
 - `User-Agent: open-etf-agent/0.27`, identifying this client rather than impersonating another application.
 - `x-opencode-session: open-etf-agent-<sha256(identity)>`.

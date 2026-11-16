@@ -8,7 +8,7 @@ The product scope remains selected text import, BM25 free queries and original s
 
 - Provider HTTP failures retain their actionable `PROVIDER_HTTP_<status>` code instead of becoming generic `EXECUTION_FAILED`. Provider bodies and credentials are not exposed. Unknown reservations, billing and no-replay behavior remain conservative.
 - The current official OpenCode Go Chat Completions endpoint receives the same native Root session metadata as the retained legacy Go endpoint. Other hosts and endpoints do not receive Go-specific headers. This is not an automatic endpoint fallback.
-- New tasks freeze `source-faithful-report@5`: requested query text is literal, explicit exclusivity is preserved, and the requested output format limits extra commentary. Historical v1–v4 guidance remains byte-for-byte available. New Knowledge tasks repeat the complete original request after Host material; old tasks retain their original layout. This is model guidance, not Host semantic enforcement or a guarantee of answer quality.
+- New tasks freeze `source-faithful-report@6`: requested query text is literal, explicit exclusivity is preserved, and the requested output format limits extra commentary. Historical v1–v5 guidance remains byte-for-byte available. New Knowledge tasks use one fidelity instruction set, avoid requiring a report for no-evidence under the default saved-answer contract, and repeat the complete original request after Host material; old tasks retain their original layout. This is model guidance, not Host semantic enforcement or a guarantee of answer quality.
 
 ## Credential and execution handling
 

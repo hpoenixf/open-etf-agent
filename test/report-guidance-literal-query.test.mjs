@@ -9,9 +9,12 @@ test('historical v3 guidance stays byte-for-byte stable',()=>{
 test('historical v4 guidance stays byte-for-byte stable',()=>{
  assert.equal(createHash('sha256').update(reportGuidanceFor({reportGuidance:'source-faithful-report@4'})).digest('hex'),'e40f58f1498a4294d65ce6c7509a1fa14c601825c3cd12a44686f8475281d42d');
 });
+test('historical v5 guidance stays byte-for-byte stable',()=>{
+ assert.equal(createHash('sha256').update(reportGuidanceFor({reportGuidance:'source-faithful-report@5'})).digest('hex'),'7e8cf7183ce38e862ea863ebad056e9af01d2a5b0d5998ee5527d8feedbad3c4');
+});
 
 test('new task guidance treats a requested query as literal data and preserves exclusive scope',()=>{
- assert.equal(REPORT_GUIDANCE_PROFILE,'source-faithful-report@5');
+ assert.equal(REPORT_GUIDANCE_PROFILE,'source-faithful-report@6');
  const text=reportGuidanceFor({reportGuidance:REPORT_GUIDANCE_PROFILE});
  assert.match(text,/Query <text>/);
  assert.match(text,/copy <text> exactly/);
