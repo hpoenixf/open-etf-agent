@@ -164,5 +164,5 @@
       "querySha256": "b886990b7ccfb57e428d43b13e5e9967dbb55bd2dbf6dfd386efd26e82433225"
     }
   ],
-  "releaseEquivalence": "Runtime source under src/ and locked dependency versions remain identical to execution source. Only release metadata/documentation change; package.json and lockfile root version advance from 0.30.0 to 0.31.0. Validate exact diff and final CI; this is not a claim that raw source fingerprints are identical."
+  "releaseEquivalence": "Runtime source under src/ and locked dependency versions remain identical to execution source. Only release metadata/documentation and historical recovery-test timing change; package.json and lockfile root version advance from 0.30.0 to 0.31.0. Validate exact diff and final CI; this is not a claim that raw source fingerprints are identical."
 }

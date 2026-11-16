@@ -25,8 +25,11 @@
       "package.json root version: 0.30.0 -> 0.31.0",
       "package-lock.json root versions: 0.30.0 -> 0.31.0"
     ],
-    "scope": "Release metadata and documentation only; live Runtime qualification remains bound to its original execution source.",
-    "checked": true
+    "scope": "Release metadata, documentation and test-harness timing changes only; live Runtime qualification remains bound to its original execution source.",
+    "checked": true,
+    "nonRuntimeDifferences": [
+      "test/durable-runtime.test.mjs and test/fixtures/recovery-process.mjs: controlled Session lease clocks for model-unknown/deadline recovery; original Runtime deadline still expires using real wall time."
+    ]
   },
   "independentInstall": {
     "schemaVersion": "v031-independent-install@1",
@@ -64,5 +67,26 @@
     "externalWrites": false,
     "status": "separate-follow-up",
     "reason": "Code publication is authorized. Article/blog repositories and deployment are outside this task write scope; their v0.30 dated entries and fixed historical case links are retained. No article parity or website update is claimed."
+  },
+  "priorPackagingCI": {
+    "runId": 43903115486,
+    "head": "3407955706b75a503073ebcb3c35ff6683fd0e47",
+    "status": "failure",
+    "url": "https://github.com/hpoenixf/open-etf-agent/actions/runs/43903115486",
+    "tests": {
+      "tests": 1400,
+      "pass": 1394,
+      "fail": 2,
+      "skipped": 4
+    },
+    "cause": "Two historical recovery tests expired their 150ms wall-clock Session leases before the first checkpoint under CI scheduling. Product STALE_WRITER refusal was correct. A deterministic 220ms delay reproduced both failures; controlled test lease clocks reached the checkpoint with the same delay.",
+    "repair": "Test-only: use the existing explicit Session clock for these modes, advance it past the original lease on restart, and wait for the original persisted Runtime deadline in real time. No src or locked dependency changes.",
+    "affectedTests": {
+      "tests": 12,
+      "pass": 12,
+      "fail": 0,
+      "skipped": 0
+    },
+    "finalCI": "Required on the repaired final release commit; actual check run is authoritative."
   }
 }
