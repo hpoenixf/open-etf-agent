@@ -6,6 +6,7 @@ import {safeDirectory} from './storage-files.mjs';
 import {openProjectSpecialists,maintainResearchUnknownCapacity,releaseResearchUnknownCapacity,createResearchProject,updateResearchProject,inspectResearchProject,readProjectJson,submitResearchTask,workResearchTask,inspectResearchTask,cancelResearchTask,respondResearchTask,readResearchOutput,applyProjectMemoryIntent,approveProjectMemoryIntent,listResearchInteractions,inspectResearchInteraction,inspectResearchChildren,cancelResearchChild} from './research-project.mjs';
 import {importProjectSources,loadProjectSources} from './project-sources.mjs';
 import {inspectResearchKnowledge} from './research-project.mjs';
+import {queryImportedKnowledge} from './local-knowledge.mjs';
 import {inspectResearchCapacity} from './research-project.mjs';
 import {openMemoryLibrary} from './memory.mjs';
 import {startReader} from './reader.mjs';
@@ -41,6 +42,8 @@ Usage: node src/research-cli.mjs <group> <command> [options]
   child list --project DIR --run ID
   child cancel --project DIR --run ID --child ID
   knowledge inspect --project DIR --run ID
+  knowledge import --project DIR --files JSON_FILE
+  knowledge query --project DIR --manifest SHA256 --query TEXT_FILE
   capacity inspect|maintain --project DIR --run ID
   capacity release-unknown --project DIR --run ID --release JSON_FILE
       --preserve-unknown --no-replay --no-refund
@@ -68,6 +71,11 @@ can become task input. --base-manifest explicitly retains existing local sources
 Optional --knowledge-vectors imports bounded frozen query/page embeddings for a
 hybrid knowledge config; no provider acquisition is performed. Exact query hashes
 not in the snapshot fall back to BM25. Provider labels are not authenticated.
+knowledge import explicitly stores local files without project/gateway setup.
+knowledge query searches the selected imported text snapshot with BM25. It needs
+no API key or model and writes no task or report. --query is a nonempty UTF-8 file
+of at most 512 bytes. Results retain original source text; no-evidence means no
+lexical match in this snapshot, not proof of absence elsewhere. PDF is not indexed.
 Submit does not call a model. Live submit requires all three explicit approvals:
 configured provider, selected source/question/Memory data, and configured cost limit.
 Work uses only the environment variable named by gateway.apiKeyEnv. Fixture projects
@@ -90,6 +98,8 @@ const specifications={
  'capacity inspect':['project','run'], 'capacity maintain':['project','run'],
  'capacity release-unknown':['project','run','release','preserve-unknown','no-replay','no-refund'],
  'knowledge inspect':['project','run'],
+ 'knowledge import':['project','files'],
+ 'knowledge query':['project','manifest','query'],
  'child list':['project','run'], 'child cancel':['project','run','child'],
  'interaction list':['project','run?','limit?','after?'],
  'interaction inspect':['project','run','question-id'],
@@ -160,6 +170,17 @@ export async function runResearchCli(args,{stdout=process.stdout,stderr=process.
   }
   if(command==='capacity maintain'){emit(await maintainResearchUnknownCapacity({projectDir,runId}));return 0;}
   if(command==='capacity inspect'){emit(await inspectResearchCapacity({projectDir,runId}));return 0;}
+  if(command==='knowledge import'){
+   // Preserve the exact returned manifest bytes, including user-selected names.
+   const result=sourceResult(await importProjectSources({projectDir,files:await readProjectJson(o.files)}));
+   stdout.write(JSON.stringify(result)+'\n');return 0;
+  }
+  if(command==='knowledge query'){
+   // Explicit local input is returned only to its caller, not a provider response.
+   // Redacting these bytes while retaining their original hash would forge evidence.
+   const result=await queryImportedKnowledge({projectDir,manifestSha256:o.manifest,query:await textFile(o.query,512)});
+   stdout.write(JSON.stringify(result)+'\n');return 0;
+  }
   if(command==='knowledge inspect'){emit(await inspectResearchKnowledge({projectDir,runId}));return 0;}
   if(command==='child cancel'){emit(await cancelResearchChild({projectDir,runId,childRunId:o.child}));return 0;}
   if(command==='child list'){emit(await inspectResearchChildren({projectDir,runId}));return 0;}

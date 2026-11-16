@@ -1,0 +1,257 @@
+{
+  "schemaVersion": "minimal-bm25-real-ten-plan@1",
+  "cohort": "v031-minimal-bm25-handoff-20261116",
+  "createdAt": "2026-11-16T08:18:14.712872+00:00",
+  "state": "prepared-not-dispatched",
+  "old_cohorts": "Separate new fixed source. Earlier local-full-delta and historical cohorts remain unchanged; no outcomes are relabelled.",
+  "executionIdentity": "33061ecac1bc7260665906ad77308fb077e318e5277218f8e6c81edab07b0977",
+  "sourceFiles": {
+    "src/admission-demo-worker.mjs": "306bee1191cc3d77ef1ff88953afcd7a0d5ae19d6cb020991133c5c2fbebc75b",
+    "src/admission-demo.mjs": "b86db55625cad861c9b18d992be2380ca8b12857bc0ad2bed368698ac6c63ec6",
+    "src/admission.mjs": "c03ddcabe290c6b380471369da867e09caefe4a3de39101a551874e55b581907",
+    "src/artifact-demo.mjs": "b56ba56449613dc02754887aeaf3ae3227ff74dcf5d916a86df0d57c79e81ba6",
+    "src/artifacts.mjs": "a578e29ea6d6b6becf8718fcf712d012c2d668ad3f003e7e98f1b7fa3b0627ec",
+    "src/calculation.mjs": "5b7b775e7b80c2326db16e8f5d7771cc64b0b112f6430f92afdc78b5d158b43f",
+    "src/child-execution.mjs": "db142b75a184dd7221a71c7525d58838cab9b4dc0ee3a9b5deec92256cd1fa92",
+    "src/child-results.mjs": "1e1522bf3fce336c03b4781a4fa303ff039986f35c2aa5dbb57b248411ce194c",
+    "src/child.mjs": "2cab86f4f947ad8c033ec5326638828da0f5a2c2d9cbc21ee911e831b022c606",
+    "src/cli.mjs": "1a43616cf07c944509e6637c7f6dea53fa4a37534df7b363eb1aabe021a3c415",
+    "src/compaction.mjs": "2a4f7194081e44239af2ef2bb943423fe112af5e27249378e6f048070a5d3da1",
+    "src/context.mjs": "b49b54922cbf16017d6020769532f257aae903215307bc659444b06993b1d6bf",
+    "src/conversation-cli.mjs": "98250218c718b6792d70d56579fed712e54c6416454ed6a764556d8d919a5994",
+    "src/conversation-history.mjs": "e56c2c3e03bfd8a23fccc92257d16072330ed7f568bbc195a90af7dc83e78727",
+    "src/conversation.mjs": "d707e7b195ae79e7e04a352caaa38eb709f60adb54bb7aabf9dbbdedc209e3a5",
+    "src/cooperation-demo.mjs": "8fe51ff844db362b2687e86fe53dc38cb1148441133ffd04f0f159dc9ea72e5c",
+    "src/cooperation.mjs": "984f63e17a29b03b3bd97a84c363f217f867ae9f2a34af100e7ddf12e12b0c71",
+    "src/durable-child.mjs": "48b0b95a320109f5129719cbdbfd4cab21c63cf1a5434b5cfa74e55a8ea8cf67",
+    "src/durable-demo.mjs": "f054ddf80b60c47e19c16c2bafc5512bd72143c4c35c03bacc868ee80884eaa3",
+    "src/durable-memory.mjs": "db16e6e40a557e2b6828614e3c7b8f3e6c9369725b2d62e988d09427040c5dd7",
+    "src/evaluate-cli.mjs": "306bbad49b7698449421d1a694decbafdb1fdf31841a829edd058e2209ece794",
+    "src/evaluate.mjs": "974e288e0516dcd4098110bbba1e0ee2e868a717d48778ff48295b53e5aae200",
+    "src/example-plugins.mjs": "05dc97f843e14f3fe4224dd35b0c57d5232b97240a3bd25115d3abdea537f0eb",
+    "src/extensions.mjs": "5ece403239b5f09d7c3838d0e55af1793991fa690bb3e508d1ac8f87e603e0c8",
+    "src/fixture-gateway.mjs": "5ba1ae02049188f7b5890aca19df3bfe5e987cd389ef3b103518cbad88c40bcd",
+    "src/fixture-server.mjs": "98830aa62741d054efb969bf717e964790a109f31feef75681ba2ac105fd3738",
+    "src/gateway.mjs": "d2fc1a09065c28dc2da167156e1c2232901a52aeb7869968ac76a44ea7916d2b",
+    "src/hooks.mjs": "aeedd9bfeaffbd5a23e069817740cfac0574e570c494b717588644f432db06d4",
+    "src/human-interaction.mjs": "5e81b30062e5137083abd8f3de840a61b09720e20bc7e6fc122a58796eef96d2",
+    "src/human-response.mjs": "40e5cfa35551be5bfdb5d09ba4b5f1f34e7e4204fa9c400996a09cc0fc1a50c0",
+    "src/knowledge-evaluation.mjs": "a7f0d017fe866c9ca57c08071b45ca7e59c3a5cf2af04f013a151dbaf4a4cdc6",
+    "src/knowledge-vectors.mjs": "e5356641c52e4bcd6a2db1968ac4dc201f6c62f0dd3da892ee3d958f701b6273",
+    "src/knowledge.mjs": "d73ec83bce21ab2e8215e00fa30603b6c71443a11ad46f57619593f0881504bc",
+    "src/live-config.mjs": "e021eabdce6f4c8b9f52d70669e6be934f1a674197b45739c4ce592c1f21d546",
+    "src/live-options.mjs": "ddd4eba2bac029bd4c06227ad0807d412f2dff8d5b2caae8a471b5e7bcaf3555",
+    "src/live-trace.mjs": "9f45500caeb8a51c335fc01bc1b2eb05e24c97ecfe9a1d583581a77763e3374f",
+    "src/live-transport.mjs": "a8912b1157418136e111e2184afe96711443e0e010bdf4e4f4e069524a9fcbc3",
+    "src/live-validation.mjs": "1e5896f5686cc3d8cf0f6321e6c9dc63e3fb2621919119bff61ca4d1bcc626ef",
+    "src/local-knowledge.mjs": "b9cd06ad63eca4325b5f2ab747c5433966dc924b4127439809ad98f7d486d7b2",
+    "src/mcp.mjs": "46b6c1dc5a2910edaad90d557c4f211e2a046b5a27a29b6248220e64b06f1695",
+    "src/memory-consumer.mjs": "56c12074b32be107ab8d097a4cf35302e0af2d7bd270a70523d31a5bd455b7cd",
+    "src/memory-effects.mjs": "92b5079e6d0c8c5c40f6cae28de4612fba772b591c61a27092fba9236c148592",
+    "src/memory-projection.mjs": "b4c5215c4507b35db0b6c74dc3a6ec2f5cfb2dc62ce3c13f4537d4ef1b34f6fe",
+    "src/memory-recall-demo.mjs": "c733ec7df7c97d05454c0c792160cbdd6438dd2249ef2af3da1b49ad85c60b98",
+    "src/memory-tools.mjs": "ffeb476134963c08e21ac61aae4bff8ea9bf7287a2fceae44fa836ebdef42f1e",
+    "src/memory.mjs": "363857f6410f0a4e2bf953752db7872d0fb25c3f831800fde0b50b9e3a349616",
+    "src/observe.mjs": "036aca4761335cacc23481427273811581836e439be3118a923b9858528cfc1e",
+    "src/pdf-demo.mjs": "8f805d01e82a046c0fb2e5c14c703df518de676ad35000a7ebe8602db658a553",
+    "src/pdf-input.mjs": "8d11a41c59ef5843ce349a43c29e98ab3b6adc570c584414f5298f936419658e",
+    "src/pdf-parser-worker.mjs": "987cbce7acc7ac809e707e3ea74858cec0cb1e2f1929a0309c14740c35586501",
+    "src/plugins.mjs": "faa9d09c7ec8ca3bff00c558abab41efe2390c0ccdfba84b3b5d61f83d3d3196",
+    "src/portfolio-rebalance-demo.mjs": "45c9ad864f05ed6bd56f99fc1194727b0ce39d93e0760020d5d0ff0f4a35fc2a",
+    "src/project-plugins.mjs": "43b9311bcc39aea80cdbff3966b1a90f2907640fa3c04941a3075835d1c18c00",
+    "src/project-sources.mjs": "7afb0998ff597d3ac42c9fd69294b554ae10fa178a24f9b4b283758c12eba12f",
+    "src/publication.mjs": "c28e848fe317c5f84aa499c19d76ae37c1fd586691dbc40a630ce56d971a0a04",
+    "src/reader-cli.mjs": "60f5b9c5a743db2fe485e4da50853d39c1e2a0783525947cfea2674238678c2c",
+    "src/reader.mjs": "bdc644a74ea346c6e9d10cf7c78332878b1e5e562083be95ceccdb55d8f1eb0c",
+    "src/report-assessment.mjs": "325b2b87ede3c3cfe0af3f20d1b1f4da741bfafb96d55e2c56ce2aa04bf759e4",
+    "src/report-guidance.mjs": "d48fe84dd156e061d6d79017ea197bcec90213c848e89879ea3e4bb348ec4dc3",
+    "src/report-review-cli.mjs": "8a15369e8c2129e8d8c9de75dee0c3a153e34de012b658e8d4073af494742ef6",
+    "src/report-review.mjs": "a5a06b41280c801bcd61e3102ecc9621c3cce514e63a1d05a7351fbb8deac66a",
+    "src/report.mjs": "4899f721145b859779826fcef00e07ea63c708262a8cb33f0be7a93f41c20c7a",
+    "src/research-cli.mjs": "72242fddd3ba96f9bbb5fd2bdd94da92b46c6921ae46084287d0d6bdce8a21c3",
+    "src/research-project.mjs": "3b36cf3ba3c9c0c30177f6c5e6fbd729eb6906dd835bd42549bd9fe8f0e4530f",
+    "src/result-consumption-demo.mjs": "7c37a8418a157115d183e2ee7f8a025452da12b4135f491ad2916fc9c39ec3e7",
+    "src/results.mjs": "f518291acfac552a9193fd9b6dfae8eb602f6b69999c9fce512a5311bcbe759b",
+    "src/retrieval-demo.mjs": "d55b579fefdfd43e4797c98191a52786d73d5903981130071de37a6c09adcfac",
+    "src/retrieval.mjs": "23313cf6879fa1b29a80a00a1883fdfa2c3085bdb125eb5cfd8334937bce15de",
+    "src/run-control.mjs": "0c313ac2b3bb2fc62515c506d035cb3cc5a4a3968d691716b2d4e5aa443bb4e7",
+    "src/runtime.mjs": "26f9b31e416935d96ccda85608c68042a4bf58238e8160418a6ab51593498e6b",
+    "src/schedule-demo.mjs": "c2cb2967ada4e94e79f49702b4d2b9fc40b473132f795089667cb76f1622573a",
+    "src/schedule.mjs": "be6895cefbffbe9b38710fdeadab800f07fc17a1faf4646f2ea9df6ba3c84608",
+    "src/scheduled-tasks.mjs": "46db538e5e412b7ce48171a725a184a5265fe7191544f0719c16b2ca993e90b1",
+    "src/session-cli.mjs": "aa57f64553f0346995edaf276f38dbeb9c625519ee44777ba7d9c1c767b8514e",
+    "src/session-recovery.mjs": "10a04529c83cbefc127902221e57d8796f893f5f5fcb15d2aefc80cd6c5a1cf9",
+    "src/session.mjs": "a8b53906118b3032835b07c1ca6997a3586eec8dee0899f6663eac046b4c6893",
+    "src/skills.mjs": "39da1f37d9686bb93b2e2da406f1b7232b397eed99c0d61f6b4256b1c8e50de1",
+    "src/source.mjs": "c2605fb0be894973be7da62494337d197a00ee5f7279232ba9c3d58649016697",
+    "src/specialist-child.mjs": "ddc15314c4ca741d4a55a03a0f5f0adca015fb73e9412897e23e4a0d0d578c55",
+    "src/specialist-cli.mjs": "32d02ffc073512d2689aadebad4e18dcb489b9cf6190311113d96b4d8721682a",
+    "src/specialist-demo.mjs": "462deaa47fc2ea52e7806445ea41a2628396b662e5273de82420e5eef30d51af",
+    "src/specialist-profiles.mjs": "bee54f6518aef147dad374fa335ab24beff8fb4f2e3222a8ce20e52545b17e97",
+    "src/storage-files.mjs": "44ec8a1efc0c270975b55743e706d6da5f6f967a9722099d51c3e66a278b1ea7",
+    "src/stream.mjs": "010f66751e677184de6f4de9767582cfba1c353acadd1f6c4ed5bae3397b2cef",
+    "src/temporal-cli.mjs": "485dfc249cceae4fe20eb1fd29b2408449c1ab5772f1dcb8acf8ff5bebfbd772",
+    "src/temporal-demo.mjs": "0c5c3de1b18be068deba0d45c8a1f80829a1ba8957515cd1e88086800305ffe4",
+    "src/temporal.mjs": "9fc839349cb2e7ecc362a954e7bf7dbc7590ac08e72a177b75e1472c3411eb8f",
+    "src/tools.mjs": "90d39478452bef49f8fb9dea6f6b98f1ec4a834b7476a64d92bae1fad7a37c86",
+    "src/web-acquisition-records.mjs": "46cd27b1e95e335b26c5249958c834966fe94a1e4475ccc7fadcf78eeefa16af",
+    "src/web-acquisition.mjs": "a03c16d20667c626b6015bd55c876d05123512687c32029cf6d3177e0aaa6b99",
+    "src/web-extraction.mjs": "e46d8b9588ae57908392e0f099e44afc6ee8829031e92ca548fd46be57426840",
+    "src/web-platform-profile.mjs": "2a2bdc9c45cce6613cfe9309aef91ffe2696ae61cc4a374d0858350af8426f51",
+    "src/web-policy.mjs": "c2b64fda8bc6ef42a7c9dce18c221f2052e1d8acca4a5bd7f3dc9fe154a34d1d",
+    "src/web-source.mjs": "66b6650c9e5895568d9a195b1b7d9471f6ae29c9f6c0152053243678d648d3a5",
+    "src/web-text-pages.mjs": "c8b56077692368d4c71fc8e9cd3efbdac13f95dbd0f1ba8ee99d9b82b43533c1",
+    "src/web-transport.mjs": "97fd79913f0d9290cbd23682e991cc6d418dbd248d7638a549ca51a592e7c758",
+    "src/worker.mjs": "605f51b9239cfac10755731ce621d41e85fc875280e93f4ad0e69eb9cc194b05",
+    "src/working-demo.mjs": "cd3d8973b54bc141978cc654d33746ea3b02211991394d2f7fd04d8b6f61fa9a",
+    "src/working-note.mjs": "6bc9411849e92afdd8ff5c06d55067e833d7d9a4dcf5fecb778c35b16d1adaa7",
+    "package.json": "58fc7ad69442225d30101f7be0eef8380eb4b575e459f49b3d4559a329a5a0f2",
+    "package-lock.json": "f0b7b4103baffa1bbe3290bc8c4e47d2800b2219a043603bb39f46de011ed6a7"
+  },
+  "inputSha256": "3bd9fc52e51692a4405c41a678172137dac6634323ac17b643bd0b3d7beca233",
+  "documents": [
+    {
+      "id": "service-terms",
+      "name": "service-terms.md",
+      "text": "Fictional service, version 1. Annual fee: 12 units. Cancellation requires 30 days notice. CSV export is supported. PDF export is not supported. Offline editing is not supported."
+    },
+    {
+      "id": "service-update",
+      "name": "service-update.md",
+      "text": "Fictional service, version 2. Annual fee: 15 units. Cancellation requires 14 days notice. CSV and Markdown export are supported. PDF export is not supported. Offline viewing is supported only for previously downloaded notes."
+    },
+    {
+      "id": "cn-guide",
+      "name": "cn-guide.md",
+      "text": "虚构产品使用指南：导出支持 CSV 和 Markdown，不支持 PDF。离线仅支持查看已下载笔记，不支持编辑。退款规则未在本文提供。"
+    },
+    {
+      "id": "privacy",
+      "name": "privacy.md",
+      "text": "Fictional privacy notice. Imported documents remain in the local collection. This notice does not specify a retention period or refund policy."
+    },
+    {
+      "id": "long-noise",
+      "name": "long-noise.md",
+      "text": "Fictional general note. general informationservice general informationservice general informationservice general informationservice general informationservice general informationservice general informationservice general informationservice general informationservice general informationservice general informationservice general informationservice general informationservice general informationservice general informationservice general informationservice general informationservice general informationservice general informationservice general informationservice general informationservice general informationservice general informationservice general informationservice general informationservice general informationservice general informationservice general informationservice general informationservice general information. No cancellation terms are given here."
+    }
+  ],
+  "tasks": [
+    {
+      "id": "B01",
+      "question": "用 knowledge_query 查询 cancellation，列出两个版本的取消通知天数并标明来源，不计算差值。",
+      "specifiedQuery": "cancellation",
+      "expectedRelevantDocuments": [
+        "service-terms",
+        "service-update"
+      ],
+      "separateAnswerReview": "30 and 14 days, correctly versioned; do not attribute missing terms to long-noise.",
+      "status": "not-run"
+    },
+    {
+      "id": "B02",
+      "question": "查询 annual fee，分别报告两个版本的费用和单位，引用原文，不换算收益或差额。",
+      "specifiedQuery": "annual fee",
+      "expectedRelevantDocuments": [
+        "service-terms",
+        "service-update"
+      ],
+      "separateAnswerReview": "12/15 units with versions; no invented currency.",
+      "status": "not-run"
+    },
+    {
+      "id": "B03",
+      "question": "Query PDF export. Is PDF export supported by either fictional version? Cite the original statements.",
+      "specifiedQuery": "PDF export",
+      "expectedRelevantDocuments": [
+        "service-terms",
+        "service-update"
+      ],
+      "separateAnswerReview": "Explicitly not supported; lexical match is not affirmative support.",
+      "status": "not-run"
+    },
+    {
+      "id": "B04",
+      "question": "查询“离线”，说明中文指南允许和不允许的操作，保留条件和原始来源。",
+      "specifiedQuery": "离线",
+      "expectedRelevantDocuments": [
+        "cn-guide"
+      ],
+      "separateAnswerReview": "Only viewing previously downloaded notes; no editing.",
+      "status": "not-run"
+    },
+    {
+      "id": "B05",
+      "question": "查询“导出”，只列出中文指南支持的格式与不支持的格式。",
+      "specifiedQuery": "导出",
+      "expectedRelevantDocuments": [
+        "cn-guide"
+      ],
+      "separateAnswerReview": "CSV and Markdown supported; PDF unsupported.",
+      "status": "not-run"
+    },
+    {
+      "id": "B06",
+      "question": "Query retention period. State what the privacy notice actually says and distinguish a missing value from a zero-day policy.",
+      "specifiedQuery": "retention period",
+      "expectedRelevantDocuments": [
+        "privacy"
+      ],
+      "separateAnswerReview": "Not specified; no invented days.",
+      "status": "not-run"
+    },
+    {
+      "id": "B07",
+      "question": "Query previously downloaded notes. Describe the exact offline-viewing condition with original sources.",
+      "specifiedQuery": "previously downloaded notes",
+      "expectedRelevantDocuments": [
+        "service-update"
+      ],
+      "separateAnswerReview": "Previously downloaded condition remains; no offline-editing claim.",
+      "status": "not-run"
+    },
+    {
+      "id": "B08",
+      "question": "Query refund. Does the returned privacy notice establish a refund entitlement? State the evidence limit.",
+      "specifiedQuery": "refund",
+      "expectedRelevantDocuments": [
+        "privacy"
+      ],
+      "separateAnswerReview": "No specified refund policy, no invented entitlement.",
+      "status": "not-run"
+    },
+    {
+      "id": "B09",
+      "question": "用 knowledge_query 精确查询 zxqvnonexistent921。若没有命中，明确限定在当前导入资料，不能改写查询重试或补造来源。",
+      "specifiedQuery": "zxqvnonexistent921",
+      "expectedRelevantDocuments": [],
+      "separateAnswerReview": "Explicit no-evidence only for imported collection; no fabricated citations.",
+      "status": "not-run"
+    },
+    {
+      "id": "B10",
+      "question": "Query imported documents. Identify where the fictional notice says they remain, cite the original text, and do not infer encryption or cloud backup.",
+      "specifiedQuery": "imported documents",
+      "expectedRelevantDocuments": [
+        "privacy"
+      ],
+      "separateAnswerReview": "Local collection only; encryption/cloud backup unstated.",
+      "status": "not-run"
+    }
+  ],
+  "gate": {
+    "planned": 10,
+    "requiredSuccesses": 9,
+    "runtimeAndDelivery": "Existing real-ten-min-nine-20261102; no known runtime defect, all ten original outcomes preserved, realProvider true and physical requests retained.",
+    "answerQuality": "Separate per-task review; do not turn model-only defects into Runtime defects.",
+    "transport": "Executor must independently verify approved transport; no dispatch by this preparation.",
+    "budget": "Executor must obtain bounded authorization and reliable accounting before dispatch. No old balance inferred.",
+    "fixedSource": "Recompute executionIdentity and source/input hashes before any run. Changes require a declared new fixed execution identity, never relabel old results."
+  },
+  "preDispatchBlockers": [
+    "Verify an authorized provider/account/transport and a bounded cost limit in the executing environment.",
+    "Reconcile existing accounting; retain unknown calls and reservations without erasure or replay.",
+    "Freeze model/config/limits/deadline and original sources, then use the real application workflow."
+  ],
+  "physicalRequests": 0
+}

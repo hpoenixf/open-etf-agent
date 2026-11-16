@@ -1,0 +1,23 @@
+{
+  "status": "wip-not-release",
+  "base": "4974681235d6883269d3d660facc4666986a4e89",
+  "executionIdentity": "33061ecac1bc7260665906ad77308fb077e318e5277218f8e6c81edab07b0977",
+  "fixedTreeTests": {
+    "pass": 93,
+    "fail": 0,
+    "skip": 0,
+    "scope": "project-sources, knowledge*, research-cli, tools",
+    "node": "26.11.1",
+    "localHttp": "included"
+  },
+  "realProviderTasks": {
+    "planned": 10,
+    "attempted": 0,
+    "physicalRequests": 0
+  },
+  "limits": [
+    "Not full repository regression or CI",
+    "Not a release or model qualification",
+    "Older 115-test result belongs to a different local tree with additional unsubmitted changes"
+  ]
+}
