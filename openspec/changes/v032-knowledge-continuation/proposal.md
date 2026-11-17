@@ -115,3 +115,23 @@ This fails meaningful no-evidence quality; vector coverage 16/16 is not semantic
 acceptance. [Provenance, exact receipts and remaining gates](../../../docs/verification/next-real-local-embedding.md).
 The prepared-query route stays experimental; in-Run dynamic-query authorization
 remains closed. No new release or extension of paid-call authority follows.
+
+## 2026-11-17 follow-up: evidence layers and blocked live admission
+
+Remote main `6bc660b595f0a7050bc49322e9b047a426b0d095` contains the reviewed
+offline preparation increment; stable metadata remains 0.31.0. This follow-up
+does not import or re-review the stopped dynamic-authorization candidate.
+The original scope and dynamic/shared-budget gates above remain required.
+
+Retrieval evaluator v3 accepts explicit supplied answerability annotations and
+distinguishes candidate return, retrieval of labelled supporting sources, and
+unmeasured generated-answer quality. Legacy v1/v2 results and labels stay intact.
+An after-ranking source-text audit records N01's explicit missing fee amount and
+P08's omitted second supporting passage separately; it is not a blind relabelled
+benchmark or a new qualification score. No ranking threshold changed.
+
+The official existing Go model-directory access check returned HTTP 401 before
+inference. That route was stopped without alternate endpoints or credentials.
+The new ten-task gate is incomplete, with zero tasks dispatched. Real local E5
+and provider-free tests cannot replace it. See the [dated follow-up evidence and
+remaining decisions](../../../docs/verification/v032-progress-20261117.md).

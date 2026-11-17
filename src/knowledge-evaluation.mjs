@@ -6,6 +6,7 @@ const exact=(v,keys)=>object(v)&&Object.keys(v).sort().join(',')===[...keys].sor
 // An evaluator of supplied labels, not an independent source of relevance truth.
 // There is no network/provider port and no automatic qualification pass threshold.
 export function evaluateKnowledgeRetrieval({catalog,allowedDocuments,vectorEvidence,evaluation,signal}){
+ if(evaluation?.schemaVersion==='knowledge-retrieval-evaluation@3')return evaluateAnswerability({catalog,allowedDocuments,vectorEvidence,evaluation,signal});
  catalog=normalizeDocumentCatalog(catalog);
  if(!Array.isArray(allowedDocuments))fail();
  const negativeCases=evaluation?.schemaVersion==='knowledge-retrieval-evaluation@2';
@@ -18,4 +19,26 @@ export function evaluateKnowledgeRetrieval({catalog,allowedDocuments,vectorEvide
  const mean=(items,get)=>items.length?items.reduce((n,r)=>n+get(r),0)/items.length:null;
  const means=Object.fromEntries(profiles.map(({name,index})=>[name,{indexSha256:index.indexSha256,recallAtK:mean(positives,r=>r.profiles[name].recall),mrrAtK:mean(positives,r=>r.profiles[name].reciprocalRank),...(negativeCases?{noEvidenceAccuracy:mean(negatives,r=>Number(r.profiles[name].noEvidenceCorrect)),falsePositiveRate:mean(negatives,r=>Number(r.profiles[name].falsePositive))}:{})}]));
  return{schemaVersion:negativeCases?'knowledge-retrieval-evaluation-result@2':'knowledge-retrieval-evaluation-result@1',...(negativeCases?{positiveQueries:positives.length,negativeQueries:negatives.length}:{}),provenance:evaluation.provenance,qualification:'not-certified',boundary:'Metrics measure supplied relevance labels on the admitted snapshot only; external labels and provider provenance are not authenticated. Synthetic results are not semantic quality acceptance.',catalog:documentCatalogBinding(catalog),evaluationSha256:sha256(JSON.stringify({...(negativeCases?{schemaVersion:evaluation.schemaVersion}:{}),provenance:evaluation.provenance,k:evaluation.k,cases})),vectorEvidenceSha256:profiles[2].index.vectorEvidenceSha256,k:evaluation.k,cases:rows,vectorCoveredQueries:rows.filter(r=>r.profiles.hybrid.vectorAvailable).length,totalQueries:rows.length,metrics:means};
+}
+
+// v3 measures retrieval against explicitly supplied answerability annotations.
+// It does not infer answerability from scores or grade any generated answer.
+// Keep v1/v2 outputs and their historical meaning byte-identical.
+function evaluateAnswerability({catalog,allowedDocuments,vectorEvidence,evaluation,signal}){
+ if(!exact(evaluation,['schemaVersion','provenance','k','cases'])||!Array.isArray(evaluation.cases))fail();
+ const cases=Array.from(evaluation.cases,c=>{
+  if(!exact(c,['query','relevantSourceIds','answerability'])||!['direct-answer','explicitly-unspecified','insufficient'].includes(c.answerability)||!Array.isArray(c.relevantSourceIds)||(c.answerability==='insufficient')!==(c.relevantSourceIds.length===0))fail();
+  return {query:c.query,relevantSourceIds:[...c.relevantSourceIds],answerability:c.answerability};
+ });
+ const r=evaluateKnowledgeRetrieval({catalog,allowedDocuments,vectorEvidence,signal,evaluation:{...evaluation,schemaVersion:'knowledge-retrieval-evaluation@2',cases:cases.map(({answerability,...c})=>c)}});
+ const rows=r.cases.map((row,i)=>({...row,answerability:cases[i].answerability,profiles:Object.fromEntries(Object.entries(row.profiles).map(([name,p])=>{
+  const {falsePositive,noEvidenceCorrect,...retrieval}=p;
+  return [name,{...retrieval,candidateReturned:p.sourceIds.length>0,labelledSupportRetrieved:cases[i].answerability==='insufficient'?null:p.sourceIds.some(id=>row.relevantSourceIds.includes(id))}];
+ }))}));
+ const mean=(items,get)=>items.length?items.reduce((n,row)=>n+Number(get(row)),0)/items.length:null;
+ const identity={schemaVersion:evaluation.schemaVersion,provenance:evaluation.provenance,k:evaluation.k,cases:cases.map(c=>({...c,relevantSourceIds:[...c.relevantSourceIds].sort()}))};
+ return {...r,schemaVersion:'knowledge-retrieval-evaluation-result@3',evaluationSha256:sha256(JSON.stringify(identity)),boundary:'Retrieval metrics use supplied answerability and supporting-source labels, not inferred semantic truth. Candidate return on insufficient cases is not a final-answer error. Generated answers are not evaluated.',finalAnswerQuality:'not-evaluated',answerabilityCounts:Object.fromEntries(['direct-answer','explicitly-unspecified','insufficient'].map(s=>[s,cases.filter(c=>c.answerability===s).length])),cases:rows,metrics:Object.fromEntries(Object.entries(r.metrics).map(([name,m])=>{
+  const {falsePositiveRate,noEvidenceAccuracy,...retrieval}=m;
+  return [name,{...retrieval,labelledSupportHitRate:mean(rows.filter(r=>r.answerability!=='insufficient'),r=>r.profiles[name].labelledSupportRetrieved),candidateReturnRateOnInsufficient:mean(rows.filter(r=>r.answerability==='insufficient'),r=>r.profiles[name].candidateReturned)}];
+ }))};
 }

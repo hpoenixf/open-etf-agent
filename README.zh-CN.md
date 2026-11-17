@@ -102,6 +102,8 @@ npm run demo -- --case document-compare
 
 **[v0.31.0 · 本地知识](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.31.0)** 提供显式文本导入、BM25 自由查询与原始来源回读。独立冻结的真实模型批次完成 9/10 Runtime 工作流；模型指令与正文质量另评。[证据与边界](docs/verification/v031-release.zh-CN.md)。
 
+**0.32 开发中，尚未发布：** 本地 E5 准备与冻结查询恢复仍为实验能力；Run 内动态获取入口保持关闭。2026-11-17 的 Go 权限检查返回 HTTP 401，新十任务尚未开始。候选召回、标注的支持证据与最终回答质量分开检验。[当前证据及剩余门槛](docs/verification/v032-progress-20261117.md)。
+
 | 最近版本 / 状态 | 能做什么 | 用法与边界 |
 | --- | --- | --- |
 | [v0.31 · 本地知识](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.31.0) | 导入选定文本、运行新 BM25 查询并检查原始字节，无需模型密钥 | [本地知识](docs/local-knowledge.zh-CN.md) |

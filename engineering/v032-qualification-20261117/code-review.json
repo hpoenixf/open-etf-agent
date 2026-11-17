@@ -1,0 +1,20 @@
+{
+  "schemaVersion": "v032-independent-review@1",
+  "scope": [
+    "src/knowledge-evaluation.mjs",
+    "test/knowledge-evaluation-answerability.test.mjs"
+  ],
+  "requestedModel": "gpt-6-luna",
+  "resolvedModel": null,
+  "resolvedModelBoundary": "Review interface does not attest actual resolved model identity.",
+  "findings": [
+    {
+      "issue": "v3 top-level property order affected evaluation identity",
+      "status": "fixed",
+      "evidence": "Fixed-order identity object; full-output equivalence test failed before correction and passed after."
+    }
+  ],
+  "finalBlockingFindings": 0,
+  "legacyBoundary": "v1/v2 path unchanged after new v3 dispatch; original v1 golden hash still passes",
+  "excluded": "Stopped dynamic-authorization candidate was not inspected, imported or re-reviewed."
+}

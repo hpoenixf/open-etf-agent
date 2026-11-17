@@ -1,5 +1,7 @@
 **English** | [简体中文](README.zh-CN.md)
 
+- [Unreleased 0.32: real E5 verification, answerability audit, Go HTTP 401 and incomplete ten-task gate](v032-progress-20261117.md)
+
 - [v0.26 Web evidence: dated Runtime 9/10, unknown and content boundaries](v026-release.md)
 
 - [v0.25 once Scheduled tasks: Runtime qualification and model content limits](v025-release.md)

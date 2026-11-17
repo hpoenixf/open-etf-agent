@@ -1,5 +1,7 @@
 [English](README.md) | **简体中文**
 
+- [0.32 未发布：真实 E5 验证、可回答性复核、Go HTTP 401 与未完成的十任务门槛](v032-progress-20261117.md)
+
 - [v0.26 Web 证据：本次 Runtime 9/10、未知与内容边界](v026-release.zh-CN.md)
 
 - [v0.25 一次性计划任务：Runtime 资格与模型内容边界](v025-release.zh-CN.md)

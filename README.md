@@ -102,6 +102,8 @@ npm run demo -- --case document-compare
 
 **[v0.31.0 · Local Knowledge](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.31.0)** adds selected text import, BM25 free queries and original source readback. The independently frozen live-model cohort completed 9/10 Runtime workflows; model instruction and prose quality remain separate. [Evidence and limits](docs/verification/v031-release.md).
 
+**Unreleased 0.32 work:** local E5 preparation and frozen-query recovery are experimental. In-Run dynamic acquisition remains closed. The 2026-11-17 Go access check returned HTTP 401, so the new ten-task cohort has not started. Retrieval candidates, labelled support and generated-answer quality are separate checks. [Current evidence and remaining gates](docs/verification/v032-progress-20261117.md).
+
 | Recent version / status | What it enables | Usage and boundaries |
 | --- | --- | --- |
 | [v0.31 · Local Knowledge](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.31.0) | Import selected text, run new BM25 queries and inspect original bytes without a model key | [Local Knowledge](docs/local-knowledge.md) |
