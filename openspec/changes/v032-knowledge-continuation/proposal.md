@@ -135,3 +135,21 @@ inference. That route was stopped without alternate endpoints or credentials.
 The new ten-task gate is incomplete, with zero tasks dispatched. Real local E5
 and provider-free tests cannot replace it. See the [dated follow-up evidence and
 remaining decisions](../../../docs/verification/v032-progress-20261117.md).
+
+## 2026-11-17 restored-Go continuation: prepared cohort only
+
+The user explicitly replaced the local Go credential after the historical 401.
+Official directory and minimal-inference checks returned HTTP 200 with
+`gpt-6-luna` and Go billing. A dated activation record keeps the original source,
+questions, data, project configuration and ten-task acceptance contract unchanged;
+it lifts only that obsolete provider-access checkpoint. The original 401/not-run
+records are retained, and the stopped dynamic candidate remains excluded.
+
+All ten original prepared-path tasks completed with exact queries, cold output
+readback and 25 real Go model requests (0 USD additional cost). The separate
+single-request key probe is not a task in that denominator. The first two tasks
+exercise only/prefer, all ten consume real frozen E5 query vectors, and the five
+insufficient-evidence tasks do not invent answers. Detailed content assessment is
+separate from Runtime completion. No general semantic/financial qualification,
+dynamic acquisition, physical embedding budget, crash/fence recovery or full
+0.32 release follows. See the [dated live record](../../../docs/verification/v032-live-20261117.md).

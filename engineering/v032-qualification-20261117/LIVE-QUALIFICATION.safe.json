@@ -1,0 +1,646 @@
+{
+  "schemaVersion": "v032-prepared-live-qualification@1",
+  "sourceCommit": "74df3cfdfc75a2bac11b4cfff2b6586888be0de6",
+  "executionHead": "451f8e5000e0df17f6299d0ed70a013380d7576c",
+  "executionIdentity": "8eac8804ed50d24d3a411285639a7995c164d27b54c47421e9419e3d879ca6e4",
+  "realProviderApplicability": "supported",
+  "scope": "Original ten-task prepared-query business path; dynamic scope remains closed.",
+  "normalGate": {
+    "planned": 10,
+    "requiredSuccesses": 9,
+    "threshold": 0.9,
+    "taskIds": [
+      "V032-01",
+      "V032-02",
+      "V032-03",
+      "V032-04",
+      "V032-05",
+      "V032-06",
+      "V032-07",
+      "V032-08",
+      "V032-09",
+      "V032-10"
+    ],
+    "tasks": [
+      {
+        "id": "V032-01",
+        "executionIdentity": "8eac8804ed50d24d3a411285639a7995c164d27b54c47421e9419e3d879ca6e4",
+        "status": "success",
+        "runtimeStatus": "completed",
+        "runtimeCode": null,
+        "startedAt": "2026-11-17T08:07:40.433Z",
+        "elapsedMs": 8562,
+        "physicalRequests": 3,
+        "resolvedModels": [
+          "gpt-6-luna"
+        ],
+        "realProvider": true,
+        "deliveryReadback": true,
+        "outputKind": "report",
+        "outputSha256": "e066bfc5e0e34f48437bb5547365dc45baef2fad046b4d020554b301ba51172a",
+        "onTime": true,
+        "unknownEffects": false,
+        "workError": null,
+        "readbackError": null,
+        "transportStop": null,
+        "rootUsage": {
+          "model": 3,
+          "tool": 2
+        },
+        "contentReview": "pass-independent-source-review",
+        "newCostUsd": 0,
+        "runtimeAccepted": true,
+        "workflowCompleted": true,
+        "eligibleSuccess": true,
+        "exactQuery": true,
+        "scopeArgumentsMatched": true,
+        "preparedVectorUsed": true,
+        "scopeSelection": {
+          "requested": [
+            "text:77198f89bfe04961748fa83888db05f07adc778f58d22d05ef2d8cf234eb95e6"
+          ],
+          "mode": "only",
+          "preferredMatched": 1,
+          "widening": "only"
+        },
+        "returnedSources": [
+          "text:77198f89bfe04961748fa83888db05f07adc778f58d22d05ef2d8cf234eb95e6@utf8-pages-v1:77198f89bfe04961748fa83888db05f07adc778f58d22d05ef2d8cf234eb95e6:p1"
+        ],
+        "savedReportSourceIds": [
+          [
+            "text:77198f89bfe04961748fa83888db05f07adc778f58d22d05ef2d8cf234eb95e6@utf8-pages-v1:77198f89bfe04961748fa83888db05f07adc778f58d22d05ef2d8cf234eb95e6:p1"
+          ]
+        ],
+        "originalOutput": "live-reports/V032-01.md",
+        "outputBytes": 727,
+        "tokens": {
+          "prompt_tokens": 11956,
+          "completion_tokens": 402,
+          "total_tokens": 12358
+        },
+        "billingSources": [
+          "go"
+        ],
+        "contentFailureReason": null,
+        "originalCaseId": "P01"
+      },
+      {
+        "id": "V032-02",
+        "executionIdentity": "8eac8804ed50d24d3a411285639a7995c164d27b54c47421e9419e3d879ca6e4",
+        "status": "success",
+        "runtimeStatus": "completed",
+        "runtimeCode": null,
+        "startedAt": "2026-11-17T08:08:41.616Z",
+        "elapsedMs": 10823,
+        "physicalRequests": 3,
+        "resolvedModels": [
+          "gpt-6-luna"
+        ],
+        "realProvider": true,
+        "deliveryReadback": true,
+        "outputKind": "report",
+        "outputSha256": "5759ac91af698caaa254592017f6a1b96a9c8cdf2998b7c78949b3d5c9bb0393",
+        "onTime": true,
+        "unknownEffects": false,
+        "workError": null,
+        "readbackError": null,
+        "transportStop": null,
+        "rootUsage": {
+          "model": 3,
+          "tool": 2
+        },
+        "contentReview": "pass-independent-source-review",
+        "newCostUsd": 0,
+        "runtimeAccepted": true,
+        "workflowCompleted": true,
+        "eligibleSuccess": true,
+        "exactQuery": true,
+        "scopeArgumentsMatched": true,
+        "preparedVectorUsed": true,
+        "scopeSelection": {
+          "requested": [
+            "text:9af2ff6959bd9ecea86f6dc322fa0d45afb532d2398615f595b957cb17ebb06e"
+          ],
+          "mode": "prefer",
+          "preferredMatched": 1,
+          "widening": "expanded"
+        },
+        "returnedSources": [
+          "text:9af2ff6959bd9ecea86f6dc322fa0d45afb532d2398615f595b957cb17ebb06e@utf8-pages-v1:9af2ff6959bd9ecea86f6dc322fa0d45afb532d2398615f595b957cb17ebb06e:p1",
+          "text:7874b49f5f2b55595cae93616a48d26631f930a204d7532951294924f4e21783@utf8-pages-v1:7874b49f5f2b55595cae93616a48d26631f930a204d7532951294924f4e21783:p1",
+          "text:ed0b79f1d5f45e219963c81abc32cbb027f0f1683999e8c52d742a4c5d21c05d@utf8-pages-v1:ed0b79f1d5f45e219963c81abc32cbb027f0f1683999e8c52d742a4c5d21c05d:p1",
+          "text:aa66ed922efd83210d01e95bb4d0f851536d36b3908fa459231e0e26b0947bf0@utf8-pages-v1:aa66ed922efd83210d01e95bb4d0f851536d36b3908fa459231e0e26b0947bf0:p1"
+        ],
+        "savedReportSourceIds": [
+          [
+            "text:7874b49f5f2b55595cae93616a48d26631f930a204d7532951294924f4e21783@utf8-pages-v1:7874b49f5f2b55595cae93616a48d26631f930a204d7532951294924f4e21783:p1",
+            "text:9af2ff6959bd9ecea86f6dc322fa0d45afb532d2398615f595b957cb17ebb06e@utf8-pages-v1:9af2ff6959bd9ecea86f6dc322fa0d45afb532d2398615f595b957cb17ebb06e:p1"
+          ]
+        ],
+        "originalOutput": "live-reports/V032-02.md",
+        "outputBytes": 1135,
+        "tokens": {
+          "prompt_tokens": 15529,
+          "completion_tokens": 446,
+          "total_tokens": 15975
+        },
+        "billingSources": [
+          "go"
+        ],
+        "contentFailureReason": null,
+        "originalCaseId": "P05"
+      },
+      {
+        "id": "V032-03",
+        "executionIdentity": "8eac8804ed50d24d3a411285639a7995c164d27b54c47421e9419e3d879ca6e4",
+        "status": "success",
+        "runtimeStatus": "completed",
+        "runtimeCode": null,
+        "startedAt": "2026-11-17T08:08:52.526Z",
+        "elapsedMs": 9591,
+        "physicalRequests": 3,
+        "resolvedModels": [
+          "gpt-6-luna"
+        ],
+        "realProvider": true,
+        "deliveryReadback": true,
+        "outputKind": "report",
+        "outputSha256": "05fdfaf637aa976662cbaeb9a1d3203548bf44bb343e2eb132f4498a845a22ec",
+        "onTime": true,
+        "unknownEffects": false,
+        "workError": null,
+        "readbackError": null,
+        "transportStop": null,
+        "rootUsage": {
+          "model": 3,
+          "tool": 2
+        },
+        "contentReview": "pass-independent-source-review",
+        "newCostUsd": 0,
+        "runtimeAccepted": true,
+        "workflowCompleted": true,
+        "eligibleSuccess": true,
+        "exactQuery": true,
+        "scopeArgumentsMatched": true,
+        "preparedVectorUsed": true,
+        "scopeSelection": null,
+        "returnedSources": [
+          "text:9af2ff6959bd9ecea86f6dc322fa0d45afb532d2398615f595b957cb17ebb06e@utf8-pages-v1:9af2ff6959bd9ecea86f6dc322fa0d45afb532d2398615f595b957cb17ebb06e:p1",
+          "text:77198f89bfe04961748fa83888db05f07adc778f58d22d05ef2d8cf234eb95e6@utf8-pages-v1:77198f89bfe04961748fa83888db05f07adc778f58d22d05ef2d8cf234eb95e6:p1",
+          "text:917cabdc80c65485c11e80307884ee217825ac5222b0fe9b9f11b19356f25689@utf8-pages-v1:917cabdc80c65485c11e80307884ee217825ac5222b0fe9b9f11b19356f25689:p1",
+          "text:066a69cdb1e09edbba1a80617a2e8309269b8a46ae34aa493c1a24d674544ec3@utf8-pages-v1:066a69cdb1e09edbba1a80617a2e8309269b8a46ae34aa493c1a24d674544ec3:p1"
+        ],
+        "savedReportSourceIds": [
+          [
+            "text:9af2ff6959bd9ecea86f6dc322fa0d45afb532d2398615f595b957cb17ebb06e@utf8-pages-v1:9af2ff6959bd9ecea86f6dc322fa0d45afb532d2398615f595b957cb17ebb06e:p1"
+          ]
+        ],
+        "originalOutput": "live-reports/V032-03.md",
+        "outputBytes": 700,
+        "tokens": {
+          "prompt_tokens": 14740,
+          "completion_tokens": 366,
+          "total_tokens": 15106
+        },
+        "billingSources": [
+          "go"
+        ],
+        "contentFailureReason": null,
+        "originalCaseId": "P08"
+      },
+      {
+        "id": "V032-04",
+        "executionIdentity": "8eac8804ed50d24d3a411285639a7995c164d27b54c47421e9419e3d879ca6e4",
+        "status": "success",
+        "runtimeStatus": "completed",
+        "runtimeCode": null,
+        "startedAt": "2026-11-17T08:09:02.201Z",
+        "elapsedMs": 8420,
+        "physicalRequests": 3,
+        "resolvedModels": [
+          "gpt-6-luna"
+        ],
+        "realProvider": true,
+        "deliveryReadback": true,
+        "outputKind": "report",
+        "outputSha256": "7acbc9bc4336244576a8b43e4fd0987e0450ade95b2d6e8217779aaf68b52350",
+        "onTime": true,
+        "unknownEffects": false,
+        "workError": null,
+        "readbackError": null,
+        "transportStop": null,
+        "rootUsage": {
+          "model": 3,
+          "tool": 2
+        },
+        "contentReview": "pass-independent-source-review",
+        "newCostUsd": 0,
+        "runtimeAccepted": true,
+        "workflowCompleted": true,
+        "eligibleSuccess": true,
+        "exactQuery": true,
+        "scopeArgumentsMatched": true,
+        "preparedVectorUsed": true,
+        "scopeSelection": null,
+        "returnedSources": [
+          "text:b84ba2ff8b1dd6dc6b082302d164d4f080e7c23020e272fc1c1891bef18b534e@utf8-pages-v1:b84ba2ff8b1dd6dc6b082302d164d4f080e7c23020e272fc1c1891bef18b534e:p1",
+          "text:77198f89bfe04961748fa83888db05f07adc778f58d22d05ef2d8cf234eb95e6@utf8-pages-v1:77198f89bfe04961748fa83888db05f07adc778f58d22d05ef2d8cf234eb95e6:p1",
+          "text:917cabdc80c65485c11e80307884ee217825ac5222b0fe9b9f11b19356f25689@utf8-pages-v1:917cabdc80c65485c11e80307884ee217825ac5222b0fe9b9f11b19356f25689:p1",
+          "text:066a69cdb1e09edbba1a80617a2e8309269b8a46ae34aa493c1a24d674544ec3@utf8-pages-v1:066a69cdb1e09edbba1a80617a2e8309269b8a46ae34aa493c1a24d674544ec3:p1"
+        ],
+        "savedReportSourceIds": [
+          [
+            "text:b84ba2ff8b1dd6dc6b082302d164d4f080e7c23020e272fc1c1891bef18b534e@utf8-pages-v1:b84ba2ff8b1dd6dc6b082302d164d4f080e7c23020e272fc1c1891bef18b534e:p1"
+          ]
+        ],
+        "originalOutput": "live-reports/V032-04.md",
+        "outputBytes": 693,
+        "tokens": {
+          "prompt_tokens": 14776,
+          "completion_tokens": 266,
+          "total_tokens": 15042
+        },
+        "billingSources": [
+          "go"
+        ],
+        "contentFailureReason": null,
+        "originalCaseId": "P10"
+      },
+      {
+        "id": "V032-05",
+        "executionIdentity": "8eac8804ed50d24d3a411285639a7995c164d27b54c47421e9419e3d879ca6e4",
+        "status": "success",
+        "runtimeStatus": "completed",
+        "runtimeCode": null,
+        "startedAt": "2026-11-17T08:09:10.708Z",
+        "elapsedMs": 10195,
+        "physicalRequests": 3,
+        "resolvedModels": [
+          "gpt-6-luna"
+        ],
+        "realProvider": true,
+        "deliveryReadback": true,
+        "outputKind": "report",
+        "outputSha256": "e770a25cacc9c8e90ad13eb3489765531a7c565422d4099ae67d6e57604e010c",
+        "onTime": true,
+        "unknownEffects": false,
+        "workError": null,
+        "readbackError": null,
+        "transportStop": null,
+        "rootUsage": {
+          "model": 3,
+          "tool": 2
+        },
+        "contentReview": "pass-independent-source-review",
+        "newCostUsd": 0,
+        "runtimeAccepted": true,
+        "workflowCompleted": true,
+        "eligibleSuccess": true,
+        "exactQuery": true,
+        "scopeArgumentsMatched": true,
+        "preparedVectorUsed": true,
+        "scopeSelection": null,
+        "returnedSources": [
+          "text:066a69cdb1e09edbba1a80617a2e8309269b8a46ae34aa493c1a24d674544ec3@utf8-pages-v1:066a69cdb1e09edbba1a80617a2e8309269b8a46ae34aa493c1a24d674544ec3:p1",
+          "text:917cabdc80c65485c11e80307884ee217825ac5222b0fe9b9f11b19356f25689@utf8-pages-v1:917cabdc80c65485c11e80307884ee217825ac5222b0fe9b9f11b19356f25689:p1",
+          "text:b84ba2ff8b1dd6dc6b082302d164d4f080e7c23020e272fc1c1891bef18b534e@utf8-pages-v1:b84ba2ff8b1dd6dc6b082302d164d4f080e7c23020e272fc1c1891bef18b534e:p1",
+          "text:77198f89bfe04961748fa83888db05f07adc778f58d22d05ef2d8cf234eb95e6@utf8-pages-v1:77198f89bfe04961748fa83888db05f07adc778f58d22d05ef2d8cf234eb95e6:p1"
+        ],
+        "savedReportSourceIds": [
+          [
+            "text:066a69cdb1e09edbba1a80617a2e8309269b8a46ae34aa493c1a24d674544ec3@utf8-pages-v1:066a69cdb1e09edbba1a80617a2e8309269b8a46ae34aa493c1a24d674544ec3:p1"
+          ]
+        ],
+        "originalOutput": "live-reports/V032-05.md",
+        "outputBytes": 599,
+        "tokens": {
+          "prompt_tokens": 14740,
+          "completion_tokens": 238,
+          "total_tokens": 14978
+        },
+        "billingSources": [
+          "go"
+        ],
+        "contentFailureReason": null,
+        "originalCaseId": "N01"
+      },
+      {
+        "id": "V032-06",
+        "executionIdentity": "8eac8804ed50d24d3a411285639a7995c164d27b54c47421e9419e3d879ca6e4",
+        "status": "success",
+        "runtimeStatus": "completed",
+        "runtimeCode": null,
+        "startedAt": "2026-11-17T08:09:20.990Z",
+        "elapsedMs": 7669,
+        "physicalRequests": 2,
+        "resolvedModels": [
+          "gpt-6-luna"
+        ],
+        "realProvider": true,
+        "deliveryReadback": true,
+        "outputKind": "published-answer",
+        "outputSha256": "33884de23a20279a5a431cec526957608c79acc7d38c8ae837e721a87d662c61",
+        "onTime": true,
+        "unknownEffects": false,
+        "workError": null,
+        "readbackError": null,
+        "transportStop": null,
+        "rootUsage": {
+          "model": 2,
+          "tool": 1
+        },
+        "contentReview": "pass-independent-source-review",
+        "newCostUsd": 0,
+        "runtimeAccepted": true,
+        "workflowCompleted": true,
+        "eligibleSuccess": true,
+        "exactQuery": true,
+        "scopeArgumentsMatched": true,
+        "preparedVectorUsed": true,
+        "scopeSelection": null,
+        "returnedSources": [
+          "text:aa66ed922efd83210d01e95bb4d0f851536d36b3908fa459231e0e26b0947bf0@utf8-pages-v1:aa66ed922efd83210d01e95bb4d0f851536d36b3908fa459231e0e26b0947bf0:p1",
+          "text:9af2ff6959bd9ecea86f6dc322fa0d45afb532d2398615f595b957cb17ebb06e@utf8-pages-v1:9af2ff6959bd9ecea86f6dc322fa0d45afb532d2398615f595b957cb17ebb06e:p1",
+          "text:77198f89bfe04961748fa83888db05f07adc778f58d22d05ef2d8cf234eb95e6@utf8-pages-v1:77198f89bfe04961748fa83888db05f07adc778f58d22d05ef2d8cf234eb95e6:p1",
+          "text:7874b49f5f2b55595cae93616a48d26631f930a204d7532951294924f4e21783@utf8-pages-v1:7874b49f5f2b55595cae93616a48d26631f930a204d7532951294924f4e21783:p1"
+        ],
+        "savedReportSourceIds": [],
+        "originalOutput": "live-reports/V032-06.md",
+        "outputBytes": 148,
+        "tokens": {
+          "prompt_tokens": 8616,
+          "completion_tokens": 143,
+          "total_tokens": 8759
+        },
+        "billingSources": [
+          "go"
+        ],
+        "contentFailureReason": null,
+        "originalCaseId": "N02"
+      },
+      {
+        "id": "V032-07",
+        "executionIdentity": "8eac8804ed50d24d3a411285639a7995c164d27b54c47421e9419e3d879ca6e4",
+        "status": "success",
+        "runtimeStatus": "completed",
+        "runtimeCode": null,
+        "startedAt": "2026-11-17T08:09:28.740Z",
+        "elapsedMs": 5875,
+        "physicalRequests": 2,
+        "resolvedModels": [
+          "gpt-6-luna"
+        ],
+        "realProvider": true,
+        "deliveryReadback": true,
+        "outputKind": "published-answer",
+        "outputSha256": "95cc4803b6fc00b63a19f2073c59cb5fdf33d4815eaca11a84c5ad2c5e721fd1",
+        "onTime": true,
+        "unknownEffects": false,
+        "workError": null,
+        "readbackError": null,
+        "transportStop": null,
+        "rootUsage": {
+          "model": 2,
+          "tool": 1
+        },
+        "contentReview": "pass-independent-source-review",
+        "newCostUsd": 0,
+        "runtimeAccepted": true,
+        "workflowCompleted": true,
+        "eligibleSuccess": true,
+        "exactQuery": true,
+        "scopeArgumentsMatched": true,
+        "preparedVectorUsed": true,
+        "scopeSelection": null,
+        "returnedSources": [
+          "text:066a69cdb1e09edbba1a80617a2e8309269b8a46ae34aa493c1a24d674544ec3@utf8-pages-v1:066a69cdb1e09edbba1a80617a2e8309269b8a46ae34aa493c1a24d674544ec3:p1",
+          "text:77198f89bfe04961748fa83888db05f07adc778f58d22d05ef2d8cf234eb95e6@utf8-pages-v1:77198f89bfe04961748fa83888db05f07adc778f58d22d05ef2d8cf234eb95e6:p1",
+          "text:b84ba2ff8b1dd6dc6b082302d164d4f080e7c23020e272fc1c1891bef18b534e@utf8-pages-v1:b84ba2ff8b1dd6dc6b082302d164d4f080e7c23020e272fc1c1891bef18b534e:p1",
+          "text:917cabdc80c65485c11e80307884ee217825ac5222b0fe9b9f11b19356f25689@utf8-pages-v1:917cabdc80c65485c11e80307884ee217825ac5222b0fe9b9f11b19356f25689:p1"
+        ],
+        "savedReportSourceIds": [],
+        "originalOutput": "live-reports/V032-07.md",
+        "outputBytes": 206,
+        "tokens": {
+          "prompt_tokens": 8663,
+          "completion_tokens": 143,
+          "total_tokens": 8806
+        },
+        "billingSources": [
+          "go"
+        ],
+        "contentFailureReason": null,
+        "originalCaseId": "N03"
+      },
+      {
+        "id": "V032-08",
+        "executionIdentity": "8eac8804ed50d24d3a411285639a7995c164d27b54c47421e9419e3d879ca6e4",
+        "status": "success",
+        "runtimeStatus": "completed",
+        "runtimeCode": null,
+        "startedAt": "2026-11-17T08:09:34.693Z",
+        "elapsedMs": 6397,
+        "physicalRequests": 2,
+        "resolvedModels": [
+          "gpt-6-luna"
+        ],
+        "realProvider": true,
+        "deliveryReadback": true,
+        "outputKind": "published-answer",
+        "outputSha256": "f30404865eb4d1a66c902c88d193af814c5011a2f10afc491d741fd5315fc605",
+        "onTime": true,
+        "unknownEffects": false,
+        "workError": null,
+        "readbackError": null,
+        "transportStop": null,
+        "rootUsage": {
+          "model": 2,
+          "tool": 1
+        },
+        "contentReview": "pass-independent-source-review",
+        "newCostUsd": 0,
+        "runtimeAccepted": true,
+        "workflowCompleted": true,
+        "eligibleSuccess": true,
+        "exactQuery": true,
+        "scopeArgumentsMatched": true,
+        "preparedVectorUsed": true,
+        "scopeSelection": null,
+        "returnedSources": [
+          "text:066a69cdb1e09edbba1a80617a2e8309269b8a46ae34aa493c1a24d674544ec3@utf8-pages-v1:066a69cdb1e09edbba1a80617a2e8309269b8a46ae34aa493c1a24d674544ec3:p1",
+          "text:917cabdc80c65485c11e80307884ee217825ac5222b0fe9b9f11b19356f25689@utf8-pages-v1:917cabdc80c65485c11e80307884ee217825ac5222b0fe9b9f11b19356f25689:p1",
+          "text:77198f89bfe04961748fa83888db05f07adc778f58d22d05ef2d8cf234eb95e6@utf8-pages-v1:77198f89bfe04961748fa83888db05f07adc778f58d22d05ef2d8cf234eb95e6:p1",
+          "text:b84ba2ff8b1dd6dc6b082302d164d4f080e7c23020e272fc1c1891bef18b534e@utf8-pages-v1:b84ba2ff8b1dd6dc6b082302d164d4f080e7c23020e272fc1c1891bef18b534e:p1"
+        ],
+        "savedReportSourceIds": [],
+        "originalOutput": "live-reports/V032-08.md",
+        "outputBytes": 206,
+        "tokens": {
+          "prompt_tokens": 8628,
+          "completion_tokens": 74,
+          "total_tokens": 8702
+        },
+        "billingSources": [
+          "go"
+        ],
+        "contentFailureReason": null,
+        "originalCaseId": "N04"
+      },
+      {
+        "id": "V032-09",
+        "executionIdentity": "8eac8804ed50d24d3a411285639a7995c164d27b54c47421e9419e3d879ca6e4",
+        "status": "success",
+        "runtimeStatus": "completed",
+        "runtimeCode": null,
+        "startedAt": "2026-11-17T08:09:41.177Z",
+        "elapsedMs": 5569,
+        "physicalRequests": 2,
+        "resolvedModels": [
+          "gpt-6-luna"
+        ],
+        "realProvider": true,
+        "deliveryReadback": true,
+        "outputKind": "published-answer",
+        "outputSha256": "6bd20ffdcc9aa48d68bd41f117c8974dc18118ea3ba706683a0092be720190a1",
+        "onTime": true,
+        "unknownEffects": false,
+        "workError": null,
+        "readbackError": null,
+        "transportStop": null,
+        "rootUsage": {
+          "model": 2,
+          "tool": 1
+        },
+        "contentReview": "pass-independent-source-review",
+        "newCostUsd": 0,
+        "runtimeAccepted": true,
+        "workflowCompleted": true,
+        "eligibleSuccess": true,
+        "exactQuery": true,
+        "scopeArgumentsMatched": true,
+        "preparedVectorUsed": true,
+        "scopeSelection": null,
+        "returnedSources": [
+          "text:aa66ed922efd83210d01e95bb4d0f851536d36b3908fa459231e0e26b0947bf0@utf8-pages-v1:aa66ed922efd83210d01e95bb4d0f851536d36b3908fa459231e0e26b0947bf0:p1",
+          "text:ed0b79f1d5f45e219963c81abc32cbb027f0f1683999e8c52d742a4c5d21c05d@utf8-pages-v1:ed0b79f1d5f45e219963c81abc32cbb027f0f1683999e8c52d742a4c5d21c05d:p1",
+          "text:9af2ff6959bd9ecea86f6dc322fa0d45afb532d2398615f595b957cb17ebb06e@utf8-pages-v1:9af2ff6959bd9ecea86f6dc322fa0d45afb532d2398615f595b957cb17ebb06e:p1",
+          "text:7874b49f5f2b55595cae93616a48d26631f930a204d7532951294924f4e21783@utf8-pages-v1:7874b49f5f2b55595cae93616a48d26631f930a204d7532951294924f4e21783:p1"
+        ],
+        "savedReportSourceIds": [],
+        "originalOutput": "live-reports/V032-09.md",
+        "outputBytes": 117,
+        "tokens": {
+          "prompt_tokens": 8665,
+          "completion_tokens": 108,
+          "total_tokens": 8773
+        },
+        "billingSources": [
+          "go"
+        ],
+        "contentFailureReason": null,
+        "originalCaseId": "N05"
+      },
+      {
+        "id": "V032-10",
+        "executionIdentity": "8eac8804ed50d24d3a411285639a7995c164d27b54c47421e9419e3d879ca6e4",
+        "status": "success",
+        "runtimeStatus": "completed",
+        "runtimeCode": null,
+        "startedAt": "2026-11-17T08:09:46.823Z",
+        "elapsedMs": 5022,
+        "physicalRequests": 2,
+        "resolvedModels": [
+          "gpt-6-luna"
+        ],
+        "realProvider": true,
+        "deliveryReadback": true,
+        "outputKind": "published-answer",
+        "outputSha256": "0a2bc6b54d8f70f1f737095ac7cee237f096abe465c0d29c6cc862ccf364b2e1",
+        "onTime": true,
+        "unknownEffects": false,
+        "workError": null,
+        "readbackError": null,
+        "transportStop": null,
+        "rootUsage": {
+          "model": 2,
+          "tool": 1
+        },
+        "contentReview": "pass-independent-source-review",
+        "newCostUsd": 0,
+        "runtimeAccepted": true,
+        "workflowCompleted": true,
+        "eligibleSuccess": true,
+        "exactQuery": true,
+        "scopeArgumentsMatched": true,
+        "preparedVectorUsed": true,
+        "scopeSelection": null,
+        "returnedSources": [
+          "text:b84ba2ff8b1dd6dc6b082302d164d4f080e7c23020e272fc1c1891bef18b534e@utf8-pages-v1:b84ba2ff8b1dd6dc6b082302d164d4f080e7c23020e272fc1c1891bef18b534e:p1",
+          "text:77198f89bfe04961748fa83888db05f07adc778f58d22d05ef2d8cf234eb95e6@utf8-pages-v1:77198f89bfe04961748fa83888db05f07adc778f58d22d05ef2d8cf234eb95e6:p1",
+          "text:066a69cdb1e09edbba1a80617a2e8309269b8a46ae34aa493c1a24d674544ec3@utf8-pages-v1:066a69cdb1e09edbba1a80617a2e8309269b8a46ae34aa493c1a24d674544ec3:p1",
+          "text:7874b49f5f2b55595cae93616a48d26631f930a204d7532951294924f4e21783@utf8-pages-v1:7874b49f5f2b55595cae93616a48d26631f930a204d7532951294924f4e21783:p1"
+        ],
+        "savedReportSourceIds": [],
+        "originalOutput": "live-reports/V032-10.md",
+        "outputBytes": 237,
+        "tokens": {
+          "prompt_tokens": 8658,
+          "completion_tokens": 163,
+          "total_tokens": 8821
+        },
+        "billingSources": [
+          "go"
+        ],
+        "contentFailureReason": null,
+        "originalCaseId": "N06"
+      }
+    ],
+    "attempted": 10,
+    "notRun": 0,
+    "successes": 10,
+    "observedRate": 1
+  },
+  "separateSafetyGatePassed": true,
+  "separateSafetyGateScope": "Prepared frozen-query route only: same 436 executed source inputs, 1466 local tests passed / 4 skipped / 0 failed, original owner safety regressions, source-bound acquisition/Runtime checks and independent review. This boolean does not qualify unimplemented dynamic effects.",
+  "knownUnresolvedRuntimeDefectsObservedInPreparedScope": [],
+  "contentReview": {
+    "passed": 10,
+    "failed": 0,
+    "independentReceipt": "live-independent-review.safe.json",
+    "scope": "Four direct facts, one explicit missing amount, five source-scoped abstentions. No broad quality claim."
+  },
+  "accounting": {
+    "cohortPhysicalRequests": 25,
+    "cohortConfirmedResponses": 25,
+    "cohortUnknownOutcomesOrCosts": 0,
+    "cohortAdditionalCostUsd": 0,
+    "cohortListPriceUsd": 0.00730226,
+    "cohortTokens": {
+      "prompt_tokens": 114971,
+      "completion_tokens": 2349,
+      "total_tokens": 117320
+    },
+    "billingSources": [
+      "go"
+    ],
+    "probePhysicalRequests": 1,
+    "newPhysicalRequestsIncludingProbe": 26,
+    "priorBatchPhysicalRequests": 110,
+    "observedCumulativePhysicalRequestsInRetainedBatchesIncludingProbe": 136,
+    "newAdditionalCostUsdIncludingProbe": 0,
+    "historicalUnknownsAndAllocationsRetained": true
+  },
+  "coldReadbackRechecked": {
+    "tasks": 10,
+    "allOutputsIdentical": true,
+    "requestLedgerUnchanged": true
+  },
+  "originalBlockedQualificationRetained": "QUALIFICATION.safe.json",
+  "originalScopeGate": {
+    "eligible": false,
+    "reason": "In-Run dynamic query authorization remains closed; original shared physical embedding budget and dynamic crash/fence qualification not completed."
+  },
+  "releasePermitted": false,
+  "tagCreated": false,
+  "releaseCreated": false
+}

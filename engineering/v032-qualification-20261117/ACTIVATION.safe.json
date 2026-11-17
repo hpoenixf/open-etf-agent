@@ -1,0 +1,49 @@
+{
+  "schemaVersion": "v032-live-activation@1",
+  "frozenDate": "2026-11-17",
+  "sourceCommit": "74df3cfdfc75a2bac11b4cfff2b6586888be0de6",
+  "executionHead": "451f8e5000e0df17f6299d0ed70a013380d7576c",
+  "executionIdentity": "8eac8804ed50d24d3a411285639a7995c164d27b54c47421e9419e3d879ca6e4",
+  "originalPlanSha256": "e23f24047bf712ea0828515dfe94a64786431cb2511ad85decd0273d7fdc1689",
+  "sourceInventorySha256": "a9e52bf5f221440efe0027b60e24b90c3e111ed74fab34ee91ba20f114a538ba",
+  "originalQuestionsConfigAndGateUnchanged": true,
+  "actualNormalizedConfigSha256": "c294bdbf5475bc989cb89ca2dfa18edb43ebfc6a643afc39bd3ac4eb3ebf2b28",
+  "sourceManifestSha256": "c16c472150d398815823e21b6d91b0d589a218eeeba5e1c19b66a1b364ec3b8c",
+  "preparedEvidenceSha256": "4f191eda4dfab36b11a0ade8f91bcc5e102a105169ba0114f59f0ab9387510bb",
+  "runnerSha256": "fbfd9b7808af9c4990e21649fddfea47fc1e835f7b361a81cbe5a6e4a70837a8",
+  "privateFreezeSha256": "545d1eb22e2778f6038b759e96e8b8d3abe2186bdd39a85ead1c84f76eec5f07",
+  "privateRequestLedgerSha256": "6970fd5dab04da646746b380b1f5b507524d05754744af6c0befbc4f8709af2b",
+  "authority": "Original 0.32 instruction plus user-provided replacement Go key; original frozen questions/config/gates unchanged. This dated activation supersedes only the historical provider-401 dispatch block, not the dynamic safety refusal.",
+  "dispatchConditionsSatisfiedForPreparedRouteOnly": true,
+  "priorLedgers": [
+    {
+      "name": "v031-minimal-preflight-20261116",
+      "sha256": "9fafe942b412795d6adfd3f8f7ae994f3087e9fa6cece0153c9cc458fe962c56"
+    },
+    {
+      "name": "v031-repair-20261116",
+      "sha256": "b74ccec3fc95379efc506a61453885efca1f54337b5eb9ba53dee6dfad273e48"
+    },
+    {
+      "name": "v031-repair-v5-20261116",
+      "sha256": "94f6d3953c127cbfa2201ce1aec9a79a921faf96643072c18c37972706656714"
+    },
+    {
+      "name": "v031-repair-v6-20261116",
+      "sha256": "80572c13204906fa203f6af60915bd74e1e7c62052c9c3a489bbfa10617a3fc1"
+    }
+  ],
+  "allocation": {
+    "priorAllocatedUsd": 9600,
+    "probeMaximumHeldUsd": 10,
+    "cohortMaximumPhysicalRequests": 39,
+    "cohortMaximumHeldUsd": 390,
+    "combinedMaximumAllocatedUsd": 10000,
+    "maximumAdditionalBillingUsd": 0,
+    "automaticRetries": false,
+    "oldUnknownsAndReservationsRefunded": false,
+    "currentAccountBalanceInferred": false
+  },
+  "historicalBlockedReceiptsRewritten": false,
+  "dynamicCandidateRefusalLifted": false
+}
