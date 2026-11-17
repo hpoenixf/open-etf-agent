@@ -1,0 +1,68 @@
+{
+  "schemaVersion": "a20-local-regression@1",
+  "baseCommit": "61fd7e8a1297276d3c181e7a094a930792f15264",
+  "executionSource": "Frozen 416-file SHA256 inventory before full regression, rechecked byte-identical after execution. Commit is made after the checks; no claim that a later metadata SHA was executed.",
+  "executionInputsSha256": "91d64a8706a0d37a5d7bb853a41ca8fd7222d6ebeb9d24ac2b78b612ae38210b",
+  "node": {
+    "version": "v26.11.1",
+    "executable": "<explicit-node-26-executable>",
+    "platform": "darwin-arm64",
+    "executablePathRedaction": "Local absolute executable path removed for privacy; recorded runtime version and test results are unchanged."
+  },
+  "fullSuite": {
+    "command": "explicit Node 26.11.1 --test --test-concurrency=1 test/*.test.mjs",
+    "temporaryDirectory": "canonical task-owned test-output/a20-real-model-20261117/regression-tmp",
+    "exitCode": 0,
+    "tests": 1482,
+    "pass": 1478,
+    "fail": 0,
+    "cancelled": 0,
+    "skipped": 4,
+    "todo": 0,
+    "durationMs": 226028.58325
+  },
+  "focused": {
+    "pass": 48,
+    "fail": 0,
+    "countedInFullSuite": true
+  },
+  "pythonWorker": {
+    "python": "3.14.7",
+    "pass": 6,
+    "fail": 0,
+    "boundary": "Injected worker-contract fixtures; actual weights were separately tested with CPython 3.12.13."
+  },
+  "build": {
+    "command": "explicit Node 26.11.1 scripts/build.mjs",
+    "exitCode": 0
+  },
+  "documentation": {
+    "command": "explicit Node 26.11.1 scripts/sync-module-map.mjs --check",
+    "exitCode": 0
+  },
+  "skippedTests": [
+    "﹣ real fixed v1 binary task resumes under v2 without upgrading frozen question (0.042916ms) # SKIP",
+    "﹣ real fixed v2 binary task resumes under v3 without upgrading frozen question (0.022334ms) # SKIP",
+    "﹣ old fixed binary Host snapshot reopens under new binary without definitions drift (0.066833ms) # SKIP",
+    "﹣ old d249 task checkpoint resumes with new binary v1 policy; newly submitted task freezes v3 (0.033584ms) # SKIP"
+  ],
+  "excludedBatch": {
+    "status": "stopped-incomplete-invalid-environment",
+    "reason": "Ancestor npm Node25 shim and symlinked host TMPDIR. Original log retained; partial counts excluded."
+  },
+  "logSha256": {
+    "full-suite-final.log": "00925f6529a3b516e30899a80f55c66977548574edb636f9ba54d699cfb2d97b",
+    "build-final.log": "8e49673edd4c630a8167ee4cb7cd687001f7688c42ccecfc04314678ffd16332",
+    "docs-final.log": "a8319683ab519a3aee014dc73b94efb7385eb30b6107918abed15e995f6321c9",
+    "focused-final.log": "4205656b0f954a57bca4379697ea4a116425202198300e6092e7fecc18117459",
+    "python-final.log": "661d65c4b52265e095c881df72ed4481af57f89aa5e52ff0705fc6d532fd4c8f",
+    "qualified-run-1.log": "f2b9b9d7bd2c4fb39936903692a4225083ef48533455887f7784c3d2ff196e2f",
+    "invalid-npm-runtime-suite.log": "2c40fa131c6a6970ae73ea6130a77614da7dbacef703884ac7cf0975deb5a0ed"
+  },
+  "ci": "not-run-for-this-unpublished-local-commit",
+  "releaseQualification": "not-certified",
+  "realTenTaskCohort": "not-run; local CPU probe/cohort is not a chat/Run release cohort",
+  "noAnswerQuality": "failed: 6/6 false positives for lexical/BM25/hybrid",
+  "billableRequests": 0,
+  "boundary": "No counts added across batches. This receipt is local code/runtime regression evidence only."
+}

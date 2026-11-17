@@ -1,0 +1,157 @@
+{
+  "schemaVersion": "a20-local-embedding-cohort@1",
+  "purpose": "Small authored bilingual retrieval diagnostic, not market data or a release cohort",
+  "relevanceRule": "Relevant means the passage directly answers the question. For an undated current-policy question, only the explicitly current rule is relevant; superseded rules are distractors. Topical similarity without the requested fact is not relevant. The corpus is not investment advice.",
+  "documents": [
+    {
+      "id": "redemptions",
+      "text": "Liquidity policy, current 2026. Cash and overnight deposits cover investor withdrawals. If redemptions exceed the cash buffer, the fund sells short-dated government bills. Borrowing and forced sales of illiquid bonds are prohibited."
+    },
+    {
+      "id": "fees",
+      "text": "Fees, effective 2026. The annual management charge is 0.15 percent of assets. The custody charge is 0.05 percent per year. These are operating expenses, not a promise of investment returns. No subscription charge is specified here."
+    },
+    {
+      "id": "tracking",
+      "text": "Tracking difference is the fund return minus the benchmark return over the same period. Management expenses, withholding taxes and sampling can produce a gap even when the portfolio follows the benchmark. Tracking error measures the variability of that gap."
+    },
+    {
+      "id": "settlement",
+      "text": "Trading and settlement. Investors submit orders during exchange hours. Ownership and cash are transferred on the next business day after the trade, known as T+1 settlement. Weekends and exchange holidays are not business days."
+    },
+    {
+      "id": "rebalance-current",
+      "text": "指数调整现行规则，2026年生效。每年六月和十二月检查成份股权重，随后按目标比例调整组合。2024年的季度调整规则已废止。临时市场波动不触发额外的定期调整。"
+    },
+    {
+      "id": "rebalance-old",
+      "text": "已废止的2024年历史规则：每个季度末重新平衡一次组合。这一规则只用于历史回测，不适用于2026年的实际组合。"
+    },
+    {
+      "id": "currency",
+      "text": "汇率风险说明。基金持有美元计价的境外资产，本币升值会压低换算后的本币收益。本产品不做外汇对冲，因此基金净值也会受到汇率变动影响。"
+    },
+    {
+      "id": "concentration",
+      "text": "组合集中度限制。单一发行人的债券市值不得超过净资产的百分之十。政府债券不受该项单一发行人上限约束。这是风险控制限制，不是收益预测。"
+    }
+  ],
+  "cases": [
+    {
+      "id": "P01",
+      "query": "What assets meet investor cash-out requests?",
+      "relevantDocuments": [
+        "redemptions"
+      ],
+      "reason": "Cash/overnight deposits and bills fund withdrawals; synonym control."
+    },
+    {
+      "id": "P02",
+      "query": "annual management charge",
+      "relevantDocuments": [
+        "fees"
+      ],
+      "reason": "Exact lexical control."
+    },
+    {
+      "id": "P03",
+      "query": "Why can a passive portfolio lag its benchmark?",
+      "relevantDocuments": [
+        "tracking"
+      ],
+      "reason": "Explains expenses, taxes and sampling."
+    },
+    {
+      "id": "P04",
+      "query": "When does ownership transfer after a trade?",
+      "relevantDocuments": [
+        "settlement"
+      ],
+      "reason": "Next business day/T+1."
+    },
+    {
+      "id": "P05",
+      "query": "现在每年何时按目标比例调整持仓？",
+      "relevantDocuments": [
+        "rebalance-current"
+      ],
+      "reason": "Current June/December rule; superseded rule is not relevant."
+    },
+    {
+      "id": "P06",
+      "query": "为什么本币走强会拖累境外资产的收益？",
+      "relevantDocuments": [
+        "currency"
+      ],
+      "reason": "Currency conversion effect and unhedged exposure."
+    },
+    {
+      "id": "P07",
+      "query": "单一公司债持仓最多可以占多少？",
+      "relevantDocuments": [
+        "concentration"
+      ],
+      "reason": "Ten percent issuer cap."
+    },
+    {
+      "id": "P08",
+      "query": "How did the superseded 2024 rebalancing schedule work?",
+      "relevantDocuments": [
+        "rebalance-old"
+      ],
+      "reason": "Historical quarterly schedule is explicit only in old passage."
+    },
+    {
+      "id": "P09",
+      "query": "政府债也受单个发行人百分之十的限制吗？",
+      "relevantDocuments": [
+        "concentration"
+      ],
+      "reason": "Government exemption."
+    },
+    {
+      "id": "P10",
+      "query": "Do Saturdays count toward the settlement delay?",
+      "relevantDocuments": [
+        "settlement"
+      ],
+      "reason": "Weekends excluded."
+    },
+    {
+      "id": "N01",
+      "query": "What is the subscription charge?",
+      "relevantDocuments": [],
+      "reason": "Fee passage explicitly does not specify subscription charge."
+    },
+    {
+      "id": "N02",
+      "query": "2026年该基金的审计机构叫什么？",
+      "relevantDocuments": [],
+      "reason": "No auditor identity anywhere."
+    },
+    {
+      "id": "N03",
+      "query": "What was the net asset value per unit on 2026-10-31?",
+      "relevantDocuments": [],
+      "reason": "No dated net asset value per unit is provided."
+    },
+    {
+      "id": "N04",
+      "query": "How do I bake a chocolate cake?",
+      "relevantDocuments": [],
+      "reason": "Unrelated topic."
+    },
+    {
+      "id": "N05",
+      "query": "这只基金的股票代码是什么？",
+      "relevantDocuments": [],
+      "reason": "No ticker supplied."
+    },
+    {
+      "id": "N06",
+      "query": "How many investors redeemed units last month?",
+      "relevantDocuments": [],
+      "reason": "Liquidity passage gives policy, no redemption count."
+    }
+  ]
+}

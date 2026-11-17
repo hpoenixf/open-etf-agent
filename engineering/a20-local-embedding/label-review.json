@@ -1,0 +1,14 @@
+{
+  "schemaVersion": "a20-label-review@1",
+  "cohortSha256": "0d9316b5b7ee4fe83de58c47b71da12598497b4e4f3dedadf91770d64b2bfde4",
+  "reviewer": "independent_review subagent, clean context",
+  "requestedModel": "gpt-6-luna",
+  "resolvedModel": null,
+  "resolvedModelBoundary": "The invocation API did not expose resolved model identity; requested identity is not a resolved-model attestation.",
+  "reviewedBeforeRankings": true,
+  "verdict": "pass",
+  "positiveQueries": 10,
+  "negativeQueries": 6,
+  "adjudication": "Every question, passage and proposed label was read against the direct-answer rule. Initial N03 guarantee wording was ambiguous and replaced before results with a missing dated NAV question. N01 asks a charge amount that is not supplied. Remaining labels are supported.",
+  "boundary": "A small authored bilingual diagnostic. No paired-language equivalence, market truth, general benchmark quality or independent human review is claimed. Relevance review was performed by another agent."
+}

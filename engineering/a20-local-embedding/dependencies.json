@@ -1,0 +1,455 @@
+{
+  "python": "3.12.13 (main, Mar  3 2026, 12:39:30) [Clang 17.0.0 (clang-1700.6.3.2)]",
+  "platform": "darwin",
+  "lockSha256": "792f9b678ab978c22b30bdd316857532ef3ce4f022ba82c7b396bf48e20ad631",
+  "installation": "uv pip sync --require-hashes --only-binary :all: --index-url https://pypi.org/simple",
+  "packages": [
+    {
+      "name": "certifi",
+      "version": "2026.10.23",
+      "index": "https://pypi.org/pypi/certifi/2026.10.23/json",
+      "licenseExpression": null,
+      "licenseFiles": [
+        "certifi-2026.10.23.dist-info/licenses/LICENSE"
+      ],
+      "verifiedRecordFiles": 13,
+      "installer": "uv",
+      "licenseSummary": "MPL-2.0"
+    },
+    {
+      "name": "charset-normalizer",
+      "version": "3.5.2",
+      "index": "https://pypi.org/pypi/charset-normalizer/3.5.2/json",
+      "licenseExpression": null,
+      "licenseFiles": [
+        "charset_normalizer-3.5.2.dist-info/licenses/LICENSE"
+      ],
+      "verifiedRecordFiles": 23,
+      "installer": "uv",
+      "licenseSummary": "MIT"
+    },
+    {
+      "name": "cloudpickle",
+      "version": "3.1.2",
+      "index": "https://pypi.org/pypi/cloudpickle/3.1.2/json",
+      "licenseExpression": null,
+      "licenseFiles": [
+        "cloudpickle-3.1.2.dist-info/licenses/LICENSE"
+      ],
+      "verifiedRecordFiles": 8,
+      "installer": "uv",
+      "licenseSummary": "BSD-3-Clause"
+    },
+    {
+      "name": "filelock",
+      "version": "4.2.10",
+      "index": "https://pypi.org/pypi/filelock/4.2.10/json",
+      "licenseExpression": "MIT",
+      "licenseFiles": [
+        "filelock-4.2.10.dist-info/licenses/LICENSE"
+      ],
+      "verifiedRecordFiles": 30,
+      "installer": "uv",
+      "licenseSummary": "MIT"
+    },
+    {
+      "name": "fsspec",
+      "version": "2026.9.0",
+      "index": "https://pypi.org/pypi/fsspec/2026.9.0/json",
+      "licenseExpression": "BSD-3-Clause",
+      "licenseFiles": [
+        "fsspec-2026.9.0.dist-info/licenses/LICENSE"
+      ],
+      "verifiedRecordFiles": 63,
+      "installer": "uv",
+      "licenseSummary": "BSD-3-Clause"
+    },
+    {
+      "name": "hf-xet",
+      "version": "1.8.0",
+      "index": "https://pypi.org/pypi/hf-xet/1.8.0/json",
+      "licenseExpression": "Apache-2.0",
+      "licenseFiles": [
+        "hf_xet-1.8.0.dist-info/licenses/LICENSE"
+      ],
+      "verifiedRecordFiles": 8,
+      "installer": "uv",
+      "licenseSummary": "Apache-2.0"
+    },
+    {
+      "name": "huggingface_hub",
+      "version": "0.36.2",
+      "index": "https://pypi.org/pypi/huggingface_hub/0.36.2/json",
+      "licenseExpression": null,
+      "licenseFiles": [
+        "huggingface_hub-0.36.2.dist-info/licenses/LICENSE"
+      ],
+      "verifiedRecordFiles": 174,
+      "installer": "uv",
+      "licenseSummary": "Apache"
+    },
+    {
+      "name": "idna",
+      "version": "3.20",
+      "index": "https://pypi.org/pypi/idna/3.20/json",
+      "licenseExpression": "BSD-3-Clause",
+      "licenseFiles": [
+        "idna-3.20.dist-info/licenses/LICENSE.md"
+      ],
+      "verifiedRecordFiles": 18,
+      "installer": "uv",
+      "licenseSummary": "BSD-3-Clause"
+    },
+    {
+      "name": "Jinja2",
+      "version": "3.1.6",
+      "index": "https://pypi.org/pypi/Jinja2/3.1.6/json",
+      "licenseExpression": null,
+      "licenseFiles": [
+        "jinja2-3.1.6.dist-info/licenses/LICENSE.txt"
+      ],
+      "verifiedRecordFiles": 32,
+      "installer": "uv",
+      "licenseSummary": "License :: OSI Approved :: BSD License"
+    },
+    {
+      "name": "joblib",
+      "version": "1.6.0",
+      "index": "https://pypi.org/pypi/joblib/1.6.0/json",
+      "licenseExpression": "BSD-3-Clause",
+      "licenseFiles": [
+        "joblib-1.6.0.dist-info/licenses/LICENSE.txt"
+      ],
+      "verifiedRecordFiles": 142,
+      "installer": "uv",
+      "licenseSummary": "BSD-3-Clause"
+    },
+    {
+      "name": "MarkupSafe",
+      "version": "3.0.4",
+      "index": "https://pypi.org/pypi/MarkupSafe/3.0.4/json",
+      "licenseExpression": "BSD-3-Clause",
+      "licenseFiles": [
+        "markupsafe-3.0.4.dist-info/licenses/LICENSE.txt"
+      ],
+      "verifiedRecordFiles": 12,
+      "installer": "uv",
+      "licenseSummary": "BSD-3-Clause"
+    },
+    {
+      "name": "mpmath",
+      "version": "1.3.0",
+      "index": "https://pypi.org/pypi/mpmath/1.3.0/json",
+      "licenseExpression": null,
+      "licenseFiles": [
+        "mpmath-1.3.0.dist-info/LICENSE"
+      ],
+      "verifiedRecordFiles": 93,
+      "installer": "uv",
+      "licenseSummary": "BSD"
+    },
+    {
+      "name": "narwhals",
+      "version": "2.28.0",
+      "index": "https://pypi.org/pypi/narwhals/2.28.0/json",
+      "licenseExpression": "MIT",
+      "licenseFiles": [
+        "narwhals-2.28.0.dist-info/licenses/LICENSE.md"
+      ],
+      "verifiedRecordFiles": 169,
+      "installer": "uv",
+      "licenseSummary": "MIT"
+    },
+    {
+      "name": "networkx",
+      "version": "3.7",
+      "index": "https://pypi.org/pypi/networkx/3.7/json",
+      "licenseExpression": "BSD-3-Clause",
+      "licenseFiles": [
+        "networkx-3.7.dist-info/licenses/LICENSE.txt"
+      ],
+      "verifiedRecordFiles": 605,
+      "installer": "uv",
+      "licenseSummary": "BSD-3-Clause"
+    },
+    {
+      "name": "numpy",
+      "version": "2.5.5",
+      "index": "https://pypi.org/pypi/numpy/2.5.5/json",
+      "licenseExpression": "BSD-3-Clause AND 0BSD AND MIT AND Zlib AND CC0-1.0",
+      "licenseFiles": [
+        "numpy-2.5.5.dist-info/licenses/LICENSE.txt",
+        "numpy-2.5.5.dist-info/licenses/numpy/_core/include/numpy/libdivide/LICENSE.txt",
+        "numpy-2.5.5.dist-info/licenses/numpy/_core/src/common/pythoncapi-compat/COPYING",
+        "numpy-2.5.5.dist-info/licenses/numpy/_core/src/highway/LICENSE",
+        "numpy-2.5.5.dist-info/licenses/numpy/_core/src/multiarray/dragon4_LICENSE.txt",
+        "numpy-2.5.5.dist-info/licenses/numpy/_core/src/npysort/x86-simd-sort/LICENSE.md",
+        "numpy-2.5.5.dist-info/licenses/numpy/_core/src/umath/svml/LICENSE",
+        "numpy-2.5.5.dist-info/licenses/numpy/fft/pocketfft/LICENSE.md",
+        "numpy-2.5.5.dist-info/licenses/numpy/linalg/lapack_lite/LICENSE.txt",
+        "numpy-2.5.5.dist-info/licenses/numpy/ma/LICENSE",
+        "numpy-2.5.5.dist-info/licenses/numpy/random/LICENSE.md",
+        "numpy-2.5.5.dist-info/licenses/numpy/random/src/distributions/LICENSE.md",
+        "numpy-2.5.5.dist-info/licenses/numpy/random/src/mt19937/LICENSE.md",
+        "numpy-2.5.5.dist-info/licenses/numpy/random/src/pcg64/LICENSE.md",
+        "numpy-2.5.5.dist-info/licenses/numpy/random/src/philox/LICENSE.md",
+        "numpy-2.5.5.dist-info/licenses/numpy/random/src/sfc64/LICENSE.md",
+        "numpy-2.5.5.dist-info/licenses/numpy/random/src/splitmix64/LICENSE.md",
+        "numpy/_core/include/numpy/random/LICENSE.txt",
+        "numpy/ma/LICENSE",
+        "numpy/random/LICENSE.md"
+      ],
+      "verifiedRecordFiles": 926,
+      "installer": "uv",
+      "licenseSummary": "BSD-3-Clause AND 0BSD AND MIT AND Zlib AND CC0-1.0"
+    },
+    {
+      "name": "packaging",
+      "version": "26.3",
+      "index": "https://pypi.org/pypi/packaging/26.3/json",
+      "licenseExpression": "Apache-2.0 OR BSD-2-Clause",
+      "licenseFiles": [
+        "packaging-26.3.dist-info/licenses/LICENSE",
+        "packaging-26.3.dist-info/licenses/LICENSE.APACHE",
+        "packaging-26.3.dist-info/licenses/LICENSE.BSD",
+        "packaging/licenses/__init__.py",
+        "packaging/licenses/_spdx.py"
+      ],
+      "verifiedRecordFiles": 30,
+      "installer": "uv",
+      "licenseSummary": "Apache-2.0 OR BSD-2-Clause"
+    },
+    {
+      "name": "pillow",
+      "version": "13.0.0",
+      "index": "https://pypi.org/pypi/pillow/13.0.0/json",
+      "licenseExpression": "MIT-CMU",
+      "licenseFiles": [
+        "pillow-13.0.0.dist-info/licenses/LICENSE"
+      ],
+      "verifiedRecordFiles": 139,
+      "installer": "uv",
+      "licenseSummary": "MIT-CMU"
+    },
+    {
+      "name": "PyYAML",
+      "version": "6.0.3",
+      "index": "https://pypi.org/pypi/PyYAML/6.0.3/json",
+      "licenseExpression": null,
+      "licenseFiles": [
+        "pyyaml-6.0.3.dist-info/licenses/LICENSE"
+      ],
+      "verifiedRecordFiles": 25,
+      "installer": "uv",
+      "licenseSummary": "MIT"
+    },
+    {
+      "name": "regex",
+      "version": "2026.11.15",
+      "index": "https://pypi.org/pypi/regex/2026.11.15/json",
+      "licenseExpression": "Apache-2.0 AND CNRI-Python",
+      "licenseFiles": [
+        "regex-2026.11.15.dist-info/licenses/LICENSE.txt"
+      ],
+      "verifiedRecordFiles": 11,
+      "installer": "uv",
+      "licenseSummary": "Apache-2.0 AND CNRI-Python"
+    },
+    {
+      "name": "requests",
+      "version": "2.34.2",
+      "index": "https://pypi.org/pypi/requests/2.34.2/json",
+      "licenseExpression": null,
+      "licenseFiles": [
+        "requests-2.34.2.dist-info/licenses/LICENSE",
+        "requests-2.34.2.dist-info/licenses/NOTICE"
+      ],
+      "verifiedRecordFiles": 27,
+      "installer": "uv",
+      "licenseSummary": "Apache-2.0"
+    },
+    {
+      "name": "safetensors",
+      "version": "0.8.0",
+      "index": "https://pypi.org/pypi/safetensors/0.8.0/json",
+      "licenseExpression": null,
+      "licenseFiles": [
+        "safetensors-0.8.0.dist-info/licenses/LICENSE"
+      ],
+      "verifiedRecordFiles": 16,
+      "installer": "uv",
+      "licenseSummary": "License :: OSI Approved :: Apache Software License"
+    },
+    {
+      "name": "scikit-learn",
+      "version": "1.9.1",
+      "index": "https://pypi.org/pypi/scikit-learn/1.9.1/json",
+      "licenseExpression": "BSD-3-Clause",
+      "licenseFiles": [
+        "scikit_learn-1.9.1.dist-info/licenses/COPYING",
+        "sklearn/externals/array_api_compat/LICENSE",
+        "sklearn/externals/array_api_extra/LICENSE"
+      ],
+      "verifiedRecordFiles": 1008,
+      "installer": "uv",
+      "licenseSummary": "BSD-3-Clause"
+    },
+    {
+      "name": "scipy",
+      "version": "1.18.1",
+      "index": "https://pypi.org/pypi/scipy/1.18.1/json",
+      "licenseExpression": null,
+      "licenseFiles": [
+        "scipy-1.18.1.dist-info/LICENSE.txt",
+        "scipy/_lib/_uarray/LICENSE",
+        "scipy/fft/_duccfft/LICENSE.md",
+        "scipy/integrate/LICENSE_DOP",
+        "scipy/spatial/qhull_src/COPYING_QHULL.txt"
+      ],
+      "verifiedRecordFiles": 1430,
+      "installer": "uv",
+      "licenseSummary": "Copyright (c) 2001-2002 Enthought, Inc. 2003, SciPy Developers."
+    },
+    {
+      "name": "sentence-transformers",
+      "version": "5.1.2",
+      "index": "https://pypi.org/pypi/sentence-transformers/5.1.2/json",
+      "licenseExpression": null,
+      "licenseFiles": [
+        "sentence_transformers-5.1.2.dist-info/licenses/LICENSE",
+        "sentence_transformers-5.1.2.dist-info/licenses/NOTICE.txt"
+      ],
+      "verifiedRecordFiles": 178,
+      "installer": "uv",
+      "licenseSummary": "Apache 2.0"
+    },
+    {
+      "name": "setuptools",
+      "version": "84.2.1",
+      "index": "https://pypi.org/pypi/setuptools/84.2.1/json",
+      "licenseExpression": "MIT",
+      "licenseFiles": [
+        "setuptools-84.2.1.dist-info/licenses/LICENSE",
+        "setuptools/_vendor/autocommand-2.2.2.dist-info/LICENSE",
+        "setuptools/_vendor/backports.tarfile-1.2.0.dist-info/LICENSE",
+        "setuptools/_vendor/importlib_metadata-8.7.1.dist-info/licenses/LICENSE",
+        "setuptools/_vendor/jaraco.text-4.0.0.dist-info/LICENSE",
+        "setuptools/_vendor/jaraco_context-6.1.0.dist-info/licenses/LICENSE",
+        "setuptools/_vendor/jaraco_functools-4.4.0.dist-info/licenses/LICENSE",
+        "setuptools/_vendor/more_itertools-10.8.0.dist-info/licenses/LICENSE",
+        "setuptools/_vendor/packaging-26.3.dist-info/licenses/LICENSE",
+        "setuptools/_vendor/packaging-26.3.dist-info/licenses/LICENSE.APACHE",
+        "setuptools/_vendor/packaging-26.3.dist-info/licenses/LICENSE.BSD",
+        "setuptools/_vendor/packaging/licenses/__init__.py",
+        "setuptools/_vendor/packaging/licenses/_spdx.py",
+        "setuptools/_vendor/platformdirs-4.4.0.dist-info/licenses/LICENSE",
+        "setuptools/_vendor/tomli-2.4.0.dist-info/licenses/LICENSE",
+        "setuptools/_vendor/wheel-0.46.3.dist-info/licenses/LICENSE.txt",
+        "setuptools/_vendor/zipp-3.23.0.dist-info/licenses/LICENSE"
+      ],
+      "verifiedRecordFiles": 349,
+      "installer": "uv",
+      "licenseSummary": "MIT"
+    },
+    {
+      "name": "sympy",
+      "version": "1.14.0",
+      "index": "https://pypi.org/pypi/sympy/1.14.0/json",
+      "licenseExpression": null,
+      "licenseFiles": [
+        "sympy-1.14.0.dist-info/licenses/AUTHORS",
+        "sympy-1.14.0.dist-info/licenses/LICENSE",
+        "sympy/parsing/latex/LICENSE.txt"
+      ],
+      "verifiedRecordFiles": 1572,
+      "installer": "uv",
+      "licenseSummary": "BSD"
+    },
+    {
+      "name": "threadpoolctl",
+      "version": "3.8.0",
+      "index": "https://pypi.org/pypi/threadpoolctl/3.8.0/json",
+      "licenseExpression": "BSD-3-Clause",
+      "licenseFiles": [
+        "threadpoolctl-3.8.0.dist-info/licenses/LICENSE"
+      ],
+      "verifiedRecordFiles": 6,
+      "installer": "uv",
+      "licenseSummary": "BSD-3-Clause"
+    },
+    {
+      "name": "tokenizers",
+      "version": "0.22.1",
+      "index": "https://pypi.org/pypi/tokenizers/0.22.1/json",
+      "licenseExpression": null,
+      "licenseFiles": [],
+      "verifiedRecordFiles": 29,
+      "installer": "uv",
+      "licenseSummary": "License :: OSI Approved :: Apache Software License"
+    },
+    {
+      "name": "torch",
+      "version": "2.9.1",
+      "index": "https://pypi.org/pypi/torch/2.9.1/json",
+      "licenseExpression": null,
+      "licenseFiles": [
+        "torch-2.9.1.dist-info/licenses/LICENSE",
+        "torch-2.9.1.dist-info/licenses/NOTICE"
+      ],
+      "verifiedRecordFiles": 12094,
+      "installer": "uv",
+      "licenseSummary": "BSD-3-Clause"
+    },
+    {
+      "name": "tqdm",
+      "version": "4.70.1",
+      "index": "https://pypi.org/pypi/tqdm/4.70.1/json",
+      "licenseExpression": null,
+      "licenseFiles": [
+        "tqdm-4.70.1.dist-info/licenses/LICENCE"
+      ],
+      "verifiedRecordFiles": 41,
+      "installer": "uv",
+      "licenseSummary": "MPL-2.0 AND MIT"
+    },
+    {
+      "name": "transformers",
+      "version": "4.57.1",
+      "index": "https://pypi.org/pypi/transformers/4.57.1/json",
+      "licenseExpression": null,
+      "licenseFiles": [
+        "transformers-4.57.1.dist-info/licenses/LICENSE"
+      ],
+      "verifiedRecordFiles": 2249,
+      "installer": "uv",
+      "licenseSummary": "Apache 2.0 License"
+    },
+    {
+      "name": "typing_extensions",
+      "version": "4.16.0",
+      "index": "https://pypi.org/pypi/typing_extensions/4.16.0/json",
+      "licenseExpression": "PSF-2.0",
+      "licenseFiles": [
+        "typing_extensions-4.16.0.dist-info/licenses/LICENSE"
+      ],
+      "verifiedRecordFiles": 6,
+      "installer": "uv",
+      "licenseSummary": "PSF-2.0"
+    },
+    {
+      "name": "urllib3",
+      "version": "2.8.0",
+      "index": "https://pypi.org/pypi/urllib3/2.8.0/json",
+      "licenseExpression": "MIT",
+      "licenseFiles": [
+        "urllib3-2.8.0.dist-info/licenses/LICENSE.txt"
+      ],
+      "verifiedRecordFiles": 43,
+      "installer": "uv",
+      "licenseSummary": "MIT"
+    }
+  ],
+  "boundary": "Pinned PyPI archives verified by installer hashes and installed RECORD checked; this is not a vulnerability audit or legal opinion.",
+  "architecture": "macOS arm64",
+  "redistributedPackagesOrWeights": false
+}

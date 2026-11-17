@@ -1,0 +1,91 @@
+{
+  "schemaVersion": "knowledge-retrieval-evaluation@2",
+  "provenance": "externally-supplied",
+  "k": 4,
+  "cases": [
+    {
+      "query": "What assets meet investor cash-out requests?",
+      "relevantSourceIds": [
+        "text:77198f89bfe04961748fa83888db05f07adc778f58d22d05ef2d8cf234eb95e6@utf8-pages-v1:77198f89bfe04961748fa83888db05f07adc778f58d22d05ef2d8cf234eb95e6:p1"
+      ]
+    },
+    {
+      "query": "annual management charge",
+      "relevantSourceIds": [
+        "text:066a69cdb1e09edbba1a80617a2e8309269b8a46ae34aa493c1a24d674544ec3@utf8-pages-v1:066a69cdb1e09edbba1a80617a2e8309269b8a46ae34aa493c1a24d674544ec3:p1"
+      ]
+    },
+    {
+      "query": "Why can a passive portfolio lag its benchmark?",
+      "relevantSourceIds": [
+        "text:917cabdc80c65485c11e80307884ee217825ac5222b0fe9b9f11b19356f25689@utf8-pages-v1:917cabdc80c65485c11e80307884ee217825ac5222b0fe9b9f11b19356f25689:p1"
+      ]
+    },
+    {
+      "query": "When does ownership transfer after a trade?",
+      "relevantSourceIds": [
+        "text:b84ba2ff8b1dd6dc6b082302d164d4f080e7c23020e272fc1c1891bef18b534e@utf8-pages-v1:b84ba2ff8b1dd6dc6b082302d164d4f080e7c23020e272fc1c1891bef18b534e:p1"
+      ]
+    },
+    {
+      "query": "现在每年何时按目标比例调整持仓？",
+      "relevantSourceIds": [
+        "text:7874b49f5f2b55595cae93616a48d26631f930a204d7532951294924f4e21783@utf8-pages-v1:7874b49f5f2b55595cae93616a48d26631f930a204d7532951294924f4e21783:p1"
+      ]
+    },
+    {
+      "query": "为什么本币走强会拖累境外资产的收益？",
+      "relevantSourceIds": [
+        "text:aa66ed922efd83210d01e95bb4d0f851536d36b3908fa459231e0e26b0947bf0@utf8-pages-v1:aa66ed922efd83210d01e95bb4d0f851536d36b3908fa459231e0e26b0947bf0:p1"
+      ]
+    },
+    {
+      "query": "单一公司债持仓最多可以占多少？",
+      "relevantSourceIds": [
+        "text:ed0b79f1d5f45e219963c81abc32cbb027f0f1683999e8c52d742a4c5d21c05d@utf8-pages-v1:ed0b79f1d5f45e219963c81abc32cbb027f0f1683999e8c52d742a4c5d21c05d:p1"
+      ]
+    },
+    {
+      "query": "How did the superseded 2024 rebalancing schedule work?",
+      "relevantSourceIds": [
+        "text:9af2ff6959bd9ecea86f6dc322fa0d45afb532d2398615f595b957cb17ebb06e@utf8-pages-v1:9af2ff6959bd9ecea86f6dc322fa0d45afb532d2398615f595b957cb17ebb06e:p1"
+      ]
+    },
+    {
+      "query": "政府债也受单个发行人百分之十的限制吗？",
+      "relevantSourceIds": [
+        "text:ed0b79f1d5f45e219963c81abc32cbb027f0f1683999e8c52d742a4c5d21c05d@utf8-pages-v1:ed0b79f1d5f45e219963c81abc32cbb027f0f1683999e8c52d742a4c5d21c05d:p1"
+      ]
+    },
+    {
+      "query": "Do Saturdays count toward the settlement delay?",
+      "relevantSourceIds": [
+        "text:b84ba2ff8b1dd6dc6b082302d164d4f080e7c23020e272fc1c1891bef18b534e@utf8-pages-v1:b84ba2ff8b1dd6dc6b082302d164d4f080e7c23020e272fc1c1891bef18b534e:p1"
+      ]
+    },
+    {
+      "query": "What is the subscription charge?",
+      "relevantSourceIds": []
+    },
+    {
+      "query": "2026年该基金的审计机构叫什么？",
+      "relevantSourceIds": []
+    },
+    {
+      "query": "What was the net asset value per unit on 2026-10-31?",
+      "relevantSourceIds": []
+    },
+    {
+      "query": "How do I bake a chocolate cake?",
+      "relevantSourceIds": []
+    },
+    {
+      "query": "这只基金的股票代码是什么？",
+      "relevantSourceIds": []
+    },
+    {
+      "query": "How many investors redeemed units last month?",
+      "relevantSourceIds": []
+    }
+  ]
+}
