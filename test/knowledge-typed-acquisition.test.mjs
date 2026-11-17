@@ -31,3 +31,4 @@ test('abort before commit writes no typed receipt and cannot recover success',as
  await assert.rejects(acquireKnowledgeVectors({...a,backend:b,signal:controller.signal}),{code:'EMBEDDING_ACQUISITION_INCOMPLETE'});
  assert.notEqual((await inspectKnowledgeAcquisition(a)).status,'succeeded');await assert.rejects(readFile(join(a.projectDir,'knowledge-acquisitions','typed','encoding.json')),{code:'ENOENT'});
 });
+test('local backend weight identity is captured in immutable plan',async t=>{const a=await setup(t),b=backend();b.identity={model:'local-test',manifestSha256:'b'.repeat(64)};await acquireKnowledgeVectors({...a,backend:b});const plan=JSON.parse(await readFile(join(a.projectDir,'knowledge-acquisitions','typed','plan.json')));assert.deepEqual(plan.encoding.backendIdentity,b.identity);b.identity.manifestSha256='c'.repeat(64);assert.equal((await inspectKnowledgeAcquisition(a)).status,'succeeded');});

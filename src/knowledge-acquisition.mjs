@@ -37,6 +37,8 @@ export async function acquireKnowledgeVectors({projectDir,manifestSha256,acquisi
  const typed=backend!==undefined;
  if(typed&&(embed!==undefined||!backend||!Number.isSafeInteger(backend.maxTokens)||backend.maxTokens<1||backend.maxTokens>1048576||['tokenize','encodeDocument','encodeQuery'].some(k=>typeof backend[k]!=='function')))fail('EMBEDDING_ADMISSION_INVALID');
  if(!validId(acquisitionId)||approveSelectedText!==true||(!typed&&typeof embed!=='function')||!Number.isSafeInteger(timeoutMs)||timeoutMs<1||timeoutMs>120000)fail('EMBEDDING_ADMISSION_INVALID');
+ if(typed&&backend.identity!==undefined&&(!backend.identity||typeof backend.identity.model!=='string'||!backend.identity.model||!/^[a-f0-9]{64}$/.test(backend.identity.manifestSha256)))fail('EMBEDDING_ADMISSION_INVALID');
+ const backendIdentity=typed&&backend.identity?Object.freeze({model:backend.identity.model,manifestSha256:backend.identity.manifestSha256}):undefined;
  const typedBackend=typed?Object.freeze({maxTokens:backend.maxTokens,tokenize:backend.tokenize.bind(backend),encodeDocument:backend.encodeDocument.bind(backend),encodeQuery:backend.encodeQuery.bind(backend)}):null;
  signal?.throwIfAborted();
  projectDir=await safeDirectory(projectDir);
@@ -44,7 +46,7 @@ export async function acquireKnowledgeVectors({projectDir,manifestSha256,acquisi
  if(!catalog)fail('KNOWLEDGE_TEXT_REQUIRED');
  const {base,texts,typedInputs}=inputs(catalog,provider,dimensions,queries);
  // Copy identity/input before awaiting or exposing values to an adapter.
- const plan=JSON.parse(JSON.stringify({schemaVersion:typed?'knowledge-acquisition-plan@2':'knowledge-acquisition-plan@1',...(typed?{encoding:{schemaVersion:'typed-embedding@1',maxTokens:typedBackend.maxTokens,inputs:typedInputs.map(v=>({kind:v.kind,id:v.id,inputSha256:digest(v)}))}}:{}),manifestSha256,acquisitionId,provider:base.provider,dimensions,timeoutMs,inputSha256:digest(texts),vectorTemplate:base}));
+ const plan=JSON.parse(JSON.stringify({schemaVersion:typed?'knowledge-acquisition-plan@2':'knowledge-acquisition-plan@1',...(typed?{encoding:{schemaVersion:'typed-embedding@1',...(backendIdentity?{backendIdentity}:{}),maxTokens:typedBackend.maxTokens,inputs:typedInputs.map(v=>({kind:v.kind,id:v.id,inputSha256:digest(v)}))}}:{}),manifestSha256,acquisitionId,provider:base.provider,dimensions,timeoutMs,inputSha256:digest(texts),vectorTemplate:base}));
  const parent=await ensureSafeDirectory(join(projectDir,'knowledge-acquisitions'));
  await syncDirectory(projectDir); // persist a newly created acquisitions directory
  const directory=join(parent,acquisitionId);
