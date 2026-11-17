@@ -1,0 +1,35 @@
+{
+  "schemaVersion": "research-project@1",
+  "gateway": {
+    "mode": "live",
+    "provider": "opencode-go",
+    "protocol": "chat-completions",
+    "model": "gpt-6-luna",
+    "endpoint": "https://opencode.ai/inference/go/openai/v1/chat/completions",
+    "apiKeyEnv": "CHAT_API_KEY",
+    "stream": false
+  },
+  "capabilities": [
+    "report",
+    "knowledge"
+  ],
+  "knowledge": {
+    "algorithm": "hybrid",
+    "maxResults": 4,
+    "maxSourceBytes": 128000
+  },
+  "allowedTools": [
+    "knowledge_query",
+    "read_page",
+    "read_result",
+    "save_report"
+  ],
+  "contextBytes": 1048576,
+  "limits": {
+    "maxRounds": 8,
+    "maxTools": 8,
+    "timeoutMs": 300000,
+    "model": 4,
+    "tool": 8
+  }
+}

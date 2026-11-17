@@ -1,0 +1,95 @@
+{
+  "schemaVersion": "v032-verification@1",
+  "sourceCommit": "74df3cfdfc75a2bac11b4cfff2b6586888be0de6",
+  "executionInputsSha256": "a9e52bf5f221440efe0027b60e24b90c3e111ed74fab34ee91ba20f114a538ba",
+  "executionInputsRecheckedUnchanged": true,
+  "node": "26.11.1",
+  "platform": "darwin-arm64",
+  "fullSuite": {
+    "command": "explicit Node 26.11.1 --test --test-concurrency=1 test/*.test.mjs; canonical task-owned TMPDIR",
+    "tests": 1470,
+    "pass": 1466,
+    "fail": 0,
+    "skipped": 4,
+    "exitCode": 0,
+    "durationMs": 242568.138417,
+    "skippedTests": [
+      "﹣ real fixed v1 binary task resumes under v2 without upgrading frozen question (0.046292ms) # SKIP",
+      "﹣ real fixed v2 binary task resumes under v3 without upgrading frozen question (0.035833ms) # SKIP",
+      "﹣ old fixed binary Host snapshot reopens under new binary without definitions drift (0.078583ms) # SKIP",
+      "﹣ old d249 task checkpoint resumes with new binary v1 policy; newly submitted task freezes v3 (0.039ms) # SKIP"
+    ]
+  },
+  "focused": {
+    "pass": 11,
+    "fail": 0,
+    "includedInFullSuite": true
+  },
+  "pythonWorker": {
+    "command": "CPython 3.12.13 test/local-embedding-worker.test.py",
+    "pass": 6,
+    "fail": 0,
+    "scope": "Injected contract fixtures; separate real E5 execution recorded in real-local-receipt.json."
+  },
+  "build": {
+    "exitCode": 0
+  },
+  "documentation": {
+    "exitCode": 0
+  },
+  "articleCoverage": {
+    "mode": "--check",
+    "exitCode": 0,
+    "newCaseExecution": false
+  },
+  "releaseQualification": "expected-rejection-incomplete-ten-task-cohort",
+  "realTenTaskCohort": {
+    "planned": 10,
+    "attempted": 0,
+    "notRun": 10,
+    "qualified": false
+  },
+  "versionConsistency": {
+    "package": "0.31.0",
+    "packageLock": "0.31.0",
+    "readmeStable": "0.31.0",
+    "newTag": false,
+    "releaseCreated": false
+  },
+  "independentReview": "code-review.json",
+  "logSha256": {
+    "full-suite-final.log": "79ceee72cc02fc95d3bc3746bae7a4e6876d71d5e80adc0d45286fb924c67060",
+    "focused.log": "30e71709d437dc8987244471f209dc0d3070e87ab339673f0e578d5702577c41",
+    "build-final.log": "8e49673edd4c630a8167ee4cb7cd687001f7688c42ccecfc04314678ffd16332",
+    "docs-final.log": "a8319683ab519a3aee014dc73b94efb7385eb30b6107918abed15e995f6321c9",
+    "coverage-final.json": "fd087286834c1aee260718279d1f984439ae73f1e5a82b9a658dbef79b9cf673",
+    "python-direct-final.log": "4aac0b7a938d5e87a97142cf8761205198f9fe439545ba8677f7d01d90a9c5e9",
+    "real-final.log": "e2d257966f62061a5701c91d37545aecd12169708f8f8ba54968860c0925ad29"
+  },
+  "excludedObservations": [
+    {
+      "name": "full-suite.log",
+      "pass": 1465,
+      "fail": 0,
+      "skipped": 4,
+      "reason": "Run overlapped final hash/test correction; not the frozen final batch."
+    },
+    {
+      "name": "python-final.log",
+      "tests": 0,
+      "exitCode": 5,
+      "reason": "unittest discovery did not load dotted filename; direct script ran six tests successfully."
+    },
+    {
+      "name": "article coverage --help",
+      "exitCode": 1,
+      "reason": "Unsupported help option; actual --check passed."
+    },
+    {
+      "name": "first v3 evaluation invocation",
+      "error": "KNOWLEDGE_PREPARATION_SOURCE_MISMATCH",
+      "reason": "Wrong manifest supplied; exact binding used in successful cold evaluation."
+    }
+  ],
+  "temporaryStorage": "Raw real-model projects/logs and the unique pinned environment are retained for evidence and recovery; no unknown or shared cache deleted."
+}
