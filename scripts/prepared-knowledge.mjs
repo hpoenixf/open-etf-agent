@@ -7,8 +7,9 @@ import {loadProjectSources} from '../src/project-sources.mjs';
 import {acquireKnowledgeVectors,inspectKnowledgeAcquisition} from '../src/knowledge-acquisition.mjs';
 import {createLocalEmbeddingBackend} from '../src/local-embedding-process.mjs';
 import {createKnowledgeIndex,queryKnowledge} from '../src/knowledge.mjs';
+import {evaluateKnowledgeRetrieval} from '../src/knowledge-evaluation.mjs';
 const fail=code=>{throw Object.assign(new Error(code),{code});};
-const schemas={prepare:['project','manifest','acquisition','model-dir','model-manifest','model-sha','python','queries','approve-selected-text','reuse?','timeout-ms?'],inspect:['project','acquisition'],query:['project','manifest','acquisition','query'],export:['project','acquisition','output']};
+const schemas={prepare:['project','manifest','acquisition','model-dir','model-manifest','model-sha','python','queries','approve-selected-text','reuse?','timeout-ms?'],inspect:['project','acquisition'],query:['project','manifest','acquisition','query'],export:['project','acquisition','output'],evaluate:['project','manifest','acquisition','labels']};
 function parse(args){const [command,...rest]=args,fields=schemas[command];if(!fields)fail('PREPARED_KNOWLEDGE_USAGE');const allowed=new Set(fields.map(s=>s.replace(/\?$/,''))),options={};for(let i=0;i<rest.length;i++){const token=rest[i];if(!token.startsWith('--'))fail('PREPARED_KNOWLEDGE_USAGE');const name=token.slice(2);if(!allowed.has(name)||Object.hasOwn(options,name))fail('PREPARED_KNOWLEDGE_USAGE');if(name==='approve-selected-text')options[name]=true;else{const value=rest[++i];if(!value||value.startsWith('--'))fail('PREPARED_KNOWLEDGE_USAGE');options[name]=value;}}if(fields.filter(s=>!s.endsWith('?')).some(s=>!Object.hasOwn(options,s)))fail('PREPARED_KNOWLEDGE_USAGE');return{command,options};}
 async function bytes(path,max){const file=await open(path,constants.O_RDONLY|constants.O_NOFOLLOW);try{const stat=await file.stat();if(!stat.isFile()||stat.size>max)fail('PREPARED_KNOWLEDGE_INPUT_LIMIT');const b=await file.readFile();if(b.length>max)fail('PREPARED_KNOWLEDGE_INPUT_LIMIT');return b;}finally{await file.close();}}
 const json=b=>JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(b));
@@ -34,10 +35,15 @@ export async function main(args=process.argv.slice(2),{backendFactory=createLoca
     const file=await open(o.output,'wx',0o600);try{await file.writeFile(JSON.stringify(saved.vectorEvidence)+'\n');await file.sync();}finally{await file.close();}output={status:'exported',vectorEvidenceSha256:saved.evidenceSha256};
    }else{
     if(saved.manifestSha256!==o.manifest)fail('KNOWLEDGE_PREPARATION_SOURCE_MISMATCH');
-    const query=new TextDecoder('utf-8',{fatal:true}).decode(await bytes(o.query,512));
     const {catalog}=await loadProjectSources({projectDir,manifestSha256:o.manifest});
+    if(command==='evaluate'){
+     const labels=await bytes(o.labels,1048576);
+     output={schemaVersion:'prepared-knowledge-evaluation@1',manifestSha256:o.manifest,acquisitionId:o.acquisition,labelsSha256:sha256(labels),result:evaluateKnowledgeRetrieval({catalog,allowedDocuments:catalog.documents.map(d=>d.id),vectorEvidence:saved.vectorEvidence,evaluation:json(labels)})};
+    }else{
+    const query=new TextDecoder('utf-8',{fatal:true}).decode(await bytes(o.query,512));
     const index=createKnowledgeIndex({catalog,allowedDocuments:catalog.documents.map(d=>d.id),config:{algorithm:'hybrid'},vectorEvidence:saved.vectorEvidence});
     output={schemaVersion:'prepared-knowledge-query@1',manifestSha256:o.manifest,acquisitionId:o.acquisition,result:queryKnowledge(index,{query})};
+    }
    }
   }
  }
