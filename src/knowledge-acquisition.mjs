@@ -110,5 +110,5 @@ export async function inspectKnowledgeAcquisition({projectDir,acquisitionId}={})
    if(!input||!r||input.kind!==e.kind||input.id!==e.id||r.kind!==e.kind||r.id!==e.id||r.inputSha256!==input.inputSha256||!/^[a-f0-9]{64}$/.test(r.inputSha256)||!/^[a-f0-9]{64}$/.test(r.tokenIdsSha256)||!Number.isSafeInteger(r.tokenCount)||r.tokenCount<1||r.tokenCount>plan.encoding.maxTokens||JSON.stringify(r.vector)!==JSON.stringify(vector))fail('EMBEDDING_RECORD_CHANGED');
   }
  }
- return {...terminal,vectorEvidence:frozen.snapshot};
+ return {...terminal,manifestSha256:plan.manifestSha256,vectorEvidence:frozen.snapshot};
 }
