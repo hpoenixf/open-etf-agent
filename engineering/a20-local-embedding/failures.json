@@ -1,0 +1,34 @@
+{
+  "schemaVersion": "a20-local-diagnostic-failures@1",
+  "historicalUnknownCallsAndCosts": "Unchanged; no historical ledger was opened, refunded, reset or replayed.",
+  "billableRequests": 0,
+  "failures": [
+    {
+      "stage": "real model inventory before compatibility changes",
+      "error": "MODEL_MANIFEST_LIMIT",
+      "cause": "Root tokenizer.json is 17082730 bytes, above old 2097152-byte JSON bound.",
+      "logSha256": "db91845e30a566536c8df1cddd21c92721f6e24598e3fe4bb8736f62fcf753e8",
+      "boundary": "The red unit-test log reproduces the same bound with an authored >2MiB JSON fixture; the actual model inventory error is recorded in this session."
+    },
+    {
+      "stage": "real worker after tokenizer-size fix and initial prompt-probe fix",
+      "error": "EMBEDDING_PROCESS_EXIT",
+      "cause": "Standard Transformer strips prompt-only surrounding whitespace; direct tokenizer preserved a trailing-space token. Worker guard correctly rejected the mismatch.",
+      "logSha256": "d314a8cf53ac673e15bf07d67a7bfed76209f5b795a4a235ef6b3e28fbd4ea52",
+      "diagnosticSha256": "fc6805b093e66b9f45ba94b9222457355b2a08522eaafa524c8bd78e439f76cc"
+    },
+    {
+      "stage": "final real retrieval diagnostic",
+      "error": "NO_ANSWER_QUALITY_GATE_NOT_MET",
+      "cause": "All six independently labelled negatives returned sources in all three profiles; falsePositiveRate=1. No thresholds or labels were tuned after rankings."
+    },
+    {
+      "stage": "first regression command, explicitly excluded",
+      "error": "INVALID_VERIFICATION_ENVIRONMENT",
+      "status": "stopped-incomplete-not-qualified",
+      "cause": "npm inserted an ancestor node_modules/.bin/node (Node 25.9.0) ahead of selected Node 26.11.1. Host TMPDIR used /var/folders, whose real path is /private/var/folders; strict path owners rejected it. Stopped only the owned regression process. Original log retained; no partial counts accepted.",
+      "logSha256": "2c40fa131c6a6970ae73ea6130a77614da7dbacef703884ac7cf0975deb5a0ed",
+      "correction": "Explicit Node 26.11.1 executable and a canonical task-owned TMPDIR; restart the entire unchanged-source regression."
+    }
+  ]
+}

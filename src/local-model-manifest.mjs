@@ -25,7 +25,8 @@ export async function prepareLocalModelManifest({modelDir,model,revision,dimensi
    if(++count>4096||stat.size>maxModelBytes-total)fail('MODEL_MANIFEST_LIMIT');
    const key=relative(root,path).split(sep).join('/');
    if(key.startsWith('../')||await realpath(path)!==path)unsupported();
-   const isJson=name.endsWith('.json');if(isJson&&stat.size>2097152)fail('MODEL_MANIFEST_LIMIT');
+   const isJson=name.endsWith('.json'),jsonLimit=key==='tokenizer.json'?32*1024**2:2097152;
+   if(isJson&&stat.size>jsonLimit)fail('MODEL_MANIFEST_LIMIT');
    const file=await open(path,constants.O_RDONLY|constants.O_NOFOLLOW),digest=createHash('sha256'),chunks=[];let bytes=0;
    try{
     const opened=await file.stat();if(!opened.isFile()||changed(stat,opened))fail('MODEL_MANIFEST_CHANGED');

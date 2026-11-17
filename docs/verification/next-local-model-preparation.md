@@ -50,3 +50,12 @@ Real packages and audited weights are still absent. This is a usable preparation
 command for when selected local weights become available, not documentation offered
 instead of implementation. No new permissions, network/provider calls or paid
 requests were needed. Independent review is required before WIP backup.
+
+## 2026-11-17 real-model follow-on (historical claims above retained)
+
+The separately pinned model/dependency acquisition and actual tokenizer checks are
+now recorded in [the real local diagnostic](next-real-local-embedding.md). Only
+root `tokenizer.json` has a new 32 MiB JSON bound for the actual multilingual E5
+tokenizer; all other JSON retains 2 MiB and custom-code restrictions still apply.
+The real diagnostic found 100% no-answer false positives; it is not release or
+semantic-quality qualification.

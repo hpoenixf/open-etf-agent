@@ -60,7 +60,7 @@ def main():
                 h.update(chunk)
         require(h.hexdigest() == files[name])
         if path.suffix == ".json":
-            require(path.stat().st_size <= LIMIT)
+            require(path.stat().st_size <= (32 * 1024**2 if name == "tokenizer.json" else LIMIT))
             safe_config(json.loads(path.read_text()))
     require(actual == set(files) and any(n.endswith('.safetensors') for n in actual))
     modules = json.loads((root / "modules.json").read_text())
@@ -103,12 +103,22 @@ def main():
         else:
             require(inp["tokenIds"] == ids and inp["tokenIdsSha256"] == digest(ids))
             seen = []
+            prompt_seen = []
+            # The admitted standard Transformer strips surrounding whitespace
+            # before tokenizing its prompt-only metadata probe.
+            prompt_ids = tokenizer(prompts[kind].strip(), add_special_tokens=True, truncation=False)["input_ids"]
             def guarded_tokenize(*positional, **kwargs):
                 features = original_tokenize(*positional, **kwargs)
                 actual_ids = features["input_ids"].tolist()
                 masks = features["attention_mask"].tolist()
                 require(len(actual_ids) == 1 and len(masks) == 1)
                 actual_ids = [i for i, mask in zip(actual_ids[0], masks[0]) if mask]
+                # SentenceTransformer may tokenize the role prompt to compute
+                # pooling metadata. This probe must never stand in for the batch.
+                if prompts[kind] and len(positional) == 1 and positional[0] == [prompts[kind]]:
+                    require(not seen and not prompt_seen and actual_ids == prompt_ids)
+                    prompt_seen.append(True)
+                    return features
                 require(actual_ids == ids)
                 seen.append(True)
                 return features

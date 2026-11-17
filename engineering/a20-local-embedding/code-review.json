@@ -1,0 +1,38 @@
+{
+  "schemaVersion": "a20-independent-code-review@1",
+  "baseCommit": "61fd7e8a1297276d3c181e7a094a930792f15264",
+  "reviewer": "independent_review subagent",
+  "requestedModel": "gpt-6-luna",
+  "resolvedModel": null,
+  "scope": [
+    "scripts/local-embedding-worker.py",
+    "src/local-model-manifest.mjs",
+    "test/local-embedding-worker.test.py",
+    "test/local-model-manifest.test.mjs",
+    "engineering/a20-local-embedding/cohort.json",
+    "engineering/a20-local-embedding/label-review.json",
+    "engineering/a20-local-embedding/verify.mjs",
+    "engineering/a20-local-embedding/reference.py"
+  ],
+  "passed": true,
+  "security_concerns": [],
+  "logic_errors": [],
+  "suggestions": [],
+  "summary": "The root-tokenizer size exception remains bounded, full-batch token guards remain in place, and the diagnostic verifies the real independent reference, overflow, reuse and cold readback. Read-only review; no tests run by reviewer. No previous interrupted candidate was reviewed.",
+  "staticScan": {
+    "status": "passed-after-adjudication",
+    "resolvedFinding": {
+      "file": "engineering/a20-local-embedding/reference.py",
+      "expression": "AutoModel.from_pretrained(...).to('cpu').eval()",
+      "classification": "PyTorch evaluation mode; no dynamic Python eval call",
+      "boundary": "Initial broad regex matched this method name; independently reviewed code is unchanged."
+    },
+    "checkedCategories": [
+      "hardcoded credentials",
+      "shell injection",
+      "dynamic eval",
+      "pickle deserialization"
+    ],
+    "scopedFiles": 24
+  }
+}

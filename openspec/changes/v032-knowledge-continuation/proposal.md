@@ -98,3 +98,20 @@ complete arbitrary model-generated dynamic query support. A callback claiming
 that it charged the budget is not adequate proof. No shared owner was modified
 in this prototype. Timeout may stop waiting, never certify remote termination;
 unknown capacity and cost cannot be refunded because a local timer elapsed.
+
+## 2026-11-17 local real-model diagnostic amendment
+
+Starting only from remote `61fd7e8a1297276d3c181e7a094a930792f15264`, this
+increment acquired pinned public MIT multilingual E5 safetensors and hash-verified
+PyPI wheels. Real CPU tokenizer/document/query encoding, page-vector reuse and
+frozen-evidence cold readback now execute. The bounded tokenizer-size and auxiliary
+prompt-probe fixes do not modify Session/Runtime authorization or retrieval/task
+identities. The previously interrupted local candidate remains excluded.
+
+A separate agent adjudicated the 8-passage, 16-query authored diagnostic before
+rankings. BM25 and hybrid each score Recall@4/MRR@4 1.0 on ten positives, but all
+three profiles return sources for all six no-answer cases (100% false positives).
+This fails meaningful no-evidence quality; vector coverage 16/16 is not semantic
+acceptance. [Provenance, exact receipts and remaining gates](../../../docs/verification/next-real-local-embedding.md).
+The prepared-query route stays experimental; in-Run dynamic-query authorization
+remains closed. No new release or extension of paid-call authority follows.

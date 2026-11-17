@@ -1,0 +1,44 @@
+{
+  "schemaVersion": "a20-real-local-diagnostic@1",
+  "status": "passed-runtime-diagnostic",
+  "qualification": "not-certified",
+  "modelSha": "943e6f6e81786dcbddbebd3d52f7f3df8ea535abf24e9823b5ec8374249bf3de",
+  "manifestSha256": "c16c472150d398815823e21b6d91b0d589a218eeeba5e1c19b66a1b364ec3b8c",
+  "cohortSha256": "0d9316b5b7ee4fe83de58c47b71da12598497b4e4f3dedadf91770d64b2bfde4",
+  "probeTokenCounts": [
+    11,
+    12,
+    12,
+    13
+  ],
+  "referenceMaxAbsDifferences": [
+    0,
+    0,
+    0,
+    0
+  ],
+  "overflow": {
+    "tokenCount": 1205,
+    "error": "EMBEDDING_PROCESS_EXIT"
+  },
+  "pageVectors": 8,
+  "queryVectors": 16,
+  "queryOnlyReuse": {
+    "documentVectorsUnchanged": true,
+    "encodedQueries": 1
+  },
+  "coldReadback": {
+    "separateNodeProcesses": true,
+    "backendFactoryForbidden": true,
+    "projectBytesUnchanged": true,
+    "exportMatches": true
+  },
+  "evaluationSha256": "1bfd7c7bf47ae97baa749a74608a87827155efb7b4f190f505901ae2851fdcfb",
+  "exported": {
+    "status": "exported",
+    "vectorEvidenceSha256": "a2e4ebbd7bb0784a5d839e061812f86a5bdd152f1acd53c2a67bb8f64999b952"
+  },
+  "billableRequests": 0,
+  "newBillableUnknowns": 0,
+  "boundary": "Real CPU weights and tokenizer; small authored relevance diagnostic, not a chat/Run release cohort or dynamic-query qualification."
+}
