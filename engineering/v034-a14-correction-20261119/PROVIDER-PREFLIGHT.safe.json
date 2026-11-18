@@ -1,0 +1,23 @@
+{
+  "observedAt": "2026-11-18T16:36:46.119Z",
+  "quotaHttpStatus": 200,
+  "catalogHttpStatus": 200,
+  "windows": {
+    "rolling": {
+      "status": "ok",
+      "percent": 0
+    },
+    "weekly": {
+      "status": "ok",
+      "percent": 2
+    },
+    "monthly": {
+      "status": "ok",
+      "percent": 3
+    }
+  },
+  "reportedExtraUsage": null,
+  "extraUsageUserConfirmedOff": true,
+  "modelAvailable": "deepseek-v4.1-flash",
+  "modelInferenceRequests": 0
+}

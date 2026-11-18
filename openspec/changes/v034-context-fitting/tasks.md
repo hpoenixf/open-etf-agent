@@ -10,5 +10,6 @@
 - [x] Independent final review (including legal large-history and original report regression).
 - [x] Full final suite and native ESM build.
 - [x] Runtime exact-head remote CI: Verify #132, 1521 pass, 0 fail, 4 skip.
-- [ ] Authorized real-model acceptance (not started; no dispatch authorized here).
+- [x] Run and independently review the original authorized ten-task cohort. Retain Q09 as a failure and the original score as 9/10.
+- [x] Verify one original-read parameter correction and the post-projection same-ref reread on the corrected execution source. Keep the controlled refusal outside the original cohort.
 - [ ] Publication direction (not requested for this candidate).

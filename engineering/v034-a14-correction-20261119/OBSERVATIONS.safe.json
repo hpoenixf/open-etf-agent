@@ -1,0 +1,943 @@
+{
+  "schemaVersion": "v034-a14-targeted-observations@1",
+  "planSha256": "3b6ea1befc747b2772d3134e2651e6d6418d687b32c59143794dd23622ae603a",
+  "sourceCommit": "9d7018df68ef3b9791ef93b1857cb0007f592165",
+  "sourceTree": "ee1296d2f84a4140e0365c3520efec33e0357263",
+  "sourceSha256": "5f09a65bd7918a073596ab64355f8a7b619ef6928b79473d9b9e53e23119b080",
+  "earlierObservedLedgers": {
+    "reserved": 240,
+    "confirmedGoZero": 237,
+    "unknownBilling": 3,
+    "knownOther": 0
+  },
+  "priorOriginalCohort": {
+    "physicalRequests": 46,
+    "maxRequests": 240,
+    "ledgerSha256": "2d0d535761e4bb45cc581327e0b9c02a36269f054182f715d1a2ed8376d1e54a",
+    "confirmedGoZero": 46,
+    "unknownRequestCount": 0,
+    "contentPasses": 9,
+    "planned": 10,
+    "failedCase": "a14-09",
+    "reportFailure": "TOOL_REJECTED: exact original resultRef with unsupported selection",
+    "independentReviewModel": "gpt-6-luna"
+  },
+  "engineeringSafetyOffline": {
+    "tests": 1537,
+    "pass": 1533,
+    "fail": 0,
+    "skipped": 4,
+    "logSha256": "5ccb2082a9f11647653ce460cb2d9f7256518619c61862126783149f8b5edee2",
+    "provenance": "current Mac, Node 26.11.1; no provider calls"
+  },
+  "liveAccounting": {
+    "physicalRequests": 14,
+    "confirmedGoZero": 14,
+    "knownAdditionalUsd": 0,
+    "totalAdditionalUsd": 0,
+    "unknownIds": [],
+    "confirmedTokens": 121723,
+    "verifiedModels": [
+      "deepseek-v4.1-flash"
+    ],
+    "ledgerSha256": "f451c99ec973d75cee0510da53d7073f119f738c347c849b7d666b936341bafb"
+  },
+  "requests": [
+    {
+      "id": 1,
+      "runId": "a14r-q09",
+      "ordinal": 1,
+      "at": "2026-11-18T16:38:36.231Z",
+      "inputHash": "c972382a70fa26bff9f4acb2e70c01a0d7c8e45c0789e0d380f8cff12d521249",
+      "requestSha256": "3461e12a10db18f7f2d1075f2eb96766b95bcde2711529718de4b1537663d7ed",
+      "requestBytes": 6446,
+      "settledAt": "2026-11-18T16:38:41.483Z",
+      "outcome": "go-zero",
+      "httpStatus": 200,
+      "resolvedModel": "deepseek-v4.1-flash",
+      "costUsd": 0,
+      "billingSource": "go",
+      "allowance": 0.00019593,
+      "usdListCost": 0.00032655,
+      "usage": {
+        "prompt_tokens": 1765,
+        "completion_tokens": 103,
+        "total_tokens": 1868
+      },
+      "responseSha256": "04fa8dbff42b1be9303b102426a9915d562073d2a9c2df474b047405a3ce71b8"
+    },
+    {
+      "id": 2,
+      "runId": "a14r-q09",
+      "ordinal": 2,
+      "at": "2026-11-18T16:38:41.532Z",
+      "inputHash": "d19549f7d381355fb2b2edd57a468a0030be77830167539ea61dadea45c469ed",
+      "requestSha256": "6c12344f8d4099605d040030bd6d5a867c1e58d57fbca3b5056ce4b6123dcdd2",
+      "requestBytes": 17626,
+      "settledAt": "2026-11-18T16:38:47.819Z",
+      "outcome": "go-zero",
+      "httpStatus": 200,
+      "resolvedModel": "deepseek-v4.1-flash",
+      "costUsd": 0,
+      "billingSource": "go",
+      "allowance": 0.00033753,
+      "usdListCost": 0.00056254,
+      "usage": {
+        "prompt_tokens": 4297,
+        "completion_tokens": 271,
+        "total_tokens": 4568
+      },
+      "responseSha256": "53590779eea98e9a874f16f6dfde4018547e00e34e8931f9a07c32d33bf8bd71"
+    },
+    {
+      "id": 3,
+      "runId": "a14r-q09",
+      "ordinal": 3,
+      "at": "2026-11-18T16:38:47.851Z",
+      "inputHash": "455d51b4e0f0f2342b1b0006d38883a6add82f0a5842ef52709e1e1532e2b6f9",
+      "requestSha256": "c4f5225de74e7cea13edcb5a8d8d2f7faa77e8d1ca286d7597c3f610127127c8",
+      "requestBytes": 51061,
+      "settledAt": "2026-11-18T16:39:16.444Z",
+      "outcome": "go-zero",
+      "httpStatus": 200,
+      "resolvedModel": "deepseek-v4.1-flash",
+      "costUsd": 0,
+      "billingSource": "go",
+      "allowance": 0.00130468,
+      "usdListCost": 0.00217447,
+      "usage": {
+        "prompt_tokens": 11828,
+        "completion_tokens": 1702,
+        "total_tokens": 13530
+      },
+      "responseSha256": "700c944193e2cdfc3ba952a6e4cbbae1f7deb48e138b17047bafe5ff2c5126ea"
+    },
+    {
+      "id": 4,
+      "runId": "a14r-q09",
+      "ordinal": 4,
+      "at": "2026-11-18T16:39:16.786Z",
+      "inputHash": "e66f871e90bbbe0e9aa3603efd5704588e746c3f976b678359f2431860e4d9ef",
+      "requestSha256": "6843d77809a827f75f887330685b5d5d293707e757c8429a846cfa0b2df43579",
+      "requestBytes": 57558,
+      "settledAt": "2026-11-18T16:39:27.229Z",
+      "outcome": "go-zero",
+      "httpStatus": 200,
+      "resolvedModel": "deepseek-v4.1-flash",
+      "costUsd": 0,
+      "billingSource": "go",
+      "allowance": 0.00037103,
+      "usdListCost": 0.00061838,
+      "usage": {
+        "prompt_tokens": 13531,
+        "completion_tokens": 533,
+        "total_tokens": 14064
+      },
+      "responseSha256": "027dcec49f59c04b681cad54dbe6d9faea6763761beda8c4c88f0a996eeb8c13"
+    },
+    {
+      "id": 5,
+      "runId": "a14r-projection",
+      "ordinal": 1,
+      "at": "2026-11-18T16:39:39.987Z",
+      "inputHash": "485c9150e02fcba2ad4509e3e9b1d395806cd198cf19dddd651415affa5e0099",
+      "requestSha256": "c899bd443456964f1928874593e710931228ae71c0f86a2c9842329bb853ba5c",
+      "requestBytes": 7420,
+      "settledAt": "2026-11-18T16:39:44.204Z",
+      "outcome": "go-zero",
+      "httpStatus": 200,
+      "resolvedModel": "deepseek-v4.1-flash",
+      "costUsd": 0,
+      "billingSource": "go",
+      "allowance": 0.00021258,
+      "usdListCost": 0.0003543,
+      "usage": {
+        "prompt_tokens": 1954,
+        "completion_tokens": 102,
+        "total_tokens": 2056
+      },
+      "responseSha256": "8ed2295d693849c8593325d5827cbc41ce4993eee09056d4c194d082450e36fe"
+    },
+    {
+      "id": 6,
+      "runId": "a14r-projection",
+      "ordinal": 2,
+      "at": "2026-11-18T16:39:44.237Z",
+      "inputHash": "fc1f55f5ce02e45157d1f80f9e8ace6c5a6b2ae651201db530165e055d9cf6d9",
+      "requestSha256": "e60c0ceafcbbc5f32ba4d21d8d87fe619e920c94993eafc1fdf4e1128d9548c1",
+      "requestBytes": 18600,
+      "settledAt": "2026-11-18T16:39:47.099Z",
+      "outcome": "go-zero",
+      "httpStatus": 200,
+      "resolvedModel": "deepseek-v4.1-flash",
+      "costUsd": 0,
+      "billingSource": "go",
+      "allowance": 0.00026878,
+      "usdListCost": 0.00044796,
+      "usage": {
+        "prompt_tokens": 4484,
+        "completion_tokens": 96,
+        "total_tokens": 4580
+      },
+      "responseSha256": "9d3c98b2a524df3461f38f57acd441d3041af01167d94d9c6c15f967b57d4a8b"
+    },
+    {
+      "id": 7,
+      "runId": "a14r-projection",
+      "ordinal": 3,
+      "at": "2026-11-18T16:39:47.121Z",
+      "inputHash": "d4e4e5c92a7151e78a44b87665af03982e821c018f126d40851aee05f0d7b045",
+      "requestSha256": "712a87b99639634438ede31add19a614a9fec8a49467fc9c6e476981dc8aee59",
+      "requestBytes": 29779,
+      "settledAt": "2026-11-18T16:39:51.325Z",
+      "outcome": "go-zero",
+      "httpStatus": 200,
+      "resolvedModel": "deepseek-v4.1-flash",
+      "costUsd": 0,
+      "billingSource": "go",
+      "allowance": 0.00027842,
+      "usdListCost": 0.00046404,
+      "usage": {
+        "prompt_tokens": 7004,
+        "completion_tokens": 120,
+        "total_tokens": 7124
+      },
+      "responseSha256": "6b171916fe8fec59190dce23fc13630b980ee8cea6ffd3178cbbea1b8a1e9505"
+    },
+    {
+      "id": 8,
+      "runId": "a14r-projection",
+      "ordinal": 4,
+      "at": "2026-11-18T16:39:51.385Z",
+      "inputHash": "d452188ea2609abedcbff5d4a40b1227519a815d2fd2ec825fd6ae8846f2bcb3",
+      "requestSha256": "60632e4debc644162eebc56e52eceb2bf78d356b3c1a53ccff03ca88eb0455f5",
+      "requestBytes": 30685,
+      "settledAt": "2026-11-18T16:39:54.820Z",
+      "outcome": "go-zero",
+      "httpStatus": 200,
+      "resolvedModel": "deepseek-v4.1-flash",
+      "costUsd": 0,
+      "billingSource": "go",
+      "allowance": 0.00007814,
+      "usdListCost": 0.00013024,
+      "usage": {
+        "prompt_tokens": 7290,
+        "completion_tokens": 88,
+        "total_tokens": 7378
+      },
+      "responseSha256": "27c7a1257fffc76242223977c2f8f49b118ac41c920b2433b38392b80450c392"
+    },
+    {
+      "id": 9,
+      "runId": "a14r-projection",
+      "ordinal": 5,
+      "at": "2026-11-18T16:39:54.861Z",
+      "inputHash": "17ab3c7110decfd99736980e76a9aff79d140401f5fafbf3f1e927e8e9491ba1",
+      "requestSha256": "3747d7f80355d93e0f0cff0869fbd6b3e0114287b3476d89e8a5362840499025",
+      "requestBytes": 32001,
+      "settledAt": "2026-11-18T16:40:00.579Z",
+      "outcome": "go-zero",
+      "httpStatus": 200,
+      "resolvedModel": "deepseek-v4.1-flash",
+      "costUsd": 0,
+      "billingSource": "go",
+      "allowance": 0.00038147,
+      "usdListCost": 0.00063579,
+      "usage": {
+        "prompt_tokens": 7841,
+        "completion_tokens": 197,
+        "total_tokens": 8038
+      },
+      "responseSha256": "cc5964eea8b8d6965f6511d8fb26ef7e0b913a7168338ae4da279939e0685da3"
+    },
+    {
+      "id": 10,
+      "runId": "a14r-projection",
+      "ordinal": 6,
+      "at": "2026-11-18T16:40:00.657Z",
+      "inputHash": "c9964a4537a9087c19da1d588d2cdc695f59196c7f76d7c7508cccaf9d45d238",
+      "requestSha256": "1ad725235a07b8abc5e6604bac6ee5a11161f61eb3cad7b6ab55f8dcc426828e",
+      "requestBytes": 43179,
+      "settledAt": "2026-11-18T16:40:08.290Z",
+      "outcome": "go-zero",
+      "httpStatus": 200,
+      "resolvedModel": "deepseek-v4.1-flash",
+      "costUsd": 0,
+      "billingSource": "go",
+      "allowance": 0.00034867,
+      "usdListCost": 0.00058112,
+      "usage": {
+        "prompt_tokens": 10358,
+        "completion_tokens": 292,
+        "total_tokens": 10650
+      },
+      "responseSha256": "1524c7ba159a7498479ce30d969fd19ac1d74798fc9e82abcc512094a389e3ae"
+    },
+    {
+      "id": 11,
+      "runId": "a14r-projection",
+      "ordinal": 7,
+      "at": "2026-11-18T16:40:08.314Z",
+      "inputHash": "2dc1735ee2d4c084cbeffc61f6f202fbf70a2d64340909e34b2ce123c307e3b1",
+      "requestSha256": "ad071c372cfa050c36322908c301debec9dca5f7ca5098c4b5d61ae1bfcda203",
+      "requestBytes": 44633,
+      "settledAt": "2026-11-18T16:40:19.962Z",
+      "outcome": "go-zero",
+      "httpStatus": 200,
+      "resolvedModel": "deepseek-v4.1-flash",
+      "costUsd": 0,
+      "billingSource": "go",
+      "allowance": 0.00072437,
+      "usdListCost": 0.00120728,
+      "usage": {
+        "prompt_tokens": 10941,
+        "completion_tokens": 594,
+        "total_tokens": 11535
+      },
+      "responseSha256": "bdd4c108544f8a8d48b646b5e30d34b7ae9d432a0e987d01265caf2a5857e84b"
+    },
+    {
+      "id": 12,
+      "runId": "a14r-projection",
+      "ordinal": 8,
+      "at": "2026-11-18T16:40:19.998Z",
+      "inputHash": "2ca20c712d83096e0c824d14faa7bd5540a31856ac48b0d2f9520e2e0bb26f55",
+      "requestSha256": "9953227180a75292524c9a04dff04696e1e5cbeb90ee97daed7391f15e17f67b",
+      "requestBytes": 46088,
+      "settledAt": "2026-11-18T16:40:26.118Z",
+      "outcome": "go-zero",
+      "httpStatus": 200,
+      "resolvedModel": "deepseek-v4.1-flash",
+      "costUsd": 0,
+      "billingSource": "go",
+      "allowance": 0.0005808,
+      "usdListCost": 0.000968,
+      "usage": {
+        "prompt_tokens": 11521,
+        "completion_tokens": 207,
+        "total_tokens": 11728
+      },
+      "responseSha256": "459ff025676c923bbcfe63f7bbcde3fe285abd326598e1c936e65bf81682d47a"
+    },
+    {
+      "id": 13,
+      "runId": "a14r-projection",
+      "ordinal": 9,
+      "at": "2026-11-18T16:40:26.149Z",
+      "inputHash": "a7542b9bdf4450cdf5801c17b6b621425e67afd4178f5b2799159087463054b9",
+      "requestSha256": "2944249f53b73b85639aba6f1f3bd4ff6c365dc1588f6511150e2f6891a48b9a",
+      "requestBytes": 47542,
+      "settledAt": "2026-11-18T16:40:39.844Z",
+      "outcome": "go-zero",
+      "httpStatus": 200,
+      "resolvedModel": "deepseek-v4.1-flash",
+      "costUsd": 0,
+      "billingSource": "go",
+      "allowance": 0.00084578,
+      "usdListCost": 0.00140963,
+      "usage": {
+        "prompt_tokens": 12103,
+        "completion_tokens": 923,
+        "total_tokens": 13026
+      },
+      "responseSha256": "45ef58424ef96156fecd51c8ef83585d569a84e9abb9779cc453b4f64daa956c"
+    },
+    {
+      "id": 14,
+      "runId": "a14r-projection",
+      "ordinal": 10,
+      "at": "2026-11-18T16:40:39.908Z",
+      "inputHash": "2fa7205a4188f9e6f86d4a2a3a5119d1c9097985cef6ee5bcbe1d721fd96c1a1",
+      "requestSha256": "dec928fd15202b08162853b176a5a60c9bb8141904d1d5c9a89f59d94a60fd51",
+      "requestBytes": 41216,
+      "settledAt": "2026-11-18T16:40:48.530Z",
+      "outcome": "go-zero",
+      "httpStatus": 200,
+      "resolvedModel": "deepseek-v4.1-flash",
+      "costUsd": 0,
+      "billingSource": "go",
+      "allowance": 0.00051591,
+      "usdListCost": 0.00085985,
+      "usage": {
+        "prompt_tokens": 11185,
+        "completion_tokens": 393,
+        "total_tokens": 11578
+      },
+      "responseSha256": "8729a7bcae58b1b561a24f295175bc30f9e306faf885734e094d816eec4d15cb"
+    }
+  ],
+  "cases": [
+    {
+      "id": "a14r-q09",
+      "questionSha256": "9bd822964e12c3c18a267789f39540e016aa565c8333c21547a7f2ef8aa3daea",
+      "assignedScope": "exact original question on the corrected candidate",
+      "report": "# Why the stress scenario cannot determine either fund's return\n\n**Source:** `acceptance-source.txt` (version `utf8-pages-v1:5f09a65b…b080`), page 1, synthetic acceptance data. The document itself states: \"SYNTHETIC ACCEPTANCE DATA. Not investment advice or real securities.\" [1]\n\n## The stress scenario as supplied\n\nThe only stress statement in the source is: \"Stress scenario: A hypothetical 10% equity decline is not a forecast and no portfolio beta is supplied. Do not infer fund return from it.\" [1]\n\nThat single sentence contains three separate reasons the scenario cannot produce a fund return:\n\n1. **The shock is hypothetical, not a forecast.** A 10% equity decline is posited as an assumption only; the source states it \"is not a forecast.\" An assumed shock establishes no expected outcome. [1]\n2. **The transmission input is missing.** The source states \"no portfolio beta is supplied.\" Without a beta (or any other sensitivity of a fund to an equity move), a 10% equity decline cannot be mapped to a percentage change in either fund. [1]\n3. **The inference is prohibited at the source.** The source directs: \"Do not infer fund return from it.\" The restriction is unconditional and applies to the scenario as a whole, so it covers any fund, not a subset. [1]\n\n## Why this applies to both funds — Aurora and Boreal\n\n- **Scope of the instruction.** The prohibition is attached to the stress scenario itself and names no fund, so nothing in the source authorises applying it to Aurora while exempting Boreal, or the reverse. [1]\n- **Beta is absent for both.** The source supplies no beta, or any comparable equity-sensitivity measure, for Aurora or for Boreal. The per-fund data it does give is: Aurora — annual fee 0.20%, assets 120 million CNY, holdings 40, largest holding 8%, tracking difference −0.30 percentage points in 2025, dividend yield unknown; Boreal — annual fee 0.35%, assets 90 million CNY, holdings 65, largest holding 5%, tracking difference −0.10 percentage points in 2025, dividend yield 1.5% in 2025. [1] None of these lines reports an equity exposure or a sensitivity coefficient, so neither fund's line supplies the missing link the scenario would require.\n- **No return figure is offered anywhere.** The source reports tracking difference in percentage points for 2025, bid–ask spreads on 2026-10-01, and asset levels, but it never gives a fund return, and it never links any of those quantities to a 10% equity decline. [1]\n\nConsequently, a stress-derived return for Aurora or for Boreal cannot be computed from this source, and no such figure is stated. This is an absence of the required input and an explicit instruction not to infer — not a finding that either fund's return under a 10% equity decline is zero, or small, or otherwise known. [1]\n\n## Items that must not be confused with stress inputs\n\n- **Liquidity observations are dated and non-prospective:** \"Liquidity observation dated 2026-10-01: Aurora spread 0.12%; Boreal spread 0.18%. These observations do not establish future liquidity.\" [1] They are spread observations, not equity sensitivities, and they carry forward-looking limits.\n- **Aurora asset figures carry distinct dates and are not conflicting same-date data:** \"Historical Aurora fact dated 2025-12-31: assets 100 million CNY. Current Aurora fact dated 2026-10-01: assets 120 million CNY.\" [1] Neither the historical nor the current asset level is a beta or a return.\n- **Boreal's fee was corrected:** \"Initial illustrative Boreal fee 0.40% was superseded by 0.35%. The superseded number remains historical, not current.\" [1] The current fee is 0.35%; 0.40% must not be used as the current figure, and neither is a stress sensitivity.\n- **The opaque identifier is not a quantity to process:** \"Opaque identifier, not a number to round: 12345678901234567890.\" [1]\n- **Appendix rows 000–119** are each described as \"synthetic control note, no additional financial claim,\" so they add no stress or return data. [1]\n\n## Uncertainty / missing information\n\n- **Portfolio beta:** not supplied for Aurora, for Boreal, or at portfolio level — this is the stated reason the scenario cannot be converted into a return. [1]\n- **Any other equity-sensitivity measure** (for example, an explicit exposure-to-equity relation) is likewise not supplied for either fund. [1]\n- **A scenario outcome or return estimate:** the source provides none, and states the scenario \"is not a forecast.\" [1]\n- **Aurora dividend yield:** recorded as \"unknown\" in the source, so no value for it is available. [1]\n- **Effective date of the stress scenario:** the scenario statement carries no date in the source. [1]\n\nUnconfirmed is not the same as false: the source does not establish what either fund's return would be under a 10% equity decline, and it does not establish that such a return is unknowable in principle — only that this source supplies no beta and instructs against inferring a return from the scenario. [1]\n\n## Reference\n\n1. `acceptance-source.txt`, page 1 (`sourceId: text:5f09a65bd7918a073596ab64355f8a7b619ef6928b79473d9b9e53e23119b080@utf8-pages-v1:5f09a65bd7918a073596ab64355f8a7b619ef6928b79473d9b9e53e23119b080:p1`). Synthetic acceptance data; not investment advice or real securities.\n\n\n## Acquired sources\n\n- [1] text:5f09a65bd7918a073596ab64355f8a7b619ef6928b79473d9b9e53e23119b080@utf8-pages-v1:5f09a65bd7918a073596ab64355f8a7b619ef6928b79473d9b9e53e23119b080:p1: acceptance-source.txt, version utf8-pages-v1:5f09a65bd7918a073596ab64355f8a7b619ef6928b79473d9b9e53e23119b080, physical page 1; SHA-256 5f09a65bd7918a073596ab64355f8a7b619ef6928b79473d9b9e53e23119b080; ResultRef result:sha256:9450f93a65fedaf5bb2ceeba6c2cff78fe3e4264266919e5234a4ba5eb6d5234\n",
+      "final": "Report saved (`report.md`, artifact `sha256:05a4a39d…f047da`).\n\n**What the source says.** The entire stress statement is one sentence: \"Stress scenario: A hypothetical 10% equity decline is not a forecast and no portfolio beta is supplied. Do not infer fund return from it.\" [1]\n\n**Why neither fund return can be determined from it:**\n\n1. **The shock is hypothetical, not a forecast.** An assumed 10% decline supplies no expected outcome. [1]\n2. **The transmission channel is missing.** No portfolio beta — or any comparable equity-sensitivity measure — is supplied for Aurora, for Boreal, or at portfolio level, so a 10% equity move cannot be converted into a percentage change in either fund. [1]\n3. **The inference is expressly barred.** \"Do not infer fund return from it\" is unconditional and names no fund, so nothing in the source licenses applying it to one fund while exempting the other. [1]\n\n**What the source does contain** is not a substitute: Aurora (fee 0.20%, assets 120 million CNY, 40 holdings, largest 8%, tracking difference −0.30 pp in 2025, dividend yield unknown) and Boreal (fee 0.35%, assets 90 million CNY, 65 holdings, largest 5%, tracking difference −0.10 pp in 2025, dividend yield 1.5% in 2025) — no return figures and no equity exposures. [1] Dated spreads (Aurora 0.12%, Boreal 0.18%, 2026-10-01) explicitly \"do not establish future liquidity\"; the 2025-12-31 Aurora asset level (100 million CNY) is historical and distinct-dated, not conflicting same-date data; Boreal's 0.40% fee is superseded by 0.35% and remains historical only. [1]\n\n**Uncertainty.** Beta and any other equity sensitivity are absent [1]; Aurora's dividend yield is recorded as \"unknown\" [1]; the scenario carries no date [1]. Accordingly, no stress return is stated or computable here — which is not a finding that either fund's return would be zero or is unknowable in principle. [1]\n\nCitations: [1] `acceptance-source.txt` p1, `text:5f09a65b…b080@utf8-pages-v1:…:p1` — synthetic acceptance data, not investment advice or real securities.",
+      "outcome": {
+        "id": "a14r-q09",
+        "status": "completed",
+        "code": null,
+        "transportStop": null,
+        "contentStatus": "pending-independent-review",
+        "requestCount": 4,
+        "rootModelReservations": 4,
+        "rootTools": 5,
+        "ticketStates": [
+          "completed",
+          "completed",
+          "completed",
+          "completed"
+        ],
+        "completedWithinDeadline": true,
+        "reportSha256": "1aacec1793804a922f6851d6b4d446bca6c3e92b25a5cfdfae025aa16811244e",
+        "finalSha256": "cab7922d897fcd0acd1d3628635a1f116926a06820bd145da37c6a3098792b72",
+        "deliveryReadback": true,
+        "citedOriginal": true,
+        "sourceRef": "result:sha256:9450f93a65fedaf5bb2ceeba6c2cff78fe3e4264266919e5234a4ba5eb6d5234",
+        "sourceSha256": "5f09a65bd7918a073596ab64355f8a7b619ef6928b79473d9b9e53e23119b080",
+        "sourceManifestSha256": "4f9f3cbd45ec39e10446f50fc7a112fea29645aab25d080686246c53a31a6f5c",
+        "rereadCount": 3,
+        "originalReadHistoryExact": true,
+        "coldRefExact": true,
+        "toolAccountingMatches": true,
+        "correctionUses": 0,
+        "contextFit": [
+          {
+            "beforeBytes": 2411,
+            "afterBytes": 2411,
+            "softProjectedResults": 0
+          },
+          {
+            "beforeBytes": 13347,
+            "afterBytes": 13347,
+            "softProjectedResults": 0
+          },
+          {
+            "beforeBytes": 46096,
+            "afterBytes": 46096,
+            "softProjectedResults": 0
+          },
+          {
+            "beforeBytes": 52386,
+            "afterBytes": 52386,
+            "softProjectedResults": 0
+          }
+        ],
+        "coldReadbackProviderRequests": 0,
+        "wireProofs": [
+          {
+            "ordinal": 1,
+            "inputHash": "c972382a70fa26bff9f4acb2e70c01a0d7c8e45c0789e0d380f8cff12d521249",
+            "groupCount": 0,
+            "recentGroupsExact": true,
+            "knownCallHashes": [],
+            "fullReadCallHashes": [],
+            "modelCorrectionAdviceCallHashes": [],
+            "projectedReads": []
+          },
+          {
+            "ordinal": 2,
+            "inputHash": "d19549f7d381355fb2b2edd57a468a0030be77830167539ea61dadea45c469ed",
+            "groupCount": 1,
+            "recentGroupsExact": true,
+            "knownCallHashes": [
+              "30e9d928a355657cd601bb74a1bb163a9834da190f8e22d3118c0a86590a9b0b"
+            ],
+            "fullReadCallHashes": [],
+            "modelCorrectionAdviceCallHashes": [],
+            "projectedReads": []
+          },
+          {
+            "ordinal": 3,
+            "inputHash": "455d51b4e0f0f2342b1b0006d38883a6add82f0a5842ef52709e1e1532e2b6f9",
+            "groupCount": 2,
+            "recentGroupsExact": true,
+            "knownCallHashes": [
+              "30e9d928a355657cd601bb74a1bb163a9834da190f8e22d3118c0a86590a9b0b",
+              "9b08e0714d75256ad108a35415f50cf03bd45b5586121e3f86fcd48b59158038",
+              "28d93ef1d98dbb4aeab812358fa4c5167cd4631af8119098e6680f59e0e7092f",
+              "bd1b14394a8dca34000ffe2842973062571d8c171af45f68d4b3bba11d8df4c5"
+            ],
+            "fullReadCallHashes": [
+              "9b08e0714d75256ad108a35415f50cf03bd45b5586121e3f86fcd48b59158038",
+              "28d93ef1d98dbb4aeab812358fa4c5167cd4631af8119098e6680f59e0e7092f",
+              "bd1b14394a8dca34000ffe2842973062571d8c171af45f68d4b3bba11d8df4c5"
+            ],
+            "modelCorrectionAdviceCallHashes": [],
+            "projectedReads": []
+          },
+          {
+            "ordinal": 4,
+            "inputHash": "e66f871e90bbbe0e9aa3603efd5704588e746c3f976b678359f2431860e4d9ef",
+            "groupCount": 3,
+            "recentGroupsExact": true,
+            "knownCallHashes": [
+              "30e9d928a355657cd601bb74a1bb163a9834da190f8e22d3118c0a86590a9b0b",
+              "9b08e0714d75256ad108a35415f50cf03bd45b5586121e3f86fcd48b59158038",
+              "28d93ef1d98dbb4aeab812358fa4c5167cd4631af8119098e6680f59e0e7092f",
+              "bd1b14394a8dca34000ffe2842973062571d8c171af45f68d4b3bba11d8df4c5",
+              "4befe87c26165f69f77928519fee399748b0c5932b2ff32c1c26d5e96fb3e2c4"
+            ],
+            "fullReadCallHashes": [
+              "9b08e0714d75256ad108a35415f50cf03bd45b5586121e3f86fcd48b59158038",
+              "28d93ef1d98dbb4aeab812358fa4c5167cd4631af8119098e6680f59e0e7092f",
+              "bd1b14394a8dca34000ffe2842973062571d8c171af45f68d4b3bba11d8df4c5"
+            ],
+            "modelCorrectionAdviceCallHashes": [],
+            "projectedReads": []
+          }
+        ],
+        "correctionAttempts": [],
+        "rereadsAfterProjection": []
+      },
+      "requests": [
+        1,
+        2,
+        3,
+        4
+      ]
+    },
+    {
+      "id": "a14r-projection",
+      "questionSha256": "3868487f37f89b1399c5a3907512d9944ff83f12dbe9cf6d1bd20c2710c6c87f",
+      "assignedScope": "controlled real-model engineering path, excluded from normal cohort numerator",
+      "report": "# Controlled check: Aurora / Boreal synthetic source\n\nSource: `acceptance-source.txt` (synthetic acceptance data; explicitly not investment advice or real securities) [1].\n\n## 1. Hypothetical 10% equity decline vs. fund returns\n\nNo — the hypothetical 10% equity decline does **not** determine either fund's return, and the scenario is not a forecast. The source states: \"Stress scenario: A hypothetical 10% equity decline is not a forecast and no portfolio beta is supplied. Do not infer fund return from it.\" [1]\n\n**Missing input:** portfolio beta. No beta (and no other sensitivity/participation factor) is supplied for Aurora or Boreal, so no fund return can be derived from the 10% decline [1]. No return figures are stated in the source and none are inferred here.\n\n## 2. Opaque identifier (exact string, not rounded)\n\n`12345678901234567890` [1]\n\nThe source labels this an \"Opaque identifier, not a number to round\", so it is reproduced verbatim as a 20-digit string [1].\n\n## 3. Boreal annual fee — current and superseded\n\n| Status | Boreal annual fee |\n|---|---|\n| Current | 0.35% [1] |\n| Superseded (historical, not current) | 0.40% [1] |\n\nSource wording: \"Correction: Initial illustrative Boreal fee 0.40% was superseded by 0.35%. The superseded number remains historical, not current.\" [1] The current fee line for Boreal ETF also reads \"annual fee 0.35%\" [1].\n\n## 4. Uncertainty\n\n- The magnitude (or even direction of net effect) of a 10% equity decline on either fund's return is unstated, because beta and other exposure inputs are absent; this is unconfirmed, not a finding that returns are unaffected [1].\n- The source provides no forecast of returns for either fund [1].\n\n## Concise answer\n\nThe hypothetical 10% equity decline determines **neither** fund's return — it is explicitly not a forecast, and the missing input is **portfolio beta**. Opaque identifier: **12345678901234567890**. Boreal fee: current **0.35%**, superseded **0.40%** (historical only).\n\n## References\n\n[1] `acceptance-source.txt`, page 1 — acquired original source ID `text:5f09a65bd7918a073596ab64355f8a7b619ef6928b79473d9b9e53e23119b080@utf8-pages-v1:5f09a65bd7918a073596ab64355f8a7b619ef6928b79473d9b9e53e23119b080:p1`.\n\n\n## Acquired sources\n\n- [1] text:5f09a65bd7918a073596ab64355f8a7b619ef6928b79473d9b9e53e23119b080@utf8-pages-v1:5f09a65bd7918a073596ab64355f8a7b619ef6928b79473d9b9e53e23119b080:p1: acceptance-source.txt, version utf8-pages-v1:5f09a65bd7918a073596ab64355f8a7b619ef6928b79473d9b9e53e23119b080, physical page 1; SHA-256 5f09a65bd7918a073596ab64355f8a7b619ef6928b79473d9b9e53e23119b080; ResultRef result:sha256:9450f93a65fedaf5bb2ceeba6c2cff78fe3e4264266919e5234a4ba5eb6d5234\n",
+      "final": "Report saved (`report.md`, artifact `artifact:sha256:940b532f…`), backed by the acquired original source `text:5f09a65bd7918a073596ab64355f8a7b619ef6928b79473d9b9e53e23119b080@utf8-pages-v1:5f09a65bd7918a073596ab64355f8a7b619ef6928b79473d9b9e53e23119b080:p1` [1].\n\n**Concise answer**\n\n- **Does the hypothetical 10% equity decline determine either fund return?** No. The source says it \"is not a forecast and no portfolio beta is supplied. Do not infer fund return from it.\" No returns are stated or inferred; the scenario is illustration only, not a forecast.\n- **Missing input:** portfolio beta (no sensitivity/exposure factor is given for Aurora or Boreal).\n- **Opaque identifier (exact string, unrounded):** `12345678901234567890`\n- **Boreal fees:** current **0.35%**; superseded **0.40%** (historical only, not current).\n\nAll source text used was the original text from the final reread; the earlier refused call used a selection on an original result (`READ_RESULT_ORIGINAL_SELECTION`, not dispatched) and was corrected with a no-selection read in the next turn.",
+      "outcome": {
+        "id": "a14r-projection",
+        "status": "completed",
+        "code": null,
+        "transportStop": null,
+        "contentStatus": "pending-independent-review",
+        "requestCount": 10,
+        "rootModelReservations": 10,
+        "rootTools": 8,
+        "ticketStates": [
+          "completed",
+          "completed",
+          "completed",
+          "completed",
+          "completed",
+          "completed",
+          "completed",
+          "completed",
+          "completed",
+          "completed"
+        ],
+        "completedWithinDeadline": true,
+        "reportSha256": "287745a8c0b7f417eeb6b05645afeebcc2fc9f70d6bf566da33d37228743f80e",
+        "finalSha256": "51273f66b14245aca04ee58c3335d13bb5b73cabff4703d8fda82e6f45b0d7b7",
+        "deliveryReadback": true,
+        "citedOriginal": true,
+        "sourceRef": "result:sha256:9450f93a65fedaf5bb2ceeba6c2cff78fe3e4264266919e5234a4ba5eb6d5234",
+        "sourceSha256": "5f09a65bd7918a073596ab64355f8a7b619ef6928b79473d9b9e53e23119b080",
+        "sourceManifestSha256": "4f9f3cbd45ec39e10446f50fc7a112fea29645aab25d080686246c53a31a6f5c",
+        "rereadCount": 6,
+        "originalReadHistoryExact": true,
+        "coldRefExact": true,
+        "toolAccountingMatches": true,
+        "correctionUses": 1,
+        "contextFit": [
+          {
+            "beforeBytes": 3385,
+            "afterBytes": 3385,
+            "softProjectedResults": 0
+          },
+          {
+            "beforeBytes": 14321,
+            "afterBytes": 14321,
+            "softProjectedResults": 0
+          },
+          {
+            "beforeBytes": 25258,
+            "afterBytes": 25258,
+            "softProjectedResults": 0
+          },
+          {
+            "beforeBytes": 26056,
+            "afterBytes": 26056,
+            "softProjectedResults": 0
+          },
+          {
+            "beforeBytes": 36858,
+            "afterBytes": 27242,
+            "softProjectedResults": 1
+          },
+          {
+            "beforeBytes": 47794,
+            "afterBytes": 38178,
+            "softProjectedResults": 1
+          },
+          {
+            "beforeBytes": 58730,
+            "afterBytes": 39498,
+            "softProjectedResults": 2
+          },
+          {
+            "beforeBytes": 69667,
+            "afterBytes": 40819,
+            "softProjectedResults": 3
+          },
+          {
+            "beforeBytes": 80603,
+            "afterBytes": 42139,
+            "softProjectedResults": 4
+          },
+          {
+            "beforeBytes": 83832,
+            "afterBytes": 35752,
+            "softProjectedResults": 5
+          }
+        ],
+        "coldReadbackProviderRequests": 0,
+        "wireProofs": [
+          {
+            "ordinal": 1,
+            "inputHash": "485c9150e02fcba2ad4509e3e9b1d395806cd198cf19dddd651415affa5e0099",
+            "groupCount": 0,
+            "recentGroupsExact": true,
+            "knownCallHashes": [],
+            "fullReadCallHashes": [],
+            "modelCorrectionAdviceCallHashes": [],
+            "projectedReads": []
+          },
+          {
+            "ordinal": 2,
+            "inputHash": "fc1f55f5ce02e45157d1f80f9e8ace6c5a6b2ae651201db530165e055d9cf6d9",
+            "groupCount": 1,
+            "recentGroupsExact": true,
+            "knownCallHashes": [
+              "2d6a8c9ec2d05abbae6ad10689d93ed9fdd90720e8c6b35baae710112e11e18b"
+            ],
+            "fullReadCallHashes": [],
+            "modelCorrectionAdviceCallHashes": [],
+            "projectedReads": []
+          },
+          {
+            "ordinal": 3,
+            "inputHash": "d4e4e5c92a7151e78a44b87665af03982e821c018f126d40851aee05f0d7b045",
+            "groupCount": 2,
+            "recentGroupsExact": true,
+            "knownCallHashes": [
+              "2d6a8c9ec2d05abbae6ad10689d93ed9fdd90720e8c6b35baae710112e11e18b",
+              "312b96cb7080e3147f90e59f8b37b24f2ae088120d34f86b16df1bbd641806c6"
+            ],
+            "fullReadCallHashes": [
+              "312b96cb7080e3147f90e59f8b37b24f2ae088120d34f86b16df1bbd641806c6"
+            ],
+            "modelCorrectionAdviceCallHashes": [],
+            "projectedReads": []
+          },
+          {
+            "ordinal": 4,
+            "inputHash": "d452188ea2609abedcbff5d4a40b1227519a815d2fd2ec825fd6ae8846f2bcb3",
+            "groupCount": 3,
+            "recentGroupsExact": true,
+            "knownCallHashes": [
+              "2d6a8c9ec2d05abbae6ad10689d93ed9fdd90720e8c6b35baae710112e11e18b",
+              "312b96cb7080e3147f90e59f8b37b24f2ae088120d34f86b16df1bbd641806c6",
+              "2331ea975c8997bfa3185e507517c8259ddef8b52cec9697c4e2198614b33f72"
+            ],
+            "fullReadCallHashes": [
+              "312b96cb7080e3147f90e59f8b37b24f2ae088120d34f86b16df1bbd641806c6"
+            ],
+            "modelCorrectionAdviceCallHashes": [
+              "2331ea975c8997bfa3185e507517c8259ddef8b52cec9697c4e2198614b33f72"
+            ],
+            "projectedReads": []
+          },
+          {
+            "ordinal": 5,
+            "inputHash": "17ab3c7110decfd99736980e76a9aff79d140401f5fafbf3f1e927e8e9491ba1",
+            "groupCount": 4,
+            "recentGroupsExact": true,
+            "knownCallHashes": [
+              "2d6a8c9ec2d05abbae6ad10689d93ed9fdd90720e8c6b35baae710112e11e18b",
+              "312b96cb7080e3147f90e59f8b37b24f2ae088120d34f86b16df1bbd641806c6",
+              "2331ea975c8997bfa3185e507517c8259ddef8b52cec9697c4e2198614b33f72",
+              "0f20bf5408cfe53e0a35dfb8ba3f5cba88df54eff9c030a479579654438ff53e"
+            ],
+            "fullReadCallHashes": [
+              "0f20bf5408cfe53e0a35dfb8ba3f5cba88df54eff9c030a479579654438ff53e"
+            ],
+            "modelCorrectionAdviceCallHashes": [],
+            "projectedReads": [
+              {
+                "callSha256": "312b96cb7080e3147f90e59f8b37b24f2ae088120d34f86b16df1bbd641806c6",
+                "resultRef": "result:sha256:9450f93a65fedaf5bb2ceeba6c2cff78fe3e4264266919e5234a4ba5eb6d5234",
+                "sourceId": "text:5f09a65bd7918a073596ab64355f8a7b619ef6928b79473d9b9e53e23119b080@utf8-pages-v1:5f09a65bd7918a073596ab64355f8a7b619ef6928b79473d9b9e53e23119b080:p1",
+                "sourceSha256": "5f09a65bd7918a073596ab64355f8a7b619ef6928b79473d9b9e53e23119b080",
+                "groupIndex": 1
+              }
+            ]
+          },
+          {
+            "ordinal": 6,
+            "inputHash": "c9964a4537a9087c19da1d588d2cdc695f59196c7f76d7c7508cccaf9d45d238",
+            "groupCount": 5,
+            "recentGroupsExact": true,
+            "knownCallHashes": [
+              "2d6a8c9ec2d05abbae6ad10689d93ed9fdd90720e8c6b35baae710112e11e18b",
+              "312b96cb7080e3147f90e59f8b37b24f2ae088120d34f86b16df1bbd641806c6",
+              "2331ea975c8997bfa3185e507517c8259ddef8b52cec9697c4e2198614b33f72",
+              "0f20bf5408cfe53e0a35dfb8ba3f5cba88df54eff9c030a479579654438ff53e",
+              "8e3b146a328b38dff69ca063465d58a896f094bc475f8312d2d0df4f8e5b0a75"
+            ],
+            "fullReadCallHashes": [
+              "0f20bf5408cfe53e0a35dfb8ba3f5cba88df54eff9c030a479579654438ff53e",
+              "8e3b146a328b38dff69ca063465d58a896f094bc475f8312d2d0df4f8e5b0a75"
+            ],
+            "modelCorrectionAdviceCallHashes": [],
+            "projectedReads": [
+              {
+                "callSha256": "312b96cb7080e3147f90e59f8b37b24f2ae088120d34f86b16df1bbd641806c6",
+                "resultRef": "result:sha256:9450f93a65fedaf5bb2ceeba6c2cff78fe3e4264266919e5234a4ba5eb6d5234",
+                "sourceId": "text:5f09a65bd7918a073596ab64355f8a7b619ef6928b79473d9b9e53e23119b080@utf8-pages-v1:5f09a65bd7918a073596ab64355f8a7b619ef6928b79473d9b9e53e23119b080:p1",
+                "sourceSha256": "5f09a65bd7918a073596ab64355f8a7b619ef6928b79473d9b9e53e23119b080",
+                "groupIndex": 1
+              }
+            ]
+          },
+          {
+            "ordinal": 7,
+            "inputHash": "2dc1735ee2d4c084cbeffc61f6f202fbf70a2d64340909e34b2ce123c307e3b1",
+            "groupCount": 6,
+            "recentGroupsExact": true,
+            "knownCallHashes": [
+              "2d6a8c9ec2d05abbae6ad10689d93ed9fdd90720e8c6b35baae710112e11e18b",
+              "312b96cb7080e3147f90e59f8b37b24f2ae088120d34f86b16df1bbd641806c6",
+              "2331ea975c8997bfa3185e507517c8259ddef8b52cec9697c4e2198614b33f72",
+              "0f20bf5408cfe53e0a35dfb8ba3f5cba88df54eff9c030a479579654438ff53e",
+              "8e3b146a328b38dff69ca063465d58a896f094bc475f8312d2d0df4f8e5b0a75",
+              "b903e64f2d2933c38864dd6f1b1eb36adba47840ad25d6d32efa8a8112eae349"
+            ],
+            "fullReadCallHashes": [
+              "8e3b146a328b38dff69ca063465d58a896f094bc475f8312d2d0df4f8e5b0a75",
+              "b903e64f2d2933c38864dd6f1b1eb36adba47840ad25d6d32efa8a8112eae349"
+            ],
+            "modelCorrectionAdviceCallHashes": [],
+            "projectedReads": [
+              {
+                "callSha256": "312b96cb7080e3147f90e59f8b37b24f2ae088120d34f86b16df1bbd641806c6",
+                "resultRef": "result:sha256:9450f93a65fedaf5bb2ceeba6c2cff78fe3e4264266919e5234a4ba5eb6d5234",
+                "sourceId": "text:5f09a65bd7918a073596ab64355f8a7b619ef6928b79473d9b9e53e23119b080@utf8-pages-v1:5f09a65bd7918a073596ab64355f8a7b619ef6928b79473d9b9e53e23119b080:p1",
+                "sourceSha256": "5f09a65bd7918a073596ab64355f8a7b619ef6928b79473d9b9e53e23119b080",
+                "groupIndex": 1
+              },
+              {
+                "callSha256": "0f20bf5408cfe53e0a35dfb8ba3f5cba88df54eff9c030a479579654438ff53e",
+                "resultRef": "result:sha256:9450f93a65fedaf5bb2ceeba6c2cff78fe3e4264266919e5234a4ba5eb6d5234",
+                "sourceId": "text:5f09a65bd7918a073596ab64355f8a7b619ef6928b79473d9b9e53e23119b080@utf8-pages-v1:5f09a65bd7918a073596ab64355f8a7b619ef6928b79473d9b9e53e23119b080:p1",
+                "sourceSha256": "5f09a65bd7918a073596ab64355f8a7b619ef6928b79473d9b9e53e23119b080",
+                "groupIndex": 3
+              }
+            ]
+          },
+          {
+            "ordinal": 8,
+            "inputHash": "2ca20c712d83096e0c824d14faa7bd5540a31856ac48b0d2f9520e2e0bb26f55",
+            "groupCount": 7,
+            "recentGroupsExact": true,
+            "knownCallHashes": [
+              "2d6a8c9ec2d05abbae6ad10689d93ed9fdd90720e8c6b35baae710112e11e18b",
+              "312b96cb7080e3147f90e59f8b37b24f2ae088120d34f86b16df1bbd641806c6",
+              "2331ea975c8997bfa3185e507517c8259ddef8b52cec9697c4e2198614b33f72",
+              "0f20bf5408cfe53e0a35dfb8ba3f5cba88df54eff9c030a479579654438ff53e",
+              "8e3b146a328b38dff69ca063465d58a896f094bc475f8312d2d0df4f8e5b0a75",
+              "b903e64f2d2933c38864dd6f1b1eb36adba47840ad25d6d32efa8a8112eae349",
+              "fac1f1f90994c6efc3f7f5b214d4ce35eb9bf14c6e0cb928ceeef6fac5d5b36a"
+            ],
+            "fullReadCallHashes": [
+              "b903e64f2d2933c38864dd6f1b1eb36adba47840ad25d6d32efa8a8112eae349",
+              "fac1f1f90994c6efc3f7f5b214d4ce35eb9bf14c6e0cb928ceeef6fac5d5b36a"
+            ],
+            "modelCorrectionAdviceCallHashes": [],
+            "projectedReads": [
+              {
+                "callSha256": "312b96cb7080e3147f90e59f8b37b24f2ae088120d34f86b16df1bbd641806c6",
+                "resultRef": "result:sha256:9450f93a65fedaf5bb2ceeba6c2cff78fe3e4264266919e5234a4ba5eb6d5234",
+                "sourceId": "text:5f09a65bd7918a073596ab64355f8a7b619ef6928b79473d9b9e53e23119b080@utf8-pages-v1:5f09a65bd7918a073596ab64355f8a7b619ef6928b79473d9b9e53e23119b080:p1",
+                "sourceSha256": "5f09a65bd7918a073596ab64355f8a7b619ef6928b79473d9b9e53e23119b080",
+                "groupIndex": 1
+              },
+              {
+                "callSha256": "0f20bf5408cfe53e0a35dfb8ba3f5cba88df54eff9c030a479579654438ff53e",
+                "resultRef": "result:sha256:9450f93a65fedaf5bb2ceeba6c2cff78fe3e4264266919e5234a4ba5eb6d5234",
+                "sourceId": "text:5f09a65bd7918a073596ab64355f8a7b619ef6928b79473d9b9e53e23119b080@utf8-pages-v1:5f09a65bd7918a073596ab64355f8a7b619ef6928b79473d9b9e53e23119b080:p1",
+                "sourceSha256": "5f09a65bd7918a073596ab64355f8a7b619ef6928b79473d9b9e53e23119b080",
+                "groupIndex": 3
+              },
+              {
+                "callSha256": "8e3b146a328b38dff69ca063465d58a896f094bc475f8312d2d0df4f8e5b0a75",
+                "resultRef": "result:sha256:9450f93a65fedaf5bb2ceeba6c2cff78fe3e4264266919e5234a4ba5eb6d5234",
+                "sourceId": "text:5f09a65bd7918a073596ab64355f8a7b619ef6928b79473d9b9e53e23119b080@utf8-pages-v1:5f09a65bd7918a073596ab64355f8a7b619ef6928b79473d9b9e53e23119b080:p1",
+                "sourceSha256": "5f09a65bd7918a073596ab64355f8a7b619ef6928b79473d9b9e53e23119b080",
+                "groupIndex": 4
+              }
+            ]
+          },
+          {
+            "ordinal": 9,
+            "inputHash": "a7542b9bdf4450cdf5801c17b6b621425e67afd4178f5b2799159087463054b9",
+            "groupCount": 8,
+            "recentGroupsExact": true,
+            "knownCallHashes": [
+              "2d6a8c9ec2d05abbae6ad10689d93ed9fdd90720e8c6b35baae710112e11e18b",
+              "312b96cb7080e3147f90e59f8b37b24f2ae088120d34f86b16df1bbd641806c6",
+              "2331ea975c8997bfa3185e507517c8259ddef8b52cec9697c4e2198614b33f72",
+              "0f20bf5408cfe53e0a35dfb8ba3f5cba88df54eff9c030a479579654438ff53e",
+              "8e3b146a328b38dff69ca063465d58a896f094bc475f8312d2d0df4f8e5b0a75",
+              "b903e64f2d2933c38864dd6f1b1eb36adba47840ad25d6d32efa8a8112eae349",
+              "fac1f1f90994c6efc3f7f5b214d4ce35eb9bf14c6e0cb928ceeef6fac5d5b36a",
+              "3420c5d1a75a5159d624e3b18653a2d1647294dbdd72ea413ac69aa3c604e891"
+            ],
+            "fullReadCallHashes": [
+              "fac1f1f90994c6efc3f7f5b214d4ce35eb9bf14c6e0cb928ceeef6fac5d5b36a",
+              "3420c5d1a75a5159d624e3b18653a2d1647294dbdd72ea413ac69aa3c604e891"
+            ],
+            "modelCorrectionAdviceCallHashes": [],
+            "projectedReads": [
+              {
+                "callSha256": "312b96cb7080e3147f90e59f8b37b24f2ae088120d34f86b16df1bbd641806c6",
+                "resultRef": "result:sha256:9450f93a65fedaf5bb2ceeba6c2cff78fe3e4264266919e5234a4ba5eb6d5234",
+                "sourceId": "text:5f09a65bd7918a073596ab64355f8a7b619ef6928b79473d9b9e53e23119b080@utf8-pages-v1:5f09a65bd7918a073596ab64355f8a7b619ef6928b79473d9b9e53e23119b080:p1",
+                "sourceSha256": "5f09a65bd7918a073596ab64355f8a7b619ef6928b79473d9b9e53e23119b080",
+                "groupIndex": 1
+              },
+              {
+                "callSha256": "0f20bf5408cfe53e0a35dfb8ba3f5cba88df54eff9c030a479579654438ff53e",
+                "resultRef": "result:sha256:9450f93a65fedaf5bb2ceeba6c2cff78fe3e4264266919e5234a4ba5eb6d5234",
+                "sourceId": "text:5f09a65bd7918a073596ab64355f8a7b619ef6928b79473d9b9e53e23119b080@utf8-pages-v1:5f09a65bd7918a073596ab64355f8a7b619ef6928b79473d9b9e53e23119b080:p1",
+                "sourceSha256": "5f09a65bd7918a073596ab64355f8a7b619ef6928b79473d9b9e53e23119b080",
+                "groupIndex": 3
+              },
+              {
+                "callSha256": "8e3b146a328b38dff69ca063465d58a896f094bc475f8312d2d0df4f8e5b0a75",
+                "resultRef": "result:sha256:9450f93a65fedaf5bb2ceeba6c2cff78fe3e4264266919e5234a4ba5eb6d5234",
+                "sourceId": "text:5f09a65bd7918a073596ab64355f8a7b619ef6928b79473d9b9e53e23119b080@utf8-pages-v1:5f09a65bd7918a073596ab64355f8a7b619ef6928b79473d9b9e53e23119b080:p1",
+                "sourceSha256": "5f09a65bd7918a073596ab64355f8a7b619ef6928b79473d9b9e53e23119b080",
+                "groupIndex": 4
+              },
+              {
+                "callSha256": "b903e64f2d2933c38864dd6f1b1eb36adba47840ad25d6d32efa8a8112eae349",
+                "resultRef": "result:sha256:9450f93a65fedaf5bb2ceeba6c2cff78fe3e4264266919e5234a4ba5eb6d5234",
+                "sourceId": "text:5f09a65bd7918a073596ab64355f8a7b619ef6928b79473d9b9e53e23119b080@utf8-pages-v1:5f09a65bd7918a073596ab64355f8a7b619ef6928b79473d9b9e53e23119b080:p1",
+                "sourceSha256": "5f09a65bd7918a073596ab64355f8a7b619ef6928b79473d9b9e53e23119b080",
+                "groupIndex": 5
+              }
+            ]
+          },
+          {
+            "ordinal": 10,
+            "inputHash": "2fa7205a4188f9e6f86d4a2a3a5119d1c9097985cef6ee5bcbe1d721fd96c1a1",
+            "groupCount": 9,
+            "recentGroupsExact": true,
+            "knownCallHashes": [
+              "2d6a8c9ec2d05abbae6ad10689d93ed9fdd90720e8c6b35baae710112e11e18b",
+              "312b96cb7080e3147f90e59f8b37b24f2ae088120d34f86b16df1bbd641806c6",
+              "2331ea975c8997bfa3185e507517c8259ddef8b52cec9697c4e2198614b33f72",
+              "0f20bf5408cfe53e0a35dfb8ba3f5cba88df54eff9c030a479579654438ff53e",
+              "8e3b146a328b38dff69ca063465d58a896f094bc475f8312d2d0df4f8e5b0a75",
+              "b903e64f2d2933c38864dd6f1b1eb36adba47840ad25d6d32efa8a8112eae349",
+              "fac1f1f90994c6efc3f7f5b214d4ce35eb9bf14c6e0cb928ceeef6fac5d5b36a",
+              "3420c5d1a75a5159d624e3b18653a2d1647294dbdd72ea413ac69aa3c604e891",
+              "9039241cec61328df4033560a07f100435995b2cb2bbca519bd5c8dfcd34277c"
+            ],
+            "fullReadCallHashes": [
+              "3420c5d1a75a5159d624e3b18653a2d1647294dbdd72ea413ac69aa3c604e891"
+            ],
+            "modelCorrectionAdviceCallHashes": [],
+            "projectedReads": [
+              {
+                "callSha256": "312b96cb7080e3147f90e59f8b37b24f2ae088120d34f86b16df1bbd641806c6",
+                "resultRef": "result:sha256:9450f93a65fedaf5bb2ceeba6c2cff78fe3e4264266919e5234a4ba5eb6d5234",
+                "sourceId": "text:5f09a65bd7918a073596ab64355f8a7b619ef6928b79473d9b9e53e23119b080@utf8-pages-v1:5f09a65bd7918a073596ab64355f8a7b619ef6928b79473d9b9e53e23119b080:p1",
+                "sourceSha256": "5f09a65bd7918a073596ab64355f8a7b619ef6928b79473d9b9e53e23119b080",
+                "groupIndex": 1
+              },
+              {
+                "callSha256": "0f20bf5408cfe53e0a35dfb8ba3f5cba88df54eff9c030a479579654438ff53e",
+                "resultRef": "result:sha256:9450f93a65fedaf5bb2ceeba6c2cff78fe3e4264266919e5234a4ba5eb6d5234",
+                "sourceId": "text:5f09a65bd7918a073596ab64355f8a7b619ef6928b79473d9b9e53e23119b080@utf8-pages-v1:5f09a65bd7918a073596ab64355f8a7b619ef6928b79473d9b9e53e23119b080:p1",
+                "sourceSha256": "5f09a65bd7918a073596ab64355f8a7b619ef6928b79473d9b9e53e23119b080",
+                "groupIndex": 3
+              },
+              {
+                "callSha256": "8e3b146a328b38dff69ca063465d58a896f094bc475f8312d2d0df4f8e5b0a75",
+                "resultRef": "result:sha256:9450f93a65fedaf5bb2ceeba6c2cff78fe3e4264266919e5234a4ba5eb6d5234",
+                "sourceId": "text:5f09a65bd7918a073596ab64355f8a7b619ef6928b79473d9b9e53e23119b080@utf8-pages-v1:5f09a65bd7918a073596ab64355f8a7b619ef6928b79473d9b9e53e23119b080:p1",
+                "sourceSha256": "5f09a65bd7918a073596ab64355f8a7b619ef6928b79473d9b9e53e23119b080",
+                "groupIndex": 4
+              },
+              {
+                "callSha256": "b903e64f2d2933c38864dd6f1b1eb36adba47840ad25d6d32efa8a8112eae349",
+                "resultRef": "result:sha256:9450f93a65fedaf5bb2ceeba6c2cff78fe3e4264266919e5234a4ba5eb6d5234",
+                "sourceId": "text:5f09a65bd7918a073596ab64355f8a7b619ef6928b79473d9b9e53e23119b080@utf8-pages-v1:5f09a65bd7918a073596ab64355f8a7b619ef6928b79473d9b9e53e23119b080:p1",
+                "sourceSha256": "5f09a65bd7918a073596ab64355f8a7b619ef6928b79473d9b9e53e23119b080",
+                "groupIndex": 5
+              },
+              {
+                "callSha256": "fac1f1f90994c6efc3f7f5b214d4ce35eb9bf14c6e0cb928ceeef6fac5d5b36a",
+                "resultRef": "result:sha256:9450f93a65fedaf5bb2ceeba6c2cff78fe3e4264266919e5234a4ba5eb6d5234",
+                "sourceId": "text:5f09a65bd7918a073596ab64355f8a7b619ef6928b79473d9b9e53e23119b080@utf8-pages-v1:5f09a65bd7918a073596ab64355f8a7b619ef6928b79473d9b9e53e23119b080:p1",
+                "sourceSha256": "5f09a65bd7918a073596ab64355f8a7b619ef6928b79473d9b9e53e23119b080",
+                "groupIndex": 6
+              }
+            ]
+          }
+        ],
+        "correctionAttempts": [
+          {
+            "callSha256": "2331ea975c8997bfa3185e507517c8259ddef8b52cec9697c4e2198614b33f72",
+            "resultRef": "result:sha256:9450f93a65fedaf5bb2ceeba6c2cff78fe3e4264266919e5234a4ba5eb6d5234",
+            "selection": {
+              "offset": 0,
+              "limit": 1400
+            },
+            "refusedBeforeDispatch": true,
+            "modelReceivedCorrectionAdviceAt": 4,
+            "followingSingleSameRefReadSucceeded": true
+          }
+        ],
+        "rereadsAfterProjection": [
+          {
+            "callSha256": "8e3b146a328b38dff69ca063465d58a896f094bc475f8312d2d0df4f8e5b0a75",
+            "resultRef": "result:sha256:9450f93a65fedaf5bb2ceeba6c2cff78fe3e4264266919e5234a4ba5eb6d5234",
+            "firstFullReturnOrdinal": 6,
+            "sourceSha256": "5f09a65bd7918a073596ab64355f8a7b619ef6928b79473d9b9e53e23119b080"
+          },
+          {
+            "callSha256": "b903e64f2d2933c38864dd6f1b1eb36adba47840ad25d6d32efa8a8112eae349",
+            "resultRef": "result:sha256:9450f93a65fedaf5bb2ceeba6c2cff78fe3e4264266919e5234a4ba5eb6d5234",
+            "firstFullReturnOrdinal": 7,
+            "sourceSha256": "5f09a65bd7918a073596ab64355f8a7b619ef6928b79473d9b9e53e23119b080"
+          },
+          {
+            "callSha256": "fac1f1f90994c6efc3f7f5b214d4ce35eb9bf14c6e0cb928ceeef6fac5d5b36a",
+            "resultRef": "result:sha256:9450f93a65fedaf5bb2ceeba6c2cff78fe3e4264266919e5234a4ba5eb6d5234",
+            "firstFullReturnOrdinal": 8,
+            "sourceSha256": "5f09a65bd7918a073596ab64355f8a7b619ef6928b79473d9b9e53e23119b080"
+          },
+          {
+            "callSha256": "3420c5d1a75a5159d624e3b18653a2d1647294dbdd72ea413ac69aa3c604e891",
+            "resultRef": "result:sha256:9450f93a65fedaf5bb2ceeba6c2cff78fe3e4264266919e5234a4ba5eb6d5234",
+            "firstFullReturnOrdinal": 9,
+            "sourceSha256": "5f09a65bd7918a073596ab64355f8a7b619ef6928b79473d9b9e53e23119b080"
+          }
+        ]
+      },
+      "requests": [
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14
+      ]
+    }
+  ]
+}
