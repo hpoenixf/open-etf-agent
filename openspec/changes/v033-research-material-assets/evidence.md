@@ -80,3 +80,40 @@ one necessary cancellation recheck; Runtime, task schemas, knowledge algorithms,
 model configuration and permission grants were not changed. Raw logs, generated
 projects, dependency installations, caches and restricted lineage notes are not
 part of the submitted candidate.
+
+## Remote verification and first real-model cohort — 2026-11-18
+
+[GitHub Verify](https://github.com/hpoenixf/open-etf-agent/actions/runs/44267208305)
+ran the merge tree for PR #8. Its tree matched execution commit
+`f7d32e23e24b38717174ca8e581e4ea665eb1a7b`. The Runtime suite reported 1,506
+passed, 4 optional skips and 0 failures. A clean local install, build, docs check
+and the 19 A17 tests also passed on that commit.
+
+The [frozen plan](../../../engineering/v033-a17-acceptance-20261118/PLAN.safe.json)
+defines ten synthetic tasks and the pass criteria. All 422 execution inputs and
+locked dependencies were hash-checked against the working files and the pinned
+commit. The [qualification record](../../../engineering/v033-a17-acceptance-20261118/QUALIFICATION.safe.json)
+retains nine attempted tasks and one unsent task. Eight completed the original
+Runtime, delivered a report, and cited the exact expected source version and
+page. The eight reports could be read in fresh CLI processes with zero model
+requests. The execution operator compared each completed report and final answer
+with the frozen synthetic source.
+
+OpenCode Go returned 25 confirmed DeepSeek V4.1 Flash responses with 52,411
+reported tokens and 0 USD additional cost on those responses. One other physical
+request remains unknown, so the batch's total cost is unknown. Dispatch stopped
+at that point. The acceptance gate remains open at 8/10 against a 9/10 minimum.
+
+The acceptance runner submitted all ten tasks during preflight. The original
+Runtime starts each persisted deadline at submission. Serial execution and the
+canary review therefore consumed the later tasks' deadlines before work began.
+A17-09 read the selected PDF page successfully. Its second request started with
+1,680 ms left on the existing Run deadline, then the Run ended with `TIMEOUT`.
+The original request ledger and Runtime ticket both preserve the uncertainty.
+A17-10 was admitted during preflight and made zero provider requests.
+
+For a prospective cohort, freeze the ten cases and prepare the registries
+upfront. Admit each Run immediately before its own work so it receives the
+configured time budget, completing any required post-admission material change
+within that task. A fresh paid batch requires its own authorization. Preserve the
+original timeout, unsent task and unresolved request in this record.

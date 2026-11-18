@@ -10,5 +10,8 @@
 - [x] Exercise selected version through real existing task submission/readback;
       prove old task bindings do not change when current selection changes.
 - [x] Run affected original regressions, full Node 26 suite/build and review.
-- [ ] Plan fresh real-model acceptance separately; do not recycle old cohorts.
+- [x] Freeze and attempt a fresh ten-task real-model acceptance cohort with
+      explicit Go authorization, synthetic inputs and separate request accounting.
+- [ ] Reach the real-model acceptance threshold in a fresh, authorized cohort.
+      The first cohort retained eight successes, one timeout, and one unsent task.
 - [ ] Obtain stable-version publication direction; no version bump/tag/release in this candidate.
