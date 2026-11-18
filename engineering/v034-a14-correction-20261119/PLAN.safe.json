@@ -1,0 +1,179 @@
+{
+  "schemaVersion": "v034-a14-targeted-live-plan@1",
+  "sourceCommit": "9d7018df68ef3b9791ef93b1857cb0007f592165",
+  "sourceTree": "ee1296d2f84a4140e0365c3520efec33e0357263",
+  "baselineCommit": "abf78f7d1ac21f8d61483bf699b562033352d8ab",
+  "currentMainReadOnly": "a418773abddb9d076b37036e13b488c515dad1b2",
+  "sourceSha256": "5f09a65bd7918a073596ab64355f8a7b619ef6928b79473d9b9e53e23119b080",
+  "sourceBytes": 9821,
+  "originalInputContractSha256": "326082523384ffc7eceaa10008dd73d54f9e5baa6451545a7a450b873a7e7561",
+  "sourceFile": "acceptance-source.txt",
+  "profile": {
+    "capabilities": [
+      "report"
+    ],
+    "allowedTools": [
+      "read_page",
+      "read_result",
+      "save_report"
+    ],
+    "contextBytes": 1048576,
+    "limits": {
+      "maxRounds": 20,
+      "maxTools": 32,
+      "timeoutMs": 300000,
+      "model": 24,
+      "tool": 40
+    }
+  },
+  "gateway": {
+    "mode": "live",
+    "provider": "opencode-go",
+    "protocol": "chat-completions",
+    "model": "deepseek-v4.1-flash",
+    "endpoint": "https://opencode.ai/inference/go/openai/v1/chat/completions",
+    "apiKeyEnv": "CHAT_API_KEY",
+    "stream": false
+  },
+  "maximumEncodedBytes": 1048576,
+  "extraUsage": "confirmed-off-by-user",
+  "caps": {
+    "maxRequests": 40,
+    "maximumAdditionalUsd": 0,
+    "automaticRetries": 0,
+    "concurrency": 1
+  },
+  "previousV034": {
+    "physicalRequests": 46,
+    "maxRequests": 240,
+    "ledgerSha256": "2d0d535761e4bb45cc581327e0b9c02a36269f054182f715d1a2ed8376d1e54a",
+    "confirmedGoZero": 46,
+    "unknownRequestCount": 0,
+    "contentPasses": 9,
+    "planned": 10,
+    "failedCase": "a14-09",
+    "reportFailure": "TOOL_REJECTED: exact original resultRef with unsupported selection",
+    "independentReviewModel": "gpt-6-luna"
+  },
+  "earlierObservedLedgers": {
+    "totals": {
+      "reserved": 240,
+      "confirmedGoZero": 237,
+      "unknownBilling": 3,
+      "knownOther": 0
+    },
+    "v033": {
+      "batches": [
+        {
+          "label": "pr8-a17",
+          "sha256": "e2f0bc3d06469ee93737827c7d27c51f93dde198ceee06586ca89f8a3794232b",
+          "reserved": 26,
+          "confirmedGoZero": 25,
+          "unknownBilling": 1,
+          "knownOther": 0,
+          "unknown": [
+            {
+              "requestOrdinal": 26,
+              "httpStatus": null
+            }
+          ]
+        },
+        {
+          "label": "pr8-a17-fresh",
+          "sha256": "d522efdfb735cee8b13d3a321fade9825b782883af5ab42691ac6255f2b4a403",
+          "reserved": 28,
+          "confirmedGoZero": 27,
+          "unknownBilling": 1,
+          "knownOther": 0,
+          "unknown": [
+            {
+              "requestOrdinal": 28,
+              "httpStatus": 502
+            }
+          ]
+        }
+      ],
+      "reserved": 54,
+      "confirmedGoZero": 52,
+      "unknownBilling": 2,
+      "knownOther": 0
+    },
+    "retainedUnknowns": [
+      {
+        "version": "0.31",
+        "ledgerSha256": "9fafe942b412795d6adfd3f8f7ae994f3087e9fa6cece0153c9cc458fe962c56",
+        "requests": [
+          {
+            "requestOrdinal": 1,
+            "httpStatus": 401
+          }
+        ]
+      },
+      {
+        "version": "0.33",
+        "ledgerSha256": "e2f0bc3d06469ee93737827c7d27c51f93dde198ceee06586ca89f8a3794232b",
+        "requests": [
+          {
+            "requestOrdinal": 26,
+            "httpStatus": null
+          }
+        ]
+      },
+      {
+        "version": "0.33",
+        "ledgerSha256": "d522efdfb735cee8b13d3a321fade9825b782883af5ab42691ac6255f2b4a403",
+        "requests": [
+          {
+            "requestOrdinal": 28,
+            "httpStatus": 502
+          }
+        ]
+      }
+    ]
+  },
+  "independentReview": {
+    "selectedModel": "gpt-6-luna",
+    "route": "separate authenticated Codex session"
+  },
+  "tasks": [
+    {
+      "id": "a14r-q09",
+      "question": "Explain why the stress scenario cannot determine either fund return. Use only the supplied synthetic source. Read it, then perform three explicit read_result rereads of its returned exact resultRef before writing a source-cited saved report. If an old result is represented by a reference, reread it when needed. Do not invent unavailable values.",
+      "expectedOutcome": "completed-with-report",
+      "contextWorkingSetBytes": 256,
+      "rubric": [
+        "hypothetical 10% decline",
+        "beta missing",
+        "no invented return"
+      ],
+      "questionSha256": "9bd822964e12c3c18a267789f39540e016aa565c8333c21547a7f2ef8aa3daea",
+      "questionBytes": 346,
+      "originalId": "a14-09",
+      "scope": "exact original question on the corrected candidate",
+      "acceptance": "Completed artifact-required report, independent content pass, original citation readback and three successful same-ref rereads. Original ten-task denominator remains unchanged."
+    },
+    {
+      "id": "a14r-projection",
+      "question": "This is a controlled engineering check on the supplied synthetic source. Use only that source. All tools must be called one at a time, with a single tool call per turn.\n\nRead physical page 1 with read_page and keep the exact resultRef. Call read_result once with exactly that resultRef and no selection.\n\nNext, make exactly one intentionally invalid read_result call using that same resultRef and selection {\"offset\":0,\"limit\":1400}. This call is expected to be refused locally. After the refusal, correct it in the very next turn by calling only read_result with the same resultRef and no selection.\n\nMake additional successful read_result calls using only that same resultRef in distinct turns until an older read result in the visible history is represented as kind stored-source-ref. Then explicitly follow that stored-source-ref readWith reference in another single read_result call before writing your report. Use the original text returned by the later reread.\n\nSave a cited report that states whether the hypothetical 10% equity decline determines either fund return, the missing input, the exact opaque identifier as a string, and the current and superseded Boreal fees. Do not invent returns or treat the scenario as a forecast. Use the original acquired source ID, and give a concise final answer.",
+      "questionSha256": "3868487f37f89b1399c5a3907512d9944ff83f12dbe9cf6d1bd20c2710c6c87f",
+      "questionBytes": 1308,
+      "contextWorkingSetBytes": 256,
+      "rubric": [
+        "10% hypothetical, not a forecast",
+        "portfolio beta missing",
+        "no inferred return for either fund",
+        "12345678901234567890 exact as a string",
+        "Boreal 0.35% current and 0.40% superseded"
+      ],
+      "scope": "controlled real-model engineering path, excluded from normal cohort numerator",
+      "acceptance": "Exactly one pre-dispatch original-read refusal, immediate exact ref correction, older result projected in an actual delivered request, later model reread of that same reference, byte-exact original result on a subsequent actual request, and a cold-readable cited report passing independent content review."
+    }
+  ],
+  "acceptancePolicy": {
+    "preservedCohort": "reuse the prior immutable 9/10 and do not overwrite a14-09",
+    "targetedRun": "count neither an expected refusal nor an offline check as a successful real task",
+    "scopeRationale": "Only the typed one-field original-read correction and its checkpoint were changed. Valid input, report and projection contracts are unchanged and covered by the full regression; trigger a wider fresh cohort only on evidence of broader impact or a changed qualification scope.",
+    "stop": "Any provider limit, non-Go billing, missing/unknown cost, unverified model, or indeterminate request stops all further dispatch."
+  },
+  "providerPreflightSha256": "2c789144d76c42283040e96a90fa739d3cdc7ef4da23b2373e3fb916541edfbf"
+}

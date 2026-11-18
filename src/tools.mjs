@@ -1,4 +1,5 @@
 import {projectControlProofs} from './context.mjs';
+import {ORIGINAL_READ_CORRECTION} from './run-control.mjs';
 import {webOriginalArtifactId,webOriginalBytes,webProvenanceSha256} from './web-source.mjs';
 import {prepareReportAssessment,assessmentHash} from './report-assessment.mjs';
 import {verifyKnowledgeResult} from './knowledge.mjs';
@@ -26,6 +27,7 @@ const requestIdentity = (original,effective,hookUsed) => sha256(JSON.stringify([
 const recoveryFail = message => { throw Object.assign(new Error(message), {code:'RECOVERY_CHECKPOINT_MISMATCH'}); };
 // Only this original builtin validator can mint a correction-eligible rejection.
 const validationBrand=Symbol('builtin-calculation-validation');
+const originalReadSelectionBrand=Symbol('builtin-original-read-selection');
 const reportValidationBrand=Symbol('builtin-report-input-validation');
 const reportReferenceBrand=Symbol('builtin-report-reference-validation');
 const csvValidationBrand=Symbol('builtin-csv-input-validation');
@@ -52,6 +54,12 @@ const unitPattern='^[A-Za-z][A-Za-z0-9 /%_-]{0,39}(?![\\s\\S])';
 const explicitRootTypes = schema => ({ ...schema, properties: Object.assign({}, ...schema.oneOf.map(branch => branch.properties)) });
 function fields(value, names) {
   if (!object(value) || Object.keys(value).length !== names.length || names.some(k => !Object.hasOwn(value, k))) fail('Invalid argument fields');
+}
+function originalReadWithSelection(args){
+  const selection=args?.selection;
+  return object(args)&&Object.keys(args).length===2&&Object.hasOwn(args,'resultRef')&&Object.hasOwn(args,'selection')&&typeof args.resultRef==='string'&&
+    /^result:sha256:[a-f0-9]{64}$/.test(args.resultRef)&&object(selection)&&Object.keys(selection).length===2&&Object.hasOwn(selection,'offset')&&Object.hasOwn(selection,'limit')&&
+    Number.isSafeInteger(selection.offset)&&selection.offset>=0&&Number.isSafeInteger(selection.limit)&&selection.limit>=1&&selection.limit<=4096;
 }
 export function validateProtectedHostSnapshot(snapshot,protection){
  const p=validateArtifactProtection(protection);if(!object(snapshot)||Object.keys(snapshot).sort().join(',')!==['schemaVersion','protection','definitionsHash','results','methods','saveAttempted','receipt'].sort().join(',')||snapshot.schemaVersion!=='tool-host-protected@1'||!isDeepStrictEqual(snapshot.protection,p)||typeof snapshot.definitionsHash!=='string'||!/^[a-f0-9]{64}$/.test(snapshot.definitionsHash)||!Array.isArray(snapshot.results)||snapshot.results.length>4||Object.keys(snapshot.results).length!==snapshot.results.length||!Array.isArray(snapshot.methods)||snapshot.methods.length||Object.keys(snapshot.methods).length||typeof snapshot.saveAttempted!=='boolean'||snapshot.receipt!==null&&(!object(snapshot.receipt)||!snapshot.saveAttempted))recoveryFail('Invalid protected Host snapshot');
@@ -269,7 +277,9 @@ export async function createToolHost({ directory, extensions = [], hooks, allowe
         {type:'object',properties:{resultRef:{type:'string',pattern:'^result:sha256:[a-f0-9]{64}$'}},required:['resultRef'],additionalProperties:false},
         {type:'object',properties:{resultRef:{type:'string',pattern:'^derived:sha256:[a-f0-9]{64}$'},selection:{type:'object',properties:{offset:{type:'integer',minimum:0},limit:{type:'integer',minimum:1,maximum:4096}},required:['offset','limit'],additionalProperties:false}},required:['resultRef'],additionalProperties:false}
       ]},
-      validate(args){fields(args,args?.selection===undefined?['resultRef']:['resultRef','selection']);if(typeof args.resultRef!=='string'||!/^(result|derived):sha256:[a-f0-9]{64}$/.test(args.resultRef)||args.resultRef.startsWith('result:')&&args.selection!==undefined)fail('Invalid typed result read');if(args.selection!==undefined){fields(args.selection,['offset','limit']);if(!Number.isSafeInteger(args.selection.offset)||args.selection.offset<0||!Number.isSafeInteger(args.selection.limit)||args.selection.limit<1||args.selection.limit>4096)fail('Invalid derived selection');}},
+      validate(args){
+        if(hostProjection==='host-results@3'&&originalReadWithSelection(args)){const error=new Error('Invalid typed result read');error[originalReadSelectionBrand]=true;throw error;}
+        fields(args,args?.selection===undefined?['resultRef']:['resultRef','selection']);if(typeof args.resultRef!=='string'||!/^(result|derived):sha256:[a-f0-9]{64}$/.test(args.resultRef)||args.resultRef.startsWith('result:')&&args.selection!==undefined)fail('Invalid typed result read');if(args.selection!==undefined){fields(args.selection,['offset','limit']);if(!Number.isSafeInteger(args.selection.offset)||args.selection.offset<0||!Number.isSafeInteger(args.selection.limit)||args.selection.limit<1||args.selection.limit>4096)fail('Invalid derived selection');}},
       async execute(args){if(args.resultRef.startsWith('result:'))return {...await readSource(args.resultRef),resultRef:args.resultRef};await ownedDerived(args.resultRef);return results.readDerivedSelection(args.resultRef,args.selection);}
     };
   }
@@ -327,6 +337,28 @@ export async function createToolHost({ directory, extensions = [], hooks, allowe
     if(!binding?.verifyResult||await confirmDerivedConsumption(record)!==true)recoveryFail('Derived result lacks original consumed receipt');
     await binding.verifyResult(record.value,{call:record.call});return record;
   }
+  function originalReadCorrectionProof(call){
+    if(hostProjection!=='host-results@3'||hooks||protection||!runIdentity||!bindings.read_result||
+      call?.name!=='read_result'||typeof call.id!=='string'||!call.id||call.id.length>200||
+      /[\u0000-\u001f]/.test(call.id)||Object.keys(call).length!==3||
+      !checkpointJsonStable(call)||!originalReadWithSelection(call.arguments))return null;
+    const {resultRef}=call.arguments;
+    const source=results.snapshot().find(entry=>entry.kind==='source'&&entry.resultRef===resultRef);
+    if(!source||allowedDocuments&&!allowedDocuments.includes(source.documentId))return null;
+    return {schemaVersion:ORIGINAL_READ_CORRECTION,code:'READ_RESULT_ORIGINAL_SELECTION',repairable:true,
+      requestHash:sha256(canonical(call)),runId:runIdentity.runId,grantId:runIdentity.grantId,
+      scopeHash:sha256(canonical({definitionsHash,allowedDocuments:allowedDocuments??null})),
+      resultRef,sourceRecordSha256:source.recordSha256};
+  }
+  function verifyOriginalReadRejection(call,result){
+    try{fields(result,['callId','status','dispatched','error','validation','durationMs']);}
+    catch{recoveryFail('Original read correction shape mismatch');}
+    const expected=originalReadCorrectionProof(call);
+    if(!expected||!isDeepStrictEqual(expected,result.validation)||result.callId!==call.id||
+      result.status!=='rejected'||result.dispatched!==false||result.error!==expected.code||
+      !Number.isFinite(result.durationMs)||result.durationMs<0)recoveryFail('Original read correction identity mismatch');
+    return true;
+  }
   function verifyCalculationRejection(call,result){
     if(hooks||!Object.hasOwn(bindings,'calculate_change'))recoveryFail('Calculation correction scope mismatch');
     try{fields(call,['id','name','arguments']);}catch{recoveryFail('Calculation call shape mismatch');}
@@ -373,7 +405,7 @@ export async function createToolHost({ directory, extensions = [], hooks, allowe
     if(!expected||canonical(expected)!==canonical(result.validation)||result.callId!==call.id||result.status!=='rejected'||result.dispatched!==false||result.error!==expected.code||!Number.isFinite(result.durationMs)||result.durationMs<0)recoveryFail('Child input rejection owner mismatch');
     return true;
   }
-  const verifyLocalRejection=(call,result)=>result.validation?.schemaVersion==='child-execution-input-validation@1'?verifyChildInputRejection(call,result):result.validation?.schemaVersion==='builtin-csv-input-validation@1'?verifyCsvRejection(call,result):result.validation?.schemaVersion==='builtin-report-reference-validation@1'?verifyReferenceRejection(call,result):result.validation?.schemaVersion==='builtin-report-input-validation@1'?verifyReportRejection(call,result):verifyCalculationRejection(call,result);
+  const verifyLocalRejection=(call,result)=>result.validation?.schemaVersion===ORIGINAL_READ_CORRECTION?verifyOriginalReadRejection(call,result):result.validation?.schemaVersion==='child-execution-input-validation@1'?verifyChildInputRejection(call,result):result.validation?.schemaVersion==='builtin-csv-input-validation@1'?verifyCsvRejection(call,result):result.validation?.schemaVersion==='builtin-report-reference-validation@1'?verifyReferenceRejection(call,result):result.validation?.schemaVersion==='builtin-report-input-validation@1'?verifyReportRejection(call,result):verifyCalculationRejection(call,result);
   function groupRefusals(calls,historical=false){
     if(hooks||protection||!runIdentity||!Array.isArray(calls)||calls.length<2||calls.some(c=>!Object.hasOwn(bindings,c.name)||c.name==='ask_response'||!checkpointJsonStable(c)))return null;
     const facts=[...originalGroupOwners.values()].flatMap(b=>[specialistGroupRefusal(b,calls,historical),childExecutionGroupRefusal(b,calls,historical)]).filter(Boolean);if(facts.length!==1)return null;
@@ -476,7 +508,11 @@ export async function createToolHost({ directory, extensions = [], hooks, allowe
         if(groups.length!==1)recoveryFail('Group history owner missing');const expected=groupRefusals(groups[0],true)?.find(r=>r.callId===call.id);
         if(!expected||canonical(expected)!==canonical(result)||canonical(groups[0].find(c=>c.id===call.id))!==canonical(call))recoveryFail('Group result identity mismatch');return;
       }
-      if(result?.validation!==undefined){verifyLocalRejection(call,result);if(result.validation.schemaVersion==='builtin-report-reference-validation@1')await results.verifyReferenceBasis(result.validation.basis);}
+      if(result?.validation!==undefined){
+        verifyLocalRejection(call,result);
+        if(result.validation.schemaVersion==='builtin-report-reference-validation@1')await results.verifyReferenceBasis(result.validation.basis);
+        if(result.validation.schemaVersion===ORIGINAL_READ_CORRECTION)await results.read(result.validation.resultRef);
+      }
       if(call?.name==='ask_response'||result?.value?.kind===RESPONSE_PROFILE){if(!ordinaryResponse||call?.name!=='ask_response')recoveryFail('Ordinary response owner required');validateResponseCall(call);await ordinaryResponse.confirm(call,result);return;}
       if(result.status!=='succeeded')return;
       if (result.callId!==call.id) recoveryFail('Recovered call ID mismatch');
@@ -562,7 +598,9 @@ export async function createToolHost({ directory, extensions = [], hooks, allowe
         onDispatch({ original: structuredClone(original || call), effective: structuredClone(call) }); // Root resource reservation precedes the actual handler.
       } catch (error) {
         if(error?.[reportDeliveryBrand]){const deliveryAssessment=prepareReportAssessment({call,basis:error[reportDeliveryBrand].basis,...runIdentity,scopeHash:error[reportDeliveryBrand].scopeHash});return finish({callId,status:'rejected',dispatched:false,error:'REPORT_CITATIONS_DEGRADED',deliveryAssessment});}
-        const validation=childInputProof(call,{error})??(!hooks&&!protection&&call?.name==='create_csv'&&checkpointJsonStable(call)&&error?.[csvValidationBrand]===true?{schemaVersion:'builtin-csv-input-validation@1',code:'CSV_ROWS_ARRAY_REQUIRED',repairable:true,requestHash:sha256(canonical(call))}:runIdentity&&!hooks&&!protection&&!saveAttempted&&!receipt&&call?.name==='save_report'&&checkpointJsonStable(call)&&error?.[reportReferenceBrand]===true?{schemaVersion:'builtin-report-reference-validation@1',code:error.validationCode,repairable:true,requestHash:sha256(canonical(call)),...runIdentity,scopeHash:sha256(canonical({definitionsHash,allowedDocuments:allowedDocuments??null})),basis:error.basis,basisHash:sha256(canonical(error.basis))}:!hooks&&call?.name==='calculate_change'&&error?.[validationBrand]===true?{schemaVersion:'builtin-calculation-validation@2',code:error.validationCode,repairable:correctionCodes.has(error.validationCode),requestHash:sha256(canonical(call))}:!hooks&&!protection&&!saveAttempted&&!receipt&&call?.name==='save_report'&&checkpointJsonStable(call)&&error?.[reportValidationBrand]===true?{schemaVersion:'builtin-report-input-validation@1',code:error.validationCode,repairable:true,requestHash:sha256(canonical(call))}:null);
+        const originalReadProof=error?.[originalReadSelectionBrand]===true&&canOfferReferenceCorrection?.()===true
+          ? originalReadCorrectionProof(call) : null;
+        const validation=originalReadProof??childInputProof(call,{error})??(!hooks&&!protection&&call?.name==='create_csv'&&checkpointJsonStable(call)&&error?.[csvValidationBrand]===true?{schemaVersion:'builtin-csv-input-validation@1',code:'CSV_ROWS_ARRAY_REQUIRED',repairable:true,requestHash:sha256(canonical(call))}:runIdentity&&!hooks&&!protection&&!saveAttempted&&!receipt&&call?.name==='save_report'&&checkpointJsonStable(call)&&error?.[reportReferenceBrand]===true?{schemaVersion:'builtin-report-reference-validation@1',code:error.validationCode,repairable:true,requestHash:sha256(canonical(call)),...runIdentity,scopeHash:sha256(canonical({definitionsHash,allowedDocuments:allowedDocuments??null})),basis:error.basis,basisHash:sha256(canonical(error.basis))}:!hooks&&call?.name==='calculate_change'&&error?.[validationBrand]===true?{schemaVersion:'builtin-calculation-validation@2',code:error.validationCode,repairable:correctionCodes.has(error.validationCode),requestHash:sha256(canonical(call))}:!hooks&&!protection&&!saveAttempted&&!receipt&&call?.name==='save_report'&&checkpointJsonStable(call)&&error?.[reportValidationBrand]===true?{schemaVersion:'builtin-report-input-validation@1',code:error.validationCode,repairable:true,requestHash:sha256(canonical(call))}:null);
         return finish({callId,status:'rejected',dispatched:false,error:validation?.code??error.message,...(validation?{validation}:{})});
       }
       try {

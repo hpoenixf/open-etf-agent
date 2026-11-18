@@ -1,3 +1,11 @@
+export const ORIGINAL_READ_CORRECTION = 'builtin-original-read-validation@1';
+
+export function matchesOriginalReadCorrection(proposal,resultRef) {
+ const call=proposal?.kind==='calls'&&proposal.calls?.length===1?proposal.calls[0]:null;
+ return typeof resultRef==='string'&&call?.name==='read_result'&&call.arguments?.resultRef===resultRef&&
+   Object.hasOwn(call.arguments,'resultRef')&&Object.keys(call.arguments).length===1;
+}
+
 export function controlErrorCode(error, fallback='EXECUTION_FAILED'){try{const code=error?.code;return typeof code==='string'&&code.length>0&&code.length<=200&&!/[\u0000-\u001f\u007f]/.test(code)?code:fallback;}catch{return fallback;}}
 // Runtime's decision owner. This is not an authority, budget, execution or storage
 // service: only the original owners may validate facts and perform their effects.

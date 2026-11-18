@@ -1,7 +1,7 @@
 import {settleAsyncChildExecutions} from './child-execution.mjs';
 import {publicReportAssessment} from './report-assessment.mjs';
 import {INTERACTION_PROFILE, hasInteractionBinding, validateInteractionCheckpoint, validateInteractionConfig} from './human-interaction.mjs';
-import { decideRunControl, validateControlObservations, controlErrorCode } from './run-control.mjs';
+import { decideRunControl, validateControlObservations, controlErrorCode, ORIGINAL_READ_CORRECTION, matchesOriginalReadCorrection } from './run-control.mjs';
 import { validateSchedule, scheduleRunId, hasScheduleComposition, validateScheduleCompositionScope } from './schedule.mjs';
 import { RESPONSE_PROFILE, RESPONSE_BINDING, hasResponseComposition, validateResponseCheckpoint, validateResponseCall } from './human-response.mjs';
 import { createTaskTime, validateTaskTime, projectTaskTime, taskTimeMessage } from './temporal.mjs';
@@ -13,7 +13,7 @@ import { createRootBudget } from './cooperation.mjs';
 import { normalizePdfSnapshot, pdfSnapshotBinding } from './pdf-input.mjs';
 import { compactWorkingView } from './compaction.mjs';
 import { projectMemory } from './memory-projection.mjs';
-import { projectContext, projectControlProofs } from './context.mjs';
+import { projectContext, projectControlProofs, assertContextCapacity } from './context.mjs';
 import { activateTrustedPlugins, inspectTrustedPlugins } from './plugins.mjs';
 import { sha256, DOCUMENT_REVOCATION_PROFILE, normalizeDocumentCatalog, documentCatalogBinding } from './source.mjs';
 import { PUBLICATION_BINDING, PUBLICATION_TEXT_MAX_BYTES, preparePublication } from './publication.mjs';
@@ -113,7 +113,7 @@ export function materializeScheduledRun(options, reference, observation = {}) {
  const prior=options.durable.store.inspectSchedule(reference);
  return drive(options, true, {kind:'materialize',schedule:prior.envelope.schedule,reference,reportFresh:observation.reportFresh===true});
 }
-async function drive({ question, gateway, outputRoot='runs', requireReport=false, reportDelivery, signal, hostSignal, limits={}, extensions=[], hooks, plugins, rootBudget, allowedTools, allowedDocuments, taskId=null, contextBytes, workingInput, durable, publication = false, pdfInput, taskTime, ordinaryResponse = false, documentProtection = false, documentCatalog, interaction, hostProjection, knowledgeQueryEffects }, submitting, scheduleOperation) {
+async function drive({ question, gateway, outputRoot='runs', requireReport=false, reportDelivery, signal, hostSignal, limits={}, extensions=[], hooks, plugins, rootBudget, allowedTools, allowedDocuments, taskId=null, contextBytes, contextWorkingSetBytes, workingInput, durable, publication = false, pdfInput, taskTime, ordinaryResponse = false, documentProtection = false, documentCatalog, interaction, hostProjection, knowledgeQueryEffects }, submitting, scheduleOperation) {
   if(pdfInput?.snapshot!==undefined){if(Object.keys(pdfInput).length!==1)throw failure('PDF_INVALID_INPUT');pdfInput=Object.freeze({snapshot:normalizePdfSnapshot(pdfInput.snapshot)});}
   documentCatalog=documentCatalog===undefined?undefined:normalizeDocumentCatalog(documentCatalog);
   if(documentCatalog&&documentProtection)throw failure('CUSTOM_PROTECTED_CATALOG_UNSUPPORTED');
@@ -130,6 +130,7 @@ async function drive({ question, gateway, outputRoot='runs', requireReport=false
   for(const [key,value] of Object.entries(budget))if(!['maxRounds','maxTools','timeoutMs'].includes(key)||!Number.isSafeInteger(value)||value<1||value>(key==='timeoutMs'?3600000:1000))throw failure('INVALID_LIMIT');
   if(reportDelivery!==undefined&&(reportDelivery!=='artifact-required@1'||!requireReport||!publication||!durable||durable.parentRunId||durable.store?.schemaVersion===5||documentProtection||scheduleOperation))throw failure('INVALID_REPORT_DELIVERY');
   if(hostProjection!==undefined&&!['host-results@1','host-results@2','host-results@3'].includes(hostProjection))throw failure('INVALID_HOST_PROJECTION');
+  if(contextWorkingSetBytes!==undefined&&(!Number.isSafeInteger(contextWorkingSetBytes)||contextWorkingSetBytes<1||contextWorkingSetBytes>1048576))throw failure('INVALID_CONTEXT_WORKING_SET');
   if(contextBytes!==undefined&&(!Number.isSafeInteger(contextBytes)||contextBytes<1||contextBytes>1048576))throw failure('INVALID_CONTEXT_LIMIT');
   if(workingInput!==undefined&&(!workingInput||typeof workingInput!=='object'||Object.keys(workingInput).some(key=>!['memoryLibrary','compaction'].includes(key))))throw failure('INVALID_WORKING_INPUT');
   if(workingInput?.memoryLibrary&&(typeof workingInput.memoryLibrary.libraryId!=='string'||typeof workingInput.memoryLibrary.state!=='function'))throw failure('INVALID_MEMORY_LIBRARY');
@@ -206,7 +207,7 @@ async function drive({ question, gateway, outputRoot='runs', requireReport=false
       } catch (error) { if (error.code !== 'UNKNOWN_RUN') throw error; }
     }
     if (!temporal && taskTime !== undefined) temporal = createTaskTime(taskTime);
-    const config={requireReport,...(knowledgeQueryEffects?{knowledgeQueryEffects}:{}),...(reportDelivery===undefined?{}:{reportDelivery}),...(hostProjection?{hostProjection}:{}),...(pdfInput?.snapshot?{pdfSnapshot:pdfSnapshotBinding(pdfInput.snapshot)}:{}),...(documentCatalog?{documentCatalog:documentCatalogBinding(documentCatalog)}:{}),...(protectedMode?{documentProtection:{authorityId:authority.authorityId,libraryId:authority.libraryId}}:{}),...(ordinaryResponse?{ordinaryResponse:multiResponse?INTERACTION_PROFILE:RESPONSE_PROFILE,...(multiResponse?{interaction}:{})}:{}),...(temporal?{taskTime:temporal}:{}),...(publication?{publication:PUBLICATION_BINDING.version}:{}),...(allowedTools?{allowedTools}:{}),...(allowedDocuments?{allowedDocuments}:{}),...(contextBytes===undefined?{}:{contextBytes}),taskId,...(workingInput?{workingInput:{...(workingInput.memoryLibrary?{memoryLibraryId:workingInput.memoryLibrary.libraryId}:{}),...(workingInput.compaction?{compaction:{thresholdBytes:workingInput.compaction.thresholdBytes,summaryTimeoutMs:workingInput.compaction.summaryTimeoutMs??2000,version:workingInput.compaction.mode==='gateway'?'gateway-history-compaction@2':'history-compaction@1',...(workingInput.compaction.mode==='gateway'?{maxSummaryRounds:workingInput.compaction.maxSummaryRounds??6}:{})}}:{})}}:{})};
+    const config={requireReport,...(knowledgeQueryEffects?{knowledgeQueryEffects}:{}),...(reportDelivery===undefined?{}:{reportDelivery}),...(hostProjection?{hostProjection}:{}),...(pdfInput?.snapshot?{pdfSnapshot:pdfSnapshotBinding(pdfInput.snapshot)}:{}),...(documentCatalog?{documentCatalog:documentCatalogBinding(documentCatalog)}:{}),...(protectedMode?{documentProtection:{authorityId:authority.authorityId,libraryId:authority.libraryId}}:{}),...(ordinaryResponse?{ordinaryResponse:multiResponse?INTERACTION_PROFILE:RESPONSE_PROFILE,...(multiResponse?{interaction}:{})}:{}),...(temporal?{taskTime:temporal}:{}),...(publication?{publication:PUBLICATION_BINDING.version}:{}),...(allowedTools?{allowedTools}:{}),...(allowedDocuments?{allowedDocuments}:{}),...(contextBytes===undefined?{}:{contextBytes}),...(contextWorkingSetBytes===undefined?{}:{contextWorkingSetBytes}),taskId,...(workingInput?{workingInput:{...(workingInput.memoryLibrary?{memoryLibraryId:workingInput.memoryLibrary.libraryId}:{}),...(workingInput.compaction?{compaction:{thresholdBytes:workingInput.compaction.thresholdBytes,summaryTimeoutMs:workingInput.compaction.summaryTimeoutMs??2000,version:workingInput.compaction.mode==='gateway'?'gateway-history-compaction@2':'history-compaction@1',...(workingInput.compaction.mode==='gateway'?{maxSummaryRounds:workingInput.compaction.maxSummaryRounds??6}:{})}}:{})}}:{})};
     let stored,claim,directory,runId,boundChild=false,deadlineAt=Date.now()+budget.timeoutMs;
     let state={schemaVersion:'runtime-checkpoint@1',phase:'ready',messages:[{role:'user',content:question}],usedIds:[],rounds:0,toolsDispatched:0,proposal:null,cursor:0,result:null,host:null,working:null,gatewayOutcome:'settled',answer:'',status:'failed',code:null,unknownEffects:[],partialEffects:[],hookErrors:[]};
     function verifyCorrectionHistory(host){
@@ -222,7 +223,12 @@ async function drive({ question, gateway, outputRoot='runs', requireReport=false
           const message=state.messages[i+1+j];if(message?.role!=='tool')break;
           const result=message.result;
           if((result.partialPaths||[]).some(path=>['report.md','manifest.json'].includes(path))||result.artifactEffects||result.memoryEffect)partial=true;
-          if(!partial&&group.calls.length===1&&message.callId===group.calls[0].id&&host.correctionEligible(group.calls[0],result))count++;
+          if(!partial&&group.calls.length===1&&message.callId===group.calls[0].id&&host.correctionEligible(group.calls[0],result)){
+            count++;
+            const next=state.messages[i+2];
+            if(result.validation.schemaVersion===ORIGINAL_READ_CORRECTION&&next&&
+              !matchesOriginalReadCorrection({kind:'calls',calls:next.calls},result.validation.resultRef))throw failure('RECOVERY_CORRECTION_MISMATCH');
+          }
         }
       }
       if(!Number.isSafeInteger(state.corrections??0)||(state.corrections??0)!==Math.min(count,1)||(count>1&&state.failureCode!=='CORRECTION_LIMIT'))throw failure('RECOVERY_CORRECTION_MISMATCH');
@@ -401,7 +407,7 @@ async function drive({ question, gateway, outputRoot='runs', requireReport=false
             const memoryMessages=workingInput?.memoryLibrary?await projectMemory({messages:state.messages,lookupState:lookupMemory}):structuredClone(state.messages);
             const workingMessages=projectControlProofs(projectTaskTime(memoryMessages, temporal));
             const encodedBudget=gateway.inputBudget?{additionalBudget:{maxBytes:gateway.inputBudget.maxBytes,measure:messages=>gateway.inputBudget.measure({messages,tools:host.definitions})}}:{};
-            let requestMessages=contextBytes===undefined&&!hostProjection?workingMessages:await projectContext({messages:workingMessages,maxBytes:contextBytes??1048576,lookupSource:hostProjection?host.lookupContextSource:host.resolveSource,...(hostProjection?{projectOwnedResult:host.projectOwnedResult,projectOwnedCall:host.projectOwnedCall}:{}),...encodedBudget});let noteRef=null;
+            let requestMessages=contextBytes===undefined&&!hostProjection&&contextWorkingSetBytes===undefined?workingMessages:await projectContext({olderReadBytes:contextWorkingSetBytes,onFit:fact=>record('context_fit',fact),messages:workingMessages,maxBytes:contextBytes??1048576,lookupSource:host.lookupContextSource,...(hostProjection?{projectOwnedResult:host.projectOwnedResult,projectOwnedCall:host.projectOwnedCall}:{}),...encodedBudget});let noteRef=null;
             if(workingInput?.compaction&&(state.compactionState?.frontier||Buffer.byteLength(JSON.stringify(requestMessages))>=workingInput.compaction.thresholdBytes)){
               // A crash during summary generation keeps its consumed root reservation; no adoption is implied.
               const managed=workingInput.compaction.mode==='gateway';
@@ -429,12 +435,13 @@ async function drive({ question, gateway, outputRoot='runs', requireReport=false
               const compacted=await compactWorkingView({...(managed?{frontier:compactionState.frontier,readNote:host.readWorkingNote,allowSummary:compactionState.summaryAttempts<maxSummaryRounds}:{}),messages:workingMessages,maxBytes:contextBytes??262144,lookupSource:hostProjection?host.lookupContextSource:host.resolveSource,...(hostProjection?{projectOwnedResult:host.projectOwnedResult,projectOwnedCall:host.projectOwnedCall}:{}),...encodedBudget,canCompactHistory:host.canCompactHistory,lookupMemoryState:workingInput.memoryLibrary?lookupMemory:undefined,rootBudget:claim?{claim(kind){state.phase='model-reserved';state.purpose='compaction';state.host=host.snapshot();claim.reserve(kind,state);}}:rootBudget,summarize,reserveSummary,summaryInputFits,saveNote:host.persistWorkingNote,signal:controller.signal,summaryTimeoutMs:workingInput.compaction.summaryTimeoutMs});
               if(managed&&state.purpose==='compaction'&&gatewayUnsettled)throw failure('COMPACTION_OUTCOME_UNKNOWN');
               if(managed)state.compactionState={frontier:compacted.frontier??null,summaryAttempts:state.compactionState?.summaryAttempts??compactionState.summaryAttempts};
-              requestMessages=contextBytes===undefined&&!hostProjection?compacted.messages:await projectContext({messages:compacted.messages,maxBytes:contextBytes??1048576,lookupSource:hostProjection?host.lookupContextSource:host.resolveSource,...(hostProjection?{projectOwnedResult:host.projectOwnedResult,projectOwnedCall:host.projectOwnedCall}:{}),...encodedBudget});noteRef=compacted.noteRef;delete state.purpose;delete state.summaryRequest;await record('working_note',{...compacted.observation,noteRef});
+              requestMessages=contextBytes===undefined&&!hostProjection&&contextWorkingSetBytes===undefined?compacted.messages:await projectContext({olderReadBytes:contextWorkingSetBytes,onFit:fact=>record('context_fit',fact),messages:compacted.messages,maxBytes:contextBytes??1048576,lookupSource:host.lookupContextSource,...(hostProjection?{projectOwnedResult:host.projectOwnedResult,projectOwnedCall:host.projectOwnedCall}:{}),...encodedBudget});noteRef=compacted.noteRef;delete state.purpose;delete state.summaryRequest;await record('working_note',{...compacted.observation,noteRef});
             }
             state.working={schemaVersion:'working-input@1',messages:requestMessages,noteRef,hash:sha256(JSON.stringify(requestMessages))};await checkpoint('working-input');
           }
           // Forgetting after adoption but before dispatch removes old typed Memory from the next actual input.
           if(workingInput?.memoryLibrary){state.working.messages=await projectMemory({messages:state.working.messages,lookupState:ref=>workingInput.memoryLibrary.state(ref.id)});state.working.hash=sha256(JSON.stringify(state.working.messages));}
+          assertContextCapacity({messages:state.working.messages,tools:host.definitions,maxBytes:contextBytes,inputBudget:gateway.inputBudget});
           state.rounds++;state.gatewayOutcome='unknown';let reservation;if(claim){const reservedView=await checkpoint('model-reserved',{reserve:'model'});if(gateway.admission==='shared-admission@1')reservation=modelReservation(reservedView);}else{rootBudget.claim('model');gatewayUnsettled=true;}
           const start=performance.now();let proposal;
           try{
@@ -448,6 +455,9 @@ async function drive({ question, gateway, outputRoot='runs', requireReport=false
             throw error;
           }
           state.gatewayOutcome='settled';validateProposal(proposal);
+          const lastValidation=state.messages.at(-1)?.result?.validation;
+          if(lastValidation?.schemaVersion===ORIGINAL_READ_CORRECTION&&
+            !matchesOriginalReadCorrection(proposal,lastValidation.resultRef))throw failure('READ_RESULT_CORRECTION_REQUIRED');
           if(proposal.kind==='calls'){if(proposal.calls.some(c=>c.name==='ask_response')){if(!ordinaryResponse||proposal.calls.length!==1)throw failure('INVALID_ORDINARY_RESPONSE');validateResponseCall(proposal.calls[0]);if(multiResponse?durable.store.responseHistory(runId).length>=interaction.maxQuestions:durable.store.responseStatus(runId))throw failure('QUESTION_LIMIT');}const ids=new Set();for(const c of proposal.calls){if(state.usedIds.includes(c.id)||ids.has(c.id))throw failure('DUPLICATE_CALL_ID');ids.add(c.id);}if(state.toolsDispatched+proposal.calls.length>budget.maxTools)throw failure('TOOL_LIMIT');}
           // Use the original Session codec before mutating the recoverable state.
           // A malformed JS-only Gateway result must not poison its own failure checkpoint.
@@ -457,6 +467,7 @@ async function drive({ question, gateway, outputRoot='runs', requireReport=false
           await checkpoint('proposal-sealed');await record('model_proposal',{kind:proposal.kind,callIds:proposal.calls?.map(c=>c.id)||[],usage:proposal.usage??null,cost:null,durationMs:performance.now()-start});
         }
         if(state.proposal.kind==='final'){
+          if(state.messages.at(-1)?.result?.validation?.schemaVersion===ORIGINAL_READ_CORRECTION)throw failure('RECOVERY_CORRECTION_MISMATCH');
           state.answer=state.proposal.text;
           if(protectedMode&&requireReport&&!host.receipt)throw failure('REPORT_REQUIRED');
           if(publication)await publishAnswer();else await settleAsyncChildExecutions(extensions,{phase:'before-final',signal:controller.signal});

@@ -1,0 +1,99 @@
+{
+  "schemaVersion": "v034-a14-targeted-review@1",
+  "sourceCommit": "9d7018df68ef3b9791ef93b1857cb0007f592165",
+  "independentReviewer": {
+    "selectedModel": "gpt-6-luna",
+    "resolvedModel": "gpt-6-luna",
+    "provider": "openai_http",
+    "type": "separate Codex session",
+    "sessionSha256": "9b497401c9b4ed7bb1c9cab68496867e653a0fbd73fd29e976451d87ba5e3eea",
+    "toolCalls": 0,
+    "packetSha256": "85c6f5f0c61c17e04ce025e7338a6a0dab14229253009297b90bac3c1fdf3cbb",
+    "reviewSha256": "af7e5b9aa765986dc92a2642360d4b46a8f3b3fc30bcfa1eeff324a59274a412"
+  },
+  "observationSha256": "fe21a3552ab832c5a0b05f165ab89a2d99be48c1b9b1a662f7e1c03a2aedb667",
+  "content": {
+    "historicalOriginalCohortPasses": 9,
+    "historicalOriginalCohortDenominator": 10,
+    "modifiedHistoricalOutcome": false,
+    "targetedQ09Pass": true,
+    "controlledReportPass": true,
+    "targetedRunsAddedToHistoricalScore": 0
+  },
+  "engineering": {
+    "offlineSafetyPass": true,
+    "realCorrectionObserved": true,
+    "realProjectionRereadObserved": true
+  },
+  "targetedAcceptancePass": true,
+  "review": {
+    "content": [
+      {
+        "id": "a14r-q09",
+        "verdict": "pass",
+        "reason": "The persisted report satisfies the original three-item rubric and cites the supplied synthetic source. The final answer is consistent with both the report and source: it does not infer either fund’s return, and it identifies the missing beta.",
+        "criteria": [
+          {
+            "criterion": "hypothetical 10% decline",
+            "verdict": "pass",
+            "evidence": "The report calls the 10% equity decline hypothetical and says it is not a forecast."
+          },
+          {
+            "criterion": "beta missing",
+            "verdict": "pass",
+            "evidence": "The report identifies portfolio beta as unsupplied and says neither fund has a supplied equity-sensitivity measure."
+          },
+          {
+            "criterion": "no invented return",
+            "verdict": "pass",
+            "evidence": "The report provides no stress-derived return and explicitly says neither return is established as zero or otherwise known."
+          }
+        ]
+      },
+      {
+        "id": "a14r-projection",
+        "verdict": "pass",
+        "reason": "The persisted report meets all five original rubric items and cites the original acquired source ID. The final repeats the same conclusions and values without contradicting the report or source.",
+        "criteria": [
+          {
+            "criterion": "10% hypothetical, not a forecast",
+            "verdict": "pass",
+            "evidence": "The report says the 10% decline is hypothetical and not a forecast."
+          },
+          {
+            "criterion": "portfolio beta missing",
+            "verdict": "pass",
+            "evidence": "The report identifies portfolio beta as the missing input."
+          },
+          {
+            "criterion": "no inferred return for either fund",
+            "verdict": "pass",
+            "evidence": "It states no return can be derived for Aurora or Boreal and infers none."
+          },
+          {
+            "criterion": "12345678901234567890 exact as a string",
+            "verdict": "pass",
+            "evidence": "The identifier is reproduced verbatim in code formatting and described as an exact string."
+          },
+          {
+            "criterion": "Boreal 0.35% current and 0.40% superseded",
+            "verdict": "pass",
+            "evidence": "The report labels 0.35% current and 0.40% superseded, historical, and not current."
+          }
+        ]
+      }
+    ],
+    "engineering": {
+      "correction": {
+        "verdict": "supported",
+        "evidence": "The joined trace records one same-ref selection attempt with refusedBeforeDispatch=true, correction advice delivered at ordinal 4, and a following single same-ref read succeeding. The advice call appears in ordinal 4's modelCorrectionAdviceCallHashes; the same-ref read is represented in the subsequent trace. The run summary reports correctionUses=1, rootTools=8, and toolAccountingMatches=true. This supports the recorded application-level slot accounting and a refusal that was not dispatched; it does not make the expected rejection a successful normal task."
+      },
+      "projectionReread": {
+        "verdict": "supported",
+        "evidence": "At provider input ordinal 5, projectedReads records the older read call with the original resultRef, source ID, and source SHA. The subsequent trace records a later read of that same resultRef; its full result is represented in a later provider input, with the same source SHA and firstFullReturnOrdinal recorded. The summaries also report originalReadHistoryExact=true, coldRefExact=true, deliveryReadback=true, citedOriginal=true, and coldReadbackProviderRequests=0. The Q09 case separately records three same-ref rereads and exact original-history/cold-ref flags. This is supported by the joined sanitized hash chain and trace, not direct inspection of raw request bodies."
+      },
+      "regressionScope": "The original immutable cohort remains 9/10; Q09 is an unchanged targeted content case and its pass does not change that denominator. The projection case is a controlled engineering check, excluded from the normal cohort numerator; its expected rejection is engineering evidence, not a successful normal task. Offline regression reports 1,537 tests, 1,533 pass, 0 fail, and 4 skipped on the current Mac with Node 26.11.1 and no provider calls. Separately, the bounded live runs report 14 confirmed GO-zero requests, all on verified deepseek-v4.1-flash, with no unknown request IDs and $0 additional cost. This is evidence for these targeted provider runs, not broad provider qualification or a fresh cohort.",
+      "limitations": "Raw requests and provider bodies are excluded. The assessment relies on the joined sanitized hashes, trace summaries, and report readback flags; it cannot independently inspect or re-hash the omitted payloads. The evidence supports observed request/response sequencing, not stronger claims about model internals. The offline suite is provider-free; its summary does not enumerate test names, so specific process-death coverage cannot be independently confirmed from this packet. The controlled expected rejection is not evidence of successful completion of a normal task."
+    }
+  }
+}

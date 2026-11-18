@@ -1,7 +1,7 @@
 import {knowledgeQuerySchemas,hasKnowledgeQueryTables,validateKnowledgeQueryConfig,validateKnowledgeQueryDatabase,createSessionKnowledgeQueries} from './knowledge-query-session.mjs';
 import {verifyReportDeliveryState,publicReportAssessment} from './report-assessment.mjs';
 import {INTERACTION_PROFILE, validateInteractionConfig, validateInteractionDefinition, validateInteractionCheckpoint, validateInteractionFacts, interactionResult, interactionAdoptionHash} from './human-interaction.mjs';
-import { validateControlObservations } from './run-control.mjs';
+import { validateControlObservations, ORIGINAL_READ_CORRECTION } from './run-control.mjs';
 import { SCHEDULE_PROFILE, prepareSchedule, validateScheduleReference, scheduleCanonical } from './schedule.mjs';
 import { searchPages } from './retrieval.mjs';
 import { validateProtectedHostSnapshot, validateProtectedCsvResult } from './tools.mjs';
@@ -83,7 +83,7 @@ function validateBindings(value) {
  }
 }
 function validateConfig(value, ordinary = false, protectedProfile = false, interaction = false, dynamicKnowledge = false) {
- fields(value, [], ['knowledgeQueryEffects', 'requireReport', 'reportDelivery', 'hostProjection', 'allowedTools', 'allowedDocuments', 'documentCatalog', 'pdfSnapshot', 'contextBytes', 'taskId', 'workingInput', 'publication', 'taskTime', ...(ordinary ? ['ordinaryResponse'] : []), ...(interaction ? ['interaction'] : []), ...(protectedProfile ? ['documentProtection'] : [])]);
+ fields(value, [], ['knowledgeQueryEffects', 'requireReport', 'reportDelivery', 'hostProjection', 'allowedTools', 'allowedDocuments', 'documentCatalog', 'pdfSnapshot', 'contextBytes', 'contextWorkingSetBytes', 'taskId', 'workingInput', 'publication', 'taskTime', ...(ordinary ? ['ordinaryResponse'] : []), ...(interaction ? ['interaction'] : []), ...(protectedProfile ? ['documentProtection'] : [])]);
  if(dynamicKnowledge!==(value.knowledgeQueryEffects!==undefined))fail('KNOWLEDGE_QUERY_SCOPE');
  if(value.knowledgeQueryEffects!==undefined){validateKnowledgeQueryConfig(value.knowledgeQueryEffects);if(ordinary||protectedProfile)fail('KNOWLEDGE_QUERY_SCOPE');}
  if(protectedProfile){if(value.documentCatalog!==undefined||value.pdfSnapshot!==undefined)fail('INVALID_PROTECTED_PROFILE');fields(value.documentProtection,['authorityId','libraryId']);if(!identifier(value.documentProtection.authorityId)||!identifier(value.documentProtection.libraryId)||!Array.isArray(value.allowedDocuments)||!value.allowedDocuments.length||value.workingInput!==undefined||value.ordinaryResponse!==undefined)fail('INVALID_PROTECTED_PROFILE');}
@@ -95,6 +95,7 @@ function validateConfig(value, ordinary = false, protectedProfile = false, inter
  if (value.requireReport !== undefined && typeof value.requireReport !== 'boolean') fail('INVALID_DEFINITION');
  for (const key of ['allowedTools', 'allowedDocuments']) if (value[key] !== undefined && (!Array.isArray(value[key]) || (key === 'allowedDocuments' && !value[key].length) || value[key].length > 64 || new Set(value[key]).size !== value[key].length || value[key].some(v => !identifier(v)))) fail('INVALID_DEFINITION');
  if(value.hostProjection!==undefined&&!['host-results@1','host-results@2','host-results@3'].includes(value.hostProjection))fail('INVALID_DEFINITION');
+ if (value.contextWorkingSetBytes !== undefined && (!Number.isSafeInteger(value.contextWorkingSetBytes) || value.contextWorkingSetBytes < 1 || value.contextWorkingSetBytes > 1048576)) fail('INVALID_DEFINITION');
  if (value.contextBytes !== undefined && (!Number.isSafeInteger(value.contextBytes) || value.contextBytes < 1 || value.contextBytes > 1048576)) fail('INVALID_DEFINITION');
  if (value.taskId !== undefined && value.taskId !== null && !identifier(value.taskId)) fail('INVALID_DEFINITION');
  if (value.workingInput !== undefined) {
@@ -761,6 +762,22 @@ export async function openSession({ directory, clock = Date.now, leaseMs = 1000,
     },
     checkpoint(snapshot) { const encoded = encodeCheckpoint(snapshot); return transaction(() => {
      const row=writer(runId, owner, fence),proof=snapshot.result?.validation;
+     if(proof?.schemaVersion===ORIGINAL_READ_CORRECTION){
+      const prior=parsed(row.snapshot,MAX_CHECKPOINT_JSON);
+      const definition=parsed(row.definition,65536);
+      const call=prior.proposal?.calls?.[0];
+      const source=prior.host?.results?.find(entry=>entry.kind==='source'&&entry.resultRef===proof.resultRef);
+      if(definition.config.hostProjection!=='host-results@3'||prior.phase!=='proposal-sealed'||prior.cursor!==0||
+        prior.proposal?.calls?.length!==1||call?.name!=='read_result'||call.arguments.resultRef!==proof.resultRef||
+        proof.runId!==runId||proof.grantId!==definition.grantId||!source||source.recordSha256!==proof.sourceRecordSha256||
+        proof.requestHash!==createHash('sha256').update(canonical(call)).digest('hex')||prior.inFlight||
+        prior.gatewayOutcome!=='settled'||prior.unknownEffects.length||prior.partialEffects.length||
+        snapshot.phase!=='result-committed'||snapshot.cursor!==0||snapshot.result.dispatched!==false||
+        snapshot.result.callId!==call.id||snapshot.toolsDispatched!==prior.toolsDispatched||
+        canonical(snapshot.proposal)!==canonical(prior.proposal)||canonical(snapshot.host)!==canonical(prior.host)){
+       fail('ORIGINAL_READ_CORRECTION_TRANSITION');
+      }
+     }
      if(proof?.schemaVersion==='builtin-report-reference-validation@1'){
       const prior=parsed(row.snapshot,MAX_CHECKPOINT_JSON),definition=parsed(row.definition,65536),call=prior.proposal?.calls?.[prior.cursor];
       if(snapshot.phase!=='result-committed'||prior.phase!=='proposal-sealed'||prior.cursor!==0||prior.proposal?.calls?.length!==1||call?.name!=='save_report'||canonical(snapshot.proposal)!==canonical(prior.proposal)||snapshot.cursor!==prior.cursor||proof.runId!==runId||proof.grantId!==definition.grantId||proof.requestHash!==createHash('sha256').update(canonical(call)).digest('hex')||canonical(proof.basis)!==canonical(prior.host?.results)||canonical(snapshot.host)!==canonical(prior.host)||prior.host?.saveAttempted!==false||prior.host?.receipt!==null||prior.inFlight||prior.gatewayOutcome!=='settled'||prior.unknownEffects?.length||prior.partialEffects?.length||snapshot.result.dispatched!==false||snapshot.result.callId!==call.id)fail('REFERENCE_CORRECTION_TRANSITION');

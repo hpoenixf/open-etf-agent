@@ -70,6 +70,8 @@ test('teaching defaults: explicit report and small round/tool/root budgets retai
 
 test('teaching defaults: an explicit 256 KiB input guard rejects before dispatch without losing the saved report', async () => {
   const { outcome, requests, failure } = await reportFixture(262144);
-  assert.equal(outcome.status, 'failed'); assert.equal(failure, 'PROVIDER_INPUT_BYTE_LIMIT'); assert.equal(requests, 2);
+  assert.equal(outcome.status, 'failed'); assert.equal(outcome.code, 'CONTEXT_CAPACITY_EXCEEDED');
+  assert.equal(failure, null, 'preflight rejects before entering Gateway.next'); assert.equal(requests, 2);
+  assert.equal(outcome.rootUsage.model, 2, 'local capacity failure takes no third reservation');
   assert.ok(outcome.receipt); assert.equal(outcome.toolsDispatched, 2);
 });
