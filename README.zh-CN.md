@@ -37,14 +37,14 @@ GitHub 将 SVG 当作一张图片，不能在缩略图里逐卡点击；下表�
 
 | 职责层 | 模块与能力 → 对应文章 |
 | --- | --- |
-| L1 任务输入与触发 | [CLI](https://hpoenixf.com/eff-agent-article/articles/agent-in-15-minutes) · [Research Project](https://hpoenixf.com/eff-agent-article/articles/open-etf-agent-research-project-workshop) · [Schedule](https://hpoenixf.com/eff-agent-article/articles/agent-autonomous-scheduled-research) |
+| L1 任务输入与触发 | [CLI](https://hpoenixf.com/eff-agent-article/articles/agent-in-15-minutes) · [Research Project](https://hpoenixf.com/eff-agent-article/articles/open-etf-agent-research-project-workshop) · [Research Materials](https://hpoenixf.com/eff-agent-article/articles/agent-research-assets-identity-version-lifecycle) · [Schedule](https://hpoenixf.com/eff-agent-article/articles/agent-autonomous-scheduled-research) |
 | L2 身份、会话与上下文 | [Session](https://hpoenixf.com/eff-agent-article/articles/agent-task-session-run-worker-schedule) · [Conversation](https://hpoenixf.com/eff-agent-article/articles/agent-conversation-admission-task-continuation) · [Temporal](https://hpoenixf.com/eff-agent-article/articles/agent-temporal-semantics-market-calendar) · [Context](https://hpoenixf.com/eff-agent-article/articles/agent-context-governance-actions) · [Compaction](https://hpoenixf.com/eff-agent-article/articles/agent-main-run-context-compaction) · [Memory](https://hpoenixf.com/eff-agent-article/articles/026-agent-memory-forget-durable-effects) · [Human Interaction](https://hpoenixf.com/eff-agent-article/articles/agent-durable-human-interaction-response-adoption) · [Specialist Profile](https://hpoenixf.com/eff-agent-article/articles/agent-custom-expert-from-prompt-to-recovery) · [Skill](https://hpoenixf.com/eff-agent-article/articles/agent-skill-from-markdown-to-callable-research) |
 | L3 Agent 决策与运行 | [Worker](https://hpoenixf.com/eff-agent-article/articles/open-etf-agent-v010-system-design) · [Admission](https://hpoenixf.com/eff-agent-article/articles/agent-provider-admission-capacity-lease) · [Gateway](https://hpoenixf.com/eff-agent-article/articles/agent-provider-architecture-and-admission) · [Runtime](https://hpoenixf.com/eff-agent-article/articles/etf-agent-model-harness-research-loop) · [Hooks](https://hpoenixf.com/eff-agent-article/articles/agent-multi-ecosystem-hook-execution) · [Run Control](https://hpoenixf.com/eff-agent-article/articles/agent-veto-authority-and-run-termination) · [Main → Child](https://hpoenixf.com/eff-agent-article/articles/agent-subagent-context-specialization) · [Child Lifecycle](https://hpoenixf.com/eff-agent-article/articles/agent-subagent-context-specialization) |
 | L4 工具与领域能力 | [Tool Host](https://hpoenixf.com/eff-agent-article/articles/agent-tool-lifecycle-and-model-input) · [MCP](https://hpoenixf.com/eff-agent-article/articles/mcp-host-from-discovery-to-consumption) · [Trusted Plugin](https://hpoenixf.com/eff-agent-article/articles/020-agent-extension-host-smartphone) · [Web Acquisition](https://hpoenixf.com/eff-agent-article/articles/021-agent-web-research-from-search-to-deep-reading) · [PDF](https://hpoenixf.com/eff-agent-article/articles/024-agent-pdf-from-text-to-evidence) · [Result / ResultRef](https://hpoenixf.com/eff-agent-article/articles/tool-results-outside-model-context) · [Retrieval](https://hpoenixf.com/eff-agent-article/articles/agent-knowledge-retrieval-end-to-end) · [Knowledge](https://hpoenixf.com/eff-agent-article/articles/agent-knowledge-retrieval-end-to-end) · [Calculation](https://hpoenixf.com/eff-agent-article/articles/open-etf-agent-v010-system-design) · [Child Results](https://hpoenixf.com/eff-agent-article/articles/agent-subagent-contribution-evidence) |
 | L5 结果发布与交付 | [Main → Report](https://hpoenixf.com/eff-agent-article/articles/open-etf-agent-v01-first-readable-report) · [Report](https://hpoenixf.com/eff-agent-article/articles/open-etf-agent-v01-first-readable-report) · [Artifact / Revision](https://hpoenixf.com/eff-agent-article/articles/agent-artifact-version-access-sharing) · [Publication](https://hpoenixf.com/eff-agent-article/articles/019-agent-answer-publication) · [Report Review](https://hpoenixf.com/eff-agent-article/articles/open-etf-agent-report-review-workshop) |
 | L6 用户界面 | [Loopback Reader](https://hpoenixf.com/eff-agent-article/articles/open-etf-agent-v010-system-design) · [CLI Readback](https://hpoenixf.com/eff-agent-article/articles/open-etf-agent-v01-first-readable-report) |
 
-**当前地图: v0.32.0** · [模块、源码与证据](docs/module-status.zh-CN.md) · [六层文章原文](https://github.com/hpoenixf/eff-agent-article/blob/249f0b866f9446f33b57f186fbc6d35b5d82c119/articles/open-etf-agent-v010-system-design.md)
+**当前地图: v0.33.0** · [模块、源码与证据](docs/module-status.zh-CN.md) · [六层文章原文](https://github.com/hpoenixf/eff-agent-article/blob/249f0b866f9446f33b57f186fbc6d35b5d82c119/articles/open-etf-agent-v010-system-design.md)
 
 文章关联是阅读导航，不等于实现全文能力或覆盖资格。图中是公开实现范围，不是全功能完成率。真实模型验证只覆盖[各版记录](docs/verification/README.md)中的指定路径；金融语义、生产与浏览器体验不因此获得认证。
 <!-- module-map:end -->
@@ -100,15 +100,17 @@ npm run demo -- --case document-compare
 <a id="最近三个模块"></a>
 ## 最近版本与开发状态
 
+**[v0.33.0 · 资料资产生命周期](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.33.0)：** A17 提供项目内资料版本、幂等导入、替换、移除与显式恢复；历史任务固定原始来源。真实测评首批 8/10 保留，第二批由执行者复核为 9/10，非独立内容验收；两批共 2 条请求费用未知。[证据与限制](docs/verification/v033-release.md)。
+
 **[v0.31.0 · 本地知识](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.31.0)** 提供显式文本导入、BM25 自由查询与原始来源回读。独立冻结的真实模型批次完成 9/10 Runtime 工作流；模型指令与正文质量另评。[证据与边界](docs/verification/v031-release.zh-CN.md)。
 
 **[v0.32.0 · 本地动态 Knowledge](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.32.0)：** Knowledge 已支持显式本地 E5 动态查询、原子查询与操作预算，以及不重放不确定操作的持久恢复。固定 DeepSeek 4.1 Flash 批次通过 10/10 运行交付和 10/10 严格原文复核；此前内容 8/10 的批次保留。候选召回、证据充分性和最终回答仍分别评估。[动态 Knowledge 用法](docs/dynamic-knowledge.zh-CN.md) · [资格、消耗与边界](docs/verification/v032-release-readiness.zh-CN.md)。
 
 | 最近版本 / 状态 | 能做什么 | 用法与边界 |
 | --- | --- | --- |
+| [v0.33 · 资料资产](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.33.0) | 显式版本选择、替换、移除与恢复，保留已接纳任务来源 | [证据与限制](docs/verification/v033-release.md) |
 | [v0.32 · 本地动态 Knowledge](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.32.0) | Run 内编码新本地查询，保留原子预算与不重放恢复 | [动态 Knowledge](docs/dynamic-knowledge.zh-CN.md) |
 | [v0.31 · 本地知识](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.31.0) | 导入选定文本、运行新 BM25 查询并检查原始字节，无需模型密钥 | [本地知识](docs/local-knowledge.zh-CN.md) |
-| [v0.30 · Child 生命周期](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.30.0) | 原 Session 中独立 spawn/inspect/cancel、不可变观察、来源消费与冷恢复 | [Child 生命周期](docs/child-lifecycle.zh-CN.md) |
 
 [全部固定版本与命令](docs/module-guide.zh-CN.md#versions) · [版本谱系](versions.json) · [全部 Release](https://github.com/hpoenixf/open-etf-agent/releases) · [验证记录](docs/verification/README.zh-CN.md)
 

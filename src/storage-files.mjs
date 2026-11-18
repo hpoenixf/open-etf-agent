@@ -53,6 +53,8 @@ export async function publishImmutable(directory, filename, bytes, signal) {
     handle = await open(temp, 'wx', 0o600);
     await handle.writeFile(bytes); await handle.sync(); await handle.close(); handle = null;
     checkSignal(signal); await safeDirectory(directory);
+    // Directory validation yields: observe cancellation again before dispatch.
+    checkSignal(signal);
     try { await link(temp, destination); }
     catch (error) {
       checkSignal(signal);

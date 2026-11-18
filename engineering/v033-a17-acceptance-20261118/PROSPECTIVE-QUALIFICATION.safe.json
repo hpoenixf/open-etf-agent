@@ -1,0 +1,659 @@
+{
+  "schemaVersion": "v033-a17-real-ten-prospective-result@1",
+  "observedDate": "2026-11-18",
+  "sourceCommit": "f7d32e23e24b38717174ca8e581e4ea665eb1a7b",
+  "sourceTree": "af7b3a1541a5345e0b3ca7e53e6182eccd89ce70",
+  "executionIdentity": "09385ac2c0335835e77524a1bce07ec2117405f8aa4133eb2273ecc481903172",
+  "frozenInputsRechecked": 422,
+  "priorCohort": {
+    "executionIdentity": "c21ab7a028284f571249a5de3bd242aa1fe31586b0806ff23ec3d086cb052757",
+    "successes": 8,
+    "unknownRequestsRetained": 1,
+    "ledgerSha256Preserved": "e2f0bc3d06469ee93737827c7d27c51f93dde198ceee06586ca89f8a3794232b",
+    "combinedWithCurrentDenominator": false
+  },
+  "scope": "Project-local synthetic material lifecycle, exact source version and source-backed report delivery through the original research Runtime.",
+  "realProviderApplicability": "supported-with-stated-scope",
+  "provider": "opencode-go",
+  "requestedModel": "deepseek-v4.1-flash",
+  "resolvedModels": [
+    "deepseek-v4.1-flash"
+  ],
+  "accounting": {
+    "approvedMaximumRequests": 40,
+    "reservedPhysicalRequests": 28,
+    "confirmedGoZeroRequests": 27,
+    "confirmedAdditionalCostUsd": 0,
+    "unknownRequestCount": 1,
+    "totalCostUsd": null,
+    "confirmedTokens": {
+      "prompt_tokens": 50679,
+      "completion_tokens": 6270,
+      "total_tokens": 56949
+    },
+    "inferenceLedgerSha256": "d522efdfb735cee8b13d3a321fade9825b782883af5ab42691ac6255f2b4a403"
+  },
+  "coldReportReadbacks": 9,
+  "coldReadbackProviderRequests": 0,
+  "firstRequestMinimumRemainingMs": 239633,
+  "pdfOriginalAttachmentVerified": true,
+  "contentReview": {
+    "method": "Compare each completed report and final answer with the original page. Check the same frozen values as whole phrases and keep the original substring results.",
+    "deliveredReportsReviewed": 9,
+    "rawSubstringSuccesses": 8,
+    "passed": 9,
+    "independentReviewer": false
+  },
+  "separateSafetyGatePassed": true,
+  "safety": {
+    "sourceTree": "af7b3a1541a5345e0b3ca7e53e6182eccd89ce70",
+    "remoteCiRunId": 44267208305,
+    "total": 1510,
+    "passed": 1506,
+    "failed": 0,
+    "skipped": 4,
+    "localA17TestsPassed": 19
+  },
+  "normalGate": {
+    "planned": 10,
+    "requiredSuccesses": 9,
+    "threshold": 0.9,
+    "attempted": 10,
+    "notRun": 0,
+    "successes": 9,
+    "observedRate": 0.9,
+    "taskIds": [
+      "A17R-01",
+      "A17R-02",
+      "A17R-03",
+      "A17R-04",
+      "A17R-05",
+      "A17R-06",
+      "A17R-07",
+      "A17R-08",
+      "A17R-09",
+      "A17R-10"
+    ],
+    "tasks": [
+      {
+        "id": "A17R-01",
+        "flow": "initial",
+        "executionIdentity": "09385ac2c0335835e77524a1bce07ec2117405f8aa4133eb2273ecc481903172",
+        "realProvider": true,
+        "physicalRequests": 3,
+        "confirmedGoZeroRequests": 3,
+        "status": "success",
+        "eligibleSuccess": true,
+        "runtimeAccepted": true,
+        "workflowCompleted": true,
+        "deliveryReadback": true,
+        "onTime": true,
+        "unknownEffects": false,
+        "firstRequestRemainingMs": 239913,
+        "frozenManifestSha256": "f2f7edf072b5cf419a21637953d56d495109227eeb97df448f8ab8149f357635",
+        "originalSha256": "19765bff801b846249a3910a4b32273f0d8ee13958501a7c2f85056921cfdf78",
+        "originalPageReadback": {
+          "documentId": "text:19765bff801b846249a3910a4b32273f0d8ee13958501a7c2f85056921cfdf78",
+          "page": 1,
+          "sourceId": "text:19765bff801b846249a3910a4b32273f0d8ee13958501a7c2f85056921cfdf78@utf8-pages-v1:19765bff801b846249a3910a4b32273f0d8ee13958501a7c2f85056921cfdf78:p1",
+          "sha256": "19765bff801b846249a3910a4b32273f0d8ee13958501a7c2f85056921cfdf78"
+        },
+        "sourceMatched": true,
+        "rawSubstringCheckPassed": true,
+        "sourceReview": {
+          "passed": true,
+          "findings": [
+            {
+              "output": "report",
+              "missing": [],
+              "forbidden": []
+            },
+            {
+              "output": "final",
+              "missing": [],
+              "forbidden": []
+            }
+          ]
+        },
+        "coldProviderRequests": 0,
+        "lifecycleObservation": [],
+        "expectedVersion": 1,
+        "reportSha256": "a17eb17bd70964b3e3d53ecb48a94a10d78723628c511c1f4ce5f3d1c436467b",
+        "finalSha256": "45476be5aecb1c54c3656fea4ffb43835fc5073a9d5bece1ece21d680fbcab68",
+        "verifiedAnswerFacts": [
+          "SABLE-43",
+          "18 business days"
+        ],
+        "runtimeCode": null,
+        "stopCode": null,
+        "providerHttpStatuses": [
+          200,
+          200,
+          200
+        ]
+      },
+      {
+        "id": "A17R-02",
+        "flow": "replace-current",
+        "executionIdentity": "09385ac2c0335835e77524a1bce07ec2117405f8aa4133eb2273ecc481903172",
+        "realProvider": true,
+        "physicalRequests": 3,
+        "confirmedGoZeroRequests": 3,
+        "status": "success",
+        "eligibleSuccess": true,
+        "runtimeAccepted": true,
+        "workflowCompleted": true,
+        "deliveryReadback": true,
+        "onTime": true,
+        "unknownEffects": false,
+        "firstRequestRemainingMs": 239905,
+        "frozenManifestSha256": "7c2e9b0131d3b0705e141e0d32502f9f7e1f7f25df4b6dfb54af86686606d6bc",
+        "originalSha256": "55a24fabc85b0f7df4e21e7f76a147b723231b0037b22b356c5202ebbeaaa30b",
+        "originalPageReadback": {
+          "documentId": "text:55a24fabc85b0f7df4e21e7f76a147b723231b0037b22b356c5202ebbeaaa30b",
+          "page": 1,
+          "sourceId": "text:55a24fabc85b0f7df4e21e7f76a147b723231b0037b22b356c5202ebbeaaa30b@utf8-pages-v1:55a24fabc85b0f7df4e21e7f76a147b723231b0037b22b356c5202ebbeaaa30b:p1",
+          "sha256": "55a24fabc85b0f7df4e21e7f76a147b723231b0037b22b356c5202ebbeaaa30b"
+        },
+        "sourceMatched": true,
+        "rawSubstringCheckPassed": true,
+        "sourceReview": {
+          "passed": true,
+          "findings": [
+            {
+              "output": "report",
+              "missing": [],
+              "forbidden": []
+            },
+            {
+              "output": "final",
+              "missing": [],
+              "forbidden": []
+            }
+          ]
+        },
+        "coldProviderRequests": 0,
+        "lifecycleObservation": [
+          "replacement-committed"
+        ],
+        "expectedVersion": 2,
+        "reportSha256": "555c48672b1d40d344d1bbd6b90832561f37da9888fb38282cc0fe84179aef65",
+        "finalSha256": "a28d21403d675abc58b648f21297fe60293c3a4ef868eef265af0841fdbf4d22",
+        "verifiedAnswerFacts": [
+          "16 basis points",
+          "EAST-85"
+        ],
+        "runtimeCode": null,
+        "stopCode": null,
+        "providerHttpStatuses": [
+          200,
+          200,
+          200
+        ]
+      },
+      {
+        "id": "A17R-03",
+        "flow": "replace-historical",
+        "executionIdentity": "09385ac2c0335835e77524a1bce07ec2117405f8aa4133eb2273ecc481903172",
+        "realProvider": true,
+        "physicalRequests": 3,
+        "confirmedGoZeroRequests": 3,
+        "status": "success",
+        "eligibleSuccess": true,
+        "runtimeAccepted": true,
+        "workflowCompleted": true,
+        "deliveryReadback": true,
+        "onTime": true,
+        "unknownEffects": false,
+        "firstRequestRemainingMs": 239924,
+        "frozenManifestSha256": "d7f9cc351d6c6a83dbc32e93c88881fc2122b61ba494db1fb94b18435e4db400",
+        "originalSha256": "aee70d096e490818010dcc7a41e0087b5a979d99bd0540b9bb45d37dffaa4a9d",
+        "originalPageReadback": {
+          "documentId": "text:aee70d096e490818010dcc7a41e0087b5a979d99bd0540b9bb45d37dffaa4a9d",
+          "page": 1,
+          "sourceId": "text:aee70d096e490818010dcc7a41e0087b5a979d99bd0540b9bb45d37dffaa4a9d@utf8-pages-v1:aee70d096e490818010dcc7a41e0087b5a979d99bd0540b9bb45d37dffaa4a9d:p1",
+          "sha256": "aee70d096e490818010dcc7a41e0087b5a979d99bd0540b9bb45d37dffaa4a9d"
+        },
+        "sourceMatched": true,
+        "rawSubstringCheckPassed": true,
+        "sourceReview": {
+          "passed": true,
+          "findings": [
+            {
+              "output": "report",
+              "missing": [],
+              "forbidden": []
+            },
+            {
+              "output": "final",
+              "missing": [],
+              "forbidden": []
+            }
+          ]
+        },
+        "coldProviderRequests": 0,
+        "lifecycleObservation": [
+          "replacement-committed",
+          "historical-selection-matches-pre-replacement-manifest"
+        ],
+        "expectedVersion": 1,
+        "reportSha256": "ba722dd3e62df216b5040d75e594b2f9d677a489d6d107ee821b7f42fea6c17e",
+        "finalSha256": "2a0c849dc0b3097a9cb089fa14e365e6fc7b90256e3e53d79d0a6e705f75c7bf",
+        "verifiedAnswerFacts": [
+          "72 units",
+          "ORCHID-11"
+        ],
+        "runtimeCode": null,
+        "stopCode": null,
+        "providerHttpStatuses": [
+          200,
+          200,
+          200
+        ]
+      },
+      {
+        "id": "A17R-04",
+        "flow": "remove-after-admission",
+        "executionIdentity": "09385ac2c0335835e77524a1bce07ec2117405f8aa4133eb2273ecc481903172",
+        "realProvider": true,
+        "physicalRequests": 3,
+        "confirmedGoZeroRequests": 3,
+        "status": "success",
+        "eligibleSuccess": true,
+        "runtimeAccepted": true,
+        "workflowCompleted": true,
+        "deliveryReadback": true,
+        "onTime": true,
+        "unknownEffects": false,
+        "firstRequestRemainingMs": 239633,
+        "frozenManifestSha256": "a14e0e1df3c718409f8e8bde0a98cd1a46f94c9c126011b92e73745bfee57bc7",
+        "originalSha256": "857dc70927eb24098658b5aeed66b6d22a4059e003fd439b2e4ffc6c1b7753a7",
+        "originalPageReadback": {
+          "documentId": "text:857dc70927eb24098658b5aeed66b6d22a4059e003fd439b2e4ffc6c1b7753a7",
+          "page": 1,
+          "sourceId": "text:857dc70927eb24098658b5aeed66b6d22a4059e003fd439b2e4ffc6c1b7753a7@utf8-pages-v1:857dc70927eb24098658b5aeed66b6d22a4059e003fd439b2e4ffc6c1b7753a7:p1",
+          "sha256": "857dc70927eb24098658b5aeed66b6d22a4059e003fd439b2e4ffc6c1b7753a7"
+        },
+        "sourceMatched": true,
+        "rawSubstringCheckPassed": true,
+        "sourceReview": {
+          "passed": true,
+          "findings": [
+            {
+              "output": "report",
+              "missing": [],
+              "forbidden": []
+            },
+            {
+              "output": "final",
+              "missing": [],
+              "forbidden": []
+            }
+          ]
+        },
+        "coldProviderRequests": 0,
+        "lifecycleObservation": [
+          "removal-blocked-new-selection-retained-admitted-grant"
+        ],
+        "expectedVersion": 1,
+        "reportSha256": "f9fda0dde6661bb48fba79a272eecad5dac2fa1e473e40d81153d867c6bab820",
+        "finalSha256": "70823a7eb030e9c237e5499d9e4302bf18eb93064cb110cb981f51fa21739ad0",
+        "verifiedAnswerFacts": [
+          "disabled",
+          "LARCH-62"
+        ],
+        "runtimeCode": null,
+        "stopCode": null,
+        "providerHttpStatuses": [
+          200,
+          200,
+          200
+        ]
+      },
+      {
+        "id": "A17R-05",
+        "flow": "recover-current",
+        "executionIdentity": "09385ac2c0335835e77524a1bce07ec2117405f8aa4133eb2273ecc481903172",
+        "realProvider": true,
+        "physicalRequests": 3,
+        "confirmedGoZeroRequests": 3,
+        "status": "success",
+        "eligibleSuccess": true,
+        "runtimeAccepted": true,
+        "workflowCompleted": true,
+        "deliveryReadback": true,
+        "onTime": true,
+        "unknownEffects": false,
+        "firstRequestRemainingMs": 239923,
+        "frozenManifestSha256": "9cc7ca2b8c39e04969f4355167f4524599d8c98eb5e3ef439eef53024b33f2f3",
+        "originalSha256": "e1d22531d4e9371280930540d0260361617e3e4af85958fe0fcf06aef1501b3f",
+        "originalPageReadback": {
+          "documentId": "text:e1d22531d4e9371280930540d0260361617e3e4af85958fe0fcf06aef1501b3f",
+          "page": 1,
+          "sourceId": "text:e1d22531d4e9371280930540d0260361617e3e4af85958fe0fcf06aef1501b3f@utf8-pages-v1:e1d22531d4e9371280930540d0260361617e3e4af85958fe0fcf06aef1501b3f:p1",
+          "sha256": "e1d22531d4e9371280930540d0260361617e3e4af85958fe0fcf06aef1501b3f"
+        },
+        "sourceMatched": true,
+        "rawSubstringCheckPassed": true,
+        "sourceReview": {
+          "passed": true,
+          "findings": [
+            {
+              "output": "report",
+              "missing": [],
+              "forbidden": []
+            },
+            {
+              "output": "final",
+              "missing": [],
+              "forbidden": []
+            }
+          ]
+        },
+        "coldProviderRequests": 0,
+        "lifecycleObservation": [
+          "replacement-committed",
+          "explicit-recovery-restored-exact-sealed-snapshot"
+        ],
+        "expectedVersion": 2,
+        "reportSha256": "f847e9b09fcbafb53969916ddf836ada17cb5e3025f4fccfb5de0ef3184b9a0f",
+        "finalSha256": "b1e6608223a6df16e948a342cec16dabd41bbefb6ff6e3632e45313dbb23da66",
+        "verifiedAnswerFacts": [
+          "COPPER-39",
+          "13 business days"
+        ],
+        "runtimeCode": null,
+        "stopCode": null,
+        "providerHttpStatuses": [
+          200,
+          200,
+          200
+        ]
+      },
+      {
+        "id": "A17R-06",
+        "flow": "alias-idempotent",
+        "executionIdentity": "09385ac2c0335835e77524a1bce07ec2117405f8aa4133eb2273ecc481903172",
+        "realProvider": true,
+        "physicalRequests": 3,
+        "confirmedGoZeroRequests": 3,
+        "status": "success",
+        "eligibleSuccess": true,
+        "runtimeAccepted": true,
+        "workflowCompleted": true,
+        "deliveryReadback": true,
+        "onTime": true,
+        "unknownEffects": false,
+        "firstRequestRemainingMs": 239923,
+        "frozenManifestSha256": "29fa25ad78f2f9366f49e7cdab7dbc90cffe4bbe67355ec37117fbbf518ab912",
+        "originalSha256": "be3c3cc734bc136bfd39462425ca128598db01dca6a9f84d7e88e4b8b00a4857",
+        "originalPageReadback": {
+          "documentId": "text:be3c3cc734bc136bfd39462425ca128598db01dca6a9f84d7e88e4b8b00a4857",
+          "page": 1,
+          "sourceId": "text:be3c3cc734bc136bfd39462425ca128598db01dca6a9f84d7e88e4b8b00a4857@utf8-pages-v1:be3c3cc734bc136bfd39462425ca128598db01dca6a9f84d7e88e4b8b00a4857:p1",
+          "sha256": "be3c3cc734bc136bfd39462425ca128598db01dca6a9f84d7e88e4b8b00a4857"
+        },
+        "sourceMatched": true,
+        "rawSubstringCheckPassed": true,
+        "sourceReview": {
+          "passed": true,
+          "findings": [
+            {
+              "output": "report",
+              "missing": [],
+              "forbidden": []
+            },
+            {
+              "output": "final",
+              "missing": [],
+              "forbidden": []
+            }
+          ]
+        },
+        "coldProviderRequests": 0,
+        "lifecycleObservation": [
+          "alias-returned-original-version-and-manifest"
+        ],
+        "expectedVersion": 1,
+        "reportSha256": "e9a488dd068ae8e91f0ac33f7da32e7fc8490bc78db467d08195f80457095cd4",
+        "finalSha256": "47fea92826ddde594fdeadda20f421e454b49b11ebb931d5b529733a838ea203",
+        "verifiedAnswerFacts": [
+          "QUARTZ-54",
+          "3 reviewers"
+        ],
+        "runtimeCode": null,
+        "stopCode": null,
+        "providerHttpStatuses": [
+          200,
+          200,
+          200
+        ]
+      },
+      {
+        "id": "A17R-07",
+        "flow": "reject-stale-revision",
+        "executionIdentity": "09385ac2c0335835e77524a1bce07ec2117405f8aa4133eb2273ecc481903172",
+        "realProvider": true,
+        "physicalRequests": 3,
+        "confirmedGoZeroRequests": 3,
+        "status": "success",
+        "eligibleSuccess": true,
+        "runtimeAccepted": true,
+        "workflowCompleted": true,
+        "deliveryReadback": true,
+        "onTime": true,
+        "unknownEffects": false,
+        "firstRequestRemainingMs": 239923,
+        "frozenManifestSha256": "8f2d0824f8bfdd0223a51471d969e536eb7484eae1ff9ac2b693239deaef0faa",
+        "originalSha256": "a1e5f611cc78cfb63f9d73afa02eb29fdba6ce3bb364ccb0edb02fbf3c483b69",
+        "originalPageReadback": {
+          "documentId": "text:a1e5f611cc78cfb63f9d73afa02eb29fdba6ce3bb364ccb0edb02fbf3c483b69",
+          "page": 1,
+          "sourceId": "text:a1e5f611cc78cfb63f9d73afa02eb29fdba6ce3bb364ccb0edb02fbf3c483b69@utf8-pages-v1:a1e5f611cc78cfb63f9d73afa02eb29fdba6ce3bb364ccb0edb02fbf3c483b69:p1",
+          "sha256": "a1e5f611cc78cfb63f9d73afa02eb29fdba6ce3bb364ccb0edb02fbf3c483b69"
+        },
+        "sourceMatched": true,
+        "rawSubstringCheckPassed": true,
+        "sourceReview": {
+          "passed": true,
+          "findings": [
+            {
+              "output": "report",
+              "missing": [],
+              "forbidden": []
+            },
+            {
+              "output": "final",
+              "missing": [],
+              "forbidden": []
+            }
+          ]
+        },
+        "coldProviderRequests": 0,
+        "lifecycleObservation": [
+          "replacement-committed",
+          "MATERIAL_CONFLICT"
+        ],
+        "expectedVersion": 2,
+        "reportSha256": "f686cd8618be2daa10d605f5fa10bbfdf9def081645861de025ae4ef4e4ed2bf",
+        "finalSha256": "e26737f7db09d3768e23cfe2e09fbabc68b477ca92680ce4ede3aefa9c3c6d93",
+        "verifiedAnswerFacts": [
+          "VIOLET-87",
+          "27 minutes"
+        ],
+        "runtimeCode": null,
+        "stopCode": null,
+        "providerHttpStatuses": [
+          200,
+          200,
+          200
+        ]
+      },
+      {
+        "id": "A17R-08",
+        "flow": "reject-unsupported-replacement",
+        "executionIdentity": "09385ac2c0335835e77524a1bce07ec2117405f8aa4133eb2273ecc481903172",
+        "realProvider": true,
+        "physicalRequests": 3,
+        "confirmedGoZeroRequests": 3,
+        "status": "success",
+        "eligibleSuccess": true,
+        "runtimeAccepted": true,
+        "workflowCompleted": true,
+        "deliveryReadback": true,
+        "onTime": true,
+        "unknownEffects": false,
+        "firstRequestRemainingMs": 239924,
+        "frozenManifestSha256": "340edf8d56e30d808448c8a03d35b0293c69d07cc0f895aa8b5b1f465036ff91",
+        "originalSha256": "49eb408f7367aca62f23553cd00629e321b55b2704ad52e80b8c10a122b9c85c",
+        "originalPageReadback": {
+          "documentId": "text:49eb408f7367aca62f23553cd00629e321b55b2704ad52e80b8c10a122b9c85c",
+          "page": 1,
+          "sourceId": "text:49eb408f7367aca62f23553cd00629e321b55b2704ad52e80b8c10a122b9c85c@utf8-pages-v1:49eb408f7367aca62f23553cd00629e321b55b2704ad52e80b8c10a122b9c85c:p1",
+          "sha256": "49eb408f7367aca62f23553cd00629e321b55b2704ad52e80b8c10a122b9c85c"
+        },
+        "sourceMatched": true,
+        "rawSubstringCheckPassed": true,
+        "sourceReview": {
+          "passed": true,
+          "findings": [
+            {
+              "output": "report",
+              "missing": [],
+              "forbidden": []
+            },
+            {
+              "output": "final",
+              "missing": [],
+              "forbidden": []
+            }
+          ]
+        },
+        "coldProviderRequests": 0,
+        "lifecycleObservation": [
+          "PROJECT_SOURCE_UNSUPPORTED_TYPE"
+        ],
+        "expectedVersion": 1,
+        "reportSha256": "a7f01bd6dcdded00eabbd860532d2eb2c6a8f4b85ce6491309a428c4e972e90e",
+        "finalSha256": "29c3d332e88b97466dc70549df1a31ff6619a8bc756e6fdd1268037ec0a1460f",
+        "verifiedAnswerFacts": [
+          "FIR-41",
+          "63 records"
+        ],
+        "runtimeCode": null,
+        "stopCode": null,
+        "providerHttpStatuses": [
+          200,
+          200,
+          200
+        ]
+      },
+      {
+        "id": "A17R-09",
+        "flow": "physical-pdf-page",
+        "executionIdentity": "09385ac2c0335835e77524a1bce07ec2117405f8aa4133eb2273ecc481903172",
+        "realProvider": true,
+        "physicalRequests": 3,
+        "confirmedGoZeroRequests": 3,
+        "status": "success",
+        "eligibleSuccess": true,
+        "runtimeAccepted": true,
+        "workflowCompleted": true,
+        "deliveryReadback": true,
+        "onTime": true,
+        "unknownEffects": false,
+        "firstRequestRemainingMs": 239925,
+        "frozenManifestSha256": "3ffad36481e69265b2452316f2e7386b745c4b838373c48f7645a9bc9f231da8",
+        "originalSha256": "e044fbd56469b1782a312236a8adf76cd776148611dd2322cf57b43695c9ecbf",
+        "originalPageReadback": {
+          "documentId": "pdf:e044fbd56469b1782a312236a8adf76cd776148611dd2322cf57b43695c9ecbf",
+          "page": 3,
+          "sourceId": "pdf:e044fbd56469b1782a312236a8adf76cd776148611dd2322cf57b43695c9ecbf:p3",
+          "sha256": "59dfc620c9f01c082075850b2b539ceab640c9f985d60f3074b936ea721d3d10"
+        },
+        "sourceMatched": true,
+        "rawSubstringCheckPassed": false,
+        "sourceReview": {
+          "passed": true,
+          "findings": [
+            {
+              "output": "report",
+              "missing": [],
+              "forbidden": []
+            },
+            {
+              "output": "final",
+              "missing": [],
+              "forbidden": []
+            }
+          ],
+          "originalSubstringFalsePositive": {
+            "output": "report",
+            "criterion": "Edition A",
+            "matchedText": "Edition and Exported Rows"
+          }
+        },
+        "coldProviderRequests": 0,
+        "lifecycleObservation": [],
+        "expectedVersion": 1,
+        "reportSha256": "7650fd378dcca9eb346dcd42416d4ce3fced63e6974ac796d08dfdebff7ffb16",
+        "finalSha256": "2789bc8653766e35ab2eaae89a8beaf508ada2927808bff9832c142fadfa9ecc",
+        "verifiedAnswerFacts": [
+          "Edition B",
+          "300 exported rows"
+        ],
+        "runtimeCode": null,
+        "stopCode": null,
+        "providerHttpStatuses": [
+          200,
+          200,
+          200
+        ]
+      },
+      {
+        "id": "A17R-10",
+        "flow": "reopen-without-original",
+        "executionIdentity": "09385ac2c0335835e77524a1bce07ec2117405f8aa4133eb2273ecc481903172",
+        "realProvider": true,
+        "physicalRequests": 1,
+        "confirmedGoZeroRequests": 0,
+        "status": "unknown",
+        "eligibleSuccess": false,
+        "runtimeAccepted": true,
+        "workflowCompleted": false,
+        "deliveryReadback": false,
+        "onTime": false,
+        "unknownEffects": true,
+        "firstRequestRemainingMs": 239922,
+        "frozenManifestSha256": "6336834bf0f14ee1ac44cb88d1dc7893b1403c029833bd62701e1fcf23757a0a",
+        "originalSha256": "da168855876e9c33f6f3264221cf4ae388a65b9599506f189f1eb9f281ddb019",
+        "originalPageReadback": null,
+        "sourceMatched": false,
+        "rawSubstringCheckPassed": false,
+        "sourceReview": null,
+        "coldProviderRequests": null,
+        "lifecycleObservation": [
+          "cold-select-with-original-path-absent"
+        ],
+        "expectedVersion": 1,
+        "reportSha256": null,
+        "finalSha256": null,
+        "verifiedAnswerFacts": null,
+        "runtimeCode": "EXECUTION_FAILED",
+        "stopCode": "A17_PROVIDER_MODEL_BILLING_OR_HTTP_STOP",
+        "providerHttpStatuses": [
+          502
+        ]
+      }
+    ]
+  },
+  "mechanicalDecision": {
+    "policy": "real-ten-min-nine-20261102",
+    "eligible": true,
+    "planned": 10,
+    "attempted": 10,
+    "successes": 9,
+    "observedRate": 0.9,
+    "scope": "declared receipts only; fixed evidence and publication review still required"
+  }
+}
