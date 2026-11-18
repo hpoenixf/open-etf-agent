@@ -1,0 +1,175 @@
+{
+  "schemaVersion": "a14-real-acceptance-inputs@1",
+  "candidateCommit": "93d060f1c3cfce9b4b30ef67e860cbb1a9b3eaeb",
+  "sourceFile": "acceptance-source.txt",
+  "sourceSha256": "5f09a65bd7918a073596ab64355f8a7b619ef6928b79473d9b9e53e23119b080",
+  "runtimeSha256": {
+    "src/context.mjs": "c73204f06424020c1633c3ea41513fc81ca8c3c171501966b114a3505f9cb2f9",
+    "src/observe.mjs": "a3d58ec255fd6966a0d246bfd70861b388926a64c14b6a8c9d365000555656f7",
+    "src/research-project.mjs": "73f4f557400400f122c4508cce9ddb43377463177d9489381971ad236685df1f",
+    "src/runtime.mjs": "f535a2eb06d8a10e62081423285c68bcd4c5bd0618f341433ee0822a26ebe34c",
+    "src/session.mjs": "dbd04295266a16feb86f8d9edd41f8dfe5a1030c9b949860ea5482f36147bb05"
+  },
+  "planned": 10,
+  "requiredSuccesses": 9,
+  "dispatchAuthorized": false,
+  "priorUnknownRequests": 2,
+  "tasks": [
+    {
+      "id": "a14-01",
+      "question": "Compare annual fees and quantify the difference in percentage points. Use only the supplied synthetic source. Read it, then perform three explicit read_result rereads of its returned exact resultRef before writing a source-cited saved report. If an old result is represented by a reference, reread it when needed. Do not invent unavailable values.",
+      "expectedOutcome": "completed-with-report",
+      "contextWorkingSetBytes": null,
+      "rubric": [
+        "Aurora 0.20%",
+        "Boreal 0.35%",
+        "difference 0.15 percentage points"
+      ],
+      "questionSha256": "58294a10fdfbbfc56b343929902ce2b4ded780a5ff921ee0d32c30d060d8e5ba",
+      "questionBytes": 347
+    },
+    {
+      "id": "a14-02",
+      "question": "Compare asset sizes using current dated observations, not historical values. Use only the supplied synthetic source. Read it, then perform three explicit read_result rereads of its returned exact resultRef before writing a source-cited saved report. If an old result is represented by a reference, reread it when needed. Do not invent unavailable values.",
+      "expectedOutcome": "completed-with-report",
+      "contextWorkingSetBytes": 256,
+      "rubric": [
+        "120 million CNY",
+        "90 million CNY",
+        "2026-10-01"
+      ],
+      "questionSha256": "c09c58ec626523365147604f356ee1de6715f87fe023e68332086769dd8adb16",
+      "questionBytes": 354
+    },
+    {
+      "id": "a14-03",
+      "question": "Compare holdings count and largest-holding concentration without claiming lower risk is proved. Use only the supplied synthetic source. Read it, then perform three explicit read_result rereads of its returned exact resultRef before writing a source-cited saved report. If an old result is represented by a reference, reread it when needed. Do not invent unavailable values.",
+      "expectedOutcome": "completed-with-report",
+      "contextWorkingSetBytes": 256,
+      "rubric": [
+        "40 versus 65",
+        "8% versus 5%",
+        "risk not proved"
+      ],
+      "questionSha256": "3269d7f1bdfa391f901bec5737eea1c398d7dc2682449112890685bee0906d25",
+      "questionBytes": 373
+    },
+    {
+      "id": "a14-04",
+      "question": "Explain the supplied tracking differences with their period; do not predict returns. Use only the supplied synthetic source. Read it, then perform three explicit read_result rereads of its returned exact resultRef before writing a source-cited saved report. If an old result is represented by a reference, reread it when needed. Do not invent unavailable values.",
+      "expectedOutcome": "completed-with-report",
+      "contextWorkingSetBytes": 256,
+      "rubric": [
+        "2025",
+        "-0.30 versus -0.10 percentage points",
+        "no forecast"
+      ],
+      "questionSha256": "37f56dfbeca6c7e32fabfc885ffeefefd84aaf1dd99e0f0ad290d28ce2b2f1d6",
+      "questionBytes": 362
+    },
+    {
+      "id": "a14-05",
+      "question": "Compare supplied dividend yields and explicitly preserve missing data. Use only the supplied synthetic source. Read it, then perform three explicit read_result rereads of its returned exact resultRef before writing a source-cited saved report. If an old result is represented by a reference, reread it when needed. Do not invent unavailable values.",
+      "expectedOutcome": "completed-with-report",
+      "contextWorkingSetBytes": 256,
+      "rubric": [
+        "Aurora unknown",
+        "Boreal 1.5%",
+        "2025"
+      ],
+      "questionSha256": "6877c97d4b54d3581ee24c4b145e7f2f27571db73a61b2b75fa7d5032aa537c5",
+      "questionBytes": 348
+    },
+    {
+      "id": "a14-06",
+      "question": "Explain the dated spread comparison and its limitation. Use only the supplied synthetic source. Read it, then perform three explicit read_result rereads of its returned exact resultRef before writing a source-cited saved report. If an old result is represented by a reference, reread it when needed. Do not invent unavailable values.",
+      "expectedOutcome": "completed-with-report",
+      "contextWorkingSetBytes": 256,
+      "rubric": [
+        "2026-10-01",
+        "0.12% versus 0.18%",
+        "not future liquidity"
+      ],
+      "questionSha256": "328d8b3f94b6320affa968d94d6dd5b810b99a486f545018dff14aaead1102c0",
+      "questionBytes": 333
+    },
+    {
+      "id": "a14-07",
+      "question": "Reconcile the historical and current Aurora assets; preserve both dates. Use only the supplied synthetic source. Read it, then perform three explicit read_result rereads of its returned exact resultRef before writing a source-cited saved report. If an old result is represented by a reference, reread it when needed. Do not invent unavailable values.",
+      "expectedOutcome": "completed-with-report",
+      "contextWorkingSetBytes": 256,
+      "rubric": [
+        "100 million at 2025-12-31",
+        "120 million at 2026-10-01",
+        "different dates"
+      ],
+      "questionSha256": "e93971350e68e70a399db69e9e0d3dfe00960ec04aecb5c8b637b707bc451a7c",
+      "questionBytes": 350
+    },
+    {
+      "id": "a14-08",
+      "question": "Explain the corrected Boreal fee and distinguish superseded from current evidence. Use only the supplied synthetic source. Read it, then perform three explicit read_result rereads of its returned exact resultRef before writing a source-cited saved report. If an old result is represented by a reference, reread it when needed. Do not invent unavailable values.",
+      "expectedOutcome": "completed-with-report",
+      "contextWorkingSetBytes": 256,
+      "rubric": [
+        "0.40% superseded",
+        "0.35% current"
+      ],
+      "questionSha256": "8e8e516d4e3115892fdaa15a5e2b7e656d1fc5142ba499ad6e1ed43a9bf3e96a",
+      "questionBytes": 360
+    },
+    {
+      "id": "a14-09",
+      "question": "Explain why the stress scenario cannot determine either fund return. Use only the supplied synthetic source. Read it, then perform three explicit read_result rereads of its returned exact resultRef before writing a source-cited saved report. If an old result is represented by a reference, reread it when needed. Do not invent unavailable values.",
+      "expectedOutcome": "completed-with-report",
+      "contextWorkingSetBytes": 256,
+      "rubric": [
+        "hypothetical 10% decline",
+        "beta missing",
+        "no invented return"
+      ],
+      "questionSha256": "9bd822964e12c3c18a267789f39540e016aa565c8333c21547a7f2ef8aa3daea",
+      "questionBytes": 346
+    },
+    {
+      "id": "a14-10",
+      "question": "Produce a short two-fund comparison preserving the exact opaque identifier. Use only the supplied synthetic source. Read it, then perform three explicit read_result rereads of its returned exact resultRef before writing a source-cited saved report. If an old result is represented by a reference, reread it when needed. Do not invent unavailable values.",
+      "expectedOutcome": "completed-with-report",
+      "contextWorkingSetBytes": 256,
+      "rubric": [
+        "12345678901234567890 exact",
+        "fees 0.20% and 0.35%",
+        "missing dividend yield"
+      ],
+      "questionSha256": "3394717d599ec4a962a0cb2972d6bfa8a914ee3e08604c31761f6b8749938b0a",
+      "questionBytes": 353
+    }
+  ],
+  "executionGate": {
+    "route": "requires explicit approved provider/model/config identity",
+    "budget": "requires reconciled cumulative ledger and explicit remaining cap",
+    "concurrency": 1,
+    "automaticRetries": 0,
+    "unknownPolicy": "retain request and billing unknown; no refund or replay"
+  },
+  "safetyGate": "test/context-fitting-v034.test.mjs; capacity refusal/recovery are not normal-cohort successes",
+  "profile": {
+    "capabilities": [
+      "report"
+    ],
+    "allowedTools": [
+      "read_page",
+      "read_result",
+      "save_report"
+    ],
+    "contextBytes": 1048576,
+    "limits": {
+      "maxRounds": 20,
+      "maxTools": 32,
+      "timeoutMs": 300000,
+      "model": 24,
+      "tool": 40
+    }
+  },
+  "sourceBytes": 9821
+}

@@ -52,3 +52,12 @@ Final frozen Node 26.11.1 aggregate: **1525 tests, 1521 pass, 0 fail,
 4 pre-existing optional compatibility skips**, 336500 ms. Native ESM build and
 docs consistency passed. Independent final review ran context/CSV/teaching
 32/32. Exact-head remote CI remains pending at this source commit.
+
+## Preparation follow-up
+
+The unchanged Runtime commit 93d060f passed remote Verify #132 (1521 pass,
+0 fail, 4 skip). The later provider-free preparation freezes ten synthetic
+normal-content tasks separately from mechanical safety cases. It checks source,
+question and Runtime hashes and tests all ten through original import/submit APIs
+without work or provider calls. Route, cumulative budget and independent live
+review still require the real-acceptance launch gate; no request was dispatched.

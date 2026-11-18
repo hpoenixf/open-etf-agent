@@ -9,6 +9,6 @@
 - [x] Run focused provider-free regression; final reviewer combination 32/32.
 - [x] Independent final review (including legal large-history and original report regression).
 - [x] Full final suite and native ESM build.
-- [ ] Exact-head remote CI.
+- [x] Runtime exact-head remote CI: Verify #132, 1521 pass, 0 fail, 4 skip.
 - [ ] Authorized real-model acceptance (not started; no dispatch authorized here).
 - [ ] Publication direction (not requested for this candidate).
