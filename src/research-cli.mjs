@@ -1,3 +1,4 @@
+import {openResearchMaterials} from './research-materials.mjs';
 import {confirmScheduledTask,listScheduledTasks,inspectScheduledTask,cancelScheduledTask,runDueScheduledTasks} from './scheduled-tasks.mjs';
 import {open,constants} from 'node:fs/promises';
 import {resolve,dirname,join} from 'node:path';
@@ -24,6 +25,13 @@ Usage: node src/research-cli.mjs <group> <command> [options]
   preset create --project DIR --id ID --preset JSON_FILE
   preset read|remove --project DIR --id ID [--revision NUMBER (remove)]
   preset update --project DIR --id ID --revision NUMBER --preset JSON_FILE
+  material register --project DIR --id ID --file FILE
+  material replace --project DIR --id ID --file FILE --revision NUMBER
+  material list --project DIR
+  material read --project DIR --id ID
+  material select --project DIR --id ID --version NUMBER
+  material remove --project DIR --id ID --revision NUMBER
+  material recover --project DIR
   source import --project DIR --files JSON_FILE
   source list --project DIR --manifest SHA256
   source acquire --project DIR --acquisition ID --urls JSON_FILE --approve-public-fetch
@@ -105,6 +113,9 @@ const specifications={
  'interaction inspect':['project','run','question-id'],
  'project update':['project','config','expected-config'],
  'project init':['project','config'], 'project inspect':['project'],
+ 'material register':['project','id','file'], 'material replace':['project','id','file','revision'],
+ 'material list':['project'], 'material read':['project','id'], 'material select':['project','id','version'],
+ 'material remove':['project','id','revision'], 'material recover':['project'],
  'source import':['project','files'], 'source list':['project','manifest'],
  'source acquire':['project','acquisition','urls','approve-public-fetch','redirects?','base-manifest?','network-profile?'],
  'source acquisition':['project','acquisition'],
@@ -189,6 +200,16 @@ export async function runResearchCli(args,{stdout=process.stdout,stderr=process.
   if(command==='project init'){emit(await createResearchProject({directory:projectDir,config:await readProjectJson(o.config)}));return 0;}
   if(command==='project update'){emit(await updateResearchProject({projectDir,config:await readProjectJson(o.config),expectedConfigSha256:o['expected-config']}));return 0;}
   if(command==='project inspect'){emit(await inspectResearchProject({projectDir}));return 0;}
+  if(command.startsWith('material ')){
+   const project=await inspectResearchProject({projectDir}),operation=command.split(' ')[1];
+   const store=await openResearchMaterials({projectDir,projectId:project.projectId,create:operation==='register',recover:operation==='recover'});
+   if(operation==='list'||operation==='recover')emit({materials:await store.list()});
+   else if(operation==='read')emit(await store.read(o.id));
+   else if(operation==='select')emit(await store.select({id:o.id,version:integer(o.version,1,32)}));
+   else if(operation==='remove')emit(await store.remove({id:o.id,expectedRevision:integer(o.revision,1,33)}));
+   else emit(await store.import({id:o.id,file:o.file,...(operation==='replace'?{expectedRevision:integer(o.revision,1,32)}:{})}));
+   return 0;
+  }
   if(command==='source import'){await inspectResearchProject({projectDir});emit(sourceResult(await importProjectSources({projectDir,files:await readProjectJson(o.files)})));return 0;}
   if(command==='source list'){await inspectResearchProject({projectDir});emit(sourceResult(await loadProjectSources({projectDir,manifestSha256:o.manifest})));return 0;}
   if(command==='source acquisition'){emit(await inspectWebAcquisition({projectDir,acquisitionId:o.acquisition}));return 0;}
