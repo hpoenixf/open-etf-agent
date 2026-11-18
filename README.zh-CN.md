@@ -68,8 +68,8 @@ GitHub 将 SVG 当作一张图片，不能在缩略图里逐卡点击；下表�
 
 **近期更新的阅读素材**
 
-<!-- Recent reading source: hpoenixf/eff-agent-article@1f92862826be6beac68ef9fc758171d3b52f54d8 README.md; Chinese-source Git history order, translated editions are not separate entries. -->
-[资料明明在，Agent 为什么读不到？](https://hpoenixf.com/eff-agent-article/articles/agent-document-navigation-after-empty-search) · [Checkpoint 系统设计：Agent 保存什么，又凭什么继续？](https://hpoenixf.com/eff-agent-article/articles/agent-checkpoint-ownership-and-recovery) · [怎样建立贯穿研发与验收的 Agent 评测集](https://hpoenixf.com/eff-agent-article/articles/agent-evaluation-set-for-iteration)
+<!-- Recent reading source: hpoenixf/eff-agent-article@43be7ca0b4e97a77eacf86fe6c2a535bad0b3a89 README.md; Chinese-source Git history order, translated editions are not separate entries. -->
+[一份研究报告，为什么需要先变成「资产」？](https://hpoenixf.com/eff-agent-article/articles/agent-research-assets-identity-version-lifecycle) · [Open ETF Agent v0.1：从第一份可回读报告开始](https://hpoenixf.com/eff-agent-article/articles/open-etf-agent-v01-first-readable-report) · [资料明明在，Agent 为什么读不到？](https://hpoenixf.com/eff-agent-article/articles/agent-document-navigation-after-empty-search)
 
 <a id="quickstart"></a>
 ## 快速运行 · Quickstart

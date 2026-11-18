@@ -68,8 +68,8 @@ Articles can describe a broader system than the public module. Coverage records 
 
 **Recently updated reading**
 
-<!-- Recent reading source: hpoenixf/eff-agent-article@1f92862826be6beac68ef9fc758171d3b52f54d8 README.md; Chinese-source Git history order, translated editions are not separate entries. -->
-[The File Is Right There. Why Can't the Agent Read It?](https://hpoenixf.com/eff-agent-article/en/articles/agent-document-navigation-after-empty-search) · [Checkpoint System Design: What Does an Agent Save, and What Lets It Continue?](https://hpoenixf.com/eff-agent-article/en/articles/agent-checkpoint-ownership-and-recovery) · [Building Agent Evaluation Sets Across Development and Acceptance](https://hpoenixf.com/eff-agent-article/en/articles/agent-evaluation-set-for-iteration)
+<!-- Recent reading source: hpoenixf/eff-agent-article@43be7ca0b4e97a77eacf86fe6c2a535bad0b3a89 README.md; Chinese-source Git history order, translated editions are not separate entries. -->
+[Why a Research Report Must Become an Asset Before an Agent Can Reuse It](https://hpoenixf.com/eff-agent-article/en/articles/agent-research-assets-identity-version-lifecycle) · [Start with a Report You Can Read Back: Open ETF Agent v0.1](https://hpoenixf.com/eff-agent-article/en/articles/open-etf-agent-v01-first-readable-report) · [The File Is Right There. Why Can't the Agent Read It?](https://hpoenixf.com/eff-agent-article/en/articles/agent-document-navigation-after-empty-search)
 
 <a id="quickstart"></a>
 ## Quickstart
