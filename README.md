@@ -102,13 +102,13 @@ npm run demo -- --case document-compare
 
 **[v0.31.0 · Local Knowledge](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.31.0)** adds selected text import, BM25 free queries and original source readback. The independently frozen live-model cohort completed 9/10 Runtime workflows; model instruction and prose quality remain separate. [Evidence and limits](docs/verification/v031-release.md).
 
-**0.32 candidate (not yet released):** Knowledge now supports explicit local E5 dynamic queries, atomic query/operation budgets and durable recovery without re-encoding uncertain work. The fixed DeepSeek 4.1 Flash cohort passed 10/10 Runtime/delivery and 10/10 strict original-source review; an earlier 8/10 content batch is retained. Candidate retrieval, sufficient evidence and final answers remain separate. [Use the candidate](docs/dynamic-knowledge.md) · [Qualification, costs and limits](docs/verification/v032-release-readiness.md).
+**[v0.32.0 · Local dynamic Knowledge](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.32.0):** Knowledge now supports explicit local E5 dynamic queries, atomic query/operation budgets and durable recovery without re-encoding uncertain work. The fixed DeepSeek 4.1 Flash cohort passed 10/10 Runtime/delivery and 10/10 strict original-source review; an earlier 8/10 content batch is retained. Candidate retrieval, sufficient evidence and final answers remain separate. [Dynamic Knowledge guide](docs/dynamic-knowledge.md) · [Qualification, costs and limits](docs/verification/v032-release-readiness.md).
 
 | Recent version / status | What it enables | Usage and boundaries |
 | --- | --- | --- |
+| [v0.32 · Local dynamic Knowledge](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.32.0) | Encode new local queries within a Run, with atomic budgets and no-replay recovery | [Dynamic Knowledge](docs/dynamic-knowledge.md) |
 | [v0.31 · Local Knowledge](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.31.0) | Import selected text, run new BM25 queries and inspect original bytes without a model key | [Local Knowledge](docs/local-knowledge.md) |
 | [v0.30 · Child lifecycle](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.30.0) | Original-Session spawn/inspect/cancel, immutable observations, source consumption and cold recovery | [Child lifecycle](docs/child-lifecycle.md) |
-| [v0.29 · Conversation](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.29.0) | Explicit Continue, persisted clarification, safe resume/handoff and revocation with original outputs | [Conversation](docs/conversations.md) |
 
 [All fixed versions and commands](docs/module-guide.md#versions) · [Version lineage](versions.json) · [All releases](https://github.com/hpoenixf/open-etf-agent/releases) · [Verification records](docs/verification/README.md)
 

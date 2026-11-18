@@ -102,13 +102,13 @@ npm run demo -- --case document-compare
 
 **[v0.31.0 · 本地知识](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.31.0)** 提供显式文本导入、BM25 自由查询与原始来源回读。独立冻结的真实模型批次完成 9/10 Runtime 工作流；模型指令与正文质量另评。[证据与边界](docs/verification/v031-release.zh-CN.md)。
 
-**0.32 候选，尚未发布：** Knowledge 已支持显式本地 E5 动态查询、原子查询与操作预算，以及不重放不确定操作的持久恢复。固定 DeepSeek 4.1 Flash 批次通过 10/10 运行交付和 10/10 严格原文复核；此前内容 8/10 的批次保留。候选召回、证据充分性和最终回答仍分别评估。[候选用法](docs/dynamic-knowledge.zh-CN.md) · [资格、消耗与边界](docs/verification/v032-release-readiness.zh-CN.md)。
+**[v0.32.0 · 本地动态 Knowledge](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.32.0)：** Knowledge 已支持显式本地 E5 动态查询、原子查询与操作预算，以及不重放不确定操作的持久恢复。固定 DeepSeek 4.1 Flash 批次通过 10/10 运行交付和 10/10 严格原文复核；此前内容 8/10 的批次保留。候选召回、证据充分性和最终回答仍分别评估。[动态 Knowledge 用法](docs/dynamic-knowledge.zh-CN.md) · [资格、消耗与边界](docs/verification/v032-release-readiness.zh-CN.md)。
 
 | 最近版本 / 状态 | 能做什么 | 用法与边界 |
 | --- | --- | --- |
+| [v0.32 · 本地动态 Knowledge](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.32.0) | Run 内编码新本地查询，保留原子预算与不重放恢复 | [动态 Knowledge](docs/dynamic-knowledge.zh-CN.md) |
 | [v0.31 · 本地知识](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.31.0) | 导入选定文本、运行新 BM25 查询并检查原始字节，无需模型密钥 | [本地知识](docs/local-knowledge.zh-CN.md) |
 | [v0.30 · Child 生命周期](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.30.0) | 原 Session 中独立 spawn/inspect/cancel、不可变观察、来源消费与冷恢复 | [Child 生命周期](docs/child-lifecycle.zh-CN.md) |
-| [v0.29 · Conversation](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.29.0) | 明确继续、持久澄清、安全恢复、交接与撤销，保留原始产物 | [研究对话](docs/conversations.zh-CN.md) |
 
 [全部固定版本与命令](docs/module-guide.zh-CN.md#versions) · [版本谱系](versions.json) · [全部 Release](https://github.com/hpoenixf/open-etf-agent/releases) · [验证记录](docs/verification/README.zh-CN.md)
 
