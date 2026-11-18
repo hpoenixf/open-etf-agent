@@ -68,8 +68,8 @@ Articles can describe a broader system than the public module. Coverage records 
 
 **Recently updated reading**
 
-<!-- Recent reading source: hpoenixf/eff-agent-article@c95f6ad07cce340969900adb2eb1dccf4effa7eb README.md; Chinese-source Git history order, translated editions are not separate entries. -->
-[Subagent Panorama](https://hpoenixf.com/eff-agent-article/en/articles/agent-subagent-context-specialization) · [Start with a Report You Can Read Back](https://hpoenixf.com/eff-agent-article/en/articles/open-etf-agent-v01-first-readable-report) · [Spec-Driven Agent Development](https://hpoenixf.com/eff-agent-article/en/articles/agent-spec-driven-development-panorama)
+<!-- Recent reading source: hpoenixf/eff-agent-article@1f92862826be6beac68ef9fc758171d3b52f54d8 README.md; Chinese-source Git history order, translated editions are not separate entries. -->
+[The File Is Right There. Why Can't the Agent Read It?](https://hpoenixf.com/eff-agent-article/en/articles/agent-document-navigation-after-empty-search) · [Checkpoint System Design: What Does an Agent Save, and What Lets It Continue?](https://hpoenixf.com/eff-agent-article/en/articles/agent-checkpoint-ownership-and-recovery) · [Building Agent Evaluation Sets Across Development and Acceptance](https://hpoenixf.com/eff-agent-article/en/articles/agent-evaluation-set-for-iteration)
 
 <a id="quickstart"></a>
 ## Quickstart
