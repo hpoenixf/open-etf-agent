@@ -1,0 +1,550 @@
+{
+  "schemaVersion": "v032-dynamic-ten@1",
+  "sourceCommit": "f742c3ac949d16e7706e2b6aa0707ad45e9817bd",
+  "sourceTree": "1586bca78f4d797a2fb98c1d076b1b12e9c8f7c3",
+  "executionIdentity": "2607cf2e4d4d041d6e6e557d35cf6302eeed6216f43182cac905d6355ac3890a",
+  "realProviderApplicability": "supported",
+  "scope": "Local dynamic query in original Runtime; strict original-source content and delivery",
+  "normalGate": {
+    "planned": 10,
+    "requiredSuccesses": 9,
+    "threshold": 0.9,
+    "taskIds": [
+      "D032-01",
+      "D032-02",
+      "D032-03",
+      "D032-04",
+      "D032-05",
+      "D032-06",
+      "D032-07",
+      "D032-08",
+      "D032-09",
+      "D032-10"
+    ],
+    "tasks": [
+      {
+        "id": "D032-01",
+        "executionIdentity": "2607cf2e4d4d041d6e6e557d35cf6302eeed6216f43182cac905d6355ac3890a",
+        "status": "success",
+        "runtimeStatus": "completed",
+        "runtimeCode": null,
+        "physicalRequests": 3,
+        "resolvedModels": [
+          "deepseek-v4.1-flash"
+        ],
+        "realProvider": true,
+        "deliveryReadback": true,
+        "outputKind": "report",
+        "outputSha256": "df4a22930613ccf5810524c4d6b156f5042328ffa6b6210431b6cd3e02a3362f",
+        "elapsedMs": 19862,
+        "startedAt": "2026-11-18T02:17:09.687Z",
+        "onTime": true,
+        "unknownEffects": false,
+        "rootUsage": {
+          "model": 3,
+          "tool": 2
+        },
+        "queryBudget": {
+          "maxQueries": 2,
+          "reservedQueries": 1,
+          "reservedPhysicalOperations": 2,
+          "dispatchedPhysicalOperations": 2,
+          "completedQueries": 1,
+          "unsettledQueries": 0
+        },
+        "workError": null,
+        "readbackError": null,
+        "transportStop": null,
+        "contentReview": "pass-independent-source-review",
+        "additionalCostUsd": 0,
+        "originalCaseId": "P01",
+        "runtimeOutcomeStatus": "success",
+        "contentFailureReason": null,
+        "runtimeAccepted": true,
+        "workflowCompleted": true,
+        "eligibleSuccess": true,
+        "tokens": {
+          "prompt": 14360,
+          "completion": 666,
+          "total": 15026
+        },
+        "originalOutput": "first/outputs/D032-01.md",
+        "finalAnswer": "first/outputs/D032-01-final.md",
+        "evidence": "first/tasks/D032-01.json"
+      },
+      {
+        "id": "D032-02",
+        "executionIdentity": "2607cf2e4d4d041d6e6e557d35cf6302eeed6216f43182cac905d6355ac3890a",
+        "status": "success",
+        "runtimeStatus": "completed",
+        "runtimeCode": null,
+        "physicalRequests": 3,
+        "resolvedModels": [
+          "deepseek-v4.1-flash"
+        ],
+        "realProvider": true,
+        "deliveryReadback": true,
+        "outputKind": "report",
+        "outputSha256": "647906c311d07e0657a89a8f84399013db4441e00d5931263db0f9826c5020a4",
+        "elapsedMs": 24680,
+        "startedAt": "2026-11-18T02:18:59.428Z",
+        "onTime": true,
+        "unknownEffects": false,
+        "rootUsage": {
+          "model": 3,
+          "tool": 2
+        },
+        "queryBudget": {
+          "maxQueries": 2,
+          "reservedQueries": 1,
+          "reservedPhysicalOperations": 2,
+          "dispatchedPhysicalOperations": 2,
+          "completedQueries": 1,
+          "unsettledQueries": 0
+        },
+        "workError": null,
+        "readbackError": null,
+        "transportStop": null,
+        "contentReview": "pass-independent-source-review",
+        "additionalCostUsd": 0,
+        "originalCaseId": "P05",
+        "runtimeOutcomeStatus": "success",
+        "contentFailureReason": null,
+        "runtimeAccepted": true,
+        "workflowCompleted": true,
+        "eligibleSuccess": true,
+        "tokens": {
+          "prompt": 17811,
+          "completion": 982,
+          "total": 18793
+        },
+        "originalOutput": "first/outputs/D032-02.md",
+        "finalAnswer": "first/outputs/D032-02-final.md",
+        "evidence": "first/tasks/D032-02.json"
+      },
+      {
+        "id": "D032-03",
+        "executionIdentity": "2607cf2e4d4d041d6e6e557d35cf6302eeed6216f43182cac905d6355ac3890a",
+        "status": "success",
+        "runtimeStatus": "completed",
+        "runtimeCode": null,
+        "physicalRequests": 3,
+        "resolvedModels": [
+          "deepseek-v4.1-flash"
+        ],
+        "realProvider": true,
+        "deliveryReadback": true,
+        "outputKind": "report",
+        "outputSha256": "2d252425c58a1567c53ec9f8c654b372997f5a53236c5dbab2ee73d4c0495b34",
+        "elapsedMs": 25059,
+        "startedAt": "2026-11-18T02:19:24.293Z",
+        "onTime": true,
+        "unknownEffects": false,
+        "rootUsage": {
+          "model": 3,
+          "tool": 2
+        },
+        "queryBudget": {
+          "maxQueries": 2,
+          "reservedQueries": 1,
+          "reservedPhysicalOperations": 2,
+          "dispatchedPhysicalOperations": 2,
+          "completedQueries": 1,
+          "unsettledQueries": 0
+        },
+        "workError": null,
+        "readbackError": null,
+        "transportStop": null,
+        "contentReview": "pass-independent-source-review",
+        "additionalCostUsd": 0,
+        "originalCaseId": "P08",
+        "runtimeOutcomeStatus": "success",
+        "contentFailureReason": null,
+        "runtimeAccepted": true,
+        "workflowCompleted": true,
+        "eligibleSuccess": true,
+        "tokens": {
+          "prompt": 17127,
+          "completion": 1068,
+          "total": 18195
+        },
+        "originalOutput": "first/outputs/D032-03.md",
+        "finalAnswer": "first/outputs/D032-03-final.md",
+        "evidence": "first/tasks/D032-03.json"
+      },
+      {
+        "id": "D032-04",
+        "executionIdentity": "2607cf2e4d4d041d6e6e557d35cf6302eeed6216f43182cac905d6355ac3890a",
+        "status": "failure",
+        "runtimeStatus": "completed",
+        "runtimeCode": null,
+        "physicalRequests": 3,
+        "resolvedModels": [
+          "deepseek-v4.1-flash"
+        ],
+        "realProvider": true,
+        "deliveryReadback": true,
+        "outputKind": "report",
+        "outputSha256": "af10b6556b29f6b27f0ac13114b9d5909af92ab624ec11b2233dabcf93ec1dad",
+        "elapsedMs": 23785,
+        "startedAt": "2026-11-18T02:19:49.488Z",
+        "onTime": true,
+        "unknownEffects": false,
+        "rootUsage": {
+          "model": 3,
+          "tool": 2
+        },
+        "queryBudget": {
+          "maxQueries": 2,
+          "reservedQueries": 1,
+          "reservedPhysicalOperations": 2,
+          "dispatchedPhysicalOperations": 2,
+          "completedQueries": 1,
+          "unsettledQueries": 0
+        },
+        "workError": null,
+        "readbackError": null,
+        "transportStop": null,
+        "contentReview": "fail-independent-source-review",
+        "additionalCostUsd": 0,
+        "originalCaseId": "P10",
+        "runtimeOutcomeStatus": "success",
+        "contentFailureReason": "Unsupported whole-collection absence wording despite 4/8 returned pages.",
+        "runtimeAccepted": true,
+        "workflowCompleted": true,
+        "eligibleSuccess": false,
+        "tokens": {
+          "prompt": 17091,
+          "completion": 791,
+          "total": 17882
+        },
+        "originalOutput": "first/outputs/D032-04.md",
+        "finalAnswer": "first/outputs/D032-04-final.md",
+        "evidence": "first/tasks/D032-04.json"
+      },
+      {
+        "id": "D032-05",
+        "executionIdentity": "2607cf2e4d4d041d6e6e557d35cf6302eeed6216f43182cac905d6355ac3890a",
+        "status": "success",
+        "runtimeStatus": "completed",
+        "runtimeCode": null,
+        "physicalRequests": 3,
+        "resolvedModels": [
+          "deepseek-v4.1-flash"
+        ],
+        "realProvider": true,
+        "deliveryReadback": true,
+        "outputKind": "report",
+        "outputSha256": "8f7792b7628adb21a3cf30accbfb0e3758f5bd68245ef3a818e516263c4ce968",
+        "elapsedMs": 40669,
+        "startedAt": "2026-11-18T02:20:13.391Z",
+        "onTime": true,
+        "unknownEffects": false,
+        "rootUsage": {
+          "model": 3,
+          "tool": 2
+        },
+        "queryBudget": {
+          "maxQueries": 2,
+          "reservedQueries": 1,
+          "reservedPhysicalOperations": 2,
+          "dispatchedPhysicalOperations": 2,
+          "completedQueries": 1,
+          "unsettledQueries": 0
+        },
+        "workError": null,
+        "readbackError": null,
+        "transportStop": null,
+        "contentReview": "pass-independent-source-review",
+        "additionalCostUsd": 0,
+        "originalCaseId": "N01",
+        "runtimeOutcomeStatus": "success",
+        "contentFailureReason": null,
+        "runtimeAccepted": true,
+        "workflowCompleted": true,
+        "eligibleSuccess": true,
+        "tokens": {
+          "prompt": 17299,
+          "completion": 1119,
+          "total": 18418
+        },
+        "originalOutput": "first/outputs/D032-05.md",
+        "finalAnswer": "first/outputs/D032-05-final.md",
+        "evidence": "first/tasks/D032-05.json"
+      },
+      {
+        "id": "D032-06",
+        "executionIdentity": "2607cf2e4d4d041d6e6e557d35cf6302eeed6216f43182cac905d6355ac3890a",
+        "status": "failure",
+        "runtimeStatus": "completed",
+        "runtimeCode": null,
+        "physicalRequests": 2,
+        "resolvedModels": [
+          "deepseek-v4.1-flash"
+        ],
+        "realProvider": true,
+        "deliveryReadback": true,
+        "outputKind": "published-answer",
+        "outputSha256": "d721b42df671c87f80b2d866ed69ab843f0b3cafdc931d9d5f6630977b2c687d",
+        "elapsedMs": 19145,
+        "startedAt": "2026-11-18T02:20:54.193Z",
+        "onTime": true,
+        "unknownEffects": false,
+        "rootUsage": {
+          "model": 2,
+          "tool": 1
+        },
+        "queryBudget": {
+          "maxQueries": 2,
+          "reservedQueries": 1,
+          "reservedPhysicalOperations": 2,
+          "dispatchedPhysicalOperations": 2,
+          "completedQueries": 1,
+          "unsettledQueries": 0
+        },
+        "workError": null,
+        "readbackError": null,
+        "transportStop": null,
+        "contentReview": "fail-independent-source-review",
+        "additionalCostUsd": 0,
+        "originalCaseId": "N02",
+        "runtimeOutcomeStatus": "success",
+        "contentFailureReason": "Closing sentence claims information absent from admitted collection despite 4/8 returned pages.",
+        "runtimeAccepted": true,
+        "workflowCompleted": true,
+        "eligibleSuccess": false,
+        "tokens": {
+          "prompt": 9931,
+          "completion": 486,
+          "total": 10417
+        },
+        "originalOutput": "first/outputs/D032-06.md",
+        "finalAnswer": "first/outputs/D032-06-final.md",
+        "evidence": "first/tasks/D032-06.json"
+      },
+      {
+        "id": "D032-07",
+        "executionIdentity": "2607cf2e4d4d041d6e6e557d35cf6302eeed6216f43182cac905d6355ac3890a",
+        "status": "success",
+        "runtimeStatus": "completed",
+        "runtimeCode": null,
+        "physicalRequests": 2,
+        "resolvedModels": [
+          "deepseek-v4.1-flash"
+        ],
+        "realProvider": true,
+        "deliveryReadback": true,
+        "outputKind": "published-answer",
+        "outputSha256": "1a60b10ba03f6e2b28dd4a2acfbee553394a0efd5e54269431426a77112d461f",
+        "elapsedMs": 27820,
+        "startedAt": "2026-11-18T02:21:13.438Z",
+        "onTime": true,
+        "unknownEffects": false,
+        "rootUsage": {
+          "model": 2,
+          "tool": 1
+        },
+        "queryBudget": {
+          "maxQueries": 2,
+          "reservedQueries": 1,
+          "reservedPhysicalOperations": 2,
+          "dispatchedPhysicalOperations": 2,
+          "completedQueries": 1,
+          "unsettledQueries": 0
+        },
+        "workError": null,
+        "readbackError": null,
+        "transportStop": null,
+        "contentReview": "pass-independent-source-review",
+        "additionalCostUsd": 0,
+        "originalCaseId": "N03",
+        "runtimeOutcomeStatus": "success",
+        "contentFailureReason": null,
+        "runtimeAccepted": true,
+        "workflowCompleted": true,
+        "eligibleSuccess": true,
+        "tokens": {
+          "prompt": 9982,
+          "completion": 1335,
+          "total": 11317
+        },
+        "originalOutput": "first/outputs/D032-07.md",
+        "finalAnswer": "first/outputs/D032-07-final.md",
+        "evidence": "first/tasks/D032-07.json"
+      },
+      {
+        "id": "D032-08",
+        "executionIdentity": "2607cf2e4d4d041d6e6e557d35cf6302eeed6216f43182cac905d6355ac3890a",
+        "status": "success",
+        "runtimeStatus": "completed",
+        "runtimeCode": null,
+        "physicalRequests": 2,
+        "resolvedModels": [
+          "deepseek-v4.1-flash"
+        ],
+        "realProvider": true,
+        "deliveryReadback": true,
+        "outputKind": "published-answer",
+        "outputSha256": "d1538a0cae84aed2af43dc39c65378182623e780b3b1a50b220a22f4219b4c5a",
+        "elapsedMs": 13494,
+        "startedAt": "2026-11-18T02:21:41.349Z",
+        "onTime": true,
+        "unknownEffects": false,
+        "rootUsage": {
+          "model": 2,
+          "tool": 1
+        },
+        "queryBudget": {
+          "maxQueries": 2,
+          "reservedQueries": 1,
+          "reservedPhysicalOperations": 2,
+          "dispatchedPhysicalOperations": 2,
+          "completedQueries": 1,
+          "unsettledQueries": 0
+        },
+        "workError": null,
+        "readbackError": null,
+        "transportStop": null,
+        "contentReview": "pass-independent-source-review",
+        "additionalCostUsd": 0,
+        "originalCaseId": "N04",
+        "runtimeOutcomeStatus": "success",
+        "contentFailureReason": null,
+        "runtimeAccepted": true,
+        "workflowCompleted": true,
+        "eligibleSuccess": true,
+        "tokens": {
+          "prompt": 9958,
+          "completion": 426,
+          "total": 10384
+        },
+        "originalOutput": "first/outputs/D032-08.md",
+        "finalAnswer": "first/outputs/D032-08-final.md",
+        "evidence": "first/tasks/D032-08.json"
+      },
+      {
+        "id": "D032-09",
+        "executionIdentity": "2607cf2e4d4d041d6e6e557d35cf6302eeed6216f43182cac905d6355ac3890a",
+        "status": "success",
+        "runtimeStatus": "completed",
+        "runtimeCode": null,
+        "physicalRequests": 2,
+        "resolvedModels": [
+          "deepseek-v4.1-flash"
+        ],
+        "realProvider": true,
+        "deliveryReadback": true,
+        "outputKind": "published-answer",
+        "outputSha256": "89b143796e74cd5ac56bf789d72490657940fd95a17264bdcdf6ebcb11377dcc",
+        "elapsedMs": 23715,
+        "startedAt": "2026-11-18T02:21:54.957Z",
+        "onTime": true,
+        "unknownEffects": false,
+        "rootUsage": {
+          "model": 2,
+          "tool": 1
+        },
+        "queryBudget": {
+          "maxQueries": 2,
+          "reservedQueries": 1,
+          "reservedPhysicalOperations": 2,
+          "dispatchedPhysicalOperations": 2,
+          "completedQueries": 1,
+          "unsettledQueries": 0
+        },
+        "workError": null,
+        "readbackError": null,
+        "transportStop": null,
+        "contentReview": "pass-independent-source-review",
+        "additionalCostUsd": 0,
+        "originalCaseId": "N05",
+        "runtimeOutcomeStatus": "success",
+        "contentFailureReason": null,
+        "runtimeAccepted": true,
+        "workflowCompleted": true,
+        "eligibleSuccess": true,
+        "tokens": {
+          "prompt": 9969,
+          "completion": 1007,
+          "total": 10976
+        },
+        "originalOutput": "first/outputs/D032-09.md",
+        "finalAnswer": "first/outputs/D032-09-final.md",
+        "evidence": "first/tasks/D032-09.json"
+      },
+      {
+        "id": "D032-10",
+        "executionIdentity": "2607cf2e4d4d041d6e6e557d35cf6302eeed6216f43182cac905d6355ac3890a",
+        "status": "success",
+        "runtimeStatus": "completed",
+        "runtimeCode": null,
+        "physicalRequests": 2,
+        "resolvedModels": [
+          "deepseek-v4.1-flash"
+        ],
+        "realProvider": true,
+        "deliveryReadback": true,
+        "outputKind": "published-answer",
+        "outputSha256": "5dcaaafabe17b03a80ffe9605bd05b500b1d952d9967dd31b6659e61178b42b6",
+        "elapsedMs": 15496,
+        "startedAt": "2026-11-18T02:22:18.779Z",
+        "onTime": true,
+        "unknownEffects": false,
+        "rootUsage": {
+          "model": 2,
+          "tool": 1
+        },
+        "queryBudget": {
+          "maxQueries": 2,
+          "reservedQueries": 1,
+          "reservedPhysicalOperations": 2,
+          "dispatchedPhysicalOperations": 2,
+          "completedQueries": 1,
+          "unsettledQueries": 0
+        },
+        "workError": null,
+        "readbackError": null,
+        "transportStop": null,
+        "contentReview": "pass-independent-source-review",
+        "additionalCostUsd": 0,
+        "originalCaseId": "N06",
+        "runtimeOutcomeStatus": "success",
+        "contentFailureReason": null,
+        "runtimeAccepted": true,
+        "workflowCompleted": true,
+        "eligibleSuccess": true,
+        "tokens": {
+          "prompt": 9970,
+          "completion": 457,
+          "total": 10427
+        },
+        "originalOutput": "first/outputs/D032-10.md",
+        "finalAnswer": "first/outputs/D032-10-final.md",
+        "evidence": "first/tasks/D032-10.json"
+      }
+    ],
+    "attempted": 10,
+    "notRun": 0,
+    "successes": 8,
+    "observedRate": 0.8
+  },
+  "runtimeSuccesses": 10,
+  "contentSuccesses": 8,
+  "physicalModelRequests": 25,
+  "tokens": {
+    "prompt": 133498,
+    "completion": 8337,
+    "total": 141835
+  },
+  "additionalCostUsd": 0,
+  "resolvedModels": [
+    "deepseek-v4.1-flash"
+  ],
+  "billingSource": "go",
+  "separateSafetyGatePassed": false,
+  "independentReview": "../review.safe.json",
+  "originalInferenceLedgerSha256": "c86cbf171005120dda9a184688c0d5ecdeb1b42bc0e32b3ee7fb8777ba16945f",
+  "sourceInputInventory": "first/PLAN.safe.json",
+  "declarationOnly": true,
+  "releaseCreated": false
+}

@@ -1,0 +1,876 @@
+{
+  "schemaVersion": "prepared-knowledge-evaluation@1",
+  "manifestSha256": "c16c472150d398815823e21b6d91b0d589a218eeeba5e1c19b66a1b364ec3b8c",
+  "acquisitionId": "reviewed-cohort",
+  "labelsSha256": "e5129a5f8630ecda60c2d9e82529547fa5096966b07153ae3c329f4dc94c9f9d",
+  "result": {
+    "schemaVersion": "knowledge-retrieval-evaluation-result@3",
+    "positiveQueries": 11,
+    "negativeQueries": 5,
+    "provenance": "externally-supplied",
+    "qualification": "not-certified",
+    "boundary": "Retrieval metrics use supplied answerability and supporting-source labels, not inferred semantic truth. Candidate return on insufficient cases is not a final-answer error. Generated answers are not evaluated.",
+    "catalog": {
+      "schemaVersion": "document-catalog@1",
+      "id": "selected:fad06d5ad29195097acafd87c6ed63e3a7108893cb5fb1d01d13e752f043ad59",
+      "sha256": "88e3b7ac36e8ffd15269be64fbb69d2599e19f911d0b1db66ac62b1e4354ee1a"
+    },
+    "evaluationSha256": "9456c82620b13fad99a1a89d6b1470ea9fcc1f02b34e226be1f2d652f7dfc81f",
+    "vectorEvidenceSha256": "a2e4ebbd7bb0784a5d839e061812f86a5bdd152f1acd53c2a67bb8f64999b952",
+    "k": 4,
+    "cases": [
+      {
+        "querySha256": "146cf6f6203795c40fade3bb35870a255b5f9b344d7e48f065ef8a6a4d63c744",
+        "relevantSourceIds": [
+          "text:77198f89bfe04961748fa83888db05f07adc778f58d22d05ef2d8cf234eb95e6@utf8-pages-v1:77198f89bfe04961748fa83888db05f07adc778f58d22d05ef2d8cf234eb95e6:p1"
+        ],
+        "profiles": {
+          "lexical": {
+            "sourceIds": [
+              "text:77198f89bfe04961748fa83888db05f07adc778f58d22d05ef2d8cf234eb95e6@utf8-pages-v1:77198f89bfe04961748fa83888db05f07adc778f58d22d05ef2d8cf234eb95e6:p1",
+              "text:066a69cdb1e09edbba1a80617a2e8309269b8a46ae34aa493c1a24d674544ec3@utf8-pages-v1:066a69cdb1e09edbba1a80617a2e8309269b8a46ae34aa493c1a24d674544ec3:p1",
+              "text:b84ba2ff8b1dd6dc6b082302d164d4f080e7c23020e272fc1c1891bef18b534e@utf8-pages-v1:b84ba2ff8b1dd6dc6b082302d164d4f080e7c23020e272fc1c1891bef18b534e:p1"
+            ],
+            "recall": 1,
+            "reciprocalRank": 1,
+            "status": "complete",
+            "byteLimited": false,
+            "encodingLimited": false,
+            "candidateReturned": true,
+            "labelledSupportRetrieved": true
+          },
+          "bm25": {
+            "sourceIds": [
+              "text:77198f89bfe04961748fa83888db05f07adc778f58d22d05ef2d8cf234eb95e6@utf8-pages-v1:77198f89bfe04961748fa83888db05f07adc778f58d22d05ef2d8cf234eb95e6:p1",
+              "text:066a69cdb1e09edbba1a80617a2e8309269b8a46ae34aa493c1a24d674544ec3@utf8-pages-v1:066a69cdb1e09edbba1a80617a2e8309269b8a46ae34aa493c1a24d674544ec3:p1",
+              "text:b84ba2ff8b1dd6dc6b082302d164d4f080e7c23020e272fc1c1891bef18b534e@utf8-pages-v1:b84ba2ff8b1dd6dc6b082302d164d4f080e7c23020e272fc1c1891bef18b534e:p1"
+            ],
+            "recall": 1,
+            "reciprocalRank": 1,
+            "status": "complete",
+            "byteLimited": false,
+            "encodingLimited": false,
+            "candidateReturned": true,
+            "labelledSupportRetrieved": true
+          },
+          "hybrid": {
+            "sourceIds": [
+              "text:77198f89bfe04961748fa83888db05f07adc778f58d22d05ef2d8cf234eb95e6@utf8-pages-v1:77198f89bfe04961748fa83888db05f07adc778f58d22d05ef2d8cf234eb95e6:p1",
+              "text:066a69cdb1e09edbba1a80617a2e8309269b8a46ae34aa493c1a24d674544ec3@utf8-pages-v1:066a69cdb1e09edbba1a80617a2e8309269b8a46ae34aa493c1a24d674544ec3:p1",
+              "text:b84ba2ff8b1dd6dc6b082302d164d4f080e7c23020e272fc1c1891bef18b534e@utf8-pages-v1:b84ba2ff8b1dd6dc6b082302d164d4f080e7c23020e272fc1c1891bef18b534e:p1",
+              "text:917cabdc80c65485c11e80307884ee217825ac5222b0fe9b9f11b19356f25689@utf8-pages-v1:917cabdc80c65485c11e80307884ee217825ac5222b0fe9b9f11b19356f25689:p1"
+            ],
+            "recall": 1,
+            "reciprocalRank": 1,
+            "status": "partial",
+            "byteLimited": false,
+            "encodingLimited": false,
+            "vectorAvailable": true,
+            "candidateReturned": true,
+            "labelledSupportRetrieved": true
+          }
+        },
+        "answerability": "direct-answer"
+      },
+      {
+        "querySha256": "71e1f1e40def762789919e81dc62ac6309e6969ae0cc2eaaf097848c984e4ec9",
+        "relevantSourceIds": [
+          "text:066a69cdb1e09edbba1a80617a2e8309269b8a46ae34aa493c1a24d674544ec3@utf8-pages-v1:066a69cdb1e09edbba1a80617a2e8309269b8a46ae34aa493c1a24d674544ec3:p1"
+        ],
+        "profiles": {
+          "lexical": {
+            "sourceIds": [
+              "text:066a69cdb1e09edbba1a80617a2e8309269b8a46ae34aa493c1a24d674544ec3@utf8-pages-v1:066a69cdb1e09edbba1a80617a2e8309269b8a46ae34aa493c1a24d674544ec3:p1",
+              "text:917cabdc80c65485c11e80307884ee217825ac5222b0fe9b9f11b19356f25689@utf8-pages-v1:917cabdc80c65485c11e80307884ee217825ac5222b0fe9b9f11b19356f25689:p1"
+            ],
+            "recall": 1,
+            "reciprocalRank": 1,
+            "status": "complete",
+            "byteLimited": false,
+            "encodingLimited": false,
+            "candidateReturned": true,
+            "labelledSupportRetrieved": true
+          },
+          "bm25": {
+            "sourceIds": [
+              "text:066a69cdb1e09edbba1a80617a2e8309269b8a46ae34aa493c1a24d674544ec3@utf8-pages-v1:066a69cdb1e09edbba1a80617a2e8309269b8a46ae34aa493c1a24d674544ec3:p1",
+              "text:917cabdc80c65485c11e80307884ee217825ac5222b0fe9b9f11b19356f25689@utf8-pages-v1:917cabdc80c65485c11e80307884ee217825ac5222b0fe9b9f11b19356f25689:p1"
+            ],
+            "recall": 1,
+            "reciprocalRank": 1,
+            "status": "complete",
+            "byteLimited": false,
+            "encodingLimited": false,
+            "candidateReturned": true,
+            "labelledSupportRetrieved": true
+          },
+          "hybrid": {
+            "sourceIds": [
+              "text:066a69cdb1e09edbba1a80617a2e8309269b8a46ae34aa493c1a24d674544ec3@utf8-pages-v1:066a69cdb1e09edbba1a80617a2e8309269b8a46ae34aa493c1a24d674544ec3:p1",
+              "text:917cabdc80c65485c11e80307884ee217825ac5222b0fe9b9f11b19356f25689@utf8-pages-v1:917cabdc80c65485c11e80307884ee217825ac5222b0fe9b9f11b19356f25689:p1",
+              "text:77198f89bfe04961748fa83888db05f07adc778f58d22d05ef2d8cf234eb95e6@utf8-pages-v1:77198f89bfe04961748fa83888db05f07adc778f58d22d05ef2d8cf234eb95e6:p1",
+              "text:b84ba2ff8b1dd6dc6b082302d164d4f080e7c23020e272fc1c1891bef18b534e@utf8-pages-v1:b84ba2ff8b1dd6dc6b082302d164d4f080e7c23020e272fc1c1891bef18b534e:p1"
+            ],
+            "recall": 1,
+            "reciprocalRank": 1,
+            "status": "partial",
+            "byteLimited": false,
+            "encodingLimited": false,
+            "vectorAvailable": true,
+            "candidateReturned": true,
+            "labelledSupportRetrieved": true
+          }
+        },
+        "answerability": "direct-answer"
+      },
+      {
+        "querySha256": "a433244f1c2078f74df98003c68f99171ae9fdcb60414e033514323e23df0415",
+        "relevantSourceIds": [
+          "text:917cabdc80c65485c11e80307884ee217825ac5222b0fe9b9f11b19356f25689@utf8-pages-v1:917cabdc80c65485c11e80307884ee217825ac5222b0fe9b9f11b19356f25689:p1"
+        ],
+        "profiles": {
+          "lexical": {
+            "sourceIds": [
+              "text:917cabdc80c65485c11e80307884ee217825ac5222b0fe9b9f11b19356f25689@utf8-pages-v1:917cabdc80c65485c11e80307884ee217825ac5222b0fe9b9f11b19356f25689:p1",
+              "text:066a69cdb1e09edbba1a80617a2e8309269b8a46ae34aa493c1a24d674544ec3@utf8-pages-v1:066a69cdb1e09edbba1a80617a2e8309269b8a46ae34aa493c1a24d674544ec3:p1"
+            ],
+            "recall": 1,
+            "reciprocalRank": 1,
+            "status": "complete",
+            "byteLimited": false,
+            "encodingLimited": false,
+            "candidateReturned": true,
+            "labelledSupportRetrieved": true
+          },
+          "bm25": {
+            "sourceIds": [
+              "text:917cabdc80c65485c11e80307884ee217825ac5222b0fe9b9f11b19356f25689@utf8-pages-v1:917cabdc80c65485c11e80307884ee217825ac5222b0fe9b9f11b19356f25689:p1",
+              "text:066a69cdb1e09edbba1a80617a2e8309269b8a46ae34aa493c1a24d674544ec3@utf8-pages-v1:066a69cdb1e09edbba1a80617a2e8309269b8a46ae34aa493c1a24d674544ec3:p1"
+            ],
+            "recall": 1,
+            "reciprocalRank": 1,
+            "status": "complete",
+            "byteLimited": false,
+            "encodingLimited": false,
+            "candidateReturned": true,
+            "labelledSupportRetrieved": true
+          },
+          "hybrid": {
+            "sourceIds": [
+              "text:917cabdc80c65485c11e80307884ee217825ac5222b0fe9b9f11b19356f25689@utf8-pages-v1:917cabdc80c65485c11e80307884ee217825ac5222b0fe9b9f11b19356f25689:p1",
+              "text:066a69cdb1e09edbba1a80617a2e8309269b8a46ae34aa493c1a24d674544ec3@utf8-pages-v1:066a69cdb1e09edbba1a80617a2e8309269b8a46ae34aa493c1a24d674544ec3:p1",
+              "text:77198f89bfe04961748fa83888db05f07adc778f58d22d05ef2d8cf234eb95e6@utf8-pages-v1:77198f89bfe04961748fa83888db05f07adc778f58d22d05ef2d8cf234eb95e6:p1",
+              "text:aa66ed922efd83210d01e95bb4d0f851536d36b3908fa459231e0e26b0947bf0@utf8-pages-v1:aa66ed922efd83210d01e95bb4d0f851536d36b3908fa459231e0e26b0947bf0:p1"
+            ],
+            "recall": 1,
+            "reciprocalRank": 1,
+            "status": "partial",
+            "byteLimited": false,
+            "encodingLimited": false,
+            "vectorAvailable": true,
+            "candidateReturned": true,
+            "labelledSupportRetrieved": true
+          }
+        },
+        "answerability": "direct-answer"
+      },
+      {
+        "querySha256": "35a1d71dbfe6e8366ff8bbd27c799b06f82af3acb0afcb64123c9c8cbe3aee6c",
+        "relevantSourceIds": [
+          "text:b84ba2ff8b1dd6dc6b082302d164d4f080e7c23020e272fc1c1891bef18b534e@utf8-pages-v1:b84ba2ff8b1dd6dc6b082302d164d4f080e7c23020e272fc1c1891bef18b534e:p1"
+        ],
+        "profiles": {
+          "lexical": {
+            "sourceIds": [
+              "text:b84ba2ff8b1dd6dc6b082302d164d4f080e7c23020e272fc1c1891bef18b534e@utf8-pages-v1:b84ba2ff8b1dd6dc6b082302d164d4f080e7c23020e272fc1c1891bef18b534e:p1",
+              "text:917cabdc80c65485c11e80307884ee217825ac5222b0fe9b9f11b19356f25689@utf8-pages-v1:917cabdc80c65485c11e80307884ee217825ac5222b0fe9b9f11b19356f25689:p1",
+              "text:066a69cdb1e09edbba1a80617a2e8309269b8a46ae34aa493c1a24d674544ec3@utf8-pages-v1:066a69cdb1e09edbba1a80617a2e8309269b8a46ae34aa493c1a24d674544ec3:p1"
+            ],
+            "recall": 1,
+            "reciprocalRank": 1,
+            "status": "complete",
+            "byteLimited": false,
+            "encodingLimited": false,
+            "candidateReturned": true,
+            "labelledSupportRetrieved": true
+          },
+          "bm25": {
+            "sourceIds": [
+              "text:b84ba2ff8b1dd6dc6b082302d164d4f080e7c23020e272fc1c1891bef18b534e@utf8-pages-v1:b84ba2ff8b1dd6dc6b082302d164d4f080e7c23020e272fc1c1891bef18b534e:p1",
+              "text:917cabdc80c65485c11e80307884ee217825ac5222b0fe9b9f11b19356f25689@utf8-pages-v1:917cabdc80c65485c11e80307884ee217825ac5222b0fe9b9f11b19356f25689:p1",
+              "text:066a69cdb1e09edbba1a80617a2e8309269b8a46ae34aa493c1a24d674544ec3@utf8-pages-v1:066a69cdb1e09edbba1a80617a2e8309269b8a46ae34aa493c1a24d674544ec3:p1"
+            ],
+            "recall": 1,
+            "reciprocalRank": 1,
+            "status": "complete",
+            "byteLimited": false,
+            "encodingLimited": false,
+            "candidateReturned": true,
+            "labelledSupportRetrieved": true
+          },
+          "hybrid": {
+            "sourceIds": [
+              "text:b84ba2ff8b1dd6dc6b082302d164d4f080e7c23020e272fc1c1891bef18b534e@utf8-pages-v1:b84ba2ff8b1dd6dc6b082302d164d4f080e7c23020e272fc1c1891bef18b534e:p1",
+              "text:917cabdc80c65485c11e80307884ee217825ac5222b0fe9b9f11b19356f25689@utf8-pages-v1:917cabdc80c65485c11e80307884ee217825ac5222b0fe9b9f11b19356f25689:p1",
+              "text:066a69cdb1e09edbba1a80617a2e8309269b8a46ae34aa493c1a24d674544ec3@utf8-pages-v1:066a69cdb1e09edbba1a80617a2e8309269b8a46ae34aa493c1a24d674544ec3:p1",
+              "text:77198f89bfe04961748fa83888db05f07adc778f58d22d05ef2d8cf234eb95e6@utf8-pages-v1:77198f89bfe04961748fa83888db05f07adc778f58d22d05ef2d8cf234eb95e6:p1"
+            ],
+            "recall": 1,
+            "reciprocalRank": 1,
+            "status": "partial",
+            "byteLimited": false,
+            "encodingLimited": false,
+            "vectorAvailable": true,
+            "candidateReturned": true,
+            "labelledSupportRetrieved": true
+          }
+        },
+        "answerability": "direct-answer"
+      },
+      {
+        "querySha256": "2abb4195924e1e2ed061427fa70138bde4242bb06bc6df04e8f401dfa01d7a6b",
+        "relevantSourceIds": [
+          "text:7874b49f5f2b55595cae93616a48d26631f930a204d7532951294924f4e21783@utf8-pages-v1:7874b49f5f2b55595cae93616a48d26631f930a204d7532951294924f4e21783:p1"
+        ],
+        "profiles": {
+          "lexical": {
+            "sourceIds": [
+              "text:7874b49f5f2b55595cae93616a48d26631f930a204d7532951294924f4e21783@utf8-pages-v1:7874b49f5f2b55595cae93616a48d26631f930a204d7532951294924f4e21783:p1"
+            ],
+            "recall": 1,
+            "reciprocalRank": 1,
+            "status": "complete",
+            "byteLimited": false,
+            "encodingLimited": false,
+            "candidateReturned": true,
+            "labelledSupportRetrieved": true
+          },
+          "bm25": {
+            "sourceIds": [
+              "text:7874b49f5f2b55595cae93616a48d26631f930a204d7532951294924f4e21783@utf8-pages-v1:7874b49f5f2b55595cae93616a48d26631f930a204d7532951294924f4e21783:p1"
+            ],
+            "recall": 1,
+            "reciprocalRank": 1,
+            "status": "complete",
+            "byteLimited": false,
+            "encodingLimited": false,
+            "candidateReturned": true,
+            "labelledSupportRetrieved": true
+          },
+          "hybrid": {
+            "sourceIds": [
+              "text:7874b49f5f2b55595cae93616a48d26631f930a204d7532951294924f4e21783@utf8-pages-v1:7874b49f5f2b55595cae93616a48d26631f930a204d7532951294924f4e21783:p1",
+              "text:9af2ff6959bd9ecea86f6dc322fa0d45afb532d2398615f595b957cb17ebb06e@utf8-pages-v1:9af2ff6959bd9ecea86f6dc322fa0d45afb532d2398615f595b957cb17ebb06e:p1",
+              "text:ed0b79f1d5f45e219963c81abc32cbb027f0f1683999e8c52d742a4c5d21c05d@utf8-pages-v1:ed0b79f1d5f45e219963c81abc32cbb027f0f1683999e8c52d742a4c5d21c05d:p1",
+              "text:aa66ed922efd83210d01e95bb4d0f851536d36b3908fa459231e0e26b0947bf0@utf8-pages-v1:aa66ed922efd83210d01e95bb4d0f851536d36b3908fa459231e0e26b0947bf0:p1"
+            ],
+            "recall": 1,
+            "reciprocalRank": 1,
+            "status": "partial",
+            "byteLimited": false,
+            "encodingLimited": false,
+            "vectorAvailable": true,
+            "candidateReturned": true,
+            "labelledSupportRetrieved": true
+          }
+        },
+        "answerability": "direct-answer"
+      },
+      {
+        "querySha256": "0508a2a7ca0ae81b4b3072019574f6c73734bcad10dc66630f55b2a381790c48",
+        "relevantSourceIds": [
+          "text:aa66ed922efd83210d01e95bb4d0f851536d36b3908fa459231e0e26b0947bf0@utf8-pages-v1:aa66ed922efd83210d01e95bb4d0f851536d36b3908fa459231e0e26b0947bf0:p1"
+        ],
+        "profiles": {
+          "lexical": {
+            "sourceIds": [
+              "text:aa66ed922efd83210d01e95bb4d0f851536d36b3908fa459231e0e26b0947bf0@utf8-pages-v1:aa66ed922efd83210d01e95bb4d0f851536d36b3908fa459231e0e26b0947bf0:p1",
+              "text:ed0b79f1d5f45e219963c81abc32cbb027f0f1683999e8c52d742a4c5d21c05d@utf8-pages-v1:ed0b79f1d5f45e219963c81abc32cbb027f0f1683999e8c52d742a4c5d21c05d:p1"
+            ],
+            "recall": 1,
+            "reciprocalRank": 1,
+            "status": "complete",
+            "byteLimited": false,
+            "encodingLimited": false,
+            "candidateReturned": true,
+            "labelledSupportRetrieved": true
+          },
+          "bm25": {
+            "sourceIds": [
+              "text:aa66ed922efd83210d01e95bb4d0f851536d36b3908fa459231e0e26b0947bf0@utf8-pages-v1:aa66ed922efd83210d01e95bb4d0f851536d36b3908fa459231e0e26b0947bf0:p1",
+              "text:ed0b79f1d5f45e219963c81abc32cbb027f0f1683999e8c52d742a4c5d21c05d@utf8-pages-v1:ed0b79f1d5f45e219963c81abc32cbb027f0f1683999e8c52d742a4c5d21c05d:p1"
+            ],
+            "recall": 1,
+            "reciprocalRank": 1,
+            "status": "complete",
+            "byteLimited": false,
+            "encodingLimited": false,
+            "candidateReturned": true,
+            "labelledSupportRetrieved": true
+          },
+          "hybrid": {
+            "sourceIds": [
+              "text:aa66ed922efd83210d01e95bb4d0f851536d36b3908fa459231e0e26b0947bf0@utf8-pages-v1:aa66ed922efd83210d01e95bb4d0f851536d36b3908fa459231e0e26b0947bf0:p1",
+              "text:ed0b79f1d5f45e219963c81abc32cbb027f0f1683999e8c52d742a4c5d21c05d@utf8-pages-v1:ed0b79f1d5f45e219963c81abc32cbb027f0f1683999e8c52d742a4c5d21c05d:p1",
+              "text:7874b49f5f2b55595cae93616a48d26631f930a204d7532951294924f4e21783@utf8-pages-v1:7874b49f5f2b55595cae93616a48d26631f930a204d7532951294924f4e21783:p1",
+              "text:9af2ff6959bd9ecea86f6dc322fa0d45afb532d2398615f595b957cb17ebb06e@utf8-pages-v1:9af2ff6959bd9ecea86f6dc322fa0d45afb532d2398615f595b957cb17ebb06e:p1"
+            ],
+            "recall": 1,
+            "reciprocalRank": 1,
+            "status": "partial",
+            "byteLimited": false,
+            "encodingLimited": false,
+            "vectorAvailable": true,
+            "candidateReturned": true,
+            "labelledSupportRetrieved": true
+          }
+        },
+        "answerability": "direct-answer"
+      },
+      {
+        "querySha256": "94805f252f411868552661997c3f619b8b52d7063a90d9b97f0fca90ebea7d60",
+        "relevantSourceIds": [
+          "text:ed0b79f1d5f45e219963c81abc32cbb027f0f1683999e8c52d742a4c5d21c05d@utf8-pages-v1:ed0b79f1d5f45e219963c81abc32cbb027f0f1683999e8c52d742a4c5d21c05d:p1"
+        ],
+        "profiles": {
+          "lexical": {
+            "sourceIds": [
+              "text:ed0b79f1d5f45e219963c81abc32cbb027f0f1683999e8c52d742a4c5d21c05d@utf8-pages-v1:ed0b79f1d5f45e219963c81abc32cbb027f0f1683999e8c52d742a4c5d21c05d:p1"
+            ],
+            "recall": 1,
+            "reciprocalRank": 1,
+            "status": "complete",
+            "byteLimited": false,
+            "encodingLimited": false,
+            "candidateReturned": true,
+            "labelledSupportRetrieved": true
+          },
+          "bm25": {
+            "sourceIds": [
+              "text:ed0b79f1d5f45e219963c81abc32cbb027f0f1683999e8c52d742a4c5d21c05d@utf8-pages-v1:ed0b79f1d5f45e219963c81abc32cbb027f0f1683999e8c52d742a4c5d21c05d:p1"
+            ],
+            "recall": 1,
+            "reciprocalRank": 1,
+            "status": "complete",
+            "byteLimited": false,
+            "encodingLimited": false,
+            "candidateReturned": true,
+            "labelledSupportRetrieved": true
+          },
+          "hybrid": {
+            "sourceIds": [
+              "text:ed0b79f1d5f45e219963c81abc32cbb027f0f1683999e8c52d742a4c5d21c05d@utf8-pages-v1:ed0b79f1d5f45e219963c81abc32cbb027f0f1683999e8c52d742a4c5d21c05d:p1",
+              "text:7874b49f5f2b55595cae93616a48d26631f930a204d7532951294924f4e21783@utf8-pages-v1:7874b49f5f2b55595cae93616a48d26631f930a204d7532951294924f4e21783:p1",
+              "text:9af2ff6959bd9ecea86f6dc322fa0d45afb532d2398615f595b957cb17ebb06e@utf8-pages-v1:9af2ff6959bd9ecea86f6dc322fa0d45afb532d2398615f595b957cb17ebb06e:p1",
+              "text:aa66ed922efd83210d01e95bb4d0f851536d36b3908fa459231e0e26b0947bf0@utf8-pages-v1:aa66ed922efd83210d01e95bb4d0f851536d36b3908fa459231e0e26b0947bf0:p1"
+            ],
+            "recall": 1,
+            "reciprocalRank": 1,
+            "status": "partial",
+            "byteLimited": false,
+            "encodingLimited": false,
+            "vectorAvailable": true,
+            "candidateReturned": true,
+            "labelledSupportRetrieved": true
+          }
+        },
+        "answerability": "direct-answer"
+      },
+      {
+        "querySha256": "2837adfe4429c28ca42aea92db92062447bcce6371046b349ebaf69f615f5fe8",
+        "relevantSourceIds": [
+          "text:7874b49f5f2b55595cae93616a48d26631f930a204d7532951294924f4e21783@utf8-pages-v1:7874b49f5f2b55595cae93616a48d26631f930a204d7532951294924f4e21783:p1",
+          "text:9af2ff6959bd9ecea86f6dc322fa0d45afb532d2398615f595b957cb17ebb06e@utf8-pages-v1:9af2ff6959bd9ecea86f6dc322fa0d45afb532d2398615f595b957cb17ebb06e:p1"
+        ],
+        "profiles": {
+          "lexical": {
+            "sourceIds": [
+              "text:917cabdc80c65485c11e80307884ee217825ac5222b0fe9b9f11b19356f25689@utf8-pages-v1:917cabdc80c65485c11e80307884ee217825ac5222b0fe9b9f11b19356f25689:p1",
+              "text:066a69cdb1e09edbba1a80617a2e8309269b8a46ae34aa493c1a24d674544ec3@utf8-pages-v1:066a69cdb1e09edbba1a80617a2e8309269b8a46ae34aa493c1a24d674544ec3:p1",
+              "text:77198f89bfe04961748fa83888db05f07adc778f58d22d05ef2d8cf234eb95e6@utf8-pages-v1:77198f89bfe04961748fa83888db05f07adc778f58d22d05ef2d8cf234eb95e6:p1",
+              "text:b84ba2ff8b1dd6dc6b082302d164d4f080e7c23020e272fc1c1891bef18b534e@utf8-pages-v1:b84ba2ff8b1dd6dc6b082302d164d4f080e7c23020e272fc1c1891bef18b534e:p1"
+            ],
+            "recall": 0,
+            "reciprocalRank": 0,
+            "status": "partial",
+            "byteLimited": false,
+            "encodingLimited": false,
+            "candidateReturned": true,
+            "labelledSupportRetrieved": false
+          },
+          "bm25": {
+            "sourceIds": [
+              "text:9af2ff6959bd9ecea86f6dc322fa0d45afb532d2398615f595b957cb17ebb06e@utf8-pages-v1:9af2ff6959bd9ecea86f6dc322fa0d45afb532d2398615f595b957cb17ebb06e:p1",
+              "text:917cabdc80c65485c11e80307884ee217825ac5222b0fe9b9f11b19356f25689@utf8-pages-v1:917cabdc80c65485c11e80307884ee217825ac5222b0fe9b9f11b19356f25689:p1",
+              "text:7874b49f5f2b55595cae93616a48d26631f930a204d7532951294924f4e21783@utf8-pages-v1:7874b49f5f2b55595cae93616a48d26631f930a204d7532951294924f4e21783:p1",
+              "text:77198f89bfe04961748fa83888db05f07adc778f58d22d05ef2d8cf234eb95e6@utf8-pages-v1:77198f89bfe04961748fa83888db05f07adc778f58d22d05ef2d8cf234eb95e6:p1"
+            ],
+            "recall": 1,
+            "reciprocalRank": 1,
+            "status": "partial",
+            "byteLimited": false,
+            "encodingLimited": false,
+            "candidateReturned": true,
+            "labelledSupportRetrieved": true
+          },
+          "hybrid": {
+            "sourceIds": [
+              "text:9af2ff6959bd9ecea86f6dc322fa0d45afb532d2398615f595b957cb17ebb06e@utf8-pages-v1:9af2ff6959bd9ecea86f6dc322fa0d45afb532d2398615f595b957cb17ebb06e:p1",
+              "text:77198f89bfe04961748fa83888db05f07adc778f58d22d05ef2d8cf234eb95e6@utf8-pages-v1:77198f89bfe04961748fa83888db05f07adc778f58d22d05ef2d8cf234eb95e6:p1",
+              "text:917cabdc80c65485c11e80307884ee217825ac5222b0fe9b9f11b19356f25689@utf8-pages-v1:917cabdc80c65485c11e80307884ee217825ac5222b0fe9b9f11b19356f25689:p1",
+              "text:066a69cdb1e09edbba1a80617a2e8309269b8a46ae34aa493c1a24d674544ec3@utf8-pages-v1:066a69cdb1e09edbba1a80617a2e8309269b8a46ae34aa493c1a24d674544ec3:p1"
+            ],
+            "recall": 0.5,
+            "reciprocalRank": 1,
+            "status": "partial",
+            "byteLimited": false,
+            "encodingLimited": false,
+            "vectorAvailable": true,
+            "candidateReturned": true,
+            "labelledSupportRetrieved": true
+          }
+        },
+        "answerability": "direct-answer"
+      },
+      {
+        "querySha256": "606ebab9717d8735a6e2b1f52eeaf6bd37df7781d964044b9ecf7fae57500dee",
+        "relevantSourceIds": [
+          "text:ed0b79f1d5f45e219963c81abc32cbb027f0f1683999e8c52d742a4c5d21c05d@utf8-pages-v1:ed0b79f1d5f45e219963c81abc32cbb027f0f1683999e8c52d742a4c5d21c05d:p1"
+        ],
+        "profiles": {
+          "lexical": {
+            "sourceIds": [
+              "text:ed0b79f1d5f45e219963c81abc32cbb027f0f1683999e8c52d742a4c5d21c05d@utf8-pages-v1:ed0b79f1d5f45e219963c81abc32cbb027f0f1683999e8c52d742a4c5d21c05d:p1"
+            ],
+            "recall": 1,
+            "reciprocalRank": 1,
+            "status": "complete",
+            "byteLimited": false,
+            "encodingLimited": false,
+            "candidateReturned": true,
+            "labelledSupportRetrieved": true
+          },
+          "bm25": {
+            "sourceIds": [
+              "text:ed0b79f1d5f45e219963c81abc32cbb027f0f1683999e8c52d742a4c5d21c05d@utf8-pages-v1:ed0b79f1d5f45e219963c81abc32cbb027f0f1683999e8c52d742a4c5d21c05d:p1"
+            ],
+            "recall": 1,
+            "reciprocalRank": 1,
+            "status": "complete",
+            "byteLimited": false,
+            "encodingLimited": false,
+            "candidateReturned": true,
+            "labelledSupportRetrieved": true
+          },
+          "hybrid": {
+            "sourceIds": [
+              "text:ed0b79f1d5f45e219963c81abc32cbb027f0f1683999e8c52d742a4c5d21c05d@utf8-pages-v1:ed0b79f1d5f45e219963c81abc32cbb027f0f1683999e8c52d742a4c5d21c05d:p1",
+              "text:7874b49f5f2b55595cae93616a48d26631f930a204d7532951294924f4e21783@utf8-pages-v1:7874b49f5f2b55595cae93616a48d26631f930a204d7532951294924f4e21783:p1",
+              "text:9af2ff6959bd9ecea86f6dc322fa0d45afb532d2398615f595b957cb17ebb06e@utf8-pages-v1:9af2ff6959bd9ecea86f6dc322fa0d45afb532d2398615f595b957cb17ebb06e:p1",
+              "text:aa66ed922efd83210d01e95bb4d0f851536d36b3908fa459231e0e26b0947bf0@utf8-pages-v1:aa66ed922efd83210d01e95bb4d0f851536d36b3908fa459231e0e26b0947bf0:p1"
+            ],
+            "recall": 1,
+            "reciprocalRank": 1,
+            "status": "partial",
+            "byteLimited": false,
+            "encodingLimited": false,
+            "vectorAvailable": true,
+            "candidateReturned": true,
+            "labelledSupportRetrieved": true
+          }
+        },
+        "answerability": "direct-answer"
+      },
+      {
+        "querySha256": "5b2c6f104118acc9871d60a92ea4d5aa48c94c99102a37e69653c12229895b40",
+        "relevantSourceIds": [
+          "text:b84ba2ff8b1dd6dc6b082302d164d4f080e7c23020e272fc1c1891bef18b534e@utf8-pages-v1:b84ba2ff8b1dd6dc6b082302d164d4f080e7c23020e272fc1c1891bef18b534e:p1"
+        ],
+        "profiles": {
+          "lexical": {
+            "sourceIds": [
+              "text:917cabdc80c65485c11e80307884ee217825ac5222b0fe9b9f11b19356f25689@utf8-pages-v1:917cabdc80c65485c11e80307884ee217825ac5222b0fe9b9f11b19356f25689:p1",
+              "text:b84ba2ff8b1dd6dc6b082302d164d4f080e7c23020e272fc1c1891bef18b534e@utf8-pages-v1:b84ba2ff8b1dd6dc6b082302d164d4f080e7c23020e272fc1c1891bef18b534e:p1",
+              "text:066a69cdb1e09edbba1a80617a2e8309269b8a46ae34aa493c1a24d674544ec3@utf8-pages-v1:066a69cdb1e09edbba1a80617a2e8309269b8a46ae34aa493c1a24d674544ec3:p1",
+              "text:77198f89bfe04961748fa83888db05f07adc778f58d22d05ef2d8cf234eb95e6@utf8-pages-v1:77198f89bfe04961748fa83888db05f07adc778f58d22d05ef2d8cf234eb95e6:p1"
+            ],
+            "recall": 1,
+            "reciprocalRank": 0.5,
+            "status": "complete",
+            "byteLimited": false,
+            "encodingLimited": false,
+            "candidateReturned": true,
+            "labelledSupportRetrieved": true
+          },
+          "bm25": {
+            "sourceIds": [
+              "text:b84ba2ff8b1dd6dc6b082302d164d4f080e7c23020e272fc1c1891bef18b534e@utf8-pages-v1:b84ba2ff8b1dd6dc6b082302d164d4f080e7c23020e272fc1c1891bef18b534e:p1",
+              "text:917cabdc80c65485c11e80307884ee217825ac5222b0fe9b9f11b19356f25689@utf8-pages-v1:917cabdc80c65485c11e80307884ee217825ac5222b0fe9b9f11b19356f25689:p1",
+              "text:77198f89bfe04961748fa83888db05f07adc778f58d22d05ef2d8cf234eb95e6@utf8-pages-v1:77198f89bfe04961748fa83888db05f07adc778f58d22d05ef2d8cf234eb95e6:p1",
+              "text:066a69cdb1e09edbba1a80617a2e8309269b8a46ae34aa493c1a24d674544ec3@utf8-pages-v1:066a69cdb1e09edbba1a80617a2e8309269b8a46ae34aa493c1a24d674544ec3:p1"
+            ],
+            "recall": 1,
+            "reciprocalRank": 1,
+            "status": "complete",
+            "byteLimited": false,
+            "encodingLimited": false,
+            "candidateReturned": true,
+            "labelledSupportRetrieved": true
+          },
+          "hybrid": {
+            "sourceIds": [
+              "text:b84ba2ff8b1dd6dc6b082302d164d4f080e7c23020e272fc1c1891bef18b534e@utf8-pages-v1:b84ba2ff8b1dd6dc6b082302d164d4f080e7c23020e272fc1c1891bef18b534e:p1",
+              "text:77198f89bfe04961748fa83888db05f07adc778f58d22d05ef2d8cf234eb95e6@utf8-pages-v1:77198f89bfe04961748fa83888db05f07adc778f58d22d05ef2d8cf234eb95e6:p1",
+              "text:917cabdc80c65485c11e80307884ee217825ac5222b0fe9b9f11b19356f25689@utf8-pages-v1:917cabdc80c65485c11e80307884ee217825ac5222b0fe9b9f11b19356f25689:p1",
+              "text:066a69cdb1e09edbba1a80617a2e8309269b8a46ae34aa493c1a24d674544ec3@utf8-pages-v1:066a69cdb1e09edbba1a80617a2e8309269b8a46ae34aa493c1a24d674544ec3:p1"
+            ],
+            "recall": 1,
+            "reciprocalRank": 1,
+            "status": "partial",
+            "byteLimited": false,
+            "encodingLimited": false,
+            "vectorAvailable": true,
+            "candidateReturned": true,
+            "labelledSupportRetrieved": true
+          }
+        },
+        "answerability": "direct-answer"
+      },
+      {
+        "querySha256": "391190c57fcd3e3d5024ea4d517957ce83987bc2ea7d68c7370b72533130b127",
+        "relevantSourceIds": [
+          "text:066a69cdb1e09edbba1a80617a2e8309269b8a46ae34aa493c1a24d674544ec3@utf8-pages-v1:066a69cdb1e09edbba1a80617a2e8309269b8a46ae34aa493c1a24d674544ec3:p1"
+        ],
+        "profiles": {
+          "lexical": {
+            "sourceIds": [
+              "text:066a69cdb1e09edbba1a80617a2e8309269b8a46ae34aa493c1a24d674544ec3@utf8-pages-v1:066a69cdb1e09edbba1a80617a2e8309269b8a46ae34aa493c1a24d674544ec3:p1",
+              "text:917cabdc80c65485c11e80307884ee217825ac5222b0fe9b9f11b19356f25689@utf8-pages-v1:917cabdc80c65485c11e80307884ee217825ac5222b0fe9b9f11b19356f25689:p1",
+              "text:77198f89bfe04961748fa83888db05f07adc778f58d22d05ef2d8cf234eb95e6@utf8-pages-v1:77198f89bfe04961748fa83888db05f07adc778f58d22d05ef2d8cf234eb95e6:p1",
+              "text:b84ba2ff8b1dd6dc6b082302d164d4f080e7c23020e272fc1c1891bef18b534e@utf8-pages-v1:b84ba2ff8b1dd6dc6b082302d164d4f080e7c23020e272fc1c1891bef18b534e:p1"
+            ],
+            "recall": 1,
+            "reciprocalRank": 1,
+            "status": "complete",
+            "byteLimited": false,
+            "encodingLimited": false,
+            "candidateReturned": true,
+            "labelledSupportRetrieved": true
+          },
+          "bm25": {
+            "sourceIds": [
+              "text:066a69cdb1e09edbba1a80617a2e8309269b8a46ae34aa493c1a24d674544ec3@utf8-pages-v1:066a69cdb1e09edbba1a80617a2e8309269b8a46ae34aa493c1a24d674544ec3:p1",
+              "text:917cabdc80c65485c11e80307884ee217825ac5222b0fe9b9f11b19356f25689@utf8-pages-v1:917cabdc80c65485c11e80307884ee217825ac5222b0fe9b9f11b19356f25689:p1",
+              "text:77198f89bfe04961748fa83888db05f07adc778f58d22d05ef2d8cf234eb95e6@utf8-pages-v1:77198f89bfe04961748fa83888db05f07adc778f58d22d05ef2d8cf234eb95e6:p1",
+              "text:b84ba2ff8b1dd6dc6b082302d164d4f080e7c23020e272fc1c1891bef18b534e@utf8-pages-v1:b84ba2ff8b1dd6dc6b082302d164d4f080e7c23020e272fc1c1891bef18b534e:p1"
+            ],
+            "recall": 1,
+            "reciprocalRank": 1,
+            "status": "complete",
+            "byteLimited": false,
+            "encodingLimited": false,
+            "candidateReturned": true,
+            "labelledSupportRetrieved": true
+          },
+          "hybrid": {
+            "sourceIds": [
+              "text:066a69cdb1e09edbba1a80617a2e8309269b8a46ae34aa493c1a24d674544ec3@utf8-pages-v1:066a69cdb1e09edbba1a80617a2e8309269b8a46ae34aa493c1a24d674544ec3:p1",
+              "text:917cabdc80c65485c11e80307884ee217825ac5222b0fe9b9f11b19356f25689@utf8-pages-v1:917cabdc80c65485c11e80307884ee217825ac5222b0fe9b9f11b19356f25689:p1",
+              "text:b84ba2ff8b1dd6dc6b082302d164d4f080e7c23020e272fc1c1891bef18b534e@utf8-pages-v1:b84ba2ff8b1dd6dc6b082302d164d4f080e7c23020e272fc1c1891bef18b534e:p1",
+              "text:77198f89bfe04961748fa83888db05f07adc778f58d22d05ef2d8cf234eb95e6@utf8-pages-v1:77198f89bfe04961748fa83888db05f07adc778f58d22d05ef2d8cf234eb95e6:p1"
+            ],
+            "recall": 1,
+            "reciprocalRank": 1,
+            "status": "partial",
+            "byteLimited": false,
+            "encodingLimited": false,
+            "vectorAvailable": true,
+            "candidateReturned": true,
+            "labelledSupportRetrieved": true
+          }
+        },
+        "answerability": "explicitly-unspecified"
+      },
+      {
+        "querySha256": "ed1779f21fe0e467ff0e77189c3c4f134658f4177bf2ee9ab827c69cc6eb394a",
+        "relevantSourceIds": [],
+        "profiles": {
+          "lexical": {
+            "sourceIds": [
+              "text:aa66ed922efd83210d01e95bb4d0f851536d36b3908fa459231e0e26b0947bf0@utf8-pages-v1:aa66ed922efd83210d01e95bb4d0f851536d36b3908fa459231e0e26b0947bf0:p1",
+              "text:066a69cdb1e09edbba1a80617a2e8309269b8a46ae34aa493c1a24d674544ec3@utf8-pages-v1:066a69cdb1e09edbba1a80617a2e8309269b8a46ae34aa493c1a24d674544ec3:p1",
+              "text:77198f89bfe04961748fa83888db05f07adc778f58d22d05ef2d8cf234eb95e6@utf8-pages-v1:77198f89bfe04961748fa83888db05f07adc778f58d22d05ef2d8cf234eb95e6:p1",
+              "text:7874b49f5f2b55595cae93616a48d26631f930a204d7532951294924f4e21783@utf8-pages-v1:7874b49f5f2b55595cae93616a48d26631f930a204d7532951294924f4e21783:p1"
+            ],
+            "recall": null,
+            "reciprocalRank": null,
+            "status": "partial",
+            "byteLimited": false,
+            "encodingLimited": false,
+            "candidateReturned": true,
+            "labelledSupportRetrieved": null
+          },
+          "bm25": {
+            "sourceIds": [
+              "text:aa66ed922efd83210d01e95bb4d0f851536d36b3908fa459231e0e26b0947bf0@utf8-pages-v1:aa66ed922efd83210d01e95bb4d0f851536d36b3908fa459231e0e26b0947bf0:p1",
+              "text:77198f89bfe04961748fa83888db05f07adc778f58d22d05ef2d8cf234eb95e6@utf8-pages-v1:77198f89bfe04961748fa83888db05f07adc778f58d22d05ef2d8cf234eb95e6:p1",
+              "text:066a69cdb1e09edbba1a80617a2e8309269b8a46ae34aa493c1a24d674544ec3@utf8-pages-v1:066a69cdb1e09edbba1a80617a2e8309269b8a46ae34aa493c1a24d674544ec3:p1",
+              "text:9af2ff6959bd9ecea86f6dc322fa0d45afb532d2398615f595b957cb17ebb06e@utf8-pages-v1:9af2ff6959bd9ecea86f6dc322fa0d45afb532d2398615f595b957cb17ebb06e:p1"
+            ],
+            "recall": null,
+            "reciprocalRank": null,
+            "status": "partial",
+            "byteLimited": false,
+            "encodingLimited": false,
+            "candidateReturned": true,
+            "labelledSupportRetrieved": null
+          },
+          "hybrid": {
+            "sourceIds": [
+              "text:aa66ed922efd83210d01e95bb4d0f851536d36b3908fa459231e0e26b0947bf0@utf8-pages-v1:aa66ed922efd83210d01e95bb4d0f851536d36b3908fa459231e0e26b0947bf0:p1",
+              "text:9af2ff6959bd9ecea86f6dc322fa0d45afb532d2398615f595b957cb17ebb06e@utf8-pages-v1:9af2ff6959bd9ecea86f6dc322fa0d45afb532d2398615f595b957cb17ebb06e:p1",
+              "text:77198f89bfe04961748fa83888db05f07adc778f58d22d05ef2d8cf234eb95e6@utf8-pages-v1:77198f89bfe04961748fa83888db05f07adc778f58d22d05ef2d8cf234eb95e6:p1",
+              "text:7874b49f5f2b55595cae93616a48d26631f930a204d7532951294924f4e21783@utf8-pages-v1:7874b49f5f2b55595cae93616a48d26631f930a204d7532951294924f4e21783:p1"
+            ],
+            "recall": null,
+            "reciprocalRank": null,
+            "status": "partial",
+            "byteLimited": false,
+            "encodingLimited": false,
+            "vectorAvailable": true,
+            "candidateReturned": true,
+            "labelledSupportRetrieved": null
+          }
+        },
+        "answerability": "insufficient"
+      },
+      {
+        "querySha256": "ab4c812c7fb511302e7ee2cb4df071cc188116e7ed099978e3a817917b490e77",
+        "relevantSourceIds": [],
+        "profiles": {
+          "lexical": {
+            "sourceIds": [
+              "text:917cabdc80c65485c11e80307884ee217825ac5222b0fe9b9f11b19356f25689@utf8-pages-v1:917cabdc80c65485c11e80307884ee217825ac5222b0fe9b9f11b19356f25689:p1",
+              "text:066a69cdb1e09edbba1a80617a2e8309269b8a46ae34aa493c1a24d674544ec3@utf8-pages-v1:066a69cdb1e09edbba1a80617a2e8309269b8a46ae34aa493c1a24d674544ec3:p1",
+              "text:77198f89bfe04961748fa83888db05f07adc778f58d22d05ef2d8cf234eb95e6@utf8-pages-v1:77198f89bfe04961748fa83888db05f07adc778f58d22d05ef2d8cf234eb95e6:p1",
+              "text:b84ba2ff8b1dd6dc6b082302d164d4f080e7c23020e272fc1c1891bef18b534e@utf8-pages-v1:b84ba2ff8b1dd6dc6b082302d164d4f080e7c23020e272fc1c1891bef18b534e:p1"
+            ],
+            "recall": null,
+            "reciprocalRank": null,
+            "status": "partial",
+            "byteLimited": false,
+            "encodingLimited": false,
+            "candidateReturned": true,
+            "labelledSupportRetrieved": null
+          },
+          "bm25": {
+            "sourceIds": [
+              "text:066a69cdb1e09edbba1a80617a2e8309269b8a46ae34aa493c1a24d674544ec3@utf8-pages-v1:066a69cdb1e09edbba1a80617a2e8309269b8a46ae34aa493c1a24d674544ec3:p1",
+              "text:b84ba2ff8b1dd6dc6b082302d164d4f080e7c23020e272fc1c1891bef18b534e@utf8-pages-v1:b84ba2ff8b1dd6dc6b082302d164d4f080e7c23020e272fc1c1891bef18b534e:p1",
+              "text:77198f89bfe04961748fa83888db05f07adc778f58d22d05ef2d8cf234eb95e6@utf8-pages-v1:77198f89bfe04961748fa83888db05f07adc778f58d22d05ef2d8cf234eb95e6:p1",
+              "text:917cabdc80c65485c11e80307884ee217825ac5222b0fe9b9f11b19356f25689@utf8-pages-v1:917cabdc80c65485c11e80307884ee217825ac5222b0fe9b9f11b19356f25689:p1"
+            ],
+            "recall": null,
+            "reciprocalRank": null,
+            "status": "partial",
+            "byteLimited": false,
+            "encodingLimited": false,
+            "candidateReturned": true,
+            "labelledSupportRetrieved": null
+          },
+          "hybrid": {
+            "sourceIds": [
+              "text:066a69cdb1e09edbba1a80617a2e8309269b8a46ae34aa493c1a24d674544ec3@utf8-pages-v1:066a69cdb1e09edbba1a80617a2e8309269b8a46ae34aa493c1a24d674544ec3:p1",
+              "text:77198f89bfe04961748fa83888db05f07adc778f58d22d05ef2d8cf234eb95e6@utf8-pages-v1:77198f89bfe04961748fa83888db05f07adc778f58d22d05ef2d8cf234eb95e6:p1",
+              "text:b84ba2ff8b1dd6dc6b082302d164d4f080e7c23020e272fc1c1891bef18b534e@utf8-pages-v1:b84ba2ff8b1dd6dc6b082302d164d4f080e7c23020e272fc1c1891bef18b534e:p1",
+              "text:917cabdc80c65485c11e80307884ee217825ac5222b0fe9b9f11b19356f25689@utf8-pages-v1:917cabdc80c65485c11e80307884ee217825ac5222b0fe9b9f11b19356f25689:p1"
+            ],
+            "recall": null,
+            "reciprocalRank": null,
+            "status": "partial",
+            "byteLimited": false,
+            "encodingLimited": false,
+            "vectorAvailable": true,
+            "candidateReturned": true,
+            "labelledSupportRetrieved": null
+          }
+        },
+        "answerability": "insufficient"
+      },
+      {
+        "querySha256": "af1e4a3669cf13efe2cc9a755d8263ac0e18065da3c3e05d4a06410ab9b7375c",
+        "relevantSourceIds": [],
+        "profiles": {
+          "lexical": {
+            "sourceIds": [
+              "text:066a69cdb1e09edbba1a80617a2e8309269b8a46ae34aa493c1a24d674544ec3@utf8-pages-v1:066a69cdb1e09edbba1a80617a2e8309269b8a46ae34aa493c1a24d674544ec3:p1",
+              "text:917cabdc80c65485c11e80307884ee217825ac5222b0fe9b9f11b19356f25689@utf8-pages-v1:917cabdc80c65485c11e80307884ee217825ac5222b0fe9b9f11b19356f25689:p1"
+            ],
+            "recall": null,
+            "reciprocalRank": null,
+            "status": "complete",
+            "byteLimited": false,
+            "encodingLimited": false,
+            "candidateReturned": true,
+            "labelledSupportRetrieved": null
+          },
+          "bm25": {
+            "sourceIds": [
+              "text:066a69cdb1e09edbba1a80617a2e8309269b8a46ae34aa493c1a24d674544ec3@utf8-pages-v1:066a69cdb1e09edbba1a80617a2e8309269b8a46ae34aa493c1a24d674544ec3:p1",
+              "text:917cabdc80c65485c11e80307884ee217825ac5222b0fe9b9f11b19356f25689@utf8-pages-v1:917cabdc80c65485c11e80307884ee217825ac5222b0fe9b9f11b19356f25689:p1"
+            ],
+            "recall": null,
+            "reciprocalRank": null,
+            "status": "complete",
+            "byteLimited": false,
+            "encodingLimited": false,
+            "candidateReturned": true,
+            "labelledSupportRetrieved": null
+          },
+          "hybrid": {
+            "sourceIds": [
+              "text:066a69cdb1e09edbba1a80617a2e8309269b8a46ae34aa493c1a24d674544ec3@utf8-pages-v1:066a69cdb1e09edbba1a80617a2e8309269b8a46ae34aa493c1a24d674544ec3:p1",
+              "text:917cabdc80c65485c11e80307884ee217825ac5222b0fe9b9f11b19356f25689@utf8-pages-v1:917cabdc80c65485c11e80307884ee217825ac5222b0fe9b9f11b19356f25689:p1",
+              "text:77198f89bfe04961748fa83888db05f07adc778f58d22d05ef2d8cf234eb95e6@utf8-pages-v1:77198f89bfe04961748fa83888db05f07adc778f58d22d05ef2d8cf234eb95e6:p1",
+              "text:b84ba2ff8b1dd6dc6b082302d164d4f080e7c23020e272fc1c1891bef18b534e@utf8-pages-v1:b84ba2ff8b1dd6dc6b082302d164d4f080e7c23020e272fc1c1891bef18b534e:p1"
+            ],
+            "recall": null,
+            "reciprocalRank": null,
+            "status": "partial",
+            "byteLimited": false,
+            "encodingLimited": false,
+            "vectorAvailable": true,
+            "candidateReturned": true,
+            "labelledSupportRetrieved": null
+          }
+        },
+        "answerability": "insufficient"
+      },
+      {
+        "querySha256": "748aa8e81e704e50f01c6b87c439eb8c5d66d824573a9cf29631ce426fb85d4b",
+        "relevantSourceIds": [],
+        "profiles": {
+          "lexical": {
+            "sourceIds": [
+              "text:aa66ed922efd83210d01e95bb4d0f851536d36b3908fa459231e0e26b0947bf0@utf8-pages-v1:aa66ed922efd83210d01e95bb4d0f851536d36b3908fa459231e0e26b0947bf0:p1"
+            ],
+            "recall": null,
+            "reciprocalRank": null,
+            "status": "complete",
+            "byteLimited": false,
+            "encodingLimited": false,
+            "candidateReturned": true,
+            "labelledSupportRetrieved": null
+          },
+          "bm25": {
+            "sourceIds": [
+              "text:aa66ed922efd83210d01e95bb4d0f851536d36b3908fa459231e0e26b0947bf0@utf8-pages-v1:aa66ed922efd83210d01e95bb4d0f851536d36b3908fa459231e0e26b0947bf0:p1"
+            ],
+            "recall": null,
+            "reciprocalRank": null,
+            "status": "complete",
+            "byteLimited": false,
+            "encodingLimited": false,
+            "candidateReturned": true,
+            "labelledSupportRetrieved": null
+          },
+          "hybrid": {
+            "sourceIds": [
+              "text:aa66ed922efd83210d01e95bb4d0f851536d36b3908fa459231e0e26b0947bf0@utf8-pages-v1:aa66ed922efd83210d01e95bb4d0f851536d36b3908fa459231e0e26b0947bf0:p1",
+              "text:ed0b79f1d5f45e219963c81abc32cbb027f0f1683999e8c52d742a4c5d21c05d@utf8-pages-v1:ed0b79f1d5f45e219963c81abc32cbb027f0f1683999e8c52d742a4c5d21c05d:p1",
+              "text:9af2ff6959bd9ecea86f6dc322fa0d45afb532d2398615f595b957cb17ebb06e@utf8-pages-v1:9af2ff6959bd9ecea86f6dc322fa0d45afb532d2398615f595b957cb17ebb06e:p1",
+              "text:7874b49f5f2b55595cae93616a48d26631f930a204d7532951294924f4e21783@utf8-pages-v1:7874b49f5f2b55595cae93616a48d26631f930a204d7532951294924f4e21783:p1"
+            ],
+            "recall": null,
+            "reciprocalRank": null,
+            "status": "partial",
+            "byteLimited": false,
+            "encodingLimited": false,
+            "vectorAvailable": true,
+            "candidateReturned": true,
+            "labelledSupportRetrieved": null
+          }
+        },
+        "answerability": "insufficient"
+      },
+      {
+        "querySha256": "00f3db5d0f77ab68ced9ebcf64fa10c66b968530ab2084f7839a8c1edb62e315",
+        "relevantSourceIds": [],
+        "profiles": {
+          "lexical": {
+            "sourceIds": [
+              "text:b84ba2ff8b1dd6dc6b082302d164d4f080e7c23020e272fc1c1891bef18b534e@utf8-pages-v1:b84ba2ff8b1dd6dc6b082302d164d4f080e7c23020e272fc1c1891bef18b534e:p1"
+            ],
+            "recall": null,
+            "reciprocalRank": null,
+            "status": "complete",
+            "byteLimited": false,
+            "encodingLimited": false,
+            "candidateReturned": true,
+            "labelledSupportRetrieved": null
+          },
+          "bm25": {
+            "sourceIds": [
+              "text:b84ba2ff8b1dd6dc6b082302d164d4f080e7c23020e272fc1c1891bef18b534e@utf8-pages-v1:b84ba2ff8b1dd6dc6b082302d164d4f080e7c23020e272fc1c1891bef18b534e:p1"
+            ],
+            "recall": null,
+            "reciprocalRank": null,
+            "status": "complete",
+            "byteLimited": false,
+            "encodingLimited": false,
+            "candidateReturned": true,
+            "labelledSupportRetrieved": null
+          },
+          "hybrid": {
+            "sourceIds": [
+              "text:b84ba2ff8b1dd6dc6b082302d164d4f080e7c23020e272fc1c1891bef18b534e@utf8-pages-v1:b84ba2ff8b1dd6dc6b082302d164d4f080e7c23020e272fc1c1891bef18b534e:p1",
+              "text:77198f89bfe04961748fa83888db05f07adc778f58d22d05ef2d8cf234eb95e6@utf8-pages-v1:77198f89bfe04961748fa83888db05f07adc778f58d22d05ef2d8cf234eb95e6:p1",
+              "text:066a69cdb1e09edbba1a80617a2e8309269b8a46ae34aa493c1a24d674544ec3@utf8-pages-v1:066a69cdb1e09edbba1a80617a2e8309269b8a46ae34aa493c1a24d674544ec3:p1",
+              "text:7874b49f5f2b55595cae93616a48d26631f930a204d7532951294924f4e21783@utf8-pages-v1:7874b49f5f2b55595cae93616a48d26631f930a204d7532951294924f4e21783:p1"
+            ],
+            "recall": null,
+            "reciprocalRank": null,
+            "status": "partial",
+            "byteLimited": false,
+            "encodingLimited": false,
+            "vectorAvailable": true,
+            "candidateReturned": true,
+            "labelledSupportRetrieved": null
+          }
+        },
+        "answerability": "insufficient"
+      }
+    ],
+    "vectorCoveredQueries": 16,
+    "totalQueries": 16,
+    "metrics": {
+      "lexical": {
+        "indexSha256": "d907e32de0e33fc2ea1e06b44c4b4dd20c9ca93c891812113fd923b512cda948",
+        "recallAtK": 0.9090909090909091,
+        "mrrAtK": 0.8636363636363636,
+        "labelledSupportHitRate": 0.9090909090909091,
+        "candidateReturnRateOnInsufficient": 1
+      },
+      "bm25": {
+        "indexSha256": "a10de7582c30fffcb72b8158f6a3eb848f1e712191461ab8cc2b4ee194f49f98",
+        "recallAtK": 1,
+        "mrrAtK": 1,
+        "labelledSupportHitRate": 1,
+        "candidateReturnRateOnInsufficient": 1
+      },
+      "hybrid": {
+        "indexSha256": "a165c013998ec0c026ccf5c504639d7bf9a5dbbef470dc267b5cfd63a6c4dd95",
+        "recallAtK": 0.9545454545454546,
+        "mrrAtK": 1,
+        "labelledSupportHitRate": 1,
+        "candidateReturnRateOnInsufficient": 1
+      }
+    },
+    "finalAnswerQuality": "not-evaluated",
+    "answerabilityCounts": {
+      "direct-answer": 10,
+      "explicitly-unspecified": 1,
+      "insufficient": 5
+    }
+  }
+}

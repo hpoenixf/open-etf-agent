@@ -1,0 +1,122 @@
+{
+  "schemaVersion": "v032-verification@1",
+  "executionCommit": "4238a6471c9f653c1e8cf3d3cd9a5f3b66694654",
+  "executionTree": "ec2b0988761b8b2ff5700aa1a118f15e66ef69cf",
+  "node": "26.11.1",
+  "declaredNodeRange": ">=26.8.1 <27",
+  "platform": "darwin-arm64",
+  "fullSuite": {
+    "tests": 1491,
+    "pass": 1487,
+    "fail": 0,
+    "skipped": 4,
+    "exitCode": 0,
+    "durationMs": 262070.240666,
+    "command": "Explicit Node 26.11.1 --test --test-concurrency=1 test/*.test.mjs with canonical task-owned TMPDIR",
+    "skippedTests": [
+      "\ufe63 real fixed v1 binary task resumes under v2 without upgrading frozen question (0.039417ms) # SKIP",
+      "\ufe63 real fixed v2 binary task resumes under v3 without upgrading frozen question (0.021917ms) # SKIP",
+      "\ufe63 old fixed binary Host snapshot reopens under new binary without definitions drift (0.068459ms) # SKIP",
+      "\ufe63 old d249 task checkpoint resumes with new binary v1 policy; newly submitted task freezes v3 (0.036792ms) # SKIP"
+    ]
+  },
+  "firstCandidateSuite": {
+    "sourceCommit": "f742c3ac949d16e7706e2b6aa0707ad45e9817bd",
+    "tests": 1490,
+    "pass": 1486,
+    "fail": 0,
+    "skipped": 4,
+    "scope": "Separate historical implementation checkpoint, not added to final denominator"
+  },
+  "pythonContractFixtures": {
+    "pass": 6,
+    "fail": 0,
+    "scope": "Synthetic protocol/model dependencies; separate real CPU receipts"
+  },
+  "sigkillMatrix": {
+    "cases": 5,
+    "passed": 5,
+    "encoderAndChat": "synthetic",
+    "processes": "real independent Node processes",
+    "deadline": "original persisted real wall clock",
+    "includedInFullSuite": true
+  },
+  "build": {
+    "exitCode": 0,
+    "exactWorkerAssetCopied": true
+  },
+  "documentation": {
+    "exitCode": 0,
+    "singleGenerator": "scripts/sync-module-map.mjs"
+  },
+  "articleCoverage": {
+    "exitCode": 0,
+    "mode": "--check",
+    "newExecution": false
+  },
+  "openspec": {
+    "exitCode": 0,
+    "command": "openspec validate v032-knowledge-continuation --strict --no-interactive",
+    "historicalInitialFailure": "Proposal-only change had no delta; current explicit Knowledge requirements and scenarios validate."
+  },
+  "packagingTests": {
+    "pass": 19,
+    "fail": 0,
+    "scope": "Article/version lineage guards, not added to full suite count"
+  },
+  "cleanInstall": {
+    "exitCode": 0,
+    "lifecycleScripts": false,
+    "installCommand": "npm ci --ignore-scripts --no-audit --no-fund",
+    "buildExitCode": 0,
+    "compiledFixtureCliExitCode": 0,
+    "fixtureCliCases": 4,
+    "realProvider": false
+  },
+  "packagingEquivalence": {
+    "sourceCommit": "4238a6471c9f653c1e8cf3d3cd9a5f3b66694654",
+    "sourceScriptTestFixtureFilesUnchanged": 416,
+    "packageOnlyVersionChanges": true,
+    "lockedDependenciesUnchanged": true
+  },
+  "versionConsistency": {
+    "package": "0.32.0",
+    "rootLock": "0.32.0",
+    "rootLockPackage": "0.32.0",
+    "reviewedMap": "0.32.0",
+    "latestFormalRelease": "0.31.0",
+    "newTag": false,
+    "releaseCreated": false
+  },
+  "excludedObservations": [
+    {
+      "log": "full-4238.log",
+      "reason": "Noncanonical host TMPDIR triggered original path admission; stopped before full denominator. Not product regression and not accepted suite."
+    },
+    {
+      "name": "Initial map generation",
+      "reason": "Overlong new card text and then missing new evidence page rejected before generation; fixed source text and linked files, then check passed."
+    }
+  ],
+  "logSha256": {
+    "full-f742.log": "619885b5e2f317a3ee5700df3e09bac2d3da857ac91939a08f3108e3c9bee89e",
+    "full-4238.log": "5288534da47c9dd9ee95be6e23b090608c79f676553b98ff560d32085600b44f",
+    "full-4238-canonical.log": "3681b6831101ee3dbc1bc8b376e277648a4abfa36888f17d2f4d9915a7261a4d",
+    "build-final.log": "a9e7014715c181ae8b532a138273c9ab83f6e1926fcdf7bec5ecb49d0572d5c8",
+    "docs-final.log": "5337dfeb38e31fb4f16e2a57d89aa6214bed5f8078266fd5088a1274de978081",
+    "coverage-final.json": "fd087286834c1aee260718279d1f984439ae73f1e5a82b9a658dbef79b9cf673",
+    "python-final.log": "8c25c8ab96ad2abf095b7f6189cd884d00b4fc0c5d2980b871dfae7ac8b35178",
+    "packaging-tests.log": "0206ea58092395ca3ebf91dd6da704994d695ff4a6a32bd289a26d2406a2c5b3",
+    "clean-install.log": "5e9c3484ba991e33765e13e851f03ab3bb84e19a510f6102a831dd82238768c3",
+    "clean-build.log": "c94a131f46e31c074a89a067d25bb40021439369937caaa8fa57e61270860de1",
+    "clean-cli.log": "975baaf568f461056e355264bae7392c894c9a998ebdf4ca3dcd1d115aa07b75",
+    "compiled-real-cpu.log": "c1323347e2278e626ccd849379043d92a743fda90e16c2ea1b167c0cd0f01b7a"
+  },
+  "remoteCi": "Separate final PR-head/merge-tree check required; historical CI not reused for new behavior",
+  "temporaryStorage": {
+    "rawProjectsLogsDatabasesAndUniqueModelEnvironment": "retained for original evidence/readback",
+    "pythonCaches": "moved under ignored owned output, no permanent deletion",
+    "cleanInstall": "owned temporary validation copy retained through remote verification",
+    "claimedSpaceReclaimedBytes": 0
+  }
+}

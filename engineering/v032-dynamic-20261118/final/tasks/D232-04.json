@@ -1,0 +1,233 @@
+{
+  "id": "D232-04",
+  "originalCaseId": "P10",
+  "query": {
+    "query": "Do Saturdays count toward the settlement delay?",
+    "limit": 4
+  },
+  "coverage": {
+    "scope": "admitted-immutable-text-collection",
+    "documents": 8,
+    "pages": 8,
+    "matched": 8,
+    "returned": 4,
+    "limit": 4,
+    "sourceBytes": 946,
+    "maxSourceBytes": 128000,
+    "maxResponseBytes": 768000,
+    "limitReached": true,
+    "byteLimited": false,
+    "encodingLimited": false,
+    "completeWithinCollection": false
+  },
+  "retrieval": {
+    "profile": "frozen-hybrid",
+    "evidenceSha256": "5044d90a6ce254eec3c26682d893065c7699f333650c901a614a0b375670dde6",
+    "provider": {
+      "id": "local-sentence-transformers",
+      "model": "intfloat/multilingual-e5-small",
+      "revision": "943e6f6e81786dcbddbebd3d52f7f3df8ea535abf24e9823b5ec8374249bf3de"
+    },
+    "channels": {
+      "lexical": {
+        "status": "available",
+        "algorithm": "bm25",
+        "matched": 4
+      },
+      "vector": {
+        "status": "available",
+        "reason": "frozen-query-evidence",
+        "matched": 8
+      }
+    },
+    "reranker": {
+      "status": "not-configured"
+    },
+    "recovery": "frozen-provider-evidence"
+  },
+  "sourceManifestSha256": "c16c472150d398815823e21b6d91b0d589a218eeeba5e1c19b66a1b364ec3b8c",
+  "sources": [
+    {
+      "sourceId": "text:b84ba2ff8b1dd6dc6b082302d164d4f080e7c23020e272fc1c1891bef18b534e@utf8-pages-v1:b84ba2ff8b1dd6dc6b082302d164d4f080e7c23020e272fc1c1891bef18b534e:p1",
+      "documentId": "text:b84ba2ff8b1dd6dc6b082302d164d4f080e7c23020e272fc1c1891bef18b534e",
+      "name": "settlement.txt",
+      "version": "utf8-pages-v1:b84ba2ff8b1dd6dc6b082302d164d4f080e7c23020e272fc1c1891bef18b534e",
+      "page": 1,
+      "text": "Trading and settlement. Investors submit orders during exchange hours. Ownership and cash are transferred on the next business day after the trade, known as T+1 settlement. Weekends and exchange holidays are not business days.",
+      "sha256": "b84ba2ff8b1dd6dc6b082302d164d4f080e7c23020e272fc1c1891bef18b534e",
+      "mediaType": "text/plain; charset=utf-8"
+    },
+    {
+      "sourceId": "text:77198f89bfe04961748fa83888db05f07adc778f58d22d05ef2d8cf234eb95e6@utf8-pages-v1:77198f89bfe04961748fa83888db05f07adc778f58d22d05ef2d8cf234eb95e6:p1",
+      "documentId": "text:77198f89bfe04961748fa83888db05f07adc778f58d22d05ef2d8cf234eb95e6",
+      "name": "redemptions.txt",
+      "version": "utf8-pages-v1:77198f89bfe04961748fa83888db05f07adc778f58d22d05ef2d8cf234eb95e6",
+      "page": 1,
+      "text": "Liquidity policy, current 2026. Cash and overnight deposits cover investor withdrawals. If redemptions exceed the cash buffer, the fund sells short-dated government bills. Borrowing and forced sales of illiquid bonds are prohibited.",
+      "sha256": "77198f89bfe04961748fa83888db05f07adc778f58d22d05ef2d8cf234eb95e6",
+      "mediaType": "text/plain; charset=utf-8"
+    },
+    {
+      "sourceId": "text:917cabdc80c65485c11e80307884ee217825ac5222b0fe9b9f11b19356f25689@utf8-pages-v1:917cabdc80c65485c11e80307884ee217825ac5222b0fe9b9f11b19356f25689:p1",
+      "documentId": "text:917cabdc80c65485c11e80307884ee217825ac5222b0fe9b9f11b19356f25689",
+      "name": "tracking.txt",
+      "version": "utf8-pages-v1:917cabdc80c65485c11e80307884ee217825ac5222b0fe9b9f11b19356f25689",
+      "page": 1,
+      "text": "Tracking difference is the fund return minus the benchmark return over the same period. Management expenses, withholding taxes and sampling can produce a gap even when the portfolio follows the benchmark. Tracking error measures the variability of that gap.",
+      "sha256": "917cabdc80c65485c11e80307884ee217825ac5222b0fe9b9f11b19356f25689",
+      "mediaType": "text/plain; charset=utf-8"
+    },
+    {
+      "sourceId": "text:066a69cdb1e09edbba1a80617a2e8309269b8a46ae34aa493c1a24d674544ec3@utf8-pages-v1:066a69cdb1e09edbba1a80617a2e8309269b8a46ae34aa493c1a24d674544ec3:p1",
+      "documentId": "text:066a69cdb1e09edbba1a80617a2e8309269b8a46ae34aa493c1a24d674544ec3",
+      "name": "fees.txt",
+      "version": "utf8-pages-v1:066a69cdb1e09edbba1a80617a2e8309269b8a46ae34aa493c1a24d674544ec3",
+      "page": 1,
+      "text": "Fees, effective 2026. The annual management charge is 0.15 percent of assets. The custody charge is 0.05 percent per year. These are operating expenses, not a promise of investment returns. No subscription charge is specified here.",
+      "sha256": "066a69cdb1e09edbba1a80617a2e8309269b8a46ae34aa493c1a24d674544ec3",
+      "mediaType": "text/plain; charset=utf-8"
+    }
+  ],
+  "originalOutputSha256": "b08c701b0c9c4e9d2caf72671de29a49ab3440c0b6e55d25ff500b8062de55b9",
+  "originalOutputBytes": 1695,
+  "finalAnswerSha256": "848d233cbf83703854207181721ec3181fd0ef45e94724f5f65fb8cf894e9037",
+  "finalAnswerBytes": 911,
+  "tokens": {
+    "prompt": 17732,
+    "completion": 977,
+    "total": 18709
+  },
+  "requestReceipts": [
+    {
+      "ordinal": 10,
+      "httpStatus": 200,
+      "model": "deepseek-v4.1-flash",
+      "costUsd": 0,
+      "billingSource": "go",
+      "requestSha256": "1284e3189cc3fc787c00bfe872fbad63d5f222aae420759eeac0efa65c236399",
+      "responseSha256": "b3b0c395d2668a3313223ab309d461be62fd3f14a1e00563b37ec065896ceb4e",
+      "usage": {
+        "prompt_tokens": 3668,
+        "completion_tokens": 61,
+        "total_tokens": 3729,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "cost": 0,
+        "opencode": {
+          "billing_source": "go",
+          "list_cost": 0.0011736,
+          "allowance": 0.00070416,
+          "tokens": {
+            "input": 3668,
+            "output": 61,
+            "reasoning": 0,
+            "cache_read": 0,
+            "cache_write_5m": 0,
+            "cache_write_1h": 0
+          }
+        }
+      }
+    },
+    {
+      "ordinal": 11,
+      "httpStatus": 200,
+      "model": "deepseek-v4.1-flash",
+      "costUsd": 0,
+      "billingSource": "go",
+      "requestSha256": "88eb87d28e2fdfef907d28232451b1ca103fd6414e15ae047dfb95553b5d5a23",
+      "responseSha256": "0941fe76a6d33590fa10d30d5be759c758deceebc4d62d526445e8f87716266b",
+      "usage": {
+        "prompt_tokens": 6651,
+        "completion_tokens": 646,
+        "total_tokens": 7297,
+        "prompt_tokens_details": {
+          "cached_tokens": 3584
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 181
+        },
+        "cost": 0,
+        "opencode": {
+          "billing_source": "go",
+          "list_cost": 0.0017168,
+          "allowance": 0.00103008,
+          "tokens": {
+            "input": 3067,
+            "output": 646,
+            "reasoning": 181,
+            "cache_read": 3584,
+            "cache_write_5m": 0,
+            "cache_write_1h": 0
+          }
+        }
+      }
+    },
+    {
+      "ordinal": 12,
+      "httpStatus": 200,
+      "model": "deepseek-v4.1-flash",
+      "costUsd": 0,
+      "billingSource": "go",
+      "requestSha256": "f5f6959fa9544d9ef38f4de9dfaf61ebfb520fd3fe918e77852fb8d526cb87ee",
+      "responseSha256": "98d2c24e3d40b19eb9b29b780787f94b244ae67ef2f956dd7ba2e925ef5c31a9",
+      "usage": {
+        "prompt_tokens": 7413,
+        "completion_tokens": 270,
+        "total_tokens": 7683,
+        "prompt_tokens_details": {
+          "cached_tokens": 6528
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 7
+        },
+        "cost": 0,
+        "opencode": {
+          "billing_source": "go",
+          "list_cost": 0.00062867,
+          "allowance": 0.0003772,
+          "tokens": {
+            "input": 885,
+            "output": 270,
+            "reasoning": 7,
+            "cache_read": 6528,
+            "cache_write_5m": 0,
+            "cache_write_1h": 0
+          }
+        }
+      }
+    }
+  ],
+  "queryEffectSummary": {
+    "call": {
+      "arguments": {
+        "limit": 4,
+        "query": "Do Saturdays count toward the settlement delay?"
+      },
+      "id": "call_ff40e7a2fb6c482fb32d8d03",
+      "name": "knowledge_query"
+    },
+    "dispatchedPhysicalOperations": 2,
+    "encodedSha256": "f9a97f4b886405ecb21816e1935d5f38c57beaa80c16370bf83145018658baba",
+    "fence": 1,
+    "profileSha256": "f6d9050ed438eda647c5c433ca3db23981481ba3d54ca419a4f27549137b73ea",
+    "requestSha256": "f7c14b0a01881bebf903d84cef459c7dabb7f137e9ee01f52a49ede81af2c4b4",
+    "runId": "D232-04",
+    "status": "completed",
+    "toolOrdinal": 1,
+    "originalSchemaVersion": "knowledge-query-effect@1",
+    "schemaVersion": "published-query-effect-summary@1",
+    "encodedSummary": {
+      "id": "5b2c6f104118acc9871d60a92ea4d5aa48c94c99102a37e69653c12229895b40",
+      "inputSha256": "3b74a35f0aa4ddf855c72a9f5a39cb975a129c60ba9e5c87a1d63a3f05f53d0f",
+      "kind": "query",
+      "tokenCount": 16,
+      "tokenIdsSha256": "61735e9ab3ab47d7445663c0670775bbecbdf53ea36653492459efda7e7ace92",
+      "dimensions": 384,
+      "vectorSha256": "28c3b0833f5898542e5ea72c3d0e8ce3b3b78531f54a660d2aa5bf5b566c02a9"
+    }
+  }
+}

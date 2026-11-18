@@ -1,0 +1,17 @@
+{
+  "schemaVersion": "v032-provider-access@1",
+  "observedDate": "2026-11-17",
+  "service": "OpenCode Go",
+  "endpoint": "https://opencode.ai/inference/go/v1/models",
+  "method": "GET",
+  "credential": "existing local Go credential; never published",
+  "httpStatus": 401,
+  "modelDirectoryRequests": 1,
+  "inferenceRequests": 0,
+  "requestedInferenceModel": "gpt-6-luna",
+  "resolvedInferenceModel": null,
+  "action": "stopped; no alternative endpoint, credential, model or retry",
+  "newBillableUnknowns": 0,
+  "newInferenceCostUsd": 0,
+  "boundary": "Authentication check only. No current balance, entitlement or model availability attested. Old allocations/unknowns retained; dynamic-candidate refusal remains separate."
+}

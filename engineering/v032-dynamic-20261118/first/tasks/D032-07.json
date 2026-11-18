@@ -1,0 +1,199 @@
+{
+  "id": "D032-07",
+  "originalCaseId": "N03",
+  "query": {
+    "query": "What was the net asset value per unit on 2026-10-31?",
+    "limit": 4
+  },
+  "coverage": {
+    "scope": "admitted-immutable-text-collection",
+    "documents": 8,
+    "pages": 8,
+    "matched": 8,
+    "returned": 4,
+    "limit": 4,
+    "sourceBytes": 946,
+    "maxSourceBytes": 128000,
+    "maxResponseBytes": 768000,
+    "limitReached": true,
+    "byteLimited": false,
+    "encodingLimited": false,
+    "completeWithinCollection": false
+  },
+  "retrieval": {
+    "profile": "frozen-hybrid",
+    "evidenceSha256": "dcbec413e856609f05ebb3fbaa4e65a4147278aeccbf6db466d7931baf917665",
+    "provider": {
+      "id": "local-sentence-transformers",
+      "model": "intfloat/multilingual-e5-small",
+      "revision": "943e6f6e81786dcbddbebd3d52f7f3df8ea535abf24e9823b5ec8374249bf3de"
+    },
+    "channels": {
+      "lexical": {
+        "status": "available",
+        "algorithm": "bm25",
+        "matched": 6
+      },
+      "vector": {
+        "status": "available",
+        "reason": "frozen-query-evidence",
+        "matched": 8
+      }
+    },
+    "reranker": {
+      "status": "not-configured"
+    },
+    "recovery": "frozen-provider-evidence"
+  },
+  "sourceManifestSha256": "c16c472150d398815823e21b6d91b0d589a218eeeba5e1c19b66a1b364ec3b8c",
+  "sources": [
+    {
+      "sourceId": "text:066a69cdb1e09edbba1a80617a2e8309269b8a46ae34aa493c1a24d674544ec3@utf8-pages-v1:066a69cdb1e09edbba1a80617a2e8309269b8a46ae34aa493c1a24d674544ec3:p1",
+      "documentId": "text:066a69cdb1e09edbba1a80617a2e8309269b8a46ae34aa493c1a24d674544ec3",
+      "name": "fees.txt",
+      "version": "utf8-pages-v1:066a69cdb1e09edbba1a80617a2e8309269b8a46ae34aa493c1a24d674544ec3",
+      "page": 1,
+      "text": "Fees, effective 2026. The annual management charge is 0.15 percent of assets. The custody charge is 0.05 percent per year. These are operating expenses, not a promise of investment returns. No subscription charge is specified here.",
+      "sha256": "066a69cdb1e09edbba1a80617a2e8309269b8a46ae34aa493c1a24d674544ec3",
+      "mediaType": "text/plain; charset=utf-8"
+    },
+    {
+      "sourceId": "text:77198f89bfe04961748fa83888db05f07adc778f58d22d05ef2d8cf234eb95e6@utf8-pages-v1:77198f89bfe04961748fa83888db05f07adc778f58d22d05ef2d8cf234eb95e6:p1",
+      "documentId": "text:77198f89bfe04961748fa83888db05f07adc778f58d22d05ef2d8cf234eb95e6",
+      "name": "redemptions.txt",
+      "version": "utf8-pages-v1:77198f89bfe04961748fa83888db05f07adc778f58d22d05ef2d8cf234eb95e6",
+      "page": 1,
+      "text": "Liquidity policy, current 2026. Cash and overnight deposits cover investor withdrawals. If redemptions exceed the cash buffer, the fund sells short-dated government bills. Borrowing and forced sales of illiquid bonds are prohibited.",
+      "sha256": "77198f89bfe04961748fa83888db05f07adc778f58d22d05ef2d8cf234eb95e6",
+      "mediaType": "text/plain; charset=utf-8"
+    },
+    {
+      "sourceId": "text:b84ba2ff8b1dd6dc6b082302d164d4f080e7c23020e272fc1c1891bef18b534e@utf8-pages-v1:b84ba2ff8b1dd6dc6b082302d164d4f080e7c23020e272fc1c1891bef18b534e:p1",
+      "documentId": "text:b84ba2ff8b1dd6dc6b082302d164d4f080e7c23020e272fc1c1891bef18b534e",
+      "name": "settlement.txt",
+      "version": "utf8-pages-v1:b84ba2ff8b1dd6dc6b082302d164d4f080e7c23020e272fc1c1891bef18b534e",
+      "page": 1,
+      "text": "Trading and settlement. Investors submit orders during exchange hours. Ownership and cash are transferred on the next business day after the trade, known as T+1 settlement. Weekends and exchange holidays are not business days.",
+      "sha256": "b84ba2ff8b1dd6dc6b082302d164d4f080e7c23020e272fc1c1891bef18b534e",
+      "mediaType": "text/plain; charset=utf-8"
+    },
+    {
+      "sourceId": "text:917cabdc80c65485c11e80307884ee217825ac5222b0fe9b9f11b19356f25689@utf8-pages-v1:917cabdc80c65485c11e80307884ee217825ac5222b0fe9b9f11b19356f25689:p1",
+      "documentId": "text:917cabdc80c65485c11e80307884ee217825ac5222b0fe9b9f11b19356f25689",
+      "name": "tracking.txt",
+      "version": "utf8-pages-v1:917cabdc80c65485c11e80307884ee217825ac5222b0fe9b9f11b19356f25689",
+      "page": 1,
+      "text": "Tracking difference is the fund return minus the benchmark return over the same period. Management expenses, withholding taxes and sampling can produce a gap even when the portfolio follows the benchmark. Tracking error measures the variability of that gap.",
+      "sha256": "917cabdc80c65485c11e80307884ee217825ac5222b0fe9b9f11b19356f25689",
+      "mediaType": "text/plain; charset=utf-8"
+    }
+  ],
+  "originalOutputSha256": "1a60b10ba03f6e2b28dd4a2acfbee553394a0efd5e54269431426a77112d461f",
+  "originalOutputBytes": 1156,
+  "finalAnswerSha256": "1a60b10ba03f6e2b28dd4a2acfbee553394a0efd5e54269431426a77112d461f",
+  "finalAnswerBytes": 1156,
+  "tokens": {
+    "prompt": 9982,
+    "completion": 1335,
+    "total": 11317
+  },
+  "requestReceipts": [
+    {
+      "ordinal": 18,
+      "httpStatus": 200,
+      "model": "deepseek-v4.1-flash",
+      "costUsd": 0,
+      "billingSource": "go",
+      "requestSha256": "634ced4a82cafa8d26b9e1ca887fee9469436ded60081cd226fb0d99d15eba4f",
+      "responseSha256": "ed649e4334bcb2920555535747e9f854bc72169843f68705b7a0723026a0c9f3",
+      "usage": {
+        "prompt_tokens": 3496,
+        "completion_tokens": 79,
+        "total_tokens": 3575,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "cost": 0,
+        "opencode": {
+          "billing_source": "go",
+          "list_cost": 0.0011436,
+          "allowance": 0.00068616,
+          "tokens": {
+            "input": 3496,
+            "output": 79,
+            "reasoning": 0,
+            "cache_read": 0,
+            "cache_write_5m": 0,
+            "cache_write_1h": 0
+          }
+        }
+      }
+    },
+    {
+      "ordinal": 19,
+      "httpStatus": 200,
+      "model": "deepseek-v4.1-flash",
+      "costUsd": 0,
+      "billingSource": "go",
+      "requestSha256": "91eb3643b9f8a029dbe68205141e220dff49e4b591c1f7c1169c0248aeb8b25e",
+      "responseSha256": "71853488d9806e99dad64a22e5f3ada4a0ad7e1a5fedcc4518b9a3d00fd88091",
+      "usage": {
+        "prompt_tokens": 6486,
+        "completion_tokens": 1256,
+        "total_tokens": 7742,
+        "prompt_tokens_details": {
+          "cached_tokens": 3456
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 998
+        },
+        "cost": 0,
+        "opencode": {
+          "billing_source": "go",
+          "list_cost": 0.00243694,
+          "allowance": 0.00146216,
+          "tokens": {
+            "input": 3030,
+            "output": 1256,
+            "reasoning": 998,
+            "cache_read": 3456,
+            "cache_write_5m": 0,
+            "cache_write_1h": 0
+          }
+        }
+      }
+    }
+  ],
+  "queryEffectSummary": {
+    "call": {
+      "arguments": {
+        "limit": 4,
+        "query": "What was the net asset value per unit on 2026-10-31?"
+      },
+      "id": "call_221baca59f70431caac969ec",
+      "name": "knowledge_query"
+    },
+    "dispatchedPhysicalOperations": 2,
+    "encodedSha256": "fae9df15af0f0c82574c285ae1953b1901d40f5be18dc65993265680a0ca5211",
+    "fence": 1,
+    "profileSha256": "f6d9050ed438eda647c5c433ca3db23981481ba3d54ca419a4f27549137b73ea",
+    "requestSha256": "9229f141d408c7e30d96e0f48c6a091f2b29216950cd90e3ef756c40b1217dff",
+    "runId": "D032-07",
+    "status": "completed",
+    "toolOrdinal": 1,
+    "originalSchemaVersion": "knowledge-query-effect@1",
+    "schemaVersion": "published-query-effect-summary@1",
+    "encodedSummary": {
+      "id": "ab4c812c7fb511302e7ee2cb4df071cc188116e7ed099978e3a817917b490e77",
+      "inputSha256": "95329772681f2b4e90d750af8368dc8b436bee47e09f5ec50b718dca05dbb590",
+      "kind": "query",
+      "tokenCount": 20,
+      "tokenIdsSha256": "a4816fd51888be49ca5116879f68a088e14cda4427e9f012cf24dbe418514f10",
+      "dimensions": 384,
+      "vectorSha256": "42bef884dfed8eb6e9c4ef3c8078a4c8611b057a3b495c11587b60333affdc30"
+    }
+  }
+}

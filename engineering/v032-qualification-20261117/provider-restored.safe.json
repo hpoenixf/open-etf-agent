@@ -1,0 +1,53 @@
+{
+  "schemaVersion": "v032-provider-restored@1",
+  "observedDate": "2026-11-17",
+  "userExplicitlyReplacedCredential": true,
+  "credentialPublication": false,
+  "credentialLocation": "Existing local OpenCode Go credential store; mode 0600, readback verified.",
+  "modelDirectory": {
+    "endpoint": "https://opencode.ai/inference/go/v1/models",
+    "httpStatus": 200,
+    "model": "gpt-6-luna",
+    "canonicalModel": "openai/gpt-6-luna",
+    "toolsSupported": true
+  },
+  "singleInferenceProbe": {
+    "httpStatus": 200,
+    "resolvedModel": "gpt-6-luna",
+    "costUsd": 0,
+    "billingSource": "go",
+    "usage": {
+      "prompt_tokens": 11,
+      "completion_tokens": 5,
+      "total_tokens": 16,
+      "prompt_tokens_details": {
+        "cached_tokens": 0
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 0
+      },
+      "cost": 0,
+      "opencode": {
+        "billing_source": "go",
+        "list_cost": 3.6e-06,
+        "allowance": 1.44e-05,
+        "tokens": {
+          "input": 11,
+          "output": 5,
+          "reasoning": 0,
+          "cache_read": 0,
+          "cache_write_5m": 0,
+          "cache_write_1h": 0
+        }
+      }
+    },
+    "reply": "OK",
+    "responseSha256": "759ebc4b9da8d556504842c0e27ff359aeefc46d57a1fb832c61150e43a437a8"
+  },
+  "probeIncludedInTenTaskDenominator": false,
+  "original401ReceiptPreserved": true,
+  "sameOfficialRoutes": true,
+  "topUp": false,
+  "extraBillingActivated": false,
+  "dynamicCandidateRefusalLifted": false
+}

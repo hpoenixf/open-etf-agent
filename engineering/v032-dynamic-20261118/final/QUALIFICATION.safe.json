@@ -1,0 +1,578 @@
+{
+  "schemaVersion": "v032-dynamic-ten@1",
+  "sourceCommit": "4238a6471c9f653c1e8cf3d3cd9a5f3b66694654",
+  "sourceTree": "ec2b0988761b8b2ff5700aa1a118f15e66ef69cf",
+  "executionIdentity": "975e8db9ceb237965cf8b6887045375f8ce0fcbf667e3b44d32c1a9357bba304",
+  "realProviderApplicability": "supported",
+  "scope": "Local dynamic query in original Runtime; strict original-source content and delivery",
+  "normalGate": {
+    "planned": 10,
+    "requiredSuccesses": 9,
+    "threshold": 0.9,
+    "taskIds": [
+      "D232-01",
+      "D232-02",
+      "D232-03",
+      "D232-04",
+      "D232-05",
+      "D232-06",
+      "D232-07",
+      "D232-08",
+      "D232-09",
+      "D232-10"
+    ],
+    "tasks": [
+      {
+        "id": "D232-01",
+        "executionIdentity": "975e8db9ceb237965cf8b6887045375f8ce0fcbf667e3b44d32c1a9357bba304",
+        "status": "success",
+        "runtimeStatus": "completed",
+        "runtimeCode": null,
+        "physicalRequests": 3,
+        "resolvedModels": [
+          "deepseek-v4.1-flash"
+        ],
+        "realProvider": true,
+        "deliveryReadback": true,
+        "outputKind": "report",
+        "outputSha256": "6fadd8167e79b4c814af2f56616851bfaffeb5ff4ccb8fdc91aee8f1e87667ef",
+        "elapsedMs": 36477,
+        "startedAt": "2026-11-18T02:35:06.301Z",
+        "onTime": true,
+        "unknownEffects": false,
+        "rootUsage": {
+          "model": 3,
+          "tool": 2
+        },
+        "queryBudget": {
+          "maxQueries": 2,
+          "reservedQueries": 1,
+          "reservedPhysicalOperations": 2,
+          "dispatchedPhysicalOperations": 2,
+          "completedQueries": 1,
+          "unsettledQueries": 0
+        },
+        "workError": null,
+        "readbackError": null,
+        "transportStop": null,
+        "contentReview": "pass-independent-source-review",
+        "additionalCostUsd": 0,
+        "originalCaseId": "P01",
+        "runtimeOutcomeStatus": "success",
+        "contentFailureReason": null,
+        "runtimeAccepted": true,
+        "workflowCompleted": true,
+        "eligibleSuccess": true,
+        "tokens": {
+          "prompt": 14976,
+          "completion": 875,
+          "total": 15851
+        },
+        "originalOutput": "final/outputs/D232-01.md",
+        "finalAnswer": "final/outputs/D232-01-final.md",
+        "evidence": "final/tasks/D232-01.json",
+        "contentReviewReason": "Exact only-document scope; conditional bills and prohibitions preserved."
+      },
+      {
+        "id": "D232-02",
+        "executionIdentity": "975e8db9ceb237965cf8b6887045375f8ce0fcbf667e3b44d32c1a9357bba304",
+        "status": "success",
+        "runtimeStatus": "completed",
+        "runtimeCode": null,
+        "physicalRequests": 3,
+        "resolvedModels": [
+          "deepseek-v4.1-flash"
+        ],
+        "realProvider": true,
+        "deliveryReadback": true,
+        "outputKind": "report",
+        "outputSha256": "57892d87d60d4f7bfe53bc2f9e36047d6c3be2085084ce4b852f777f9f703470",
+        "elapsedMs": 30062,
+        "startedAt": "2026-11-18T02:36:09.841Z",
+        "onTime": true,
+        "unknownEffects": false,
+        "rootUsage": {
+          "model": 3,
+          "tool": 2
+        },
+        "queryBudget": {
+          "maxQueries": 2,
+          "reservedQueries": 1,
+          "reservedPhysicalOperations": 2,
+          "dispatchedPhysicalOperations": 2,
+          "completedQueries": 1,
+          "unsettledQueries": 0
+        },
+        "workError": null,
+        "readbackError": null,
+        "transportStop": null,
+        "contentReview": "pass-independent-source-review",
+        "additionalCostUsd": 0,
+        "originalCaseId": "P05",
+        "runtimeOutcomeStatus": "success",
+        "contentFailureReason": null,
+        "runtimeAccepted": true,
+        "workflowCompleted": true,
+        "eligibleSuccess": true,
+        "tokens": {
+          "prompt": 18569,
+          "completion": 1225,
+          "total": 19794
+        },
+        "originalOutput": "final/outputs/D232-02.md",
+        "finalAnswer": "final/outputs/D232-02-final.md",
+        "evidence": "final/tasks/D232-02.json",
+        "contentReviewReason": "Current June/December rule distinguished from superseded quarterly rule; prefer expands within admitted collection."
+      },
+      {
+        "id": "D232-03",
+        "executionIdentity": "975e8db9ceb237965cf8b6887045375f8ce0fcbf667e3b44d32c1a9357bba304",
+        "status": "success",
+        "runtimeStatus": "completed",
+        "runtimeCode": null,
+        "physicalRequests": 3,
+        "resolvedModels": [
+          "deepseek-v4.1-flash"
+        ],
+        "realProvider": true,
+        "deliveryReadback": true,
+        "outputKind": "report",
+        "outputSha256": "95ce642caffddf08e95a9a48bcdd592d8a1a2faad213bfe2b6eb7d4b703ec93c",
+        "elapsedMs": 30778,
+        "startedAt": "2026-11-18T02:36:40.067Z",
+        "onTime": true,
+        "unknownEffects": false,
+        "rootUsage": {
+          "model": 3,
+          "tool": 2
+        },
+        "queryBudget": {
+          "maxQueries": 2,
+          "reservedQueries": 1,
+          "reservedPhysicalOperations": 2,
+          "dispatchedPhysicalOperations": 2,
+          "completedQueries": 1,
+          "unsettledQueries": 0
+        },
+        "workError": null,
+        "readbackError": null,
+        "transportStop": null,
+        "contentReview": "pass-independent-source-review",
+        "additionalCostUsd": 0,
+        "originalCaseId": "P08",
+        "runtimeOutcomeStatus": "success",
+        "contentFailureReason": null,
+        "runtimeAccepted": true,
+        "workflowCompleted": true,
+        "eligibleSuccess": true,
+        "tokens": {
+          "prompt": 17845,
+          "completion": 1371,
+          "total": 19216
+        },
+        "originalOutput": "final/outputs/D232-03.md",
+        "finalAnswer": "final/outputs/D232-03-final.md",
+        "evidence": "final/tasks/D232-03.json",
+        "contentReviewReason": "Historical quarter-end policy is superseded and backtest-only, not actual 2026."
+      },
+      {
+        "id": "D232-04",
+        "executionIdentity": "975e8db9ceb237965cf8b6887045375f8ce0fcbf667e3b44d32c1a9357bba304",
+        "status": "success",
+        "runtimeStatus": "completed",
+        "runtimeCode": null,
+        "physicalRequests": 3,
+        "resolvedModels": [
+          "deepseek-v4.1-flash"
+        ],
+        "realProvider": true,
+        "deliveryReadback": true,
+        "outputKind": "report",
+        "outputSha256": "b08c701b0c9c4e9d2caf72671de29a49ab3440c0b6e55d25ff500b8062de55b9",
+        "elapsedMs": 23848,
+        "startedAt": "2026-11-18T02:37:10.942Z",
+        "onTime": true,
+        "unknownEffects": false,
+        "rootUsage": {
+          "model": 3,
+          "tool": 2
+        },
+        "queryBudget": {
+          "maxQueries": 2,
+          "reservedQueries": 1,
+          "reservedPhysicalOperations": 2,
+          "dispatchedPhysicalOperations": 2,
+          "completedQueries": 1,
+          "unsettledQueries": 0
+        },
+        "workError": null,
+        "readbackError": null,
+        "transportStop": null,
+        "contentReview": "pass-independent-source-review",
+        "additionalCostUsd": 0,
+        "originalCaseId": "P10",
+        "runtimeOutcomeStatus": "success",
+        "contentFailureReason": null,
+        "runtimeAccepted": true,
+        "workflowCompleted": true,
+        "eligibleSuccess": true,
+        "tokens": {
+          "prompt": 17732,
+          "completion": 977,
+          "total": 18709
+        },
+        "originalOutput": "final/outputs/D232-04.md",
+        "finalAnswer": "final/outputs/D232-04-final.md",
+        "evidence": "final/tasks/D232-04.json",
+        "contentReviewReason": "Settlement excludes weekends; absence wording limited to returned 4/8 pages."
+      },
+      {
+        "id": "D232-05",
+        "executionIdentity": "975e8db9ceb237965cf8b6887045375f8ce0fcbf667e3b44d32c1a9357bba304",
+        "status": "success",
+        "runtimeStatus": "completed",
+        "runtimeCode": null,
+        "physicalRequests": 3,
+        "resolvedModels": [
+          "deepseek-v4.1-flash"
+        ],
+        "realProvider": true,
+        "deliveryReadback": true,
+        "outputKind": "report",
+        "outputSha256": "107caa308f88a89a4c814b0993cf6ab89cc08b2707b408838beb9961a19ccc8b",
+        "elapsedMs": 29702,
+        "startedAt": "2026-11-18T02:37:34.885Z",
+        "onTime": true,
+        "unknownEffects": false,
+        "rootUsage": {
+          "model": 3,
+          "tool": 2
+        },
+        "queryBudget": {
+          "maxQueries": 2,
+          "reservedQueries": 1,
+          "reservedPhysicalOperations": 2,
+          "dispatchedPhysicalOperations": 2,
+          "completedQueries": 1,
+          "unsettledQueries": 0
+        },
+        "workError": null,
+        "readbackError": null,
+        "transportStop": null,
+        "contentReview": "pass-independent-source-review",
+        "additionalCostUsd": 0,
+        "originalCaseId": "N01",
+        "runtimeOutcomeStatus": "success",
+        "contentFailureReason": null,
+        "runtimeAccepted": true,
+        "workflowCompleted": true,
+        "eligibleSuccess": true,
+        "tokens": {
+          "prompt": 17693,
+          "completion": 1015,
+          "total": 18708
+        },
+        "originalOutput": "final/outputs/D232-05.md",
+        "finalAnswer": "final/outputs/D232-05-final.md",
+        "evidence": "final/tasks/D232-05.json",
+        "contentReviewReason": "Explicit not-specified subscription amount limited to fees source; no zero inferred."
+      },
+      {
+        "id": "D232-06",
+        "executionIdentity": "975e8db9ceb237965cf8b6887045375f8ce0fcbf667e3b44d32c1a9357bba304",
+        "status": "success",
+        "runtimeStatus": "completed",
+        "runtimeCode": null,
+        "physicalRequests": 2,
+        "resolvedModels": [
+          "deepseek-v4.1-flash"
+        ],
+        "realProvider": true,
+        "deliveryReadback": true,
+        "outputKind": "published-answer",
+        "outputSha256": "766733f8e2450541ec76a83fb168afdd4b11f00471e8ef9aa78a5abd59bffa25",
+        "elapsedMs": 23852,
+        "startedAt": "2026-11-18T02:38:04.720Z",
+        "onTime": true,
+        "unknownEffects": false,
+        "rootUsage": {
+          "model": 2,
+          "tool": 1
+        },
+        "queryBudget": {
+          "maxQueries": 2,
+          "reservedQueries": 1,
+          "reservedPhysicalOperations": 2,
+          "dispatchedPhysicalOperations": 2,
+          "completedQueries": 1,
+          "unsettledQueries": 0
+        },
+        "workError": null,
+        "readbackError": null,
+        "transportStop": null,
+        "contentReview": "pass-independent-source-review",
+        "additionalCostUsd": 0,
+        "originalCaseId": "N02",
+        "runtimeOutcomeStatus": "success",
+        "contentFailureReason": null,
+        "runtimeAccepted": true,
+        "workflowCompleted": true,
+        "eligibleSuccess": true,
+        "tokens": {
+          "prompt": 10319,
+          "completion": 543,
+          "total": 10862
+        },
+        "originalOutput": "final/outputs/D232-06.md",
+        "finalAnswer": "final/outputs/D232-06-final.md",
+        "evidence": "final/tasks/D232-06.json",
+        "contentReviewReason": "Auditor identity unsupported by returned pages; remaining pages unexamined."
+      },
+      {
+        "id": "D232-07",
+        "executionIdentity": "975e8db9ceb237965cf8b6887045375f8ce0fcbf667e3b44d32c1a9357bba304",
+        "status": "success",
+        "runtimeStatus": "completed",
+        "runtimeCode": null,
+        "physicalRequests": 2,
+        "resolvedModels": [
+          "deepseek-v4.1-flash"
+        ],
+        "realProvider": true,
+        "deliveryReadback": true,
+        "outputKind": "published-answer",
+        "outputSha256": "b6018c6a334c4a2f8f7fb72f9ec54d4d6c1ca174244111b2f55c6a5aea0a1463",
+        "elapsedMs": 20215,
+        "startedAt": "2026-11-18T02:38:28.664Z",
+        "onTime": true,
+        "unknownEffects": false,
+        "rootUsage": {
+          "model": 2,
+          "tool": 1
+        },
+        "queryBudget": {
+          "maxQueries": 2,
+          "reservedQueries": 1,
+          "reservedPhysicalOperations": 2,
+          "dispatchedPhysicalOperations": 2,
+          "completedQueries": 1,
+          "unsettledQueries": 0
+        },
+        "workError": null,
+        "readbackError": null,
+        "transportStop": null,
+        "contentReview": "pass-independent-source-review",
+        "additionalCostUsd": 0,
+        "originalCaseId": "N03",
+        "runtimeOutcomeStatus": "success",
+        "contentFailureReason": null,
+        "runtimeAccepted": true,
+        "workflowCompleted": true,
+        "eligibleSuccess": true,
+        "tokens": {
+          "prompt": 10358,
+          "completion": 612,
+          "total": 10970
+        },
+        "originalOutput": "final/outputs/D232-07.md",
+        "finalAnswer": "final/outputs/D232-07-final.md",
+        "evidence": "final/tasks/D232-07.json",
+        "contentReviewReason": "No dated NAV inferred; returned and unexamined pages distinguished."
+      },
+      {
+        "id": "D232-08",
+        "executionIdentity": "975e8db9ceb237965cf8b6887045375f8ce0fcbf667e3b44d32c1a9357bba304",
+        "status": "success",
+        "runtimeStatus": "completed",
+        "runtimeCode": null,
+        "physicalRequests": 2,
+        "resolvedModels": [
+          "deepseek-v4.1-flash"
+        ],
+        "realProvider": true,
+        "deliveryReadback": true,
+        "outputKind": "published-answer",
+        "outputSha256": "8400e37fffee14501c64f76d5059405c4d270aab54856410d69436adbe7b0954",
+        "elapsedMs": 17326,
+        "startedAt": "2026-11-18T02:38:48.978Z",
+        "onTime": true,
+        "unknownEffects": false,
+        "rootUsage": {
+          "model": 2,
+          "tool": 1
+        },
+        "queryBudget": {
+          "maxQueries": 2,
+          "reservedQueries": 1,
+          "reservedPhysicalOperations": 2,
+          "dispatchedPhysicalOperations": 2,
+          "completedQueries": 1,
+          "unsettledQueries": 0
+        },
+        "workError": null,
+        "readbackError": null,
+        "transportStop": null,
+        "contentReview": "pass-independent-source-review",
+        "additionalCostUsd": 0,
+        "originalCaseId": "N04",
+        "runtimeOutcomeStatus": "success",
+        "contentFailureReason": null,
+        "runtimeAccepted": true,
+        "workflowCompleted": true,
+        "eligibleSuccess": true,
+        "tokens": {
+          "prompt": 10334,
+          "completion": 391,
+          "total": 10725
+        },
+        "originalOutput": "final/outputs/D232-08.md",
+        "finalAnswer": "final/outputs/D232-08-final.md",
+        "evidence": "final/tasks/D232-08.json",
+        "contentReviewReason": "No cake recipe inferred from financial evidence; returned-page scope retained."
+      },
+      {
+        "id": "D232-09",
+        "executionIdentity": "975e8db9ceb237965cf8b6887045375f8ce0fcbf667e3b44d32c1a9357bba304",
+        "status": "success",
+        "runtimeStatus": "completed",
+        "runtimeCode": null,
+        "physicalRequests": 2,
+        "resolvedModels": [
+          "deepseek-v4.1-flash"
+        ],
+        "realProvider": true,
+        "deliveryReadback": true,
+        "outputKind": "published-answer",
+        "outputSha256": "4c1ccc048cfb7eebe372901a4788f10bebe58752c12787f7d6c8cc2f9d493f2f",
+        "elapsedMs": 18295,
+        "startedAt": "2026-11-18T02:39:06.446Z",
+        "onTime": true,
+        "unknownEffects": false,
+        "rootUsage": {
+          "model": 2,
+          "tool": 1
+        },
+        "queryBudget": {
+          "maxQueries": 2,
+          "reservedQueries": 1,
+          "reservedPhysicalOperations": 2,
+          "dispatchedPhysicalOperations": 2,
+          "completedQueries": 1,
+          "unsettledQueries": 0
+        },
+        "workError": null,
+        "readbackError": null,
+        "transportStop": null,
+        "contentReview": "pass-independent-source-review",
+        "additionalCostUsd": 0,
+        "originalCaseId": "N05",
+        "runtimeOutcomeStatus": "success",
+        "contentFailureReason": null,
+        "runtimeAccepted": true,
+        "workflowCompleted": true,
+        "eligibleSuccess": true,
+        "tokens": {
+          "prompt": 10342,
+          "completion": 413,
+          "total": 10755
+        },
+        "originalOutput": "final/outputs/D232-09.md",
+        "finalAnswer": "final/outputs/D232-09-final.md",
+        "evidence": "final/tasks/D232-09.json",
+        "contentReviewReason": "No ticker inferred or confirmed absent; unreturned pages remain unexamined."
+      },
+      {
+        "id": "D232-10",
+        "executionIdentity": "975e8db9ceb237965cf8b6887045375f8ce0fcbf667e3b44d32c1a9357bba304",
+        "status": "success",
+        "runtimeStatus": "completed",
+        "runtimeCode": null,
+        "physicalRequests": 2,
+        "resolvedModels": [
+          "deepseek-v4.1-flash"
+        ],
+        "realProvider": true,
+        "deliveryReadback": true,
+        "outputKind": "published-answer",
+        "outputSha256": "bfcbe31f111c4a9558cd1cd021b2374041331ec7213550e9eb48697a58ce7733",
+        "elapsedMs": 26786,
+        "startedAt": "2026-11-18T02:39:24.848Z",
+        "onTime": true,
+        "unknownEffects": false,
+        "rootUsage": {
+          "model": 2,
+          "tool": 1
+        },
+        "queryBudget": {
+          "maxQueries": 2,
+          "reservedQueries": 1,
+          "reservedPhysicalOperations": 2,
+          "dispatchedPhysicalOperations": 2,
+          "completedQueries": 1,
+          "unsettledQueries": 0
+        },
+        "workError": null,
+        "readbackError": null,
+        "transportStop": null,
+        "contentReview": "pass-independent-source-review",
+        "additionalCostUsd": 0,
+        "originalCaseId": "N06",
+        "runtimeOutcomeStatus": "success",
+        "contentFailureReason": null,
+        "runtimeAccepted": true,
+        "workflowCompleted": true,
+        "eligibleSuccess": true,
+        "tokens": {
+          "prompt": 10349,
+          "completion": 853,
+          "total": 11202
+        },
+        "originalOutput": "final/outputs/D232-10.md",
+        "finalAnswer": "final/outputs/D232-10-final.md",
+        "evidence": "final/tasks/D232-10.json",
+        "contentReviewReason": "No redemption investor count inferred or zero substituted; missing fact scoped to returned pages."
+      }
+    ],
+    "attempted": 10,
+    "notRun": 0,
+    "successes": 10,
+    "observedRate": 1
+  },
+  "runtimeSuccesses": 10,
+  "contentSuccesses": 10,
+  "physicalModelRequests": 25,
+  "tokens": {
+    "prompt": 138517,
+    "completion": 8275,
+    "total": 146792
+  },
+  "additionalCostUsd": 0,
+  "resolvedModels": [
+    "deepseek-v4.1-flash"
+  ],
+  "billingSource": "go",
+  "separateSafetyGatePassed": true,
+  "independentReview": "../review.safe.json",
+  "originalInferenceLedgerSha256": "ca9dbe820dea24df2f8ff13dbe2023d58f6afad1de229838c43c730dca1987b1",
+  "sourceInputInventory": "final/PLAN.safe.json",
+  "declarationOnly": true,
+  "releaseCreated": false,
+  "strictContentGate": {
+    "requiredSuccesses": 9,
+    "successes": 10,
+    "met": true
+  },
+  "reviewerModelIdentity": "unattested",
+  "originalScopeGate": {
+    "implemented": true,
+    "dynamicQueries": true,
+    "atomicBudget": true,
+    "noReplayRecovery": true,
+    "trueLocalModel": true,
+    "fullRealBusinessCohort": true,
+    "strictContent": true,
+    "independentReviewPassed": true,
+    "newTagOrRelease": false,
+    "remoteFinalCiRequiredSeparately": true
+  }
+}

@@ -1,0 +1,37 @@
+{
+  "schemaVersion": "v032-label-audit@1",
+  "originalCohortSha256": "0d9316b5b7ee4fe83de58c47b71da12598497b4e4f3dedadf91770d64b2bfde4",
+  "originalLabelsSha256": "2c9b4d1d37396c1f5bce6579c2abfdb00a35d067769930c1b98595855ca2987c",
+  "originalEvaluationSha256": "1bfd7c7bf47ae97baa749a74608a87827155efb7b4f190f505901ae2851fdcfb",
+  "reviewer": "primary agent; source-text review after historical rankings, not a new blind independent adjudication",
+  "changes": [
+    {
+      "id": "N01",
+      "originalRelevantDocuments": [],
+      "v3SupportingDocuments": [
+        "fees"
+      ],
+      "answerability": "explicitly-unspecified",
+      "evidence": "No subscription charge is specified here.",
+      "reason": "The requested amount cannot be supplied; this sentence supports an explicit amount-not-specified response. It does not support a zero fee or any numeric amount."
+    },
+    {
+      "id": "P08",
+      "originalRelevantDocuments": [
+        "rebalance-old"
+      ],
+      "v3SupportingDocuments": [
+        "rebalance-old",
+        "rebalance-current"
+      ],
+      "answerability": "direct-answer",
+      "evidence": "2024年的季度调整规则已废止。",
+      "reason": "The current passage also directly identifies the historical rule as quarterly; original labels were underinclusive."
+    }
+  ],
+  "unchangedCases": 14,
+  "thresholdChanges": false,
+  "rankingChanges": false,
+  "originalFilesChanged": false,
+  "boundary": "Supplementary transparent annotation audit. Original v2 6/6 candidate-return result is retained. Neither this audit nor candidate/support metrics grade generated answers or qualify release."
+}

@@ -115,3 +115,82 @@ This fails meaningful no-evidence quality; vector coverage 16/16 is not semantic
 acceptance. [Provenance, exact receipts and remaining gates](../../../docs/verification/next-real-local-embedding.md).
 The prepared-query route stays experimental; in-Run dynamic-query authorization
 remains closed. No new release or extension of paid-call authority follows.
+
+## 2026-11-17 follow-up: evidence layers and blocked live admission
+
+Remote main `6bc660b595f0a7050bc49322e9b047a426b0d095` contains the reviewed
+offline preparation increment; stable metadata remains 0.31.0. This follow-up
+does not import or re-review the stopped dynamic-authorization candidate.
+The original scope and dynamic/shared-budget gates above remain required.
+
+Retrieval evaluator v3 accepts explicit supplied answerability annotations and
+distinguishes candidate return, retrieval of labelled supporting sources, and
+unmeasured generated-answer quality. Legacy v1/v2 results and labels stay intact.
+An after-ranking source-text audit records N01's explicit missing fee amount and
+P08's omitted second supporting passage separately; it is not a blind relabelled
+benchmark or a new qualification score. No ranking threshold changed.
+
+The official existing Go model-directory access check returned HTTP 401 before
+inference. That route was stopped without alternate endpoints or credentials.
+The new ten-task gate is incomplete, with zero tasks dispatched. Real local E5
+and provider-free tests cannot replace it. See the [dated follow-up evidence and
+remaining decisions](../../../docs/verification/v032-progress-20261117.md).
+
+## 2026-11-17 restored-Go continuation: prepared cohort only
+
+The user explicitly replaced the local Go credential after the historical 401.
+Official directory and minimal-inference checks returned HTTP 200 with
+`gpt-6-luna` and Go billing. A dated activation record keeps the original source,
+questions, data, project configuration and ten-task acceptance contract unchanged;
+it lifts only that obsolete provider-access checkpoint. The original 401/not-run
+records are retained, and the stopped dynamic candidate remains excluded.
+
+All ten original prepared-path tasks completed with exact queries, cold output
+readback and 25 real Go model requests (0 USD additional cost). The separate
+single-request key probe is not a task in that denominator. The first two tasks
+exercise only/prefer, all ten consume real frozen E5 query vectors, and the five
+insufficient-evidence tasks do not invent answers. Detailed content assessment is
+separate from Runtime completion. No general semantic/financial qualification,
+dynamic acquisition, physical embedding budget, crash/fence recovery or full
+0.32 release follows. See the [dated live record](../../../docs/verification/v032-live-20261117.md).
+
+## 2026-11-18 user authorization and block clarification
+
+The user authorizes continued project work and requests removal of the reported
+block. General project permission is no longer an outstanding decision. Source
+inspection found no existing dynamic-query feature switch to enable: the current
+Run consumes frozen evidence, while in-Run acquisition, physical-attempt budget
+ownership and durable dynamic recovery still need implementation and verification.
+
+The earlier handoff records a refused/interrupted review of another unpublished
+candidate; the original refusal output and exact reason were not recovered in
+this inspection. Preserve that record and do not retry/import the stopped operation
+as a workaround. Do not turn that historical event into a blanket claim that all
+future feature development is prohibited. User authorization is not represented as
+overriding platform safeguards. No code gate was removed and no new capability is
+claimed enabled by this dated clarification; the original release scope remains.
+
+## 2026-11-18 original-scope implementation and qualification
+
+The new implementation starts from the reviewed public source, not the stopped
+candidate. Knowledge is the principal module; original Session/Runtime owners
+supply atomic query/two-operation reservation, fences and typed durable receipts.
+The local-only worker is explicitly mapped at work time. No additional embedding
+service or new billable transport was introduced. Missing/uncertain receipts retain
+unknown reservations and never re-encode on recovery. Legacy static tasks and
+report@6 question bytes are preserved.
+
+`f742c3a` completed 10/10 real DeepSeek Runtime/delivery tasks but only 8/10 strict
+content checks. Partial-result absence wording in two answers was too broad.
+`4238a64` fixes new-task framing with a separately frozen local-query instruction
+version. Its independent full ten-task cohort is 10/10 Runtime/delivery and 10/10
+strict source review, with 25 DeepSeek V4.1 Flash requests and zero additional cost.
+No old sample was replaced, no ranking threshold changed and no original label was
+rewritten. The old results remain independently navigable.
+
+Real E5 CPU reference equality, actual process-kill recovery boundaries, the
+compiled worker and complete regression are recorded separately in
+[release-readiness evidence](../../../docs/verification/v032-release-readiness.md).
+The package candidate is 0.32.0; stable release remains 0.31.0 until an actual
+merge/tag/Release. This amendment records current facts; it does not retroactively
+alter the earlier dated design, rejection/access history or their scope.

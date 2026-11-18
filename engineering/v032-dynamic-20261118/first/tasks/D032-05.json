@@ -1,0 +1,233 @@
+{
+  "id": "D032-05",
+  "originalCaseId": "N01",
+  "query": {
+    "query": "What is the subscription charge?",
+    "limit": 4
+  },
+  "coverage": {
+    "scope": "admitted-immutable-text-collection",
+    "documents": 8,
+    "pages": 8,
+    "matched": 8,
+    "returned": 4,
+    "limit": 4,
+    "sourceBytes": 946,
+    "maxSourceBytes": 128000,
+    "maxResponseBytes": 768000,
+    "limitReached": true,
+    "byteLimited": false,
+    "encodingLimited": false,
+    "completeWithinCollection": false
+  },
+  "retrieval": {
+    "profile": "frozen-hybrid",
+    "evidenceSha256": "aa5cd53ebc5c52fecec8a851da7125cdd31d21b9a721d6ad7fde05571c730261",
+    "provider": {
+      "id": "local-sentence-transformers",
+      "model": "intfloat/multilingual-e5-small",
+      "revision": "943e6f6e81786dcbddbebd3d52f7f3df8ea535abf24e9823b5ec8374249bf3de"
+    },
+    "channels": {
+      "lexical": {
+        "status": "available",
+        "algorithm": "bm25",
+        "matched": 4
+      },
+      "vector": {
+        "status": "available",
+        "reason": "frozen-query-evidence",
+        "matched": 8
+      }
+    },
+    "reranker": {
+      "status": "not-configured"
+    },
+    "recovery": "frozen-provider-evidence"
+  },
+  "sourceManifestSha256": "c16c472150d398815823e21b6d91b0d589a218eeeba5e1c19b66a1b364ec3b8c",
+  "sources": [
+    {
+      "sourceId": "text:066a69cdb1e09edbba1a80617a2e8309269b8a46ae34aa493c1a24d674544ec3@utf8-pages-v1:066a69cdb1e09edbba1a80617a2e8309269b8a46ae34aa493c1a24d674544ec3:p1",
+      "documentId": "text:066a69cdb1e09edbba1a80617a2e8309269b8a46ae34aa493c1a24d674544ec3",
+      "name": "fees.txt",
+      "version": "utf8-pages-v1:066a69cdb1e09edbba1a80617a2e8309269b8a46ae34aa493c1a24d674544ec3",
+      "page": 1,
+      "text": "Fees, effective 2026. The annual management charge is 0.15 percent of assets. The custody charge is 0.05 percent per year. These are operating expenses, not a promise of investment returns. No subscription charge is specified here.",
+      "sha256": "066a69cdb1e09edbba1a80617a2e8309269b8a46ae34aa493c1a24d674544ec3",
+      "mediaType": "text/plain; charset=utf-8"
+    },
+    {
+      "sourceId": "text:917cabdc80c65485c11e80307884ee217825ac5222b0fe9b9f11b19356f25689@utf8-pages-v1:917cabdc80c65485c11e80307884ee217825ac5222b0fe9b9f11b19356f25689:p1",
+      "documentId": "text:917cabdc80c65485c11e80307884ee217825ac5222b0fe9b9f11b19356f25689",
+      "name": "tracking.txt",
+      "version": "utf8-pages-v1:917cabdc80c65485c11e80307884ee217825ac5222b0fe9b9f11b19356f25689",
+      "page": 1,
+      "text": "Tracking difference is the fund return minus the benchmark return over the same period. Management expenses, withholding taxes and sampling can produce a gap even when the portfolio follows the benchmark. Tracking error measures the variability of that gap.",
+      "sha256": "917cabdc80c65485c11e80307884ee217825ac5222b0fe9b9f11b19356f25689",
+      "mediaType": "text/plain; charset=utf-8"
+    },
+    {
+      "sourceId": "text:b84ba2ff8b1dd6dc6b082302d164d4f080e7c23020e272fc1c1891bef18b534e@utf8-pages-v1:b84ba2ff8b1dd6dc6b082302d164d4f080e7c23020e272fc1c1891bef18b534e:p1",
+      "documentId": "text:b84ba2ff8b1dd6dc6b082302d164d4f080e7c23020e272fc1c1891bef18b534e",
+      "name": "settlement.txt",
+      "version": "utf8-pages-v1:b84ba2ff8b1dd6dc6b082302d164d4f080e7c23020e272fc1c1891bef18b534e",
+      "page": 1,
+      "text": "Trading and settlement. Investors submit orders during exchange hours. Ownership and cash are transferred on the next business day after the trade, known as T+1 settlement. Weekends and exchange holidays are not business days.",
+      "sha256": "b84ba2ff8b1dd6dc6b082302d164d4f080e7c23020e272fc1c1891bef18b534e",
+      "mediaType": "text/plain; charset=utf-8"
+    },
+    {
+      "sourceId": "text:77198f89bfe04961748fa83888db05f07adc778f58d22d05ef2d8cf234eb95e6@utf8-pages-v1:77198f89bfe04961748fa83888db05f07adc778f58d22d05ef2d8cf234eb95e6:p1",
+      "documentId": "text:77198f89bfe04961748fa83888db05f07adc778f58d22d05ef2d8cf234eb95e6",
+      "name": "redemptions.txt",
+      "version": "utf8-pages-v1:77198f89bfe04961748fa83888db05f07adc778f58d22d05ef2d8cf234eb95e6",
+      "page": 1,
+      "text": "Liquidity policy, current 2026. Cash and overnight deposits cover investor withdrawals. If redemptions exceed the cash buffer, the fund sells short-dated government bills. Borrowing and forced sales of illiquid bonds are prohibited.",
+      "sha256": "77198f89bfe04961748fa83888db05f07adc778f58d22d05ef2d8cf234eb95e6",
+      "mediaType": "text/plain; charset=utf-8"
+    }
+  ],
+  "originalOutputSha256": "8f7792b7628adb21a3cf30accbfb0e3758f5bd68245ef3a818e516263c4ce968",
+  "originalOutputBytes": 2937,
+  "finalAnswerSha256": "4c0f276c05586cf736b24f3e7867ca9baf29be42ba11eb871193802e71e61d36",
+  "finalAnswerBytes": 768,
+  "tokens": {
+    "prompt": 17299,
+    "completion": 1119,
+    "total": 18418
+  },
+  "requestReceipts": [
+    {
+      "ordinal": 13,
+      "httpStatus": 200,
+      "model": "deepseek-v4.1-flash",
+      "costUsd": 0,
+      "billingSource": "go",
+      "requestSha256": "98e535f7e97b608fa8347a78d0f357b7cb48029a3d4037e85267080cf190f2c0",
+      "responseSha256": "5cb3a1660de140c442d33eaaf0bceeb572bc97a8efdc094ed393eb4efe115178",
+      "usage": {
+        "prompt_tokens": 3474,
+        "completion_tokens": 59,
+        "total_tokens": 3533,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "cost": 0,
+        "opencode": {
+          "billing_source": "go",
+          "list_cost": 0.001113,
+          "allowance": 0.0006678,
+          "tokens": {
+            "input": 3474,
+            "output": 59,
+            "reasoning": 0,
+            "cache_read": 0,
+            "cache_write_5m": 0,
+            "cache_write_1h": 0
+          }
+        }
+      }
+    },
+    {
+      "ordinal": 14,
+      "httpStatus": 200,
+      "model": "deepseek-v4.1-flash",
+      "costUsd": 0,
+      "billingSource": "go",
+      "requestSha256": "0e4c6740e29a430c110e561b3595b85e11b3b3613fb64809b0e770bb7e64d780",
+      "responseSha256": "9672ed9ba0293eb5a5cf766e7e2ae5853da876ac0bfccf61d8d982f554bc039e",
+      "usage": {
+        "prompt_tokens": 6461,
+        "completion_tokens": 898,
+        "total_tokens": 7359,
+        "prompt_tokens_details": {
+          "cached_tokens": 3456
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 268
+        },
+        "cost": 0,
+        "opencode": {
+          "billing_source": "go",
+          "list_cost": 0.00199984,
+          "allowance": 0.0011999,
+          "tokens": {
+            "input": 3005,
+            "output": 898,
+            "reasoning": 268,
+            "cache_read": 3456,
+            "cache_write_5m": 0,
+            "cache_write_1h": 0
+          }
+        }
+      }
+    },
+    {
+      "ordinal": 15,
+      "httpStatus": 200,
+      "model": "deepseek-v4.1-flash",
+      "costUsd": 0,
+      "billingSource": "go",
+      "requestSha256": "b8468acb87417adb3f3fd2c089f91485c0a8e3fa819d5e4ba367a9854ae33bcc",
+      "responseSha256": "6c7b9c4aa89160e93b7975e04659ee11307762cbe74f228dd68e13c7e6a61084",
+      "usage": {
+        "prompt_tokens": 7364,
+        "completion_tokens": 162,
+        "total_tokens": 7526,
+        "prompt_tokens_details": {
+          "cached_tokens": 6400
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "cost": 0,
+        "opencode": {
+          "billing_source": "go",
+          "list_cost": 0.000522,
+          "allowance": 0.0003132,
+          "tokens": {
+            "input": 964,
+            "output": 162,
+            "reasoning": 0,
+            "cache_read": 6400,
+            "cache_write_5m": 0,
+            "cache_write_1h": 0
+          }
+        }
+      }
+    }
+  ],
+  "queryEffectSummary": {
+    "call": {
+      "arguments": {
+        "limit": 4,
+        "query": "What is the subscription charge?"
+      },
+      "id": "call_c46880f4a8e24316b3d5fb1b",
+      "name": "knowledge_query"
+    },
+    "dispatchedPhysicalOperations": 2,
+    "encodedSha256": "92257eba510d0a64657ac8eeef4e7b8cc14c647a74d6f6929f54c64ae9cb3429",
+    "fence": 1,
+    "profileSha256": "f6d9050ed438eda647c5c433ca3db23981481ba3d54ca419a4f27549137b73ea",
+    "requestSha256": "5671f90caac51dd58ca8210d3216e56a47e1ddb338bd39521e2dfdcdaed44e0b",
+    "runId": "D032-05",
+    "status": "completed",
+    "toolOrdinal": 1,
+    "originalSchemaVersion": "knowledge-query-effect@1",
+    "schemaVersion": "published-query-effect-summary@1",
+    "encodedSummary": {
+      "id": "391190c57fcd3e3d5024ea4d517957ce83987bc2ea7d68c7370b72533130b127",
+      "inputSha256": "ac7c317514214013ad4cbf5121d6d3faa8d528347a9b2a39fcaac15e862f9c70",
+      "kind": "query",
+      "tokenCount": 12,
+      "tokenIdsSha256": "333b7019570a29d13a9550bacd5c09d2067b5221428239042e17d4f998659c7c",
+      "dimensions": 384,
+      "vectorSha256": "11c733f4179545a14d009cbed4753408e26cfd4a4a9b7c13543cb3d43544a37e"
+    }
+  }
+}

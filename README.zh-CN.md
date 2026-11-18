@@ -44,7 +44,7 @@ GitHub 将 SVG 当作一张图片，不能在缩略图里逐卡点击；下表�
 | L5 结果发布与交付 | [Main → Report](https://hpoenixf.com/eff-agent-article/articles/open-etf-agent-v01-first-readable-report) · [Report](https://hpoenixf.com/eff-agent-article/articles/open-etf-agent-v01-first-readable-report) · [Artifact / Revision](https://hpoenixf.com/eff-agent-article/articles/agent-artifact-version-access-sharing) · [Publication](https://hpoenixf.com/eff-agent-article/articles/019-agent-answer-publication) · [Report Review](https://hpoenixf.com/eff-agent-article/articles/open-etf-agent-report-review-workshop) |
 | L6 用户界面 | [Loopback Reader](https://hpoenixf.com/eff-agent-article/articles/open-etf-agent-v010-system-design) · [CLI Readback](https://hpoenixf.com/eff-agent-article/articles/open-etf-agent-v01-first-readable-report) |
 
-**当前地图: v0.31.0** · [模块、源码与证据](docs/module-status.zh-CN.md) · [六层文章原文](https://github.com/hpoenixf/eff-agent-article/blob/249f0b866f9446f33b57f186fbc6d35b5d82c119/articles/open-etf-agent-v010-system-design.md)
+**当前地图: v0.32.0** · [模块、源码与证据](docs/module-status.zh-CN.md) · [六层文章原文](https://github.com/hpoenixf/eff-agent-article/blob/249f0b866f9446f33b57f186fbc6d35b5d82c119/articles/open-etf-agent-v010-system-design.md)
 
 文章关联是阅读导航，不等于实现全文能力或覆盖资格。图中是公开实现范围，不是全功能完成率。真实模型验证只覆盖[各版记录](docs/verification/README.md)中的指定路径；金融语义、生产与浏览器体验不因此获得认证。
 <!-- module-map:end -->
@@ -101,6 +101,8 @@ npm run demo -- --case document-compare
 ## 最近版本与开发状态
 
 **[v0.31.0 · 本地知识](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.31.0)** 提供显式文本导入、BM25 自由查询与原始来源回读。独立冻结的真实模型批次完成 9/10 Runtime 工作流；模型指令与正文质量另评。[证据与边界](docs/verification/v031-release.zh-CN.md)。
+
+**0.32 候选，尚未发布：** Knowledge 已支持显式本地 E5 动态查询、原子查询与操作预算，以及不重放不确定操作的持久恢复。固定 DeepSeek 4.1 Flash 批次通过 10/10 运行交付和 10/10 严格原文复核；此前内容 8/10 的批次保留。候选召回、证据充分性和最终回答仍分别评估。[候选用法](docs/dynamic-knowledge.zh-CN.md) · [资格、消耗与边界](docs/verification/v032-release-readiness.zh-CN.md)。
 
 | 最近版本 / 状态 | 能做什么 | 用法与边界 |
 | --- | --- | --- |

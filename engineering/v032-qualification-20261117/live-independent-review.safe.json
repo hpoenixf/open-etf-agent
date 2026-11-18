@@ -1,0 +1,84 @@
+{
+  "schemaVersion": "v032-independent-live-review@1",
+  "requestedModel": "gpt-6-luna",
+  "resolvedReviewerModel": null,
+  "reviewerModelBoundary": "Reviewer interface does not expose resolved identity. Actual task request/response model identity is separately attested as gpt-6-luna.",
+  "reviewedArtifacts": "Original private request/response payloads, returned source evidence, cold report/answer outputs, frozen plan/corpus and source inventory; credentials not inspected.",
+  "runtimeDeliveryPassed": 10,
+  "contentPassed": 10,
+  "failedTasks": [],
+  "decisions": [
+    {
+      "id": "V032-01",
+      "originalCaseId": "P01",
+      "runtime": "pass",
+      "content": "pass",
+      "reason": "Cash and overnight deposits fund withdrawals; excess redemptions use short-dated government bills. No borrowing or illiquid forced sales."
+    },
+    {
+      "id": "V032-02",
+      "originalCaseId": "P05",
+      "runtime": "pass",
+      "content": "pass",
+      "reason": "Current 2026 adjustment is June and December; quarterly 2024 is superseded."
+    },
+    {
+      "id": "V032-03",
+      "originalCaseId": "P08",
+      "runtime": "pass",
+      "content": "pass",
+      "reason": "The superseded 2024 policy was quarterly, not the current June/December rule."
+    },
+    {
+      "id": "V032-04",
+      "originalCaseId": "P10",
+      "runtime": "pass",
+      "content": "pass",
+      "reason": "Saturday does not count as a business day."
+    },
+    {
+      "id": "V032-05",
+      "originalCaseId": "N01",
+      "runtime": "pass",
+      "content": "pass",
+      "reason": "The subscription charge amount is explicitly not specified; no numeric or zero fee may be inferred."
+    },
+    {
+      "id": "V032-06",
+      "originalCaseId": "N02",
+      "runtime": "pass",
+      "content": "pass",
+      "reason": "Auditor identity is unavailable in the admitted corpus."
+    },
+    {
+      "id": "V032-07",
+      "originalCaseId": "N03",
+      "runtime": "pass",
+      "content": "pass",
+      "reason": "No 2026-10-31 unit NAV is supplied."
+    },
+    {
+      "id": "V032-08",
+      "originalCaseId": "N04",
+      "runtime": "pass",
+      "content": "pass",
+      "reason": "The admitted corpus does not support cake instructions."
+    },
+    {
+      "id": "V032-09",
+      "originalCaseId": "N05",
+      "runtime": "pass",
+      "content": "pass",
+      "reason": "No ticker is supplied."
+    },
+    {
+      "id": "V032-10",
+      "originalCaseId": "N06",
+      "runtime": "pass",
+      "content": "pass",
+      "reason": "No previous-month redemption count is supplied."
+    }
+  ],
+  "originalSourceInventoryChecked": 436,
+  "scopeBoundary": "Small authored prepared-query cohort only; no financial generalization, in-Run dynamic acquisition, real fault injection or whole-version release qualification."
+}

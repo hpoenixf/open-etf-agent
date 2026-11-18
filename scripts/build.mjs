@@ -24,4 +24,10 @@ async function copyTree(folder, targetDirectory) {
 }
 await mkdir('dist', { recursive: true }); await safeDirectory('dist');
 for (const folder of ['src', 'fixtures']) await copyTree(folder, join('dist', folder));
+// The local-only query encoder is an explicit runtime asset, not a model download.
+const workerDirectory=join('dist','scripts');await mkdir(workerDirectory,{recursive:true});await safeDirectory(workerDirectory);
+const workerSource=join('scripts','local-embedding-worker.py'),workerTarget=join(workerDirectory,'local-embedding-worker.py');
+if(!(await lstat(workerSource)).isFile())throw new Error('Build accepts an ordinary embedding worker only');
+try{if((await lstat(workerTarget)).isSymbolicLink())throw new Error('Refuse symlink build worker');}catch(error){if(error.code!=='ENOENT')throw error;}
+await copyFile(workerSource,workerTarget);
 process.stdout.write(JSON.stringify({ build: 'syntax-checked native ESM copy', directory: resolve('dist'), typescript: false }) + '\n');

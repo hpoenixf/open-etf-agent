@@ -1,0 +1,161 @@
+{
+  "schemaVersion": "v032-prepared-real-ten-plan@1",
+  "frozenDate": "2026-11-17",
+  "sourceCommit": "74df3cfdfc75a2bac11b4cfff2b6586888be0de6",
+  "sourceTree": "c3610b95feee278ce95518a010f05502fb10193d",
+  "executionIdentity": "8eac8804ed50d24d3a411285639a7995c164d27b54c47421e9419e3d879ca6e4",
+  "sourceInventorySha256": "a9e52bf5f221440efe0027b60e24b90c3e111ed74fab34ee91ba20f114a538ba",
+  "configSha256": "9dd2289aeff4978447f731d75c97bd4fcc495c7718157bb0c65f50332489dd8c",
+  "corpusPath": "engineering/a20-local-embedding/cohort.json",
+  "corpusSha256": "0d9316b5b7ee4fe83de58c47b71da12598497b4e4f3dedadf91770d64b2bfde4",
+  "modelManifestSha256": "943e6f6e81786dcbddbebd3d52f7f3df8ea535abf24e9823b5ec8374249bf3de",
+  "sourceManifestSha256": "c16c472150d398815823e21b6d91b0d589a218eeeba5e1c19b66a1b364ec3b8c",
+  "acquisition": "Explicit real local preparation of these exact queries before original task admission. No in-Run vector acquisition.",
+  "tasks": [
+    {
+      "id": "V032-01",
+      "originalCaseId": "P01",
+      "query": "What assets meet investor cash-out requests?",
+      "question": "Query What assets meet investor cash-out requests?\nUse this exact string in one knowledge_query call with limit 4. Pass these exact scope arguments: {\"documentMode\": \"only\", \"documentIds\": [\"text:77198f89bfe04961748fa83888db05f07adc778f58d22d05ef2d8cf234eb95e6\"]}. Answer only from returned original evidence. Distinguish an explicit not-specified statement from insufficient evidence; never turn a candidate match into a fact. Save a report only for a source-supported answer with exact source citations; otherwise give a final ordinary answer stating the particular evidence gap. Do not fetch or acquire any new data.",
+      "requiredQueries": [
+        "What assets meet investor cash-out requests?"
+      ],
+      "queryScope": {
+        "documentMode": "only",
+        "documentIds": [
+          "text:77198f89bfe04961748fa83888db05f07adc778f58d22d05ef2d8cf234eb95e6"
+        ]
+      },
+      "expectedContent": "Cash and overnight deposits fund withdrawals; excess redemptions use short-dated government bills. No borrowing or illiquid forced sales."
+    },
+    {
+      "id": "V032-02",
+      "originalCaseId": "P05",
+      "query": "现在每年何时按目标比例调整持仓？",
+      "question": "Query 现在每年何时按目标比例调整持仓？\nUse this exact string in one knowledge_query call with limit 4. Pass these exact scope arguments: {\"documentMode\": \"prefer\", \"documentIds\": [\"text:9af2ff6959bd9ecea86f6dc322fa0d45afb532d2398615f595b957cb17ebb06e\"]}. Answer only from returned original evidence. Distinguish an explicit not-specified statement from insufficient evidence; never turn a candidate match into a fact. Save a report only for a source-supported answer with exact source citations; otherwise give a final ordinary answer stating the particular evidence gap. Do not fetch or acquire any new data.",
+      "requiredQueries": [
+        "现在每年何时按目标比例调整持仓？"
+      ],
+      "queryScope": {
+        "documentMode": "prefer",
+        "documentIds": [
+          "text:9af2ff6959bd9ecea86f6dc322fa0d45afb532d2398615f595b957cb17ebb06e"
+        ]
+      },
+      "expectedContent": "Current 2026 adjustment is June and December; quarterly 2024 is superseded."
+    },
+    {
+      "id": "V032-03",
+      "originalCaseId": "P08",
+      "query": "How did the superseded 2024 rebalancing schedule work?",
+      "question": "Query How did the superseded 2024 rebalancing schedule work?\nUse this exact string in one knowledge_query call with limit 4. Answer only from returned original evidence. Distinguish an explicit not-specified statement from insufficient evidence; never turn a candidate match into a fact. Save a report only for a source-supported answer with exact source citations; otherwise give a final ordinary answer stating the particular evidence gap. Do not fetch or acquire any new data.",
+      "requiredQueries": [
+        "How did the superseded 2024 rebalancing schedule work?"
+      ],
+      "queryScope": {},
+      "expectedContent": "The superseded 2024 policy was quarterly, not the current June/December rule."
+    },
+    {
+      "id": "V032-04",
+      "originalCaseId": "P10",
+      "query": "Do Saturdays count toward the settlement delay?",
+      "question": "Query Do Saturdays count toward the settlement delay?\nUse this exact string in one knowledge_query call with limit 4. Answer only from returned original evidence. Distinguish an explicit not-specified statement from insufficient evidence; never turn a candidate match into a fact. Save a report only for a source-supported answer with exact source citations; otherwise give a final ordinary answer stating the particular evidence gap. Do not fetch or acquire any new data.",
+      "requiredQueries": [
+        "Do Saturdays count toward the settlement delay?"
+      ],
+      "queryScope": {},
+      "expectedContent": "Saturday does not count as a business day."
+    },
+    {
+      "id": "V032-05",
+      "originalCaseId": "N01",
+      "query": "What is the subscription charge?",
+      "question": "Query What is the subscription charge?\nUse this exact string in one knowledge_query call with limit 4. Answer only from returned original evidence. Distinguish an explicit not-specified statement from insufficient evidence; never turn a candidate match into a fact. Save a report only for a source-supported answer with exact source citations; otherwise give a final ordinary answer stating the particular evidence gap. Do not fetch or acquire any new data.",
+      "requiredQueries": [
+        "What is the subscription charge?"
+      ],
+      "queryScope": {},
+      "expectedContent": "The subscription charge amount is explicitly not specified; no numeric or zero fee may be inferred."
+    },
+    {
+      "id": "V032-06",
+      "originalCaseId": "N02",
+      "query": "2026年该基金的审计机构叫什么？",
+      "question": "Query 2026年该基金的审计机构叫什么？\nUse this exact string in one knowledge_query call with limit 4. Answer only from returned original evidence. Distinguish an explicit not-specified statement from insufficient evidence; never turn a candidate match into a fact. Save a report only for a source-supported answer with exact source citations; otherwise give a final ordinary answer stating the particular evidence gap. Do not fetch or acquire any new data.",
+      "requiredQueries": [
+        "2026年该基金的审计机构叫什么？"
+      ],
+      "queryScope": {},
+      "expectedContent": "Auditor identity is unavailable in the admitted corpus."
+    },
+    {
+      "id": "V032-07",
+      "originalCaseId": "N03",
+      "query": "What was the net asset value per unit on 2026-10-31?",
+      "question": "Query What was the net asset value per unit on 2026-10-31?\nUse this exact string in one knowledge_query call with limit 4. Answer only from returned original evidence. Distinguish an explicit not-specified statement from insufficient evidence; never turn a candidate match into a fact. Save a report only for a source-supported answer with exact source citations; otherwise give a final ordinary answer stating the particular evidence gap. Do not fetch or acquire any new data.",
+      "requiredQueries": [
+        "What was the net asset value per unit on 2026-10-31?"
+      ],
+      "queryScope": {},
+      "expectedContent": "No 2026-10-31 unit NAV is supplied."
+    },
+    {
+      "id": "V032-08",
+      "originalCaseId": "N04",
+      "query": "How do I bake a chocolate cake?",
+      "question": "Query How do I bake a chocolate cake?\nUse this exact string in one knowledge_query call with limit 4. Answer only from returned original evidence. Distinguish an explicit not-specified statement from insufficient evidence; never turn a candidate match into a fact. Save a report only for a source-supported answer with exact source citations; otherwise give a final ordinary answer stating the particular evidence gap. Do not fetch or acquire any new data.",
+      "requiredQueries": [
+        "How do I bake a chocolate cake?"
+      ],
+      "queryScope": {},
+      "expectedContent": "The admitted corpus does not support cake instructions."
+    },
+    {
+      "id": "V032-09",
+      "originalCaseId": "N05",
+      "query": "这只基金的股票代码是什么？",
+      "question": "Query 这只基金的股票代码是什么？\nUse this exact string in one knowledge_query call with limit 4. Answer only from returned original evidence. Distinguish an explicit not-specified statement from insufficient evidence; never turn a candidate match into a fact. Save a report only for a source-supported answer with exact source citations; otherwise give a final ordinary answer stating the particular evidence gap. Do not fetch or acquire any new data.",
+      "requiredQueries": [
+        "这只基金的股票代码是什么？"
+      ],
+      "queryScope": {},
+      "expectedContent": "No ticker is supplied."
+    },
+    {
+      "id": "V032-10",
+      "originalCaseId": "N06",
+      "query": "How many investors redeemed units last month?",
+      "question": "Query How many investors redeemed units last month?\nUse this exact string in one knowledge_query call with limit 4. Answer only from returned original evidence. Distinguish an explicit not-specified statement from insufficient evidence; never turn a candidate match into a fact. Save a report only for a source-supported answer with exact source citations; otherwise give a final ordinary answer stating the particular evidence gap. Do not fetch or acquire any new data.",
+      "requiredQueries": [
+        "How many investors redeemed units last month?"
+      ],
+      "queryScope": {},
+      "expectedContent": "No previous-month redemption count is supplied."
+    }
+  ],
+  "gate": {
+    "planned": 10,
+    "requiredSuccesses": 9,
+    "runtime": "Original completed Runtime; exact prepared query; expected scope; source-backed report or explicit insufficient ordinary answer; cold readback; original deadline; no unknown effects; no unresolved applicable Runtime defect.",
+    "content": "Separately judge expected facts, original supporting evidence and abstention; no automated semantic pass inferred from retrieval.",
+    "preservation": "All ten outcomes including not-run/failure/unknown remain; no substitution or retry to pass."
+  },
+  "accountingConstraints": {
+    "maximumNewInferenceRequests": 40,
+    "maximumAdditionalBillingUsd": 0,
+    "automaticRetries": false,
+    "topUp": false,
+    "extraBillingActivation": false,
+    "previousAllocationUsd": 9600,
+    "previousReservationsAndUnknowns": "retained unchanged; no refund or current balance inferred",
+    "revalidateOriginalAccountingAndEntitlementBeforeDispatch": true
+  },
+  "status": "frozen-not-dispatched-provider-401",
+  "dispatchPermitted": false,
+  "preDispatchConditions": [
+    "Existing Go access restored and metadata/model/entitlement checked without alternate-route bypass",
+    "Original ledger/cumulative authority rechecked; no extra billing",
+    "Review fixed source/config/data again; behaviour change requires a new dated batch"
+  ],
+  "scopeBoundary": "A prepared-query business-path cohort only. Even a later 9/10 would not qualify the still-closed dynamic-query/shared-embedding-budget scope."
+}

@@ -1,0 +1,242 @@
+{
+  "id": "D032-02",
+  "originalCaseId": "P05",
+  "query": {
+    "query": "现在每年何时按目标比例调整持仓？",
+    "limit": 4,
+    "documentIds": [
+      "text:9af2ff6959bd9ecea86f6dc322fa0d45afb532d2398615f595b957cb17ebb06e"
+    ],
+    "documentMode": "prefer"
+  },
+  "coverage": {
+    "scope": "admitted-immutable-text-collection",
+    "documents": 8,
+    "pages": 8,
+    "matched": 8,
+    "returned": 4,
+    "limit": 4,
+    "sourceBytes": 754,
+    "maxSourceBytes": 128000,
+    "maxResponseBytes": 768000,
+    "limitReached": true,
+    "byteLimited": false,
+    "encodingLimited": false,
+    "completeWithinCollection": false,
+    "completeWithinQueryScope": false
+  },
+  "retrieval": {
+    "profile": "frozen-hybrid",
+    "evidenceSha256": "e400c115f1c7a83b3e50aaa1122d0866a64555abf9261b98ec132c6e0dc03c2b",
+    "provider": {
+      "id": "local-sentence-transformers",
+      "model": "intfloat/multilingual-e5-small",
+      "revision": "943e6f6e81786dcbddbebd3d52f7f3df8ea535abf24e9823b5ec8374249bf3de"
+    },
+    "channels": {
+      "lexical": {
+        "status": "available",
+        "algorithm": "bm25",
+        "matched": 1
+      },
+      "vector": {
+        "status": "available",
+        "reason": "frozen-query-evidence",
+        "matched": 8
+      }
+    },
+    "reranker": {
+      "status": "not-configured"
+    },
+    "recovery": "frozen-provider-evidence"
+  },
+  "sourceManifestSha256": "c16c472150d398815823e21b6d91b0d589a218eeeba5e1c19b66a1b364ec3b8c",
+  "sources": [
+    {
+      "sourceId": "text:9af2ff6959bd9ecea86f6dc322fa0d45afb532d2398615f595b957cb17ebb06e@utf8-pages-v1:9af2ff6959bd9ecea86f6dc322fa0d45afb532d2398615f595b957cb17ebb06e:p1",
+      "documentId": "text:9af2ff6959bd9ecea86f6dc322fa0d45afb532d2398615f595b957cb17ebb06e",
+      "name": "rebalance-old.txt",
+      "version": "utf8-pages-v1:9af2ff6959bd9ecea86f6dc322fa0d45afb532d2398615f595b957cb17ebb06e",
+      "page": 1,
+      "text": "已废止的2024年历史规则：每个季度末重新平衡一次组合。这一规则只用于历史回测，不适用于2026年的实际组合。",
+      "sha256": "9af2ff6959bd9ecea86f6dc322fa0d45afb532d2398615f595b957cb17ebb06e",
+      "mediaType": "text/plain; charset=utf-8"
+    },
+    {
+      "sourceId": "text:7874b49f5f2b55595cae93616a48d26631f930a204d7532951294924f4e21783@utf8-pages-v1:7874b49f5f2b55595cae93616a48d26631f930a204d7532951294924f4e21783:p1",
+      "documentId": "text:7874b49f5f2b55595cae93616a48d26631f930a204d7532951294924f4e21783",
+      "name": "rebalance-current.txt",
+      "version": "utf8-pages-v1:7874b49f5f2b55595cae93616a48d26631f930a204d7532951294924f4e21783",
+      "page": 1,
+      "text": "指数调整现行规则，2026年生效。每年六月和十二月检查成份股权重，随后按目标比例调整组合。2024年的季度调整规则已废止。临时市场波动不触发额外的定期调整。",
+      "sha256": "7874b49f5f2b55595cae93616a48d26631f930a204d7532951294924f4e21783",
+      "mediaType": "text/plain; charset=utf-8"
+    },
+    {
+      "sourceId": "text:ed0b79f1d5f45e219963c81abc32cbb027f0f1683999e8c52d742a4c5d21c05d@utf8-pages-v1:ed0b79f1d5f45e219963c81abc32cbb027f0f1683999e8c52d742a4c5d21c05d:p1",
+      "documentId": "text:ed0b79f1d5f45e219963c81abc32cbb027f0f1683999e8c52d742a4c5d21c05d",
+      "name": "concentration.txt",
+      "version": "utf8-pages-v1:ed0b79f1d5f45e219963c81abc32cbb027f0f1683999e8c52d742a4c5d21c05d",
+      "page": 1,
+      "text": "组合集中度限制。单一发行人的债券市值不得超过净资产的百分之十。政府债券不受该项单一发行人上限约束。这是风险控制限制，不是收益预测。",
+      "sha256": "ed0b79f1d5f45e219963c81abc32cbb027f0f1683999e8c52d742a4c5d21c05d",
+      "mediaType": "text/plain; charset=utf-8"
+    },
+    {
+      "sourceId": "text:aa66ed922efd83210d01e95bb4d0f851536d36b3908fa459231e0e26b0947bf0@utf8-pages-v1:aa66ed922efd83210d01e95bb4d0f851536d36b3908fa459231e0e26b0947bf0:p1",
+      "documentId": "text:aa66ed922efd83210d01e95bb4d0f851536d36b3908fa459231e0e26b0947bf0",
+      "name": "currency.txt",
+      "version": "utf8-pages-v1:aa66ed922efd83210d01e95bb4d0f851536d36b3908fa459231e0e26b0947bf0",
+      "page": 1,
+      "text": "汇率风险说明。基金持有美元计价的境外资产，本币升值会压低换算后的本币收益。本产品不做外汇对冲，因此基金净值也会受到汇率变动影响。",
+      "sha256": "aa66ed922efd83210d01e95bb4d0f851536d36b3908fa459231e0e26b0947bf0",
+      "mediaType": "text/plain; charset=utf-8"
+    }
+  ],
+  "originalOutputSha256": "647906c311d07e0657a89a8f84399013db4441e00d5931263db0f9826c5020a4",
+  "originalOutputBytes": 1827,
+  "finalAnswerSha256": "81e45338195689164dd4669e0f19ca0ae256c5230be50a097bf732f3df0e34d0",
+  "finalAnswerBytes": 503,
+  "tokens": {
+    "prompt": 17811,
+    "completion": 982,
+    "total": 18793
+  },
+  "requestReceipts": [
+    {
+      "ordinal": 4,
+      "httpStatus": 200,
+      "model": "deepseek-v4.1-flash",
+      "costUsd": 0,
+      "billingSource": "go",
+      "requestSha256": "9e3a4ff21d72de609b7bd6306970ae2deb342a7f0f0cace34e6eca24d7a2b26c",
+      "responseSha256": "2cb99739eb8d196d55b1bdfff27bf7b51c7450c97d08eb437397aed7f5710fbf",
+      "usage": {
+        "prompt_tokens": 3598,
+        "completion_tokens": 136,
+        "total_tokens": 3734,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "cost": 0,
+        "opencode": {
+          "billing_source": "go",
+          "list_cost": 0.0012426,
+          "allowance": 0.00074556,
+          "tokens": {
+            "input": 3598,
+            "output": 136,
+            "reasoning": 0,
+            "cache_read": 0,
+            "cache_write_5m": 0,
+            "cache_write_1h": 0
+          }
+        }
+      }
+    },
+    {
+      "ordinal": 5,
+      "httpStatus": 200,
+      "model": "deepseek-v4.1-flash",
+      "costUsd": 0,
+      "billingSource": "go",
+      "requestSha256": "6ec3fb747749b6030772530167b2a9d97af999167b95082ec3c30320fa367dc7",
+      "responseSha256": "9390e09a2e9cae4c0bffc930d5c8f60cb92341d567bcb85080e3d19897cafb78",
+      "usage": {
+        "prompt_tokens": 6755,
+        "completion_tokens": 736,
+        "total_tokens": 7491,
+        "prompt_tokens_details": {
+          "cached_tokens": 3584
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 314
+        },
+        "cost": 0,
+        "opencode": {
+          "billing_source": "go",
+          "list_cost": 0.001856,
+          "allowance": 0.0011136,
+          "tokens": {
+            "input": 3171,
+            "output": 736,
+            "reasoning": 314,
+            "cache_read": 3584,
+            "cache_write_5m": 0,
+            "cache_write_1h": 0
+          }
+        }
+      }
+    },
+    {
+      "ordinal": 6,
+      "httpStatus": 200,
+      "model": "deepseek-v4.1-flash",
+      "costUsd": 0,
+      "billingSource": "go",
+      "requestSha256": "98d32ede8d8b63a833066e22409dbded8553e62cc0213980bc5d006fd83d94a8",
+      "responseSha256": "7daef38fa33132df6df0d55c5b6ce2b507938361211085a1f8471ea46ba163e0",
+      "usage": {
+        "prompt_tokens": 7458,
+        "completion_tokens": 110,
+        "total_tokens": 7568,
+        "prompt_tokens_details": {
+          "cached_tokens": 6656
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "cost": 0,
+        "opencode": {
+          "billing_source": "go",
+          "list_cost": 0.00041254,
+          "allowance": 0.00024752,
+          "tokens": {
+            "input": 802,
+            "output": 110,
+            "reasoning": 0,
+            "cache_read": 6656,
+            "cache_write_5m": 0,
+            "cache_write_1h": 0
+          }
+        }
+      }
+    }
+  ],
+  "queryEffectSummary": {
+    "call": {
+      "arguments": {
+        "documentIds": [
+          "text:9af2ff6959bd9ecea86f6dc322fa0d45afb532d2398615f595b957cb17ebb06e"
+        ],
+        "documentMode": "prefer",
+        "limit": 4,
+        "query": "现在每年何时按目标比例调整持仓？"
+      },
+      "id": "call_dba13c0ae8c24b39966234d1",
+      "name": "knowledge_query"
+    },
+    "dispatchedPhysicalOperations": 2,
+    "encodedSha256": "60b0352ef453774f4738994492568de7a0013dc97b704ff48a81f936c6aa932f",
+    "fence": 1,
+    "profileSha256": "f6d9050ed438eda647c5c433ca3db23981481ba3d54ca419a4f27549137b73ea",
+    "requestSha256": "2c6173d91ca5c1a7ab3a34da8aec2f437bb74be169ce90623349dbdec4bf8f57",
+    "runId": "D032-02",
+    "status": "completed",
+    "toolOrdinal": 1,
+    "originalSchemaVersion": "knowledge-query-effect@1",
+    "schemaVersion": "published-query-effect-summary@1",
+    "encodedSummary": {
+      "id": "2abb4195924e1e2ed061427fa70138bde4242bb06bc6df04e8f401dfa01d7a6b",
+      "inputSha256": "0b7fa2dd74bca08ff2ef85a7d0597e45710a522679224789ac6268ec1abde893",
+      "kind": "query",
+      "tokenCount": 17,
+      "tokenIdsSha256": "40b2f0520cd457e3eac5c58503490303a1362894b7c19f8b536e4a6d278d9189",
+      "dimensions": 384,
+      "vectorSha256": "42cca27f5ea8b6b677b691b1f5f2619bf5b8b51c1b035f31d09fb1ecec9740bf"
+    }
+  }
+}

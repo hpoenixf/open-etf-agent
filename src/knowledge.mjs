@@ -119,8 +119,9 @@ function rankPages(pages, tokens, version, signal) {
   }
   return matches.sort((a, b) => b.score - a.score || (a.documentId < b.documentId ? -1 : a.documentId > b.documentId ? 1 : a.page - b.page));
 }
-export function queryKnowledge(index, args, {signal} = {}) {
+export function queryKnowledge(index, args, {signal,queryAcquisition} = {}) {
   cancelled(signal);
+  if(queryAcquisition!==undefined){if(!object(queryAcquisition)||Object.keys(queryAcquisition).sort().join(',')!=='dispatchedPhysicalOperations,receiptSha256,requestSha256,reservedPhysicalOperations,schemaVersion'||queryAcquisition.schemaVersion!=='local-knowledge-query@1'||!['receiptSha256','requestSha256'].every(k=>/^[a-f0-9]{64}$/.test(queryAcquisition[k]))||queryAcquisition.reservedPhysicalOperations!==2||queryAcquisition.dispatchedPhysicalOperations!==2)fail('KNOWLEDGE_QUERY_METADATA');queryAcquisition={...queryAcquisition};}
   const data = indexes.get(index);
   if (!data) fail('KNOWLEDGE_INDEX_REQUIRED');
   const {query, limit, documentIds, mode} = queryArguments(args, index), tokens = [...new Set(data.tokenize(query))];
@@ -141,7 +142,7 @@ export function queryKnowledge(index, args, {signal} = {}) {
   }
   const sources = [], hits = []; let sourceBytes = 0, byteLimited = false, encodingLimited = false;
   const output = () => ({
-    kind: 'knowledge-evidence', version: index.version,
+    kind: 'knowledge-evidence', version: index.version,...(queryAcquisition?{queryAcquisition}:{}),
     ...(isBm25(index.version) ? {ranking: index.version === HYBRID_KNOWLEDGE_VERSION ? {algorithm: vector ? 'rrf' : 'bm25', lexical: {...BM25}, ...(vector ? {k:60,vector:'cosine-positive'} : {})} : {...BM25}} : {}),
     ...(data.vectors ? {retrieval: {profile:'frozen-hybrid', evidenceSha256:data.vectors.sha256, provider:{...data.vectors.snapshot.provider}, channels:{lexical:{status:'available',algorithm:'bm25',matched:lexical.length},vector:{status:vector ? 'available' : 'unavailable',reason:vector ? 'frozen-query-evidence' : 'query-not-in-snapshot',matched:vector?.length??0}},reranker:{status:'not-configured'},recovery:'frozen-provider-evidence'}} : {}),
     ...(index.version === BM25_HEALTH_KNOWLEDGE_VERSION ? {retrieval: {profile: 'local-lexical-only', channels: {lexical: {status: 'available', algorithm: 'bm25', matched: matches.length}, vector: {status: 'not-configured'}}, reranker: {status: 'not-configured'}, recovery: 'deterministic-original-query'}} : {}),

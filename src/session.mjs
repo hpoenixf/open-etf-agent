@@ -1,3 +1,4 @@
+import {knowledgeQuerySchemas,hasKnowledgeQueryTables,validateKnowledgeQueryConfig,validateKnowledgeQueryDatabase,createSessionKnowledgeQueries} from './knowledge-query-session.mjs';
 import {verifyReportDeliveryState,publicReportAssessment} from './report-assessment.mjs';
 import {INTERACTION_PROFILE, validateInteractionConfig, validateInteractionDefinition, validateInteractionCheckpoint, validateInteractionFacts, interactionResult, interactionAdoptionHash} from './human-interaction.mjs';
 import { validateControlObservations } from './run-control.mjs';
@@ -81,8 +82,10 @@ function validateBindings(value) {
   }
  }
 }
-function validateConfig(value, ordinary = false, protectedProfile = false, interaction = false) {
- fields(value, [], ['requireReport', 'reportDelivery', 'hostProjection', 'allowedTools', 'allowedDocuments', 'documentCatalog', 'pdfSnapshot', 'contextBytes', 'taskId', 'workingInput', 'publication', 'taskTime', ...(ordinary ? ['ordinaryResponse'] : []), ...(interaction ? ['interaction'] : []), ...(protectedProfile ? ['documentProtection'] : [])]);
+function validateConfig(value, ordinary = false, protectedProfile = false, interaction = false, dynamicKnowledge = false) {
+ fields(value, [], ['knowledgeQueryEffects', 'requireReport', 'reportDelivery', 'hostProjection', 'allowedTools', 'allowedDocuments', 'documentCatalog', 'pdfSnapshot', 'contextBytes', 'taskId', 'workingInput', 'publication', 'taskTime', ...(ordinary ? ['ordinaryResponse'] : []), ...(interaction ? ['interaction'] : []), ...(protectedProfile ? ['documentProtection'] : [])]);
+ if(dynamicKnowledge!==(value.knowledgeQueryEffects!==undefined))fail('KNOWLEDGE_QUERY_SCOPE');
+ if(value.knowledgeQueryEffects!==undefined){validateKnowledgeQueryConfig(value.knowledgeQueryEffects);if(ordinary||protectedProfile)fail('KNOWLEDGE_QUERY_SCOPE');}
  if(protectedProfile){if(value.documentCatalog!==undefined||value.pdfSnapshot!==undefined)fail('INVALID_PROTECTED_PROFILE');fields(value.documentProtection,['authorityId','libraryId']);if(!identifier(value.documentProtection.authorityId)||!identifier(value.documentProtection.libraryId)||!Array.isArray(value.allowedDocuments)||!value.allowedDocuments.length||value.workingInput!==undefined||value.ordinaryResponse!==undefined)fail('INVALID_PROTECTED_PROFILE');}
  if(value.documentCatalog!==undefined){fields(value.documentCatalog,['schemaVersion','id','sha256']);if(!['document-catalog@1','document-catalog@2'].includes(value.documentCatalog.schemaVersion)||!identifier(value.documentCatalog.id)||!hash(value.documentCatalog.sha256))fail('INVALID_DEFINITION');}
  if(value.pdfSnapshot!==undefined){const p=value.pdfSnapshot;fields(p,['schemaVersion','parser','parserWorkerSha256','originalSha256','originalBytes','snapshotSha256']);if(p.schemaVersion!=='pdf-input-snapshot@1'||p.parser!=='pdf2json@4.1.0'||!hash(p.parserWorkerSha256)||!hash(p.originalSha256)||!hash(p.snapshotSha256)||!Number.isSafeInteger(p.originalBytes)||p.originalBytes<5||p.originalBytes>1048576)fail('INVALID_DEFINITION');}
@@ -104,7 +107,7 @@ function validateConfig(value, ordinary = false, protectedProfile = false, inter
   }
  }
 }
-function definitionBytes(value, ordinary = false, protectedProfile = false, interaction = false) {
+function definitionBytes(value, ordinary = false, protectedProfile = false, interaction = false, dynamicKnowledge = false) {
  fields(value, ['question', 'grantId', 'bindings', 'limits', 'rootLimits', 'deadlineAt', 'config']);
  if (typeof value.question !== 'string' || !value.question.trim() || (value.config?.hostProjection===undefined&&Buffer.byteLength(value.question) > 16000) || !identifier(value.grantId) || !Number.isSafeInteger(value.deadlineAt) || value.deadlineAt < 1) fail('INVALID_DEFINITION');
  fields(value.limits, ['maxRounds', 'maxTools', 'timeoutMs']); fields(value.rootLimits, ['model', 'tool']);
@@ -112,7 +115,7 @@ function definitionBytes(value, ordinary = false, protectedProfile = false, inte
  for (const n of Object.values(value.rootLimits)) if (!Number.isSafeInteger(n) || n < 1 || n > 1000) fail('INVALID_DEFINITION');
  if(!protectedProfile&&value.bindings?.adapters?.some(x=>x.id==='document-revocation'||x.version===DOCUMENT_REVOCATION_PROFILE))fail('INVALID_PROTECTED_PROFILE');
  if(protectedProfile&&(value.bindings?.gateway?.mode==='live'||value.bindings?.plugins?.length||!value.bindings?.adapters?.some(x=>x.id==='document-revocation'&&x.version===DOCUMENT_REVOCATION_PROFILE)))fail('PROTECTED_EXECUTION_DISABLED');
- validateBindings(value.bindings); validateConfig(value.config, ordinary, protectedProfile, interaction); if(interaction)validateInteractionDefinition(value);else validateResponseProfile(value, ordinary); return json(value, 65536);
+ validateBindings(value.bindings); validateConfig(value.config, ordinary, protectedProfile, interaction, dynamicKnowledge); if(interaction)validateInteractionDefinition(value);else validateResponseProfile(value, ordinary); return json(value, 65536);
 }
 function checkpointBytes(value, terminal = false, ordinary = false, interaction = false) {
  if(interaction)validateInteractionCheckpoint(value);else validateResponseCheckpoint(value, ordinary);validateGatewayOutcomeCheckpoint(value);validateControlObservations(value);
@@ -194,9 +197,10 @@ function hasProtectedSemantics(value) {
 // Synchronous short transactions own facts only. No tool/model callback enters a transaction.
 export async function openSession({ directory, clock = Date.now, leaseMs = 1000, profile, readOnly = false } = {}) {
  if (typeof readOnly !== 'boolean' || typeof directory !== 'string' || typeof clock !== 'function' || !Number.isSafeInteger(leaseMs) || leaseMs < 20 || leaseMs > 30000) fail('INVALID_SESSION_OPTIONS');
- if (profile !== undefined && profile !== RESPONSE_PROFILE && profile !== INTERACTION_PROFILE && profile !== DOCUMENT_REVOCATION_PROFILE && profile !== SCHEDULE_PROFILE) fail('INVALID_SESSION_PROFILE');
+ if (profile !== undefined && profile !== 'local-knowledge-query@1' && profile !== RESPONSE_PROFILE && profile !== INTERACTION_PROFILE && profile !== DOCUMENT_REVOCATION_PROFILE && profile !== SCHEDULE_PROFILE) fail('INVALID_SESSION_PROFILE');
+ let dynamicKnowledge=profile==='local-knowledge-query@1';
  let interaction = profile === INTERACTION_PROFILE; let ordinary = profile === RESPONSE_PROFILE || interaction; const protectedProfile=profile===DOCUMENT_REVOCATION_PROFILE; const scheduled=profile===SCHEDULE_PROFILE;
- const encodeDefinition = value => definitionBytes(value, ordinary, protectedProfile, interaction);
+ const encodeDefinition = value => definitionBytes(value, ordinary, protectedProfile, interaction, dynamicKnowledge);
  const encodeCheckpoint = (value, terminal = false) => {let checked=value;if(protectedProfile&&value?.host?.schemaVersion==='tool-host-protected@1'){
    validateProtectedHostSnapshot(value.host,value.host.protection);checked=structuredClone(value);checked.host=null;const csv=(call,result)=>{validateProtectedCsvResult(call,result,value.host.protection);return {...result,value:null};};
    if(value.result?.value?.schemaVersion==='protected-artifact@1'){if(value.phase!=='result-committed'&&!(value.phase==='terminal'&&['failed','cancelled'].includes(value.status)))fail('INVALID_PROTECTED_CHECKPOINT');checked.result=csv(value.proposal?.calls?.[value.cursor],value.result);}
@@ -292,14 +296,16 @@ export async function openSession({ directory, clock = Date.now, leaseMs = 1000,
  function validateSchema(connection) {
   const version = connection.prepare('PRAGMA user_version').get().user_version; const app = connection.prepare('PRAGMA application_id').get().application_id;
   const actual = connection.prepare("SELECT sql FROM sqlite_master WHERE name NOT LIKE 'sqlite_%' ORDER BY name").all().map(row => row.sql);
-  if (!(scheduled ? version===5 : protectedProfile ? version===4 : [2,3,6].includes(version)) || (profile === RESPONSE_PROFILE && version !== 3) || (profile === INTERACTION_PROFILE && version !== 6) || app !== APP_ID || JSON.stringify(actual) !== JSON.stringify([...(hasControlTable(connection)?[controlSchema]:[]),...(hasChildOperationTable(connection)?[childOperationSchema]:[]),...(version===5?[...schemas,...scheduleSchemas]:version===4?[...schemas,...protectedSchemas]:version === 6 ? [...schemas,interactionSchema] : version === 3 ? [...schemas,responseSchema] : schemas)].sort())) fail('UNSUPPORTED_SESSION_SCHEMA');
+  if (!(scheduled ? version===5 : protectedProfile ? version===4 : dynamicKnowledge ? version===7 : [2,3,6,7].includes(version)) || (profile === RESPONSE_PROFILE && version !== 3) || (profile === INTERACTION_PROFILE && version !== 6) || app !== APP_ID || JSON.stringify(actual) !== JSON.stringify([...(hasKnowledgeQueryTables(connection)?knowledgeQuerySchemas:[]),...(hasControlTable(connection)?[controlSchema]:[]),...(hasChildOperationTable(connection)?[childOperationSchema]:[]),...(version===5?[...schemas,...scheduleSchemas]:version===4?[...schemas,...protectedSchemas]:version === 6 ? [...schemas,interactionSchema] : version === 3 ? [...schemas,responseSchema] : schemas)].sort())) fail('UNSUPPORTED_SESSION_SCHEMA');
+  validateKnowledgeQueryDatabase(connection);
   if(hasControlTable(connection))for(const row of connection.prepare('SELECT run_id FROM session_control_facts').iterate())controlFactFrom(connection,row.run_id);
   if(hasChildOperationTable(connection))for(const row of connection.prepare('SELECT parent_run_id,call_id FROM child_operation_receipts').iterate())childOperationFactFrom(connection,row.parent_run_id,row.call_id);
-  interaction = version === 6; ordinary = version === 3 || interaction;
+  dynamicKnowledge=version===7;interaction = version === 6; ordinary = version === 3 || interaction;
   if(protectedProfile)validateProtectedDatabase(connection);
   if(scheduled)validateScheduleDatabase(connection);
   // Admission (including a hot-journal isolated copy) rejects cross-profile semantics.
   for (const row of connection.prepare('SELECT * FROM runs').iterate()) {
+   if(dynamicKnowledge)encodeDefinition(parsed(row.definition,65536));
    if(!ordinary){
     // Preserve v2's existing deferred malformed-state rejection; only the new
     // profile's semantic markers are excluded at admission.
@@ -331,7 +337,7 @@ export async function openSession({ directory, clock = Date.now, leaseMs = 1000,
   db = new DatabaseSync(filename, { timeout: 1000, readOnly }); safeExistingDirectory(directory); identity = safeFile(filename, true);
   if (fresh) {
    db.exec('PRAGMA journal_mode=DELETE; PRAGMA synchronous=FULL; BEGIN IMMEDIATE');
-   try { for (const schema of scheduled ? [...schemas,...scheduleSchemas] : protectedProfile ? [...schemas,...protectedSchemas] : interaction ? [...schemas,interactionSchema] : ordinary ? [...schemas,responseSchema] : schemas) db.exec(schema); db.exec(`PRAGMA application_id=${APP_ID}; PRAGMA user_version=${scheduled ? 5 : protectedProfile ? 4 : interaction ? 6 : ordinary ? 3 : SCHEMA_VERSION}; COMMIT`); }
+   try { for (const schema of scheduled ? [...schemas,...scheduleSchemas] : protectedProfile ? [...schemas,...protectedSchemas] : interaction ? [...schemas,interactionSchema] : ordinary ? [...schemas,responseSchema] : schemas) db.exec(schema); db.exec(`PRAGMA application_id=${APP_ID}; PRAGMA user_version=${scheduled ? 5 : protectedProfile ? 4 : interaction ? 6 : ordinary ? 3 : dynamicKnowledge ? 7 : SCHEMA_VERSION}; COMMIT`); }
    catch (error) { db.exec('ROLLBACK'); throw error; }
   }
   validateSchema(db);
@@ -488,6 +494,7 @@ export async function openSession({ directory, clock = Date.now, leaseMs = 1000,
    const encodedDefinition = encodeDefinition(definition); const encodedSnapshot = encodeCheckpoint(snapshot); if(protectedProfile&&parentRunId!==null)fail('PROTECTED_CHILD_UNSUPPORTED'); if (ordinary && parentRunId !== null) fail('ORDINARY_CHILD_UNSUPPORTED'); if (snapshot.phase !== 'ready' || !identifier(runId)) fail('INVALID_CHECKPOINT'); runDirectory = safeExistingDirectory(runDirectory);
     if(protectedProfile){const a=authorityFrom(db);if(canonical(definition.config.documentProtection)!==canonical({authorityId:a.authorityId,libraryId:a.libraryId}))fail('PROTECTED_SCOPE_MISMATCH');for(const documentId of definition.config.allowedDocuments)grantFrom(db,documentId);}
     if (db.prepare('SELECT 1 FROM runs WHERE run_id=?').get(runId)) fail('RUN_EXISTS');
+    if(parentRunId!==null&&dynamicKnowledge)fail('KNOWLEDGE_QUERY_SCOPE');
     if (parentRunId !== null) {
      const parent = getRun(parentRunId); const root = active(parent);
      if (!object(parentClaim) || !identifier(parentClaim.owner) || !Number.isSafeInteger(parentClaim.fence) || parentClaim.fence < 1) fail('PARENT_CLAIM_REQUIRED');
@@ -507,7 +514,7 @@ export async function openSession({ directory, clock = Date.now, leaseMs = 1000,
      if (rootId !== undefined && rootId !== runId) fail('ROOT_SCOPE_MISMATCH'); rootId = runId;
      db.prepare('INSERT INTO roots(root_id,grant_id,model_limit,tool_limit,deadline_at) VALUES(?,?,?,?,?)').run(rootId, definition.grantId, definition.rootLimits.model, definition.rootLimits.tool, definition.deadlineAt);
     }
-    db.prepare('INSERT INTO runs(run_id,root_id,parent_run_id,directory,definition,snapshot,created_at) VALUES(?,?,?,?,?,?,?)').run(runId, rootId, parentRunId, runDirectory, encodedDefinition, encodedSnapshot, now()); return view(getRun(runId));
+    db.prepare('INSERT INTO runs(run_id,root_id,parent_run_id,directory,definition,snapshot,created_at) VALUES(?,?,?,?,?,?,?)').run(runId, rootId, parentRunId, runDirectory, encodedDefinition, encodedSnapshot, now());knowledgeQueries.initialize(runId);return view(getRun(runId));
 
  }
  function boundSchedule(reference){
@@ -516,7 +523,12 @@ export async function openSession({ directory, clock = Date.now, leaseMs = 1000,
   if(scheduleCanonical(fact.reference)!==scheduleCanonical(reference))fail('SCHEDULE_BINDING_MISMATCH');return fact;
  }
  function scheduleView(fact){return {reference:fact.reference,envelope:fact.envelope,confirmedAt:fact.confirmedAt,state:fact.state,decidedAt:fact.decidedAt,materializedAt:fact.materializedAt,runId:fact.materializedRunId,run:fact.materializedRunId===null?null:view(getRun(fact.materializedRunId))};}
+ const knowledgeQueries=createSessionKnowledgeQueries({db,transaction,writer});
  const store = {
+  dispatchKnowledgeQuery:(token,callId,stage)=>knowledgeQueries.dispatch(token,callId,stage),
+  completeKnowledgeQuery:(token,callId,encoded)=>knowledgeQueries.complete(token,callId,encoded),
+  knowledgeQueryEffect(runId,callId){return transaction(()=>knowledgeQueries.read(runId,callId));},
+  knowledgeQueryBudget(runId){return transaction(()=>knowledgeQueries.budget(runId));},
   validateCheckpoint(snapshot) { encodeCheckpoint(snapshot); return true; },
   confirmSchedule({schedule,definition,snapshot}) {
    if(!scheduled)fail('SCHEDULE_PROFILE_REQUIRED');encodeDefinition(definition);encodeCheckpoint(snapshot);validateRuntimeCheckpoint(snapshot,definition);
@@ -589,7 +601,7 @@ export async function openSession({ directory, clock = Date.now, leaseMs = 1000,
    });
   },
 
-  directory, leaseMs, schemaVersion: scheduled ? 5 : protectedProfile ? 4 : interaction ? 6 : ordinary ? 3 : 2,
+  directory, leaseMs, schemaVersion: scheduled ? 5 : protectedProfile ? 4 : interaction ? 6 : ordinary ? 3 : dynamicKnowledge ? 7 : 2,
   create(input) { if(scheduled)fail('SCHEDULE_MATERIALIZATION_REQUIRED'); return transaction(() => insertRun(input)); },
   inspect(runId) { return transaction(() => view(getRun(runId))); },
   readClaim(token) { return transaction(() => { if(!object(token)||!identifier(token.runId)||!identifier(token.owner)||!Number.isSafeInteger(token.fence)||token.fence<1)fail('INVALID_CLAIM'); return view(writer(token.runId,token.owner,token.fence)); }); },
@@ -701,10 +713,14 @@ export async function openSession({ directory, clock = Date.now, leaseMs = 1000,
       else if(call.name!=='save_report')fail('PROTECTED_TOOL_UNSUPPORTED');
      }} const root = getRoot(row.root_id); if (root[kind + '_used'] >= root[kind + '_limit']) fail('ROOT_BUDGET_EXHAUSTED');
      db.prepare(`UPDATE roots SET ${kind}_used=${kind}_used+1 WHERE root_id=?`).run(rootId);
-     if (encoded !== undefined) db.prepare('UPDATE runs SET snapshot=? WHERE run_id=?').run(encoded, runId); return view(getRun(runId));
+     if (encoded !== undefined) db.prepare('UPDATE runs SET snapshot=? WHERE run_id=?').run(encoded, runId);
+     if(kind==='tool'&&dynamicKnowledge){const saved=parsed(getRun(runId).snapshot,MAX_CHECKPOINT_JSON),call=saved.proposal?.calls?.[saved.cursor];if(saved.phase==='tool-dispatched'&&call?.name==='knowledge_query')knowledgeQueries.reserve({runId,owner,fence},call);}
+     return view(getRun(runId));
     });
    };
    return Object.freeze({
+    dispatchKnowledgeQuery:(callId,stage)=>knowledgeQueries.dispatch({runId,owner,fence},callId,stage),
+    completeKnowledgeQuery:(callId,encoded)=>knowledgeQueries.complete({runId,owner,fence},callId,encoded),
     queryProtectedPages(callId,query,documents){return transaction(()=>{
      if(!protectedProfile)fail('DOCUMENT_PROFILE_REQUIRED');const row=writer(runId,owner,fence),state=view(row).snapshot,call=state.proposal?.calls?.[state.cursor],{authority,definition}=protectedScope(row);currentDependencies(row);const querySha256=queryHash(query);
      if(!definition.config.allowedTools?.includes('search_pages')||state.phase!=='tool-dispatched'||call?.name!=='search_pages'||call.id!==callId||!identifier(callId))fail('PROTECTED_QUERY_DISPATCH_REQUIRED');fields(call.arguments,['query'],[],'INVALID_PROTECTED_QUERY');if(call.arguments.query!==query)fail('PROTECTED_QUERY_MISMATCH');
@@ -816,7 +832,7 @@ export async function openSession({ directory, clock = Date.now, leaseMs = 1000,
   },
   close() { if (!closed) { db.close(); closed = true; } }
  };
- if(readOnly)return Object.freeze({directory,schemaVersion:scheduled?5:protectedProfile?4:interaction?6:ordinary?3:2,readOnly:true,childOperation:store.childOperation,controlFact:store.controlFact,publication:store.publication,publicationRevisions:store.publicationRevisions,publicationEvent:store.publicationEvent,confirmPublication:store.confirmPublication,inspect:store.inspect,findChild:store.findChild,listChildren:store.listChildren,...(ordinary?{response:store.response,responseStatus:store.responseStatus,responseHistory:store.responseHistory}:{}),...(scheduled?{inspectSchedule:store.inspectSchedule,publication:store.publication,publicationRevisions:store.publicationRevisions,publicationEvent:store.publicationEvent}:{}),...(protectedProfile?{publication:store.publication,publicationRevisions:store.publicationRevisions,publicationEvent:store.publicationEvent,verifyProtectedQueryResult:store.verifyProtectedQueryResult,protectedOutput:store.protectedOutput,consumeProtectedSource:store.consumeProtectedSource,protectedDependencies:store.protectedDependencies,readProtectedOutput:store.readProtectedOutput,listProtectedOutputs:store.listProtectedOutputs}:{}),close:store.close});
+ if(readOnly)return Object.freeze({directory,schemaVersion:scheduled?5:protectedProfile?4:interaction?6:ordinary?3:dynamicKnowledge?7:2,readOnly:true,knowledgeQueryEffect:store.knowledgeQueryEffect,knowledgeQueryBudget:store.knowledgeQueryBudget,childOperation:store.childOperation,controlFact:store.controlFact,publication:store.publication,publicationRevisions:store.publicationRevisions,publicationEvent:store.publicationEvent,confirmPublication:store.confirmPublication,inspect:store.inspect,findChild:store.findChild,listChildren:store.listChildren,...(ordinary?{response:store.response,responseStatus:store.responseStatus,responseHistory:store.responseHistory}:{}),...(scheduled?{inspectSchedule:store.inspectSchedule,publication:store.publication,publicationRevisions:store.publicationRevisions,publicationEvent:store.publicationEvent}:{}),...(protectedProfile?{publication:store.publication,publicationRevisions:store.publicationRevisions,publicationEvent:store.publicationEvent,verifyProtectedQueryResult:store.verifyProtectedQueryResult,protectedOutput:store.protectedOutput,consumeProtectedSource:store.consumeProtectedSource,protectedDependencies:store.protectedDependencies,readProtectedOutput:store.readProtectedOutput,listProtectedOutputs:store.listProtectedOutputs}:{}),close:store.close});
  activeAdmissionOwners.set(store,(ticket,persistStop,expired=false)=>transaction(()=>{
   const current=view(getRun(ticket.runId));
   if(ticket.runId!==ticket.rootId||current.parentRunId!==null||current.snapshot.purpose!==undefined)fail('ADMISSION_RELEASE_SCOPE_UNSUPPORTED');
