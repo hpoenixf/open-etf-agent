@@ -2,6 +2,9 @@
 
 [简体中文](local-knowledge.zh-CN.md)
 
+
+For the optional 0.32 candidate Run integration, see [dynamic local Knowledge](dynamic-knowledge.md). The commands below retain the v0.31 standalone BM25 contract.
+
 v0.31 offers a small local workflow: import explicitly selected text, search it with BM25, and inspect the original source bytes. **No API key, model, database or local HTTP server is required.** This is retrieval, not an automatically authored research report or semantic vector search.
 
 ## Run from the repository root

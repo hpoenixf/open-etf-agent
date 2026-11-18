@@ -1,5 +1,6 @@
 [English](README.md) | **简体中文**
 
+- [0.32 候选：本地动态查询、预算、恢复及 DeepSeek 十次验收](v032-release-readiness.zh-CN.md)
 - [0.32 未发布：真实 E5、恢复 Go 后冻结路径 10/10、可回答性复核与剩余动态范围](v032-progress-20261117.md)
 
 - [v0.26 Web 证据：本次 Runtime 9/10、未知与内容边界](v026-release.zh-CN.md)

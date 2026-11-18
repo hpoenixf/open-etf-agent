@@ -44,7 +44,7 @@ GitHub treats embedded SVG as one image, so its cards are not individually click
 | L5 Publication & delivery | [Main → Report](https://hpoenixf.com/eff-agent-article/en/articles/open-etf-agent-v01-first-readable-report) · [Report](https://hpoenixf.com/eff-agent-article/en/articles/open-etf-agent-v01-first-readable-report) · [Artifact / Revision](https://hpoenixf.com/eff-agent-article/en/articles/agent-artifact-version-access-sharing) · [Publication](https://hpoenixf.com/eff-agent-article/en/articles/019-agent-answer-publication) · [Report Review](https://hpoenixf.com/eff-agent-article/en/articles/open-etf-agent-report-review-workshop) |
 | L6 User interfaces | [Loopback Reader](https://hpoenixf.com/eff-agent-article/en/articles/open-etf-agent-v010-system-design) · [CLI Readback](https://hpoenixf.com/eff-agent-article/en/articles/open-etf-agent-v01-first-readable-report) |
 
-**Current map: v0.31.0** · [Modules, source & evidence](docs/module-status.md) · [Six-layer article (Chinese original)](https://github.com/hpoenixf/eff-agent-article/blob/249f0b866f9446f33b57f186fbc6d35b5d82c119/articles/open-etf-agent-v010-system-design.md)
+**Current map: v0.32.0** · [Modules, source & evidence](docs/module-status.md) · [Six-layer article (Chinese original)](https://github.com/hpoenixf/eff-agent-article/blob/249f0b866f9446f33b57f186fbc6d35b5d82c119/articles/open-etf-agent-v010-system-design.md)
 
 Article links are reading navigation, not implementation parity or coverage qualification. This maps public implementation, not completion percentages. Live-model evidence qualifies only the paths in [version records](docs/verification/README.md), not financial accuracy, production or browser experience.
 <!-- module-map:end -->
@@ -102,7 +102,7 @@ npm run demo -- --case document-compare
 
 **[v0.31.0 · Local Knowledge](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.31.0)** adds selected text import, BM25 free queries and original source readback. The independently frozen live-model cohort completed 9/10 Runtime workflows; model instruction and prose quality remain separate. [Evidence and limits](docs/verification/v031-release.md).
 
-**Unreleased 0.32 work:** real local E5 preparation and the frozen-query business path completed 10/10 Go-backed tasks after access was restored on 2026-11-17. In-Run dynamic acquisition remains closed, so the original 0.32 release scope is incomplete. Retrieval candidates, labelled support and generated-answer quality are separate checks. [Current evidence and remaining gates](docs/verification/v032-progress-20261117.md).
+**0.32 candidate (not yet released):** Knowledge now supports explicit local E5 dynamic queries, atomic query/operation budgets and durable recovery without re-encoding uncertain work. The fixed DeepSeek 4.1 Flash cohort passed 10/10 Runtime/delivery and 10/10 strict original-source review; an earlier 8/10 content batch is retained. Candidate retrieval, sufficient evidence and final answers remain separate. [Use the candidate](docs/dynamic-knowledge.md) · [Qualification, costs and limits](docs/verification/v032-release-readiness.md).
 
 | Recent version / status | What it enables | Usage and boundaries |
 | --- | --- | --- |

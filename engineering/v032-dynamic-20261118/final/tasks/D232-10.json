@@ -1,0 +1,199 @@
+{
+  "id": "D232-10",
+  "originalCaseId": "N06",
+  "query": {
+    "query": "How many investors redeemed units last month?",
+    "limit": 4
+  },
+  "coverage": {
+    "scope": "admitted-immutable-text-collection",
+    "documents": 8,
+    "pages": 8,
+    "matched": 8,
+    "returned": 4,
+    "limit": 4,
+    "sourceBytes": 907,
+    "maxSourceBytes": 128000,
+    "maxResponseBytes": 768000,
+    "limitReached": true,
+    "byteLimited": false,
+    "encodingLimited": false,
+    "completeWithinCollection": false
+  },
+  "retrieval": {
+    "profile": "frozen-hybrid",
+    "evidenceSha256": "b374eba8b412524ecca06c57e22b4d7d4ac8a362e09634017e312d1ccd660eb1",
+    "provider": {
+      "id": "local-sentence-transformers",
+      "model": "intfloat/multilingual-e5-small",
+      "revision": "943e6f6e81786dcbddbebd3d52f7f3df8ea535abf24e9823b5ec8374249bf3de"
+    },
+    "channels": {
+      "lexical": {
+        "status": "available",
+        "algorithm": "bm25",
+        "matched": 1
+      },
+      "vector": {
+        "status": "available",
+        "reason": "frozen-query-evidence",
+        "matched": 8
+      }
+    },
+    "reranker": {
+      "status": "not-configured"
+    },
+    "recovery": "frozen-provider-evidence"
+  },
+  "sourceManifestSha256": "c16c472150d398815823e21b6d91b0d589a218eeeba5e1c19b66a1b364ec3b8c",
+  "sources": [
+    {
+      "sourceId": "text:b84ba2ff8b1dd6dc6b082302d164d4f080e7c23020e272fc1c1891bef18b534e@utf8-pages-v1:b84ba2ff8b1dd6dc6b082302d164d4f080e7c23020e272fc1c1891bef18b534e:p1",
+      "documentId": "text:b84ba2ff8b1dd6dc6b082302d164d4f080e7c23020e272fc1c1891bef18b534e",
+      "name": "settlement.txt",
+      "version": "utf8-pages-v1:b84ba2ff8b1dd6dc6b082302d164d4f080e7c23020e272fc1c1891bef18b534e",
+      "page": 1,
+      "text": "Trading and settlement. Investors submit orders during exchange hours. Ownership and cash are transferred on the next business day after the trade, known as T+1 settlement. Weekends and exchange holidays are not business days.",
+      "sha256": "b84ba2ff8b1dd6dc6b082302d164d4f080e7c23020e272fc1c1891bef18b534e",
+      "mediaType": "text/plain; charset=utf-8"
+    },
+    {
+      "sourceId": "text:77198f89bfe04961748fa83888db05f07adc778f58d22d05ef2d8cf234eb95e6@utf8-pages-v1:77198f89bfe04961748fa83888db05f07adc778f58d22d05ef2d8cf234eb95e6:p1",
+      "documentId": "text:77198f89bfe04961748fa83888db05f07adc778f58d22d05ef2d8cf234eb95e6",
+      "name": "redemptions.txt",
+      "version": "utf8-pages-v1:77198f89bfe04961748fa83888db05f07adc778f58d22d05ef2d8cf234eb95e6",
+      "page": 1,
+      "text": "Liquidity policy, current 2026. Cash and overnight deposits cover investor withdrawals. If redemptions exceed the cash buffer, the fund sells short-dated government bills. Borrowing and forced sales of illiquid bonds are prohibited.",
+      "sha256": "77198f89bfe04961748fa83888db05f07adc778f58d22d05ef2d8cf234eb95e6",
+      "mediaType": "text/plain; charset=utf-8"
+    },
+    {
+      "sourceId": "text:066a69cdb1e09edbba1a80617a2e8309269b8a46ae34aa493c1a24d674544ec3@utf8-pages-v1:066a69cdb1e09edbba1a80617a2e8309269b8a46ae34aa493c1a24d674544ec3:p1",
+      "documentId": "text:066a69cdb1e09edbba1a80617a2e8309269b8a46ae34aa493c1a24d674544ec3",
+      "name": "fees.txt",
+      "version": "utf8-pages-v1:066a69cdb1e09edbba1a80617a2e8309269b8a46ae34aa493c1a24d674544ec3",
+      "page": 1,
+      "text": "Fees, effective 2026. The annual management charge is 0.15 percent of assets. The custody charge is 0.05 percent per year. These are operating expenses, not a promise of investment returns. No subscription charge is specified here.",
+      "sha256": "066a69cdb1e09edbba1a80617a2e8309269b8a46ae34aa493c1a24d674544ec3",
+      "mediaType": "text/plain; charset=utf-8"
+    },
+    {
+      "sourceId": "text:7874b49f5f2b55595cae93616a48d26631f930a204d7532951294924f4e21783@utf8-pages-v1:7874b49f5f2b55595cae93616a48d26631f930a204d7532951294924f4e21783:p1",
+      "documentId": "text:7874b49f5f2b55595cae93616a48d26631f930a204d7532951294924f4e21783",
+      "name": "rebalance-current.txt",
+      "version": "utf8-pages-v1:7874b49f5f2b55595cae93616a48d26631f930a204d7532951294924f4e21783",
+      "page": 1,
+      "text": "指数调整现行规则，2026年生效。每年六月和十二月检查成份股权重，随后按目标比例调整组合。2024年的季度调整规则已废止。临时市场波动不触发额外的定期调整。",
+      "sha256": "7874b49f5f2b55595cae93616a48d26631f930a204d7532951294924f4e21783",
+      "mediaType": "text/plain; charset=utf-8"
+    }
+  ],
+  "originalOutputSha256": "bfcbe31f111c4a9558cd1cd021b2374041331ec7213550e9eb48697a58ce7733",
+  "originalOutputBytes": 2204,
+  "finalAnswerSha256": "bfcbe31f111c4a9558cd1cd021b2374041331ec7213550e9eb48697a58ce7733",
+  "finalAnswerBytes": 2204,
+  "tokens": {
+    "prompt": 10349,
+    "completion": 853,
+    "total": 11202
+  },
+  "requestReceipts": [
+    {
+      "ordinal": 24,
+      "httpStatus": 200,
+      "model": "deepseek-v4.1-flash",
+      "costUsd": 0,
+      "billingSource": "go",
+      "requestSha256": "228c47e2ce7dae2f30abc69d81c95b9d36033ba02d358b1187ddb4866c65f625",
+      "responseSha256": "61d3d497691e220ac6c880f0e2e6ef79c616383243e89db5c5ba5eb18d04956d",
+      "usage": {
+        "prompt_tokens": 3668,
+        "completion_tokens": 69,
+        "total_tokens": 3737,
+        "prompt_tokens_details": {
+          "cached_tokens": 2176
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "cost": 0,
+        "opencode": {
+          "billing_source": "go",
+          "list_cost": 0.00054346,
+          "allowance": 0.00032607,
+          "tokens": {
+            "input": 1492,
+            "output": 69,
+            "reasoning": 0,
+            "cache_read": 2176,
+            "cache_write_5m": 0,
+            "cache_write_1h": 0
+          }
+        }
+      }
+    },
+    {
+      "ordinal": 25,
+      "httpStatus": 200,
+      "model": "deepseek-v4.1-flash",
+      "costUsd": 0,
+      "billingSource": "go",
+      "requestSha256": "42b0927f49cbfdd7804a94a34e5d13f40712190f7de212bfbad90625a5f81cff",
+      "responseSha256": "22fd033d873572c2045a5a41cc9ea253fd653a69e9b057943a0c4194b5dff6ce",
+      "usage": {
+        "prompt_tokens": 6681,
+        "completion_tokens": 784,
+        "total_tokens": 7465,
+        "prompt_tokens_details": {
+          "cached_tokens": 3584
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 96
+        },
+        "cost": 0,
+        "opencode": {
+          "billing_source": "go",
+          "list_cost": 0.0018914,
+          "allowance": 0.00113484,
+          "tokens": {
+            "input": 3097,
+            "output": 784,
+            "reasoning": 96,
+            "cache_read": 3584,
+            "cache_write_5m": 0,
+            "cache_write_1h": 0
+          }
+        }
+      }
+    }
+  ],
+  "queryEffectSummary": {
+    "call": {
+      "arguments": {
+        "limit": 4,
+        "query": "How many investors redeemed units last month?"
+      },
+      "id": "call_bf0cdc6c40904bd2975ec81c",
+      "name": "knowledge_query"
+    },
+    "dispatchedPhysicalOperations": 2,
+    "encodedSha256": "bbd80dbd920ca09cb47260c1af7b59379675dac3828e5a622e1ed10868d07db6",
+    "fence": 1,
+    "profileSha256": "f6d9050ed438eda647c5c433ca3db23981481ba3d54ca419a4f27549137b73ea",
+    "requestSha256": "991a52fe3634106ace181bd4c0f961179dc3df827ab31da9ea6db5d7c41d68fa",
+    "runId": "D232-10",
+    "status": "completed",
+    "toolOrdinal": 1,
+    "originalSchemaVersion": "knowledge-query-effect@1",
+    "schemaVersion": "published-query-effect-summary@1",
+    "encodedSummary": {
+      "id": "00f3db5d0f77ab68ced9ebcf64fa10c66b968530ab2084f7839a8c1edb62e315",
+      "inputSha256": "3739e0a5c151deab0627735b2cd1a960fb0cdc9b7f567180bb9ed061d99e3234",
+      "kind": "query",
+      "tokenCount": 17,
+      "tokenIdsSha256": "7c1bc7b7431b978321517e80ef59d4adc055944db2a99bf45bc16dc74701b876",
+      "dimensions": 384,
+      "vectorSha256": "86e6bd8375117238b736eb850f69ed38040dce023c45339f7164f1198fa9a7d8"
+    }
+  }
+}

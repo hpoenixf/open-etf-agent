@@ -1,0 +1,199 @@
+{
+  "id": "D232-08",
+  "originalCaseId": "N04",
+  "query": {
+    "query": "How do I bake a chocolate cake?",
+    "limit": 4
+  },
+  "coverage": {
+    "scope": "admitted-immutable-text-collection",
+    "documents": 8,
+    "pages": 8,
+    "matched": 8,
+    "returned": 4,
+    "limit": 4,
+    "sourceBytes": 946,
+    "maxSourceBytes": 128000,
+    "maxResponseBytes": 768000,
+    "limitReached": true,
+    "byteLimited": false,
+    "encodingLimited": false,
+    "completeWithinCollection": false
+  },
+  "retrieval": {
+    "profile": "frozen-hybrid",
+    "evidenceSha256": "4c47c393f7ae692086a1b63bc70609f7a881e6850a2e9a3b22afd5f83792c567",
+    "provider": {
+      "id": "local-sentence-transformers",
+      "model": "intfloat/multilingual-e5-small",
+      "revision": "943e6f6e81786dcbddbebd3d52f7f3df8ea535abf24e9823b5ec8374249bf3de"
+    },
+    "channels": {
+      "lexical": {
+        "status": "available",
+        "algorithm": "bm25",
+        "matched": 2
+      },
+      "vector": {
+        "status": "available",
+        "reason": "frozen-query-evidence",
+        "matched": 8
+      }
+    },
+    "reranker": {
+      "status": "not-configured"
+    },
+    "recovery": "frozen-provider-evidence"
+  },
+  "sourceManifestSha256": "c16c472150d398815823e21b6d91b0d589a218eeeba5e1c19b66a1b364ec3b8c",
+  "sources": [
+    {
+      "sourceId": "text:066a69cdb1e09edbba1a80617a2e8309269b8a46ae34aa493c1a24d674544ec3@utf8-pages-v1:066a69cdb1e09edbba1a80617a2e8309269b8a46ae34aa493c1a24d674544ec3:p1",
+      "documentId": "text:066a69cdb1e09edbba1a80617a2e8309269b8a46ae34aa493c1a24d674544ec3",
+      "name": "fees.txt",
+      "version": "utf8-pages-v1:066a69cdb1e09edbba1a80617a2e8309269b8a46ae34aa493c1a24d674544ec3",
+      "page": 1,
+      "text": "Fees, effective 2026. The annual management charge is 0.15 percent of assets. The custody charge is 0.05 percent per year. These are operating expenses, not a promise of investment returns. No subscription charge is specified here.",
+      "sha256": "066a69cdb1e09edbba1a80617a2e8309269b8a46ae34aa493c1a24d674544ec3",
+      "mediaType": "text/plain; charset=utf-8"
+    },
+    {
+      "sourceId": "text:917cabdc80c65485c11e80307884ee217825ac5222b0fe9b9f11b19356f25689@utf8-pages-v1:917cabdc80c65485c11e80307884ee217825ac5222b0fe9b9f11b19356f25689:p1",
+      "documentId": "text:917cabdc80c65485c11e80307884ee217825ac5222b0fe9b9f11b19356f25689",
+      "name": "tracking.txt",
+      "version": "utf8-pages-v1:917cabdc80c65485c11e80307884ee217825ac5222b0fe9b9f11b19356f25689",
+      "page": 1,
+      "text": "Tracking difference is the fund return minus the benchmark return over the same period. Management expenses, withholding taxes and sampling can produce a gap even when the portfolio follows the benchmark. Tracking error measures the variability of that gap.",
+      "sha256": "917cabdc80c65485c11e80307884ee217825ac5222b0fe9b9f11b19356f25689",
+      "mediaType": "text/plain; charset=utf-8"
+    },
+    {
+      "sourceId": "text:77198f89bfe04961748fa83888db05f07adc778f58d22d05ef2d8cf234eb95e6@utf8-pages-v1:77198f89bfe04961748fa83888db05f07adc778f58d22d05ef2d8cf234eb95e6:p1",
+      "documentId": "text:77198f89bfe04961748fa83888db05f07adc778f58d22d05ef2d8cf234eb95e6",
+      "name": "redemptions.txt",
+      "version": "utf8-pages-v1:77198f89bfe04961748fa83888db05f07adc778f58d22d05ef2d8cf234eb95e6",
+      "page": 1,
+      "text": "Liquidity policy, current 2026. Cash and overnight deposits cover investor withdrawals. If redemptions exceed the cash buffer, the fund sells short-dated government bills. Borrowing and forced sales of illiquid bonds are prohibited.",
+      "sha256": "77198f89bfe04961748fa83888db05f07adc778f58d22d05ef2d8cf234eb95e6",
+      "mediaType": "text/plain; charset=utf-8"
+    },
+    {
+      "sourceId": "text:b84ba2ff8b1dd6dc6b082302d164d4f080e7c23020e272fc1c1891bef18b534e@utf8-pages-v1:b84ba2ff8b1dd6dc6b082302d164d4f080e7c23020e272fc1c1891bef18b534e:p1",
+      "documentId": "text:b84ba2ff8b1dd6dc6b082302d164d4f080e7c23020e272fc1c1891bef18b534e",
+      "name": "settlement.txt",
+      "version": "utf8-pages-v1:b84ba2ff8b1dd6dc6b082302d164d4f080e7c23020e272fc1c1891bef18b534e",
+      "page": 1,
+      "text": "Trading and settlement. Investors submit orders during exchange hours. Ownership and cash are transferred on the next business day after the trade, known as T+1 settlement. Weekends and exchange holidays are not business days.",
+      "sha256": "b84ba2ff8b1dd6dc6b082302d164d4f080e7c23020e272fc1c1891bef18b534e",
+      "mediaType": "text/plain; charset=utf-8"
+    }
+  ],
+  "originalOutputSha256": "8400e37fffee14501c64f76d5059405c4d270aab54856410d69436adbe7b0954",
+  "originalOutputBytes": 1264,
+  "finalAnswerSha256": "8400e37fffee14501c64f76d5059405c4d270aab54856410d69436adbe7b0954",
+  "finalAnswerBytes": 1264,
+  "tokens": {
+    "prompt": 10334,
+    "completion": 391,
+    "total": 10725
+  },
+  "requestReceipts": [
+    {
+      "ordinal": 20,
+      "httpStatus": 200,
+      "model": "deepseek-v4.1-flash",
+      "costUsd": 0,
+      "billingSource": "go",
+      "requestSha256": "0f230007575e07b54bfb282bbd51fbfee07f6af1039a10028a185fa734903026",
+      "responseSha256": "75f9301feb6a263e9b8ed2b8a728e84731e471bd50776df08dfd2457fc67f79b",
+      "usage": {
+        "prompt_tokens": 3668,
+        "completion_tokens": 61,
+        "total_tokens": 3729,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "cost": 0,
+        "opencode": {
+          "billing_source": "go",
+          "list_cost": 0.0011736,
+          "allowance": 0.00070416,
+          "tokens": {
+            "input": 3668,
+            "output": 61,
+            "reasoning": 0,
+            "cache_read": 0,
+            "cache_write_5m": 0,
+            "cache_write_1h": 0
+          }
+        }
+      }
+    },
+    {
+      "ordinal": 21,
+      "httpStatus": 200,
+      "model": "deepseek-v4.1-flash",
+      "costUsd": 0,
+      "billingSource": "go",
+      "requestSha256": "6d4d98a5a4e44f17e4af13cd907fedc9d01be324ad28a2e4e0a7e7508b467ca0",
+      "responseSha256": "e38fdb8730c60adfd6a25424dee1034edcb7d3d07a798a33772ea16329a23c9e",
+      "usage": {
+        "prompt_tokens": 6666,
+        "completion_tokens": 330,
+        "total_tokens": 6996,
+        "prompt_tokens_details": {
+          "cached_tokens": 3584
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 67
+        },
+        "cost": 0,
+        "opencode": {
+          "billing_source": "go",
+          "list_cost": 0.0013421,
+          "allowance": 0.00080526,
+          "tokens": {
+            "input": 3082,
+            "output": 330,
+            "reasoning": 67,
+            "cache_read": 3584,
+            "cache_write_5m": 0,
+            "cache_write_1h": 0
+          }
+        }
+      }
+    }
+  ],
+  "queryEffectSummary": {
+    "call": {
+      "arguments": {
+        "limit": 4,
+        "query": "How do I bake a chocolate cake?"
+      },
+      "id": "call_d3a53424244249eabfa0e481",
+      "name": "knowledge_query"
+    },
+    "dispatchedPhysicalOperations": 2,
+    "encodedSha256": "2a9c20591ba7ad1de5569407916102e8130417690087fcb3422607a853ebcdfe",
+    "fence": 1,
+    "profileSha256": "f6d9050ed438eda647c5c433ca3db23981481ba3d54ca419a4f27549137b73ea",
+    "requestSha256": "1d96d5511a19daf41abe5885a62f4714fd64d47d944d7bfeaa674a1e8799fc2f",
+    "runId": "D232-08",
+    "status": "completed",
+    "toolOrdinal": 1,
+    "originalSchemaVersion": "knowledge-query-effect@1",
+    "schemaVersion": "published-query-effect-summary@1",
+    "encodedSummary": {
+      "id": "af1e4a3669cf13efe2cc9a755d8263ac0e18065da3c3e05d4a06410ab9b7375c",
+      "inputSha256": "c51dd996e6620fe229ccdf28bc0d8a03f633b058fd7924a82f1e3fa748862fbc",
+      "kind": "query",
+      "tokenCount": 13,
+      "tokenIdsSha256": "b096b2782d1860d9abde263ce1ad03c1ce4fb82551a60e22f96bc09231800cd6",
+      "dimensions": 384,
+      "vectorSha256": "f6cfb6e7d7afa093dfbedf8575da01e199dd236fa405302a870ddcfa2c0e7a05"
+    }
+  }
+}

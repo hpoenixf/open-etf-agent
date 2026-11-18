@@ -169,3 +169,28 @@ as a workaround. Do not turn that historical event into a blanket claim that all
 future feature development is prohibited. User authorization is not represented as
 overriding platform safeguards. No code gate was removed and no new capability is
 claimed enabled by this dated clarification; the original release scope remains.
+
+## 2026-11-18 original-scope implementation and qualification
+
+The new implementation starts from the reviewed public source, not the stopped
+candidate. Knowledge is the principal module; original Session/Runtime owners
+supply atomic query/two-operation reservation, fences and typed durable receipts.
+The local-only worker is explicitly mapped at work time. No additional embedding
+service or new billable transport was introduced. Missing/uncertain receipts retain
+unknown reservations and never re-encode on recovery. Legacy static tasks and
+report@6 question bytes are preserved.
+
+`f742c3a` completed 10/10 real DeepSeek Runtime/delivery tasks but only 8/10 strict
+content checks. Partial-result absence wording in two answers was too broad.
+`4238a64` fixes new-task framing with a separately frozen local-query instruction
+version. Its independent full ten-task cohort is 10/10 Runtime/delivery and 10/10
+strict source review, with 25 DeepSeek V4.1 Flash requests and zero additional cost.
+No old sample was replaced, no ranking threshold changed and no original label was
+rewritten. The old results remain independently navigable.
+
+Real E5 CPU reference equality, actual process-kill recovery boundaries, the
+compiled worker and complete regression are recorded separately in
+[release-readiness evidence](../../../docs/verification/v032-release-readiness.md).
+The package candidate is 0.32.0; stable release remains 0.31.0 until an actual
+merge/tag/Release. This amendment records current facts; it does not retroactively
+alter the earlier dated design, rejection/access history or their scope.

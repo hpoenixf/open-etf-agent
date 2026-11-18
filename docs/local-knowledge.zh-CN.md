@@ -2,6 +2,9 @@
 
 [English](local-knowledge.md)
 
+
+可选的 0.32 候选 Run 集成见[本地动态 Knowledge](dynamic-knowledge.zh-CN.md)。下文命令保留 v0.31 独立 BM25 合同。
+
 v0.31 提供一个小而完整的本地入口：导入你选定的文本，用 BM25 检索，查看命中的原文与来源。**不需要 API key、模型、数据库或本地 HTTP 服务。** 这是检索，不是自动撰写研究报告，也不是向量语义搜索。
 
 ## 从仓库根目录运行

@@ -1,0 +1,212 @@
+{
+  "id": "D032-01",
+  "originalCaseId": "P01",
+  "query": {
+    "query": "What assets meet investor cash-out requests?",
+    "limit": 4,
+    "documentMode": "only",
+    "documentIds": [
+      "text:77198f89bfe04961748fa83888db05f07adc778f58d22d05ef2d8cf234eb95e6"
+    ]
+  },
+  "coverage": {
+    "scope": "admitted-document-subset",
+    "documents": 1,
+    "pages": 1,
+    "matched": 1,
+    "returned": 1,
+    "limit": 4,
+    "sourceBytes": 232,
+    "maxSourceBytes": 128000,
+    "maxResponseBytes": 768000,
+    "limitReached": false,
+    "byteLimited": false,
+    "encodingLimited": false,
+    "completeWithinCollection": false,
+    "completeWithinQueryScope": true
+  },
+  "retrieval": {
+    "profile": "frozen-hybrid",
+    "evidenceSha256": "07a328468901d18c15cfda67cbffad62fb0f68794f09f5ee579fd96a0bf4ede9",
+    "provider": {
+      "id": "local-sentence-transformers",
+      "model": "intfloat/multilingual-e5-small",
+      "revision": "943e6f6e81786dcbddbebd3d52f7f3df8ea535abf24e9823b5ec8374249bf3de"
+    },
+    "channels": {
+      "lexical": {
+        "status": "available",
+        "algorithm": "bm25",
+        "matched": 1
+      },
+      "vector": {
+        "status": "available",
+        "reason": "frozen-query-evidence",
+        "matched": 1
+      }
+    },
+    "reranker": {
+      "status": "not-configured"
+    },
+    "recovery": "frozen-provider-evidence"
+  },
+  "sourceManifestSha256": "c16c472150d398815823e21b6d91b0d589a218eeeba5e1c19b66a1b364ec3b8c",
+  "sources": [
+    {
+      "sourceId": "text:77198f89bfe04961748fa83888db05f07adc778f58d22d05ef2d8cf234eb95e6@utf8-pages-v1:77198f89bfe04961748fa83888db05f07adc778f58d22d05ef2d8cf234eb95e6:p1",
+      "documentId": "text:77198f89bfe04961748fa83888db05f07adc778f58d22d05ef2d8cf234eb95e6",
+      "name": "redemptions.txt",
+      "version": "utf8-pages-v1:77198f89bfe04961748fa83888db05f07adc778f58d22d05ef2d8cf234eb95e6",
+      "page": 1,
+      "text": "Liquidity policy, current 2026. Cash and overnight deposits cover investor withdrawals. If redemptions exceed the cash buffer, the fund sells short-dated government bills. Borrowing and forced sales of illiquid bonds are prohibited.",
+      "sha256": "77198f89bfe04961748fa83888db05f07adc778f58d22d05ef2d8cf234eb95e6",
+      "mediaType": "text/plain; charset=utf-8"
+    }
+  ],
+  "originalOutputSha256": "df4a22930613ccf5810524c4d6b156f5042328ffa6b6210431b6cd3e02a3362f",
+  "originalOutputBytes": 1527,
+  "finalAnswerSha256": "a08c0367d2a4ce458ee4be9d1667418c71cf299f1e201f46c7087d0c3d1365db",
+  "finalAnswerBytes": 479,
+  "tokens": {
+    "prompt": 14360,
+    "completion": 666,
+    "total": 15026
+  },
+  "requestReceipts": [
+    {
+      "ordinal": 1,
+      "httpStatus": 200,
+      "model": "deepseek-v4.1-flash",
+      "costUsd": 0,
+      "billingSource": "go",
+      "requestSha256": "6e1628d3fd7eeb51dd9e894e77640bf9025dddb2b3100dbd8e54c14f6e6caa6b",
+      "responseSha256": "4456ec2df61c6c3a1ace691d60cd22206e74498e18c09482d409bbe0305708f1",
+      "usage": {
+        "prompt_tokens": 3592,
+        "completion_tokens": 133,
+        "total_tokens": 3725,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "cost": 0,
+        "opencode": {
+          "billing_source": "go",
+          "list_cost": 0.0012372,
+          "allowance": 0.00074232,
+          "tokens": {
+            "input": 3592,
+            "output": 133,
+            "reasoning": 0,
+            "cache_read": 0,
+            "cache_write_5m": 0,
+            "cache_write_1h": 0
+          }
+        }
+      }
+    },
+    {
+      "ordinal": 2,
+      "httpStatus": 200,
+      "model": "deepseek-v4.1-flash",
+      "costUsd": 0,
+      "billingSource": "go",
+      "requestSha256": "2138b723d6389d4a57bf328286493918d7bfddde17043a4f7c43050118d40912",
+      "responseSha256": "da015af197cb983c6d6404df18d2747cf7a62471d5895ee9a06d4643c24d2bed",
+      "usage": {
+        "prompt_tokens": 5036,
+        "completion_tokens": 426,
+        "total_tokens": 5462,
+        "prompt_tokens_details": {
+          "cached_tokens": 3584
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 9
+        },
+        "cost": 0,
+        "opencode": {
+          "billing_source": "go",
+          "list_cost": 0.0009683,
+          "allowance": 0.00058098,
+          "tokens": {
+            "input": 1452,
+            "output": 426,
+            "reasoning": 9,
+            "cache_read": 3584,
+            "cache_write_5m": 0,
+            "cache_write_1h": 0
+          }
+        }
+      }
+    },
+    {
+      "ordinal": 3,
+      "httpStatus": 200,
+      "model": "deepseek-v4.1-flash",
+      "costUsd": 0,
+      "billingSource": "go",
+      "requestSha256": "8a8658bbb7bc1166cda6be2b8b5b42450bf0dfdf7c2076b3266d764b3340f7a0",
+      "responseSha256": "d40219ebfcd0d412d32f92aea3370d74d6273b47c9ace2d976851be822f2335f",
+      "usage": {
+        "prompt_tokens": 5732,
+        "completion_tokens": 107,
+        "total_tokens": 5839,
+        "prompt_tokens_details": {
+          "cached_tokens": 4992
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "cost": 0,
+        "opencode": {
+          "billing_source": "go",
+          "list_cost": 0.00038035,
+          "allowance": 0.00022821,
+          "tokens": {
+            "input": 740,
+            "output": 107,
+            "reasoning": 0,
+            "cache_read": 4992,
+            "cache_write_5m": 0,
+            "cache_write_1h": 0
+          }
+        }
+      }
+    }
+  ],
+  "queryEffectSummary": {
+    "call": {
+      "arguments": {
+        "documentIds": [
+          "text:77198f89bfe04961748fa83888db05f07adc778f58d22d05ef2d8cf234eb95e6"
+        ],
+        "documentMode": "only",
+        "limit": 4,
+        "query": "What assets meet investor cash-out requests?"
+      },
+      "id": "call_51c45b9001a541eea3def429",
+      "name": "knowledge_query"
+    },
+    "dispatchedPhysicalOperations": 2,
+    "encodedSha256": "df697329e05935f3bfa44f3b522df9a6b37e1a100f69b27885508d3577705e65",
+    "fence": 1,
+    "profileSha256": "f6d9050ed438eda647c5c433ca3db23981481ba3d54ca419a4f27549137b73ea",
+    "requestSha256": "425246a03fcf8252c900d9ff78e37a897985e540e402e2f0876c2725f594ac18",
+    "runId": "D032-01",
+    "status": "completed",
+    "toolOrdinal": 1,
+    "originalSchemaVersion": "knowledge-query-effect@1",
+    "schemaVersion": "published-query-effect-summary@1",
+    "encodedSummary": {
+      "id": "146cf6f6203795c40fade3bb35870a255b5f9b344d7e48f065ef8a6a4d63c744",
+      "inputSha256": "8dffb2e3e7d791ae58a986e6ce0d41551fb77cff4ce29a1b6a008cc82d758557",
+      "kind": "query",
+      "tokenCount": 15,
+      "tokenIdsSha256": "711f79035ef2ad1d357d658f3b132ef9ed950d101cfc12f360f39f1ca2958801",
+      "dimensions": 384,
+      "vectorSha256": "1e98c16f1a0e4923da1a28bad6d3c9db35c51488eca5d11e2cd98ca49d949707"
+    }
+  }
+}

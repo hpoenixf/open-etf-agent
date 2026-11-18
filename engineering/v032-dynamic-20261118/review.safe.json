@@ -1,0 +1,85 @@
+{
+  "schemaVersion": "v032-independent-review@1",
+  "reviewer": "Existing separate read-only review agent; model identity unattested",
+  "finalCommit": "4238a6471c9f653c1e8cf3d3cd9a5f3b66694654",
+  "firstCommit": "f742c3ac949d16e7706e2b6aa0707ad45e9817bd",
+  "first": {
+    "runtime": 10,
+    "strictContent": 8,
+    "failures": {
+      "D032-04": "Unsupported whole-collection absence claim with 4/8 coverage.",
+      "D032-06": "Closing sentence expands missing returned-page evidence to whole admitted collection."
+    }
+  },
+  "final": {
+    "runtime": 10,
+    "strictContent": 10,
+    "tasks": [
+      {
+        "id": "D232-01",
+        "pass": true,
+        "reason": "Exact only-document scope; conditional bills and prohibitions preserved."
+      },
+      {
+        "id": "D232-02",
+        "pass": true,
+        "reason": "Current June/December rule distinguished from superseded quarterly rule; prefer expands within admitted collection."
+      },
+      {
+        "id": "D232-03",
+        "pass": true,
+        "reason": "Historical quarter-end policy is superseded and backtest-only, not actual 2026."
+      },
+      {
+        "id": "D232-04",
+        "pass": true,
+        "reason": "Settlement excludes weekends; absence wording limited to returned 4/8 pages."
+      },
+      {
+        "id": "D232-05",
+        "pass": true,
+        "reason": "Explicit not-specified subscription amount limited to fees source; no zero inferred."
+      },
+      {
+        "id": "D232-06",
+        "pass": true,
+        "reason": "Auditor identity unsupported by returned pages; remaining pages unexamined."
+      },
+      {
+        "id": "D232-07",
+        "pass": true,
+        "reason": "No dated NAV inferred; returned and unexamined pages distinguished."
+      },
+      {
+        "id": "D232-08",
+        "pass": true,
+        "reason": "No cake recipe inferred from financial evidence; returned-page scope retained."
+      },
+      {
+        "id": "D232-09",
+        "pass": true,
+        "reason": "No ticker inferred or confirmed absent; unreturned pages remain unexamined."
+      },
+      {
+        "id": "D232-10",
+        "pass": true,
+        "reason": "No redemption investor count inferred or zero substituted; missing fact scoped to returned pages."
+      }
+    ],
+    "noConfirmedBlocker": true
+  },
+  "checked": [
+    "Original Session terminal status, grant, source manifest and cold original output",
+    "Exact single query, limit and only/prefer arguments",
+    "Committed receipt, two reserved/dispatched local operations, one completed/zero unsettled",
+    "25 original physical request/response pairs; all actual DeepSeek V4.1 Flash and Go cost zero",
+    "427 frozen source hashes and original plan/runner hashes",
+    "Fixed 30-request cap with reserved-before-send and no unknown refunds",
+    "Source fix preserves old @6 questions and pins new dynamic task guidance"
+  ],
+  "limitations": [
+    "Small authored corpus; not general financial accuracy",
+    "Reviewer model identity cannot be attested from current tool output",
+    "Original earlier failures and unknown allocations are retained"
+  ]
+}

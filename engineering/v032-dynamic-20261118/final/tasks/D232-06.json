@@ -1,0 +1,199 @@
+{
+  "id": "D232-06",
+  "originalCaseId": "N02",
+  "query": {
+    "query": "2026年该基金的审计机构叫什么？",
+    "limit": 4
+  },
+  "coverage": {
+    "scope": "admitted-immutable-text-collection",
+    "documents": 8,
+    "pages": 8,
+    "matched": 8,
+    "returned": 4,
+    "limit": 4,
+    "sourceBytes": 791,
+    "maxSourceBytes": 128000,
+    "maxResponseBytes": 768000,
+    "limitReached": true,
+    "byteLimited": false,
+    "encodingLimited": false,
+    "completeWithinCollection": false
+  },
+  "retrieval": {
+    "profile": "frozen-hybrid",
+    "evidenceSha256": "c21a0eeb2c10025ad8bd7f0b7825aa6924a8e69d188ea397cf5d612e3f616b4d",
+    "provider": {
+      "id": "local-sentence-transformers",
+      "model": "intfloat/multilingual-e5-small",
+      "revision": "943e6f6e81786dcbddbebd3d52f7f3df8ea535abf24e9823b5ec8374249bf3de"
+    },
+    "channels": {
+      "lexical": {
+        "status": "available",
+        "algorithm": "bm25",
+        "matched": 5
+      },
+      "vector": {
+        "status": "available",
+        "reason": "frozen-query-evidence",
+        "matched": 8
+      }
+    },
+    "reranker": {
+      "status": "not-configured"
+    },
+    "recovery": "frozen-provider-evidence"
+  },
+  "sourceManifestSha256": "c16c472150d398815823e21b6d91b0d589a218eeeba5e1c19b66a1b364ec3b8c",
+  "sources": [
+    {
+      "sourceId": "text:aa66ed922efd83210d01e95bb4d0f851536d36b3908fa459231e0e26b0947bf0@utf8-pages-v1:aa66ed922efd83210d01e95bb4d0f851536d36b3908fa459231e0e26b0947bf0:p1",
+      "documentId": "text:aa66ed922efd83210d01e95bb4d0f851536d36b3908fa459231e0e26b0947bf0",
+      "name": "currency.txt",
+      "version": "utf8-pages-v1:aa66ed922efd83210d01e95bb4d0f851536d36b3908fa459231e0e26b0947bf0",
+      "page": 1,
+      "text": "汇率风险说明。基金持有美元计价的境外资产，本币升值会压低换算后的本币收益。本产品不做外汇对冲，因此基金净值也会受到汇率变动影响。",
+      "sha256": "aa66ed922efd83210d01e95bb4d0f851536d36b3908fa459231e0e26b0947bf0",
+      "mediaType": "text/plain; charset=utf-8"
+    },
+    {
+      "sourceId": "text:9af2ff6959bd9ecea86f6dc322fa0d45afb532d2398615f595b957cb17ebb06e@utf8-pages-v1:9af2ff6959bd9ecea86f6dc322fa0d45afb532d2398615f595b957cb17ebb06e:p1",
+      "documentId": "text:9af2ff6959bd9ecea86f6dc322fa0d45afb532d2398615f595b957cb17ebb06e",
+      "name": "rebalance-old.txt",
+      "version": "utf8-pages-v1:9af2ff6959bd9ecea86f6dc322fa0d45afb532d2398615f595b957cb17ebb06e",
+      "page": 1,
+      "text": "已废止的2024年历史规则：每个季度末重新平衡一次组合。这一规则只用于历史回测，不适用于2026年的实际组合。",
+      "sha256": "9af2ff6959bd9ecea86f6dc322fa0d45afb532d2398615f595b957cb17ebb06e",
+      "mediaType": "text/plain; charset=utf-8"
+    },
+    {
+      "sourceId": "text:77198f89bfe04961748fa83888db05f07adc778f58d22d05ef2d8cf234eb95e6@utf8-pages-v1:77198f89bfe04961748fa83888db05f07adc778f58d22d05ef2d8cf234eb95e6:p1",
+      "documentId": "text:77198f89bfe04961748fa83888db05f07adc778f58d22d05ef2d8cf234eb95e6",
+      "name": "redemptions.txt",
+      "version": "utf8-pages-v1:77198f89bfe04961748fa83888db05f07adc778f58d22d05ef2d8cf234eb95e6",
+      "page": 1,
+      "text": "Liquidity policy, current 2026. Cash and overnight deposits cover investor withdrawals. If redemptions exceed the cash buffer, the fund sells short-dated government bills. Borrowing and forced sales of illiquid bonds are prohibited.",
+      "sha256": "77198f89bfe04961748fa83888db05f07adc778f58d22d05ef2d8cf234eb95e6",
+      "mediaType": "text/plain; charset=utf-8"
+    },
+    {
+      "sourceId": "text:7874b49f5f2b55595cae93616a48d26631f930a204d7532951294924f4e21783@utf8-pages-v1:7874b49f5f2b55595cae93616a48d26631f930a204d7532951294924f4e21783:p1",
+      "documentId": "text:7874b49f5f2b55595cae93616a48d26631f930a204d7532951294924f4e21783",
+      "name": "rebalance-current.txt",
+      "version": "utf8-pages-v1:7874b49f5f2b55595cae93616a48d26631f930a204d7532951294924f4e21783",
+      "page": 1,
+      "text": "指数调整现行规则，2026年生效。每年六月和十二月检查成份股权重，随后按目标比例调整组合。2024年的季度调整规则已废止。临时市场波动不触发额外的定期调整。",
+      "sha256": "7874b49f5f2b55595cae93616a48d26631f930a204d7532951294924f4e21783",
+      "mediaType": "text/plain; charset=utf-8"
+    }
+  ],
+  "originalOutputSha256": "766733f8e2450541ec76a83fb168afdd4b11f00471e8ef9aa78a5abd59bffa25",
+  "originalOutputBytes": 1106,
+  "finalAnswerSha256": "766733f8e2450541ec76a83fb168afdd4b11f00471e8ef9aa78a5abd59bffa25",
+  "finalAnswerBytes": 1106,
+  "tokens": {
+    "prompt": 10319,
+    "completion": 543,
+    "total": 10862
+  },
+  "requestReceipts": [
+    {
+      "ordinal": 16,
+      "httpStatus": 200,
+      "model": "deepseek-v4.1-flash",
+      "costUsd": 0,
+      "billingSource": "go",
+      "requestSha256": "e11ccc9dd6662745569ddd229982ef9030ad5a1d8fd00e6c01f746bc95cd2785",
+      "responseSha256": "edc43b77a06cfbf211dede51a47df10f2f6b163ea1cdaaf87ece361e50802bf3",
+      "usage": {
+        "prompt_tokens": 3672,
+        "completion_tokens": 72,
+        "total_tokens": 3744,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "cost": 0,
+        "opencode": {
+          "billing_source": "go",
+          "list_cost": 0.001188,
+          "allowance": 0.0007128,
+          "tokens": {
+            "input": 3672,
+            "output": 72,
+            "reasoning": 0,
+            "cache_read": 0,
+            "cache_write_5m": 0,
+            "cache_write_1h": 0
+          }
+        }
+      }
+    },
+    {
+      "ordinal": 17,
+      "httpStatus": 200,
+      "model": "deepseek-v4.1-flash",
+      "costUsd": 0,
+      "billingSource": "go",
+      "requestSha256": "1c60a7a4d2602d80c6eea4f40feb5983b31fe56a4fe37806f174cdc9d19ba22f",
+      "responseSha256": "c54014617ac0719db2990886108122cb20aff7da3f7f4c3e4d7029dec2228afb",
+      "usage": {
+        "prompt_tokens": 6647,
+        "completion_tokens": 471,
+        "total_tokens": 7118,
+        "prompt_tokens_details": {
+          "cached_tokens": 3584
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 220
+        },
+        "cost": 0,
+        "opencode": {
+          "billing_source": "go",
+          "list_cost": 0.0015056,
+          "allowance": 0.00090336,
+          "tokens": {
+            "input": 3063,
+            "output": 471,
+            "reasoning": 220,
+            "cache_read": 3584,
+            "cache_write_5m": 0,
+            "cache_write_1h": 0
+          }
+        }
+      }
+    }
+  ],
+  "queryEffectSummary": {
+    "call": {
+      "arguments": {
+        "limit": 4,
+        "query": "2026年该基金的审计机构叫什么？"
+      },
+      "id": "call_1a3fcc54651b44a5b05e9c1b",
+      "name": "knowledge_query"
+    },
+    "dispatchedPhysicalOperations": 2,
+    "encodedSha256": "584c89074ba025a30d14e2d332b7e42fca40d984f7ca1797979d4b4199823cb8",
+    "fence": 1,
+    "profileSha256": "f6d9050ed438eda647c5c433ca3db23981481ba3d54ca419a4f27549137b73ea",
+    "requestSha256": "6b20abc09e2326c9e7dc9f45d9029a5c6b9bfba5fab388d4bbd3de5a489dd469",
+    "runId": "D232-06",
+    "status": "completed",
+    "toolOrdinal": 1,
+    "originalSchemaVersion": "knowledge-query-effect@1",
+    "schemaVersion": "published-query-effect-summary@1",
+    "encodedSummary": {
+      "id": "ed1779f21fe0e467ff0e77189c3c4f134658f4177bf2ee9ab827c69cc6eb394a",
+      "inputSha256": "773d53b2598c7d029e5082b76f96c2e614be5af4d981c3cecd51daf2873fe719",
+      "kind": "query",
+      "tokenCount": 16,
+      "tokenIdsSha256": "4a75047c0293c8651e95845b76f845a4de44b1850dbc134091803c42d4a2ce25",
+      "dimensions": 384,
+      "vectorSha256": "7ba18c4340a85a628e14d9c5c28f1370c602bcc3f51b24aaf7476e33049a4ffc"
+    }
+  }
+}

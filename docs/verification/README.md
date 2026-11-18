@@ -1,5 +1,6 @@
 **English** | [简体中文](README.zh-CN.md)
 
+- [0.32 candidate: local dynamic queries, budgets, recovery and DeepSeek ten-task evidence](v032-release-readiness.md)
 - [Unreleased 0.32: real E5, restored Go prepared-path 10/10, answerability audit and remaining dynamic scope](v032-progress-20261117.md)
 
 - [v0.26 Web evidence: dated Runtime 9/10, unknown and content boundaries](v026-release.md)

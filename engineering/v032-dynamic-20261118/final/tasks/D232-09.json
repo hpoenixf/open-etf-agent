@@ -1,0 +1,199 @@
+{
+  "id": "D232-09",
+  "originalCaseId": "N05",
+  "query": {
+    "query": "这只基金的股票代码是什么？",
+    "limit": 4
+  },
+  "coverage": {
+    "scope": "admitted-immutable-text-collection",
+    "documents": 8,
+    "pages": 8,
+    "matched": 8,
+    "returned": 4,
+    "limit": 4,
+    "sourceBytes": 754,
+    "maxSourceBytes": 128000,
+    "maxResponseBytes": 768000,
+    "limitReached": true,
+    "byteLimited": false,
+    "encodingLimited": false,
+    "completeWithinCollection": false
+  },
+  "retrieval": {
+    "profile": "frozen-hybrid",
+    "evidenceSha256": "11e141d3a6d4c9cd4d9234087476ae5a78e274344f71b2d9a5f56c4cf19c52b3",
+    "provider": {
+      "id": "local-sentence-transformers",
+      "model": "intfloat/multilingual-e5-small",
+      "revision": "943e6f6e81786dcbddbebd3d52f7f3df8ea535abf24e9823b5ec8374249bf3de"
+    },
+    "channels": {
+      "lexical": {
+        "status": "available",
+        "algorithm": "bm25",
+        "matched": 1
+      },
+      "vector": {
+        "status": "available",
+        "reason": "frozen-query-evidence",
+        "matched": 8
+      }
+    },
+    "reranker": {
+      "status": "not-configured"
+    },
+    "recovery": "frozen-provider-evidence"
+  },
+  "sourceManifestSha256": "c16c472150d398815823e21b6d91b0d589a218eeeba5e1c19b66a1b364ec3b8c",
+  "sources": [
+    {
+      "sourceId": "text:aa66ed922efd83210d01e95bb4d0f851536d36b3908fa459231e0e26b0947bf0@utf8-pages-v1:aa66ed922efd83210d01e95bb4d0f851536d36b3908fa459231e0e26b0947bf0:p1",
+      "documentId": "text:aa66ed922efd83210d01e95bb4d0f851536d36b3908fa459231e0e26b0947bf0",
+      "name": "currency.txt",
+      "version": "utf8-pages-v1:aa66ed922efd83210d01e95bb4d0f851536d36b3908fa459231e0e26b0947bf0",
+      "page": 1,
+      "text": "汇率风险说明。基金持有美元计价的境外资产，本币升值会压低换算后的本币收益。本产品不做外汇对冲，因此基金净值也会受到汇率变动影响。",
+      "sha256": "aa66ed922efd83210d01e95bb4d0f851536d36b3908fa459231e0e26b0947bf0",
+      "mediaType": "text/plain; charset=utf-8"
+    },
+    {
+      "sourceId": "text:ed0b79f1d5f45e219963c81abc32cbb027f0f1683999e8c52d742a4c5d21c05d@utf8-pages-v1:ed0b79f1d5f45e219963c81abc32cbb027f0f1683999e8c52d742a4c5d21c05d:p1",
+      "documentId": "text:ed0b79f1d5f45e219963c81abc32cbb027f0f1683999e8c52d742a4c5d21c05d",
+      "name": "concentration.txt",
+      "version": "utf8-pages-v1:ed0b79f1d5f45e219963c81abc32cbb027f0f1683999e8c52d742a4c5d21c05d",
+      "page": 1,
+      "text": "组合集中度限制。单一发行人的债券市值不得超过净资产的百分之十。政府债券不受该项单一发行人上限约束。这是风险控制限制，不是收益预测。",
+      "sha256": "ed0b79f1d5f45e219963c81abc32cbb027f0f1683999e8c52d742a4c5d21c05d",
+      "mediaType": "text/plain; charset=utf-8"
+    },
+    {
+      "sourceId": "text:9af2ff6959bd9ecea86f6dc322fa0d45afb532d2398615f595b957cb17ebb06e@utf8-pages-v1:9af2ff6959bd9ecea86f6dc322fa0d45afb532d2398615f595b957cb17ebb06e:p1",
+      "documentId": "text:9af2ff6959bd9ecea86f6dc322fa0d45afb532d2398615f595b957cb17ebb06e",
+      "name": "rebalance-old.txt",
+      "version": "utf8-pages-v1:9af2ff6959bd9ecea86f6dc322fa0d45afb532d2398615f595b957cb17ebb06e",
+      "page": 1,
+      "text": "已废止的2024年历史规则：每个季度末重新平衡一次组合。这一规则只用于历史回测，不适用于2026年的实际组合。",
+      "sha256": "9af2ff6959bd9ecea86f6dc322fa0d45afb532d2398615f595b957cb17ebb06e",
+      "mediaType": "text/plain; charset=utf-8"
+    },
+    {
+      "sourceId": "text:7874b49f5f2b55595cae93616a48d26631f930a204d7532951294924f4e21783@utf8-pages-v1:7874b49f5f2b55595cae93616a48d26631f930a204d7532951294924f4e21783:p1",
+      "documentId": "text:7874b49f5f2b55595cae93616a48d26631f930a204d7532951294924f4e21783",
+      "name": "rebalance-current.txt",
+      "version": "utf8-pages-v1:7874b49f5f2b55595cae93616a48d26631f930a204d7532951294924f4e21783",
+      "page": 1,
+      "text": "指数调整现行规则，2026年生效。每年六月和十二月检查成份股权重，随后按目标比例调整组合。2024年的季度调整规则已废止。临时市场波动不触发额外的定期调整。",
+      "sha256": "7874b49f5f2b55595cae93616a48d26631f930a204d7532951294924f4e21783",
+      "mediaType": "text/plain; charset=utf-8"
+    }
+  ],
+  "originalOutputSha256": "4c1ccc048cfb7eebe372901a4788f10bebe58752c12787f7d6c8cc2f9d493f2f",
+  "originalOutputBytes": 1141,
+  "finalAnswerSha256": "4c1ccc048cfb7eebe372901a4788f10bebe58752c12787f7d6c8cc2f9d493f2f",
+  "finalAnswerBytes": 1141,
+  "tokens": {
+    "prompt": 10342,
+    "completion": 413,
+    "total": 10755
+  },
+  "requestReceipts": [
+    {
+      "ordinal": 22,
+      "httpStatus": 200,
+      "model": "deepseek-v4.1-flash",
+      "costUsd": 0,
+      "billingSource": "go",
+      "requestSha256": "ad8cc2fca8481aa19d4a10ded2208e3e1a84628be1c5761c482a3b7b3faf7820",
+      "responseSha256": "0e51ed03647b92978e23c225c61a03e0f9a8559b7212707e34eee098242fe0ca",
+      "usage": {
+        "prompt_tokens": 3666,
+        "completion_tokens": 60,
+        "total_tokens": 3726,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "cost": 0,
+        "opencode": {
+          "billing_source": "go",
+          "list_cost": 0.0011718,
+          "allowance": 0.00070308,
+          "tokens": {
+            "input": 3666,
+            "output": 60,
+            "reasoning": 0,
+            "cache_read": 0,
+            "cache_write_5m": 0,
+            "cache_write_1h": 0
+          }
+        }
+      }
+    },
+    {
+      "ordinal": 23,
+      "httpStatus": 200,
+      "model": "deepseek-v4.1-flash",
+      "costUsd": 0,
+      "billingSource": "go",
+      "requestSha256": "4174dc53627594f60323381d2f385cf25e0ef2a7af9dfeaf36957d2ae257a29d",
+      "responseSha256": "4d9ff2c8ddb6f4beee2736abf1d03f29951528fea2b7721a0b271cff45e1c4e1",
+      "usage": {
+        "prompt_tokens": 6676,
+        "completion_tokens": 353,
+        "total_tokens": 7029,
+        "prompt_tokens_details": {
+          "cached_tokens": 3584
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 99
+        },
+        "cost": 0,
+        "opencode": {
+          "billing_source": "go",
+          "list_cost": 0.0013727,
+          "allowance": 0.00082362,
+          "tokens": {
+            "input": 3092,
+            "output": 353,
+            "reasoning": 99,
+            "cache_read": 3584,
+            "cache_write_5m": 0,
+            "cache_write_1h": 0
+          }
+        }
+      }
+    }
+  ],
+  "queryEffectSummary": {
+    "call": {
+      "arguments": {
+        "limit": 4,
+        "query": "这只基金的股票代码是什么？"
+      },
+      "id": "call_120a1e415e9d473ca1712bdc",
+      "name": "knowledge_query"
+    },
+    "dispatchedPhysicalOperations": 2,
+    "encodedSha256": "a13b60b3e0144ed8de4223b684d2e572fcebebad2da9352356d0b7ad76ebfb45",
+    "fence": 1,
+    "profileSha256": "f6d9050ed438eda647c5c433ca3db23981481ba3d54ca419a4f27549137b73ea",
+    "requestSha256": "6f9afccc9da8feb0b04a21af38e99537508bb9147b62b3ad1a541a0671189771",
+    "runId": "D232-09",
+    "status": "completed",
+    "toolOrdinal": 1,
+    "originalSchemaVersion": "knowledge-query-effect@1",
+    "schemaVersion": "published-query-effect-summary@1",
+    "encodedSummary": {
+      "id": "748aa8e81e704e50f01c6b87c439eb8c5d66d824573a9cf29631ce426fb85d4b",
+      "inputSha256": "a13f7d2b38e62da58ec880a54ba78f4fd6d85a212540c677ac7d6a1b407f91e6",
+      "kind": "query",
+      "tokenCount": 13,
+      "tokenIdsSha256": "24bc5783be22e5ab83dba82064353559168fc3b0f7840248a5c4cdbd2d702515",
+      "dimensions": 384,
+      "vectorSha256": "244dec99a3b30291c785e4c304e0cadd65046b7465ff875a2f2d7daa2c7c1237"
+    }
+  }
+}

@@ -1,0 +1,233 @@
+{
+  "id": "D032-03",
+  "originalCaseId": "P08",
+  "query": {
+    "query": "How did the superseded 2024 rebalancing schedule work?",
+    "limit": 4
+  },
+  "coverage": {
+    "scope": "admitted-immutable-text-collection",
+    "documents": 8,
+    "pages": 8,
+    "matched": 8,
+    "returned": 4,
+    "limit": 4,
+    "sourceBytes": 869,
+    "maxSourceBytes": 128000,
+    "maxResponseBytes": 768000,
+    "limitReached": true,
+    "byteLimited": false,
+    "encodingLimited": false,
+    "completeWithinCollection": false
+  },
+  "retrieval": {
+    "profile": "frozen-hybrid",
+    "evidenceSha256": "3905166676c2fb89be8955d4408a55f6a75c89ad15a89d3098d74a300aeb3eb5",
+    "provider": {
+      "id": "local-sentence-transformers",
+      "model": "intfloat/multilingual-e5-small",
+      "revision": "943e6f6e81786dcbddbebd3d52f7f3df8ea535abf24e9823b5ec8374249bf3de"
+    },
+    "channels": {
+      "lexical": {
+        "status": "available",
+        "algorithm": "bm25",
+        "matched": 6
+      },
+      "vector": {
+        "status": "available",
+        "reason": "frozen-query-evidence",
+        "matched": 8
+      }
+    },
+    "reranker": {
+      "status": "not-configured"
+    },
+    "recovery": "frozen-provider-evidence"
+  },
+  "sourceManifestSha256": "c16c472150d398815823e21b6d91b0d589a218eeeba5e1c19b66a1b364ec3b8c",
+  "sources": [
+    {
+      "sourceId": "text:9af2ff6959bd9ecea86f6dc322fa0d45afb532d2398615f595b957cb17ebb06e@utf8-pages-v1:9af2ff6959bd9ecea86f6dc322fa0d45afb532d2398615f595b957cb17ebb06e:p1",
+      "documentId": "text:9af2ff6959bd9ecea86f6dc322fa0d45afb532d2398615f595b957cb17ebb06e",
+      "name": "rebalance-old.txt",
+      "version": "utf8-pages-v1:9af2ff6959bd9ecea86f6dc322fa0d45afb532d2398615f595b957cb17ebb06e",
+      "page": 1,
+      "text": "已废止的2024年历史规则：每个季度末重新平衡一次组合。这一规则只用于历史回测，不适用于2026年的实际组合。",
+      "sha256": "9af2ff6959bd9ecea86f6dc322fa0d45afb532d2398615f595b957cb17ebb06e",
+      "mediaType": "text/plain; charset=utf-8"
+    },
+    {
+      "sourceId": "text:77198f89bfe04961748fa83888db05f07adc778f58d22d05ef2d8cf234eb95e6@utf8-pages-v1:77198f89bfe04961748fa83888db05f07adc778f58d22d05ef2d8cf234eb95e6:p1",
+      "documentId": "text:77198f89bfe04961748fa83888db05f07adc778f58d22d05ef2d8cf234eb95e6",
+      "name": "redemptions.txt",
+      "version": "utf8-pages-v1:77198f89bfe04961748fa83888db05f07adc778f58d22d05ef2d8cf234eb95e6",
+      "page": 1,
+      "text": "Liquidity policy, current 2026. Cash and overnight deposits cover investor withdrawals. If redemptions exceed the cash buffer, the fund sells short-dated government bills. Borrowing and forced sales of illiquid bonds are prohibited.",
+      "sha256": "77198f89bfe04961748fa83888db05f07adc778f58d22d05ef2d8cf234eb95e6",
+      "mediaType": "text/plain; charset=utf-8"
+    },
+    {
+      "sourceId": "text:917cabdc80c65485c11e80307884ee217825ac5222b0fe9b9f11b19356f25689@utf8-pages-v1:917cabdc80c65485c11e80307884ee217825ac5222b0fe9b9f11b19356f25689:p1",
+      "documentId": "text:917cabdc80c65485c11e80307884ee217825ac5222b0fe9b9f11b19356f25689",
+      "name": "tracking.txt",
+      "version": "utf8-pages-v1:917cabdc80c65485c11e80307884ee217825ac5222b0fe9b9f11b19356f25689",
+      "page": 1,
+      "text": "Tracking difference is the fund return minus the benchmark return over the same period. Management expenses, withholding taxes and sampling can produce a gap even when the portfolio follows the benchmark. Tracking error measures the variability of that gap.",
+      "sha256": "917cabdc80c65485c11e80307884ee217825ac5222b0fe9b9f11b19356f25689",
+      "mediaType": "text/plain; charset=utf-8"
+    },
+    {
+      "sourceId": "text:066a69cdb1e09edbba1a80617a2e8309269b8a46ae34aa493c1a24d674544ec3@utf8-pages-v1:066a69cdb1e09edbba1a80617a2e8309269b8a46ae34aa493c1a24d674544ec3:p1",
+      "documentId": "text:066a69cdb1e09edbba1a80617a2e8309269b8a46ae34aa493c1a24d674544ec3",
+      "name": "fees.txt",
+      "version": "utf8-pages-v1:066a69cdb1e09edbba1a80617a2e8309269b8a46ae34aa493c1a24d674544ec3",
+      "page": 1,
+      "text": "Fees, effective 2026. The annual management charge is 0.15 percent of assets. The custody charge is 0.05 percent per year. These are operating expenses, not a promise of investment returns. No subscription charge is specified here.",
+      "sha256": "066a69cdb1e09edbba1a80617a2e8309269b8a46ae34aa493c1a24d674544ec3",
+      "mediaType": "text/plain; charset=utf-8"
+    }
+  ],
+  "originalOutputSha256": "2d252425c58a1567c53ec9f8c654b372997f5a53236c5dbab2ee73d4c0495b34",
+  "originalOutputBytes": 1863,
+  "finalAnswerSha256": "fc89d590f2e04107bd88965be3b006d9c326a949e83be89dffa9f23c368c72c2",
+  "finalAnswerBytes": 1166,
+  "tokens": {
+    "prompt": 17127,
+    "completion": 1068,
+    "total": 18195
+  },
+  "requestReceipts": [
+    {
+      "ordinal": 7,
+      "httpStatus": 200,
+      "model": "deepseek-v4.1-flash",
+      "costUsd": 0,
+      "billingSource": "go",
+      "requestSha256": "f350aac04ee46c7297745e190612a653de993ada4f19405c46cff0ec11ee0d3d",
+      "responseSha256": "4f3caf665c1d613e355ee46741ddf443d8aee8f66d8a4fae3ec27338ec48e0d2",
+      "usage": {
+        "prompt_tokens": 3490,
+        "completion_tokens": 67,
+        "total_tokens": 3557,
+        "prompt_tokens_details": {
+          "cached_tokens": 2176
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "cost": 0,
+        "opencode": {
+          "billing_source": "go",
+          "list_cost": 0.00048766,
+          "allowance": 0.00029259,
+          "tokens": {
+            "input": 1314,
+            "output": 67,
+            "reasoning": 0,
+            "cache_read": 2176,
+            "cache_write_5m": 0,
+            "cache_write_1h": 0
+          }
+        }
+      }
+    },
+    {
+      "ordinal": 8,
+      "httpStatus": 200,
+      "model": "deepseek-v4.1-flash",
+      "costUsd": 0,
+      "billingSource": "go",
+      "requestSha256": "006a2d8e9c1ad5535abffd8f1c58dc8b81c6d00809835bd6af9045fee8950e5c",
+      "responseSha256": "bf4b7aeb9ca83cb44b7e43a3fd2d47d2fc9aad214edff9073d6abed3220804a7",
+      "usage": {
+        "prompt_tokens": 6464,
+        "completion_tokens": 689,
+        "total_tokens": 7153,
+        "prompt_tokens_details": {
+          "cached_tokens": 3456
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 251
+        },
+        "cost": 0,
+        "opencode": {
+          "billing_source": "go",
+          "list_cost": 0.00174994,
+          "allowance": 0.00104996,
+          "tokens": {
+            "input": 3008,
+            "output": 689,
+            "reasoning": 251,
+            "cache_read": 3456,
+            "cache_write_5m": 0,
+            "cache_write_1h": 0
+          }
+        }
+      }
+    },
+    {
+      "ordinal": 9,
+      "httpStatus": 200,
+      "model": "deepseek-v4.1-flash",
+      "costUsd": 0,
+      "billingSource": "go",
+      "requestSha256": "e1fef2fbd9dbd47c470a7cf17e8fd23825b97187bc288b913d8d8939f1953d1d",
+      "responseSha256": "1e11d3d5740e75b52ee99bed9ba6217b48645e992562b190ab5679ddcabc0094",
+      "usage": {
+        "prompt_tokens": 7173,
+        "completion_tokens": 312,
+        "total_tokens": 7485,
+        "prompt_tokens_details": {
+          "cached_tokens": 6400
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "cost": 0,
+        "opencode": {
+          "billing_source": "go",
+          "list_cost": 0.0006447,
+          "allowance": 0.00038682,
+          "tokens": {
+            "input": 773,
+            "output": 312,
+            "reasoning": 0,
+            "cache_read": 6400,
+            "cache_write_5m": 0,
+            "cache_write_1h": 0
+          }
+        }
+      }
+    }
+  ],
+  "queryEffectSummary": {
+    "call": {
+      "arguments": {
+        "limit": 4,
+        "query": "How did the superseded 2024 rebalancing schedule work?"
+      },
+      "id": "call_672bf068ea004b8fab062e97",
+      "name": "knowledge_query"
+    },
+    "dispatchedPhysicalOperations": 2,
+    "encodedSha256": "72b38ea32fba4d8375601a74313cb961f7023995d7a50ab3ac5127440c4e352a",
+    "fence": 1,
+    "profileSha256": "f6d9050ed438eda647c5c433ca3db23981481ba3d54ca419a4f27549137b73ea",
+    "requestSha256": "9a9a60f745b830cafaf9ca3c2a73cfd8b963e234a826f1d82524f350472e3276",
+    "runId": "D032-03",
+    "status": "completed",
+    "toolOrdinal": 1,
+    "originalSchemaVersion": "knowledge-query-effect@1",
+    "schemaVersion": "published-query-effect-summary@1",
+    "encodedSummary": {
+      "id": "2837adfe4429c28ca42aea92db92062447bcce6371046b349ebaf69f615f5fe8",
+      "inputSha256": "b1eb5d4fe80317c15299a5cbf5563b37d78ace701eb28492a5046c396fe5f434",
+      "kind": "query",
+      "tokenCount": 19,
+      "tokenIdsSha256": "69877103fa908cc81e19ec8e233b539c4105edb2f4a19ed9d8b21aefecfcb5da",
+      "dimensions": 384,
+      "vectorSha256": "5145b02a40e612112bd7773c89ab7a04ed35d2d30b42d9b4292bf657d9311efc"
+    }
+  }
+}
