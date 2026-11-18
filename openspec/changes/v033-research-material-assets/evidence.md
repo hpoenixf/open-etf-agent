@@ -117,3 +117,32 @@ upfront. Admit each Run immediately before its own work so it receives the
 configured time budget, completing any required post-admission material change
 within that task. A fresh paid batch requires its own authorization. Preserve the
 original timeout, unsent task and unresolved request in this record.
+
+## Prospective cohort with per-task admission — 2026-11-18
+
+After separate authorization, the [prospective plan](../../../engineering/v033-a17-acceptance-20261118/PROSPECTIVE-PLAN.safe.json)
+kept the first plan's ten questions, synthetic inputs, expected source pages,
+and criteria. It used new Run IDs and admitted each task immediately before work.
+All 422 pinned inputs matched. The shortest remaining Runtime deadline at a
+task's first model request was 239,633 ms of 240,000 ms.
+
+All ten tasks were attempted. Nine completed and delivered the expected source
+version and page through the original Runtime. Nine reports reopened in fresh
+CLI processes with zero model dispatches. The [prospective receipt](../../../engineering/v033-a17-acceptance-20261118/PROSPECTIVE-QUALIFICATION.safe.json)
+records all ten results and preserves the original cohort's ledger hash.
+
+The raw substring check passed 8/10. In A17R-09 it matched the prefix
+`Edition A` inside the heading `Edition and Exported Rows`. Review of the report
+and final answer against the original selected page confirmed `Edition B` and
+`300 exported rows`. The original report cited only physical page 3 and its PDF
+attachment matched the original bytes. Whole-phrase checks using the same frozen
+criteria and source review passed 9/10, reaching the stated threshold. The receipt
+retains the original mismatch alongside the reviewed result. The execution
+operator did the review.
+
+There were 28 physical requests. OpenCode Go confirmed 27 DeepSeek V4.1 Flash
+responses at 0 USD additional cost, with 56,949 confirmed tokens. A17R-10 received
+HTTP 502 on its first request. Its cost remains unknown and no report was
+delivered. Dispatch stopped with no retry. The first cohort's separate unknown
+request is still unresolved. Stable publication is recorded separately from
+this source-reviewed acceptance.

@@ -1,0 +1,20 @@
+{
+  "schemaVersion": "v033-a17-prospective-plan-derivation@1",
+  "prospectivePlanSha256": "09385ac2c0335835e77524a1bce07ec2117405f8aa4133eb2273ecc481903172",
+  "basePlan": {
+    "path": "PLAN.safe.json",
+    "sha256": "c21ab7a028284f571249a5de3bd242aa1fe31586b0806ff23ec3d086cb052757"
+  },
+  "derivation": {
+    "replaceSchemaVersion": "v033-a17-real-ten-prospective-plan@1",
+    "appendFieldsInOrder": {
+      "priorCohortSha256": "c21ab7a028284f571249a5de3bd242aa1fe31586b0806ff23ec3d086cb052757",
+      "admissionPolicy": "Admit each original Run immediately before dispatch. Require at least 230 seconds of its fixed 240-second deadline at first send. Prior Runs and requests are not replayed."
+    },
+    "replaceCaseIdPrefix": {
+      "from": "A17-",
+      "to": "A17R-"
+    },
+    "encoding": "UTF-8 JSON, two-space indentation, trailing newline, preserve base property order."
+  }
+}

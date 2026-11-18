@@ -12,6 +12,7 @@
 - [x] Run affected original regressions, full Node 26 suite/build and review.
 - [x] Freeze and attempt a fresh ten-task real-model acceptance cohort with
       explicit Go authorization, synthetic inputs and separate request accounting.
-- [ ] Reach the real-model acceptance threshold in a fresh, authorized cohort.
-      The first cohort retained eight successes, one timeout, and one unsent task.
+- [x] Reach the 9/10 source-reviewed threshold in a separately authorized
+      prospective cohort. Keep the first cohort, the PDF substring false positive,
+      and the second cohort's HTTP 502 and unknown billing in the evidence.
 - [ ] Obtain stable-version publication direction; no version bump/tag/release in this candidate.
