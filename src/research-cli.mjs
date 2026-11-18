@@ -37,7 +37,7 @@ Usage: node src/research-cli.mjs <group> <command> [options]
   schedule list --project DIR
   schedule inspect|cancel --project DIR --run ID
   schedule run-due --project DIR [--limit NUMBER (1..32)]
-  run work --project DIR --run ID
+  run work --project DIR --run ID [--embedding-runtime JSON_FILE]
   run inspect|cancel --project DIR --run ID
   child list --project DIR --run ID
   child cancel --project DIR --run ID --child ID
@@ -109,7 +109,7 @@ const specifications={
  'source acquire':['project','acquisition','urls','approve-public-fetch','redirects?','base-manifest?','network-profile?'],
  'source acquisition':['project','acquisition'],
  'run submit':['project','run','question','manifest','approve-provider?','approve-data?','approve-cost?','memory-intents?','task-time?','schedule?','specialists?','report-delivery?','knowledge-vectors?'],
- 'run work':['project','run'], 'run inspect':['project','run'], 'run cancel':['project','run'],
+ 'run work':['project','run','embedding-runtime?'], 'run inspect':['project','run'], 'run cancel':['project','run'],
  'run respond':['project','run','question-id','response-id','text'],
  'run report':['project','run'], 'run serve':['project','run','port?'],
  'report inspect':['project','run'], 'report serve':['project','run','port?'],
@@ -204,7 +204,7 @@ export async function runResearchCli(args,{stdout=process.stdout,stderr=process.
   if(command==='run work'){
    const {definition:{config}}=await inspectResearchTask({projectDir,runId});if(config.gateway.mode!=='live')fail('CLI_LIVE_WORK_REQUIRED');secret=process.env[config.gateway.apiKeyEnv];if(!secret)fail('CLI_API_KEY_ENV_REQUIRED');
    const host=new AbortController(),stop=()=>host.abort();signals.on('SIGINT',stop);signals.on('SIGTERM',stop);
-   try{await workResearchTask({projectDir,runId,apiKey:secret,hostSignal:host.signal});emit(await readableWorkResult(projectDir,runId));}finally{signals.off('SIGINT',stop);signals.off('SIGTERM',stop);}return 0;
+   try{await workResearchTask({projectDir,runId,apiKey:secret,hostSignal:host.signal,...(o['embedding-runtime']?{localEmbedding:await readProjectJson(o['embedding-runtime'],65536)}:{})});emit(await readableWorkResult(projectDir,runId));}finally{signals.off('SIGINT',stop);signals.off('SIGTERM',stop);}return 0;
   }
   if(command==='run inspect'){emit(taskResult(await inspectResearchTask({projectDir,runId})));return 0;}
   if(command==='run cancel'){await cancelResearchTask({projectDir,runId});emit(taskResult(await inspectResearchTask({projectDir,runId})));return 0;}
