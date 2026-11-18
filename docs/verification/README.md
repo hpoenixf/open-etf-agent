@@ -1,5 +1,7 @@
 **English** | [简体中文](README.zh-CN.md)
 
+- [v0.33 A17: material lifecycle, operator-reviewed 9/10 and retained unknown billing](v033-release.md)
+
 - [0.32 candidate: local dynamic queries, budgets, recovery and DeepSeek ten-task evidence](v032-release-readiness.md)
 - [Unreleased 0.32: real E5, restored Go prepared-path 10/10, answerability audit and remaining dynamic scope](v032-progress-20261117.md)
 
