@@ -37,3 +37,19 @@ guarantee of defect-free operation, financial accuracy or production suitability
 The user approved publication with the stated limits.
 
 [Detailed design and evidence](../../openspec/changes/v033-research-material-assets/evidence.md)
+
+## Release-package CI timing correction
+
+The first metadata candidate CI [44278711943](https://github.com/hpoenixf/open-etf-agent/actions/runs/44278711943)
+reported 1,505 passed, one failed and four skipped. The unchanged typed acquisition
+test expected an unknown outcome after a 30 ms wall-clock timeout, without first
+ensuring that its tokenizer had started. The owner timer already covers durable
+attempt publication. An injected delay at that real filesystem boundary reproduced
+a pre-dispatch timeout: zero tokenizer calls, `failed`, zero adapter invocations,
+no response and no automatic replay. After dispatch, the corresponding controlled
+timeout correctly records `unknown` and retains the late-work publication fence.
+
+The test now advances the same owner timeout only after observing tokenizer entry,
+and separately checks timeout before dispatch. It does not accept both states for
+one path, increase the timeout, alter production code or retry model requests.
+The original CI failure remains linked rather than being rewritten as a pass.
