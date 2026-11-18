@@ -153,3 +153,19 @@ insufficient-evidence tasks do not invent answers. Detailed content assessment i
 separate from Runtime completion. No general semantic/financial qualification,
 dynamic acquisition, physical embedding budget, crash/fence recovery or full
 0.32 release follows. See the [dated live record](../../../docs/verification/v032-live-20261117.md).
+
+## 2026-11-18 user authorization and block clarification
+
+The user authorizes continued project work and requests removal of the reported
+block. General project permission is no longer an outstanding decision. Source
+inspection found no existing dynamic-query feature switch to enable: the current
+Run consumes frozen evidence, while in-Run acquisition, physical-attempt budget
+ownership and durable dynamic recovery still need implementation and verification.
+
+The earlier handoff records a refused/interrupted review of another unpublished
+candidate; the original refusal output and exact reason were not recovered in
+this inspection. Preserve that record and do not retry/import the stopped operation
+as a workaround. Do not turn that historical event into a blanket claim that all
+future feature development is prohibited. User authorization is not represented as
+overriding platform safeguards. No code gate was removed and no new capability is
+claimed enabled by this dated clarification; the original release scope remains.
