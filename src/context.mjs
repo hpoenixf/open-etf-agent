@@ -1,13 +1,18 @@
 import { validateSource } from './source.mjs';
+import { ORIGINAL_READ_CORRECTION } from './run-control.mjs';
 const fail = message => { throw new Error(message); };
 const citationAdvice = 'The report text contains a numbered citation without an acquired source or registered calculation. Every literal numbered marker is checked, including examples and statements that a citation was not used. Remove or correct unsupported markers in text. Keep already-valid sourceIds unchanged: documentId is not sourceId; do not remove its version/page suffix or replace it with a resultRef. This explanation does not grant another attempt or change the Host correction limit.';
 export function projectControlProofs(messages){
  const projected=structuredClone(messages);
- for(const m of projected)if(m.role==='tool'&&['builtin-report-reference-validation@1','specialist-group-refusal@1'].includes(m.result?.validation?.schemaVersion)){
+ for(const m of projected)if(m.role==='tool'&&['builtin-report-reference-validation@1','specialist-group-refusal@1',ORIGINAL_READ_CORRECTION].includes(m.result?.validation?.schemaVersion)){
   const v=m.result.validation;
   // Model-facing explanation only. The persisted proof and its private basis
   // remain unchanged; only the original Host/Runtime decides correction scope.
   if(v.schemaVersion==='builtin-report-reference-validation@1'&&v.code==='REPORT_CITATION_OUT_OF_RANGE'&&v.repairable===true&&m.result.error===v.code&&m.callId===m.result.callId&&m.result.status==='rejected'&&m.result.dispatched===false)m.result.repairAdvice=citationAdvice;
+  if(m===projected.at(-1)&&v.schemaVersion===ORIGINAL_READ_CORRECTION&&v.code==='READ_RESULT_ORIGINAL_SELECTION'&&v.repairable===true&&
+    m.result.error===v.code&&m.callId===m.result.callId&&m.result.status==='rejected'&&m.result.dispatched===false){
+   m.result.repairAdvice='Reissue only read_result with the same resultRef and omit selection. Original sources can only be reread as a whole.';
+  }
   m.result.validation={schemaVersion:v.schemaVersion,code:v.code,repairable:v.repairable,requestHash:v.requestHash};
  }
  return projected;

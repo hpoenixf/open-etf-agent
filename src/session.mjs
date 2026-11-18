@@ -1,7 +1,7 @@
 import {knowledgeQuerySchemas,hasKnowledgeQueryTables,validateKnowledgeQueryConfig,validateKnowledgeQueryDatabase,createSessionKnowledgeQueries} from './knowledge-query-session.mjs';
 import {verifyReportDeliveryState,publicReportAssessment} from './report-assessment.mjs';
 import {INTERACTION_PROFILE, validateInteractionConfig, validateInteractionDefinition, validateInteractionCheckpoint, validateInteractionFacts, interactionResult, interactionAdoptionHash} from './human-interaction.mjs';
-import { validateControlObservations } from './run-control.mjs';
+import { validateControlObservations, ORIGINAL_READ_CORRECTION } from './run-control.mjs';
 import { SCHEDULE_PROFILE, prepareSchedule, validateScheduleReference, scheduleCanonical } from './schedule.mjs';
 import { searchPages } from './retrieval.mjs';
 import { validateProtectedHostSnapshot, validateProtectedCsvResult } from './tools.mjs';
@@ -762,6 +762,22 @@ export async function openSession({ directory, clock = Date.now, leaseMs = 1000,
     },
     checkpoint(snapshot) { const encoded = encodeCheckpoint(snapshot); return transaction(() => {
      const row=writer(runId, owner, fence),proof=snapshot.result?.validation;
+     if(proof?.schemaVersion===ORIGINAL_READ_CORRECTION){
+      const prior=parsed(row.snapshot,MAX_CHECKPOINT_JSON);
+      const definition=parsed(row.definition,65536);
+      const call=prior.proposal?.calls?.[0];
+      const source=prior.host?.results?.find(entry=>entry.kind==='source'&&entry.resultRef===proof.resultRef);
+      if(definition.config.hostProjection!=='host-results@3'||prior.phase!=='proposal-sealed'||prior.cursor!==0||
+        prior.proposal?.calls?.length!==1||call?.name!=='read_result'||call.arguments.resultRef!==proof.resultRef||
+        proof.runId!==runId||proof.grantId!==definition.grantId||!source||source.recordSha256!==proof.sourceRecordSha256||
+        proof.requestHash!==createHash('sha256').update(canonical(call)).digest('hex')||prior.inFlight||
+        prior.gatewayOutcome!=='settled'||prior.unknownEffects.length||prior.partialEffects.length||
+        snapshot.phase!=='result-committed'||snapshot.cursor!==0||snapshot.result.dispatched!==false||
+        snapshot.result.callId!==call.id||snapshot.toolsDispatched!==prior.toolsDispatched||
+        canonical(snapshot.proposal)!==canonical(prior.proposal)||canonical(snapshot.host)!==canonical(prior.host)){
+       fail('ORIGINAL_READ_CORRECTION_TRANSITION');
+      }
+     }
      if(proof?.schemaVersion==='builtin-report-reference-validation@1'){
       const prior=parsed(row.snapshot,MAX_CHECKPOINT_JSON),definition=parsed(row.definition,65536),call=prior.proposal?.calls?.[prior.cursor];
       if(snapshot.phase!=='result-committed'||prior.phase!=='proposal-sealed'||prior.cursor!==0||prior.proposal?.calls?.length!==1||call?.name!=='save_report'||canonical(snapshot.proposal)!==canonical(prior.proposal)||snapshot.cursor!==prior.cursor||proof.runId!==runId||proof.grantId!==definition.grantId||proof.requestHash!==createHash('sha256').update(canonical(call)).digest('hex')||canonical(proof.basis)!==canonical(prior.host?.results)||canonical(snapshot.host)!==canonical(prior.host)||prior.host?.saveAttempted!==false||prior.host?.receipt!==null||prior.inFlight||prior.gatewayOutcome!=='settled'||prior.unknownEffects?.length||prior.partialEffects?.length||snapshot.result.dispatched!==false||snapshot.result.callId!==call.id)fail('REFERENCE_CORRECTION_TRANSITION');

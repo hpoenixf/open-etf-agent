@@ -1,7 +1,7 @@
 import {settleAsyncChildExecutions} from './child-execution.mjs';
 import {publicReportAssessment} from './report-assessment.mjs';
 import {INTERACTION_PROFILE, hasInteractionBinding, validateInteractionCheckpoint, validateInteractionConfig} from './human-interaction.mjs';
-import { decideRunControl, validateControlObservations, controlErrorCode } from './run-control.mjs';
+import { decideRunControl, validateControlObservations, controlErrorCode, ORIGINAL_READ_CORRECTION, matchesOriginalReadCorrection } from './run-control.mjs';
 import { validateSchedule, scheduleRunId, hasScheduleComposition, validateScheduleCompositionScope } from './schedule.mjs';
 import { RESPONSE_PROFILE, RESPONSE_BINDING, hasResponseComposition, validateResponseCheckpoint, validateResponseCall } from './human-response.mjs';
 import { createTaskTime, validateTaskTime, projectTaskTime, taskTimeMessage } from './temporal.mjs';
@@ -223,7 +223,12 @@ async function drive({ question, gateway, outputRoot='runs', requireReport=false
           const message=state.messages[i+1+j];if(message?.role!=='tool')break;
           const result=message.result;
           if((result.partialPaths||[]).some(path=>['report.md','manifest.json'].includes(path))||result.artifactEffects||result.memoryEffect)partial=true;
-          if(!partial&&group.calls.length===1&&message.callId===group.calls[0].id&&host.correctionEligible(group.calls[0],result))count++;
+          if(!partial&&group.calls.length===1&&message.callId===group.calls[0].id&&host.correctionEligible(group.calls[0],result)){
+            count++;
+            const next=state.messages[i+2];
+            if(result.validation.schemaVersion===ORIGINAL_READ_CORRECTION&&next&&
+              !matchesOriginalReadCorrection({kind:'calls',calls:next.calls},result.validation.resultRef))throw failure('RECOVERY_CORRECTION_MISMATCH');
+          }
         }
       }
       if(!Number.isSafeInteger(state.corrections??0)||(state.corrections??0)!==Math.min(count,1)||(count>1&&state.failureCode!=='CORRECTION_LIMIT'))throw failure('RECOVERY_CORRECTION_MISMATCH');
@@ -450,6 +455,9 @@ async function drive({ question, gateway, outputRoot='runs', requireReport=false
             throw error;
           }
           state.gatewayOutcome='settled';validateProposal(proposal);
+          const lastValidation=state.messages.at(-1)?.result?.validation;
+          if(lastValidation?.schemaVersion===ORIGINAL_READ_CORRECTION&&
+            !matchesOriginalReadCorrection(proposal,lastValidation.resultRef))throw failure('READ_RESULT_CORRECTION_REQUIRED');
           if(proposal.kind==='calls'){if(proposal.calls.some(c=>c.name==='ask_response')){if(!ordinaryResponse||proposal.calls.length!==1)throw failure('INVALID_ORDINARY_RESPONSE');validateResponseCall(proposal.calls[0]);if(multiResponse?durable.store.responseHistory(runId).length>=interaction.maxQuestions:durable.store.responseStatus(runId))throw failure('QUESTION_LIMIT');}const ids=new Set();for(const c of proposal.calls){if(state.usedIds.includes(c.id)||ids.has(c.id))throw failure('DUPLICATE_CALL_ID');ids.add(c.id);}if(state.toolsDispatched+proposal.calls.length>budget.maxTools)throw failure('TOOL_LIMIT');}
           // Use the original Session codec before mutating the recoverable state.
           // A malformed JS-only Gateway result must not poison its own failure checkpoint.
@@ -459,6 +467,7 @@ async function drive({ question, gateway, outputRoot='runs', requireReport=false
           await checkpoint('proposal-sealed');await record('model_proposal',{kind:proposal.kind,callIds:proposal.calls?.map(c=>c.id)||[],usage:proposal.usage??null,cost:null,durationMs:performance.now()-start});
         }
         if(state.proposal.kind==='final'){
+          if(state.messages.at(-1)?.result?.validation?.schemaVersion===ORIGINAL_READ_CORRECTION)throw failure('RECOVERY_CORRECTION_MISMATCH');
           state.answer=state.proposal.text;
           if(protectedMode&&requireReport&&!host.receipt)throw failure('REPORT_REQUIRED');
           if(publication)await publishAnswer();else await settleAsyncChildExecutions(extensions,{phase:'before-final',signal:controller.signal});
