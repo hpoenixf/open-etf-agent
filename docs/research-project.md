@@ -124,6 +124,51 @@ node --input-type=module -e 'import fs from "node:fs"; fs.writeFileSync("researc
 
 Supply `--memory-intents research-example/intents.json` to a **new** `run submit`, and state the requested approved change in its question. `approve-intent` returns a content-bound one-time intent, not a write receipt. Revision/forget intents also require `--entry` and `--revision`. Reading Memory is not permission to write; the model cannot approve or expand an intent. Forgotten entries use the original tombstone/revision semantics, not a promise of physical erasure.
 
+For one ordinary question in a Memory-enabled project, submit
+with `--memory-mode temporary` instead of `--memory-intents`:
+
+```sh
+node src/research-cli.mjs run submit --project research-example/project \
+  --run source-only-1 --question research-example/question.txt --manifest MANIFEST_SHA256 \
+  --memory-mode temporary
+```
+
+On a live project, pass the same existing live approvals as for any other
+submission. This choice is fixed at submit; worker restart and readback use the
+original task choice. It does not open the project Memory library, publish
+Memory tools, or apply Memory write intents. Omitting the option on a new task
+keeps normal behavior, and retrying the same temporary identity requires the
+same explicit option. This first scope covers ordinary tasks only; a
+configuration with scheduled runs, Child or trusted tool packages cannot
+select it. It does not delete the library, hide the task/report from the local
+project, or change provider-side retention.
+
+For read-only selection in an ordinary Run, write an array of existing active
+entry IDs to a local JSON file and pass `--memory-mode selected --memory-entries
+entries.json` instead. Selection freezes up to sixteen IDs with their current
+revisions and hashes. A revised, paused or forgotten entry is unavailable in
+that Run, not replaced by newer text. For selected mode, managed compaction is
+also outside this initial scope; the old default modes are unchanged.
+
+```sh
+node src/research-cli.mjs memory inspect --project research-example/project --status
+node src/research-cli.mjs memory inspect --project research-example/project --entry ENTRY_ID --status
+node src/research-cli.mjs memory pause --project research-example/project --entry ENTRY_ID --revision CURRENT --intent pause-1 --approve-intent
+node src/research-cli.mjs memory restore --project research-example/project --entry ENTRY_ID --revision PAUSED --intent restore-1 --approve-intent
+node src/research-cli.mjs run memory --project research-example/project --run selected-1
+```
+
+Use `pin` and `unpin` with the same explicit revision/intent flags. A pin
+protects against pausing but not an explicit forget; a forgotten ID cannot be
+restored. These are operator operations, not additional model write tools.
+A read-only run audit distinguishes frozen selection and recalled observations
+from completed uses evidenced by a matching original Admission ticket. Its
+view never returns preference text. Revocation before the final index snapshot
+blocks an outdated typed outgoing request, not earlier dispatch or arbitrary
+historical text.
+
+
+
 A `response` project can ask one ordinary question and wait. `run inspect` exposes `phase`, `response.questionId` and question text. Reply using an explicit text file, then continue the same run:
 
 ```sh
@@ -153,7 +198,7 @@ After `npm run build`, import from `./dist/src/research-project.mjs` and `./dist
 
 - `validateResearchConfig`, `createResearchProject({directory,config})`, `inspectResearchProject({projectDir})`, `updateResearchProject({projectDir,config,expectedConfigSha256})`.
 - `importProjectSources({projectDir,files})`, `loadProjectSources({projectDir,manifestSha256})`.
-- `submitResearchTask({projectDir,runId,question,sourceManifestSha256,authorization,memoryIntents,taskTime,schedule})`.
+- `submitResearchTask({projectDir,runId,question,sourceManifestSha256,authorization,memoryMode,memoryEntryIds,memoryIntents,taskTime,schedule})`.
 - `workResearchTask({projectDir,runId,apiKey,hostSignal})`, `inspectResearchTask`, `cancelResearchTask`.
 - `respondResearchTask({projectDir,runId,questionId,responseId,text})`, `readResearchReport({projectDir,runId})`.
 - `approveProjectMemoryIntent` and `applyProjectMemoryIntent`, with explicit operation, intent identity, approved text and current revision where required.

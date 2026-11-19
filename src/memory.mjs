@@ -18,7 +18,7 @@ async function replaceIndex(directory,index){
 }
 function validateIndex(index){
   if(index?.schemaVersion!=='explicit-memory@1'||!idPattern.test(index.libraryId)||!Array.isArray(index.entries)||index.entries.length>64)fail('Corrupt Memory index');
-  const seen=new Set();for(const item of index.entries){if(!item||!idPattern.test(item.id)||seen.has(item.id)||!Number.isSafeInteger(item.revision)||item.revision<1||typeof item.active!=='boolean'||!hashPattern.test(item.recordHash)||!(item.sha256===null||hashPattern.test(item.sha256)))fail('Corrupt Memory entry identity');seen.add(item.id);}return index;
+  const seen=new Set();for(const item of index.entries){if(!item||!idPattern.test(item.id)||seen.has(item.id)||!Number.isSafeInteger(item.revision)||item.revision<1||typeof item.active!=='boolean'||!hashPattern.test(item.recordHash)||!(item.sha256===null||hashPattern.test(item.sha256)))fail('Corrupt Memory entry identity');if(item.pinned!==undefined&&(item.active!==true||item.pinned!==true))fail('Corrupt pinned Memory identity');if(item.pausedFrom!==undefined&&(item.active!==false||item.sha256!==null||item.revision<2||!hashPattern.test(item.pausedFrom)))fail('Corrupt paused Memory identity');seen.add(item.id);}return index;
 }
 function candidateText(value){if(!value||Object.keys(value).join(',')!=='text'||typeof value.text!=='string'||!value.text.trim()||Buffer.byteLength(value.text)>8000)fail('Invalid Memory text');if(/\b(password|passwd|api[_ -]?key|secret[_ -]?key|access[_ -]?token)\s*[:=]/i.test(value.text)||/-----BEGIN [A-Z ]*PRIVATE KEY-----/.test(value.text))fail('Sensitive Memory value refused');return value.text;}
 export async function openMemoryLibrary({directory,writable=false}={}){
@@ -34,12 +34,35 @@ export async function openMemoryLibrary({directory,writable=false}={}){
   const ready=()=>{if(closed||closing)fail('Memory library closed');};
   async function current(){await safeDirectory(directory);const latest=validateIndex(await readJSON(join(directory,'memory-index.json')));if(latest.libraryId!==libraryId)fail('Memory library identity changed');return latest;}
   async function metadata(id){if(!idPattern.test(id))fail('Invalid Memory entry id');return(await current()).entries.find(item=>item.id===id);}
-  async function readActive(id,item){const path=await safeDirectory(join(directory,'entries',id));const record=await readJSON(join(path,item.revision+'.json'),16384);if(sha256(JSON.stringify(record))!==item.recordHash||record.kind!=='memory-entry'||record.libraryId!==libraryId||record.id!==id||record.revision!==item.revision||record.sha256!==item.sha256||sha256(record.text)!==item.sha256)fail('Corrupt Memory record identity');return record;}
+  async function readActive(id,item){const path=await safeDirectory(join(directory,'entries',id));const record=await readJSON(join(path,item.revision+'.json'),16384);if(sha256(JSON.stringify(record))!==item.recordHash||record.kind!=='memory-entry'||record.libraryId!==libraryId||record.id!==id||record.revision!==item.revision||record.sha256!==item.sha256||sha256(record.text)!==item.sha256||record.pinned!==undefined&&record.pinned!==true||record.pinned!==item.pinned)fail('Corrupt Memory record identity');return record;}
   async function read(id){ready();const item=await metadata(id);if(!item?.active)fail('Memory entry forgotten or unavailable');return readActive(id,item);}
+  async function withheldRecord(id,item){
+    const path=await safeDirectory(join(directory,'entries',id)),record=await readJSON(join(path,item.revision+'.json'),16384);
+    const paused=item.pausedFrom!==undefined;
+    if(item.active!==false||item.sha256!==null||record.kind!==(paused?'memory-paused':'memory-tombstone')||record.libraryId!==libraryId||record.id!==id||record.revision!==item.revision||record.pausedFrom!==item.pausedFrom||Object.hasOwn(record,'text')||sha256(JSON.stringify(record))!==item.recordHash)fail(paused?'Corrupt paused Memory identity':'Corrupt Memory tombstone identity');
+    return record;
+  }
   async function unavailable(id,item){
-    // A tombstone is a positive owner fact, not a caught read or integrity error.
-    if(item){const path=await safeDirectory(join(directory,'entries',id));const record=await readJSON(join(path,item.revision+'.json'),16384);if(item.active!==false||item.sha256!==null||record.kind!=='memory-tombstone'||record.libraryId!==libraryId||record.id!==id||record.revision!==item.revision||Object.hasOwn(record,'text')||sha256(JSON.stringify(record))!==item.recordHash)fail('Corrupt Memory tombstone identity');}
-    return {kind:'memory-unavailable',libraryId,id,revision:item?.revision??0,reason:item?'forgotten':'not-found',recordHash:item?.recordHash??null};
+    if(item)await withheldRecord(id,item);
+    return {kind:'memory-unavailable',libraryId,id,revision:item?.revision??0,reason:item?(item.pausedFrom!==undefined?'paused':'forgotten'):'not-found',recordHash:item?.recordHash??null};
+  }
+  async function readSelected(selection){
+    ready();const {id,revision,sha256}=selection;
+    const eligible=item=>item?.active===true&&item.revision===revision&&item.sha256===sha256;
+    const item=await metadata(id);if(!eligible(item))return null;
+    const result=await readActive(id,item);
+    return eligible(await metadata(id))?result:null;
+  }
+  async function describeStatus(id,item){
+    if(!item)return {kind:'memory-status',libraryId,id,status:'missing',revision:0};
+    const record=item.active?await readActive(id,item):await withheldRecord(id,item);
+    return {kind:'memory-status',libraryId,id,status:item.active?'active':item.pausedFrom!==undefined?'paused':'forgotten',revision:item.revision,sha256:item.sha256,recordHash:item.recordHash,pinned:item.pinned===true,provenance:record.provenance};
+  }
+  async function inspect(id){ready();return describeStatus(id,await metadata(id));}
+  async function inspectAll(){
+    ready();const items=(await current()).entries;
+    const entries=[];for(const item of items)entries.push(await describeStatus(item.id,item));
+    return {kind:'memory-status-list',libraryId,entries};
   }
   async function readOptional(id){ready();const item=await metadata(id);return item?.active?readActive(id,item):unavailable(id,item);}
   async function verifyReadObservation(value,id){
@@ -48,7 +71,7 @@ export async function openMemoryLibrary({directory,writable=false}={}){
     if(value.kind==='memory-entry'){
       // Verify original immutable bytes, including an old acknowledged entry.
       // Forgetting still removes its text from the future working projection.
-      if(Object.keys(value).sort().join(',')!=='id,kind,libraryId,provenance,revision,sha256,text'||!item||!Number.isSafeInteger(value.revision)||value.revision<1||value.revision>item.revision||typeof value.text!=='string'||!value.text.trim()||Buffer.byteLength(value.text)>8000||sha256(value.text)!==value.sha256||!value.provenance||Object.keys(value.provenance).sort().join(',')!=='intentId,operation,origin'||!['save','revise'].includes(value.provenance.operation)||!['intentId','origin'].every(k=>typeof value.provenance[k]==='string'&&/^[A-Za-z0-9_-]{1,100}$/.test(value.provenance[k])))fail('Invalid Memory entry observation');
+      if(Object.keys(value).sort().join(',')!==(value.pinned===true?'id,kind,libraryId,pinned,provenance,revision,sha256,text':'id,kind,libraryId,provenance,revision,sha256,text')||!item||!Number.isSafeInteger(value.revision)||value.revision<1||value.revision>item.revision||typeof value.text!=='string'||!value.text.trim()||Buffer.byteLength(value.text)>8000||sha256(value.text)!==value.sha256||!value.provenance||Object.keys(value.provenance).sort().join(',')!=='intentId,operation,origin'||!['save','revise','restore','pin','unpin'].includes(value.provenance.operation)||!['intentId','origin'].every(k=>typeof value.provenance[k]==='string'&&/^[A-Za-z0-9_-]{1,100}$/.test(value.provenance[k])))fail('Invalid Memory entry observation');
       const path=await safeDirectory(join(directory,'entries',id)),record=await readJSON(join(path,value.revision+'.json'),16384);
       if(JSON.stringify(record)!==JSON.stringify(value)||value.revision===item.revision&&(!item.active||sha256(JSON.stringify(record))!==item.recordHash||value.sha256!==item.sha256))fail('Memory entry observation mismatch');
       if(!item.active)await unavailable(id,item);return true;
@@ -58,28 +81,47 @@ export async function openMemoryLibrary({directory,writable=false}={}){
     if(Object.keys(expected).some(key=>value[key]!==expected[key]))fail('Memory unavailable observation mismatch');return true;
   }
   function mutate(operation,id,expectedRevision,value,options={}){
-    ready();if(!writable)fail('Memory library is read only');const signal=options.signal;signal?.throwIfAborted();const intent=structuredClone(options.intent);const text=operation==='forget'?undefined:candidateText(value);
+    ready();if(!writable)fail('Memory library is read only');const signal=options.signal;signal?.throwIfAborted();const intent=structuredClone(options.intent);let text=['forget','pause','restore','pin','unpin'].includes(operation)?undefined:candidateText(value);
     const work=queue.then(async()=>{
       signal?.throwIfAborted();const latest=await current();const old=id?latest.entries.find(item=>item.id===id):null;
-      if(operation!=='save'){if(!old?.active)fail('Memory entry forgotten or unavailable');if(old.revision!==expectedRevision)fail('Memory revision conflict');}
-      if(!intent||intent.explicit!==true||intent.libraryId!==libraryId||intent.operation!==operation||typeof intent.intentId!=='string'||!/^[A-Za-z0-9_-]{1,100}$/.test(intent.intentId)||typeof intent.origin!=='string'||!/^[A-Za-z0-9_-]{1,100}$/.test(intent.origin)||(text!==undefined&&intent.approvedTextHash!==sha256(text))||(operation!=='save'&&(intent.entryId!==id||intent.expectedRevision!==expectedRevision)))fail('Missing or mismatched authorized Memory intent/library/operation/content');
+      if(operation!=='save'){
+        const paused=old?.pausedFrom!==undefined;
+        if(!old||(operation==='restore'?!paused:!old.active&&!(operation==='forget'&&paused)))fail('Memory entry forgotten or unavailable');
+        if(old.revision!==expectedRevision)fail('Memory revision conflict');
+        if(operation==='pause'&&old.pinned===true)fail('Pinned Memory must be unpinned before pause');
+        if(operation==='pin'||operation==='unpin'){
+          if((old.pinned===true)===(operation==='pin'))fail('No Memory pin change');
+          text=(await readActive(id,old)).text;
+        }
+        if(paused){
+          await withheldRecord(id,old);
+          if(operation==='restore'){
+            const prior=await readJSON(join(await safeDirectory(join(directory,'entries',id)),(old.revision-1)+'.json'),16384);
+            if(prior.kind!=='memory-entry'||prior.libraryId!==libraryId||prior.id!==id||prior.revision!==old.revision-1||sha256(JSON.stringify(prior))!==old.pausedFrom||typeof prior.text!=='string'||sha256(prior.text)!==prior.sha256)fail('Corrupt paused Memory source');
+            text=prior.text;
+          }
+        }
+      }
+      if(!intent||intent.explicit!==true||intent.libraryId!==libraryId||intent.operation!==operation||typeof intent.intentId!=='string'||!/^[A-Za-z0-9_-]{1,100}$/.test(intent.intentId)||typeof intent.origin!=='string'||!/^[A-Za-z0-9_-]{1,100}$/.test(intent.origin)||(['save','revise'].includes(operation)&&intent.approvedTextHash!==sha256(text))||(operation!=='save'&&(intent.entryId!==id||intent.expectedRevision!==expectedRevision)))fail('Missing or mismatched authorized Memory intent/library/operation/content');
       if(operation==='save'&&latest.entries.length>=64)fail('Memory entry limit');
       const reserved=join(directory,'intents');await safeDirectory(reserved);const reservation=sha256(intent.intentId)+'.json';
       try{await publishImmutable(reserved,reservation,JSON.stringify({libraryId,intent})+'\n',signal);}catch(error){if(error.code==='EEXIST')fail('Memory intent already consumed');throw error;}
       const entryId=id||randomUUID();const revision=(old?.revision||0)+1;const partialPaths=['intents/'+reservation];
       try{
-        const record={kind:operation==='forget'?'memory-tombstone':'memory-entry',libraryId,id:entryId,revision,...(text===undefined?{}:{text,sha256:sha256(text)}),provenance:{intentId:intent.intentId,origin:intent.origin,operation}};
+        const pinned=operation==='pin'||operation==='revise'&&old.pinned===true;
+        const record={kind:operation==='forget'?'memory-tombstone':operation==='pause'?'memory-paused':'memory-entry',libraryId,id:entryId,revision,...(text===undefined?{}:{text,sha256:sha256(text)}),...(operation==='pause'?{pausedFrom:old.recordHash}:{}),...(pinned?{pinned:true}:{}),provenance:{intentId:intent.intentId,origin:intent.origin,operation}};
         const recordHash=sha256(JSON.stringify(record));const folder=await ensureSafeDirectory(join(directory,'entries',entryId));await publishImmutable(folder,revision+'.json',JSON.stringify(record)+'\n',signal);partialPaths.push('entries/'+entryId+'/'+revision+'.json');
-        const item={id:entryId,revision,active:operation!=='forget',sha256:text===undefined?null:sha256(text),recordHash};const entries=latest.entries.filter(entry=>entry.id!==entryId);entries.push(item);signal?.throwIfAborted();await replaceIndex(directory,{...latest,entries});
-        return{kind:'memory-write-receipt',libraryId,id:entryId,revision,sha256:item.sha256,operation:{save:'saved',revise:'revised',forget:'forgotten'}[operation],intentId:intent.intentId,recordHash};
+        const item={id:entryId,revision,active:!['forget','pause'].includes(operation),sha256:text===undefined?null:sha256(text),recordHash,...(operation==='pause'?{pausedFrom:old.recordHash}:{}),...(pinned?{pinned:true}:{})};const entries=latest.entries.filter(entry=>entry.id!==entryId);entries.push(item);signal?.throwIfAborted();await replaceIndex(directory,{...latest,entries});
+        return{kind:'memory-write-receipt',libraryId,id:entryId,revision,sha256:item.sha256,operation:{save:'saved',revise:'revised',forget:'forgotten',pause:'paused',restore:'restored',pin:'pinned',unpin:'unpinned'}[operation],intentId:intent.intentId,recordHash};
       }catch(error){error.partialPaths=partialPaths;error.intentConsumed=true;error.memoryEffect={kind:'memory-partial-effect',libraryId,intentId:intent.intentId,entryId,revision,intentConsumed:true,revisionPublished:partialPaths.length>1};throw error;}
     });queue=work.catch(()=>{});return work;
   }
   return Object.freeze({libraryId,
     async list(){ready();return(await current()).entries.filter(item=>item.active).map(({recordHash,...item})=>({libraryId,...item}));},
     async search(query){ready();if(typeof query!=='string'||!query.trim()||query.length>256)fail('Invalid Memory search');const active=(await current()).entries.filter(item=>item.active);const results=[];for(const item of active){const value=await read(item.id);if(value.text.toLowerCase().includes(query.toLowerCase()))results.push(value);}return results;},
-    read,readOptional,verifyReadObservation,async state(id){ready();const item=await metadata(id);return item?{libraryId,...item}:{libraryId,id,active:false,revision:0,sha256:null};},
-    save:async(value,options)=>mutate('save',null,null,value,options),revise:async(id,revision,value,options)=>mutate('revise',id,revision,value,options),forget:async(id,revision,options)=>mutate('forget',id,revision,null,options),
+    read,readOptional,readSelected,inspect,inspectAll,verifyReadObservation,
+    async snapshotState(ids){ready();const latest=await current();const selected=ids===undefined?null:new Set(ids);return latest.entries.filter(entry=>!selected||selected.has(entry.id)).map(entry=>({libraryId,...entry}));},async state(id){ready();const item=await metadata(id);return item?{libraryId,...item}:{libraryId,id,active:false,revision:0,sha256:null};},
+    save:async(value,options)=>mutate('save',null,null,value,options),revise:async(id,revision,value,options)=>mutate('revise',id,revision,value,options),forget:async(id,revision,options)=>mutate('forget',id,revision,null,options),pause:async(id,revision,options)=>mutate('pause',id,revision,null,options),restore:async(id,revision,options)=>mutate('restore',id,revision,null,options),pin:async(id,revision,options)=>mutate('pin',id,revision,null,options),unpin:async(id,revision,options)=>mutate('unpin',id,revision,null,options),
     async close(){if(closed)return;closing=true;await queue;await release();closed=true;}
   });
 }

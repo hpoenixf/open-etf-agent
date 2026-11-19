@@ -22,6 +22,9 @@ import {createChatGateway} from './gateway.mjs';
 import {createSharedAdmission} from './admission.mjs';
 import {openMemoryLibrary} from './memory.mjs';
 import {openDurableMemory} from './durable-memory.mjs';
+import {isNativeMemoryTool} from './memory-tools.mjs';
+import {freezeMemorySelection,memoryEntryIdentities,normalizeMemoryIds,openSelectedMemory,validateMemorySelection as validateSelectedMemory} from './selected-memory.mjs';
+import {projectMemory} from './memory-projection.mjs';
 import {createSpecialistChildBinding,sourceCheckBinding} from './specialist-child.mjs';
 import {normalizeChildMethod} from './child.mjs';
 import {RESPONSE_PROFILE,RESPONSE_COMPOSITION_BINDING} from './human-response.mjs';
@@ -42,6 +45,11 @@ const keys=(v,allowed)=>{if(!object(v)||Object.keys(v).some(k=>!allowed.includes
 const integer=(v,min,max)=>Number.isSafeInteger(v)&&v>=min&&v<=max;
 const CAPABILITIES=['report','calculation','csv','memory','child','pdf','response','schedule','compaction','task-time','trusted-tools','knowledge'];
 const PROJECT_V1='research-project-record@1',PROJECT_V2='research-project-record@2';
+const TEMPORARY_MEMORY_MODE='temporary',SELECTED_MEMORY_MODE='selected',EXPLICIT_MEMORY_TASK='research-task@3';
+function projectTaskSchema(version,memoryMode){
+ if([TEMPORARY_MEMORY_MODE,SELECTED_MEMORY_MODE].includes(memoryMode))return EXPLICIT_MEMORY_TASK;
+ return version===PROJECT_V2?'research-task@2':'research-task@1';
+}
 // Project locates the existing Admission owner. It never settles its tickets.
 function capacityBinding(config,projectVersion){
  if(projectVersion===PROJECT_V1)return {policy:'gateway-config@1',groupId:hash(config.gateway)};
@@ -54,8 +62,11 @@ function capacityBinding(config,projectVersion){
 }
 function taskCapacity(definition,project){
  const binding=capacityBinding(definition.config,project.schemaVersion);
- if(project.schemaVersion===PROJECT_V2){if(definition.schemaVersion!=='research-task@2'||canonical(definition.admission)!==canonical(binding))fail('PROJECT_CAPACITY_BINDING_CHANGED');}
- else if(definition.schemaVersion!=='research-task@1'||Object.hasOwn(definition,'admission'))fail('PROJECT_CAPACITY_BINDING_CHANGED');
+ // Older readers reject the explicit Memory task schema before assembling a Memory
+ // owner. The shared capacity identity itself stays in the original owner.
+ if(definition.schemaVersion!==projectTaskSchema(project.schemaVersion,definition.memoryMode))fail('PROJECT_CAPACITY_BINDING_CHANGED');
+ if(project.schemaVersion===PROJECT_V2){if(canonical(definition.admission)!==canonical(binding))fail('PROJECT_CAPACITY_BINDING_CHANGED');}
+ else if(Object.hasOwn(definition,'admission'))fail('PROJECT_CAPACITY_BINDING_CHANGED');
  return binding;
 }
 async function requireCapacityRegistration(projectDir,group){
@@ -146,7 +157,20 @@ export async function updateResearchProject({projectDir,config,expectedConfigSha
 
 export async function openProjectSpecialists({projectDir,create=false}){projectDir=await safeDirectory(projectDir);const project=await inspectResearchProject({projectDir});if(!project.config.capabilities.includes('child'))fail('PROJECT_CHILD_REQUIRED');return openSpecialistProfiles({directory:join(projectDir,'specialists'),projectId:project.projectId,create});}
 
-async function readTask(projectDir,runId){id(runId);await safeDirectory(projectDir);const record=await readProjectJson(join(projectDir,'tasks',runId+'.json'));keys(record,['definition','definitionSha256']);if(!object(record.definition)||hash(record.definition)!==record.definitionSha256||record.definition.runId!==runId)fail('PROJECT_TASK_CHANGED');taskKnowledgeVersion(record.definition);reportGuidanceFor(record.definition);reportDeliveryFor(record.definition);validateResearchConfig(record.definition.config);const project=await inspectResearchProject({projectDir});if(record.definition.projectId!==project.projectId)fail('PROJECT_IDENTITY_CHANGED');taskCapacity(record.definition,project);if(record.definition.specialistSelection!==undefined)verifySpecialistSelection(record.definition.specialistSelection,record.definition.config.childExecution,project.projectId);return record.definition;}
+const TEMPORARY_MEMORY_UNSUPPORTED=['schedule','child','trusted-tools'];
+function validateMemorySelection({memoryMode,memoryIntents,config,schedule}){
+ if(memoryMode===undefined)return;
+ if(![TEMPORARY_MEMORY_MODE,SELECTED_MEMORY_MODE].includes(memoryMode))fail('PROJECT_MEMORY_MODE');
+ if(schedule||!config.capabilities.includes('memory')||config.capabilities.some(c=>TEMPORARY_MEMORY_UNSUPPORTED.includes(c))||memoryMode===SELECTED_MEMORY_MODE&&config.capabilities.includes('compaction'))fail(memoryMode===TEMPORARY_MEMORY_MODE?'PROJECT_TEMPORARY_MEMORY_SCOPE':'PROJECT_SELECTED_MEMORY_SCOPE');
+ if(!Array.isArray(memoryIntents)||memoryIntents.length!==0)fail(memoryMode===TEMPORARY_MEMORY_MODE?'PROJECT_TEMPORARY_MEMORY_INTENTS':'PROJECT_SELECTED_MEMORY_INTENTS');
+}
+function projectMemoryEnabled(definition){return definition.memoryMode===undefined&&definition.config.capabilities.includes('memory');}
+function validateFrozenMemory(definition){
+ validateMemorySelection(definition);
+ if(definition.memoryMode===SELECTED_MEMORY_MODE){if(validateSelectedMemory(definition.memorySelection).libraryId!==definition.memoryLibraryId)fail('PROJECT_MEMORY_CHANGED');}
+ else if(definition.memorySelection!==undefined||definition.memoryMode===TEMPORARY_MEMORY_MODE&&definition.memoryLibraryId!==null)fail('PROJECT_MEMORY_CHANGED');
+}
+async function readTask(projectDir,runId){id(runId);await safeDirectory(projectDir);const record=await readProjectJson(join(projectDir,'tasks',runId+'.json'));keys(record,['definition','definitionSha256']);if(!object(record.definition)||hash(record.definition)!==record.definitionSha256||record.definition.runId!==runId)fail('PROJECT_TASK_CHANGED');taskKnowledgeVersion(record.definition);reportGuidanceFor(record.definition);reportDeliveryFor(record.definition);validateResearchConfig(record.definition.config);validateFrozenMemory(record.definition);const project=await inspectResearchProject({projectDir});if(record.definition.projectId!==project.projectId)fail('PROJECT_IDENTITY_CHANGED');taskCapacity(record.definition,project);if(record.definition.specialistSelection!==undefined)verifySpecialistSelection(record.definition.specialistSelection,record.definition.config.childExecution,project.projectId);return record.definition;}
 
 function taskKnowledgeVersion(definition){const version=Object.hasOwn(definition,'knowledgeVersion')?definition.knowledgeVersion:LEGACY_KNOWLEDGE_VERSION;if(![LEGACY_KNOWLEDGE_VERSION,KNOWLEDGE_VERSION,BM25_KNOWLEDGE_VERSION,BM25_HEALTH_KNOWLEDGE_VERSION,HYBRID_KNOWLEDGE_VERSION].includes(version)||definition.knowledgeVersion!==undefined&&!definition.config.capabilities.includes('knowledge'))fail('PROJECT_KNOWLEDGE_VERSION');return version;}
 function profile(config){if(config.knowledgeQuery)return 'local-knowledge-query@1';return config.capabilities.includes('response')?(config.interaction?INTERACTION_PROFILE:RESPONSE_PROFILE):config.capabilities.includes('schedule')?SCHEDULE_PROFILE:undefined;}
@@ -164,13 +188,28 @@ async function assemble(projectDir,definition,{gateway,apiKey,fetchImpl,hostSign
  if(!documents.length)fail('PROJECT_NO_SOURCES');
  const store=await openSession({directory:p.session,...(profile(config)?{profile:profile(config)}:{}),leaseMs:30000});let admission;const closers=[];
  try{
-  let selectedGateway=gateway;if(selectedGateway&&selectedGateway.mode!==config.gateway.mode)fail('PROJECT_GATEWAY_IDENTITY');
+  let selectedGateway=gateway,selectedMemory,defaultMemory;if(selectedGateway&&selectedGateway.mode!==config.gateway.mode)fail('PROJECT_GATEWAY_IDENTITY');
   if(selectedGateway&&config.gateway.mode==='live')fail('PROJECT_LIVE_GATEWAY_OVERRIDE');
   const requestContext=new AsyncLocalStorage();
   if(!selectedGateway){if(!dispatch)selectedGateway={mode:config.gateway.mode,next(){fail('PROJECT_SUBMIT_MUST_NOT_DISPATCH');}};else{if(config.gateway.mode!=='live')fail('PROJECT_FIXTURE_GATEWAY_REQUIRED');selectedGateway=createChatGateway({endpoint:config.gateway.endpoint,model:config.gateway.model,apiKey,authorization:definition.authorization,stream:config.gateway.stream??false,fetchImpl:fetchImpl?((url,options)=>fetchImpl(url,options,requestContext.getStore())):undefined});}}
   const originalGateway=selectedGateway;selectedGateway={mode:originalGateway.mode,...(originalGateway.inputBudget?{inputBudget:originalGateway.inputBudget}:{}),next(input){const r=input.reservation;const context=r?Object.freeze({role:r.purpose==='compaction'?'summary':r.runId===r.rootId?'main':'child',rootId:r.rootId,runId:r.runId,modelOrdinal:r.modelOrdinal,purpose:r.purpose??'main',inputHash:r.inputHash}):null;return requestContext.run(context,async()=>{try{const result=await originalGateway.next(input);if(config.gateway.mode==='live'&&typeof apiKey==='string'&&apiKey&&containsSecret(result,apiKey))fail('PROJECT_CREDENTIAL_ECHO');return result;}catch(error){if(config.gateway.mode==='live'&&typeof apiKey==='string'&&apiKey&&(String(error?.message).includes(apiKey)||String(error?.code).includes(apiKey)))fail('PROJECT_CREDENTIAL_ECHO');throw error;}});}};
   admission=await createSharedAdmission({directory:join(projectDir,'admission',group.groupId),routeId:group.groupId,existingOnly:group.policy==='project-endpoint-capacity@1',queueTimeoutMs:Math.min(config.limits.timeoutMs,config.childExecution?.schemaVersion==='child-execution@2'?300000:30000),pollMs:10});
-  const runId=definition.schedule?scheduleRunId(definition.schedule):definition.runId;const wrapped=admission.wrap(selectedGateway,{session:store,runId});
+  const runId=definition.schedule?scheduleRunId(definition.schedule):definition.runId;const memoryUseDirectory=join(projectDir,'memory-uses',definition.runId);
+  const memoryGate=async(input,ticket)=>{
+   const entries=memoryEntryIdentities(input.messages);
+   const ownsTypedMemory=entries.length>0||input.messages.some(m=>m.role==='tool'&&(m.result?.value?.kind==='memory-write-receipt'||m.result?.value?.kind==='derived-working-note'&&m.result.value.memoryRefs?.length>0));
+   if(!ownsTypedMemory)return;
+   if(selectedMemory&&entries.length>0){
+    const receipt={schemaVersion:'selected-memory-use@1',...ticket,entries};
+    await immutableJson(memoryUseDirectory,ticket.modelOrdinal+'.json',receipt);
+   }
+   // One read of the atomic Memory index defines the last eligibility cut,
+   // after queueing and after receipt I/O, before owner transition/encoding.
+   const lookupState=await (selectedMemory??defaultMemory).snapshotCurrentness();
+   const current=await projectMemory({messages:input.messages,lookupState});
+   if(hash(current)!==hash(input.messages))fail(selectedMemory?'PROJECT_SELECTED_MEMORY_CHANGED_BEFORE_SEND':'PROJECT_MEMORY_CHANGED_BEFORE_SEND');
+  };
+  const wrapped=admission.wrap(selectedGateway,{session:store,runId,...(definition.memoryMode===SELECTED_MEMORY_MODE||projectMemoryEnabled(definition)?{beforeDispatch:memoryGate}:{})});
   const adapters=[PUBLICATION_BINDING],extensions=[];let workingInput,knowledgeQueryEffects;const plugins=await loadProjectPlugins({projectDir,config});
   if(localEmbedding!==undefined&&!config.knowledgeQuery)fail('PROJECT_KNOWLEDGE_QUERY_NOT_ENABLED');
   if(embeddingBackend!==undefined&&(!config.knowledgeQuery||config.gateway.mode!=='fixture'))fail('PROJECT_KNOWLEDGE_QUERY_BACKEND_OVERRIDE');
@@ -185,7 +224,13 @@ async function assemble(projectDir,definition,{gateway,apiKey,fetchImpl,hostSign
    }else{const index=createKnowledgeIndex({catalog:sources.catalog,allowedDocuments:documents,config:config.knowledge,signal,version:taskKnowledgeVersion(definition),vectorEvidence:definition.knowledgeVectorEvidence});adapters.push(knowledgeBinding(index));extensions.push(createKnowledgeTool(index));}
   }
   if(caps.includes('response'))adapters.push(config.interaction?INTERACTION_BINDING:RESPONSE_COMPOSITION_BINDING);if(caps.includes('schedule'))adapters.push(SCHEDULE_COMPOSITION_BINDING);
-  if(caps.includes('memory')){const memory=await openDurableMemory({directory:p.memory,intents:definition.memoryIntents??[]});if(memory.libraryId!==definition.memoryLibraryId)fail('PROJECT_MEMORY_CHANGED');const writes=(definition.memoryIntents??[]).length>0;extensions.push(...memory.extensions.filter(t=>writes||!t.memoryEffect));adapters.push({id:'durable-memory',version:'1',contentSha256:memory.intentDigest});workingInput={memoryLibrary:memory};}
+  if(definition.memoryMode===SELECTED_MEMORY_MODE){
+   selectedMemory=await openSelectedMemory({directory:p.memory,selection:definition.memorySelection});
+   closers.push(selectedMemory.close);extensions.push(...selectedMemory.extensions);
+   adapters.push({id:'durable-memory-selected',version:'1',contentSha256:hash(definition.memorySelection)});
+   workingInput={memoryLibrary:selectedMemory.library};
+  }
+  if(projectMemoryEnabled(definition)){const memory=await openDurableMemory({directory:p.memory,intents:definition.memoryIntents??[]});if(memory.libraryId!==definition.memoryLibraryId)fail('PROJECT_MEMORY_CHANGED');const writes=(definition.memoryIntents??[]).length>0;extensions.push(...memory.extensions.filter(t=>writes||!t.memoryEffect));adapters.push({id:'durable-memory',version:'1',contentSha256:memory.intentDigest});workingInput={memoryLibrary:memory};defaultMemory=memory;}
   if(caps.includes('compaction'))workingInput={...workingInput,compaction:{mode:'gateway',thresholdBytes:16000,summaryTimeoutMs:10000,maxSummaryRounds:4,...config.compaction}};
   let claim;const originalQuestion=frozenTaskQuestion(definition,sources);
   if(caps.includes('child')){const childDocuments=sources.catalog?.documents.map(d=>d.id)??[];if(!childDocuments.length||childDocuments.length>(config.childExecution?64:2))fail('PROJECT_CHILD_DOCUMENT_SCOPE');
@@ -197,32 +242,48 @@ async function assemble(projectDir,definition,{gateway,apiKey,fetchImpl,hostSign
   }
   const available=['read_result','save_report',...(caps.includes('compaction')?['read_note']:[]),...(sources.catalog?['read_page']:[]),...(sources.pdfSnapshot?['read_pdf_page',...(sources.pdfSnapshot.schemaVersion==='pdf-input-snapshot@2'?['read_pdf_cell']:[])]:[]),...(caps.includes('calculation')?['calculate_change']:[]),...(caps.includes('csv')?['create_csv']:[]),...(caps.includes('response')?['ask_response']:[]),...extensions.map(t=>t.name)];
   const inspected=await inspectTrustedPlugins({plugins,signal});available.push(...inspected.extensions.map(t=>t.name));
-  const allowedTools=config.allowedTools??available;if(allowedTools.some(t=>!available.includes(t))||!allowedTools.includes('save_report'))fail('PROJECT_UNAVAILABLE_TOOL');
+  // Only exact existing native Memory names are removed from the explicit
+  // allowlist. Unknown ordinary tool names still fail the original validation.
+  const allowedTools=(definition.memoryMode===TEMPORARY_MEMORY_MODE?config.allowedTools?.filter(name=>!isNativeMemoryTool(name)):definition.memoryMode===SELECTED_MEMORY_MODE?config.allowedTools?.filter(name=>!isNativeMemoryTool(name)||available.includes(name)):config.allowedTools)??available;if(allowedTools.some(t=>!available.includes(t))||!allowedTools.includes('save_report'))fail('PROJECT_UNAVAILABLE_TOOL');
   if(caps.includes('child')&&(config.childExecution?normalizeChildExecution(config.childExecution).methods.flatMap(m=>m.allowedTools):config.childMethod?normalizeChildMethod(config.childMethod).allowedTools:['read_page']).some(t=>!allowedTools.includes(t)))fail('PROJECT_CHILD_TOOL_SCOPE');
   const limits=config.limits;const options={question:originalQuestion,...(knowledgeQueryEffects?{knowledgeQueryEffects}:{}),...(definition.reportDelivery===undefined?{}:{reportDelivery:definition.reportDelivery}),...(definition.hostProjection===undefined?{}:{hostProjection:definition.hostProjection}),documentCatalog:sources.catalog??undefined,pdfInput:sources.pdfSnapshot?{snapshot:sources.pdfSnapshot}:undefined,allowedDocuments:documents,allowedTools,publication:true,requireReport:true,ordinaryResponse:caps.includes('response'),...(config.interaction?{interaction:config.interaction}:{}),extensions,plugins,workingInput,taskTime:definition.taskTime?{anchorInstant:definition.taskTime.anchorInstant,timeZone:definition.taskTime.timeZone}:undefined,...(config.contextWorkingSetBytes===undefined?{}:{contextWorkingSetBytes:config.contextWorkingSetBytes}),contextBytes:config.contextBytes??(caps.includes('knowledge')?KNOWLEDGE_CONTEXT_BYTES:32000),gateway:wrapped,outputRoot:p.runs,limits:{maxRounds:limits.maxRounds,maxTools:limits.maxTools,timeoutMs:limits.timeoutMs},hostSignal,signal,durable:{store,runId,grantId:definition.grantId,rootLimits:{model:limits.model,tool:limits.tool},bindings:{gateway:gatewayBinding(config),plugins:inspected.bindings,adapters},onClaim:v=>{claim=v;},onCheckpoint}};
   return{options,store,sources,runId,close:async()=>{try{for(const close of closers.reverse())await close();}finally{try{admission.close();}finally{store.close();}}}};
  }catch(error){admission?.close();store.close();throw error;}
 }
-export async function submitResearchTask({projectDir,runId,question,sourceManifestSha256,authorization,memoryIntents=[],taskTime,schedule,specialistSelection,reportDelivery,expectedConfigSha256,knowledgeVectorEvidence}){
+export async function submitResearchTask({projectDir,runId,question,sourceManifestSha256,authorization,memoryMode,memoryEntryIds,memoryIntents=[],taskTime,schedule,specialistSelection,reportDelivery,expectedConfigSha256,knowledgeVectorEvidence}){
  projectDir=await safeDirectory(projectDir);id(runId);if(typeof question!=='string'||!question.trim()||!hex(sourceManifestSha256))fail('PROJECT_TASK_INPUT');
  if(reportDelivery!==undefined&&reportDelivery!=='artifact-required@1')fail('PROJECT_REPORT_DELIVERY');
  if(reportDelivery!==undefined&&schedule)fail('PROJECT_REPORT_DELIVERY_SCHEDULE_UNSUPPORTED');
- const project=await inspectResearchProject({projectDir});
- if(expectedConfigSha256!==undefined&&project.configSha256!==expectedConfigSha256)fail('PROJECT_CONFIG_CONFLICT');
+ const project=await inspectResearchProject({projectDir}),explicitMemoryMode=[TEMPORARY_MEMORY_MODE,SELECTED_MEMORY_MODE].includes(memoryMode);
+ if(!explicitMemoryMode&&expectedConfigSha256!==undefined&&project.configSha256!==expectedConfigSha256)fail('PROJECT_CONFIG_CONFLICT');
  let prior;try{prior=await readTask(projectDir,runId);}catch(error){if(error.code!=='ENOENT')throw error;}
+ // Never fall back to persistent mode when a retry omits a frozen opt-out.
+ if(prior&&prior.memoryMode!==memoryMode)fail('PROJECT_TASK_ALREADY_DEFINED');
+ // A prior explicit Memory Task can survive an exit before Session admission. Reuse
+ // its immutable config and still require the caller's original live approvals.
+ const selectedConfig=explicitMemoryMode&&prior?prior.config:project.config;
+ if(explicitMemoryMode&&expectedConfigSha256!==undefined&&hash(selectedConfig)!==expectedConfigSha256)fail('PROJECT_CONFIG_CONFLICT');
  if(knowledgeVectorEvidence!==undefined)knowledgeVectorEvidence=structuredClone(knowledgeVectorEvidence);
  if(prior?.knowledgeVectorEvidence!==undefined&&knowledgeVectorEvidence===undefined)knowledgeVectorEvidence=prior.knowledgeVectorEvidence;
- let config=project.config,selectionMetadata;
+ let config=selectedConfig,selectionMetadata;
  if(prior?.specialistSelection!==undefined){if(canonical(specialistSelection)!==canonical(prior.specialistSelection.selection))fail('PROJECT_TASK_ALREADY_DEFINED');config=prior.config;selectionMetadata=prior.specialistSelection;}
  else if(specialistSelection!==undefined){if(prior)fail('PROJECT_TASK_ALREADY_DEFINED');if(!config.capabilities.includes('child'))fail('PROJECT_CHILD_REQUIRED');if(config.childExecution!==undefined||config.childMethod!==undefined)fail('PROJECT_CHILD_CONFIG_CONFLICT');const store=await openProjectSpecialists({projectDir});const selected=await store.resolveSelection(specialistSelection);config=validateResearchConfig({...config,childExecution:selected.execution});selectionMetadata=selected.metadata;}
 
+ validateMemorySelection({memoryMode,memoryIntents,config,schedule});
  if(config.gateway.mode==='live'&&(!authorization||authorization.providerApproved!==true||authorization.dataApproved!==true||authorization.costApproved!==true))fail('PROJECT_LIVE_APPROVAL_REQUIRED');
  if(Boolean(schedule)!==config.capabilities.includes('schedule'))fail('PROJECT_SCHEDULE_CONFIG');
  if(schedule){validateSchedule(schedule);if(schedule.maxLatenessMs>=config.limits.timeoutMs)fail('PROJECT_SCHEDULE_WINDOW');if(memoryIntents?.length)fail('PROJECT_SCHEDULE_MEMORY_WRITE_UNSUPPORTED');if(taskTime&&(taskTime.timeZone!==schedule.timeZone||taskTime.anchorInstant!==undefined&&taskTime.anchorInstant!==schedule.scheduledInstant))fail('PROJECT_SCHEDULE_TIME_MISMATCH');}
  if(taskTime&&!config.capabilities.includes('task-time'))fail('PROJECT_TASK_TIME_REQUIRED');
  if(!Array.isArray(memoryIntents))fail('PROJECT_MEMORY_INTENTS');
  if(memoryIntents.length&&!config.capabilities.includes('memory'))fail('PROJECT_MEMORY_REQUIRED');
- let memoryLibraryId=null;if(config.capabilities.includes('memory')){const lib=await openMemoryLibrary({directory:join(projectDir,'memory'),writable:true});memoryLibraryId=lib.libraryId;await lib.close();}
+ let memoryLibraryId=null,memorySelection;
+ if(memoryMode===SELECTED_MEMORY_MODE){
+  const ids=normalizeMemoryIds(memoryEntryIds);
+  if(prior){if(canonical(ids)!==canonical(prior.memorySelection.entries.map(e=>e.id)))fail('PROJECT_TASK_ALREADY_DEFINED');memorySelection=prior.memorySelection;}
+  else memorySelection=await freezeMemorySelection({directory:join(projectDir,'memory'),ids});
+  memoryLibraryId=memorySelection.libraryId;
+ }else if(memoryEntryIds!==undefined)fail('PROJECT_MEMORY_SELECTION');
+ if(projectMemoryEnabled({memoryMode,config})){const lib=await openMemoryLibrary({directory:join(projectDir,'memory'),writable:true});memoryLibraryId=lib.libraryId;await lib.close();}
  if(config.knowledgeQuery){
   if(!knowledgeVectorEvidence||sourceManifestSha256!==config.knowledgeQuery.sourceManifestSha256)fail('PROJECT_KNOWLEDGE_QUERY_BINDING');
   const sources=await loadProjectSources({projectDir,manifestSha256:sourceManifestSha256});
@@ -230,9 +291,9 @@ export async function submitResearchTask({projectDir,runId,question,sourceManife
   if(frozen.provider.id!=='local-sentence-transformers'||frozen.provider.revision!==config.knowledgeQuery.modelManifestSha256||pageVectorIdentity(frozen)!==config.knowledgeQuery.pageEvidenceSha256)fail('PROJECT_KNOWLEDGE_QUERY_BINDING');
  }
  if(knowledgeVectorEvidence!==undefined&&(!config.capabilities.includes('knowledge')||config.knowledge?.algorithm!=='hybrid'))fail('PROJECT_KNOWLEDGE_VECTOR_CONFIG');
- const definition={...(knowledgeVectorEvidence===undefined?{}:{knowledgeVectorEvidence}),...(prior?(Object.hasOwn(prior,'knowledgeVersion')?{knowledgeVersion:prior.knowledgeVersion}:{}):config.capabilities.includes('knowledge')?{knowledgeVersion:config.knowledge?.algorithm==='hybrid'?HYBRID_KNOWLEDGE_VERSION:config.knowledge?.algorithm==='bm25'?BM25_HEALTH_KNOWLEDGE_VERSION:KNOWLEDGE_VERSION}:{}),...(reportDelivery===undefined?{}:{reportDelivery}),...(prior?(Object.hasOwn(prior,'hostProjection')?{hostProjection:prior.hostProjection}:{}):{hostProjection:'host-results@3'}),...(prior?(Object.hasOwn(prior,'childInputProjection')?{childInputProjection:prior.childInputProjection}:{}):config.childExecution?{childInputProjection:'host-context@1'}:{}),...(prior?(Object.hasOwn(prior,'reportGuidance')?{reportGuidance:prior.reportGuidance}:{}):{reportGuidance:config.knowledgeQuery?LOCAL_QUERY_GUIDANCE_PROFILE:REPORT_GUIDANCE_PROFILE}),schemaVersion:project.schemaVersion===PROJECT_V2?'research-task@2':'research-task@1',...(project.schemaVersion===PROJECT_V2?{admission:capacityBinding(config,project.schemaVersion)}:{}),runId,projectId:project.projectId,config,question,sourceManifestSha256,...(selectionMetadata?{specialistSelection:selectionMetadata}:{}),grantId:prior?.grantId??('project-'+randomUUID()),authorization:config.gateway.mode==='live'?{providerApproved:true,dataApproved:true,costApproved:true}:null,memoryLibraryId,memoryIntents:structuredClone(memoryIntents),...(config.capabilities.includes('task-time')?{taskTime:schedule?createTaskTime({anchorInstant:schedule.scheduledInstant,timeZone:schedule.timeZone}):taskTime?createTaskTime({...taskTime,...(prior?.taskTime&&taskTime.anchorInstant===undefined?{anchorInstant:prior.taskTime.anchorInstant}:{})}):(prior?.taskTime??createTaskTime({timeZone:config.timeZone??'UTC'}))}:{}),...(schedule?{schedule:structuredClone(schedule)}:{})};
+ const definition={...(knowledgeVectorEvidence===undefined?{}:{knowledgeVectorEvidence}),...(prior?(Object.hasOwn(prior,'knowledgeVersion')?{knowledgeVersion:prior.knowledgeVersion}:{}):config.capabilities.includes('knowledge')?{knowledgeVersion:config.knowledge?.algorithm==='hybrid'?HYBRID_KNOWLEDGE_VERSION:config.knowledge?.algorithm==='bm25'?BM25_HEALTH_KNOWLEDGE_VERSION:KNOWLEDGE_VERSION}:{}),...(reportDelivery===undefined?{}:{reportDelivery}),...(prior?(Object.hasOwn(prior,'hostProjection')?{hostProjection:prior.hostProjection}:{}):{hostProjection:'host-results@3'}),...(prior?(Object.hasOwn(prior,'childInputProjection')?{childInputProjection:prior.childInputProjection}:{}):config.childExecution?{childInputProjection:'host-context@1'}:{}),...(prior?(Object.hasOwn(prior,'reportGuidance')?{reportGuidance:prior.reportGuidance}:{}):{reportGuidance:config.knowledgeQuery?LOCAL_QUERY_GUIDANCE_PROFILE:REPORT_GUIDANCE_PROFILE}),schemaVersion:projectTaskSchema(project.schemaVersion,memoryMode),...(project.schemaVersion===PROJECT_V2?{admission:capacityBinding(config,project.schemaVersion)}:{}),runId,projectId:project.projectId,config,question,sourceManifestSha256,...(selectionMetadata?{specialistSelection:selectionMetadata}:{}),grantId:prior?.grantId??('project-'+randomUUID()),authorization:config.gateway.mode==='live'?{providerApproved:true,dataApproved:true,costApproved:true}:null,...(memoryMode===undefined?{}:{memoryMode}),...(memorySelection===undefined?{}:{memorySelection}),memoryLibraryId,memoryIntents:structuredClone(memoryIntents),...(config.capabilities.includes('task-time')?{taskTime:schedule?createTaskTime({anchorInstant:schedule.scheduledInstant,timeZone:schedule.timeZone}):taskTime?createTaskTime({...taskTime,...(prior?.taskTime&&taskTime.anchorInstant===undefined?{anchorInstant:prior.taskTime.anchorInstant}:{})}):(prior?.taskTime??createTaskTime({timeZone:config.timeZone??'UTC'}))}:{}),...(schedule?{schedule:structuredClone(schedule)}:{})};
  if(prior&&hash(prior)!==hash(definition))fail('PROJECT_TASK_ALREADY_DEFINED');
- const opened=await assemble(projectDir,definition);try{if(!prior){try{await immutableJson(join(projectDir,'tasks'),runId+'.json',{definition,definitionSha256:hash(definition)});}catch(error){if(error.code!=='EEXIST')throw error;return submitResearchTask({projectDir,runId,question,sourceManifestSha256,authorization,memoryIntents,taskTime,schedule,specialistSelection,reportDelivery,expectedConfigSha256,knowledgeVectorEvidence});}}if(schedule){const confirmed=await confirmScheduledRun(opened.options,schedule);try{await immutableJson(join(projectDir,'tasks'),runId+'.schedule.json',confirmed.reference);}catch(error){if(error.code!=='EEXIST')throw error;const saved=await readProjectJson(join(projectDir,'tasks',runId+'.schedule.json'));if(hash(saved)!==hash(confirmed.reference))fail('PROJECT_SCHEDULE_CHANGED');}return confirmed;}return await submitRun(opened.options);}finally{await opened.close();}
+ const opened=await assemble(projectDir,definition);try{if(!prior){try{await immutableJson(join(projectDir,'tasks'),runId+'.json',{definition,definitionSha256:hash(definition)});}catch(error){if(error.code!=='EEXIST')throw error;return submitResearchTask({projectDir,runId,question,sourceManifestSha256,authorization,memoryMode,memoryEntryIds,memoryIntents,taskTime,schedule,specialistSelection,reportDelivery,expectedConfigSha256,knowledgeVectorEvidence});}}if(schedule){const confirmed=await confirmScheduledRun(opened.options,schedule);try{await immutableJson(join(projectDir,'tasks'),runId+'.schedule.json',confirmed.reference);}catch(error){if(error.code!=='EEXIST')throw error;const saved=await readProjectJson(join(projectDir,'tasks',runId+'.schedule.json'));if(hash(saved)!==hash(confirmed.reference))fail('PROJECT_SCHEDULE_CHANGED');}return confirmed;}return await submitRun(opened.options);}finally{await opened.close();}
 }
 // Bounded enumeration of original immutable task records, not a second job queue.
 export async function listResearchScheduledTasks({projectDir}){
@@ -258,6 +319,21 @@ export async function materializeResearchScheduledTask({projectDir,runId}){
 }
 export async function workResearchTask({projectDir,runId,requireFreshSchedule=false,...controls}){if(typeof requireFreshSchedule!=='boolean')fail('INVALID_SCHEDULE_OBSERVATION');projectDir=await safeDirectory(projectDir);const definition=await readTask(projectDir,runId);await maintainProjectRouteBeforeWork(projectDir,definition);const opened=await assemble(projectDir,definition,{...controls,dispatch:true});try{if(definition.schedule){const reference=await readProjectJson(join(projectDir,'tasks',runId+'.schedule.json'));const occurrence=await materializeScheduledRun(opened.options,reference,{reportFresh:requireFreshSchedule});if(!occurrence.runId||requireFreshSchedule&&occurrence.materializedNow!==true)return occurrence;}return await workRun(opened.options);}finally{try{await opened.close();}finally{await maintainProjectRouteBeforeWork(projectDir,definition);}}}
 export async function inspectResearchTask({projectDir,runId}){const d=await readTask(projectDir,runId),p=paths(projectDir,runId);const store=await openSession({directory:p.session,...(profile(d.config)?{profile:profile(d.config)}:{}),readOnly:true});try{const actual=d.schedule?scheduleRunId(d.schedule):runId;if(d.schedule){const scheduled=store.inspectSchedule(await readProjectJson(join(projectDir,'tasks',runId+'.schedule.json')));if(!scheduled.runId)return {definition:d,schedule:scheduled,run:null};}const state=store.inspect(actual);return{definition:d,run:state};}finally{store.close();}}
+export async function inspectResearchMemory({projectDir,runId}){
+ const {definition,run}=await inspectResearchTask({projectDir,runId}),uses=[];
+ const observed=memoryEntryIdentities(run?.snapshot?.messages??[]);
+ if(definition.memorySelection){
+  const {requests}=await inspectResearchCapacity({projectDir,runId});
+  for(const ticket of requests){
+   if(!ticket||ticket.runId!==runId||ticket.rootId!==runId||ticket.state!=='completed')continue;
+   let receipt;
+   try{receipt=await readProjectJson(join(projectDir,'memory-uses',runId,ticket.modelOrdinal+'.json'),8192);}catch(error){if(error.code==='ENOENT')continue;throw error;}
+   if(!object(receipt)||Object.keys(receipt).sort().join(',')!=='entries,inputHash,modelOrdinal,rootId,runId,schemaVersion,ticketId'||receipt.schemaVersion!=='selected-memory-use@1'||!['ticketId','rootId','runId','modelOrdinal','inputHash'].every(key=>receipt[key]===ticket[key])||!Array.isArray(receipt.entries)||receipt.entries.length<1||receipt.entries.length>16||receipt.entries.some(e=>!object(e)||Object.keys(e).sort().join(',')!=='id,libraryId,revision,sha256'||e.libraryId!==definition.memorySelection.libraryId||!definition.memorySelection.entries.some(x=>x.id===e.id&&x.revision===e.revision&&x.sha256===e.sha256)))fail('PROJECT_MEMORY_USE_READBACK');
+   uses.push(receipt);
+  }
+ }
+ return {runId,mode:definition.memoryMode??(definition.memoryLibraryId?'project-default':'disabled'),selection:definition.memorySelection??null,observed,observationScope:'persisted-runtime-tool-results-not-provider-delivery',uses,useScope:'selected-typed-input-with-matching-completed-admission-ticket'};
+}
 export async function cancelResearchTask({projectDir,runId}){const d=await readTask(projectDir,runId),store=await openSession({directory:paths(projectDir,runId).session,...(profile(d.config)?{profile:profile(d.config)}:{})});try{if(d.schedule)return store.cancelSchedule(await readProjectJson(join(projectDir,'tasks',runId+'.schedule.json')));return store.cancel(runId);}finally{store.close();}}
 export async function respondResearchTask({projectDir,runId,questionId,responseId,text}){const d=await readTask(projectDir,runId);if(!d.config.capabilities.includes('response'))fail('PROJECT_RESPONSE_NOT_ENABLED');const store=await openSession({directory:paths(projectDir,runId).session,profile:profile(d.config)});try{return store.receiveResponse({runId,questionId,responseId,text});}finally{store.close();}}
 export async function readResearchReport({projectDir,runId}){
@@ -274,8 +350,8 @@ export async function readResearchReport({projectDir,runId}){
  }
  return{runId:run.runId,status:run.status,receipt,revision,report:{artifactId:revision.reportId,sha256:artifact.sha256,bytes:artifact.bytes.length,text:artifact.bytes.toString('utf8')},directory:run.directory};
 }
-export async function applyProjectMemoryIntent({projectDir,operation,text,entryId,expectedRevision,intentId,explicit}){const project=await inspectResearchProject({projectDir});if(!project.config.capabilities.includes('memory')||explicit!==true)fail('PROJECT_MEMORY_INTENT_REQUIRED');if(operation!=='forget'&&(typeof text!=='string'||!text.trim()||Buffer.byteLength(text)>8000))fail('PROJECT_MEMORY_TEXT');
- const library=await openMemoryLibrary({directory:join(projectDir,'memory'),writable:true});try{const intent={explicit:true,libraryId:library.libraryId,operation,intentId:id(intentId),origin:'project-user',...(operation==='forget'?{}:{approvedTextHash:sha256(text)}),...(operation==='save'?{}:{entryId,expectedRevision})};if(operation==='save')return await library.save({text},{intent});if(operation==='revise')return await library.revise(entryId,expectedRevision,{text},{intent});if(operation==='forget')return await library.forget(entryId,expectedRevision,{intent});fail('PROJECT_MEMORY_OPERATION');}finally{await library.close();}}
+export async function applyProjectMemoryIntent({projectDir,operation,text,entryId,expectedRevision,intentId,explicit}){const project=await inspectResearchProject({projectDir});if(!project.config.capabilities.includes('memory')||explicit!==true)fail('PROJECT_MEMORY_INTENT_REQUIRED');if(!['save','revise','forget','pause','restore','pin','unpin'].includes(operation))fail('PROJECT_MEMORY_OPERATION');if(['save','revise'].includes(operation)&&(typeof text!=='string'||!text.trim()||Buffer.byteLength(text)>8000))fail('PROJECT_MEMORY_TEXT');
+ const library=await openMemoryLibrary({directory:join(projectDir,'memory'),writable:true});try{const intent={explicit:true,libraryId:library.libraryId,operation,intentId:id(intentId),origin:'project-user',...(['save','revise'].includes(operation)?{approvedTextHash:sha256(text)}:{}),...(operation==='save'?{}:{entryId,expectedRevision})};if(operation==='save')return await library.save({text},{intent});if(operation==='revise')return await library.revise(entryId,expectedRevision,{text},{intent});return await library[operation](entryId,expectedRevision,{intent});}finally{await library.close();}}
 export async function approveProjectMemoryIntent({projectDir,operation,text,entryId,expectedRevision,intentId,explicit}){
  const project=await inspectResearchProject({projectDir});if(!project.config.capabilities.includes('memory')||explicit!==true||!['save','revise','forget'].includes(operation))fail('PROJECT_MEMORY_INTENT_REQUIRED');
  if(operation!=='forget'&&(typeof text!=='string'||!text.trim()||Buffer.byteLength(text)>8000))fail('PROJECT_MEMORY_TEXT');
@@ -402,7 +478,7 @@ async function maintainProjectRouteBeforeWork(projectDir,definition){
 // Finish admission of an already frozen ordinary task; never dispatch or rebind it.
 export async function resumeResearchTaskAdmission({projectDir,runId,question,sourceManifestSha256,expectedConfigSha256}){
  projectDir=await safeDirectory(projectDir);const definition=await readTask(projectDir,runId);
- if(definition.schedule||definition.question!==question||definition.sourceManifestSha256!==sourceManifestSha256||hash(definition.config)!==expectedConfigSha256)fail('PROJECT_TASK_ALREADY_DEFINED');
+ if(definition.schedule||definition.memoryMode!==undefined||definition.question!==question||definition.sourceManifestSha256!==sourceManifestSha256||hash(definition.config)!==expectedConfigSha256)fail('PROJECT_TASK_ALREADY_DEFINED');
  const opened=await assemble(projectDir,definition);try{return await submitRun(opened.options);}finally{await opened.close();}
 }
 

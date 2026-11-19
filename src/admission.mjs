@@ -12,6 +12,8 @@ const APP_ID = 0x4f454144;
 const fail = code => { throw Object.assign(new Error(code), { code }); };
 const canonical=v=>JSON.stringify(v,(_,x)=>x&&typeof x==='object'&&!Array.isArray(x)?Object.fromEntries(Object.keys(x).sort().map(k=>[k,x[k]])):x);
 const digest=v=>createHash('sha256').update(canonical(v)).digest('hex');
+const knownPredispatch=new WeakSet();
+export const isKnownAdmissionNonDispatch=error=>knownPredispatch.has(error);
 const active = "('admitted','dispatched','unknown')";
 const reservationId = ({ rootId, modelOrdinal }) => createHash('sha256').update(JSON.stringify([rootId, 'model', modelOrdinal])).digest('hex');
 function reserved(session, runId, initial = false) {
@@ -214,9 +216,9 @@ export async function createSharedAdmission({ directory, routeId, maxQueue = 8, 
     inspect(ticketId) { return projectRow(ticketId); },
     inspectReservation(identity) { const value = db.prepare('SELECT request_id FROM requests WHERE reservation_id=?').get(reservationId(identity)); return value ? projectRow(value.request_id) : null; },
     close() { db.close(); },
-    wrap(gateway, { session, runId }) {
+    wrap(gateway, { session, runId, beforeDispatch }) {
       if (readOnly) fail('ADMISSION_READ_ONLY');
-      if (typeof gateway?.next !== 'function' || typeof session?.inspect !== 'function') fail('INVALID_ADMISSION_GATEWAY');
+      if (typeof gateway?.next !== 'function' || typeof session?.inspect !== 'function' || beforeDispatch!==undefined&&typeof beforeDispatch!=='function') fail('INVALID_ADMISSION_GATEWAY');
       const bind = selectedRunId => ({
         mode: gateway.mode,
         ...(gateway.inputBudget?{inputBudget:gateway.inputBudget}:{}),
@@ -264,6 +266,16 @@ export async function createSharedAdmission({ directory, routeId, maxQueue = 8, 
           // Cancellation before dispatch is known not to have reached the provider.
           try { signal?.throwIfAborted(); currentFence(true); }
           catch (error) { transition(requestId, reservation, 'admitted', 'cancelled'); throw error; }
+          if(beforeDispatch){
+            try{
+              await beforeDispatch(input,Object.freeze({ticketId:requestId,rootId:reservation.rootId,runId,modelOrdinal:reservation.modelOrdinal,inputHash:reservation.inputHash}));
+              signal?.throwIfAborted();if(Date.now()>=deadline)fail('ADMISSION_QUEUE_TIMEOUT');currentFence(true);
+            }catch(cause){
+              transition(requestId, reservation, 'admitted', 'cancelled');
+              const code=typeof cause?.code==='string'&&/^[A-Z][A-Z0-9_]{1,80}$/.test(cause.code)?cause.code:'ADMISSION_PRE_DISPATCH_REJECTED';
+              const error=Object.assign(new Error(code),{code});knownPredispatch.add(error);throw error;
+            }
+          }
           transition(requestId, reservation, 'admitted', 'dispatched');
           const dispatchTicket=row(requestId),monotonicStart=performance.now(),wallStart=Date.now(),localAbort=new AbortController();let expiryTimer,stopReject;
           const stopped=new Promise((_,reject)=>{stopReject=reject;});

@@ -18,6 +18,7 @@ import { activateTrustedPlugins, inspectTrustedPlugins } from './plugins.mjs';
 import { sha256, DOCUMENT_REVOCATION_PROFILE, normalizeDocumentCatalog, documentCatalogBinding } from './source.mjs';
 import { PUBLICATION_BINDING, PUBLICATION_TEXT_MAX_BYTES, preparePublication } from './publication.mjs';
 import { projectProviderProtocolDiagnostic } from './gateway.mjs';
+import { isKnownAdmissionNonDispatch } from './admission.mjs';
 
 const failure = code => Object.assign(new Error(code), { code });
 const modelReservations = new WeakSet();
@@ -451,7 +452,7 @@ async function drive({ question, gateway, outputRoot='runs', requireReport=false
             // Only the original Gateway can brand a recognized terminal finish.
             // An arbitrary code, incomplete stream/body or cancelled late reply is not settlement.
             const diagnostic=projectProviderProtocolDiagnostic(error);
-            if(!controller.signal.aborted&&diagnostic?.reason==='NON_SUCCESS_FINISH'&&diagnostic.hashScope==='complete-body')gatewayUnsettled=false;
+            if(isKnownAdmissionNonDispatch(error)||!controller.signal.aborted&&diagnostic?.reason==='NON_SUCCESS_FINISH'&&diagnostic.hashScope==='complete-body')gatewayUnsettled=false;
             throw error;
           }
           state.gatewayOutcome='settled';validateProposal(proposal);
