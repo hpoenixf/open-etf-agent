@@ -7,6 +7,7 @@ import {specialistGroupRefusal,specialistHistoricalGroup} from './specialist-chi
 import {childExecutionGroupRefusal,childExecutionHistoricalGroup,childExecutionInputRefusal} from './child-execution.mjs';
 import { RESPONSE_TOOL, RESPONSE_PROFILE, validateResponseCall } from './human-response.mjs';
 import {openPdfInput,normalizePdfSnapshot} from './pdf-input.mjs';
+import {pdfCellLimits} from './pdf-table-evidence.mjs';
 import {openArtifactStore,encodeCsv,projectArtifactEffects,validateArtifactProtection,validateProtectedSourcePayload,validateProtectedArtifactDescriptor} from './artifacts.mjs';
 import {saveReport,renderReportContent,REPORT_TEXT_MAX_BYTES,validateProtectedReportReceipt} from './report.mjs';
 import { projectMemoryEffect } from './memory-effects.mjs';
@@ -107,7 +108,7 @@ export async function createToolHost({ directory, extensions = [], hooks, allowe
   async function resultRefs(){const refs=await results.list();if(protection)for(const ref of refs)await readSource(ref.resultRef);return refs;}
   if(pdfInput!==undefined&&!pdfInput?.snapshot&&restore!==undefined)fail('PDF_ACTIVE_RECOVERY_UNSUPPORTED');
   const pdf=pdfInput===undefined?null:openPdfInput({input:pdfInput,store:artifacts});
-  async function verifyPdf(source){if(source.web){const original=await artifacts.read(webOriginalArtifactId(source.web));if(original.format!=='web-original'||original.sha256!==source.web.originalSha256||original.bytes.length!==source.web.originalBytes)fail('Web original artifact mismatch');}if(!source.pdf)return;const original=await artifacts.read(source.pdf.originalArtifactId);if(original.format!=='pdf'||original.sha256!==source.pdf.originalSha256||original.bytes.length!==source.pdf.originalBytes)fail('PDF original artifact mismatch');}
+  async function verifyPdf(source){if(source.web){const original=await artifacts.read(webOriginalArtifactId(source.web));if(original.format!=='web-original'||original.sha256!==source.web.originalSha256||original.bytes.length!==source.web.originalBytes)fail('Web original artifact mismatch');}if(!source.pdf)return;if(source.pdf.cell&&!pdf?.verifyCell(source))fail('PDF cell differs from frozen source');const original=await artifacts.read(source.pdf.originalArtifactId);if(original.format!=='pdf'||original.sha256!==source.pdf.originalSha256||original.bytes.length!==source.pdf.originalBytes)fail('PDF original artifact mismatch');}
   let receipt = null;
   let saveAttempted = false;
   async function assessReport(args,callId='assessment') {
@@ -256,6 +257,16 @@ export async function createToolHost({ directory, extensions = [], hooks, allowe
   if(protection)bindings.create_csv.parameters=structuredClone(bindings.create_csv.parameters.oneOf[0]);
   if(!documents.size)delete bindings.read_page;
   if(pdf&&(allowedDocuments===undefined||pdfDocumentId!==undefined&&allowedDocuments.includes(pdfDocumentId)))bindings.read_pdf_page={description:'Read one physical text-layer page from the operator-selected local PDF. No paths or URLs; extracted text is not visual inspection.',sourceResult:true,artifactEffects:true,parameters:{type:'object',additionalProperties:false,properties:{page:{type:'integer',minimum:1,maximum:16}},required:['page']},validate(args){fields(args,['page']);if(!Number.isSafeInteger(args.page)||args.page<1||args.page>16)fail('PDF_INVALID_PAGE');},execute:({page},context)=>pdf.readPage(page,context)};
+  if(pdf&&pdfInput?.snapshot?.schemaVersion==='pdf-input-snapshot@2'&&Object.hasOwn(bindings,'read_pdf_page')){
+    const limits={page:16,...pdfCellLimits};
+    bindings.read_pdf_cell={
+      description:'Read one exact cell of a confirmed table on an operator-selected native PDF page. Use the one-based table, row and column order from read_pdf_page pdf.tables. The receipt pins original page, row label, header and displayed units. Copy its sourceId for a cell citation.',
+      sourceResult:true,artifactEffects:true,
+      parameters:{type:'object',additionalProperties:false,properties:Object.fromEntries(Object.entries(limits).map(([k,maximum])=>[k,{type:'integer',minimum:1,maximum}])),required:Object.keys(limits)},
+      validate(args){fields(args,Object.keys(limits));if(Object.entries(limits).some(([k,limit])=>!Number.isSafeInteger(args[k])||args[k]<1||args[k]>limit))fail('PDF_INVALID_CELL');},
+      execute:(args,context)=>pdf.readCell(args,context)
+    };
+  }
   if(enableNotes)bindings.read_note={historyCompaction:'read-only@1',description:'Read an acquired derived working note, never original evidence or permission.',parameters:{type:'object',properties:{resultRef:{type:'string',pattern:'^note:sha256:[a-f0-9]{64}$'}},required:['resultRef'],additionalProperties:false},validate(args){fields(args,['resultRef']);if(typeof args.resultRef!=='string'||!/^note:sha256:[a-f0-9]{64}$/.test(args.resultRef))fail('Invalid derived note ref');},async execute(args){return{...await results.readNote(args.resultRef),resultRef:args.resultRef};}};
   if(ordinaryResponse){if(typeof ordinaryResponse.confirm!=='function')fail('Invalid ordinary response owner');bindings.ask_response={...RESPONSE_TOOL,validate:args=>validateResponseCall({id:'validate',name:'ask_response',arguments:args}),execute:()=>{throw Object.assign(new Error('ORDINARY_RUNTIME_REQUIRED'),{code:'ORDINARY_RUNTIME_REQUIRED'});}};}
   if (!Array.isArray(extensions) || extensions.length > 16) fail('Invalid extension list');
@@ -526,6 +537,10 @@ export async function createToolHost({ directory, extensions = [], hooks, allowe
       if(!binding)recoveryFail('Recovered tool binding mismatch');
       async function source(current){const stored=await readSource(current?.resultRef);if(protection){const {resultRef,...payload}=current;validateProtectedSourcePayload(payload);}for(const key of ['sourceId','documentId','name','version','page','text','sha256','mediaType'])if(stored[key]!==current[key])recoveryFail('Recovered source payload mismatch');if(!isDeepStrictEqual(stored.pdf,current.pdf))recoveryFail('PDF source provenance mismatch');if(!isDeepStrictEqual(stored.web,current.web))recoveryFail('Web source provenance mismatch');await verifyPdf(stored);}
       if(binding.sourceResult||name==='read_result'&&(!hostProjection||!call.arguments.resultRef.startsWith('derived:')))await source(value);
+      if(name==='read_pdf_cell'){
+        const args=(result.effective||call).arguments,c=value?.pdf?.cell;
+        if(!c||value.page!==args.page||['table','row','column'].some(k=>c[k]!==args[k]))recoveryFail('Recovered PDF cell request mismatch');
+      }
       if(name==='read_result'&&hostProjection&&call.arguments.resultRef.startsWith('derived:')){await ownedDerived(call.arguments.resultRef);const expected=await results.readDerivedSelection(call.arguments.resultRef,call.arguments.selection);if(!isDeepStrictEqual(value,expected))recoveryFail('Derived page identity mismatch');}
       if(binding.sourceResults){if(!Array.isArray(value?.sources))recoveryFail('Recovered sources mismatch');for(const item of value.sources)await source(item);}
       verifyKnowledgeResult(originalGroupOwners.get(name) ?? binding, result.effective || call, value);

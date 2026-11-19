@@ -1,5 +1,7 @@
 // One owned byte-buffer parse. No paths, URLs, rendering or external services.
 import PDFParser from 'pdf2json';
+import {extractPdfTables} from './pdf-table-evidence.mjs';
+const decode=text=>decodeURIComponent(text.replace(/%(?![a-f0-9]{2})/gi,'%25'));
 process.once('message',job=>{
   let done=false,count=0,total=0;
   const finish=value=>{if(done)return;done=true;process.send(value);};
@@ -14,19 +16,23 @@ process.once('message',job=>{
     try{
       if(!Array.isArray(value?.Pages)||!value.Pages.length)throw new Error('pages');
       if(value.Pages.length>16){finish({kind:'failure',code:'PDF_LIMIT_PAGES'});return;}
+      const tables=[];
       const pages=value.Pages.map(page=>{
         if(!Array.isArray(page.Texts))throw new Error('text');
         // Preserve parser item order, not a visual/semantic reading-order claim.
-        const text=page.Texts.map(item=>{
+        const spans=page.Texts.map(item=>{
           if(!Array.isArray(item.R))throw new Error('runs');
-          return item.R.map(run=>{if(typeof run.T!=='string')throw new Error('run');return decodeURIComponent(run.T);}).join('');
-        }).join('\n').replace(/\r\n?/g,'\n').trim();
+          return {x:item.x,y:item.y,text:item.R.map(run=>{if(typeof run.T!=='string')throw new Error('run');return decode(run.T);}).join('')};
+        });
+        const text=spans.map(s=>s.text).join('\n').replace(/\r\n?/g,'\n').trim();
         const size=Buffer.byteLength(text);total+=size;
         if(size>64000||total>131072)throw Object.assign(new Error('limit'),{code:'PDF_LIMIT_TEXT'});
         if(text.includes('\0'))throw new Error('text');
+        const candidates=extractPdfTables(spans.map(s=>({...s,text:s.text.trim()})));
+        tables.push(Buffer.byteLength(JSON.stringify(candidates))<=24000?candidates:[]);
         return text;
       });
-      finish({kind:'parsed',parser:'pdf2json@4.1.0',pages});
+      finish({kind:'parsed',parser:'pdf2json@4.1.0',pages,...(tables.some(t=>t.length)&&Buffer.byteLength(JSON.stringify(tables))<=131072?{tables}:{})});
     }catch(error){finish({kind:'failure',code:error.code==='PDF_LIMIT_TEXT'?'PDF_LIMIT_TEXT':'PDF_PARSE_FAILED'});}
   });
   process.send({kind:'ready'});

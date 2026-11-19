@@ -1,5 +1,6 @@
 import {validWebTextPage,webTextPageLimit} from './web-text-pages.mjs';
 import {normalizeWebProvenance,webDocumentIdentity,webOriginalBytes,validateWebPage} from './web-source.mjs';
+import {validPdfCell, validPdfCellText, validPdfTables} from './pdf-table-evidence.mjs';
 import { readFile } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
 export const sha256 = bytes => createHash('sha256').update(bytes).digest('hex');
@@ -11,12 +12,15 @@ export function validateSource(value) {
   if ([value.sourceId, value.documentId, value.name, value.version].some(s => s.length > 200 || /[\u0000-\u001f]/.test(s))) fail('Invalid source identity');
   if(value.pdf!==undefined){
     const p=value.pdf;
-    if(!object(p)||Object.keys(p).sort().join(',')!=='extraction,originalArtifactId,originalBytes,originalSha256,pageCount,parser,synthetic,visualInspection'
+    const cell=p?.cell,tables=p?.tables;
+    const evidence=cell!==undefined?',cell':tables!==undefined?',tables':'';
+    if(!object(p)||Object.keys(p).filter(k=>k!=='cell'&&k!=='tables').sort().join(',')!=='extraction,originalArtifactId,originalBytes,originalSha256,pageCount,parser,synthetic,visualInspection'
+      ||Object.keys(p).length!==(evidence?9:8)||(cell!==undefined&&(!validPdfCell(cell)||!validPdfCellText(value.text)))||(tables!==undefined&&(!validPdfTables(tables)||!tables.length||Buffer.byteLength(JSON.stringify(tables))>24000))
       ||!/^artifact:sha256:[a-f0-9]{64}$/.test(p.originalArtifactId)||!/^[a-f0-9]{64}$/.test(p.originalSha256)
       ||!Number.isSafeInteger(p.originalBytes)||p.originalBytes<5||p.originalBytes>1048576||p.parser!=='pdf2json@4.1.0'
       ||!Number.isSafeInteger(p.pageCount)||p.pageCount<value.page||p.pageCount>16||typeof p.synthetic!=='boolean'
       ||p.extraction!=='text-layer'||p.visualInspection!=='not-performed'||value.documentId!==`pdf:${p.originalSha256}`
-      ||value.sourceId!==`${value.documentId}:p${value.page}`||value.version!==`${p.parser}:${p.originalSha256}`)fail('Invalid PDF source provenance');
+      ||value.sourceId!==`${value.documentId}:p${value.page}${cell?`:t${cell.table}:r${cell.row}:c${cell.column}`:""}`||value.version!==`${p.parser}:${p.originalSha256}`)fail('Invalid PDF source provenance');
   }
   if(value.web!==undefined)validateWebPage(value);
   return structuredClone(value);
