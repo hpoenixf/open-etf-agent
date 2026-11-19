@@ -1,0 +1,6 @@
+# v0.34.0 · A14 context projection
+
+- Scope: opt-in `contextWorkingSetBytes` projects eligible older explicit result-read bodies to references, keeps the latest two complete groups, and preserves authorized exact-original rereads. Gateway envelope checks run before reservation. Unconfigured projects retain legacy fitting behavior. [Usage and boundaries](../context-fitting.md).
+- [Fixed execution source](https://github.com/hpoenixf/open-etf-agent/tree/9d7018df68ef3b9791ef93b1857cb0007f592165) and [original evidence](../../openspec/changes/v034-context-fitting/evidence.md). The corrected execution source recorded 1,533 passed, 4 optional skips and 0 failures on Node 26.11.1. Remote [Verify #135](https://github.com/hpoenixf/open-etf-agent/actions/runs/44350933115) passed on final A14 review head `55b066d`.
+- The original frozen independently reviewed cohort stays **9/10**. Original Q09 failed with `TOOL_REJECTED` for unsupported selection on an authorized original result. The separate unchanged Q09 follow-up and a controlled same-reference post-projection case passed; neither is substituted into the original cohort.
+- Targeted follow-up: 14 confirmed OpenCode Go requests, zero additional USD, zero new unknowns on the recorded DeepSeek route. Earlier unknowns stay unknown. No broader production or financial-accuracy claim.

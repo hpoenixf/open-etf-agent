@@ -1,5 +1,7 @@
 **English** | [简体中文](README.zh-CN.md)
 
+- [v0.34 A14: context projection, original 9/10 and targeted same-reference reread](v034-release.md)
+
 - [v0.33 A17: material lifecycle, operator-reviewed 9/10 and retained unknown billing](v033-release.md)
 
 - [0.32 candidate: local dynamic queries, budgets, recovery and DeepSeek ten-task evidence](v032-release-readiness.md)

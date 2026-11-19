@@ -1,5 +1,7 @@
 [English](README.md) | **简体中文**
 
+- [v0.34 A14：上下文投影、原始 9/10 与定向同引用回读](v034-release.md)
+
 - [v0.33 A17：资料生命周期、执行者复核 9/10 与保留的未知计费](v033-release.md)
 
 - [0.32 候选：本地动态查询、预算、恢复及 DeepSeek 十次验收](v032-release-readiness.zh-CN.md)
