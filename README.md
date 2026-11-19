@@ -44,7 +44,7 @@ GitHub treats embedded SVG as one image, so its cards are not individually click
 | L5 Publication & delivery | [Main → Report](https://hpoenixf.com/eff-agent-article/en/articles/open-etf-agent-v01-first-readable-report) · [Report](https://hpoenixf.com/eff-agent-article/en/articles/open-etf-agent-v01-first-readable-report) · [Artifact / Revision](https://hpoenixf.com/eff-agent-article/en/articles/agent-artifact-version-access-sharing) · [Publication](https://hpoenixf.com/eff-agent-article/en/articles/019-agent-answer-publication) · [Report Review](https://hpoenixf.com/eff-agent-article/en/articles/open-etf-agent-report-review-workshop) |
 | L6 User interfaces | [Loopback Reader](https://hpoenixf.com/eff-agent-article/en/articles/open-etf-agent-v010-system-design) · [CLI Readback](https://hpoenixf.com/eff-agent-article/en/articles/open-etf-agent-v01-first-readable-report) |
 
-**Current map: v0.34.0** · [Modules, source & evidence](docs/module-status.md) · [Six-layer article (Chinese original)](https://github.com/hpoenixf/eff-agent-article/blob/249f0b866f9446f33b57f186fbc6d35b5d82c119/articles/open-etf-agent-v010-system-design.md)
+**Current map: v0.35.0** · [Modules, source & evidence](docs/module-status.md) · [Six-layer article (Chinese original)](https://github.com/hpoenixf/eff-agent-article/blob/249f0b866f9446f33b57f186fbc6d35b5d82c119/articles/open-etf-agent-v010-system-design.md)
 
 Article links are reading navigation, not implementation parity or coverage qualification. This maps public implementation, not completion percentages. Live-model evidence qualifies only the paths in [version records](docs/verification/README.md), not financial accuracy, production or browser experience.
 <!-- module-map:end -->
@@ -100,22 +100,25 @@ npm run demo -- --case document-compare
 <a id="latest-three-modules"></a>
 ## Releases and development status
 
+**[v0.35.0 · Native PDF table evidence](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.35.0):** Cite exact row and column cells from supported native PDF tables and read back the original page from a saved report. Ambiguous layouts retain plain text without guessing cells. The frozen live cohort passed 10/10. [Evidence and limits](docs/verification/v035-release.md).
+
 **[v0.34.0 · A14 context projection](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.34.0):** An opt-in working-set policy projects eligible older tool results to references while preserving authorized original rereads. The original independently reviewed cohort remains 9/10; targeted Q09 and projection checks do not revise it. [Usage](docs/context-fitting.md) · [Evidence and limits](docs/verification/v034-release.md).
 
 **[v0.33.0 · Material lifecycle](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.33.0):** A17 adds project-local versioned materials, idempotent import, replacement, removal and explicit recovery; admitted tasks retain exact source snapshots. The first live cohort remains 8/10; the prospective cohort is operator-reviewed 9/10, not independent content acceptance. Two requests retain unknown billing. [Evidence and limits](docs/verification/v033-release.md).
 
-**[v0.32.0 · Local dynamic Knowledge](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.32.0):** Knowledge now supports explicit local E5 dynamic queries, atomic query/operation budgets and durable recovery without re-encoding uncertain work. The fixed DeepSeek 4.1 Flash cohort passed 10/10 Runtime/delivery and 10/10 strict original-source review; an earlier 8/10 content batch is retained. Candidate retrieval, sufficient evidence and final answers remain separate. [Dynamic Knowledge guide](docs/dynamic-knowledge.md) · [Qualification, costs and limits](docs/verification/v032-release-readiness.md).
 
 | Recent version / status | What it enables | Usage and boundaries |
 | --- | --- | --- |
+| [v0.35 · Native PDF table evidence](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.35.0) | Cite exact page, row, column and unit | [Evidence and limits](docs/verification/v035-release.md) |
 | [v0.34 · Context projection](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.34.0) | Project eligible older results and reread authorized original bytes | [Usage and limits](docs/context-fitting.md) |
 | [v0.33 · Material lifecycle](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.33.0) | Explicit version selection, replacement, removal and recovery without changing admitted sources | [Evidence and limits](docs/verification/v033-release.md) |
-| [v0.32 · Local dynamic Knowledge](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.32.0) | Encode new local queries within a Run, with atomic budgets and no-replay recovery | [Dynamic Knowledge](docs/dynamic-knowledge.md) |
 
 [All fixed versions and commands](docs/module-guide.md#versions) · [Version lineage](versions.json) · [All releases](https://github.com/hpoenixf/open-etf-agent/releases) · [Verification records](docs/verification/README.md)
 
 <details>
 <summary>Earlier versions</summary>
+
+**[v0.32.0 · Local dynamic Knowledge](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.32.0):** Knowledge now supports explicit local E5 dynamic queries, atomic query/operation budgets and durable recovery without re-encoding uncertain work. The fixed DeepSeek 4.1 Flash cohort passed 10/10 Runtime/delivery and 10/10 strict original-source review; an earlier 8/10 content batch is retained. Candidate retrieval, sufficient evidence and final answers remain separate. [Dynamic Knowledge guide](docs/dynamic-knowledge.md) · [Qualification, costs and limits](docs/verification/v032-release-readiness.md).
 
 **[v0.31.0 · Local Knowledge](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.31.0)** adds selected text import, BM25 free queries and original source readback. The independently frozen live-model cohort completed 9/10 Runtime workflows; model instruction and prose quality remain separate. [Evidence and limits](docs/verification/v031-release.md).
 
