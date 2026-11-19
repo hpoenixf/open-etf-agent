@@ -1,8 +1,12 @@
 import {fork} from 'node:child_process';
+import {isDeepStrictEqual} from 'node:util';
 import {fileURLToPath} from 'node:url';
 import {open,constants,readFile,realpath} from 'node:fs/promises';
 import {resolve,extname} from 'node:path';
 import {sha256,validateSource} from './source.mjs';
+import {validPdfTables} from './pdf-table-evidence.mjs';
+const validTablePages=(tables,count)=>Array.isArray(tables)&&tables.length===count&&tables.some(t=>t?.length)&&tables.every(t=>validPdfTables(t)&&Buffer.byteLength(JSON.stringify(t))<=24000)&&Buffer.byteLength(JSON.stringify(tables))<=131072;
+const freezeTree=value=>{if(value&&typeof value==='object'){for(const child of Object.values(value))freezeTree(child);Object.freeze(value);}return value;};
 const error=code=>Object.assign(new Error(code),{code});
 const fail=code=>{throw error(code);};
 const cancelled=signal=>{if(signal?.aborted)fail('PDF_CANCELLED');};
@@ -43,7 +47,8 @@ export async function parsePdfBytes(bytes,{signal,timeoutMs=5000,workerUrl=new U
           if(message?.kind!=='parsed'||message.parser!==parser||!Array.isArray(message.pages)||!message.pages.length||message.pages.length>16)throw new Error('protocol');
           let total=0;for(const text of message.pages){if(typeof text!=='string'||text.includes('\0')||Buffer.byteLength(text)>64000)throw new Error('text');total+=Buffer.byteLength(text);}
           if(total>131072)throw new Error('text');
-          finish(null,{parser,pages:message.pages});
+          if(message.tables!==undefined&&!validTablePages(message.tables,message.pages.length))throw new Error('table');
+          finish(null,{parser,pages:message.pages,...(message.tables?{tables:message.tables}:{})});
         }catch{finish('PDF_PARSE_FAILED');}
       });
       onSpawn?.(child.pid);
@@ -78,11 +83,13 @@ async function selectedBytes(input,signal){
 // claims. Admission pins all original and extracted bytes before execution starts.
 export function normalizePdfSnapshot(value) {
   const invalid=()=>fail('PDF_INVALID_SNAPSHOT');
-  if(!value||typeof value!=='object'||Array.isArray(value)||Object.keys(value).sort().join(',')!=='originalBase64,originalBytes,originalSha256,pages,parser,parserWorkerSha256,schemaVersion,synthetic'||value.schemaVersion!=='pdf-input-snapshot@1'||value.parser!==parser||typeof value.parserWorkerSha256!=='string'||!/^([a-f0-9]{64})$/.test(value.parserWorkerSha256)||typeof value.synthetic!=='boolean'||typeof value.originalBase64!=='string'||value.originalBase64.length>1398104||!Number.isSafeInteger(value.originalBytes)||value.originalBytes<5||value.originalBytes>1048576||!Array.isArray(value.pages)||!value.pages.length||value.pages.length>16)invalid();
+  const typed=value?.schemaVersion==='pdf-input-snapshot@2';
+  if(!value||typeof value!=='object'||Array.isArray(value)||Object.keys(value).sort().join(',')!=='originalBase64,originalBytes,originalSha256,pages,parser,parserWorkerSha256,schemaVersion,synthetic'+(typed?',tables':'')||!typed&&value.schemaVersion!=='pdf-input-snapshot@1'||value.parser!==parser||typeof value.parserWorkerSha256!=='string'||!/^([a-f0-9]{64})$/.test(value.parserWorkerSha256)||typeof value.synthetic!=='boolean'||typeof value.originalBase64!=='string'||value.originalBase64.length>1398104||!Number.isSafeInteger(value.originalBytes)||value.originalBytes<5||value.originalBytes>1048576||!Array.isArray(value.pages)||!value.pages.length||value.pages.length>16)invalid();
   const bytes=Buffer.from(value.originalBase64,'base64');
   if(bytes.toString('base64')!==value.originalBase64||bytes.length!==value.originalBytes||sha256(bytes)!==value.originalSha256||!bytes.subarray(0,5).equals(Buffer.from('%PDF-'))||/\/Encrypt\b/.test(bytes.toString('latin1')))invalid();
   let total=0;const pages=value.pages.map(text=>{if(typeof text!=='string'||text.includes('\0')||Buffer.byteLength(text)>64000)invalid();total+=Buffer.byteLength(text);return text;});if(total>131072)invalid();
-  return Object.freeze({schemaVersion:'pdf-input-snapshot@1',parser,parserWorkerSha256:value.parserWorkerSha256,originalBase64:value.originalBase64,originalSha256:value.originalSha256,originalBytes:value.originalBytes,synthetic:value.synthetic,pages:Object.freeze(pages)});
+  if(typed&&!validTablePages(value.tables,pages.length))invalid();
+  return Object.freeze({schemaVersion:value.schemaVersion,parser,parserWorkerSha256:value.parserWorkerSha256,originalBase64:value.originalBase64,originalSha256:value.originalSha256,originalBytes:value.originalBytes,synthetic:value.synthetic,pages:Object.freeze(pages),...(typed?{tables:freezeTree(structuredClone(value.tables))}:{})});
 }
 export function pdfSnapshotBinding(snapshot) {
   const value=normalizePdfSnapshot(snapshot);
@@ -92,7 +99,20 @@ export async function preparePdfSnapshot({input={},signal}={}) {
   if(!input||typeof input!=='object'||Array.isArray(input))fail('PDF_INVALID_INPUT');
   const original=await selectedBytes(structuredClone(input),signal);
   const parsed=await parsePdfBytes(original.bytes,{signal});cancelled(signal);
-  return normalizePdfSnapshot({schemaVersion:'pdf-input-snapshot@1',parser:parsed.parser,parserWorkerSha256:sha256(await readFile(new URL('./pdf-parser-worker.mjs',import.meta.url))),originalBase64:original.bytes.toString('base64'),originalSha256:sha256(original.bytes),originalBytes:original.bytes.length,synthetic:original.synthetic,pages:parsed.pages});
+  return normalizePdfSnapshot({schemaVersion:parsed.tables?'pdf-input-snapshot@2':'pdf-input-snapshot@1',parser:parsed.parser,parserWorkerSha256:sha256(await readFile(new URL('./pdf-parser-worker.mjs',import.meta.url))),originalBase64:original.bytes.toString('base64'),originalSha256:sha256(original.bytes),originalBytes:original.bytes.length,synthetic:original.synthetic,pages:parsed.pages,...(parsed.tables?{tables:parsed.tables}:{})});
+}
+function selectPdfCell(tables,{table,row,column}){
+ const t=tables?.[table-1],r=t?.rows[row-1],c=r?.cells[column-1];
+ if(!c)return null;
+ return {text:c.text,cell:{schemaVersion:'pdf-table-cell@1',table,row,column,caption:t.caption,rowLabel:r.label,header:t.headers[column-1],unit:t.unit,at:c.at}};
+}
+// Caller holds an admitted normalized snapshot. Do not reparse or repair
+// original input to revalidate retained reports/checkpoints.
+export function matchesFrozenPdfCell(snapshot,source){
+ const cell=source?.pdf?.cell;
+ if(!cell||snapshot?.schemaVersion!=='pdf-input-snapshot@2'||source.pdf.originalSha256!==snapshot.originalSha256)return false;
+ const expected=selectPdfCell(snapshot.tables[source.page-1],cell);
+ return expected!==null&&source.text===expected.text&&isDeepStrictEqual(cell,expected.cell);
 }
 export function openPdfInput({input,store}){
   if(!input||typeof input!=='object'||Array.isArray(input)||!store?.put)fail('PDF_INVALID_INPUT');
@@ -100,21 +120,33 @@ export function openPdfInput({input,store}){
   const snapshot=Object.hasOwn(configured,'snapshot')?(Object.keys(configured).length===1?normalizePdfSnapshot(configured.snapshot):fail('PDF_INVALID_INPUT')):undefined;
   const lifetime=new AbortController();let pending,artifact,cleanupError;
   const load=signal=>pending??=(async()=>{
-    try{if(snapshot){cancelled(signal);return{bytes:Buffer.from(snapshot.originalBase64,'base64'),synthetic:snapshot.synthetic,parser:snapshot.parser,pages:snapshot.pages};}const original=await selectedBytes(configured,signal);const parsed=await parsePdfBytes(original.bytes,{signal});return{...original,...parsed};}
+    try{if(snapshot){cancelled(signal);return{bytes:Buffer.from(snapshot.originalBase64,'base64'),synthetic:snapshot.synthetic,parser:snapshot.parser,pages:snapshot.pages,tables:snapshot.tables};}const original=await selectedBytes(configured,signal);const parsed=await parsePdfBytes(original.bytes,{signal});return{...original,...parsed};}
     catch(e){if(e.code==='PDF_CLEANUP_FAILED')cleanupError=e;throw e;}
   })();
-  return{
-    async readPage(page,{signal}={}){
+  async function readPage(page,{signal,selection}={}){
       if(!Number.isSafeInteger(page)||page<1||page>16)fail('PDF_INVALID_PAGE');
       const combined=signal?AbortSignal.any([signal,lifetime.signal]):lifetime.signal;cancelled(combined);
       const value=await load(combined);cancelled(combined);
-      if(page>value.pages.length)fail('PDF_INVALID_PAGE');const text=value.pages[page-1];if(!text.trim())fail('PDF_NO_TEXT');
+      if(page>value.pages.length)fail('PDF_INVALID_PAGE');const tablePage=value.tables?.[page-1];
+      let text=value.pages[page-1],evidence={},suffix='';
+      if(selection){
+        const {table,row,column}=selection, selected=selectPdfCell(tablePage,selection);
+        if(!selected)fail('PDF_CELL_UNAVAILABLE');
+        text=selected.text;
+        suffix=`:t${table}:r${row}:c${column}`;
+        evidence={cell:selected.cell};
+      }else if(tablePage?.length)evidence={tables:tablePage};
+      if(!text.trim())fail('PDF_NO_TEXT');
       artifact??=store.put({format:'pdf',content:value.bytes},{signal:combined});const original=await artifact;
       try{
         cancelled(combined);const hash=sha256(value.bytes);
-        return validateSource({sourceId:`pdf:${hash}:p${page}`,documentId:`pdf:${hash}`,name:value.synthetic?'Original synthetic local PDF':'Operator-selected local PDF',version:`${parser}:${hash}`,page,text,sha256:sha256(text),mediaType:'text/plain; charset=utf-8',pdf:{originalArtifactId:original.artifactId,originalSha256:hash,originalBytes:value.bytes.length,parser,pageCount:value.pages.length,synthetic:value.synthetic,extraction:'text-layer',visualInspection:'not-performed'}});
+        return validateSource({sourceId:`pdf:${hash}:p${page}${suffix}`,documentId:`pdf:${hash}`,name:value.synthetic?'Original synthetic local PDF':'Operator-selected local PDF',version:`${parser}:${hash}`,page,text,sha256:sha256(text),mediaType:'text/plain; charset=utf-8',pdf:{originalArtifactId:original.artifactId,originalSha256:hash,originalBytes:value.bytes.length,parser,pageCount:value.pages.length,synthetic:value.synthetic,extraction:'text-layer',visualInspection:'not-performed',...evidence}});
       }catch(e){e.artifactEffects=[{kind:'artifact',artifactId:original.artifactId}];throw e;}
-    },
+  }
+  return{
+    readPage,
+    verifyCell(source){return matchesFrozenPdfCell(snapshot,source);},
+    readCell({page,table,row,column},context={}){return readPage(page,{...context,selection:{table,row,column}});},
     async close(){lifetime.abort();await pending?.catch(()=>{});await artifact?.catch(()=>{});if(cleanupError)throw cleanupError;}
   };
 }
