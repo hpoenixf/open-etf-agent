@@ -20,12 +20,12 @@ export async function readTimeline(directory) {
   const checks = {
     runId: identity, rootId: identity, taskId: value => value === null || identity(value),
     sequence: value => count(value) && value > 0,
-    type: value => ['run_started', 'run_resumed', 'run_yielded', 'model_proposal', 'tool_proposal', 'tool_result', 'file_saved', 'run_finished','worker_interrupted','working_note','context_fit','validation_correction_offered'].includes(value),
+    type: value => ['run_started', 'run_resumed', 'run_yielded', 'model_proposal', 'summary_proposal', 'tool_proposal', 'tool_result', 'file_saved', 'run_finished','worker_interrupted','working_note','compaction_pressure','context_fit','validation_correction_offered'].includes(value),
     settlementPhase: value => value==='pre-settlement', terminalAuthority: value => ['Session.finish','Runtime.return'].includes(value), remainingRounds: count,
     kind: value => ['calls', 'final'].includes(value), callId: identity,
     callIds: value => Array.isArray(value) && value.length <= 16 && value.every(identity),
     name: value => typeof value === 'string' && /^[a-z][a-z0-9_]{0,63}$/.test(value),
-    status: value => ['awaiting-response','interrupted','reused', 'completed', 'failed', 'cancelled', 'succeeded', 'rejected', 'unknown','applied','no-eligible-group','no-backed-material','budget-exhausted','summary-failed','summary-input-capacity','summary-timeout','stale','memory-stale','invalid-summary','no-net-saving','persistence-failed','invalid-note-receipt'].includes(value),
+    status: value => ['awaiting-response','interrupted','reused', 'completed', 'failed', 'cancelled', 'succeeded', 'rejected', 'unknown','applied','no-eligible-group','no-backed-material','budget-exhausted','summary-failed','summary-input-capacity','summary-timeout','stale','memory-stale','frontier-memory-excluded','invalid-summary','no-net-saving','unchanged-no-net-saving','capacity-unknown','pressured','under-threshold','persistence-failed','invalid-note-receipt'].includes(value),
     code: value => value === null || (typeof value === 'string' && /^[A-Z][A-Z0-9_]{0,100}$/.test(value)),
     dispatched: value => typeof value === 'boolean', durationMs: finite, toolsDispatched: count
   };
@@ -34,7 +34,7 @@ export async function readTimeline(directory) {
     if (!event || typeof event !== 'object' || Array.isArray(event) || !checks.type(event.type)) throw new Error('Malformed or unsupported timeline event');
     const entry = {};
     for (const [key, valid] of Object.entries(checks)) if (Object.hasOwn(event, key) && valid(event[key])) entry[key] = event[key];
-    if (event.type === 'model_proposal') {
+    if (event.type === 'model_proposal' || event.type === 'summary_proposal') {
       const usage = {};
       if (event.usage && typeof event.usage === 'object' && !Array.isArray(event.usage)) {
         for (const key of ['prompt_tokens', 'completion_tokens', 'total_tokens']) if (count(event.usage[key])) usage[key] = event.usage[key];
@@ -43,6 +43,7 @@ export async function readTimeline(directory) {
       entry.cost = finite(event.cost) ? event.cost : null;
     }
     if(event.type==='context_fit'){for(const key of ['beforeBytes','afterBytes','softProjectedResults'])if(count(event[key]))entry[key]=event[key];}
+    if(event.type==='compaction_pressure'){for(const key of ['requestBytes','thresholdBytes','limitBytes'])if(event[key]===null||count(event[key]))entry[key]=event[key];}
     if(event.type==='working_note'){for(const key of ['beforeBytes','afterBytes'])if(count(event[key]))entry[key]=event[key];for(const key of ['noteRef','persistedNoteRef'])if(event[key]===null||typeof event[key]==='string'&&/^note:sha256:[a-f0-9]{64}$/.test(event[key]))entry[key]=event[key];}
     if(event.type==='tool_result'){const artifacts=projectArtifactEffects(event.artifactEffects);if(artifacts)entry.artifactEffects=artifacts;if(typeof event.artifactId==='string'&&/^artifact:sha256:[a-f0-9]{64}$/.test(event.artifactId))entry.artifactId=event.artifactId;const effect=projectMemoryEffect(event.memoryEffect);if(effect)entry.memoryEffect=effect;}
     return entry;

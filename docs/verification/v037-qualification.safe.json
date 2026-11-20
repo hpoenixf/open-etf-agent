@@ -1,0 +1,45 @@
+{
+  "schemaVersion": 1,
+  "kind": "runtime-scoped-aggregate-qualification",
+  "version": "0.37.0",
+  "behavioralCommit": "1bfe01b6d0b1052272752d424c53b0ab2389e1b5",
+  "behavioralTree": "05e8b66c84df34f2d66565322c3bc9743be2a1bd",
+  "node": "26.11.1",
+  "live": {
+    "provider": "OpenCode Go",
+    "model": "DeepSeek v4.1 Flash",
+    "materials": "authored-synthetic",
+    "policy": "real-ten-min-nine-20261102",
+    "singleProspectiveCohort": true,
+    "planned": 10,
+    "attempted": 10,
+    "requiredSuccesses": 9,
+    "successes": 10,
+    "lowPressureNoSummary": 5,
+    "highPressureAppliedAndRequestReduced": 5,
+    "coldReportReadbacks": 10,
+    "physicalRequests": 60,
+    "completedNativeReservations": 60,
+    "providerIncludedZeroAdditionalCharge": 60,
+    "unknownOutcomes": 0,
+    "separateSafetyGatePassed": true
+  },
+  "historicalObservations": [
+    { "attempt": 1, "successes": 7, "physicalRequests": 40, "unknownTransportOutcomes": 1, "notRun": 2 },
+    { "attempt": 2, "successes": 0, "physicalRequests": 0, "heldNativeReservations": 1, "notRun": 9 },
+    { "attempt": 3, "successes": 0, "physicalRequests": 1, "unconfirmedProviderSettlement": 1, "notRun": 9 }
+  ],
+  "fullSuite": {
+    "runtimeCommit": "1bfe01b6d0b1052272752d424c53b0ab2389e1b5",
+    "providerFree": true,
+    "passed": 1569,
+    "skipped": 4,
+    "failed": 0,
+    "verifyRun": "https://github.com/hpoenixf/open-etf-agent/actions/runs/44664348321"
+  },
+  "limits": [
+    "No pooling, replay, refund or release evidence from historical observations.",
+    "No live financial accuracy, production, or browser qualification.",
+    "Public aggregate only; independent publisher retains fixed per-case receipts."
+  ]
+}

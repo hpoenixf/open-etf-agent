@@ -44,7 +44,7 @@ GitHub treats embedded SVG as one image, so its cards are not individually click
 | L5 Publication & delivery | [Main → Report](https://hpoenixf.com/eff-agent-article/en/articles/open-etf-agent-v01-first-readable-report) · [Report](https://hpoenixf.com/eff-agent-article/en/articles/open-etf-agent-v01-first-readable-report) · [Artifact / Revision](https://hpoenixf.com/eff-agent-article/en/articles/agent-artifact-version-access-sharing) · [Publication](https://hpoenixf.com/eff-agent-article/en/articles/019-agent-answer-publication) · [Report Review](https://hpoenixf.com/eff-agent-article/en/articles/open-etf-agent-report-review-workshop) |
 | L6 User interfaces | [Loopback Reader](https://hpoenixf.com/eff-agent-article/en/articles/open-etf-agent-v010-system-design) · [CLI Readback](https://hpoenixf.com/eff-agent-article/en/articles/open-etf-agent-v01-first-readable-report) |
 
-**Current map: v0.36.1** · [Modules, source & evidence](docs/module-status.md) · [Six-layer article (Chinese original)](https://github.com/hpoenixf/eff-agent-article/blob/249f0b866f9446f33b57f186fbc6d35b5d82c119/articles/open-etf-agent-v010-system-design.md)
+**Current map: v0.37.0** · [Modules, source & evidence](docs/module-status.md) · [Six-layer article (Chinese original)](https://github.com/hpoenixf/eff-agent-article/blob/249f0b866f9446f33b57f186fbc6d35b5d82c119/articles/open-etf-agent-v010-system-design.md)
 
 Article links are reading navigation, not implementation parity or coverage qualification. This maps public implementation, not completion percentages. Live-model evidence qualifies only the paths in [version records](docs/verification/README.md), not financial accuracy, production or browser experience.
 <!-- module-map:end -->
@@ -100,25 +100,29 @@ npm run demo -- --case document-compare
 <a id="latest-three-modules"></a>
 ## Releases and development status
 
+**[v0.37.0 · Main context compaction](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.37.0):** Check pressure on the full Gateway request; skip ineffective repeats and reserve the final model slot for delivery. [Usage](docs/project-context.md) · [Evidence and limits](docs/verification/v037-release.md).
+
 **v0.36.1 maintenance:** Main compaction no longer summarizes settled tool groups that contain typed Project Memory. Saved summary frontiers covering those groups are not reused; the original typed data still passes through the existing pre-dispatch checks. [Verification and limits](docs/verification/v0361-maintenance.md).
 
 **[v0.36.0 · Project Memory lifecycle](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.36.0):** Pin, pause, restore or forget project Memory explicitly. A task can select exact revisions or opt out, and queued typed Memory is rechecked before dispatch. The frozen synthetic live cohort passed 10/10. [Evidence and limits](docs/verification/v036-release.md).
 
-**[v0.35.0 · Native PDF table evidence](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.35.0):** Cite exact row and column cells from supported native PDF tables and read back the original page from a saved report. Ambiguous layouts retain plain text without guessing cells. The frozen live cohort passed 10/10. [Evidence and limits](docs/verification/v035-release.md).
 
-**[v0.34.0 · A14 context projection](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.34.0):** An opt-in working-set policy projects eligible older tool results to references while preserving authorized original rereads. The original independently reviewed cohort remains 9/10; targeted Q09 and projection checks do not revise it. [Usage](docs/context-fitting.md) · [Evidence and limits](docs/verification/v034-release.md).
 
 
 | Recent version / status | What it enables | Usage and boundaries |
 | --- | --- | --- |
+| [v0.37.0 · Main context compaction](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.37.0) | Check pressure on the full Gateway request; skip ineffective repeats and reserve the final model slot for delivery | [Usage](docs/project-context.md) |
+| [v0.36.1](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.36.1) | Keep typed Project Memory out of new and reused summaries | [Evidence and limits](docs/verification/v0361-maintenance.md) |
 | [v0.36 · Project Memory](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.36.0) | Manage Memory eligibility, select exact task revisions, or opt out | [Evidence and limits](docs/verification/v036-release.md) |
-| [v0.35 · Native PDF table evidence](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.35.0) | Cite exact page, row, column and unit | [Evidence and limits](docs/verification/v035-release.md) |
-| [v0.34 · Context projection](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.34.0) | Project eligible older results and reread authorized original bytes | [Usage and limits](docs/context-fitting.md) |
 
 [All fixed versions and commands](docs/module-guide.md#versions) · [Version lineage](versions.json) · [All releases](https://github.com/hpoenixf/open-etf-agent/releases) · [Verification records](docs/verification/README.md)
 
 <details>
 <summary>Earlier versions</summary>
+
+**[v0.35.0 · Native PDF table evidence](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.35.0):** Cite exact row and column cells from supported native PDF tables and read back the original page from a saved report. Ambiguous layouts retain plain text without guessing cells. The frozen live cohort passed 10/10. [Evidence and limits](docs/verification/v035-release.md).
+
+**[v0.34.0 · A14 context projection](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.34.0):** An opt-in working-set policy projects eligible older tool results to references while preserving authorized original rereads. The original independently reviewed cohort remains 9/10; targeted Q09 and projection checks do not revise it. [Usage](docs/context-fitting.md) · [Evidence and limits](docs/verification/v034-release.md).
 
 **[v0.33.0 · Material lifecycle](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.33.0):** A17 adds project-local versioned materials, idempotent import, replacement, removal and explicit recovery; admitted tasks retain exact source snapshots. The first live cohort remains 8/10; the prospective cohort is operator-reviewed 9/10, not independent content acceptance. Two requests retain unknown billing. [Evidence and limits](docs/verification/v033-release.md).
 
