@@ -1,9 +1,9 @@
 {
   "schemaVersion": 2,
-  "reviewedVersion": "0.36.1",
-  "reviewedSource": "ceb285d01f9079984029bcb54fe8a3de9013d873",
+  "reviewedVersion": "0.37.0",
+  "reviewedSource": "1bfe01b6d0b1052272752d424c53b0ab2389e1b5",
   "articleSource": "https://github.com/hpoenixf/eff-agent-article/blob/249f0b866f9446f33b57f186fbc6d35b5d82c119/articles/open-etf-agent-v010-system-design.md",
-  "evidence": "docs/verification/v0361-maintenance.md",
+  "evidence": "docs/verification/v037-release.md",
   "layers": [
     {
       "id": "L1",
@@ -330,12 +330,12 @@
       "group": "loop",
       "name": "Compaction",
       "summary": {
-        "zh": "压缩工作上下文",
-        "en": "Compact working context"
+        "zh": "按完整请求字节判断是否压缩",
+        "en": "Measure complete request pressure"
       },
       "boundary": {
-        "zh": "摘要非原文；结构化记忆不进入摘要",
-        "en": "Notes are not sources; no typed Memory"
+        "zh": "显式开启；保留原文和最后调用",
+        "en": "Opt in; keep originals and final slot"
       },
       "status": "enhanced",
       "source": "src/compaction.mjs",
