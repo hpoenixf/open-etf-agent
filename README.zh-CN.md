@@ -44,7 +44,7 @@ GitHub 将 SVG 当作一张图片，不能在缩略图里逐卡点击；下表�
 | L5 结果发布与交付 | [Main → Report](https://hpoenixf.com/eff-agent-article/articles/open-etf-agent-v01-first-readable-report) · [Report](https://hpoenixf.com/eff-agent-article/articles/open-etf-agent-v01-first-readable-report) · [Artifact / Revision](https://hpoenixf.com/eff-agent-article/articles/agent-artifact-version-access-sharing) · [Publication](https://hpoenixf.com/eff-agent-article/articles/019-agent-answer-publication) · [Report Review](https://hpoenixf.com/eff-agent-article/articles/open-etf-agent-report-review-workshop) |
 | L6 用户界面 | [Loopback Reader](https://hpoenixf.com/eff-agent-article/articles/open-etf-agent-v010-system-design) · [CLI Readback](https://hpoenixf.com/eff-agent-article/articles/open-etf-agent-v01-first-readable-report) |
 
-**当前地图: v0.35.0** · [模块、源码与证据](docs/module-status.zh-CN.md) · [六层文章原文](https://github.com/hpoenixf/eff-agent-article/blob/249f0b866f9446f33b57f186fbc6d35b5d82c119/articles/open-etf-agent-v010-system-design.md)
+**当前地图: v0.36.0** · [模块、源码与证据](docs/module-status.zh-CN.md) · [六层文章原文](https://github.com/hpoenixf/eff-agent-article/blob/249f0b866f9446f33b57f186fbc6d35b5d82c119/articles/open-etf-agent-v010-system-design.md)
 
 文章关联是阅读导航，不等于实现全文能力或覆盖资格。图中是公开实现范围，不是全功能完成率。真实模型验证只覆盖[各版记录](docs/verification/README.md)中的指定路径；金融语义、生产与浏览器体验不因此获得认证。
 <!-- module-map:end -->
@@ -100,23 +100,25 @@ npm run demo -- --case document-compare
 <a id="最近三个模块"></a>
 ## 最近版本与开发状态
 
+**[v0.36.0 · 项目记忆生命周期](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.36.0)：** 项目记忆可显式固定、暂停、恢复与遗忘。任务可限定修订或临时禁用记忆；排队后、派发前重新核对资格。固定合成任务真实验收 10/10。[证据与边界](docs/verification/v036-release.md)。
+
 **[v0.35.0 · 原生 PDF 表格证据](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.35.0)：** 从可识别的原生 PDF 表格按行列引用确切单元格，并从保存的报告回读原页。歧义版面保留纯文本，不猜单元格。冻结真实验收 10/10。[证据与限制](docs/verification/v035-release.md)。
 
 **[v0.34.0 · A14 上下文投影](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.34.0)：** 可选窗口策略将符合条件的较旧工具结果投影为引用，仍可按同一引用授权回读原文。原始独立测评保持 9/10；针对 Q09 和投影回读的后续验证不改分母。[用法](docs/context-fitting.md) · [证据与限制](docs/verification/v034-release.md)。
 
-**[v0.33.0 · 资料资产生命周期](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.33.0)：** A17 提供项目内资料版本、幂等导入、替换、移除与显式恢复；历史任务固定原始来源。真实测评首批 8/10 保留，第二批由执行者复核为 9/10，非独立内容验收；两批共 2 条请求费用未知。[证据与限制](docs/verification/v033-release.md)。
-
 
 | 最近版本 / 状态 | 能做什么 | 用法与边界 |
 | --- | --- | --- |
+| [v0.36 · 项目记忆](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.36.0) | 固定、暂停、恢复记忆，按任务选择修订或关闭记忆 | [证据与边界](docs/verification/v036-release.md) |
 | [v0.35 · 原生 PDF 表格证据](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.35.0) | 按原始页、行、列和单位引用单元格 | [证据与限制](docs/verification/v035-release.md) |
 | [v0.34 · 上下文投影](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.34.0) | 投影较旧工具结果，并保留授权原文回读 | [用法与边界](docs/context-fitting.md) |
-| [v0.33 · 资料资产](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.33.0) | 显式版本选择、替换、移除与恢复，保留已接纳任务来源 | [证据与限制](docs/verification/v033-release.md) |
 
 [全部固定版本与命令](docs/module-guide.zh-CN.md#versions) · [版本谱系](versions.json) · [全部 Release](https://github.com/hpoenixf/open-etf-agent/releases) · [验证记录](docs/verification/README.zh-CN.md)
 
 <details>
 <summary>历史版本</summary>
+
+**[v0.33.0 · 资料资产生命周期](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.33.0)：** A17 提供项目内资料版本、幂等导入、替换、移除与显式恢复；历史任务固定原始来源。真实测评首批 8/10 保留，第二批由执行者复核为 9/10，非独立内容验收；两批共 2 条请求费用未知。[证据与限制](docs/verification/v033-release.md)。
 
 **[v0.32.0 · 本地动态 Knowledge](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.32.0)：** Knowledge 已支持显式本地 E5 动态查询、原子查询与操作预算，以及不重放不确定操作的持久恢复。固定 DeepSeek 4.1 Flash 批次通过 10/10 运行交付和 10/10 严格原文复核；此前内容 8/10 的批次保留。候选召回、证据充分性和最终回答仍分别评估。[动态 Knowledge 用法](docs/dynamic-knowledge.zh-CN.md) · [资格、消耗与边界](docs/verification/v032-release-readiness.zh-CN.md)。
 
