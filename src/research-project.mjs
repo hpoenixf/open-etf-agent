@@ -18,7 +18,7 @@ import {loadProjectSources} from './project-sources.mjs';
 import {openSession} from './session.mjs';
 import {submitRun,confirmScheduledRun,materializeScheduledRun} from './runtime.mjs';
 import {workRun} from './worker.mjs';
-import {createChatGateway} from './gateway.mjs';
+import {CHAT_REQUEST_MAX_BYTES,createChatGateway} from './gateway.mjs';
 import {createSharedAdmission} from './admission.mjs';
 import {openMemoryLibrary} from './memory.mjs';
 import {openDurableMemory} from './durable-memory.mjs';
@@ -123,7 +123,7 @@ export function validateResearchConfig(input){
  if(input.allowedTools?.includes('read_pdf_cell')&&!input.allowedTools.includes('read_pdf_page'))fail('PROJECT_PDF_CELL_REQUIRES_PAGE');
  const limits={maxRounds:20,maxTools:32,timeoutMs:300000,model:24,tool:40,...input.limits};keys(limits,['maxRounds','maxTools','timeoutMs','model','tool']);
  if(!integer(limits.maxRounds,1,100)||!integer(limits.maxTools,1,100)||!integer(limits.timeoutMs,1000,3600000)||!integer(limits.model,1,100)||!integer(limits.tool,1,200))fail('PROJECT_LIMITS');
- if(input.compaction!==undefined){keys(input.compaction,['thresholdBytes','summaryTimeoutMs','maxSummaryRounds']);if(!caps.includes('compaction')||!integer(input.compaction.thresholdBytes,1,1048576)||!integer(input.compaction.summaryTimeoutMs??10000,1,120000)||!integer(input.compaction.maxSummaryRounds??4,1,24))fail('PROJECT_COMPACTION_CONFIG');}
+ if(input.compaction!==undefined){keys(input.compaction,['thresholdBytes','summaryTimeoutMs','maxSummaryRounds','pressureMode']);if(!caps.includes('compaction')||input.compaction.pressureMode!==undefined&&input.compaction.pressureMode!=='encoded-request@1'||!integer(input.compaction.thresholdBytes,1,1048576)||!integer(input.compaction.summaryTimeoutMs??10000,1,120000)||!integer(input.compaction.maxSummaryRounds??4,1,24))fail('PROJECT_COMPACTION_CONFIG');}
  if(input.timeZone!==undefined){if(!caps.includes('task-time'))fail('PROJECT_TASK_TIME_REQUIRED');createTaskTime({timeZone:input.timeZone});}
  if(input.trustedPackages!==undefined){if(!caps.includes('trusted-tools')||!Array.isArray(input.trustedPackages)||input.trustedPackages.length>8)fail('PROJECT_TRUSTED_PACKAGES');for(const p of input.trustedPackages){keys(p,['modulePath','sha256','trustedCodeApproved']);if(typeof p.modulePath!=='string'||!p.modulePath||!hex(p.sha256)||p.trustedCodeApproved!==true)fail('PROJECT_TRUSTED_PACKAGES');}}
  if(caps.includes('child')&&input.trustedPackages?.length)fail('PROJECT_PLUGIN_CHILD_UNSUPPORTED');
@@ -190,6 +190,7 @@ async function assemble(projectDir,definition,{gateway,apiKey,fetchImpl,hostSign
  try{
   let selectedGateway=gateway,selectedMemory,defaultMemory;if(selectedGateway&&selectedGateway.mode!==config.gateway.mode)fail('PROJECT_GATEWAY_IDENTITY');
   if(selectedGateway&&config.gateway.mode==='live')fail('PROJECT_LIVE_GATEWAY_OVERRIDE');
+  if(selectedGateway?.inputBudget&&config.gateway.mode==='fixture'&&config.compaction?.pressureMode==='encoded-request@1')fail('PROJECT_FIXTURE_COMPACTION_METER_UNBOUND');
   const requestContext=new AsyncLocalStorage();
   if(!selectedGateway){if(!dispatch)selectedGateway={mode:config.gateway.mode,next(){fail('PROJECT_SUBMIT_MUST_NOT_DISPATCH');}};else{if(config.gateway.mode!=='live')fail('PROJECT_FIXTURE_GATEWAY_REQUIRED');selectedGateway=createChatGateway({endpoint:config.gateway.endpoint,model:config.gateway.model,apiKey,authorization:definition.authorization,stream:config.gateway.stream??false,fetchImpl:fetchImpl?((url,options)=>fetchImpl(url,options,requestContext.getStore())):undefined});}}
   const originalGateway=selectedGateway;selectedGateway={mode:originalGateway.mode,...(originalGateway.inputBudget?{inputBudget:originalGateway.inputBudget}:{}),next(input){const r=input.reservation;const context=r?Object.freeze({role:r.purpose==='compaction'?'summary':r.runId===r.rootId?'main':'child',rootId:r.rootId,runId:r.runId,modelOrdinal:r.modelOrdinal,purpose:r.purpose??'main',inputHash:r.inputHash}):null;return requestContext.run(context,async()=>{try{const result=await originalGateway.next(input);if(config.gateway.mode==='live'&&typeof apiKey==='string'&&apiKey&&containsSecret(result,apiKey))fail('PROJECT_CREDENTIAL_ECHO');return result;}catch(error){if(config.gateway.mode==='live'&&typeof apiKey==='string'&&apiKey&&(String(error?.message).includes(apiKey)||String(error?.code).includes(apiKey)))fail('PROJECT_CREDENTIAL_ECHO');throw error;}});}};
@@ -231,7 +232,7 @@ async function assemble(projectDir,definition,{gateway,apiKey,fetchImpl,hostSign
    workingInput={memoryLibrary:selectedMemory.library};
   }
   if(projectMemoryEnabled(definition)){const memory=await openDurableMemory({directory:p.memory,intents:definition.memoryIntents??[]});if(memory.libraryId!==definition.memoryLibraryId)fail('PROJECT_MEMORY_CHANGED');const writes=(definition.memoryIntents??[]).length>0;extensions.push(...memory.extensions.filter(t=>writes||!t.memoryEffect));adapters.push({id:'durable-memory',version:'1',contentSha256:memory.intentDigest});workingInput={memoryLibrary:memory};defaultMemory=memory;}
-  if(caps.includes('compaction'))workingInput={...workingInput,compaction:{mode:'gateway',thresholdBytes:16000,summaryTimeoutMs:10000,maxSummaryRounds:4,...config.compaction}};
+  if(caps.includes('compaction'))workingInput={...workingInput,compaction:{mode:'gateway',thresholdBytes:16000,summaryTimeoutMs:10000,maxSummaryRounds:4,...config.compaction,...(config.compaction?.pressureMode==='encoded-request@1'&&config.gateway.mode==='live'?{encodedMaxBytes:CHAT_REQUEST_MAX_BYTES}:{})}};
   let claim;const originalQuestion=frozenTaskQuestion(definition,sources);
   if(caps.includes('child')){const childDocuments=sources.catalog?.documents.map(d=>d.id)??[];if(!childDocuments.length||childDocuments.length>(config.childExecution?64:2))fail('PROJECT_CHILD_DOCUMENT_SCOPE');
    const selected={question:originalQuestion,...(definition.childInputProjection===undefined?{}:{projection:definition.childInputProjection}),documents:childDocuments,documentCatalog:sources.catalog,...(config.childExecution?{execution:config.childExecution}:config.childMethod?{method:config.childMethod}:{})};

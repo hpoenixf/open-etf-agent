@@ -17,10 +17,11 @@ export function projectControlProofs(messages){
  }
  return projected;
 }
-export async function projectContext({ messages, maxBytes, lookupSource, additionalBudget, projectOwnedResult, projectOwnedCall, olderReadBytes, onFit } = {}) {
+export async function projectContext({ messages, maxBytes, lookupSource, additionalBudget, projectOwnedResult, projectOwnedCall, olderReadBytes, onFit, allowUnfitted = false } = {}) {
   if (!Array.isArray(messages) || !messages.length || messages[0].role!=='user' || !Number.isSafeInteger(maxBytes) || maxBytes<1 || maxBytes>1048576 || typeof lookupSource!=='function') fail('Invalid context budget/configuration');
   if(additionalBudget!==undefined&&(!Number.isSafeInteger(additionalBudget?.maxBytes)||additionalBudget.maxBytes<1||typeof additionalBudget.measure!=='function'))fail('Invalid encoded context budget');
   if(olderReadBytes!==undefined&&(!Number.isSafeInteger(olderReadBytes)||olderReadBytes<1||olderReadBytes>1048576))fail('Invalid context working-set target');
+  if(typeof allowUnfitted!=='boolean')fail('Invalid context fitting mode');
   if(onFit!==undefined&&typeof onFit!=='function')fail('Invalid context observation');
   const projected=projectControlProofs(messages);
   const beforeBytes=Buffer.byteLength(JSON.stringify(projected));let softProjectedResults=0;
@@ -99,6 +100,7 @@ export async function projectContext({ messages, maxBytes, lookupSource, additio
     }
     if(fits())return finish();
   }
+  if(allowUnfitted)return projected; // Only for pressure inspection; caller must guard reservation.
   throw Object.assign(new Error('Context byte budget cannot retain mandatory original question/tool identities; narrow the requested page selection or use a larger authorized context budget'),{code:'CONTEXT_CAPACITY_EXCEEDED'});
 }
 

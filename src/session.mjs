@@ -102,9 +102,10 @@ function validateConfig(value, ordinary = false, protectedProfile = false, inter
   fields(value.workingInput, [], ['memoryLibraryId', 'compaction']);
   if (value.workingInput.memoryLibraryId !== undefined && !identifier(value.workingInput.memoryLibraryId)) fail('INVALID_DEFINITION');
   if (value.workingInput.compaction !== undefined) {
-   const c = value.workingInput.compaction; fields(c, ['thresholdBytes', 'version'], ['summaryTimeoutMs','maxSummaryRounds']);
+   const c = value.workingInput.compaction; fields(c, ['thresholdBytes', 'version'], ['summaryTimeoutMs','maxSummaryRounds','encodedMaxBytes']);
    if (!Number.isSafeInteger(c.thresholdBytes) || c.thresholdBytes < 1 || c.thresholdBytes > 1048576 || !identifier(c.version) || (c.summaryTimeoutMs !== undefined && (!Number.isSafeInteger(c.summaryTimeoutMs) || c.summaryTimeoutMs < 1 || c.summaryTimeoutMs > 120000))) fail('INVALID_DEFINITION');
-   if(c.version==='gateway-history-compaction@2'?(!Number.isSafeInteger(c.maxSummaryRounds)||c.maxSummaryRounds<1||c.maxSummaryRounds>24):c.maxSummaryRounds!==undefined)fail('INVALID_DEFINITION');
+   if(['gateway-history-compaction@2','gateway-history-compaction@3'].includes(c.version)?(!Number.isSafeInteger(c.maxSummaryRounds)||c.maxSummaryRounds<1||c.maxSummaryRounds>24):c.maxSummaryRounds!==undefined)fail('INVALID_DEFINITION');
+   if(c.version==='gateway-history-compaction@3'?(c.encodedMaxBytes!==null&&(!Number.isSafeInteger(c.encodedMaxBytes)||c.encodedMaxBytes<1||c.encodedMaxBytes>1048576)):c.encodedMaxBytes!==undefined)fail('INVALID_DEFINITION');
   }
  }
 }
@@ -712,7 +713,7 @@ export async function openSession({ directory, clock = Date.now, leaseMs = 1000,
       else if(call.name==='create_csv'){if(!dependencies.length)fail('PROTECTED_DEPENDENCY_REQUIRED');fields(call.arguments,['rows'],[],'PROTECTED_CSV_SCOPE');}
       else if(call.name==='search_pages'){fields(call.arguments,['query'],[],'INVALID_PROTECTED_QUERY');queryHash(call.arguments.query);}
       else if(call.name!=='save_report')fail('PROTECTED_TOOL_UNSUPPORTED');
-     }} const root = getRoot(row.root_id); if (root[kind + '_used'] >= root[kind + '_limit']) fail('ROOT_BUDGET_EXHAUSTED');
+     }} const root = getRoot(row.root_id); const preserveMain=kind==='model'&&snapshot?.purpose==='compaction'&&view(row).definition.config.workingInput?.compaction?.version==='gateway-history-compaction@3'; if (root[kind + '_used']+(preserveMain?1:0) >= root[kind + '_limit']) fail('ROOT_BUDGET_EXHAUSTED');
      db.prepare(`UPDATE roots SET ${kind}_used=${kind}_used+1 WHERE root_id=?`).run(rootId);
      if (encoded !== undefined) db.prepare('UPDATE runs SET snapshot=? WHERE run_id=?').run(encoded, runId);
      if(kind==='tool'&&dynamicKnowledge){const saved=parsed(getRun(runId).snapshot,MAX_CHECKPOINT_JSON),call=saved.proposal?.calls?.[saved.cursor];if(saved.phase==='tool-dispatched'&&call?.name==='knowledge_query')knowledgeQueries.reserve({runId,owner,fence},call);}
