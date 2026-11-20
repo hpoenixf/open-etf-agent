@@ -1,5 +1,7 @@
 **English** | [简体中文](README.zh-CN.md)
 
+- [v0.36 Project Memory lifecycle: frozen 10/10 with revision and isolation evidence](v036-release.md)
+
 - [v0.35 Native PDF table evidence: frozen 10/10 and original-page readback](v035-release.md)
 
 - [v0.34 A14: context projection, original 9/10 and targeted same-reference reread](v034-release.md)

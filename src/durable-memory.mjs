@@ -81,7 +81,7 @@ export async function openDurableMemory({ directory, intents = [] } = {}) {
     return result;
   }
   const facade = { libraryId };
-  for (const method of ['list', 'search', 'read', 'readOptional', 'verifyReadObservation', 'state', 'save', 'revise', 'forget']) facade[method] = (...args) => operation(method, args);
+  for (const method of ['list', 'search', 'read', 'readOptional', 'verifyReadObservation', 'snapshotState', 'state', 'save', 'revise', 'forget']) facade[method] = (...args) => operation(method, args);
   Object.freeze(facade);
 
   async function state(ref) {
@@ -101,7 +101,7 @@ export async function openDurableMemory({ directory, intents = [] } = {}) {
     if (current.revision < receipt.revision || (current.revision === receipt.revision && (current.recordHash !== receipt.recordHash || current.sha256 !== receipt.sha256 || current.active !== (operationName !== 'forget')))) fail('Memory receipt revision is not committed in current index');
     const records = await safeDirectory(join(directory, 'entries', receipt.id));
     const record = await readJSON(records, receipt.revision + '.json', 16384);
-    const recordKeys = ['kind', 'libraryId', 'id', 'revision', 'provenance', ...(operationName === 'forget' ? [] : ['text', 'sha256'])];
+    const recordKeys = ['kind', 'libraryId', 'id', 'revision', 'provenance', ...(operationName === 'forget' ? [] : ['text', 'sha256']), ...(record.pinned === true && operationName === 'revise' ? ['pinned'] : [])];
     if (!exact(record, recordKeys) || sha256(JSON.stringify(record)) !== receipt.recordHash || record.kind !== (operationName === 'forget' ? 'memory-tombstone' : 'memory-entry') || record.libraryId !== libraryId || record.id !== receipt.id || record.revision !== receipt.revision || !exact(record.provenance, ['intentId', 'origin', 'operation']) || record.provenance.intentId !== receipt.intentId || record.provenance.operation !== operationName || !token.test(record.provenance.origin)) fail('Memory recovery record hash or receipt identity mismatch');
     if (operationName !== 'forget' && (typeof record.text !== 'string' || !record.text.trim() || Buffer.byteLength(record.text) > 8000 || sha256(record.text) !== receipt.sha256 || record.sha256 !== receipt.sha256)) fail('Memory recovery content hash mismatch');
     const reservation = await readJSON(join(directory, 'intents'), sha256(receipt.intentId) + '.json', 16384);
@@ -111,6 +111,10 @@ export async function openDurableMemory({ directory, intents = [] } = {}) {
     // Return only the original acknowledgement, never a historical text payload.
     return receipt;
   }
+  async function snapshotCurrentness(){
+    const snapshot=new Map((await facade.snapshotState()).map(entry=>[entry.id,entry]));
+    return ref=>ref.libraryId===libraryId?snapshot.get(ref.id)??null:null;
+  }
   const extensions = createMemoryBindings({ library: facade, intents: approved }).map(binding => Object.freeze(binding.memoryEffect ? { ...binding, verifyResult: verifyReceipt } : binding));
-  return Object.freeze({ schemaVersion, libraryId, intentDigest, binding: Object.freeze({ schemaVersion, libraryId }), extensions: Object.freeze(extensions), state, verifyReceipt });
+  return Object.freeze({ schemaVersion, libraryId, intentDigest, binding: Object.freeze({ schemaVersion, libraryId }), extensions: Object.freeze(extensions), state, snapshotCurrentness, verifyReceipt });
 }

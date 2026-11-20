@@ -124,6 +124,43 @@ node --input-type=module -e 'import fs from "node:fs"; fs.writeFileSync("researc
 
 在新 `run submit` 中添加 `--memory-intents research-example/intents.json`，问题中写明这次批准的改变。`approve-intent` 返回绑定内容的一次性 intent，不是写入回执。revise/forget 意图还需 `--entry` 和 `--revision`。Memory 读取不构成写入许可，模型不能自己批准或扩大 intent。forget 沿用原 tombstone/revision 语义，不承诺物理擦除全部历史字节。
 
+如果只希望这一题不受项目记忆影响，可以在已启用 Memory 的项目中为普通任务选择
+`--memory-mode temporary`，不要同时传 `--memory-intents`：
+
+```sh
+node src/research-cli.mjs run submit --project research-example/project \
+  --run source-only-1 --question research-example/question.txt --manifest MANIFEST_SHA256 \
+  --memory-mode temporary
+```
+
+真实项目仍要传原有的提供方、资料和费用批准。模式随任务定义固定，Worker 重启和报告
+读回继续用原定义。临时任务不会打开项目记忆库、暴露原生 Memory 工具或执行记忆
+写入意图。新任务不传此选项时保持原行为，重提同一个临时任务需要再次明确选择。
+这一版不支持定时任务、Child 或可信工具组合，也不是隐身模式：任务、检查点和报告
+仍保存在项目中；不会删除记忆库或改变模型提供方的保留策略。
+
+如果只想带入明确选中的记忆，把已有生效条目的 ID 写成 JSON 数组，提交时用
+`--memory-mode selected --memory-entries entries.json`。最多可选 16 条，只读；
+任务固定每条的身份、修订号和内容哈希。之后条目被修改、暂停或遗忘时，原任务
+停止使用该修订，不会自动换成新文本。首版选中模式也不支持托管压缩，默认模式
+保留原有选取和写入权限。
+
+```sh
+node src/research-cli.mjs memory inspect --project research-example/project --status
+node src/research-cli.mjs memory inspect --project research-example/project --entry ENTRY_ID --status
+node src/research-cli.mjs memory pause --project research-example/project --entry ENTRY_ID --revision CURRENT --intent pause-1 --approve-intent
+node src/research-cli.mjs memory restore --project research-example/project --entry ENTRY_ID --revision PAUSED --intent restore-1 --approve-intent
+node src/research-cli.mjs run memory --project research-example/project --run selected-1
+```
+
+`pin` / `unpin` 也需要明确的当前修订号和意图。置顶可以防止直接暂停，但
+挡不住用户明确遗忘；已遗忘的 ID 不能恢复。恢复暂停条目会产生新修订。这些是
+操作者权限，不是新增模型写工具。审计区分「选中」「本地工具召回」和「与已完成
+请求票据匹配的实际携带」，不回显记忆正文。最后一次索引快照之前的变化会阻止
+旧的结构化记忆发出，不会撤回已发送的请求或改写历史正文。
+
+
+
 启用 `response` 的项目可提出普通问题并等待。`run inspect` 输出 `phase`、`response.questionId` 和问题正文。通过明确文件回复后继续原 Run：
 
 ```sh
@@ -153,7 +190,7 @@ Response 是不可信任务数据，不产生权限；不能代替提供方批�
 
 - `validateResearchConfig`、`createResearchProject({directory,config})`、`inspectResearchProject({projectDir})`、`updateResearchProject({projectDir,config,expectedConfigSha256})`。
 - `importProjectSources({projectDir,files})`、`loadProjectSources({projectDir,manifestSha256})`。
-- `submitResearchTask({projectDir,runId,question,sourceManifestSha256,authorization,memoryIntents,taskTime,schedule})`。
+- `submitResearchTask({projectDir,runId,question,sourceManifestSha256,authorization,memoryMode,memoryEntryIds,memoryIntents,taskTime,schedule})`。
 - `workResearchTask({projectDir,runId,apiKey,hostSignal})`、`inspectResearchTask`、`cancelResearchTask`。
 - `respondResearchTask({projectDir,runId,questionId,responseId,text})`、`readResearchReport({projectDir,runId})`。
 - `approveProjectMemoryIntent`、`applyProjectMemoryIntent`：传明确 operation、intent 身份、批准文本，以及适用时的当前 revision。
