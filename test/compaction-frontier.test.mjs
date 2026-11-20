@@ -25,9 +25,51 @@ test('summary allowance is checked before reservation and does not compact unkno
  const f=fixture();let reserved=0;const no=await compactWorkingView({...f.options,allowSummary:false,reserveSummary:async()=>{reserved++;}});assert.equal(no.observation.status,'summary-budget-exhausted');assert.equal(reserved,0);assert.equal(f.reservations(),0);
  f.messages[2].result.status='unknown';const unknown=await compactWorkingView(f.options);assert.equal(unknown.observation.status,'no-eligible-group');assert.deepEqual(unknown.messages,f.messages);assert.equal(f.reservations(),0);
 });
-test('Memory dependency invalidation drops prior frontier instead of reusing stale content',async()=>{
- const f=fixture();let current=true;const memory={kind:'memory-entry',libraryId:'library',id:'entry',revision:1,sha256:sha256('preference'),text:'Synthetic preference '.repeat(80)};
- f.messages.splice(3,0,...f.group('memory',memory,'memory_read'));const options={...f.options,lookupMemoryState:async()=>({libraryId:'library',id:'entry',revision:current?1:2,sha256:memory.sha256,active:true})};const first=await compactWorkingView(options);assert.equal(first.observation.status,'applied');current=false;const stale=await compactWorkingView({...options,frontier:first.frontier});assert.equal(stale.frontier,null);assert.notEqual(stale.observation.status,'reused');assert.equal(f.reservations(),1);
+const memoryText='Synthetic preference '.repeat(80);
+const memory={kind:'memory-entry',libraryId:'library',id:'entry',revision:1,sha256:sha256(memoryText),text:memoryText};
+const memoryState=(active=true)=>async()=>({libraryId:memory.libraryId,id:memory.id,revision:memory.revision,sha256:memory.sha256,active});
+
+test('whole Memory-bearing groups stay typed in Main, including metadata and nested entries',async()=>{
+ for(const [name,value] of [['memory_search',{kind:'memory-search-results',entries:[memory]}],['memory_list',{kind:'memory-metadata-list',entries:[]}],['read_page',{nested:{entries:[memory]}}]]){
+  const f=fixture(),mixed=f.group('memory',value,name),other=f.group('sibling',f.b);
+  mixed[0].calls.push(other[0].calls[0]);mixed.push(other[1]);f.messages.splice(3,0,...mixed);
+  let summary;const result=await compactWorkingView({...f.options,canCompactHistory:()=>true,lookupMemoryState:memoryState(),summarize:async({groups})=>{summary=groups;return 'Safe summary of the original source.';}});
+  assert.equal(result.observation.status,'applied');
+  assert.deepEqual(summary,[f.messages.slice(1,3)]);
+  const i=result.messages.findIndex(m=>m.calls?.[0]?.id==='memory');
+  assert.ok(i>=0);assert.deepEqual(result.messages.slice(i,i+3),mixed);
+  assert.deepEqual(f.notes.get(result.noteRef).memoryRefs,[]);
+ }
+});
+
+test('settled Memory alone never reserves a summary and stale entries are redacted in Main',async()=>{
+ const f=fixture(),mixed=f.group('memory',memory,'memory_read');f.messages.splice(1,2,...mixed);
+ const result=await compactWorkingView({...f.options,lookupMemoryState:memoryState(false)});
+ assert.equal(result.observation.status,'no-eligible-group');
+ assert.equal(f.reservations(),0);assert.equal(result.messages[2].result.value.kind,'unavailable-memory-projection');
+ assert.ok(!JSON.stringify(result.messages).includes(memoryText));
+});
+
+test('a valid old Memory-bearing frontier is not reused even while the entry is active',async()=>{
+ const f=fixture();f.messages.splice(3,0,...f.group('memory',memory,'memory_read'));
+ const basisHash=sha256(JSON.stringify(f.messages));
+ const stored={kind:'derived-working-note',text:'Prior opaque synthetic preference.',sourceRefs:[f.sources.get(f.a.sourceId)],memoryRefs:[{libraryId:memory.libraryId,id:memory.id,revision:memory.revision,sha256:memory.sha256}],callIds:['a1','memory'],basisHash,origin:'derived-summary',semanticStatus:'unreviewed'};
+ const previous=noteRef(stored);f.notes.set(previous,stored);
+ const frontier={schemaVersion:'compaction-frontier@1',noteRef:previous,messageCount:f.messages.length,basisHash};
+ const result=await compactWorkingView({...f.options,lookupMemoryState:memoryState(),frontier});
+ assert.equal(result.frontier,null);assert.equal(result.noteRef,null);assert.notEqual(result.observation.status,'reused');
+ assert.ok(!JSON.stringify(result.messages).includes(stored.text));assert.equal(f.reservations(),0);
+ const next=await compactWorkingView({...f.options,lookupMemoryState:memoryState(),frontier:result.frontier});
+ assert.equal(next.observation.status,'applied');assert.deepEqual(f.notes.get(next.noteRef).memoryRefs,[]);
+});
+
+test('an old mixed frontier cannot reuse notes that name a Memory tool but have no Memory refs',async()=>{
+ const f=fixture();f.messages.splice(3,0,...f.group('list',{kind:'memory-metadata-list',entries:[]},'memory_list'));
+ const basisHash=sha256(JSON.stringify(f.messages));
+ const note={kind:'derived-working-note',text:'Prior synthetic metadata summary.',sourceRefs:[f.sources.get(f.a.sourceId)],memoryRefs:[],callIds:['a1','list'],basisHash,origin:'derived-summary',semanticStatus:'unreviewed'};
+ const previous=noteRef(note);f.notes.set(previous,note);
+ const result=await compactWorkingView({...f.options,canCompactHistory:()=>true,frontier:{schemaVersion:'compaction-frontier@1',noteRef:previous,messageCount:f.messages.length,basisHash}});
+ assert.equal(result.observation.status,'frontier-ineligible');assert.equal(result.frontier,null);assert.equal(result.noteRef,null);assert.equal(f.reservations(),0);
 });
 
 test('changed source identity drops frontier without another reservation',async()=>{

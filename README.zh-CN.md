@@ -100,6 +100,8 @@ npm run demo -- --case document-compare
 <a id="最近三个模块"></a>
 ## 最近版本与开发状态
 
+**v0.36.1 维护修复：** Main 上下文压缩不再摘要含有结构化项目记忆的已完成工具调用组，也不会复用覆盖这些调用组的旧摘要。原始结构化数据仍走原有的派发前资格核验。[验证与边界](docs/verification/v0361-maintenance.md)。
+
 **[v0.36.0 · 项目记忆生命周期](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.36.0)：** 项目记忆可显式固定、暂停、恢复与遗忘。任务可限定修订或临时禁用记忆；排队后、派发前重新核对资格。固定合成任务真实验收 10/10。[证据与边界](docs/verification/v036-release.md)。
 
 **[v0.35.0 · 原生 PDF 表格证据](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.35.0)：** 从可识别的原生 PDF 表格按行列引用确切单元格，并从保存的报告回读原页。歧义版面保留纯文本，不猜单元格。冻结真实验收 10/10。[证据与限制](docs/verification/v035-release.md)。
