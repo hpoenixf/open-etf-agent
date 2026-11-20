@@ -68,8 +68,8 @@ GitHub 将 SVG 当作一张图片，不能在缩略图里逐卡点击；下表�
 
 **近期更新的阅读素材**
 
-<!-- Recent reading source: hpoenixf/eff-agent-article@43be7ca0b4e97a77eacf86fe6c2a535bad0b3a89 README.md; Chinese-source Git history order, translated editions are not separate entries. -->
-[一份研究报告，为什么需要先变成「资产」？](https://hpoenixf.com/eff-agent-article/articles/agent-research-assets-identity-version-lifecycle) · [Open ETF Agent v0.1：从第一份可回读报告开始](https://hpoenixf.com/eff-agent-article/articles/open-etf-agent-v01-first-readable-report) · [资料明明在，Agent 为什么读不到？](https://hpoenixf.com/eff-agent-article/articles/agent-document-navigation-after-empty-search)
+<!-- Recent reading source: hpoenixf/eff-agent-article@1123d5167b926c0f50e8e198b7d8c53803b9e80f README.md; Chinese-source Git history order, translated editions are not separate entries. -->
+[资料更新以后：让 Agent 用新版继续研究，旧报告还能查证](https://hpoenixf.com/eff-agent-article/articles/open-etf-agent-material-version-workshop) · [报告写完以后：让 Agent 查证、协作，再独立复核](https://hpoenixf.com/eff-agent-article/articles/open-etf-agent-report-review-workshop) · [多 Agent 值不值得开？我们测了启动、送达和最终收益](https://hpoenixf.com/eff-agent-article/articles/agent-multi-agent-value-evaluation)(https://hpoenixf.com/eff-agent-article/articles/agent-document-navigation-after-empty-search)
 
 <a id="quickstart"></a>
 ## 快速运行 · Quickstart

@@ -68,8 +68,8 @@ Articles can describe a broader system than the public module. Coverage records 
 
 **Recently updated reading**
 
-<!-- Recent reading source: hpoenixf/eff-agent-article@43be7ca0b4e97a77eacf86fe6c2a535bad0b3a89 README.md; Chinese-source Git history order, translated editions are not separate entries. -->
-[Why a Research Report Must Become an Asset Before an Agent Can Reuse It](https://hpoenixf.com/eff-agent-article/en/articles/agent-research-assets-identity-version-lifecycle) · [Start with a Report You Can Read Back: Open ETF Agent v0.1](https://hpoenixf.com/eff-agent-article/en/articles/open-etf-agent-v01-first-readable-report) · [The File Is Right There. Why Can't the Agent Read It?](https://hpoenixf.com/eff-agent-article/en/articles/agent-document-navigation-after-empty-search)
+<!-- Recent reading source: hpoenixf/eff-agent-article@1123d5167b926c0f50e8e198b7d8c53803b9e80f README.md; Chinese-source Git history order, translated editions are not separate entries. -->
+[After the source changes: let the agent use the new version without losing the evidence behind old reports](https://hpoenixf.com/eff-agent-article/en/articles/open-etf-agent-material-version-workshop) · [After the report: source checks, specialist work, and independent review](https://hpoenixf.com/eff-agent-article/en/articles/open-etf-agent-report-review-workshop) · [Is Multi-Agent Collaboration Worth Enabling? Measuring Dispatch, Delivery and Outcomes](https://hpoenixf.com/eff-agent-article/en/articles/agent-multi-agent-value-evaluation)(https://hpoenixf.com/eff-agent-article/en/articles/agent-document-navigation-after-empty-search)
 
 <a id="quickstart"></a>
 ## Quickstart
