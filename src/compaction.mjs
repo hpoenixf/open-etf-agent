@@ -1,5 +1,6 @@
 import {validateNote,noteRef as contentNoteRef} from './working-note.mjs';
 import {projectMemory} from './memory-projection.mjs';
+import {isNativeMemoryTool} from './memory-tools.mjs';
 import {projectContext} from './context.mjs';
 import {validateSource,sha256} from './source.mjs';
 const bytes=value=>Buffer.byteLength(JSON.stringify(value));
@@ -10,6 +11,12 @@ async function boundedSummary(summarize,input,parentSignal,timeoutMs){
   finally{clearTimeout(timer);parentSignal?.removeEventListener('abort',abort);if(stop)controller.signal.removeEventListener('abort',stop);}
 }
 const identityKeys=['sourceId','documentId','name','version','page','sha256','mediaType'];
+const memoryKinds=new Set(['memory-entry','memory-write-receipt','memory-search-results','memory-metadata-list','memory-unavailable','memory-partial-effect','memory-status','memory-status-list','unavailable-memory-projection']);
+function carriesTypedMemory(value){
+  if(!value||typeof value!=='object')return false;
+  if(memoryKinds.has(value.kind)||(['derived-working-note','unavailable-derived-note'].includes(value.kind)&&value.memoryRefs?.length>0))return true;
+  return Object.values(value).some(carriesTypedMemory);
+}
 export async function compactWorkingView({messages,maxBytes,lookupSource,projectOwnedResult,projectOwnedCall,additionalBudget,rootBudget,summarize,saveNote,signal,lookupMemoryState,canCompactHistory,summaryTimeoutMs=2000,reserveSummary,frontier,readNote,allowSummary=true,summaryInputFits}={}){
   if(!Number.isSafeInteger(summaryTimeoutMs)||summaryTimeoutMs<1||summaryTimeoutMs>120000)throw new Error('Invalid summary timeout');
   if(typeof summarize!=='function'||typeof saveNote!=='function'||typeof rootBudget?.claim!=='function')throw new Error('Invalid compaction configuration');
@@ -34,6 +41,9 @@ export async function compactWorkingView({messages,maxBytes,lookupSource,project
     let allowed=group.values.every(message=>message.result.status==='succeeded');
     if(allowed)for(let offset=0;offset<baseline[group.start].calls.length;offset++){
       const call=messages[group.start].calls[offset],result=messages[group.start+offset+1].result;
+      // A summary serializes its groups into ordinary text, outside the typed
+      // Memory guard at provider dispatch. Keep the whole group typed in Main.
+      if(isNativeMemoryTool(call.name)||carriesTypedMemory(call)||carriesTypedMemory(result)){allowed=false;break;}
       if(await canCompactHistory(structuredClone(call),structuredClone(result))!==true){allowed=false;break;}
     }
     if(allowed)eligible.push(group);
@@ -67,6 +77,7 @@ export async function compactWorkingView({messages,maxBytes,lookupSource,project
     if(!frontier||Object.keys(frontier).sort().join(',')!=='basisHash,messageCount,noteRef,schemaVersion'||frontier.schemaVersion!=='compaction-frontier@1'||!Number.isSafeInteger(frontier.messageCount)||frontier.messageCount<1||frontier.messageCount>messages.length||typeof readNote!=='function')throw new Error('Invalid compaction frontier');
     const note=validateNote(await readNote(frontier.noteRef));
     if(contentNoteRef(note)!==frontier.noteRef||note.basisHash!==frontier.basisHash)throw new Error('Compaction frontier note identity mismatch');
+    if(note.memoryRefs.length)return fallback('frontier-memory-excluded');
     if(sha256(JSON.stringify(messages.slice(0,frontier.messageCount)))!==frontier.basisHash)return fallback('frontier-stale');
     const ids=new Set(note.callIds),covered=eligible.filter(group=>baseline[group.start].calls.some(call=>ids.has(call.id)));
     if(covered.some(group=>group.end>=frontier.messageCount||baseline[group.start].calls.some(call=>!ids.has(call.id)))||covered.flatMap(group=>baseline[group.start].calls).length!==ids.size)return fallback('frontier-ineligible');

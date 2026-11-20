@@ -44,7 +44,7 @@ GitHub treats embedded SVG as one image, so its cards are not individually click
 | L5 Publication & delivery | [Main → Report](https://hpoenixf.com/eff-agent-article/en/articles/open-etf-agent-v01-first-readable-report) · [Report](https://hpoenixf.com/eff-agent-article/en/articles/open-etf-agent-v01-first-readable-report) · [Artifact / Revision](https://hpoenixf.com/eff-agent-article/en/articles/agent-artifact-version-access-sharing) · [Publication](https://hpoenixf.com/eff-agent-article/en/articles/019-agent-answer-publication) · [Report Review](https://hpoenixf.com/eff-agent-article/en/articles/open-etf-agent-report-review-workshop) |
 | L6 User interfaces | [Loopback Reader](https://hpoenixf.com/eff-agent-article/en/articles/open-etf-agent-v010-system-design) · [CLI Readback](https://hpoenixf.com/eff-agent-article/en/articles/open-etf-agent-v01-first-readable-report) |
 
-**Current map: v0.36.0** · [Modules, source & evidence](docs/module-status.md) · [Six-layer article (Chinese original)](https://github.com/hpoenixf/eff-agent-article/blob/249f0b866f9446f33b57f186fbc6d35b5d82c119/articles/open-etf-agent-v010-system-design.md)
+**Current map: v0.36.1** · [Modules, source & evidence](docs/module-status.md) · [Six-layer article (Chinese original)](https://github.com/hpoenixf/eff-agent-article/blob/249f0b866f9446f33b57f186fbc6d35b5d82c119/articles/open-etf-agent-v010-system-design.md)
 
 Article links are reading navigation, not implementation parity or coverage qualification. This maps public implementation, not completion percentages. Live-model evidence qualifies only the paths in [version records](docs/verification/README.md), not financial accuracy, production or browser experience.
 <!-- module-map:end -->
@@ -99,6 +99,8 @@ npm run demo -- --case document-compare
 <a id="versions"></a>
 <a id="latest-three-modules"></a>
 ## Releases and development status
+
+**v0.36.1 maintenance:** Main compaction no longer summarizes settled tool groups that contain typed Project Memory. Saved summary frontiers covering those groups are not reused; the original typed data still passes through the existing pre-dispatch checks. [Verification and limits](docs/verification/v0361-maintenance.md).
 
 **[v0.36.0 · Project Memory lifecycle](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.36.0):** Pin, pause, restore or forget project Memory explicitly. A task can select exact revisions or opt out, and queued typed Memory is rechecked before dispatch. The frozen synthetic live cohort passed 10/10. [Evidence and limits](docs/verification/v036-release.md).
 

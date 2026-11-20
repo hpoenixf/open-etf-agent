@@ -32,12 +32,60 @@ test('5.4 next actual Gateway input forgets old typed entry, write args, search 
   const gateway={async next({messages}){if(step===2)before=structuredClone(messages);if(step===3){after=structuredClone(messages);return{kind:'final',text:'Synthetic entry forgotten.'};}const names=['fixture_memory_save','fixture_memory_read','fixture_memory_forget'];const current=step++;return{kind:'calls',calls:[{id:'memory-'+current,name:names[current],arguments:current===0?{text}:{}}]};}};
   try{const result=await run({question:'Use only the explicit synthetic Memory library.',gateway,outputRoot:await directory(),requireReport:false,extensions,hooks:createHookChain(),workingInput:{memoryLibrary:library},limits:{maxRounds:4,maxTools:3}});assert.equal(result.status,'completed');assert.match(JSON.stringify(before),/SYNTHETIC_FUTURE_FORGET_829/);assert.doesNotMatch(JSON.stringify(after),/SYNTHETIC_FUTURE_FORGET_829/);assert.equal(after.at(-1).result.value.operation,'forgotten');}finally{await library.close();}
 });
-test('5.4 Memory revision changing during note persistence forbids adoption despite unchanged history',async()=>{
+test('5.4 settled Memory-only history allocates no summary and fallback rechecks real revisions',async()=>{
   const library=await openMemoryLibrary({directory:await directory(),writable:true});
-  try{const saved=await library.save({text},{intent:intent(library,'save',text)});const entry=await library.read(saved.id);const messages=[{role:'user',content:'Do not revive forgotten typed Memory.'},{role:'assistant',calls:[{id:'old',name:'memory_read',arguments:{id:saved.id}}]},{role:'tool',callId:'old',result:{callId:'old',status:'succeeded',value:{...entry,text:entry.text}}},{role:'assistant',calls:[{id:'latest',name:'read_page',arguments:{documentId:'atlas-a',page:1}}]},{role:'tool',callId:'latest',result:{callId:'latest',status:'succeeded',value:{text:'Latest group'}}}];
-    // Repeat an acknowledged old entry in a complete group to make real baseline savings possible.
-    messages.splice(3,0,{role:'assistant',calls:[{id:'old-again',name:'memory_read',arguments:{id:saved.id}}]},{role:'tool',callId:'old-again',result:{callId:'old-again',status:'succeeded',value:entry}});
-    let persisted=0;const result=await compactWorkingView({canCompactHistory:()=>true,messages,maxBytes:8000,lookupSource:async()=>null,lookupMemoryState:ref=>library.state(ref.id),rootBudget:createRootBudget({model:1,tool:1}),summarize:async()=> 'Derived preference.',saveNote:async()=>{persisted++;await library.forget(saved.id,1,{intent:intent(library,'forget',undefined,{entryId:saved.id,expectedRevision:1})});return{resultRef:'note:sha256:'+'e'.repeat(64)};}});assert.equal(persisted,1);assert.equal(result.observation.status,'memory-stale');assert.doesNotMatch(JSON.stringify(result.messages),/SYNTHETIC_FUTURE_FORGET_829/);
+  try{
+    const preference=text.repeat(40); // Large enough to make unsafe compaction save bytes.
+    const saved=await library.save({text:preference},{intent:intent(library,'save',preference)});
+    const entry=await library.read(saved.id);
+    const group=(id,value)=>[{role:'assistant',calls:[{id,name:'memory_read',arguments:{id:saved.id}}]},{role:'tool',callId:id,result:{callId:id,status:'succeeded',value}}];
+    const messages=[{role:'user',content:'Do not revive forgotten typed Memory.'},...group('old',entry),...group('latest',{kind:'memory-metadata-list',entries:[]})];
+    let reservations=0,summaries=0,saves=0;
+    const options={canCompactHistory:()=>true,messages,maxBytes:8000,lookupSource:async()=>null,lookupMemoryState:ref=>library.state(ref.id),rootBudget:createRootBudget({model:1,tool:1}),reserveSummary:async()=>{reservations++;},summarize:async()=>{summaries++;return 'Synthetic historical preference.';},saveNote:async()=>{saves++;return {resultRef:'note:sha256:'+'e'.repeat(64)};}};
+    const active=await compactWorkingView(options);
+    assert.equal(active.observation.status,'no-eligible-group');assert.equal(active.noteRef,null);assert.equal(active.frontier,null);
+    assert.equal(active.messages[2].result.value.text,preference);assert.deepEqual([reservations,summaries,saves],[0,0,0]);
+    await library.forget(saved.id,1,{intent:intent(library,'forget',undefined,{entryId:saved.id,expectedRevision:1})});
+    const revoked=await compactWorkingView(options);
+    assert.equal(revoked.observation.status,'no-eligible-group');assert.equal(revoked.noteRef,null);assert.equal(revoked.frontier,null);
+    assert.deepEqual([reservations,summaries,saves],[0,0,0]);
+    assert.equal(revoked.messages[2].result.value.kind,'unavailable-memory-projection');assert.ok(!JSON.stringify(revoked.messages).includes(text));
+  }finally{await library.close();}
+});
+
+test('5.4 revocation while a source-only summary is pending is enforced at the next actual Main dispatch',async()=>{
+  const library=await openMemoryLibrary({directory:await directory(),writable:true});
+  const original={sourceId:'revocation@L1:p1',documentId:'revocation',name:'Synthetic source-only compaction fixture',version:'L1',page:1,text:'Synthetic original page; not a Memory entry. '.repeat(120),mediaType:'text/plain; charset=utf-8'};
+  original.sha256=sha256(original.text);
+  try{
+    const saved=await library.save({text},{intent:intent(library,'save',text)});
+    const binding=(name,execute,extra={})=>({name,description:'Synthetic integration fixture.',parameters:{type:'object',properties:{},additionalProperties:false},validate(){},execute,...extra});
+    const extensions=[binding('fixture_memory_read',()=>library.read(saved.id)),binding('fixture_source_read',async()=>structuredClone(original),{sourceResult:true,historyCompaction:'read-only@1'})];
+    let step=0,summaryCalls=0,noteRef;
+    const gateway={async next({messages}){
+      if(step===1||step===2)assert.ok(JSON.stringify(messages).includes(text),'active Memory reached Main before revocation');
+      if(step===3){
+        assert.ok(!JSON.stringify(messages).includes(text),'revoked Memory must not reach Main after summary');
+        assert.equal(messages.find(message=>message.callId==='read-memory')?.result.value.kind,'unavailable-memory-projection');
+        const note=messages.find(message=>message.result?.value?.kind==='derived-working-note')?.result.value;
+        assert.ok(note,'the independent source-only note still reaches Main');
+        assert.deepEqual(note.memoryRefs,[]);assert.equal(note.sourceRefs[0].sourceId,original.sourceId);
+        noteRef=note.resultRef;
+        return{kind:'final',text:'Synthetic source note retained without revoked Memory.'};
+      }
+      const first=step++===0;
+      return{kind:'calls',calls:[{id:first?'read-memory':'read-source-'+step,name:first?'fixture_memory_read':'fixture_source_read',arguments:{}}]};
+    }};
+    const result=await run({question:'Keep original sources and respect explicit Memory revocation.',gateway,outputRoot:await directory(),requireReport:false,extensions,rootBudget:createRootBudget({model:10,tool:4}),limits:{maxRounds:4,maxTools:3},contextBytes:32000,workingInput:{memoryLibrary:library,compaction:{thresholdBytes:1000,summarize:async({groups})=>{
+      summaryCalls++;
+      assert.deepEqual(groups.flatMap(group=>group[0].calls.map(call=>call.name)),['fixture_source_read']);
+      assert.ok(!JSON.stringify(groups).includes(text),'opaque summary input excludes Memory');
+      await library.forget(saved.id,1,{intent:intent(library,'forget',undefined,{entryId:saved.id,expectedRevision:1})});
+      return 'Synthetic source-only derived note.';
+    }}}});
+    assert.equal(result.status,'completed');assert.equal(summaryCalls,1);
+    const store=await createResultStore({directory:result.directory});
+    assert.deepEqual((await store.readNote(noteRef)).memoryRefs,[]);
   }finally{await library.close();}
 });
 
