@@ -44,7 +44,7 @@ GitHub 将 SVG 当作一张图片，不能在缩略图里逐卡点击；下表�
 | L5 结果发布与交付 | [Main → Report](https://hpoenixf.com/eff-agent-article/articles/open-etf-agent-v01-first-readable-report) · [Report](https://hpoenixf.com/eff-agent-article/articles/open-etf-agent-v01-first-readable-report) · [Artifact / Revision](https://hpoenixf.com/eff-agent-article/articles/agent-artifact-version-access-sharing) · [Publication](https://hpoenixf.com/eff-agent-article/articles/019-agent-answer-publication) · [Report Review](https://hpoenixf.com/eff-agent-article/articles/open-etf-agent-report-review-workshop) |
 | L6 用户界面 | [Loopback Reader](https://hpoenixf.com/eff-agent-article/articles/open-etf-agent-v010-system-design) · [CLI Readback](https://hpoenixf.com/eff-agent-article/articles/open-etf-agent-v01-first-readable-report) |
 
-**当前地图: v0.37.0** · [模块、源码与证据](docs/module-status.zh-CN.md) · [六层文章原文](https://github.com/hpoenixf/eff-agent-article/blob/249f0b866f9446f33b57f186fbc6d35b5d82c119/articles/open-etf-agent-v010-system-design.md)
+**当前地图: v0.38.0** · [模块、源码与证据](docs/module-status.zh-CN.md) · [六层文章原文](https://github.com/hpoenixf/eff-agent-article/blob/249f0b866f9446f33b57f186fbc6d35b5d82c119/articles/open-etf-agent-v010-system-design.md)
 
 文章关联是阅读导航，不等于实现全文能力或覆盖资格。图中是公开实现范围，不是全功能完成率。真实模型验证只覆盖[各版记录](docs/verification/README.md)中的指定路径；金融语义、生产与浏览器体验不因此获得认证。
 <!-- module-map:end -->
@@ -100,25 +100,27 @@ npm run demo -- --case document-compare
 <a id="最近三个模块"></a>
 ## 最近版本与开发状态
 
+**[v0.38.0 · Wind 基金日收盘价](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.38.0):** 显式查询一只场内基金的未复权日收盘价。默认研究流程不接入 Wind。 [用法](docs/wind-fund-mcp.zh-CN.md) · [证据与边界](docs/verification/v038-release.md).
+
 **[v0.37.0 · Main 上下文压缩](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.37.0)：** 按完整 Gateway 请求判断压缩；无缩减不重复摘要，最后一个模型调用留给交付。[用法](docs/project-context.zh-CN.md) · [证据与边界](docs/verification/v037-release.md).
 
 **v0.36.1 维护修复：** Main 上下文压缩不再摘要含有结构化项目记忆的已完成工具调用组，也不会复用覆盖这些调用组的旧摘要。原始结构化数据仍走原有的派发前资格核验。[验证与边界](docs/verification/v0361-maintenance.md)。
-
-**[v0.36.0 · 项目记忆生命周期](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.36.0)：** 项目记忆可显式固定、暂停、恢复与遗忘。任务可限定修订或临时禁用记忆；排队后、派发前重新核对资格。固定合成任务真实验收 10/10。[证据与边界](docs/verification/v036-release.md)。
 
 
 
 
 | 最近版本 / 状态 | 能做什么 | 用法与边界 |
 | --- | --- | --- |
+| [v0.38.0 · Wind 基金日收盘价](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.38.0) | 显式查询单只基金日收盘；不自动交给模型 | [用法](docs/wind-fund-mcp.zh-CN.md) |
 | [v0.37.0 · Main 上下文压缩](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.37.0) | 按完整 Gateway 请求判断压缩；无缩减不重复摘要，最后一个模型调用留给交付 | [用法](docs/project-context.zh-CN.md) |
 | [v0.36.1](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.36.1) | 禁止结构化项目记忆进入压缩摘要 | [证据与边界](docs/verification/v0361-maintenance.md) |
-| [v0.36 · 项目记忆](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.36.0) | 固定、暂停、恢复记忆，按任务选择修订或关闭记忆 | [证据与边界](docs/verification/v036-release.md) |
 
 [全部固定版本与命令](docs/module-guide.zh-CN.md#versions) · [版本谱系](versions.json) · [全部 Release](https://github.com/hpoenixf/open-etf-agent/releases) · [验证记录](docs/verification/README.zh-CN.md)
 
 <details>
 <summary>历史版本</summary>
+
+**[v0.36.0 · 项目记忆生命周期](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.36.0)：** 项目记忆可显式固定、暂停、恢复与遗忘。任务可限定修订或临时禁用记忆；排队后、派发前重新核对资格。固定合成任务真实验收 10/10。[证据与边界](docs/verification/v036-release.md)。
 
 **[v0.35.0 · 原生 PDF 表格证据](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.35.0)：** 从可识别的原生 PDF 表格按行列引用确切单元格，并从保存的报告回读原页。歧义版面保留纯文本，不猜单元格。冻结真实验收 10/10。[证据与限制](docs/verification/v035-release.md)。
 

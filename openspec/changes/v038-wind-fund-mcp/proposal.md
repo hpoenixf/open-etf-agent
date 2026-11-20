@@ -12,6 +12,6 @@ The CLI reads credentials from the calling environment only. Neither the module 
 
 - [x] Validate the actual SDK's JSON and SSE call envelopes using injected fixtures, with a synthetic token and no external traffic.
 - [x] Exercise malformed inputs, auth/entitlement/rate-limit error, nested vendor errors, missing/incorrect identity, malformed rows, response budget, deadline and cancellation.
-- [ ] Verify one explicitly authorized live Wind request under an entitled account; verify transport, envelope, returned date and data basis.
+- [x] Verify the bounded, explicitly authorized live Wind path. Three distinct ETF/date-window queries passed; all were request-bound only, with no recognized returned code column. See [verification](../../../docs/verification/v038-release.md).
 
 Automatic model routing and multi-provider fallback are out of scope.
