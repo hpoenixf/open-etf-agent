@@ -1,9 +1,9 @@
 {
   "schemaVersion": 2,
-  "reviewedVersion": "0.36.0",
-  "reviewedSource": "fbc05a06e2ea27bd170cf231276baee78c6662e0",
+  "reviewedVersion": "0.36.1",
+  "reviewedSource": "ceb285d01f9079984029bcb54fe8a3de9013d873",
   "articleSource": "https://github.com/hpoenixf/eff-agent-article/blob/249f0b866f9446f33b57f186fbc6d35b5d82c119/articles/open-etf-agent-v010-system-design.md",
-  "evidence": "docs/verification/v036-release.md",
+  "evidence": "docs/verification/v0361-maintenance.md",
   "layers": [
     {
       "id": "L1",
@@ -334,10 +334,10 @@
         "en": "Compact working context"
       },
       "boundary": {
-        "zh": "摘要不代替原始证据",
-        "en": "Notes are not source evidence"
+        "zh": "摘要非原文；结构化记忆不进入摘要",
+        "en": "Notes are not sources; no typed Memory"
       },
-      "status": "bounded",
+      "status": "enhanced",
       "source": "src/compaction.mjs",
       "kind": "module",
       "article": {
@@ -362,7 +362,7 @@
         "zh": "可限定修订或临时关闭",
         "en": "Exact selection or temporary opt-out"
       },
-      "status": "enhanced",
+      "status": "bounded",
       "source": "src/memory.mjs",
       "kind": "module",
       "article": {
