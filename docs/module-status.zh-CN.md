@@ -2,7 +2,7 @@
 
 [English](module-status.md) · [README](../README.zh-CN.md#module-map)
 
-审阅版本: **v0.38.0**. [固定代码基线](https://github.com/hpoenixf/open-etf-agent/tree/533b9e7609bda3df5b2d7cfc65dd902d553a772f) · [本版验证范围与限制](verification/v038-release.md).
+审阅版本: **v0.38.1**. [固定代码基线](https://github.com/hpoenixf/open-etf-agent/tree/533b9e7609bda3df5b2d7cfc65dd902d553a772f) · [本版验证范围与限制](verification/v0381-preview.md).
 
 实现、离线检查、真实任务、发布和部署是不同事实。下表不是逐模块验收通过清单；模块可参与多层。
 
@@ -42,7 +42,7 @@
 
 投影旧结果并回读原文. **原文不随窗口改写**.  [Agent 上下文治理全景·行动篇：从首轮输入到长期记忆，怎样真正落地](https://hpoenixf.com/eff-agent-article/articles/agent-context-governance-actions) (overview) · [固定源码](https://github.com/hpoenixf/open-etf-agent/blob/533b9e7609bda3df5b2d7cfc65dd902d553a772f/src/context.mjs) · [范围导读](project-context.zh-CN.md)
 
-### Compaction · v0.38.0 增强
+### Compaction · v0.38.1 增强
 
 按完整请求字节判断是否压缩. **显式开启；保留原文和最后调用**.  [上下文快满时，为什么不能直接把历史交给模型摘要？](https://hpoenixf.com/eff-agent-article/articles/agent-main-run-context-compaction) (module-article) · [固定源码](https://github.com/hpoenixf/open-etf-agent/blob/533b9e7609bda3df5b2d7cfc65dd902d553a772f/src/compaction.mjs) · [范围导读](project-context.zh-CN.md)
 

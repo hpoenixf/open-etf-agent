@@ -3,6 +3,8 @@
 
 [简体中文](research-project.zh-CN.md)
 
+For opt-in Wind Fund tools in the same Worker, see [Wind Fund research](wind-research.md).
+
 This application connects explicitly selected documents to the existing Session, Worker, Memory, Child, Publication and Reader owners. It is a local, single-user application, not a trading service or an unattended research daemon. The older demonstration CLIs and their live-execution guards remain separate.
 
 **Qualification:** real runs and deterministic mechanism checks are separate. The original forty tasks, six repairs and an additional ten-task B cohort are retained with their original source identities. The additional B cohort completed 9/10 tasks; its frozen mechanism score remains 8/10. The user accepted this runtime result with independent provider-free forget-exclusion evidence. Old failures and unknown requests remain. See [the layered evidence and limits](verification/v020-release.md); this is not a claim of answer quality or that every task ran on the final source.

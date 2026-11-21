@@ -3,6 +3,8 @@
 
 [English](research-project.md)
 
+同一 Worker 中可显式启用 Wind 基金工具，参见 [Wind 基金研究接入](wind-research.zh-CN.md)。
+
 该入口把用户明确选择的资料接入原有 Session、Worker、Memory、Child、Publication 和 Reader。它是本地单用户应用，不是交易服务或无人值守研究平台。原有演示 CLI 及其真实执行拒绝规则保持独立。
 
 **资格边界：**真实运行与确定性机制验证分别呈现。原40题、6次独立修复和新增B组10题均保留原源码身份。新增B组运行完成9/10，冻结机制评分仍8/10；用户接受运行结果与独立零模型遗忘过滤补证的分层依据。旧失败和未知请求不改写。参见[分层证据与限制](verification/v020-release.zh-CN.md)，不宣称答案质量合格或全部题目都在最终源码运行。

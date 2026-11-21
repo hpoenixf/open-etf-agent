@@ -66,17 +66,7 @@ export async function connectTrustedMcp({ transport, serverName, documents, sign
   try {
     await client.connect(transport, { timeout: timeoutMs, signal });
     if (fatal || protocolVersion !== '2025-11-25' || client.getServerVersion()?.name !== serverName) throw new Error('MCP protocol parse failure or unsupported version');
-    const list = { tools: [] }; const seen = new Set(); const cursors = new Set(); let cursor;
-    for (let page = 0; ; page++) {
-      if (page >= 4) throw new Error('MCP pagination page limit');
-      const result = await client.listTools(cursor === undefined ? undefined : { cursor }, { timeout: timeoutMs, signal });
-      if (fatal) throw new Error('MCP protocol parse failure');
-      if (result.tools.length + list.tools.length > 32) throw new Error('MCP catalog size limit');
-      for (const tool of result.tools) { if (seen.has(tool.name)) throw new Error('Duplicate MCP tool name'); seen.add(tool.name); list.tools.push(tool); }
-      if (result.nextCursor === undefined) break;
-      if (typeof result.nextCursor !== 'string' || !result.nextCursor || cursors.has(result.nextCursor)) throw new Error('MCP pagination repeated cursor');
-      cursor = result.nextCursor; cursors.add(cursor);
-    }
+    const list = await listMcpTools(client, { timeoutMs, signal, fatal: () => fatal });
     const tools = list.tools.filter(t => t.name === 'read_page');
     if (tools.length !== 1 || !isDeepStrictEqual(tools[0].inputSchema, contract.inputSchema)) throw new Error('Unsupported MCP input schema');
     return {
@@ -105,4 +95,20 @@ export async function connectTrustedMcp({ transport, serverName, documents, sign
     if (fatal) throw new Error('MCP protocol parse failure or connection closed');
     throw error;
   }
+}
+
+// Shared bounded MCP catalog enumeration. Callers keep transport and schema policy.
+export async function listMcpTools(client, { timeoutMs, signal, fatal = () => false, maxPages = 4, maxTools = 32 } = {}) {
+    const list = { tools: [] }; const seen = new Set(); const cursors = new Set(); let cursor;
+    for (let page = 0; ; page++) {
+      if (page >= maxPages) throw new Error('MCP pagination page limit');
+      const result = await client.listTools(cursor === undefined ? undefined : { cursor }, { timeout: timeoutMs, signal });
+      if (fatal()) throw new Error('MCP protocol parse failure');
+      if (result.tools.length + list.tools.length > maxTools) throw new Error('MCP catalog size limit');
+      for (const tool of result.tools) { if (seen.has(tool.name)) throw new Error('Duplicate MCP tool name'); seen.add(tool.name); list.tools.push(tool); }
+      if (result.nextCursor === undefined) break;
+      if (typeof result.nextCursor !== 'string' || !result.nextCursor || cursors.has(result.nextCursor)) throw new Error('MCP pagination repeated cursor');
+      cursor = result.nextCursor; cursors.add(cursor);
+    }
+    return list;
 }

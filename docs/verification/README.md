@@ -1,5 +1,7 @@
 **English** | [简体中文](README.zh-CN.md)
 
+- [v0.38.1 preview: Wind Fund tool selection, offline regression and one live Wind read](v0381-preview.md)
+
 - [v0.38 Wind: live reads and instrument-identity boundaries](v038-release.md)
 
 - [v0.37 Main context compaction: encoded pressure and validation boundaries](v037-release.md)

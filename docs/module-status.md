@@ -2,7 +2,7 @@
 
 [简体中文](module-status.zh-CN.md) · [README](../README.md#module-map)
 
-Reviewed version: **v0.38.0**. [Fixed code baseline](https://github.com/hpoenixf/open-etf-agent/tree/533b9e7609bda3df5b2d7cfc65dd902d553a772f) · [Version evidence and limits](verification/v038-release.md).
+Reviewed version: **v0.38.1**. [Fixed code baseline](https://github.com/hpoenixf/open-etf-agent/tree/533b9e7609bda3df5b2d7cfc65dd902d553a772f) · [Version evidence and limits](verification/v0381-preview.md).
 
 Implementation, offline checks, live workflows, release and deployment are different facts. This is not a per-module qualification checklist; modules can span layers.
 
@@ -42,7 +42,7 @@ Pin task time. **Zone anchor, not market calendar**.  [When an Agent Says “Tod
 
 Project older reads; reread originals. **Do not rewrite originals**.  [Agent Context Governance Panorama · Practice: From the First Request to Long-Term Memory](https://hpoenixf.com/eff-agent-article/en/articles/agent-context-governance-actions) (overview) · [Fixed source](https://github.com/hpoenixf/open-etf-agent/blob/533b9e7609bda3df5b2d7cfc65dd902d553a772f/src/context.mjs) · [Scope guide](project-context.md)
 
-### Compaction · v0.38.0 enhanced
+### Compaction · v0.38.1 enhanced
 
 Measure complete request pressure. **Opt in; keep originals and final slot**.  [When Context Is Nearly Full, Why Can't We Simply Ask a Model to Summarize History?](https://hpoenixf.com/eff-agent-article/en/articles/agent-main-run-context-compaction) (module-article) · [Fixed source](https://github.com/hpoenixf/open-etf-agent/blob/533b9e7609bda3df5b2d7cfc65dd902d553a772f/src/compaction.mjs) · [Scope guide](project-context.md)
 

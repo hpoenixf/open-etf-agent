@@ -91,8 +91,9 @@ of at most 512 bytes. Results retain original source text; no-evidence means no
 lexical match in this snapshot, not proof of absence elsewhere. PDF is not indexed.
 Submit does not call a model. Live submit requires all three explicit approvals:
 configured provider, selected source/question/Memory data, and configured cost limit.
-Work uses only the environment variable named by gateway.apiKeyEnv. Fixture projects
-cannot be executed by this CLI. Repeat work to resume the SAME run; do not resubmit.
+Work uses the environment variable named by gateway.apiKeyEnv for the model.
+For an explicitly opted-in Wind Fund project only, it also reads WIND_API_KEY.
+Fixture projects cannot be executed by this CLI. Repeat work to resume the SAME run; do not resubmit.
 Ctrl-C/SIGTERM stops the Host cooperatively, not the task. Only cancel cancels a run.
 Reader serves verified persisted artifacts on 127.0.0.1 and never runs a model.
 approve-intent returns an unconsumed intent; put it in an explicit JSON array file
@@ -159,7 +160,7 @@ async function readableWorkResult(projectDir,runId){
 export function researchError(error){const code=typeof error?.code==='string'&&/^[A-Z][A-Z0-9_]{1,80}$/.test(error.code)?error.code:'RESEARCH_OPERATION_FAILED';return{error:code,hint:code==='RESEARCH_OPERATION_FAILED'?'Check explicit input files, project state and configuration. No provider error body is displayed.':'See help and verify the named operation inputs.'};}
 function redact(text,secret){let value=text;if(secret)value=value.split(secret).join('[REDACTED]');return value.replace(/\bBearer\s+[A-Za-z0-9._~+\/-]+=*/gi,'Bearer [REDACTED]').replace(/\bsk-[A-Za-z0-9_-]{8,}/g,'[REDACTED]');}
 export async function runResearchCli(args,{stdout=process.stdout,stderr=process.stderr,signals=process}={}){
- let secret;const emit=v=>stdout.write(redact(JSON.stringify(v),secret)+'\n');
+ let secret,windSecret;const emit=v=>stdout.write(redact(redact(JSON.stringify(v),secret),windSecret)+'\n');
  try{
   const parsed=parseResearchArguments(args);if(parsed.help){stdout.write(RESEARCH_HELP);return 0;}
   const {command,options:o}=parsed,projectDir=resolve(o.project),runId=o.run;
@@ -233,7 +234,8 @@ export async function runResearchCli(args,{stdout=process.stdout,stderr=process.
   if(command==='run work'){
    const {definition:{config}}=await inspectResearchTask({projectDir,runId});if(config.gateway.mode!=='live')fail('CLI_LIVE_WORK_REQUIRED');secret=process.env[config.gateway.apiKeyEnv];if(!secret)fail('CLI_API_KEY_ENV_REQUIRED');
    const host=new AbortController(),stop=()=>host.abort();signals.on('SIGINT',stop);signals.on('SIGTERM',stop);
-   try{await workResearchTask({projectDir,runId,apiKey:secret,hostSignal:host.signal,...(o['embedding-runtime']?{localEmbedding:await readProjectJson(o['embedding-runtime'],65536)}:{})});emit(await readableWorkResult(projectDir,runId));}finally{signals.off('SIGINT',stop);signals.off('SIGTERM',stop);}return 0;
+   if(config.windData)windSecret=process.env.WIND_API_KEY;
+   try{await workResearchTask({projectDir,runId,apiKey:secret,...(config.windData?{windApiKey:windSecret}:{}),hostSignal:host.signal,...(o['embedding-runtime']?{localEmbedding:await readProjectJson(o['embedding-runtime'],65536)}:{})});emit(await readableWorkResult(projectDir,runId));}finally{signals.off('SIGINT',stop);signals.off('SIGTERM',stop);}return 0;
   }
   if(command==='run inspect'){emit(taskResult(await inspectResearchTask({projectDir,runId})));return 0;}
   if(command==='run memory'){emit(await inspectResearchMemory({projectDir,runId}));return 0;}
