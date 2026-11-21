@@ -79,6 +79,20 @@ export async function submitConversationMessage({projectDir,conversationId,messa
 }
 export async function workConversationMessage({projectDir,conversationId,messageId,...controls}){const loc=await location(projectDir,conversationId),record=await intent(loc,messageId);const task=await checkedTask(loc,record);if(task.run.status==='active'&&(await inspectResearchProject({projectDir:loc.projectDir})).configSha256!==record.configSha256)fail('CONVERSATION_EXECUTION_AUTHORITY_CHANGED');return workResearchTask({...controls,projectDir:loc.projectDir,runId:record.runId});}
 export async function cancelConversationMessage({projectDir,conversationId,messageId}){const loc=await location(projectDir,conversationId),record=await intent(loc,messageId);await checkedTask(loc,record);return cancelResearchTask({projectDir:loc.projectDir,runId:record.runId});}
+// Lightweight History metadata: read only the first immutable intent, never task output.
+export async function readConversationTitle({projectDir,conversationId}){
+ const loc=await location(projectDir,conversationId),names=await readdir(await safeDirectory(join(loc.directory,'messages')));
+ if(names.length>1024)fail('CONVERSATION_LIST_TOO_LARGE');
+ const name=names.filter(n=>/^[A-Za-z0-9_-]{1,48}\.json$/.test(n)).sort()[0];
+ if(!name)return null;
+ return titleForConversationInput((await intent(loc,name.slice(0,-5))).input.text);
+}
+export function titleForConversationInput(text){
+ if(!text)return null;
+ const chars=Array.from(text.replace(/\s+/gu,' ').trim());
+ return chars.length>96?chars.slice(0,96).join('')+'…':chars.join('');
+}
+export async function readConversationInput({projectDir,conversationId,messageId}){const loc=await location(projectDir,conversationId),record=await intent(loc,messageId);return {text:record.input.text,sourceManifestSha256:record.input.sourceManifestSha256};}
 export async function readConversationMessage({projectDir,conversationId,messageId}){const loc=await location(projectDir,conversationId),record=await intent(loc,messageId);await checkedTask(loc,record);const output=await readResearchOutput({projectDir:loc.projectDir,runId:record.runId});return {conversationId,messageId,input:record.input,digest:record.digest,output};}
 
 function admissionFact(record,task){return {schemaVersion:'conversation-admission@1',intentDigest:record.digest,taskDefinitionHash:hash(canonical(task.definition)),sessionDefinitionHash:hash(canonical(task.run.definition))};}
