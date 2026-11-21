@@ -26,6 +26,7 @@ button:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px sol
 .history,.evidence{min-width:0;padding:1.15rem;background:var(--panel)}
 .history{border-inline-end:1px solid var(--line)}
 .evidence{border-inline-start:1px solid var(--line)}
+.evidence small,#mobile-evidence small{overflow-wrap:anywhere}
 .history header,dialog header{display:flex;justify-content:space-between;gap:.5rem;align-items:center}
 h2{font-size:1rem;margin:0;color:var(--ink)}
 h3{margin:.35rem 0 .75rem}

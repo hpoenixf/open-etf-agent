@@ -127,6 +127,8 @@ export async function startLocalGui({ projectDir, port = 0 } = {}) {
     const c = await inspectConversation({ projectDir, conversationId });
     const messages = [];
     for (const m of c.messages) {
+      const key = workKey(conversationId, m.messageId);
+      const workerWasRunning = working?.key === key;
       let run, output = null, error = null;
       const input = await readConversationInput({ projectDir, conversationId, messageId: m.messageId });
       if (m.status !== 'admission-pending') {
@@ -138,9 +140,11 @@ export async function startLocalGui({ projectDir, port = 0 } = {}) {
           if (e.code !== 'PROJECT_REPORT_NOT_READY') error = 'OUTPUT_READ_FAILED';
         }
       }
+      const status = run?.status ?? m.status;
       messages.push({
-        id: m.messageId, runId: m.runId, status: run?.status ?? m.status, phase: run?.snapshot?.phase ?? null,
-        code: run?.snapshot?.code ?? null, working: working?.key === workKey(conversationId,m.messageId),
+        id: m.messageId, runId: m.runId, status, phase: run?.snapshot?.phase ?? null,
+        // A worker can finish during these reads. Keep polling an active snapshot.
+        code: run?.snapshot?.code ?? null, working: status === 'active' && (workerWasRunning || working?.key === key),
         question: input.text, sourceId: input.sourceManifestSha256, output, error,
       });
     }
