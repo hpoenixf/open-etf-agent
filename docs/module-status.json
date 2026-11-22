@@ -1,9 +1,9 @@
 {
   "schemaVersion": 2,
-  "reviewedVersion": "0.41.0",
-  "reviewedSource": "762b78387d209582b2a49cc2495d94f5b42470aa",
+  "reviewedVersion": "0.42.0",
+  "reviewedSource": "ca4161199ea4066bd0893f0c76c4835e4ebc9131",
   "articleSource": "https://github.com/hpoenixf/eff-agent-article/blob/249f0b866f9446f33b57f186fbc6d35b5d82c119/articles/open-etf-agent-v010-system-design.md",
-  "evidence": "docs/verification/v041-release-candidate.md",
+  "evidence": "docs/verification/v042-runtime-qualification.md",
   "layers": [
     {
       "id": "L1",
@@ -225,6 +225,31 @@
       }
     },
     {
+      "id": "dailywatch",
+      "layer": "L1",
+      "group": "task",
+      "name": "Daily Research Watch",
+      "summary": {
+        "zh": "同题研究与日历基线",
+        "en": "Daily research and verified baseline"
+      },
+      "boundary": {
+        "zh": "邮件需另配且默认关闭",
+        "en": "Digest requires separate opt-in"
+      },
+      "status": "enhanced",
+      "source": "src/gui-daily-watch.mjs",
+      "kind": "module",
+      "article": {
+        "slug": "agent-autonomous-scheduled-research",
+        "kind": "module-article",
+        "title": {
+          "zh": "Agent 不必一直在线思考：我们怎样让研究在对话结束后按时继续？",
+          "en": "Agents Don't Need to Think Continuously: How Research Continues on Schedule After a Conversation Ends"
+        }
+      }
+    },
+    {
       "id": "session",
       "layer": "L2",
       "group": "task",
@@ -262,7 +287,7 @@
         "zh": "附资料即隔离，不重跑旧任务",
         "en": "Attachment boundary; no old Run replay"
       },
-      "status": "enhanced",
+      "status": "bounded",
       "source": "src/conversation.mjs",
       "kind": "module",
       "article": {
@@ -737,7 +762,7 @@
         "zh": "摘要不是原文证据",
         "en": "Search snippets are not evidence"
       },
-      "status": "enhanced",
+      "status": "bounded",
       "source": "src/web-acquisition.mjs",
       "kind": "module",
       "article": {
@@ -762,7 +787,7 @@
         "zh": "无 OCR / 视觉解析",
         "en": "No OCR / visual parsing"
       },
-      "status": "enhanced",
+      "status": "bounded",
       "source": "src/pdf-input.mjs",
       "kind": "module",
       "article": {
@@ -1062,7 +1087,7 @@
         "zh": "默认离线，单操作员",
         "en": "Offline default; single operator"
       },
-      "status": "enhanced",
+      "status": "bounded",
       "source": "src/gui-server.mjs",
       "kind": "call-site",
       "article": {
