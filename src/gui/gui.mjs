@@ -68,6 +68,7 @@ function controls() {
   byId('send').disabled = state.submitting || working === true || !state.workspace;
   byId('send').textContent = state.pending ? '重试原提交' : liveMode() ? '提交真实模型' : '提交演练';
   byId('question').readOnly = Boolean(state.submitting || state.pending);
+  byId('pdf-file').disabled = Boolean(state.submitting || state.pending);
   byId('source').disabled = Boolean(state.submitting || state.pending);
   byId('new').disabled = Boolean(state.submitting || state.pending);
   for (const b of document.querySelectorAll('[data-reuse-question]')) {
@@ -96,7 +97,7 @@ function refreshHistory() {
 }
 function showEvidence(source,index) {
   const node = byId('evidence-template').content.cloneNode(true);
-  node.querySelector('h3').textContent = '来源 ['+index+']';
+  node.querySelector('h3').textContent = '来源 ['+index+']'+(source.pdfPage?' · PDF 第 '+source.pdfPage+' 页':'');
   node.querySelector('pre').textContent = source.text;
   node.querySelector('small').textContent = source.sha256 ? 'SHA-256 '+source.sha256 : '';
   if (window.matchMedia('(max-width:930px)').matches) {
@@ -115,6 +116,7 @@ function render() {
     const status = isUnknown ? '结果未知' : m.working ? phaseLabels[m.phase] ?? '处理中' : statusLabels[m.status] ?? '状态待核对';
     header.append(make('strong','你'),make('span',status,'state'));
     article.append(header,make('p',m.question ?? '问题尚未读回','question'));
+    if(m.attachment) article.append(make('p','PDF：'+m.attachment.name+' · '+m.attachment.pages+' 页','muted'));
     const providerFailure=(/^PROVIDER_HTTP_(403|429)$/).exec(m.code??'');
     if (providerFailure) {
       const guidance=providerFailure[1]==='403'?'提供方拒绝访问，请核对账户、地区及模型权限。'
@@ -162,7 +164,7 @@ function render() {
       actions.append(reuse);
     }
     if(actions.childElementCount) article.append(actions);
-    if (m.status === 'active' && !isUnknown && (!ownerMode() || m.sourceId===null)) {
+    if (m.status === 'active' && !isUnknown && (!ownerMode() || m.sourceId===null || m.attachment)) {
       const action = m.working ? 'cancel' : 'work';
       const b = make('button',m.working?'取消本次':'继续原任务','secondary');
       b.type='button'; b.addEventListener('click',async()=> {
@@ -205,6 +207,7 @@ async function select(id) {
   if (state.pending && state.pending.conversationId !== id) return;
   if (state.conversation !== id) {
     message();
+    if(state.conversation)byId('pdf-file').value='';
     const dialog=byId('mobile-evidence');
     if (dialog.open) dialog.close();
     byId('mobile-evidence-content').replaceChildren();
@@ -233,6 +236,7 @@ async function load() {
     const capabilities=[c.search?(c.searchProvider==='deepseek-search'?'公开网页搜索（DeepSeek，可能计费）':c.searchProvider==='yuanbao-search'?'公开网页搜索（腾讯元宝，可能计费）':'公开网页搜索（Exa 预览）'):null,alternates.length?'补充搜索：'+alternates.join('、')+'（可能计费）':null,c.web?'公开网页读取':null,c.wind?'Wind 基金日收盘价':null].filter(Boolean);
     byId('mode-note').textContent=capabilities.length?'已启用：'+capabilities.join('、')+'。当前事实以实际来源为准。':'不联网检索新闻或行情。';
     byId('source-picker').hidden=true;
+    byId('pdf-picker').hidden=!state.workspace.capabilities.includes('pdf-attachment');
     byId('source').required=false;
     byId('question').placeholder='输入你的问题';
   } else if (liveMode()) {
@@ -258,7 +262,7 @@ async function create(initialDraft) {
   return c.id;
 }
 function failed(e) {
-  message(({GUI_WORKER_BUSY:'已有任务执行，待完成后再提交。',GUI_ORIGIN_REQUIRED:'请从启动命令显示的本机地址打开。',CONVERSATION_ID_CONFLICT:'原提交内容已不同，请先确认原会话状态。'})[e.message] ?? '未确认操作结果，请刷新并查看会话；重试会沿用原提交。');
+  message(({GUI_WORKER_BUSY:'已有任务执行，待完成后再提交。',GUI_ORIGIN_REQUIRED:'请从启动命令显示的本机地址打开。',CONVERSATION_ID_CONFLICT:'原提交内容已不同，请先确认原会话状态。',PDF_UPLOAD_LIMIT:'PDF 不能超过 1 MiB 或 16 页。',PDF_LIMIT_PAGES:'PDF 不能超过 16 页。',PDF_LIMIT_TEXT:'PDF 提取内容超出支持范围，请缩小文件范围。',PDF_ENCRYPTED:'该 PDF 已加密，请上传未加密副本。',PDF_NO_TEXT_LAYER:'没有可用的文字层。请先用本地 OCR 或上传带文字层的版本。',PDF_INVALID_FORMAT:'未识别为 PDF 文件。',PDF_PARSE_FAILED:'无法读取这个 PDF。',PDF_TIMEOUT:'PDF 解析超时，请尝试较小的文件。',PROJECT_SOURCE_INVALID_INPUT:'请选择文件名有效的 PDF。',GUI_PDF_UPLOAD_BUSY:'另一个 PDF 正在处理，请稍后重试。'})[e.message] ?? '未确认操作结果，请刷新并查看会话；重试会沿用原提交。');
 }
 byId('history-toggle').addEventListener('click',()=> {
   const b = byId('history-toggle'), isOpen=b.getAttribute('aria-expanded')==='true';
@@ -282,15 +286,25 @@ byId('composer').addEventListener('submit',async e=>{
   try {
     message(); state.submitting=true; controls();
     const original = formDraft();
+    const file=!state.pending&&!byId('pdf-picker').hidden?byId('pdf-file').files[0]:null;
     if (!state.conversation) await create(original);
     else if (!state.pending) saveDraft(original);
+    let attachment;
+    if(file) {
+      if(file.size>1048576) throw new Error('PDF_UPLOAD_LIMIT');
+      const response=await fetch('/api/conversations/'+state.conversation+'/pdf',{method:'POST',headers:{'content-type':'application/pdf','x-pdf-name':encodeURIComponent(file.name)},body:file});
+      if(response.status===413)throw new Error('PDF_UPLOAD_LIMIT');
+      const payload=await response.json();
+      if(!response.ok) throw new Error(payload.error);
+      attachment=payload.id;
+    }
     state.pending ??= { conversationId:state.conversation,
-      input:{messageId:'m'+Date.now()+'-'+crypto.randomUUID().replaceAll('-','').slice(0,24),question:original.question,...(ownerMode()?{}:{sourceId:original.sourceId})} };
+      input:{messageId:'m'+Date.now()+'-'+crypto.randomUUID().replaceAll('-','').slice(0,24),question:original.question,...(ownerMode()?(attachment?{attachmentId:attachment}:{}):{sourceId:original.sourceId})} };
     sessionStorage.setItem(pendingKey(),JSON.stringify(state.pending));
     const {conversationId,input}=state.pending;
     await api('/api/conversations/'+conversationId+'/messages',liveMode()&&!ownerMode()?{...input,approveLive:true}:input);
     clearMatchingDraft(state.pending);
-    state.pending=null; sessionStorage.removeItem(pendingKey()); q.value='';
+    state.pending=null; sessionStorage.removeItem(pendingKey()); q.value=''; byId('pdf-file').value='';
     await select(conversationId);
   } catch(error){ failed(error); }
   finally { state.submitting=false; controls(); }

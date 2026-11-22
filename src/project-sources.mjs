@@ -3,7 +3,7 @@ import {open, constants, realpath, mkdir, lstat} from 'node:fs/promises';
 import {resolve, join, dirname, basename, extname} from 'node:path';
 import {sha256, normalizeDocumentCatalog, documentCatalogBinding} from './source.mjs';
 import {publishImmutable} from './storage-files.mjs';
-import {preparePdfSnapshot, normalizePdfSnapshot, pdfSnapshotBinding} from './pdf-input.mjs';
+import {preparePdfSnapshot, prepareUploadedPdfSnapshot, normalizePdfSnapshot, pdfSnapshotBinding} from './pdf-input.mjs';
 import {normalizeWebProvenance,webDocumentIdentity,webOriginalBytes} from './web-source.mjs';
 import {normalizeWebAcquisitionPlan,validateWebTransportRecord,acquisitionHash,ACQUISITION_LIMITS} from './web-acquisition-records.mjs';
 
@@ -115,6 +115,18 @@ export async function importProjectSources({projectDir,files,signal}={}) {
   const catalog=catalogFor(documents),manifest=validateManifest({schemaVersion:'project-sources@1',files:entries,catalogBinding:catalog?documentCatalogBinding(catalog):null,pdfBinding:pdfSnapshot?pdfSnapshotBinding(pdfSnapshot):null});
   const manifestSha256=await put(dirs.manifests,encode(manifest),'json',signal);
   return loadProjectSources({projectDir,manifestSha256,signal});
+}
+// Direct upload is a host API, never a model tool or caller-owned path.
+export async function importUploadedPdf({projectDir,bytes,name,signal}) {
+  if(typeof name!=='string'||!name||Buffer.byteLength(name)>200||!/\.pdf$/i.test(name)||/[\p{Cc}\p{Cf}/\\]/u.test(name))fail('PROJECT_SOURCE_INVALID_INPUT');
+  const snapshot=await prepareUploadedPdfSnapshot(bytes,{signal});
+  if(!snapshot.pages.some(text=>text.trim()))fail('PDF_NO_TEXT_LAYER');
+  const dirs=await directories(projectDir,true);
+  const originalSha256=await put(dirs.objects,bytes,'pdf',signal);
+  const snapshotSha256=await put(dirs.objects,encode(snapshot),'json',signal);
+  const manifest=validateManifest({schemaVersion:'project-sources@1',files:[{kind:'pdf',name,originalSha256,originalBytes:bytes.length,snapshotSha256,pageMap:null}],catalogBinding:null,pdfBinding:pdfSnapshotBinding(snapshot)});
+  const manifestSha256=await put(dirs.manifests,encode(manifest),'json',signal);
+  return {id:manifestSha256,name,pages:snapshot.pages.length};
 }
 export async function loadProjectSources({projectDir,manifestSha256,signal}={}) {
   cancel(signal);

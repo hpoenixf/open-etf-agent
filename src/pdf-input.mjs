@@ -98,6 +98,12 @@ export function pdfSnapshotBinding(snapshot) {
 export async function preparePdfSnapshot({input={},signal}={}) {
   if(!input||typeof input!=='object'||Array.isArray(input))fail('PDF_INVALID_INPUT');
   const original=await selectedBytes(structuredClone(input),signal);
+  return freezePdfBytes(original,{signal});
+}
+export async function prepareUploadedPdfSnapshot(bytes,{signal}={}) {
+  return freezePdfBytes({bytes,synthetic:false},{signal});
+}
+async function freezePdfBytes(original,{signal}) {
   const parsed=await parsePdfBytes(original.bytes,{signal});cancelled(signal);
   return normalizePdfSnapshot({schemaVersion:parsed.tables?'pdf-input-snapshot@2':'pdf-input-snapshot@1',parser:parsed.parser,parserWorkerSha256:sha256(await readFile(new URL('./pdf-parser-worker.mjs',import.meta.url))),originalBase64:original.bytes.toString('base64'),originalSha256:sha256(original.bytes),originalBytes:original.bytes.length,synthetic:original.synthetic,pages:parsed.pages,...(parsed.tables?{tables:parsed.tables}:{})});
 }

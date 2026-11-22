@@ -29,6 +29,7 @@
       <section id="transcript" aria-label="会话消息"></section>
       <form id="composer">
         <div id="source-picker" class="source-picker"><label for="source">演练资料</label><select id="source" required></select></div>
+        <div id="pdf-picker" class="source-picker" hidden><label for="pdf-file">附加 PDF（可选）</label><input id="pdf-file" type="file" accept=".pdf,application/pdf" aria-describedby="pdf-note"><p id="pdf-note" class="muted">支持带文字层的 PDF，最多 1 MiB、16 页。不支持 OCR。模型读取的摘录会发给配置的模型服务；附有 PDF 的当轮不启用外部查询。</p></div>
         <label for="question">研究问题</label>
         <textarea id="question" rows="3" maxlength="3000" required placeholder="例如：对比 Alpha 与 Beta 的费率，并注明来源。"></textarea>
         <div class="composer-actions"><p id="mode-note">固定脚本演练，不是 AI 对问题的分析，不计费。</p><button id="send" type="submit">提交演练</button></div>

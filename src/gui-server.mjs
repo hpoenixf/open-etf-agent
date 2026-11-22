@@ -8,15 +8,17 @@ import {
   createConversation, inspectConversation, readConversationMessage, readConversationInput, readConversationTitle, titleForConversationInput, submitConversationMessage,
   workConversationMessage, cancelConversationMessage,
 } from './conversation.mjs';
-import { createResearchProject, inspectResearchProject, inspectResearchTask, supportsOwnerFreeform, updateResearchProject, validateResearchConfig } from './research-project.mjs';
-import { importProjectSources } from './project-sources.mjs';
-import { safeDirectory } from './storage-files.mjs';
+import { createResearchProject, inspectResearchProject, inspectResearchTask, readProjectJson, supportsOwnerFreeform, updateResearchProject, validateResearchConfig } from './research-project.mjs';
+import { importProjectSources, importUploadedPdf, PROJECT_SOURCE_LIMITS } from './project-sources.mjs';
+import { ensureSafeDirectory, publishImmutable, safeDirectory } from './storage-files.mjs';
 import { prepareOwnerSearch } from './gui-owner-web.mjs';
 import { prepareGuiLiveConfig } from './gui-live-config.mjs';
 
 const routeId = '[A-Za-z0-9_-]{1,48}';
 const idPattern = new RegExp('^'+routeId+'$');
 const conversationPath = new RegExp('^/api/conversations/('+routeId+')$');
+const pdfPath = new RegExp('^/api/conversations/('+routeId+')/pdf$');
+const pdfId = /^[a-f0-9]{64}$/;
 const reportPath = new RegExp('^/api/conversations/('+routeId+')/messages/('+routeId+')/report[.]md$');
 const actionPath = new RegExp('^/api/conversations/('+routeId+')/messages(?:/('+routeId+')/(work|cancel))?$');
 const config = {
@@ -36,16 +38,20 @@ function reject(status, code) { throw new RequestError(status, code); }
 function exact(input, keys) {
   return input && !Array.isArray(input) && Object.keys(input).sort().join() === [...keys].sort().join();
 }
-async function inputFor(req) {
-  if (req.headers['content-type']?.split(';',1)[0].trim() !== 'application/json') reject(415, 'JSON_REQUIRED');
+async function readBody(req,limit) {
   const chunks = [];
   let size = 0;
   for await (const chunk of req) {
     size += chunk.length;
-    if (size > 18432) reject(413, 'INPUT_TOO_LARGE');
+    if (size > limit) reject(413, 'INPUT_TOO_LARGE');
     chunks.push(chunk);
   }
-  try { return JSON.parse(Buffer.concat(chunks)); }
+  return Buffer.concat(chunks);
+}
+async function inputFor(req) {
+  if (req.headers['content-type']?.split(';',1)[0].trim() !== 'application/json') reject(415, 'JSON_REQUIRED');
+  const bytes=await readBody(req,18432);
+  try { return JSON.parse(bytes); }
   catch { reject(400, 'INVALID_JSON'); }
 }
 function projectedOutput(output) {
@@ -57,7 +63,7 @@ function projectedOutput(output) {
     report: output.report ? {
       text: output.report.text, sha256: output.report.sha256, revisionId: output.revision.revisionId,
     } : null,
-    sources: output.revision?.sources?.map(({ sourceId, text, sha256 }) => ({ sourceId, text, sha256 })) ?? [],
+    sources: output.revision?.sources?.map(({ sourceId, text, sha256, page, pdf }) => ({ sourceId, text, sha256, ...(pdf?{pdfPage:page}: {}) })) ?? [],
     warning: output.deliveryWarning ?? output.answer?.warning ?? null,
   };
 }
@@ -164,17 +170,27 @@ export async function startLocalGui({ projectDir, port = 0, liveConfig, env = pr
         id: m.messageId, runId: m.runId, status, phase: run?.snapshot?.phase ?? null,
         // A worker can finish during these reads. Keep polling an active snapshot.
         code: run?.snapshot?.code ?? null, working: status === 'active' && (workerWasRunning || working?.key === key),
-        question: input.text, sourceId: input.sourceManifestSha256, output, error,
+        question: input.text, sourceId: input.sourceManifestSha256, ...(freeform&&input.sourceManifestSha256?{attachment:await pdfAttachment(conversationId,input.sourceManifestSha256)}:{}), output, error,
       });
     }
     return { id: c.conversationId, title: titleForConversationInput(messages[0]?.question), messages };
+  }
+  let uploading=false;
+  const pdfDirectory=conversationId=>join(projectDir,'conversations',conversationId,'pdf-uploads');
+  async function pdfAttachment(conversationId,id) {
+    if(typeof id!=='string'||!pdfId.test(id)) return null;
+    try {
+      const {id:storedId,name,pages}=await readProjectJson(join(pdfDirectory(conversationId),id+'.json'),4096);
+      if(storedId!==id||typeof name!=='string'||!Number.isSafeInteger(pages)||pages<1||pages>16) reject(500,'GUI_PDF_METADATA_INVALID');
+      return {id,name,pages};
+    } catch(e) { if(e.code==='ENOENT')return null; throw e; }
   }
   function begin(conversationId, messageId, sourceId) {
     const key = workKey(conversationId, messageId);
     if (working?.key === key) return;
     if (working) reject(409, 'GUI_WORKER_BUSY');
     const source = sourceFor(sourceId);
-    if (freeform?sourceId!==null:!source) reject(409, 'GUI_SOURCE_UNKNOWN');
+    if (!freeform&&!source) reject(409, 'GUI_SOURCE_UNKNOWN');
     const p = Promise.resolve().then(() =>
       workConversationMessage({ projectDir, conversationId, messageId,
         ...(live?{apiKey:live.apiKey,fetchImpl,ownerWebTransport,ownerWindSettings,ownerSearchSettings}:{gateway:demoGateway(source)}), hostSignal: hostSignal.signal })
@@ -203,7 +219,7 @@ export async function startLocalGui({ projectDir, port = 0, liveConfig, env = pr
         if (req.url === '/api/workspace') return send(200, {
           schemaVersion: 'local-gui@1', mode,
           ...(live?{liveNotice:{maxModelCallsPerRun:expectedConfig.limits.model,...(freeform?{freeform:true,connectivity:{web:connectivity.web===true,search:!!connectivity.search,...(connectivity.search?{searchProvider:connectivity.search}:{}),...(connectivity.searchAlternates?{searchAlternates:connectivity.searchAlternates}:{}),wind:connectivity.wind===true}}:{})}}:{}),
-          capabilities: ['conversations','progress','reports','sources'],
+          capabilities: ['conversations','progress','reports','sources',...(freeform?['pdf-attachment']:[])],
           projectId: demo.projectId, conversations: await list({titles:true}), sources: publicSources,
         });
         const reportMatch = reportPath.exec(req.url);
@@ -227,13 +243,32 @@ export async function startLocalGui({ projectDir, port = 0, liveConfig, env = pr
         await createConversation({ projectDir, conversationId });
         return send(201, { id: conversationId });
       }
+      const pdfMatch=pdfPath.exec(req.url);
+      if(pdfMatch) {
+        if(!freeform)reject(404,'NOT_FOUND');
+        if(req.headers['content-type']!=='application/pdf'||req.headers['content-encoding']!==undefined)reject(415,'GUI_PDF_CONTENT_TYPE');
+        if(Number(req.headers['content-length'])>PROJECT_SOURCE_LIMITS.originalBytes)reject(413,'INPUT_TOO_LARGE');
+        if(uploading)reject(409,'GUI_PDF_UPLOAD_BUSY');
+        uploading=true;
+        try {
+          const [,conversationId]=pdfMatch;
+          await inspectConversation({projectDir,conversationId});
+          let name;try{name=decodeURIComponent(req.headers['x-pdf-name']??'');}catch{reject(400,'GUI_PDF_NAME_INVALID');}
+          const directory=await ensureSafeDirectory(pdfDirectory(conversationId));
+          const bytes=await readBody(req,PROJECT_SOURCE_LIMITS.originalBytes);
+          const source=await importUploadedPdf({projectDir,bytes,name,signal:hostSignal.signal});
+          try{await publishImmutable(directory,source.id+'.json',Buffer.from(JSON.stringify(source)),hostSignal.signal);}
+          catch(e){if(e.code!=='EEXIST'||!isDeepStrictEqual(await pdfAttachment(conversationId,source.id),source))throw e;}
+          return send(201,source);
+        }finally{uploading=false;}
+      }
       const match = actionPath.exec(req.url);
       if (!match) reject(404,'NOT_FOUND');
       const [,conversationId,messageId,action] = match;
       if (!action) {
         const input = await inputFor(req);
         if (needsConsent && input?.approveLive!==true) reject(400,'GUI_LIVE_APPROVAL_REQUIRED');
-        if (!exact(input, freeform?['messageId','question']:needsConsent?['messageId','question','sourceId','approveLive']:['messageId','question','sourceId']) || typeof input.messageId !== 'string'
+        if (!exact(input, freeform?(Object.hasOwn(input??{},'attachmentId')?['messageId','question','attachmentId']:['messageId','question']):needsConsent?['messageId','question','sourceId','approveLive']:['messageId','question','sourceId']) || typeof input.messageId !== 'string'
           || !idPattern.test(input.messageId) || typeof input.question !== 'string' || !input.question.trim()
           || Buffer.byteLength(input.question)>12000 || !freeform&&!sourceFor(input.sourceId)) reject(400,'INVALID_MESSAGE');
         if (submitting || (working && working.key !== workKey(conversationId,input.messageId))) reject(409,'GUI_WORKER_BUSY');
@@ -246,7 +281,9 @@ export async function startLocalGui({ projectDir, port = 0, liveConfig, env = pr
             try { await readConversationInput({projectDir,conversationId,messageId:input.messageId}); retry=true; }
             catch (error) { if (error.code!=='ENOENT') throw error; }
           }
-          const sourceId=freeform?null:input.sourceId;
+          const attachment=freeform&&Object.hasOwn(input,'attachmentId')?await pdfAttachment(conversationId,input.attachmentId):null;
+          if(freeform&&Object.hasOwn(input,'attachmentId')&&!attachment) reject(400,'GUI_PDF_ATTACHMENT_UNKNOWN');
+          const sourceId=freeform?(attachment?.id??null):input.sourceId;
           const m = await submitConversationMessage({ projectDir, conversationId, messageId: input.messageId,
             text: input.question, sourceManifestSha256: sourceId,
             ...(live?{authorization:{providerApproved:true,dataApproved:true,costApproved:true}}:{}) });
@@ -267,12 +304,12 @@ export async function startLocalGui({ projectDir, port = 0, liveConfig, env = pr
       if (submitting || found.status !== 'active') reject(409,'RUN_NOT_ACTIVE');
       const { definition } = await inspectResearchTask({ projectDir,runId:found.runId });
       if (!isDeepStrictEqual(definition.config,expectedConfig)) reject(409,wrongProject);
-      if (freeform&&definition.sourceManifestSha256!==null) reject(409,'GUI_LIVE_LEGACY_RETRY_DISABLED');
+      if (freeform&&definition.sourceManifestSha256!==null&&!(await pdfAttachment(conversationId,definition.sourceManifestSha256))) reject(409,'GUI_LIVE_LEGACY_RETRY_DISABLED');
       begin(conversationId,messageId,definition.sourceManifestSha256);
       return send(202, { id: messageId });
     } catch (e) {
       const code = e.status ? e.message : typeof e.code === 'string' && /^[A-Z0-9_]+$/.test(e.code) ? e.code : 'GUI_REQUEST_FAILED';
-      const status = e.status ?? (code==='ENOENT'||code==='UNKNOWN_RUN'?404:code.includes('ID_CONFLICT')?409:500);
+      const status = e.status ?? (code==='ENOENT'||code==='UNKNOWN_RUN'?404:code.includes('ID_CONFLICT')?409:code==='PDF_LIMIT_BYTES'||code==='PDF_LIMIT_PAGES'||code==='PDF_LIMIT_TEXT'?413:code==='PROJECT_SOURCE_INVALID_INPUT'||code==='PDF_ENCRYPTED'||code==='PDF_PARSE_FAILED'||code==='PDF_INVALID_FORMAT'||code==='PDF_NO_TEXT_LAYER'||code==='PDF_TIMEOUT'?422:500);
       if (!res.headersSent && !res.destroyed) send(status,{ error:code });
     }
   });
