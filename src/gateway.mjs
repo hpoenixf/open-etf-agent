@@ -70,7 +70,7 @@ export function directDeepSeekProfile({ provider, endpoint, model }) {
   }
   return true;
 }
-export function createChatGateway({ provider, endpoint, model, apiKey, authorization, stream = false, maxInputBytes = CHAT_REQUEST_MAX_BYTES, fetchImpl = globalThis.fetch }) {
+export function createChatGateway({ provider, endpoint, model, apiKey, authorization, stream = false, maxInputBytes = CHAT_REQUEST_MAX_BYTES, fetchImpl = globalThis.fetch, observeTransport }) {
   if (authorization?.providerApproved !== true || !(authorization?.syntheticDataApproved === true || authorization?.dataApproved === true) || authorization?.costApproved !== true) throw new Error('LIVE_BLOCKED');
   if (!Number.isSafeInteger(maxInputBytes) || maxInputBytes < 1 || maxInputBytes > 1048576) throw new Error('Invalid input byte limit');
   const directDeepSeek=directDeepSeekProfile({provider,endpoint,model});
@@ -101,11 +101,10 @@ export function createChatGateway({ provider, endpoint, model, apiKey, authoriza
     async next({ messages, tools, signal, reservation }) {
       const body = encodeInput({messages,tools});
       if (Buffer.byteLength(body) > maxInputBytes) throw new Error('PROVIDER_INPUT_BYTE_LIMIT');
-      const response = await fetchImpl(url, {
-        method: 'POST', redirect: 'error', signal,
-        headers: requestHeaders(reservation),
-        body
-      });
+      const headers=requestHeaders(reservation),at=Date.now();
+      let response,result;
+      try {
+      response = await fetchImpl(url, {method:'POST',redirect:'error',signal,headers,body});
       if (!response.ok) {
         const code = `PROVIDER_HTTP_${response.status}`;
         throw Object.assign(new Error(code), {code});
@@ -113,7 +112,7 @@ export function createChatGateway({ provider, endpoint, model, apiKey, authoriza
       if (stream) {
         if (!response.headers.get('content-type')?.startsWith('text/event-stream')) throw new Error('PROVIDER_STREAM_CONTENT_TYPE');
         const { readChatStream, projectStreamProtocolDiagnostic } = await import('./stream.mjs');
-        try { return await readChatStream(response.body, { signal }); }
+        try { result=await readChatStream(response.body, { signal }); return result; }
         catch (error) {
           const diagnostic = projectStreamProtocolDiagnostic(error);
           if (diagnostic) diagnostics.set(error, Object.freeze(diagnostic));
@@ -131,11 +130,17 @@ export function createChatGateway({ provider, endpoint, model, apiKey, authoriza
       const bytes = Buffer.concat(parts);
       try {
         let parsed; try { parsed = JSON.parse(bytes.toString('utf8')); } catch (error) { if (error instanceof SyntaxError) reject('RESPONSE_JSON'); throw error; }
-        return normalizeChatCompletion(parsed);
+        result=normalizeChatCompletion(parsed); return result;
       } catch (error) {
         const diagnostic = projectProviderProtocolDiagnostic(error);
         if (diagnostic) diagnostics.set(error, Object.freeze({ ...diagnostic, bytes: bytes.length, hashScope: 'complete-body', bodySha256: createHash('sha256').update(bytes).digest('hex') }));
         throw error;
+      }
+      } catch(error) {
+        try{observeTransport?.({type:'model-transport',ordinal:reservation?.modelOrdinal,model,at,end:Date.now(),status:response?(response.ok?'protocol-error':'http-error'):'unknown',code:error?.code});}catch{}
+        throw error;
+      } finally {
+        if(result)try{observeTransport?.({type:'model-transport',ordinal:reservation?.modelOrdinal,model,at,end:Date.now(),status:'responded',usage:result.usage});}catch{}
       }
     }
   };

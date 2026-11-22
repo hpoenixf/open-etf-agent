@@ -2,11 +2,11 @@
 
 Without `--live-config`, neither the original GUI startup nor its bundled offline demo dispatch a provider request. This alternative is an explicit, single-operator mode. It uses the existing Chat Completions Research Project, Conversation, Worker and Admission identities; it does not introduce another model client or request ledger.
 
-Use a **new, separate Project directory**. It cannot adopt an offline Project, and the offline launcher refuses a live Project. Restart with the same Project directory, configuration and port. The built-in listener does not provide authentication or public ingress; keep it on loopback. The owner profile can import a selected text PDF per question; this is not a general upload service. It does not support web crawling, guest access or account sharing.
+Use a **new, separate Project directory**. It cannot adopt an offline Project, and the offline launcher refuses a live Project. Restart with the same Project directory, configuration and port. No private material upload, web crawling, memory export, guest access, account sharing, proxy, public DNS or public ingress is supported.
 
 1. Select a provider and model that explicitly allow your research workload and regional usage. Independently verify the account's spend settings and data retention. The model must support Chat Completions function tools.
 2. Create an operator-only configuration file outside version control. Set **non-secret metadata only**. Inject the credential as the dedicated server-side `ETF_GUI_PROVIDER_KEY` environment variable from your approved secrets store. Do not pass its value in the file, browser, command line, git or tickets.
-3. Start it on a trusted local machine. Other than the named Go owner profile below, this preview uses only the two bundled synthetic sources. Do not enter confidential information. Other local processes can access the loopback port, so operator/host trust is required.
+3. Start it on a trusted local machine. For this preview, use only the two bundled synthetic sources; do not enter confidential information. Other local processes can access the loopback port, so operator/host trust is required.
 
 Illustrative configuration (replace the domain and model; `.invalid` does not name a working endpoint):
 
@@ -27,7 +27,7 @@ npm ci --ignore-scripts --no-audit --no-fund
 npm run gui -- --project ./test-output/local-gui-real --port 4179 --live-config /path/to/config.json
 ```
 
-The host prints its **loopback-only** origin. Opening the interface, starting a conversation and reading History do not dispatch. In the source-bound preview, the UI asks you to authorize the selected source, question and provider. In the Go owner profile, clicking Send submits immediately to the configured provider and may use its allowance. A repeated submission acknowledges only its original message and never resumes it by itself. An interrupted active Run only resumes through a separate explicit action; Admission retains the original accounting records and cannot guarantee that a provider will not charge. A request ceiling is **not** a dollar guarantee. No real-request evidence is implied by mocked transport tests.
+The host prints its **loopback-only** origin. Opening the interface, starting a conversation and reading History do not dispatch. The UI displays that real requests can incur cost, then asks you to authorize the selected source, question and configured provider before submission. A repeated submission acknowledges only its original message and never resumes it by itself. An interrupted active Run only resumes through a separate explicit action; Admission retains the original accounting records and cannot guarantee that a provider will not charge. A request ceiling is **not** a dollar guarantee. No real-request evidence is implied by mocked transport tests.
 
 ## OpenCode Go profile for the account owner
 
@@ -44,39 +44,7 @@ Use these exact provider and endpoint values, and replace the model placeholder 
 }
 ```
 
-Go owner mode has an optional per-turn PDF picker but no seeded demo material or per-message confirmation dialog. You can ask directly and reopen the answer in History. By default, general answers do not use external sources. The optional connectivity settings below enable online tools. Existing sourced reports remain readable. No other Go host or path is accepted by this GUI. The existing native adapter identifies itself as Open ETF Agent and sends the stable, opaque native Root session on each request for the same Run. It does not identify itself as another client. A 403 or 429 is shown on the original turn without the upstream body. The original Admission receipt remains unknown where applicable; the application does not retry, change model, or infer a zero charge.
-
-### Ordinary follow-ups and attachments
-
-Sending an ordinary question may include short excerpts of up to four recent completed ordinary
-turns in this conversation. Start a new conversation to leave prior context behind. An attachment,
-unsettled turn, or profile change stops the history chain; other conversations are not read.
-Historical answers do not grant authority or restart old Runs.
-
-A selected PDF belongs to one question. It needs a text layer, is capped at 1 MiB and 16 pages,
-and cannot be encrypted. Upload parses locally. On send, excerpts actually read may go to the
-configured model service. Attached turns do not include ordinary history or external search, web
-or Wind tools. Later ordinary turns do not inherit the file or its content. Use only materials
-you are authorized to transmit. [PDF route, scope and checks](verification/owner-gui-pdf.md).
-
-### Research progress
-
-Expand **研究进度** on a turn to see recorded execution steps. Labels describe observed
-events, not the model's private reasoning. Tool return is not evidence that a source
-supported the answer or that a provider succeeded. Missing or interrupted records can
-leave steps unavailable. Opening progress or History does not invoke a model.
-
-### Optional public web and Wind connectivity
-
-In the trusted launch file, add a top-level `"connectivity": {"web": true, "search": "exa-public-preview"}` to enable the existing public HTTPS reader and Exa’s documented no-key preview. The preview is rate-limited and does not fall back to a paid account. Exa receives public search terms. Search snippets are discovery only; the page reader must retrieve an original for a sourced claim. It checks robots and public addresses and reads static text, not logins, JavaScript, or PDFs. Page provenance is saved; the free-form answer may give source links but is not a formal cited Report.
-
-Optional paid search profiles are `deepseek-search` and `yuanbao-search`. An approved account
-and matching server-side environment reference are required (`WEB_RESEARCH_DEEPSEEK_API_KEY`
-or `WEB_RESEARCH_YUANBAO_API_KEY`). You can opt into these as `searchAlternates` with Exa as the
-primary search provider. A paid alternate requires a successful Exa lookup in the same Run;
-it is not an automatic paid fallback after Exa failure. Send only public search terms.
-
-To additionally enable the typed Wind fund daily close tool, set `"wind": true` in the same object and inject `WIND_API_KEY` into the server process via an authorized secret store. Never store it in the launch JSON. The Wind tool is not a raw MCP passthrough, does not expose arbitrary service calls, and is not a universal live market feed. Restart the host with the same Project to preserve history. Old tasks keep their original configuration.
+No other Go host or path is accepted by this GUI. The existing native adapter identifies itself as Open ETF Agent and sends the stable, opaque native Root session on each request for the same Run. It does not identify itself as another client. A 403 or 429 is shown on the original turn without the upstream body. The original Admission receipt remains unknown where applicable; the application does not retry, change model, or infer a zero charge.
 
 ## Direct DeepSeek Flash profile
 
@@ -95,6 +63,20 @@ This explicit profile follows [DeepSeek's non-thinking tool-call contract](https
 
 ## 中文
 
-默认离线模式不变。只有显式传入 `--live-config`，且独立项目、服务端密钥环境变量和既有提供方配置都核验通过，才可启动本机真实模型预览。普通来源模式在提交前确认问题和选中的合成资料；Go 持有人模式可以直接提问，不加载演示资料。发送会使用所配置的模型与账户额度。未配置联网工具时只使用模型知识。可选联网能力见上文；Wind 需单独授权密钥，目前工具用于基金日收盘价，不等于通用实时行情。调用次数上限不是价格上限。刷新、History 和重复提交不会自动续跑，原任务需要另点确认恢复。应用本身仅监听回环地址，不自带公网入口和鉴权，不接入访客。仅显式选中的单轮文字 PDF 可导入；读取到的摘录可能发给配置的模型服务。OpenCode Go 使用明确的账户持有人配置、官方端点及经核对的 Chat Completions 模型。内部使用不代表提供方已确认本用途；先核对用途、地区、账号、额度及 Extra Usage。不得伪装为编程流量绕过拒绝，也不会因 403/429 自动换模型或重试。
+默认离线模式不变。只有显式传入 `--live-config`，且独立项目、服务端密钥环境变量和既有提供方配置都核验通过，才可启动本机真实模型预览。每次提交前须同意发送问题和选中的合成资料，可能产生费用；调用次数上限不是价格上限。刷新、History 和重复提交不会自动续跑，原任务需要另点确认恢复。不开放公网，不接入访客或私人材料。OpenCode Go 使用明确的账户持有人配置、官方端点及经核对的 Chat Completions 模型。内部使用不代表提供方已确认本用途；先核对用途、地区、账号、额度及 Extra Usage。不得伪装为编程流量绕过拒绝，也不会因 403/429 自动换模型或重试。
 
 直连 DeepSeek 时，使用上面的 `deepseek-direct` / 官方端点 / `deepseek-flash` 组合。本配置按官方工具协议关闭 thinking，不会静默改用其他模型或重试其他提供方。
+
+### 已有 Owner Project 的运行额度
+
+`limits.model` 是 Root 级模型请求上限；`limits.maxRounds` 是独立的 Run 轮次上限，先耗尽哪一项就按哪一项停止。`tool` 与 `maxTools` 分别是 Root 和本 Run 的工具预算。它们是工作台配置，不代表模型厂商套餐、余额或并发上限；HTTP 403/429 另行解释。增配不限制正文长度，也不移除工具或浏览器、网络、账户的安全防护。计费可能随实际完成的更多轮次增加。
+
+要从早期 4 次试点值更新现有部署，操作员先确认无在途研究、队列或待核对扣费，停止服务，在受限目录备份**原有启动配置**和 `research-cli project inspect --project DIR` 返回的完整 `.config` 及 `.configSha256`。仅修改已有 `.config.limits`，保留网关、凭据引用、源及其他字段；通过 `research-cli project update --project DIR --config FILE --expected-config OLD_SHA` 对该 Project 做显式 CAS，然后把启动配置的 `limits` 项更新为相同值，再重启核对。这里 `research-cli` 指部署里的原生 `node src/research-cli.mjs`（构建包则用对应 `dist/src`），不是设置模型代理的新接口。若失败，保持服务停机、按当时的配置 SHA CAS 恢复旧完整配置，再恢复旧启动配置。不要改写 Project ID、账本或旧任务快照。
+
+更新仅对后续新 Run 生效；原有终态、用量与 History 不变，旧任务不自动重放。已有每日追踪在运行配置改变后须重新启用。工作台启动不会因为编辑启动配置而默默给现存 Project 扩增额度。
+
+#### 普通问题的工具调用仅记账（可选）
+
+操作员可显式在可信启动配置顶层设置 `"toolAccounting":"metered-only@1"`，并用上述原生 Project CAS 给新配置设置 `"ownerToolAccounting":"metered-only@1"`（其他字段保持不变）。现有工作台启动不会自动迁移此项。只影响随后新建、无附加资料的 Owner 普通问题，包括相同模式的每日追踪。已绑定旧预算的历史、未知或暂停任务不改写；PDF、离线演练、其他项目类型仍执行其原有预算。
+
+此模式只移除普通问题的 Root 与 Run 两处聚合工具次数挡板，不加替代数字。每次工具派发仍在原 Session 执行前记账，重开仍可核对；未结算不等于工具已成功。配置里原来的 `tool` / `maxTools` 保留用于非普通问题及版本兼容，不能当作此模式的挡板。模型请求次数、模型轮次、时间窗口、访问安全、工具及供应商自己的约束仍有效，并不等于无限外部操作。关闭新任务该模式可将 Project 配置 CAS 回原值；退回不认识该计量绑定的旧二进制，不能保证安全读取超出原总数的新 Run，不建议回退旧二进制来恢复限制。

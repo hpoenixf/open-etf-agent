@@ -1,0 +1,9 @@
+# Open GUI observation (0.42.x)
+
+This opt-in exports metadata-only Langfuse observations over OTLP/HTTP v4. It does not send question, answer, report, provider request/response body, tool arguments/result body, URL, account/session ID, file path, or API key as span data. The operator supplies scoped project credentials and a separate random stable trace salt through the server credential manager (never through GUI, source config, or Git).
+
+Set ETF_LANGFUSE_ENABLED=1, ETF_LANGFUSE_REGION=us (or eu/jp matching the Langfuse project), ETF_LANGFUSE_PUBLIC_KEY, ETF_LANGFUSE_SECRET_KEY and ETF_LANGFUSE_TRACE_SALT (prefix trace- followed by a securely generated random URL-safe value). Missing or unsupported settings disable export without changing research. Endpoint and redirect policy are fixed; no dynamic URLs from a question.
+
+A research trace links original physical model dispatch, normalized usage only when received, encountered tool results, and final Run versus independently confirmed delivery. A model response is not a completed research Run; a tool result is not a delivered answer. A transport failure before a response is marked unknown; no cost is imputed. The export begins after verified final readback; it does not give active or retrospective visibility. Terminal runs lacking instrumentation, process deaths and unexported queue overflow are not backfilled. The fixed application bounds are telemetry resource bounds, not model limits. Research never waits for remote telemetry nor replays a model call to finish an export. Once an export is claimed, it is never automatically retried on ambiguity. The local langfuse-export journal stores only opaque IDs and export disposition. Server logs and existing History remain authoritative.
+
+Official transport: https://langfuse.com/integrations/native/opentelemetry/migration-to-v4.

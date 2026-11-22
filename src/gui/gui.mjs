@@ -167,6 +167,14 @@ function render() {
         :'提供方限制了请求，请核对可用额度或频率。';
       article.append(make('p',m.code+' · '+guidance+' 本次未自动重发。','warning'));
     }
+    if(m.budgetFailure?.owner==='local-run'){
+      const b=m.budgetFailure;
+      const counters=[['模型请求预算',b.model],['工具调用预算',b.tools],['运行轮次',b.rounds],['本轮工具执行',b.runTools]]
+        .filter(([,count])=>count).map(([label,count])=>label+' '+count.used+'/'+count.limit);
+      const scope=m.code==='ROUND_LIMIT'?'本轮达到本地模型轮次上限。':m.code==='TOOL_LIMIT'?'本轮的下一批工具调用超出本地运行上限。':b.exhausted==='model'?'本轮用完了工作台的本地模型请求预算。':b.exhausted==='tools'?'本轮用完了工作台的本地工具调用预算。':'本轮达到工作台本地运行预算。';
+      article.append(make('p',scope+(counters.length?' '+counters.join('，')+'。':'')+' 这不是模型服务商配额错误，也没有自动重试。','warning'));
+    }
+    if(m.toolAccounting?.mode==='metered-only@1')article.append(make('p','已记账工具调用：'+m.toolAccounting.used,'muted'));
     if (m.output?.warning) article.append(make('p',m.output.warning,'warning'));
     if (m.output?.answer && m.output.answer !== m.output?.report?.text) article.append(make('pre',m.output.answer));
     if (m.output?.report) {
@@ -290,6 +298,7 @@ async function load() {
     const capabilities=[c.search?(c.searchProvider==='deepseek-search'?'公开网页搜索（DeepSeek，可能计费）':c.searchProvider==='yuanbao-search'?'公开网页搜索（腾讯元宝，可能计费）':'公开网页搜索（Exa 预览）'):null,alternates.length?'补充搜索：'+alternates.join('、')+'（可能计费）':null,c.web?'公开网页读取':null,c.wind?'Wind 基金日收盘价':null].filter(Boolean);
     byId('mode-note').textContent=(capabilities.length?'已启用：'+capabilities.join('、')+'。当前事实以实际来源为准。':'不联网检索新闻或行情。')
       +' 普通问题可能连同本会话近期问答的摘录发给配置的模型；跨越 PDF 附件轮次不沿用历史。新建会话可从空白开始。';
+    if(state.workspace.liveNotice.toolAccounting==='metered-only@1')byId('mode-note').textContent+=' 普通问题工具调用仅记账，无额外总次数挡板。';
     byId('source-picker').hidden=true;
     byId('pdf-picker').hidden=!state.workspace.capabilities.includes('pdf-attachment');
     byId('source').required=false;

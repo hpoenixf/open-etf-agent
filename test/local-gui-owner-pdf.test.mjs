@@ -14,7 +14,7 @@ const response=(message,finish_reason)=>Response.json({choices:[{message:{role:'
 const call=(name,args)=>response({tool_calls:[{type:'function',id:name,function:{name,arguments:JSON.stringify(args)}}]},'tool_calls');
 const final=content=>response({content},'stop');
 
-async function launch(t){
+async function launch(t,options={}){
  await mkdir('test-output',{recursive:true});
  const projectDir=await mkdtemp(resolve('test-output/owner-pdf-'));
  const instances=[];
@@ -38,7 +38,7 @@ async function launch(t){
   return final('已读取附件并保存报告。');
  };
  async function start(){
-  const gui=await startLocalGui({projectDir,liveConfig,env,fetchImpl}); instances.push(gui);
+  const gui=await startLocalGui({projectDir,liveConfig:{...liveConfig,...options},env,fetchImpl}); instances.push(gui);
   const get=path=>fetch(gui.origin+path);
   const post=(path,body)=>fetch(gui.origin+path,{method:'POST',headers:{origin:gui.origin,'content-type':'application/json'},body:JSON.stringify(body)});
   const upload=(path,bytes,name='基金附件.pdf',headers={})=>fetch(gui.origin+path+'/'+'pdf',{method:'POST',headers:{origin:gui.origin,'content-type':'application/pdf','x-pdf-name':encodeURIComponent(name),...headers},body:bytes});
@@ -137,4 +137,19 @@ test('mobile browser can attach a PDF, open cited page evidence and revisit hist
  await page.getByText('PDF：手机附件.pdf · 3 页').waitFor();
  assert.equal(page.url(),detailBefore);
  assert.equal(sent.length,3);
+});
+
+test('owner metered-only mode does not replace the existing PDF/tool scope or cap',async t=>{
+ const {start,sent}=await launch(t,{toolAccounting:'metered-only@1',limits:{model:4,maxTools:1,tool:1}}),gui=await start();
+ const path='/api/conversations/'+(await gui.post('/api/conversations',{}).then(r=>r.json())).id;
+ const attachment=await gui.upload(path,pdf('text')).then(r=>r.json());
+ assert.ok(attachment.id);
+ assert.equal((await gui.post(path+'/messages',{messageId:'pdf-bounded',question:'Read the private PDF',attachmentId:attachment.id})).status,202);
+ const turn=await settled(gui,path,'pdf-bounded');
+ assert.equal(turn.status,'failed');
+ assert.equal(turn.code,'TOOL_LIMIT');
+ assert.equal(Object.hasOwn(turn,'toolAccounting'),false);
+ assert.deepEqual(turn.budgetFailure.tools,{used:1,limit:1});
+ assert.equal(sent.length,2);
+ assert.ok(sent.every(request=>request.tools.some(x=>x.function.name==='read_pdf_page')&&!request.tools.some(x=>x.function.name==='public_web_read')));
 });

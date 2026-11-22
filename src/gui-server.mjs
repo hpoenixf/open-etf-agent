@@ -1,3 +1,5 @@
+import { hasOwnerMeteredTools, OWNER_METERED_TOOL_ACCOUNTING } from './tool-accounting.mjs';
+import { prepareOwnerLangfuse } from './gui-langfuse.mjs';
 import { createServer } from 'node:http';
 import { isDeepStrictEqual } from 'node:util';
 import { randomUUID } from 'node:crypto';
@@ -116,7 +118,21 @@ async function guiProject(projectDir, expectedConfig, live, freeform) {
   return { projectDir, sources, projectId: project.projectId };
 }
 
-export async function startLocalGui({ projectDir, port = 0, liveConfig, env = process.env, fetchImpl, ownerWebTransport, dailyClock, onDailyCompleted, smtpOptions, ownerDailyDigest } = {}) {
+function localBudgetFailure(run) {
+  const code=run?.snapshot?.code;
+  if(!['ROOT_BUDGET_EXHAUSTED','ROUND_LIMIT','TOOL_LIMIT'].includes(code))return null;
+  const limits=run.definition?.rootLimits,usage=run.rootUsage;
+  const local=run.definition?.limits;
+  const count=(used,limit)=>Number.isSafeInteger(used)&&used>=0&&Number.isSafeInteger(limit)&&limit>0?{used,limit}:null;
+  const metered=hasOwnerMeteredTools(run.definition?.bindings);
+  const model=count(usage?.model,limits?.model),tools=metered?null:count(usage?.tool,limits?.tool);
+  const exhausted=metered&&model&&model.used>=model.limit?'model':model&&tools?(model.used>=model.limit?tools.used>=tools.limit?'multiple':'model':tools.used>=tools.limit?'tools':null):null;
+  return {owner:'local-run',model,tools,exhausted:code==='ROOT_BUDGET_EXHAUSTED'?exhausted:null,
+    rounds:code==='ROUND_LIMIT'?count(run.snapshot?.rounds,local?.maxRounds):null,
+    runTools:code==='TOOL_LIMIT'?count(run.snapshot?.toolsDispatched,local?.maxTools):null};
+}
+
+export async function startLocalGui({ projectDir, port = 0, liveConfig, env = process.env, fetchImpl, ownerWebTransport, dailyClock, onDailyCompleted, smtpOptions, ownerDailyDigest, langfuseOptions } = {}) {
   if (!Number.isInteger(port) || port < 0 || port > 65535) reject(400, 'INVALID_GUI_PORT');
   const live = liveConfig === undefined ? null : prepareGuiLiveConfig(liveConfig,env);
   const mode = live?'live-research':'offline-demo';
@@ -124,6 +140,7 @@ export async function startLocalGui({ projectDir, port = 0, liveConfig, env = pr
   const wrongProject=live?'GUI_LIVE_PROJECT_REQUIRED':'GUI_DEMO_PROJECT_REQUIRED';
   const freeform=supportsOwnerFreeform(expectedConfig);
   const needsConsent=live&&!freeform;
+  const telemetry=live?prepareOwnerLangfuse(env,langfuseOptions):null;
   const connectivity=expectedConfig.ownerConnectivity??{};
   const ownerSearchSettings=Object.fromEntries([connectivity.search,...(connectivity.searchAlternates??[])].filter(Boolean).map(provider=>[provider,prepareOwnerSearch(provider,env)]));
   const ownerWindSettings=connectivity.wind?((await import('./gui-owner-wind.mjs')).prepareOwnerWind(true,env)):undefined;
@@ -194,10 +211,12 @@ export async function startLocalGui({ projectDir, port = 0, liveConfig, env = pr
         }
       }
       const status = run?.status ?? m.status;
+      const budgetFailure=localBudgetFailure(run);
+      const toolAccounting=hasOwnerMeteredTools(run?.definition?.bindings)&&Number.isSafeInteger(run.rootUsage?.tool)?{mode:OWNER_METERED_TOOL_ACCOUNTING,used:run.rootUsage.tool}:null;
       messages.push({
         id: m.messageId, runId: m.runId, status, phase: run?.snapshot?.phase ?? null,
         // A worker can finish during these reads. Keep polling an active snapshot.
-        code: run?.snapshot?.code ?? null, working: status === 'active' && (workerWasRunning || working?.key === key),
+        code: run?.snapshot?.code ?? null, ...(budgetFailure?{budgetFailure}:{}), ...(toolAccounting?{toolAccounting}:{}), working: status === 'active' && (workerWasRunning || working?.key === key),
         question: input.text, sourceId: input.sourceManifestSha256, ...(freeform&&input.sourceManifestSha256?{attachment:await pdfAttachment(conversationId,input.sourceManifestSha256)}:{}), output, error,
       });
     }
@@ -219,10 +238,24 @@ export async function startLocalGui({ projectDir, port = 0, liveConfig, env = pr
     if (working) reject(409, 'GUI_WORKER_BUSY');
     const source = sourceFor(sourceId);
     if (!freeform&&!source) reject(409, 'GUI_SOURCE_UNKNOWN');
+    const trace=telemetry?.start();
     const p = Promise.resolve().then(() =>
       workConversationMessage({ projectDir, conversationId, messageId,
-        ...(live?{apiKey:live.apiKey,fetchImpl,ownerWebTransport,ownerWindSettings,ownerSearchSettings}:{gateway:demoGateway(source)}), hostSignal: hostSignal.signal })
+        ...(live?{apiKey:live.apiKey,fetchImpl,ownerWebTransport,ownerWindSettings,ownerSearchSettings,observeGuiRun:trace?.observe}:{gateway:demoGateway(source)}), hostSignal: hostSignal.signal })
     ).catch(() => { /* Lifecycle and original execution evidence remain in Project. */ });
+    if(trace)void p.then(async()=>{
+      const turn=await inspectConversationMessage({projectDir,conversationId,messageId});
+      if(!turn?.runId)return;
+      const {run,definition}=await inspectResearchTask({projectDir,runId:turn.runId});
+      if(!['completed','failed','cancelled'].includes(run?.status))return;
+      let delivery='unavailable';
+      try{
+        const {output}=await readConversationMessage({projectDir,conversationId,messageId});
+        delivery=output?.publicationStatus==='published'?'publication':output?.kind==='report'?'report':'not-created';
+      }catch(error){if(error?.code==='PROJECT_REPORT_NOT_READY')delivery='not-created';}
+      trace.finish(projectDir,{runId:run.runId,status:run.status,code:run.snapshot.code,delivery,
+        modelUsed:run.rootUsage.model,toolUsed:run.rootUsage.tool,modelLimit:definition.config.limits.model,toolLimit:hasOwnerMeteredTools(run.definition?.bindings)?null:definition.config.limits.tool});
+    }).catch(()=>{});
     working = { key, p };
     p.finally(() => { if (working?.p === p) working = null; });
     return p;
@@ -352,7 +385,7 @@ export async function startLocalGui({ projectDir, port = 0, liveConfig, env = pr
         if (asset) return send(200, asset.bytes, asset.type+'; charset=utf-8');
         if (req.url === '/api/workspace') return send(200, {
           schemaVersion: 'local-gui@1', mode,
-          ...(live?{liveNotice:{maxModelCallsPerRun:expectedConfig.limits.model,...(freeform?{freeform:true,connectivity:{web:connectivity.web===true,search:!!connectivity.search,...(connectivity.search?{searchProvider:connectivity.search}:{}),...(connectivity.searchAlternates?{searchAlternates:connectivity.searchAlternates}:{}),wind:connectivity.wind===true}}:{})}}:{}),
+          ...(live?{liveNotice:{maxModelCallsPerRun:expectedConfig.limits.model,...(freeform?{freeform:true,...(expectedConfig.ownerToolAccounting===OWNER_METERED_TOOL_ACCOUNTING?{toolAccounting:OWNER_METERED_TOOL_ACCOUNTING}:{}),connectivity:{web:connectivity.web===true,search:!!connectivity.search,...(connectivity.search?{searchProvider:connectivity.search}:{}),...(connectivity.searchAlternates?{searchAlternates:connectivity.searchAlternates}:{}),wind:connectivity.wind===true}}:{})}}:{}),
           capabilities: ['conversations','progress','reports','sources',...(freeform?['pdf-attachment','daily-watch']:[])],
           projectId: demo.projectId, conversations: await list({titles:true}), sources: publicSources,
         });

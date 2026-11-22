@@ -1,3 +1,4 @@
+import { hasOwnerMeteredTools } from './tool-accounting.mjs';
 import {settleAsyncChildExecutions} from './child-execution.mjs';
 import {publicReportAssessment} from './report-assessment.mjs';
 import {INTERACTION_PROFILE, hasInteractionBinding, validateInteractionCheckpoint, validateInteractionConfig} from './human-interaction.mjs';
@@ -74,7 +75,7 @@ export function validateRuntimeCheckpoint(state, definition) {
   if(definition.config?.ordinaryResponse===INTERACTION_PROFILE)validateInteractionCheckpoint(state,definition.config.interaction.maxQuestions);else validateResponseCheckpoint(state,definition.config?.ordinaryResponse===RESPONSE_PROFILE);
   validateGatewayOutcomeCheckpoint(state);validateControlObservations(state);
   if(definition.config?.reportDelivery==='artifact-required@1'&&state?.status==='completed'&&!state.host?.receipt)throw failure('INVALID_REPORT_DELIVERY_OUTCOME');
-  if(state?.schemaVersion!=='runtime-checkpoint@1'||!Array.isArray(state.messages)||state.messages[0]?.role!=='user'||state.messages[0]?.content!==definition.question||!Array.isArray(state.usedIds)||new Set(state.usedIds).size!==state.usedIds.length||state.usedIds.some(id=>typeof id!=='string')||!Number.isSafeInteger(state.rounds)||state.rounds<0||state.rounds>definition.limits.maxRounds||!Number.isSafeInteger(state.toolsDispatched)||state.toolsDispatched<0||state.toolsDispatched>definition.limits.maxTools||!Number.isSafeInteger(state.cursor)||state.cursor<0||!Array.isArray(state.partialEffects)||!Array.isArray(state.unknownEffects)||!Array.isArray(state.hookErrors))throw failure('INVALID_RUNTIME_CHECKPOINT');
+  if(state?.schemaVersion!=='runtime-checkpoint@1'||!Array.isArray(state.messages)||state.messages[0]?.role!=='user'||state.messages[0]?.content!==definition.question||!Array.isArray(state.usedIds)||new Set(state.usedIds).size!==state.usedIds.length||state.usedIds.some(id=>typeof id!=='string')||!Number.isSafeInteger(state.rounds)||state.rounds<0||state.rounds>definition.limits.maxRounds||!Number.isSafeInteger(state.toolsDispatched)||state.toolsDispatched<0||!hasOwnerMeteredTools(definition.bindings)&&state.toolsDispatched>definition.limits.maxTools||!Number.isSafeInteger(state.cursor)||state.cursor<0||!Array.isArray(state.partialEffects)||!Array.isArray(state.unknownEffects)||!Array.isArray(state.hookErrors))throw failure('INVALID_RUNTIME_CHECKPOINT');
   if(['proposal-sealed','awaiting-response','tool-dispatched','result-committed','result-consumed'].includes(state.phase)){validateProposal(state.proposal);if(state.proposal.kind==='calls'&&state.cursor>state.proposal.calls.length)throw failure('INVALID_RUNTIME_CHECKPOINT');}
   if(state.phase==='result-committed'&&state.result?.callId!==state.proposal.calls[state.cursor]?.id)throw failure('INVALID_RUNTIME_CHECKPOINT');
   if(state.working&&state.working.hash!==sha256(JSON.stringify(state.working.messages)))throw failure('INVALID_WORKING_CHECKPOINT');
@@ -115,7 +116,7 @@ export function materializeScheduledRun(options, reference, observation = {}) {
  const prior=options.durable.store.inspectSchedule(reference);
  return drive(options, true, {kind:'materialize',schedule:prior.envelope.schedule,reference,reportFresh:observation.reportFresh===true});
 }
-async function drive({ question, gateway, outputRoot='runs', requireReport=false, reportDelivery, signal, hostSignal, limits={}, extensions=[], hooks, plugins, rootBudget, allowedTools, allowedDocuments, taskId=null, contextBytes, contextWorkingSetBytes, workingInput, durable, publication = false, pdfInput, taskTime, ordinaryResponse = false, documentProtection = false, documentCatalog, interaction, hostProjection, knowledgeQueryEffects }, submitting, scheduleOperation) {
+async function drive({ question, gateway, outputRoot='runs', requireReport=false, reportDelivery, signal, hostSignal, limits={}, extensions=[], hooks, plugins, rootBudget, allowedTools, allowedDocuments, taskId=null, contextBytes, contextWorkingSetBytes, workingInput, durable, publication = false, pdfInput, taskTime, ordinaryResponse = false, documentProtection = false, documentCatalog, interaction, hostProjection, knowledgeQueryEffects, observeToolResult }, submitting, scheduleOperation) {
   if(pdfInput?.snapshot!==undefined){if(Object.keys(pdfInput).length!==1)throw failure('PDF_INVALID_INPUT');pdfInput=Object.freeze({snapshot:normalizePdfSnapshot(pdfInput.snapshot)});}
   documentCatalog=documentCatalog===undefined?undefined:normalizeDocumentCatalog(documentCatalog);
   if(documentCatalog&&documentProtection)throw failure('CUSTOM_PROTECTED_CATALOG_UNSUPPORTED');
@@ -130,6 +131,10 @@ async function drive({ question, gateway, outputRoot='runs', requireReport=false
   if (taskTime !== undefined && (!taskTime || typeof taskTime !== 'object' || Array.isArray(taskTime) || Object.keys(taskTime).some(key => !['anchorInstant', 'timeZone'].includes(key)))) throw failure('INVALID_TASK_TIME_INPUT');
   const budget={maxRounds:24,maxTools:64,timeoutMs:120000,...limits};
   for(const [key,value] of Object.entries(budget))if(!['maxRounds','maxTools','timeoutMs'].includes(key)||!Number.isSafeInteger(value)||value<1||value>(key==='timeoutMs'?3600000:1000))throw failure('INVALID_LIMIT');
+  const meteredTools=hasOwnerMeteredTools(durable?.bindings);
+  if(meteredTools&&(durable.parentRunId||gateway.mode!=='live'||requireReport||!publication||reportDelivery||
+    allowedDocuments!==undefined||documentCatalog||pdfInput||workingInput||ordinaryResponse||documentProtection||scheduleOperation||plugins?.length||hooks))
+    throw failure('INVALID_METERED_TOOL_SCOPE');
   if(reportDelivery!==undefined&&(reportDelivery!=='artifact-required@1'||!requireReport||!publication||!durable||durable.parentRunId||durable.store?.schemaVersion===5||documentProtection||scheduleOperation))throw failure('INVALID_REPORT_DELIVERY');
   if(hostProjection!==undefined&&!['host-results@1','host-results@2','host-results@3'].includes(hostProjection))throw failure('INVALID_HOST_PROJECTION');
   if(contextWorkingSetBytes!==undefined&&(!Number.isSafeInteger(contextWorkingSetBytes)||contextWorkingSetBytes<1||contextWorkingSetBytes>1048576))throw failure('INVALID_CONTEXT_WORKING_SET');
@@ -335,7 +340,7 @@ async function drive({ question, gateway, outputRoot='runs', requireReport=false
       try{return await Promise.race([pendingEffect,new Promise(resolve=>{timeout=setTimeout(()=>resolve(false),500);})]);}
       finally{clearTimeout(timeout);}
     }
-    async function record(type,data={}){if(!log)return;try{await log.write(JSON.stringify({runId,rootId:rootBudget.rootId,taskId,sequence:++record.sequence,type,...data})+'\n');}catch{if(!logErrors.includes('LOG_WRITE_FAILED'))logErrors.push('LOG_WRITE_FAILED');observeControl('log','LOG_WRITE_FAILED');}}
+    async function record(type,data={}){if(type==='tool_result')try{observeToolResult?.({type:'tool-result',toolId:data.callId,at:Date.now(),name:data.name,status:data.status,dispatched:data.dispatched,duration:data.durationMs});}catch{}if(!log)return;try{await log.write(JSON.stringify({runId,rootId:rootBudget.rootId,taskId,sequence:++record.sequence,type,...data})+'\n');}catch{if(!logErrors.includes('LOG_WRITE_FAILED'))logErrors.push('LOG_WRITE_FAILED');observeControl('log','LOG_WRITE_FAILED');}}
     record.sequence=0;
     async function checkpoint(phase,{reserve}={}){
       const previousPhase=state.phase;state.phase=phase;state.host=host.snapshot();state.inFlight=inFlight;state.logSequence=record.sequence;
@@ -467,7 +472,7 @@ async function drive({ question, gateway, outputRoot='runs', requireReport=false
           const lastValidation=state.messages.at(-1)?.result?.validation;
           if(lastValidation?.schemaVersion===ORIGINAL_READ_CORRECTION&&
             !matchesOriginalReadCorrection(proposal,lastValidation.resultRef))throw failure('READ_RESULT_CORRECTION_REQUIRED');
-          if(proposal.kind==='calls'){if(proposal.calls.some(c=>c.name==='ask_response')){if(!ordinaryResponse||proposal.calls.length!==1)throw failure('INVALID_ORDINARY_RESPONSE');validateResponseCall(proposal.calls[0]);if(multiResponse?durable.store.responseHistory(runId).length>=interaction.maxQuestions:durable.store.responseStatus(runId))throw failure('QUESTION_LIMIT');}const ids=new Set();for(const c of proposal.calls){if(state.usedIds.includes(c.id)||ids.has(c.id))throw failure('DUPLICATE_CALL_ID');ids.add(c.id);}if(state.toolsDispatched+proposal.calls.length>budget.maxTools)throw failure('TOOL_LIMIT');}
+          if(proposal.kind==='calls'){if(proposal.calls.some(c=>c.name==='ask_response')){if(!ordinaryResponse||proposal.calls.length!==1)throw failure('INVALID_ORDINARY_RESPONSE');validateResponseCall(proposal.calls[0]);if(multiResponse?durable.store.responseHistory(runId).length>=interaction.maxQuestions:durable.store.responseStatus(runId))throw failure('QUESTION_LIMIT');}const ids=new Set();for(const c of proposal.calls){if(state.usedIds.includes(c.id)||ids.has(c.id))throw failure('DUPLICATE_CALL_ID');ids.add(c.id);}if(!meteredTools&&state.toolsDispatched+proposal.calls.length>budget.maxTools)throw failure('TOOL_LIMIT');}
           // Use the original Session codec before mutating the recoverable state.
           // A malformed JS-only Gateway result must not poison its own failure checkpoint.
           if(claim)durable.store.validateCheckpoint({...state,phase:'proposal-sealed',proposal:structuredClone(proposal),cursor:0,result:null,working:null,messages:proposal.kind==='calls'?[...state.messages,{role:'assistant',calls:structuredClone(proposal.calls)}]:state.messages});
