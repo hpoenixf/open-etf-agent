@@ -26,6 +26,33 @@
     </aside>
     <main id="main">
       <div class="intro" id="intro"><p class="eyebrow">LOCAL RESEARCH WORKSPACE</p><h1 id="mode-heading">做一份可以回查的 ETF 研究。</h1><p id="mode-intro">选一份演练资料，观察从提交到报告和原文引用的过程。</p></div>
+      <details id="daily-watch" hidden>
+        <summary>每日追踪</summary>
+        <p id="daily-note" class="muted">按北京时间定时执行你选择的问题，运行可能产生费用。白天可在这里回看结果。</p>
+        <form id="daily-form">
+          <label for="daily-question">追踪问题</label><input id="daily-question" type="text" required maxlength="3000" placeholder="例如：今天黄金 ETF 有什么值得关注的变化？">
+          <label for="daily-time">北京时间</label><input id="daily-time" type="time" required>
+          <label><input id="daily-enabled" type="checkbox">启用自动执行</label>
+          <label id="daily-digest-watch-choice" hidden><input id="daily-digest-watch" type="checkbox">纳入每日邮件摘要</label>
+          <label id="daily-email-choice" hidden><input id="daily-email" type="checkbox">完成后发邮件给已配置收件人<span id="daily-email-target"></span></label>
+          <button id="daily-save" type="submit">保存追踪</button>
+          <button id="daily-reset" type="button" class="secondary" hidden>取消编辑</button>
+        </form>
+        <section id="daily-digest-settings" hidden>
+          <h3>每日邮件摘要</h3>
+          <p id="daily-digest-note" class="muted">独立设定北京时间；当时只发一封摘要，不会启动研究。</p>
+          <form id="daily-digest-form">
+            <label for="daily-digest-time">北京时间</label><input id="daily-digest-time" type="time" required>
+            <label><input id="daily-digest-on" type="checkbox">启用每日摘要</label>
+            <button id="daily-digest-save" type="submit">保存摘要设置</button>
+          </form>
+          <p id="daily-digest-status" class="muted" role="status"></p>
+          <ul id="daily-digest-history"></ul>
+        </section>
+        <p id="daily-status" class="muted" role="status"></p>
+        <button id="daily-refresh" type="button" class="secondary">刷新状态</button>
+        <div id="daily-items"></div>
+      </details>
       <section id="transcript" aria-label="会话消息"></section>
       <form id="composer">
         <div id="source-picker" class="source-picker"><label for="source">演练资料</label><select id="source" required></select></div>

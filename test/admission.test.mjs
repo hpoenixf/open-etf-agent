@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createServer } from 'node:http';
 import { fork } from 'node:child_process';
-import { mkdir, mkdtemp } from 'node:fs/promises';
+import { mkdir, mkdtemp, readFile } from 'node:fs/promises';
 import { resolve, join } from 'node:path';
 import { setTimeout as delay } from 'node:timers/promises';
 import { createSharedAdmission } from '../src/admission.mjs';
@@ -225,4 +225,26 @@ test('fixture lease isolates scheduling delay without weakening expired-writer r
       else { const result = await execution; assert.equal(result.status, 'completed', result.code); assert.equal(f.requests.length, 1); assert.deepEqual(f.admission.snapshot().requests.map(t => t.state), ['completed']); }
     } finally { await f.close(); }
   }
+});
+
+test('native receipt separates complete valid proposal from malformed HTTP 200 without settling unknown', { timeout:12000 }, async()=>{
+  const f=await fixture(({res},requests)=>{
+    if(requests.length===1)return complete(res);
+    res.writeHead(200,{'content-type':'text/event-stream'});
+    res.end('data: {"choices":[{"index":0,"delta":{"content":"not-visible-raw-protocol-marker"},"finish_reason":"stop"}]}\n\ndata: {"badFields":123}\n\ndata: [DONE]\n\n');
+  });
+  try{
+    const a=await f.launch('verified-proposal').done,b=await f.launch('rejected-protocol',{stream:true}).done;
+    const ra=f.session.inspect('verified-proposal'),rb=f.session.inspect('rejected-protocol');
+    const rows=async run=>(await readFile(join(run.directory,'run.jsonl'),'utf8')).trim().split('\n').map(JSON.parse);
+    const [ta,tb]=f.admission.snapshot().requests;
+    assert.equal(a.message.result.status,'completed');assert.equal(b.message.result.code,'PROVIDER_PROTOCOL_INVALID');
+    assert.equal(ta.state,'completed');assert.equal(tb.state,'unknown');assert.equal(rb.snapshot.gatewayOutcome,'unknown');
+    const proposal=(await rows(ra)).find(e=>e.type==='model_proposal');
+    assert.equal(proposal.modelOrdinal,ta.modelOrdinal);assert.equal(proposal.inputHash,ta.inputHash);
+    const rejected=(await rows(rb)).filter(e=>e.type==='model_protocol_rejected');
+    assert.equal(rejected.length,1);assert.equal(rejected[0].modelOrdinal,tb.modelOrdinal);assert.equal(rejected[0].inputHash,tb.inputHash);
+    assert.equal(rejected[0].diagnostic.reason,'CHOICES_SHAPE');assert.match(rejected[0].diagnostic.bodySha256,/^[a-f0-9]{64}$/);
+    assert.doesNotMatch(JSON.stringify(rejected),/raw-protocol-marker|badFields/);assert.equal(f.requests.length,2);
+  }finally{await f.close();}
 });

@@ -154,6 +154,7 @@ function render() {
   t.replaceChildren();
   for (const m of state.detail?.messages ?? []) {
     const article = make('article',undefined,'turn'), header = make('div',undefined,'turn-header');
+    article.dataset.turnId=m.id;
     const isUnknown = /UNKNOWN|MISSING/.test(m.code ?? '');
     const status = isUnknown ? '结果未知' : m.working ? phaseLabels[m.phase] ?? '处理中' : statusLabels[m.status] ?? '状态待核对';
     header.append(make('strong','你'),make('span',status,'state'));
@@ -247,7 +248,14 @@ async function refresh() {
   else for (const item of detail.messages){const entry=state.progress.get(item.id);if(entry?.open)void loadProgress(selected,entry,item);}
   scheduleRefresh();
 }
-async function select(id) {
+function conversationHash(hash=location.hash){
+  const parsed=/^#([A-Za-z0-9_-]{1,48})(?:~([A-Za-z0-9_-]{1,48}))?$/.exec(hash);
+  return parsed?{conversationId:parsed[1],messageId:parsed[2]}:{};
+}
+function focusTurn(messageId){
+  if(messageId)Array.from(byId('transcript').children).find(el=>el.dataset.turnId===messageId)?.scrollIntoView({block:'start'});
+}
+async function select(id,messageId) {
   if (state.pending && state.pending.conversationId !== id) return;
   if (state.conversation !== id) {
     state.progress.clear();
@@ -261,11 +269,12 @@ async function select(id) {
   clearTimeout(state.poll);
   state.selection++; state.conversation=id; state.detail=null;
   restoreDraft();
-  location.hash=id;
+  location.hash=id+(messageId?'~'+messageId:'');
   refreshHistory();
   byId('history').dataset.open='false'; byId('history-toggle').setAttribute('aria-expanded','false');
   render();
   await refresh();
+  if(state.conversation===id)focusTurn(messageId);
 }
 async function load() {
   state.workspace = await api('/api/workspace');
@@ -298,6 +307,7 @@ async function load() {
     const o = make('option',source.title); o.value=source.id; s.append(o);
   }
   if (state.workspace.sources.some(x => x.id === old)) s.value=old;
+  byId('daily-watch').hidden=!state.workspace.capabilities.includes('daily-watch');
   refreshHistory(); controls();
 }
 async function create(initialDraft) {
@@ -310,6 +320,114 @@ async function create(initialDraft) {
 function failed(e) {
   message(({GUI_WORKER_BUSY:'已有任务执行，待完成后再提交。',GUI_ORIGIN_REQUIRED:'请从启动命令显示的本机地址打开。',CONVERSATION_ID_CONFLICT:'原提交内容已不同，请先确认原会话状态。',PDF_UPLOAD_LIMIT:'PDF 不能超过 1 MiB 或 16 页。',PDF_LIMIT_PAGES:'PDF 不能超过 16 页。',PDF_LIMIT_TEXT:'PDF 提取内容超出支持范围，请缩小文件范围。',PDF_ENCRYPTED:'该 PDF 已加密，请上传未加密副本。',PDF_NO_TEXT_LAYER:'没有可用的文字层。请先用本地 OCR 或上传带文字层的版本。',PDF_INVALID_FORMAT:'未识别为 PDF 文件。',PDF_PARSE_FAILED:'无法读取这个 PDF。',PDF_TIMEOUT:'PDF 解析超时，请尝试较小的文件。',PROJECT_SOURCE_INVALID_INPUT:'请选择文件名有效的 PDF。',GUI_PDF_UPLOAD_BUSY:'另一个 PDF 正在处理，请稍后重试。'})[e.message] ?? '未确认操作结果，请刷新并查看会话；重试会沿用原提交。');
 }
+let editingDaily=null,dailyRequestId=null,dailyEmailToken=null,dailyDigestToken=null;
+const dailyStatuses={unknown:'结果未知，不会自动重跑',submitted:'已提交',completed:'已完成',failed:'未完成',cancelled:'已取消'};
+const emailStatuses={pending:'邮件待处理',accepted:'邮件服务已接收','not-dispatched':'邮件未发出',unknown:'邮件结果未知，不会自动重发',unavailable:'无可发送的正文',empty:'没有纳入摘要的追踪'};
+function resetDaily(){
+  editingDaily=null;dailyRequestId=null;
+  byId('daily-form').reset();
+  byId('daily-reset').hidden=true;
+}
+async function focusDailyTurn(row){
+  try{await select(row.conversationId,row.messageId);}catch(error){failed(error);}
+}
+async function showDaily(){
+  const data=await api('/api/daily-watch');
+  const nextEmailToken=data.emailConsentToken??null;
+  if(dailyEmailToken&&dailyEmailToken!==nextEmailToken)byId('daily-email').checked=false;
+  dailyEmailToken=nextEmailToken;
+  byId('daily-email-choice').hidden=!data.emailAvailable;
+  byId('daily-email-target').textContent=data.emailPreview?'（'+data.emailPreview+'）':'';
+  const digest=data.digest;
+  const newDigestToken=digest?.consentToken??null;
+  if(dailyDigestToken&&dailyDigestToken!==newDigestToken)byId('daily-digest-watch').checked=false;
+  dailyDigestToken=newDigestToken;
+  byId('daily-digest-settings').hidden=!digest?.available;
+  byId('daily-digest-watch-choice').hidden=!digest?.available;
+  if(digest?.available){
+    byId('daily-digest-time').value=digest.localTime??'';
+    byId('daily-digest-on').checked=digest.enabled&&!digest.requiresConfirmation;
+    byId('daily-digest-note').textContent='在设定的北京时间发一封摘要，不会启动研究。'+(digest.recipientPreview?'收件人：'+digest.recipientPreview+'。':'');
+    byId('daily-digest-status').textContent=digest.requiresConfirmation?'投递配置已变更，请重新确认。':digest.enabled?'当前已启用。':'当前未启用。';
+    byId('daily-digest-history').replaceChildren(...digest.history.map(item=>make('li',item.date+' · '+(emailStatuses[item.status]??'状态待核对'))));
+  }
+  byId('daily-status').textContent=data.autorun?'定时服务已启用。':'定时服务尚未启用，可以先保存问题。';
+  const list=byId('daily-items');list.replaceChildren();
+  for(const item of data.items){
+    const card=make('section',undefined,'daily-item');
+    card.append(make('h3',item.question),make('p',item.localTime+' · 北京时间 · '+(item.requiresReview?'运行配置变化，请确认后重新启用':item.enabled?'已启用':'已暂停'),'muted'));
+    const edit=make('button','编辑','secondary');edit.type='button';
+    edit.addEventListener('click',()=>{
+      editingDaily=item.id;
+      byId('daily-reset').hidden=false;
+      byId('daily-question').value=item.question;
+      byId('daily-time').value=item.localTime;
+      byId('daily-enabled').checked=item.enabled;
+      byId('daily-email').checked=item.emailConfirmed;
+      byId('daily-digest-watch').checked=item.digestConfirmed;
+      byId('daily-question').focus();
+    });
+    const toggle=make('button',item.requiresReview?'确认并重新启用':item.enabled?'暂停':'启用','secondary');toggle.type='button';
+    toggle.addEventListener('click',async()=>{
+      toggle.disabled=true;
+      try{
+        await api('/api/daily-watch/'+encodeURIComponent(item.id),{question:item.question,localTime:item.localTime,enabled:item.requiresReview||!item.enabled});
+        await showDaily();
+      }catch{byId('daily-status').textContent='操作未确认，请刷新状态。';toggle.disabled=false;}
+    });
+    card.append(edit,toggle);
+    if(item.digestEnabled&&digest?.available&&!item.digestConfirmed)card.append(make('p','请重新确认此追踪是否纳入摘要。','muted'));
+    else if(item.digestConfirmed)card.append(make('p','纳入每日邮件摘要。','muted'));
+    if(item.emailEnabled&&data.emailAvailable&&!item.emailConfirmed)card.append(make('p','请重新确认邮件收件人。','muted'));
+    if(item.history.length){
+      const history=make('ul');
+      for(const row of item.history){
+        const li=make('li',row.date+' · '+(dailyStatuses[row.status]??'状态待核对')+(emailStatuses[row.emailStatus]?' · '+emailStatuses[row.emailStatus]:''));
+        if(row.runId){
+          const open=make('button','查看本轮对话','secondary');open.type='button';
+          open.addEventListener('click',()=>void focusDailyTurn(row));
+          li.append(open);
+        }
+        if(row.baseline){
+          const reference=make('button','基线：'+row.baseline.date,'secondary');reference.type='button';
+          reference.addEventListener('click',()=>void focusDailyTurn(row.baseline));
+          li.append(reference);
+        }else if(row.baseline===null)li.append(make('span',' · 无已核验基线','muted'));
+        history.append(li);
+      }
+      card.append(history);
+    }
+    list.append(card);
+  }
+}
+function refreshDaily(){void showDaily().catch(()=>{byId('daily-status').textContent='暂时读不到追踪状态。';});}
+byId('daily-watch').addEventListener('toggle',()=>{if(byId('daily-watch').open)refreshDaily();});
+byId('daily-refresh').addEventListener('click',refreshDaily);
+byId('daily-reset').addEventListener('click',resetDaily);
+byId('daily-form').addEventListener('submit',async event=>{
+  event.preventDefault();
+  const save=byId('daily-save');if(save.disabled)return;save.disabled=true;
+  try{
+    if(!editingDaily)dailyRequestId??='w'+crypto.randomUUID().replaceAll('-','').slice(0,24);
+    await api('/api/daily-watch'+(editingDaily?'/'+encodeURIComponent(editingDaily):''),{
+      ...(editingDaily?{}:{requestId:dailyRequestId}),question:byId('daily-question').value,localTime:byId('daily-time').value,enabled:byId('daily-enabled').checked,
+      ...(!byId('daily-digest-watch-choice').hidden?{digestEnabled:byId('daily-digest-watch').checked,...(byId('daily-digest-watch').checked?{digestConsentToken:dailyDigestToken}:{})}:{}),
+      ...(!byId('daily-email-choice').hidden?{emailEnabled:byId('daily-email').checked,...(byId('daily-email').checked?{emailConsentToken:dailyEmailToken}:{})}:{}),
+    });
+    resetDaily();await showDaily();
+  }catch{byId('daily-status').textContent='未确认保存，请先刷新状态。';}
+  finally{save.disabled=false;}
+});
+byId('daily-digest-form').addEventListener('submit',async event=>{
+  event.preventDefault();
+  const save=byId('daily-digest-save');if(save.disabled)return;save.disabled=true;
+  try{
+    const enabled=byId('daily-digest-on').checked;
+    await api('/api/daily-digest',{localTime:byId('daily-digest-time').value,enabled,...(enabled?{consentToken:dailyDigestToken}:{})});
+    await showDaily();
+  }catch{byId('daily-digest-status').textContent='未确认保存，请刷新后再核对。';}
+  finally{save.disabled=false;}
+});
 byId('history-toggle').addEventListener('click',()=> {
   const b = byId('history-toggle'), isOpen=b.getAttribute('aria-expanded')==='true';
   b.setAttribute('aria-expanded',String(!isOpen)); byId('history').dataset.open=String(!isOpen);
@@ -361,11 +479,12 @@ try {
   const legacy = sessionStorage.getItem('local-gui-pending@1')
     || (ownerMode() && sessionStorage.getItem('local-gui-pending@2:'+state.workspace.projectId));
   const pending=stored ? JSON.parse(stored):null;
-  const wanted=pending?.conversationId ?? location.hash.slice(1);
+  const anchor=conversationHash();
+  const wanted=pending?.conversationId??anchor.conversationId;
   const existing=state.workspace.conversations.find(c=>c.id===wanted) ?? state.workspace.conversations[0];
   if(existing) {
     if (pending?.conversationId===existing.id) state.pending=pending;
-    await select(existing.id);
+    await select(existing.id,!pending&&anchor.conversationId===existing.id?anchor.messageId:undefined);
     if(state.pending) {
       if(state.detail?.messages.some(m=>m.id===pending.input.messageId && m.status!=='admission-pending')) {
         clearMatchingDraft(pending);

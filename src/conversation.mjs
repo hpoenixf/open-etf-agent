@@ -1,3 +1,4 @@
+import { validateDailyContext, buildDailyQuestion } from './conversation-daily-context.mjs';
 import {readConversationCalculations} from './conversation-history.mjs';
 import {join} from 'node:path';
 import {lstat,readdir} from 'node:fs/promises';
@@ -49,7 +50,7 @@ async function ownerPreviousTurns(loc,messageId,configSha256){
  }
  return turns;
 }
-export async function submitConversationMessage({projectDir,conversationId,messageId,text,sourceManifestSha256,parent=null,review=null,continuationOfMessageId=null,authorization}){
+export async function submitConversationMessage({projectDir,conversationId,messageId,text,sourceManifestSha256,parent=null,review=null,continuationOfMessageId=null,authorization,dailyResearch}){
  const loc=await location(projectDir,conversationId);id(messageId);
  if(typeof text!=='string'||!text.trim()||text.includes('\0')||Buffer.byteLength(text)>12000||Buffer.from(text).toString('utf8')!==text)fail('CONVERSATION_INVALID_TEXT');
  const freeform=sourceManifestSha256===null;
@@ -58,7 +59,8 @@ export async function submitConversationMessage({projectDir,conversationId,messa
  if(parent!==null&&(!parent||typeof parent!=='object'||Array.isArray(parent)||!same(Object.keys(parent).sort(),['end','messageId','start'])||parent.messageId===messageId||!Number.isSafeInteger(parent.start)||!Number.isSafeInteger(parent.end)||parent.start<0||parent.end<=parent.start))fail('CONVERSATION_INVALID_PARENT');
  if(review!==null&&(!parent||!review||typeof review!=='object'||!same(Object.keys(review).sort(),['directory','runId'])||typeof review.directory!=='string'||typeof review.runId!=='string'))fail('CONVERSATION_INVALID_REVIEW');
  if(continuationOfMessageId!==null){id(continuationOfMessageId);if(continuationOfMessageId===messageId||parent||review)fail('CONVERSATION_INVALID_CONTINUATION');}
- const input={text,sourceManifestSha256,parent,review,...(continuationOfMessageId===null?{}:{continuationOfMessageId})};await immutable(loc.directory,messageId+'.request.json',{schemaVersion:'conversation-request@1',projectId:loc.meta.projectId,conversationId,messageId,input});const admittedProject=await inspectResearchProject({projectDir:loc.projectDir});let record;
+ if(dailyResearch!==undefined){if(!freeform)fail('CONVERSATION_DAILY_CONTEXT_INVALID');validateDailyContext(dailyResearch,{conversationId,messageId});}
+ const input={text,sourceManifestSha256,parent,review,...(dailyResearch===undefined?{}:{dailyResearch}),...(continuationOfMessageId===null?{}:{continuationOfMessageId})};await immutable(loc.directory,messageId+'.request.json',{schemaVersion:'conversation-request@1',projectId:loc.meta.projectId,conversationId,messageId,input});const admittedProject=await inspectResearchProject({projectDir:loc.projectDir});let record;
  try{record=await intent(loc,messageId);if(!same(record.input,input))fail('CONVERSATION_ID_CONFLICT');}catch(e){if(e.code!=='ENOENT')throw e;}
  if(!record){
   if(admittedProject.config.capabilities.includes('schedule'))fail('CONVERSATION_SCHEDULE_UNSUPPORTED');
@@ -102,7 +104,15 @@ export async function submitConversationMessage({projectDir,conversationId,messa
    else {const unavailable={schemaVersion:'conversation-calculations@1',validity:'historical-only-not-current-evidence',items:[],unavailable:'context-capacity'};if(Buffer.byteLength(PREFIX+JSON.stringify({...frame,continuation:{...continuation,historicalCalculations:unavailable}}))<=16000)continuation.historicalCalculations=unavailable;}
   }
   if(freeform&&(!authorization?.providerApproved||!authorization?.dataApproved||!authorization?.costApproved))fail('PROJECT_LIVE_APPROVAL_REQUIRED');
-  const question=freeform?buildOwnerFollowupQuestion(text,await ownerPreviousTurns(loc,messageId,admittedProject.configSha256)):PREFIX+JSON.stringify({request:text,previousReport:context,advisoryReview:advice,...(continuation?{continuation}: {})});if(Buffer.byteLength(question)>16000)fail('CONVERSATION_CONTEXT_TOO_LARGE');
+  let priorText;
+  if(dailyResearch?.baseline){
+   const b=dailyResearch.baseline;
+   const previous=await readDailyConversationBaseline({projectDir:loc.projectDir,conversationId:b.conversationId,messageId:b.messageId,watchId:dailyResearch.watchId,
+    date:b.date,revision:dailyResearch.revision,text,configSha256:admittedProject.configSha256});
+   if(previous.runId!==b.runId||previous.sha256!==b.sha256||previous.intentSha256!==b.intentSha256)fail('CONVERSATION_DAILY_BASELINE_MISMATCH');
+   priorText=previous.text;
+  }
+  const question=dailyResearch?buildDailyQuestion(text,dailyResearch,priorText):freeform?buildOwnerFollowupQuestion(text,await ownerPreviousTurns(loc,messageId,admittedProject.configSha256)):PREFIX+JSON.stringify({request:text,previousReport:context,advisoryReview:advice,...(continuation?{continuation}: {})});if(Buffer.byteLength(question)>16000)fail('CONVERSATION_CONTEXT_TOO_LARGE');
   const body={schemaVersion:'conversation-message@1',projectId:loc.meta.projectId,configSha256:admittedProject.configSha256,conversationId,messageId,runId:'conversation-'+hash([loc.meta.projectId,conversationId,messageId]).slice(0,40),input,question,...(continuationRoot?{continuationRoot}:{})};record={...body,digest:hash(body)};await immutable(join(loc.directory,'messages'),messageId+'.json',record);
  }
  let admission;try{admission=await readProjectJson(join(loc.directory,messageId+'.admitted.json'));}catch(e){if(e.code!=='ENOENT')throw e;}
@@ -126,6 +136,24 @@ export function titleForConversationInput(text){
  if(!text)return null;
  const chars=Array.from(text.replace(/\s+/gu,' ').trim());
  return chars.length>96?chars.slice(0,96).join('')+'…':chars.join('');
+}
+export async function readDailyConversationBaseline({projectDir,conversationId,messageId,watchId,date,revision,text,configSha256}){
+ const loc=await location(projectDir,conversationId),record=await intent(loc,messageId),daily=record.input.dailyResearch;
+ if(!daily||daily.watchId!==watchId||daily.date!==date||daily.revision!==revision||record.input.text!==text||
+   record.configSha256!==configSha256||record.input.sourceManifestSha256!==null)fail('CONVERSATION_DAILY_BASELINE_MISMATCH');
+ validateDailyContext(daily,{conversationId,messageId});
+ const {run}=await checkedTask(loc,record);
+ if(run.status!=='completed'||run.rootStatus!=='completed'||run.snapshot.gatewayOutcome==='unknown'||
+   run.snapshot.unknownEffects?.length||run.snapshot.partialEffects?.length||run.snapshot.inFlight)fail('CONVERSATION_DAILY_BASELINE_UNAVAILABLE');
+ const output=await readResearchOutput({projectDir:loc.projectDir,runId:record.runId});
+ const candidate=output.kind==='report'?output.report:output.kind==='published-answer'&&output.publicationStatus==='published'&&output.reportStatus==='not-created'?output.answer:null;
+ if(!candidate||typeof candidate.text!=='string'||!candidate.text.trim()||sha256(candidate.text)!==candidate.sha256)fail('CONVERSATION_DAILY_BASELINE_UNAVAILABLE');
+ return {date,conversationId,messageId,runId:record.runId,intentSha256:record.digest,sha256:candidate.sha256,text:candidate.text};
+}
+export async function inspectConversationMessage({projectDir,conversationId,messageId}){
+ const loc=await location(projectDir,conversationId),record=await intent(loc,messageId);
+ const {run}=await checkedTask(loc,record);
+ return {messageId:record.messageId,runId:run.runId,status:run.status};
 }
 export async function readConversationInput({projectDir,conversationId,messageId}){const loc=await location(projectDir,conversationId),record=await intent(loc,messageId);return {text:record.input.text,sourceManifestSha256:record.input.sourceManifestSha256};}
 export async function readConversationMessage({projectDir,conversationId,messageId}){const loc=await location(projectDir,conversationId),record=await intent(loc,messageId);await checkedTask(loc,record);const output=await readResearchOutput({projectDir:loc.projectDir,runId:record.runId});return {conversationId,messageId,input:record.input,digest:record.digest,output};}

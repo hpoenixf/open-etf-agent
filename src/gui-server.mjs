@@ -5,13 +5,17 @@ import { readFile, readdir } from 'node:fs/promises';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
-  createConversation, inspectConversation, readConversationMessage, readConversationInput, readConversationTitle, titleForConversationInput, submitConversationMessage,
+  createConversation, inspectConversation, inspectConversationMessage, readDailyConversationBaseline, readConversationMessage, readConversationInput, readConversationTitle, titleForConversationInput, submitConversationMessage,
   workConversationMessage, cancelConversationMessage,
 } from './conversation.mjs';
 import { createResearchProject, inspectResearchProject, inspectResearchTask, readProjectJson, supportsOwnerFreeform, updateResearchProject, validateResearchConfig } from './research-project.mjs';
 import { importProjectSources, importUploadedPdf, PROJECT_SOURCE_LIMITS } from './project-sources.mjs';
 import { ensureSafeDirectory, publishImmutable, safeDirectory } from './storage-files.mjs';
 import { prepareOwnerSearch } from './gui-owner-web.mjs';
+import { prepareOwnerDailyDigest } from './gui-daily-digest-delivery.mjs';
+import { prepareScheduledSmtp } from './scheduled-smtp.mjs';
+import { createScheduledReportEmailHook, inspectScheduledEmailDelivery } from './scheduled-report-email.mjs';
+import { openGuiDailyWatch, DAILY_TIME_ZONE } from './gui-daily-watch.mjs';
 import { readGuiResearchProgress } from './gui-progress.mjs';
 import { prepareGuiLiveConfig } from './gui-live-config.mjs';
 
@@ -20,6 +24,7 @@ const idPattern = new RegExp('^'+routeId+'$');
 const conversationPath = new RegExp('^/api/conversations/('+routeId+')$');
 const pdfPath = new RegExp('^/api/conversations/('+routeId+')/pdf$');
 const pdfId = /^[a-f0-9]{64}$/;
+const dailyPath = new RegExp('^/api/daily-watch(?:/(w[a-f0-9]{24}))?$');
 const progressPath = new RegExp('^/api/conversations/('+routeId+')/messages/('+routeId+')/progress$');
 const reportPath = new RegExp('^/api/conversations/('+routeId+')/messages/('+routeId+')/report[.]md$');
 const actionPath = new RegExp('^/api/conversations/('+routeId+')/messages(?:/('+routeId+')/(work|cancel))?$');
@@ -111,7 +116,7 @@ async function guiProject(projectDir, expectedConfig, live, freeform) {
   return { projectDir, sources, projectId: project.projectId };
 }
 
-export async function startLocalGui({ projectDir, port = 0, liveConfig, env = process.env, fetchImpl, ownerWebTransport } = {}) {
+export async function startLocalGui({ projectDir, port = 0, liveConfig, env = process.env, fetchImpl, ownerWebTransport, dailyClock, onDailyCompleted, smtpOptions, ownerDailyDigest } = {}) {
   if (!Number.isInteger(port) || port < 0 || port > 65535) reject(400, 'INVALID_GUI_PORT');
   const live = liveConfig === undefined ? null : prepareGuiLiveConfig(liveConfig,env);
   const mode = live?'live-research':'offline-demo';
@@ -128,6 +133,27 @@ export async function startLocalGui({ projectDir, port = 0, liveConfig, env = pr
     [route, { bytes: await readFile(new URL(name, uiRoot)), type }]
   )));
   const hostSignal = new AbortController();
+  const dailyConfigVersion=freeform?(await inspectResearchProject({projectDir})).configSha256:null;
+  const daily=freeform?await openGuiDailyWatch(projectDir,{now:dailyClock}):null;
+  let smtp,digestProfile;
+  try {
+    digestProfile=daily?(ownerDailyDigest??prepareOwnerDailyDigest(env,smtpOptions)):null;
+    smtp=daily&&!digestProfile?prepareScheduledSmtp(env,smtpOptions):null;
+  }
+  catch(error){daily?.close();throw error;}
+  const ownerMailbox=smtp?.resolveDestination();
+  // Bind owner confirmation to the provider's recipient+revision identity.
+  const emailVersion=ownerMailbox?.version??(onDailyCompleted?'injected-owner-mail@1':null);
+  const deliveryHook=onDailyCompleted??(smtp?createScheduledReportEmailHook({
+    resolveConfirmedDestination:({watchId,date})=>daily.emailConfirmed(watchId,date,emailVersion)?ownerMailbox:null,
+    transport:smtp.transport,
+  }):undefined);
+  const emailConsentToken=deliveryHook?randomUUID():null;
+  const emailPreview=ownerMailbox?.address.replace(/^(.).*@/,'$1***@');
+  const digestVersion=digestProfile?.version??null;
+  const digestConsentToken=digestProfile?randomUUID():null;
+  const dailyAutorun=!!daily&&env.ETF_GUI_DAILY_AUTORUN==='1';
+  let dailyLoop=null,dailyFlight=null,digestFlight=null;
   const publicSources = demo.sources.map(({ id, title }) => ({ id, title }));
   let origin, working = null, submitting = null;
   const workKey = (conversationId, messageId) => conversationId + '/' + messageId;
@@ -199,6 +225,112 @@ export async function startLocalGui({ projectDir, port = 0, liveConfig, env = pr
     ).catch(() => { /* Lifecycle and original execution evidence remain in Project. */ });
     working = { key, p };
     p.finally(() => { if (working?.p === p) working = null; });
+    return p;
+  }
+  async function sweepDailyEmail(){
+    if((!digestProfile&&!deliveryHook)||hostSignal.signal.aborted)return;
+    for(const previous of daily.pendingEmail()){
+      // Rechecks and durable provider-attempt identity belong to the email
+      // outbox. Running this projection again cannot restart research.
+      if(hostSignal.signal.aborted)return;
+      try{
+        const delivery=await inspectScheduledEmailDelivery({directory:join(projectDir,'scheduled-email'),occurrenceId:previous.watchId+':'+previous.date});
+        if(['accepted','unknown','not-dispatched'].includes(delivery.status)){daily.emailSettlement(previous,delivery.status);continue;}
+        if(digestProfile){daily.emailSettlement(previous,'not-dispatched');continue;}
+        if(!daily.emailConfirmed(previous.watchId,previous.date,emailVersion)){daily.emailSettlement(previous,'not-dispatched');continue;}
+        const result=await deliveryHook({projectDir,...previous,signal:hostSignal.signal});
+        if(result?.status==='not-started')continue;
+        daily.emailSettlement(previous,result?.status==='not-configured'?'not-dispatched':result?.status??'unknown');
+      }catch(error){
+        if(error.code==='EMAIL_REPORT_NOT_VERIFIED')daily.emailSettlement(previous,'unavailable');
+        if(error.code==='EMAIL_OCCURRENCE_BINDING_CHANGED')daily.emailSettlement(previous,'unknown');
+        // Other storage failures retain the same pending outbox identity.
+      }
+    }
+  }
+  async function sweepDigest(){
+    if(!digestProfile||digestFlight||hostSignal.signal.aborted)return;
+    const work=(async()=>{
+      for(const previous of daily.digest.pending()){
+        // A killed sender might have durable acceptance in the outbox.
+        // Settle the owner view if known, never replay a claimed day.
+        try{
+          const recovered=await digestProfile.inspect?.({projectDir,ownerId:demo.projectId,date:previous.date});
+          if(['accepted','unknown','not-dispatched','unavailable'].includes(recovered?.status))daily.digest.settle(previous.date,recovered.status);
+        }catch{ /* Hold ambiguous original identity. */ }
+      }
+      await sweepDailyEmail(); // Observe old per-watch receipts; never send them in digest mode.
+      if(hostSignal.signal.aborted)return;
+      const slot=daily.digest.claim(digestVersion,dailyConfigVersion,dailyAutorun);
+      if(!slot)return;
+      try{
+        const result=await digestProfile.deliver({projectDir,ownerId:demo.projectId,...slot,signal:hostSignal.signal,
+          confirmed:()=>!hostSignal.signal.aborted&&daily.digest.confirmed(slot.date,digestVersion)});
+        daily.digest.settle(slot.date,['accepted','not-dispatched','unknown','unavailable','empty'].includes(result?.status)?result.status:result?.status==='not-configured'?'not-dispatched':'unknown');
+      }catch(error){
+        if(error.code==='DIGEST_ROWS_INVALID')daily.digest.settle(slot.date,'unavailable');
+        // In absence of positive settlement, no new dispatch.
+      }
+    })();
+    digestFlight=work;
+    try{await work;}finally{if(digestFlight===work)digestFlight=null;}
+  }
+  async function sweepDaily(){
+    if(!dailyAutorun||dailyFlight||hostSignal.signal.aborted)return;
+    const work=(async()=>{
+      for(const previous of daily.pending()){
+        let runId=previous.runId;
+        try{
+          if(!runId){
+            // Crash after original Conversation admission but before our index
+            // recorded its ID: recover observation only, never restart work.
+            const turn=await inspectConversationMessage({projectDir,conversationId:previous.conversationId,messageId:previous.messageId});
+            if(['completed','failed','cancelled'].includes(turn.status))daily.settlement(previous,turn.status,turn.runId);
+            else daily.settlement(previous,'submitted',turn.runId);
+            continue;
+          }
+          const {run}=await inspectResearchTask({projectDir,runId});
+          if(['completed','failed','cancelled'].includes(run.status))daily.settlement(previous,run.status,run.runId);
+        }catch{ /* Missing or unreadable original evidence remains held/unknown. */ }
+      }
+      await sweepDailyEmail();
+      if(working||submitting||hostSignal.signal.aborted||!isDeepStrictEqual((await inspectResearchProject({projectDir})).config,expectedConfig)||working||submitting||hostSignal.signal.aborted)return;
+      const occurrence=daily.claim(dailyConfigVersion,{perWatchEmail:!digestProfile});
+      if(!occurrence)return;
+      const {conversationId,messageId,question}=occurrence;
+      submitting=workKey(conversationId,messageId);
+      let runId, runWork;
+      try{
+        await createConversation({projectDir,conversationId});
+        let baseline=null;
+        for(const candidate of daily.baselineCandidates(occurrence)){
+          try{
+            const previous=await readDailyConversationBaseline({projectDir,conversationId:candidate.conversationId,messageId:candidate.messageId,
+              watchId:occurrence.watchId,date:candidate.date,revision:occurrence.revision,text:question,configSha256:dailyConfigVersion});
+            if(previous.runId!==candidate.runId)continue;
+            const {text:_historicalText,...ref}=previous;
+            baseline=ref;break;
+          }catch{
+            // Missing or unreadable historical evidence is not authority.
+            // Skip it; still answer today's question using current evidence.
+          }
+        }
+        daily.freezeBaseline(occurrence,baseline);
+        const turn=await submitConversationMessage({projectDir,conversationId,messageId,text:question,sourceManifestSha256:null,
+          dailyResearch:{watchId:occurrence.watchId,date:occurrence.date,revision:occurrence.revision,baseline},
+          authorization:{providerApproved:true,dataApproved:true,costApproved:true}});
+        runId=turn.runId;
+        daily.settlement(occurrence,'submitted',runId);
+        if(turn.status==='active'&&!hostSignal.signal.aborted)runWork=begin(conversationId,messageId,null);
+      }catch{daily.settlement(occurrence,'unknown',runId);return;}finally{submitting=null;}
+      await runWork;
+      const {run}=await inspectResearchTask({projectDir,runId});
+      if(!['completed','failed','cancelled'].includes(run.status)){daily.settlement(occurrence,'unknown',runId);return;}
+      daily.settlement(occurrence,run.status,runId);
+      await sweepDailyEmail();
+    })();
+    dailyFlight=work;
+    try{await work;}finally{if(dailyFlight===work)dailyFlight=null;}
   }
   const server = createServer({ maxHeaderSize: 8192 }, async (req, res) => {
     const headers = {
@@ -221,9 +353,13 @@ export async function startLocalGui({ projectDir, port = 0, liveConfig, env = pr
         if (req.url === '/api/workspace') return send(200, {
           schemaVersion: 'local-gui@1', mode,
           ...(live?{liveNotice:{maxModelCallsPerRun:expectedConfig.limits.model,...(freeform?{freeform:true,connectivity:{web:connectivity.web===true,search:!!connectivity.search,...(connectivity.search?{searchProvider:connectivity.search}:{}),...(connectivity.searchAlternates?{searchAlternates:connectivity.searchAlternates}:{}),wind:connectivity.wind===true}}:{})}}:{}),
-          capabilities: ['conversations','progress','reports','sources',...(freeform?['pdf-attachment']:[])],
+          capabilities: ['conversations','progress','reports','sources',...(freeform?['pdf-attachment','daily-watch']:[])],
           projectId: demo.projectId, conversations: await list({titles:true}), sources: publicSources,
         });
+        if(req.url==='/api/daily-watch'&&daily)return send(200,{timeZone:DAILY_TIME_ZONE,autorun:dailyAutorun,
+          emailAvailable:!digestProfile&&!!deliveryHook,...(!digestProfile&&emailConsentToken?{emailConsentToken}:{}),...(!digestProfile&&emailPreview?{emailPreview}:{}),
+          digest:{available:!!digestProfile,...daily.digest.describe(digestVersion),...(digestProfile?{consentToken:digestConsentToken,recipientPreview:digestProfile.recipientPreview}: {})},
+          items:daily.list({emailVersion,configVersion:dailyConfigVersion,digestVersion})});
         const progressMatch=progressPath.exec(req.url);
         if(progressMatch){
           const [,conversationId,messageId]=progressMatch;
@@ -245,6 +381,22 @@ export async function startLocalGui({ projectDir, port = 0, liveConfig, env = pr
         const match = conversationPath.exec(req.url);
         if (match) return send(200, await detail(match[1]));
         reject(404,'NOT_FOUND');
+      }
+      if(req.url==='/api/daily-digest'&&daily){
+        const input=await inputFor(req);
+        if(input?.enabled===true&&(!digestProfile||input.consentToken!==digestConsentToken))reject(409,'GUI_DIGEST_RECONFIRM');
+        if(input&&Object.hasOwn(input,'consentToken'))delete input.consentToken;
+        return send(200,daily.digest.save(input,digestVersion));
+      }
+      const dailyMatch=dailyPath.exec(req.url);
+      if(dailyMatch&&daily){
+        const input=await inputFor(req);
+        if(input?.digestEnabled===true&&(!digestProfile||input.digestConsentToken!==digestConsentToken))reject(409,'GUI_DIGEST_RECONFIRM');
+        if(input&&Object.hasOwn(input,'digestConsentToken'))delete input.digestConsentToken;
+        if(input?.emailEnabled===true&&(digestProfile||!deliveryHook))reject(400,'GUI_DAILY_EMAIL_NOT_CONFIGURED');
+        if(input?.emailEnabled===true&&input?.emailConsentToken!==emailConsentToken)reject(409,'GUI_DAILY_EMAIL_RECONFIRM');
+        if(input&&Object.hasOwn(input,'emailConsentToken'))delete input.emailConsentToken;
+        return send(dailyMatch[1]?200:201,daily.save(input,dailyMatch[1],{emailVersion,configVersion:dailyConfigVersion,digestVersion}));
       }
       if (req.url === '/api/conversations') {
         if (!exact(await inputFor(req), [])) reject(400,'INVALID_CONVERSATION');
@@ -331,12 +483,16 @@ export async function startLocalGui({ projectDir, port = 0, liveConfig, env = pr
     server.listen(port,'127.0.0.1',() => { server.off('error',reject); resolve(); });
   });
   origin = 'http://127.0.0.1:' + server.address().port;
+  if(dailyAutorun||digestProfile){dailyLoop=setInterval(()=>{void sweepDaily().catch(()=>{});void sweepDigest().catch(()=>{});},15_000);dailyLoop.unref();}
   let closing;
-  return { origin, mode, async close() {
+  return { origin, mode, sweepDaily, sweepDigest, async close() {
     if (!closing) {
+      clearInterval(dailyLoop);
       hostSignal.abort();
-      closing = new Promise((resolve,reject) => server.close(e => e ? reject(e) : resolve()));
+      closing=Promise.allSettled([new Promise((resolve,reject) => server.close(e => e ? reject(e) : resolve())),working?.p,dailyFlight,digestFlight]).then(results=>{
+        daily?.close();if(results[0].status==='rejected')throw results[0].reason;
+      });
     }
-    await Promise.all([closing,working?.p]);
+    await closing;
   } };
 }
