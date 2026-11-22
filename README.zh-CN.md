@@ -100,26 +100,26 @@ npm run demo -- --case document-compare
 <a id="最近三个模块"></a>
 ## 最近版本与开发状态
 
-**v0.42.0 · 每日研究与可选的持有人摘要。** 同一问题续用上一份已核实的回答，修改问题后重建基线。邮件需另行启用，未完成外部投递验收。[使用说明](docs/local-gui-daily-watch.md) · [运行验收](docs/verification/v042-runtime-qualification.md)
+**[v0.42.0 · 每日研究与可选的持有人摘要](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.42.0).** 同一问题续用上一份已核实的回答，修改问题后重建基线。邮件需另行启用，未完成外部投递验收。[使用说明](docs/local-gui-daily-watch.md) · [运行验收](docs/verification/v042-runtime-qualification.md)
 
-**v0.41.0 候选 · 持有人研究工作台。** 支持同会话有限追问、按轮附带文字 PDF、查看研究进度，以及可选公开检索及 Wind 基金日收盘价。默认仍是离线演练。[持有人用法](docs/local-gui-live.md) · [候选范围与验证](docs/verification/v041-release-candidate.md)
+**[v0.41.0 · 持有人研究工作台](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.41.0).** 支持同会话有限追问、查看实际研究进度，以及可选公开检索及 Wind 基金日收盘价。默认仍是离线演练。已实现按轮附带文字 PDF，但浏览器 PDF 验收延期。[持有人用法](docs/local-gui-live.md) · [范围与验证](docs/verification/v041-release-candidate.md)
 
 **[v0.39.0 · 本地研究界面预览](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.39.0)。** 用 `npm run gui -- --project ./test-output/local-gui` 打开浏览器工作台。界面使用内置的两份 ETF 模拟资料，会话、报告和引用保存在本机。[启动方式和适用范围](docs/local-gui.md) · [验收证据](docs/verification/v039-release.md)
 
-**[v0.38.0 · Wind 基金日收盘价](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.38.0):** 显式查询一只场内基金的未复权日收盘价。默认研究流程不接入 Wind。 [用法](docs/wind-fund-mcp.zh-CN.md) · [证据与边界](docs/verification/v038-release.md).
-
-**[v0.37.0 · Main 上下文压缩](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.37.0)：** 按完整 Gateway 请求判断压缩；无缩减不重复摘要，最后一个模型调用留给交付。[用法](docs/project-context.zh-CN.md) · [证据与边界](docs/verification/v037-release.md).
-
 | 最近版本 / 状态 | 能做什么 | 用法与边界 |
 | --- | --- | --- |
+| [v0.42.0 · 每日研究与可选的持有人摘要](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.42.0) | 按日追踪、复用基线，可选摘要；未验收外部邮件投递 | [用法](docs/local-gui-daily-watch.md) |
+| [v0.41.0 · 持有人研究工作台](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.41.0) | 追问、公开取证与真实进度；浏览器 PDF 验收延期 | [用法](docs/local-gui-live.md) |
 | [v0.39.0 · 本地研究界面预览](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.39.0) | 在浏览器使用模拟资料，查看会话、保存的报告和来源原文 | [用法](docs/local-gui.md) |
-| [v0.38.0 · Wind 基金日收盘价](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.38.0) | 显式查询单只基金日收盘；不自动交给模型 | [用法](docs/wind-fund-mcp.zh-CN.md) |
-| [v0.37.0 · Main 上下文压缩](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.37.0) | 按完整 Gateway 请求判断压缩；无缩减不重复摘要，最后一个模型调用留给交付 | [用法](docs/project-context.zh-CN.md) |
 
 [全部固定版本与命令](docs/module-guide.zh-CN.md#versions) · [版本谱系](versions.json) · [全部 Release](https://github.com/hpoenixf/open-etf-agent/releases) · [验证记录](docs/verification/README.zh-CN.md)
 
 <details>
 <summary>历史版本</summary>
+
+**[v0.38.0 · Wind 基金日收盘价](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.38.0):** 显式查询一只场内基金的未复权日收盘价。默认研究流程不接入 Wind。 [用法](docs/wind-fund-mcp.zh-CN.md) · [证据与边界](docs/verification/v038-release.md).
+
+**[v0.37.0 · Main 上下文压缩](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.37.0)：** 按完整 Gateway 请求判断压缩；无缩减不重复摘要，最后一个模型调用留给交付。[用法](docs/project-context.zh-CN.md) · [证据与边界](docs/verification/v037-release.md).
 
 **[v0.36.1 维护修复](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.36.1)。** Main 上下文压缩会把含有结构化项目记忆的已完成工具调用组排除在新摘要和复用摘要之外。原始结构化数据仍走原有的派发前资格核验。[验证与边界](docs/verification/v0361-maintenance.md)
 

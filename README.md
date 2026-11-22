@@ -100,26 +100,26 @@ npm run demo -- --case document-compare
 <a id="latest-three-modules"></a>
 ## Releases and development status
 
-**v0.42.0 · Daily research and an optional owner digest.** Track an unchanged question against the last verified answer. A changed question starts a new baseline. Delivery remains opt-in; external email was not qualified. [Usage](docs/local-gui-daily-watch.md) · [Runtime verification](docs/verification/v042-runtime-qualification.md)
+**[v0.42.0 · Daily research and an optional owner digest](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.42.0).** Track an unchanged question against the last verified answer. A changed question starts a new baseline. Delivery remains opt-in; external email was not qualified. [Usage](docs/local-gui-daily-watch.md) · [Runtime verification](docs/verification/v042-runtime-qualification.md)
 
-**v0.41.0 release candidate · Owner research workspace.** Bounded follow-ups, per-question text PDF evidence, observable research progress, and opt-in public research tools. Default startup remains offline. [Owner setup](docs/local-gui-live.md) · [Candidate scope and verification](docs/verification/v041-release-candidate.md)
+**[v0.41.0 · Owner research workspace](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.41.0).** Bounded follow-ups, observable research progress, and opt-in public research tools. Default startup remains offline. Per-question text PDF support is implemented, but browser PDF acceptance was deferred. [Owner setup](docs/local-gui-live.md) · [Scope and verification](docs/verification/v041-release-candidate.md)
 
 **[v0.39.0 · Local research GUI preview](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.39.0).** Open the browser workspace with `npm run gui -- --project ./test-output/local-gui`. The workspace uses two bundled synthetic ETF sources and saves conversations, reports and citations locally. [Setup and scope](docs/local-gui.md) · [Verification](docs/verification/v039-release.md)
 
-**[v0.38.0 · Wind ETF daily closes](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.38.0):** Opt in to fetch unadjusted daily exchange closes for one ETF. Default research does not contact Wind. [Usage](docs/wind-fund-mcp.md) · [Evidence and limits](docs/verification/v038-release.md).
-
-**[v0.37.0 · Main context compaction](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.37.0):** Check pressure on the full Gateway request; skip ineffective repeats and reserve the final model slot for delivery. [Usage](docs/project-context.md) · [Evidence and limits](docs/verification/v037-release.md).
-
 | Recent version / status | What it enables | Usage and boundaries |
 | --- | --- | --- |
+| [v0.42.0 · Daily research and an optional owner digest](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.42.0) | Daily watch, reusable baseline and optional digest; external mail not qualified | [Usage](docs/local-gui-daily-watch.md) |
+| [v0.41.0 · Owner research workspace](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.41.0) | Follow-ups, public evidence and progress; browser PDF acceptance deferred | [Usage](docs/local-gui-live.md) |
 | [v0.39.0 · Local research GUI preview](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.39.0) | Browser conversations, saved reports and original citations using synthetic sources | [Usage](docs/local-gui.md) |
-| [v0.38.0 · Wind ETF daily closes](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.38.0) | Explicit, one-fund daily close query; no automatic model input | [Usage](docs/wind-fund-mcp.md) |
-| [v0.37.0 · Main context compaction](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.37.0) | Check pressure on the full Gateway request; skip ineffective repeats and reserve the final model slot for delivery | [Usage](docs/project-context.md) |
 
 [All fixed versions and commands](docs/module-guide.md#versions) · [Version lineage](versions.json) · [All releases](https://github.com/hpoenixf/open-etf-agent/releases) · [Verification records](docs/verification/README.md)
 
 <details>
 <summary>Earlier versions</summary>
+
+**[v0.38.0 · Wind ETF daily closes](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.38.0):** Opt in to fetch unadjusted daily exchange closes for one ETF. Default research does not contact Wind. [Usage](docs/wind-fund-mcp.md) · [Evidence and limits](docs/verification/v038-release.md).
+
+**[v0.37.0 · Main context compaction](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.37.0):** Check pressure on the full Gateway request; skip ineffective repeats and reserve the final model slot for delivery. [Usage](docs/project-context.md) · [Evidence and limits](docs/verification/v037-release.md).
 
 **[v0.36.1 maintenance](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.36.1).** Main compaction excludes settled tool groups that contain typed Project Memory from new and reused summaries. The original typed data still passes through the existing pre-dispatch checks. [Verification and limits](docs/verification/v0361-maintenance.md)
 
