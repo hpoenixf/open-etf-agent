@@ -1,5 +1,5 @@
 const byId = id => document.getElementById(id);
-const state = { workspace: null, conversation: null, detail: null, poll: null, submitting: false, pending: null, failures: 0, selection:0 };
+const state = { workspace: null, conversation: null, detail: null, poll: null, submitting: false, pending: null, failures: 0, selection:0, progress:new Map() };
 const statusLabels = {
   'admission-pending':'接收待确认', 'completed':'已完成', 'failed':'未完成', 'cancelled':'已取消',
   'active':'等待执行', 'fenced':'已暂停', 'unknown':'结果未知',
@@ -107,6 +107,48 @@ function showEvidence(source,index) {
     byId('desktop-evidence').replaceChildren(make('h2','来源与核对'),node);
   }
 }
+function progressContent(target, value) {
+  target.replaceChildren();
+  if (!value || value.status!=='available' || !value.steps?.length) {
+    target.append(make('p',value?.status==='unavailable'?'暂未读到可显示的研究记录。':'尚无已记录的步骤。','muted'));
+    return;
+  }
+  if(value.omitted>0)target.append(make('p','仅展示最近的步骤。','muted'));
+  const list=make('ol');
+  for(const step of value.steps)list.append(make('li',step.label));
+  target.append(list);
+}
+async function loadProgress(conversation, entry, message) {
+  if(entry.loading||(!message.working&&entry.cachedTerminal))return;
+  entry.loading=true;
+  try {
+    const value=await api('/api/conversations/'+encodeURIComponent(conversation)+'/messages/'+encodeURIComponent(message.id)+'/progress');
+    if(state.conversation!==conversation||state.progress.get(message.id)!==entry)return;
+    entry.data=value;
+    entry.cachedTerminal=['completed','failed','cancelled'].includes(message.status)&&value.status==='available';
+    if(entry.content?.isConnected)progressContent(entry.content,value);
+  } catch {
+    if(entry.content?.isConnected)progressContent(entry.content,{status:'unavailable'});
+  } finally { entry.loading=false; }
+}
+function progressDetails(message) {
+  const details=make('details',undefined,'research-progress');
+  const content=make('div',undefined,'research-progress-body');
+  const conversation=state.conversation;
+  const entry=state.progress.get(message.id)??{open:false};
+  entry.content=content;
+  state.progress.set(message.id,entry);
+  details.append(make('summary','研究进度'),make('p','仅展示实际执行记录，不包含模型内部推理。','muted'),content);
+  progressContent(content,entry.data);
+  details.open=entry.open;
+  details.addEventListener('toggle',()=>{
+    if(!details.isConnected)return;
+    entry.open=details.open;
+    if(details.open)void loadProgress(conversation,entry,message);
+  });
+  if(details.open)void loadProgress(conversation,entry,message);
+  return details;
+}
 function render() {
   const t = byId('transcript');
   t.replaceChildren();
@@ -117,6 +159,7 @@ function render() {
     header.append(make('strong','你'),make('span',status,'state'));
     article.append(header,make('p',m.question ?? '问题尚未读回','question'));
     if(m.attachment) article.append(make('p','PDF：'+m.attachment.name+' · '+m.attachment.pages+' 页','muted'));
+    article.append(progressDetails(m));
     const providerFailure=(/^PROVIDER_HTTP_(403|429)$/).exec(m.code??'');
     if (providerFailure) {
       const guidance=providerFailure[1]==='403'?'提供方拒绝访问，请核对账户、地区及模型权限。'
@@ -201,11 +244,13 @@ async function refresh() {
   const title = detail.title;
   if (row && row.title !== title) { row.title=title; refreshHistory(); controls(); }
   if (old !== JSON.stringify(detail)) render();
+  else for (const item of detail.messages){const entry=state.progress.get(item.id);if(entry?.open)void loadProgress(selected,entry,item);}
   scheduleRefresh();
 }
 async function select(id) {
   if (state.pending && state.pending.conversationId !== id) return;
   if (state.conversation !== id) {
+    state.progress.clear();
     message();
     if(state.conversation)byId('pdf-file').value='';
     const dialog=byId('mobile-evidence');

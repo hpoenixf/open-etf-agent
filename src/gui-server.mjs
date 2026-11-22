@@ -12,6 +12,7 @@ import { createResearchProject, inspectResearchProject, inspectResearchTask, rea
 import { importProjectSources, importUploadedPdf, PROJECT_SOURCE_LIMITS } from './project-sources.mjs';
 import { ensureSafeDirectory, publishImmutable, safeDirectory } from './storage-files.mjs';
 import { prepareOwnerSearch } from './gui-owner-web.mjs';
+import { readGuiResearchProgress } from './gui-progress.mjs';
 import { prepareGuiLiveConfig } from './gui-live-config.mjs';
 
 const routeId = '[A-Za-z0-9_-]{1,48}';
@@ -19,6 +20,7 @@ const idPattern = new RegExp('^'+routeId+'$');
 const conversationPath = new RegExp('^/api/conversations/('+routeId+')$');
 const pdfPath = new RegExp('^/api/conversations/('+routeId+')/pdf$');
 const pdfId = /^[a-f0-9]{64}$/;
+const progressPath = new RegExp('^/api/conversations/('+routeId+')/messages/('+routeId+')/progress$');
 const reportPath = new RegExp('^/api/conversations/('+routeId+')/messages/('+routeId+')/report[.]md$');
 const actionPath = new RegExp('^/api/conversations/('+routeId+')/messages(?:/('+routeId+')/(work|cancel))?$');
 const config = {
@@ -222,6 +224,15 @@ export async function startLocalGui({ projectDir, port = 0, liveConfig, env = pr
           capabilities: ['conversations','progress','reports','sources',...(freeform?['pdf-attachment']:[])],
           projectId: demo.projectId, conversations: await list({titles:true}), sources: publicSources,
         });
+        const progressMatch=progressPath.exec(req.url);
+        if(progressMatch){
+          const [,conversationId,messageId]=progressMatch;
+          const conversation=await inspectConversation({projectDir,conversationId});
+          const turn=conversation.messages.find(entry=>entry.messageId===messageId);
+          if(!turn)reject(404,'NOT_FOUND');
+          const run=turn.status==='admission-pending'?null:(await inspectResearchTask({projectDir,runId:turn.runId})).run;
+          return send(200,await readGuiResearchProgress(projectDir,run));
+        }
         const reportMatch = reportPath.exec(req.url);
         if (reportMatch) {
           const [,conversationId,messageId] = reportMatch;

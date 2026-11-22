@@ -81,3 +81,8 @@ dialog::backdrop{background:#14282480}
 #history-search:focus-visible,.download:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
 .turn-actions{display:flex;align-items:center;flex-wrap:wrap}
 .download{display:inline-flex;min-height:44px;padding:.5rem .75rem;border:1px solid var(--line);border-radius:.55rem;color:var(--ink);text-decoration:none;align-items:center;font-weight:600}
+
+.research-progress { margin-block: .8rem; padding: .55rem .7rem; border: 1px solid currentColor; border-radius: .45rem; }
+.research-progress summary { cursor: pointer; font-weight: 600; }
+.research-progress-body ol { margin: .35rem 0 .15rem; padding-inline-start: 1.5rem; }
+.research-progress-body li { margin-block: .25rem; }
