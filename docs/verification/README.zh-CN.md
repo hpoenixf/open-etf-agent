@@ -1,5 +1,7 @@
 [English](README.md) | **简体中文**
 
+- [v0.39 本地研究界面预览：浏览器、持久化读回和模型边界](v039-release.md)
+
 - [v0.38 Wind：真实取数与标的核验边界](v038-release.md)
 
 - [v0.37 Main 上下文压缩：完整请求口径与验证边界](v037-release.md)

@@ -155,6 +155,10 @@
     "0.38": {
       "commit": "533b9e7609bda3df5b2d7cfc65dd902d553a772f",
       "tree": "f18459af358696d7d3079565dce495fe927de646"
+    },
+    "0.39": {
+      "commit": "aa2104e52c8ba9c16822387e7c3c0709531b221e",
+      "tree": "6c01ba0a160d9285134b957a861c66ca143b48b2"
     }
   },
   "targets": {

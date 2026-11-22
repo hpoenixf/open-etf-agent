@@ -1,9 +1,9 @@
 {
   "schemaVersion": 2,
-  "reviewedVersion": "0.38.0",
-  "reviewedSource": "533b9e7609bda3df5b2d7cfc65dd902d553a772f",
+  "reviewedVersion": "0.39.0",
+  "reviewedSource": "aa2104e52c8ba9c16822387e7c3c0709531b221e",
   "articleSource": "https://github.com/hpoenixf/eff-agent-article/blob/249f0b866f9446f33b57f186fbc6d35b5d82c119/articles/open-etf-agent-v010-system-design.md",
-  "evidence": "docs/verification/v038-release.md",
+  "evidence": "docs/verification/v039-release.md",
   "layers": [
     {
       "id": "L1",
@@ -337,7 +337,7 @@
         "zh": "显式开启；保留原文和最后调用",
         "en": "Opt in; keep originals and final slot"
       },
-      "status": "enhanced",
+      "status": "bounded",
       "source": "src/compaction.mjs",
       "kind": "module",
       "article": {
@@ -1046,6 +1046,31 @@
         "title": {
           "zh": "Agent 深入：从一份报告到持续执行与专家协作",
           "en": "Agent Deep Dive: From One Report to Durable Execution and Specialist Collaboration"
+        }
+      }
+    },
+    {
+      "id": "localgui",
+      "layer": "L6",
+      "group": "delivery",
+      "name": "Local Research GUI",
+      "summary": {
+        "zh": "会话、研究报告与原文",
+        "en": "Conversations, reports and sources"
+      },
+      "boundary": {
+        "zh": "本机离线演练，只用模拟资料",
+        "en": "Loopback demo with synthetic sources"
+      },
+      "status": "enhanced",
+      "source": "src/gui-server.mjs",
+      "kind": "call-site",
+      "article": {
+        "slug": "agent-conversation-admission-task-continuation",
+        "kind": "module-article",
+        "title": {
+          "zh": "“接着聊”不等于“接着执行”：Agent 对话接纳与任务接续的设计",
+          "en": "Keep Chatting Is Not Keep Executing: Agent Conversation Admission and Task Continuation"
         }
       }
     },

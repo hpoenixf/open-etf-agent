@@ -1,6 +1,6 @@
 {
   "name": "open-etf-agent",
-  "version": "0.38.0",
+  "version": "0.39.0",
   "private": true,
   "type": "module",
   "license": "MIT",
@@ -18,7 +18,8 @@
     "research": "node src/research-cli.mjs",
     "wind:fund": "node src/wind-fund-cli.mjs",
     "docs:sync": "node scripts/sync-module-map.mjs",
-    "docs:check": "node scripts/sync-module-map.mjs --check"
+    "docs:check": "node scripts/sync-module-map.mjs --check",
+    "gui": "node src/gui-cli.mjs"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "1.32.2",

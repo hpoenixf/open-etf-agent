@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="light">
+  <title>Open ETF Agent · 研究工作台</title>
+  <link rel="stylesheet" href="/gui.css">
+  <script type="module" src="/gui.mjs"></script>
+</head>
+<body>
+  <header class="masthead">
+    <button id="history-toggle" class="secondary mobile" aria-controls="history" aria-expanded="false">会话</button>
+    <span class="brand-symbol" aria-hidden="true">E</span>
+    <div><strong>Open ETF Agent</strong><span class="subbrand">研究工作台</span></div>
+    <span class="badge" title="不调用模型或外部数据">离线演练</span>
+  </header>
+  <div class="workspace">
+    <aside id="history" class="history" aria-label="会话历史">
+      <header><h2>会话</h2><button id="new" type="button" class="secondary">＋ 新会话</button></header>
+      <label for="history-search" class="history-label">搜索会话</label>
+      <input id="history-search" type="search" autocomplete="off" maxlength="120" placeholder="按首个问题或编号搜索">
+      <ul id="conversation-list"></ul>
+      <p id="history-empty" class="muted" role="status" hidden></p>
+      <p class="muted">会话保存在本地 Project 中。</p>
+    </aside>
+    <main id="main">
+      <div class="intro" id="intro"><p class="eyebrow">LOCAL RESEARCH WORKSPACE</p><h1>做一份可以回查的 ETF 研究。</h1><p>选一份演练资料，观察从提交到报告和原文引用的过程。</p></div>
+      <section id="transcript" aria-label="会话消息"></section>
+      <form id="composer">
+        <div class="source-picker"><label for="source">演练资料</label><select id="source" required></select></div>
+        <label for="question">研究问题</label>
+        <textarea id="question" rows="3" maxlength="3000" required placeholder="例如：对比 Alpha 与 Beta 的费率，并注明来源。"></textarea>
+        <div class="composer-actions"><p>固定脚本演练，不是 AI 对问题的分析，不计费。</p><button id="send" type="submit">提交演练</button></div>
+        <p id="notice" role="status" class="notice" hidden></p>
+      </form>
+    </main>
+    <aside id="desktop-evidence" class="evidence" aria-label="研究证据"><h2>来源与核对</h2><p class="muted">选中报告的引用，即可核对保存的原文。</p></aside>
+  </div>
+  <dialog id="mobile-evidence" aria-label="研究证据"><header><h2>来源与核对</h2><button id="close-evidence" class="secondary">关闭</button></header><div id="mobile-evidence-content"></div></dialog>
+  <template id="evidence-template"><div><p class="eyebrow">报告引用</p><h3></h3><pre></pre><small></small></div></template>
+</body>
+</html>
