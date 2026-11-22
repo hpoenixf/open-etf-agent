@@ -116,8 +116,9 @@ async function guiProject(projectDir, expectedConfig, live, freeform) {
   return { projectDir, sources, projectId: project.projectId };
 }
 
-export async function startLocalGui({ projectDir, port = 0, liveConfig, env = process.env, fetchImpl, ownerWebTransport, dailyClock, onDailyCompleted, smtpOptions, ownerDailyDigest } = {}) {
-  if (!Number.isInteger(port) || port < 0 || port > 65535) reject(400, 'INVALID_GUI_PORT');
+// Trusted server composition only. An account host must authenticate and
+// resolve its Project before mounting this listener-free handler.
+export async function createLocalGuiWorkspace({ projectDir, origin: mountOrigin, liveConfig, env = process.env, fetchImpl, ownerWebTransport, dailyClock, onDailyCompleted, smtpOptions, ownerDailyDigest } = {}) {
   const live = liveConfig === undefined ? null : prepareGuiLiveConfig(liveConfig,env);
   const mode = live?'live-research':'offline-demo';
   const expectedConfig=live?.config??validatedConfig;
@@ -155,7 +156,11 @@ export async function startLocalGui({ projectDir, port = 0, liveConfig, env = pr
   const dailyAutorun=!!daily&&env.ETF_GUI_DAILY_AUTORUN==='1';
   let dailyLoop=null,dailyFlight=null,digestFlight=null;
   const publicSources = demo.sources.map(({ id, title }) => ({ id, title }));
-  let origin, working = null, submitting = null;
+  let origin=mountOrigin, working = null, submitting = null;
+  function setOrigin(value) {
+    if (origin !== undefined) throw new Error('GUI_ORIGIN_ALREADY_SET');
+    origin = value;
+  }
   const workKey = (conversationId, messageId) => conversationId + '/' + messageId;
   const sourceFor = id => demo.sources.find(s => s.id === id);
 
@@ -332,7 +337,7 @@ export async function startLocalGui({ projectDir, port = 0, liveConfig, env = pr
     dailyFlight=work;
     try{await work;}finally{if(dailyFlight===work)dailyFlight=null;}
   }
-  const server = createServer({ maxHeaderSize: 8192 }, async (req, res) => {
+  async function handle(req, res) {
     const headers = {
       'cache-control': 'no-store', 'x-content-type-options': 'nosniff',
       'content-security-policy': "default-src 'none'; script-src 'self'; style-src 'self'; connect-src 'self'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'",
@@ -475,24 +480,38 @@ export async function startLocalGui({ projectDir, port = 0, liveConfig, env = pr
       const status = e.status ?? (code==='ENOENT'||code==='UNKNOWN_RUN'?404:code.includes('ID_CONFLICT')?409:code==='PDF_LIMIT_BYTES'||code==='PDF_LIMIT_PAGES'||code==='PDF_LIMIT_TEXT'?413:code==='PROJECT_SOURCE_INVALID_INPUT'||code==='PDF_ENCRYPTED'||code==='PDF_PARSE_FAILED'||code==='PDF_INVALID_FORMAT'||code==='PDF_NO_TEXT_LAYER'||code==='PDF_TIMEOUT'?422:500);
       if (!res.headersSent && !res.destroyed) send(status,{ error:code });
     }
-  });
-  server.requestTimeout = 10000;
-  server.headersTimeout = 8000;
-  await new Promise((resolve,reject) => {
-    server.once('error', reject);
-    server.listen(port,'127.0.0.1',() => { server.off('error',reject); resolve(); });
-  });
-  origin = 'http://127.0.0.1:' + server.address().port;
+  }
   if(dailyAutorun||digestProfile){dailyLoop=setInterval(()=>{void sweepDaily().catch(()=>{});void sweepDigest().catch(()=>{});},15_000);dailyLoop.unref();}
   let closing;
-  return { origin, mode, sweepDaily, sweepDigest, async close() {
-    if (!closing) {
-      clearInterval(dailyLoop);
-      hostSignal.abort();
-      closing=Promise.allSettled([new Promise((resolve,reject) => server.close(e => e ? reject(e) : resolve())),working?.p,dailyFlight,digestFlight]).then(results=>{
-        daily?.close();if(results[0].status==='rejected')throw results[0].reason;
-      });
+  return {handle,setOrigin,mode,sweepDaily,sweepDigest,async close(){
+    if(!closing){
+      clearInterval(dailyLoop);hostSignal.abort();
+      closing=Promise.allSettled([working?.p,dailyFlight,digestFlight]).then(()=>daily?.close());
     }
     await closing;
-  } };
+  }};
+}
+export async function startLocalGui(options = {}) {
+  const {port = 0} = options;
+  if (!Number.isInteger(port) || port < 0 || port > 65535) reject(400, 'INVALID_GUI_PORT');
+  const workspace=await createLocalGuiWorkspace({...options,origin:undefined});
+  const server=createServer({maxHeaderSize:8192},workspace.handle);
+  server.requestTimeout=10000;
+  server.headersTimeout=8000;
+  try{
+    await new Promise((resolve,reject)=>{
+      server.once('error',reject);
+      server.listen(port,'127.0.0.1',()=>{server.off('error',reject);resolve();});
+    });
+  }catch(e){await workspace.close();throw e;}
+  const origin='http://127.0.0.1:'+server.address().port;
+  workspace.setOrigin(origin);
+  let closing;
+  return {origin,mode:workspace.mode,sweepDaily:workspace.sweepDaily,sweepDigest:workspace.sweepDigest,async close(){
+    closing??=Promise.all([
+      new Promise((resolve,reject)=>server.close(e=>e?reject(e):resolve())),
+      workspace.close(),
+    ]);
+    await closing;
+  }};
 }
