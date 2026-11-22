@@ -1,0 +1,17 @@
+{
+  "candidate":"16788881f8b2ca32023d6a0bce27864885c8608a",
+  "runtimeSrc":"d2bb4fcc042c7876b01f8a354b43faca2e87b9cc",
+  "rules":"10 assessed cases, at least 9 pass, no known in-scope runtime defect. No mixing builds, no rerouting replays, no paid search fallback.",
+  "cases":[
+    {"id":"Q01","turns":["请用中文解释什么是ETF，以及它跟购买单只股票有什么区别。不需要实时数据，不调用任何工具。"],"pass":"Fund basket and exchange trading distinguished; no invented return or source; no tools."},
+    {"id":"Q02","turns":["把这个标记作为本会话的测试值：晨杉-637Q。只回复收到。","我刚才给的测试值是什么？只回复测试值，不联网。"],"pass":"Second answer reproduces 晨杉-637Q from same prior turn; no tools; both turns retained."},
+    {"id":"Q03","turns":["请直接阅读 https://www.iana.org/help/example-domains ，说明这些域名能否注册或转让，并给出读到的公开原文链接。不要用搜索摘要替代正文。"],"pass":"Actual IANA read, correctly identifies nonregistration/nontransfer, links source."},
+    {"id":"Q04","turns":["请分别读取 https://example.com/ 和 https://example.com/open-etf-qualification-missing-041 。即便后一页打不开，也请用成功读取的首页继续回答：这个域名是做什么用的？注明哪个页面不可用，勿为该页编造正文。"],"pass":"New same-run readable page and recorded missing page; complete answer, no invention."},
+    {"id":"Q05","turns":["只用免费的公开网页搜索查找 IANA Example Domains 的官方页面；如果可读，请打开原文，列出来源。不要使用 DeepSeek 或元宝付费搜索。"],"pass":"Successful Exa search, real IANA link, snippets marked as such if not read."},
+    {"id":"Q06","turns":["只用 Wind 查询 510300.SH 在 2026-11-20 的场内不复权日收盘价。给出日期和口径，不要把它写成基金净值或盘中价格。"],"pass":"Successful matching Wind receipt; figure equals authorized actual result; date/unit/basis accurate."},
+    {"id":"Q07","turns":["请阅读 https://example.com/ ，核实它是否公布了某只 ETF 的基金净值。如果没有，请明确说原文不支持这个结论；不要猜数字。"],"pass":"Read original; explicitly no ETF NAV evidence, no invention."},
+    {"id":"Q08","browserPdfPending":true,"turns":["阅读我附上的公开合成基金资料，找出第一页显示的项目，给出该页引用。"],"pass":"Browser-authorized actual upload plus PDF page receipt and report quote; history readback."},
+    {"id":"Q09","browserPdfPending":true,"turns":["比对附件里两页的确切值；分别标页。"],"pass":"Browser-authorized actual distinct multipage fixture; correct values/locations; same saved report after reopen."},
+    {"id":"Q10","turns":["请读取 https://example.org/ ，根据网页解释它为什么适合举例而不应被依赖做生产服务；给出来源。"],"pass":"Live progress when observable, real successful tool step, final answer and same run/hash after reopen."}
+  ]
+}
