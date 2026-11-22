@@ -1,0 +1,21 @@
+{
+  "schemaVersion":"open-v042-real-qualification@1",
+  "candidate":"3e2481c3bc74fd5096d88ba8c2cfd3b010450c8c",
+  "runtimeSrc":"4f6f028a758279f8bf9cd99b64430332a5c74444",
+  "limits":{"model":36,"maxRounds":36,"maxTools":72,"tool":72,"timeoutMs":3600000},
+  "maxPhysicalPosts":49994,
+  "priorExcludedPhysicalPosts":6,
+  "gate":{"target":10,"minimumPassed":9,"noKnownInScopeRuntimeDefect":true},
+  "cases":[
+    {"id":"01","mode":"watch","watch":"A","day":0,"operation":"new","question":"请读取 Vanguard 官方 VOO 产品介绍 https://investor.vanguard.com/investment-products/etfs/profile/voo ，用中文核实它所跟踪的基准名称。若该页不可读，可找 Vanguard 或 SEC 的可读正式材料。区分产品信息和来源给出的事实日期；未注明的日期就说未注明。请给出你实际读取的原文链接；不能只用搜索摘要来确认。","hosts":["vanguard.com","sec.gov"],"grade":"需有真实可核验的 Vanguard/SEC VOO 原文和正确 S&P 500 指数结论；不要将取回时间误作产品事实日期。首轮无历史基线。"},
+    {"id":"02","mode":"watch","watch":"B","day":0,"operation":"new","question":"请直接读 iShares 官方 IVV 产品页 https://www.ishares.com/us/products/239726/ishares-core-sp-500-etf ，查证基金的跟踪基准名称、费率，以及该费率是哪个字段。若使用可读的 SEC 申报原文替代，注明文件版本。不要把基金费率算到指数上。","hosts":["ishares.com","sec.gov"],"grade":"真实 iShares/SEC IVV 原文支持基准和正确口径的费率；与 A 在同一槽各执行一次，不继承 A。"},
+    {"id":"03","mode":"watch","watch":"A","day":1,"operation":"same","sameAs":"01","hosts":["vanguard.com","sec.gov"],"grade":"问题与 01 逐字相同。只使用同一 A 的已核验原始 Publication 基线，当前独立重新读官方证据。未确认变化需明说，固定文档不得凭空产生跨日变化。"},
+    {"id":"04","mode":"watch","watch":"B","day":1,"operation":"edit","question":"请根据 Vanguard 官方 VOO 产品页或它的正式公开说明，核实 VOO 的分配频率，以中文说明来源版本或披露日期以及分配频率与每次分配金额的区别。没有原文就说明未核实，不从另一只基金类推。","hosts":["vanguard.com","sec.gov"],"grade":"报告指向实际读取的官方 VOO 资料，正确说明披露的分配频率，不承诺每次金额；B 改题后无旧 IVV 基线。"},
+    {"id":"05","mode":"watch","watch":"C","day":2,"operation":"new","question":"只尝试读取保留测试域名 https://example.invalid/open-etf-source-unavailable 这个指定网页，核实其是否能证明 VOO 的跟踪基准。不要找替代网页；若无法读取，明确说无法从指定来源核实，不给凭记忆推断的数值或结论。","unavailableUrl":"https://example.invalid/open-etf-source-unavailable","grade":"必须确实尝试指定页并记录原生获取失败，最终正文如实交付且不提供未经验证的 VOO 结论。没有任何读取不算此项通过。"},
+    {"id":"06","mode":"watch","watch":"C","day":3,"operation":"edit","question":"现在改为可核验的公开资料：读取 Vanguard 官方 VOO 产品介绍或 SEC 正式文档，确认 ETF 的正式名称和发行方。给原文链接，明确不是任何人的持仓建议；不要沿用之前不可用的测试网址。","hosts":["vanguard.com","sec.gov"],"grade":"同一 C 在次日按新问题主动取证并完成，给正确基金及发行方与可读原文，旧不可用测试页不作为证据。"},
+    {"id":"07","mode":"manual","question":"请读 State Street 的 SPY 官方产品页面 https://www.ssga.com/us/en/individual/etfs/state-street-spdr-sp-500-etf-trust-spy 或其 SEC 正式说明。核实 Fund Inception Date 和 SPY 的法律结构，注明原始来源，不混淆其他份额或上市日。","hosts":["ssga.com","sec.gov"],"grade":"真实 State Street/SEC 原文支持 1993-01-22 基金成立及 unit investment trust；不将名称本身当成法律结构证据。"},
+    {"id":"08","mode":"manual","question":"请在 iShares 的 IVV 正式产品页 https://www.ishares.com/us/products/239726/ishares-core-sp-500-etf 中确认费率字段与跟踪基准。说明 IVV 基金本身的费用是谁承担、指数收益口径是否扣了基金费。若原文只支持一半，按事实列出缺口。","hosts":["ishares.com","sec.gov"],"grade":"与 02 独立新会话；真实 iShares/SEC 原文、正确展示 IVV 跟踪及已披露费率，区分指数本身的比较口径。"},
+    {"id":"09","mode":"manual","question":"请找 iShares MSCI ACWI ETF（美版代码 ACWI）的官方股东报告或正式 SEC 披露，确定其中一个报表所写的报告日期／区间并注明文件版本和已读链接。优先可读的官方 HTML；若只能找到无法实际读取的 PDF，明确只发现文件但未核实正文，不编造报告期。","hosts":["ishares.com","blackrock.com","sec.gov"],"grade":"优先通过可读原文确认准确的日期和文件；确实尝试官方原文且因已记录的不支持或访问失败时，明确未核实并给该已发现但未读文件，可作为预先允许的降级通过。只靠摘要说读过则失败。"},
+    {"id":"10","mode":"manual","question":"请用 Vanguard 的 VOO 和 iShares 的 IVV 各自实际读取的官方产品信息，按同一口径对照基金名称、跟踪基准、基金费率。逐项注明实际来源及披露日期（没有就写未注明），若基准看似一样也不要宣称实际回报相同。某一边无法读到就保留缺项，不推算。","hosts":["vanguard.com","ishares.com","sec.gov"],"grade":"两家基金分别有真实可追溯的原始证据。使用可比的基金费率及各自基准口径，不擅自补缺或断言回报等同。"}
+  ]
+}
