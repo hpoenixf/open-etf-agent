@@ -3,7 +3,7 @@ import {join} from 'node:path';
 import {readdir} from 'node:fs/promises';
 import {sha256} from './source.mjs';
 import {safeDirectory,ensureSafeDirectory,publishImmutable} from './storage-files.mjs';
-import {readProjectJson,inspectResearchProject,submitResearchTask,inspectResearchTask,workResearchTask,cancelResearchTask,readResearchReport,readResearchOutput,resumeResearchTaskAdmission,respondResearchTask,inspectResearchInteraction,listResearchInteractions,controlResearchTask,inspectResearchControl} from './research-project.mjs';
+import {readProjectJson,inspectResearchProject,submitResearchTask,inspectResearchTask,workResearchTask,cancelResearchTask,readResearchReport,readResearchOutput,resumeResearchTaskAdmission,supportsOwnerFreeform,respondResearchTask,inspectResearchInteraction,listResearchInteractions,controlResearchTask,inspectResearchControl} from './research-project.mjs';
 import {readReportReview} from './report-review.mjs';
 const fail=code=>{throw Object.assign(new Error(code),{code});};
 const id=v=>{if(typeof v!=='string'||!/^[A-Za-z0-9_-]{1,48}$/.test(v))fail('CONVERSATION_INVALID_ID');return v;};
@@ -20,7 +20,9 @@ export async function inspectConversation({projectDir,conversationId}){const loc
 export async function submitConversationMessage({projectDir,conversationId,messageId,text,sourceManifestSha256,parent=null,review=null,continuationOfMessageId=null,authorization}){
  const loc=await location(projectDir,conversationId);id(messageId);
  if(typeof text!=='string'||!text.trim()||text.includes('\0')||Buffer.byteLength(text)>12000||Buffer.from(text).toString('utf8')!==text)fail('CONVERSATION_INVALID_TEXT');
- if(typeof sourceManifestSha256!=='string'||!/^[a-f0-9]{64}$/.test(sourceManifestSha256))fail('CONVERSATION_INVALID_MANIFEST');
+ const freeform=sourceManifestSha256===null;
+ if(freeform ? !supportsOwnerFreeform((await inspectResearchProject({projectDir:loc.projectDir})).config)||parent!==null||review!==null||continuationOfMessageId!==null
+   : typeof sourceManifestSha256!=='string'||!/^[a-f0-9]{64}$/.test(sourceManifestSha256))fail('CONVERSATION_INVALID_MANIFEST');
  if(parent!==null&&(!parent||typeof parent!=='object'||Array.isArray(parent)||!same(Object.keys(parent).sort(),['end','messageId','start'])||parent.messageId===messageId||!Number.isSafeInteger(parent.start)||!Number.isSafeInteger(parent.end)||parent.start<0||parent.end<=parent.start))fail('CONVERSATION_INVALID_PARENT');
  if(review!==null&&(!parent||!review||typeof review!=='object'||!same(Object.keys(review).sort(),['directory','runId'])||typeof review.directory!=='string'||typeof review.runId!=='string'))fail('CONVERSATION_INVALID_REVIEW');
  if(continuationOfMessageId!==null){id(continuationOfMessageId);if(continuationOfMessageId===messageId||parent||review)fail('CONVERSATION_INVALID_CONTINUATION');}
@@ -67,7 +69,7 @@ export async function submitConversationMessage({projectDir,conversationId,messa
    if(Buffer.byteLength(PREFIX+JSON.stringify(frame))<=16000)continuation.historicalCalculations=historicalCalculations;
    else {const unavailable={schemaVersion:'conversation-calculations@1',validity:'historical-only-not-current-evidence',items:[],unavailable:'context-capacity'};if(Buffer.byteLength(PREFIX+JSON.stringify({...frame,continuation:{...continuation,historicalCalculations:unavailable}}))<=16000)continuation.historicalCalculations=unavailable;}
   }
-  const question=PREFIX+JSON.stringify({request:text,previousReport:context,advisoryReview:advice,...(continuation?{continuation}: {})});if(Buffer.byteLength(question)>16000)fail('CONVERSATION_CONTEXT_TOO_LARGE');
+  const question=freeform?text:PREFIX+JSON.stringify({request:text,previousReport:context,advisoryReview:advice,...(continuation?{continuation}: {})});if(Buffer.byteLength(question)>16000)fail('CONVERSATION_CONTEXT_TOO_LARGE');
   const body={schemaVersion:'conversation-message@1',projectId:loc.meta.projectId,configSha256:admittedProject.configSha256,conversationId,messageId,runId:'conversation-'+hash([loc.meta.projectId,conversationId,messageId]).slice(0,40),input,question,...(continuationRoot?{continuationRoot}:{})};record={...body,digest:hash(body)};await immutable(join(loc.directory,'messages'),messageId+'.json',record);
  }
  let admission;try{admission=await readProjectJson(join(loc.directory,messageId+'.admitted.json'));}catch(e){if(e.code!=='ENOENT')throw e;}

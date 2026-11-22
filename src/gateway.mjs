@@ -61,16 +61,26 @@ function encodeMessages(messages) {
 // No authorization is implied by importing this adapter. CLI keeps live blocked.
 // The caller must supply an explicit reviewed grant; never derive it from data.
 export const CHAT_REQUEST_MAX_BYTES=1048576;
-export function createChatGateway({ endpoint, model, apiKey, authorization, stream = false, maxInputBytes = CHAT_REQUEST_MAX_BYTES, fetchImpl = globalThis.fetch }) {
+export const OPENCODE_GO_OWNER_PROVIDER='opencode-go-owner';
+export const OPENCODE_GO_CURRENT_ENDPOINT='https://opencode.ai/inference/go/openai/v1/chat/completions';
+export function directDeepSeekProfile({ provider, endpoint, model }) {
+  if (provider!=='deepseek-direct') return false;
+  if (endpoint!=='https://api.deepseek.com/chat/completions'||model!=='deepseek-flash') {
+    throw Object.assign(new Error('DEEPSEEK_DIRECT_PROFILE_INVALID'), {code:'DEEPSEEK_DIRECT_PROFILE_INVALID'});
+  }
+  return true;
+}
+export function createChatGateway({ provider, endpoint, model, apiKey, authorization, stream = false, maxInputBytes = CHAT_REQUEST_MAX_BYTES, fetchImpl = globalThis.fetch }) {
   if (authorization?.providerApproved !== true || !(authorization?.syntheticDataApproved === true || authorization?.dataApproved === true) || authorization?.costApproved !== true) throw new Error('LIVE_BLOCKED');
   if (!Number.isSafeInteger(maxInputBytes) || maxInputBytes < 1 || maxInputBytes > 1048576) throw new Error('Invalid input byte limit');
+  const directDeepSeek=directDeepSeekProfile({provider,endpoint,model});
   const url = new URL(endpoint);
   if (url.protocol !== 'https:' || url.username || url.password || url.search || url.hash || !url.pathname.endsWith('/chat/completions')) throw new Error('Invalid trusted endpoint');
   if (typeof model !== 'string' || !model || typeof apiKey !== 'string' || !apiKey) throw new Error('Missing trusted provider configuration');
   // Provider conversation metadata is not an authorization or an execution owner.
   // Native reservations bind Main/Child/reopen to one Root. Direct non-durable
   // callers get one opaque conversation per gateway instance, never per request.
-  const go = ['https://opencode.ai/zen/go/v1/chat/completions','https://opencode.ai/inference/go/openai/v1/chat/completions'].includes(url.href);
+  const go = ['https://opencode.ai/zen/go/v1/chat/completions',OPENCODE_GO_CURRENT_ENDPOINT].includes(url.href);
   const directSession = go ? randomUUID() : null;
   function requestHeaders(reservation) {
     const headers = { 'content-type': 'application/json', authorization: `Bearer ${apiKey}` };
@@ -79,7 +89,12 @@ export function createChatGateway({ endpoint, model, apiKey, authorization, stre
     if (typeof identity !== 'string' || !identity.trim() || identity.length > 256) throw Object.assign(new Error('GO_NATIVE_ROOT_REQUIRED'), { code: 'GO_NATIVE_ROOT_REQUIRED' });
     return { ...headers, 'user-agent': 'open-etf-agent/0.27', 'x-opencode-session': 'open-etf-agent-' + createHash('sha256').update(identity).digest('hex') };
   }
-  const encodeInput = ({messages,tools}) => JSON.stringify({ model, stream, ...(stream ? { stream_options: { include_usage: true } } : {}), n: 1, messages: encodeMessages(messages), tools: tools.map(t => ({ type: 'function', function: t })) });
+  // DeepSeek's thinking mode requires replaying reasoning_content on tool turns.
+  // This adapter only encodes durable tool messages, not provider reasoning.
+  // Keep the explicit direct profile in documented non-thinking mode every round.
+  const encodeInput = ({messages,tools}) => JSON.stringify({ model, stream, ...(stream ? { stream_options: { include_usage: true } } : {}),
+    ...(directDeepSeek ? {thinking:{type:'disabled'}} : {n:1}),
+    messages: encodeMessages(messages), tools: tools.map(t => ({ type: 'function', function: t })) });
   return {
     mode: 'live',
     inputBudget: Object.freeze({maxBytes:maxInputBytes,measure:input=>Buffer.byteLength(encodeInput(input))}),

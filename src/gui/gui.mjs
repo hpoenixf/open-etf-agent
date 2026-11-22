@@ -24,7 +24,7 @@ async function api(path, body) {
 function message(text) {
   const n = byId('notice'); n.hidden = !text; n.textContent = text ?? '';
 }
-function pendingKey() { return 'local-gui-pending@2:'+state.workspace.projectId; }
+function pendingKey() { return (ownerMode()?'local-gui-pending@3:':'local-gui-pending@2:')+state.workspace.projectId; }
 function draftKey(id = state.conversation) {
   return 'local-gui-draft@1:'+state.workspace.projectId+':'+(id ?? 'new');
 }
@@ -51,15 +51,22 @@ function restoreDraft() {
 }
 function clearMatchingDraft({conversationId,input}) {
   const saved = readDraft(conversationId);
-  if (saved?.question !== input.question || saved?.sourceId !== input.sourceId) return;
+  if (saved?.question !== input.question || !ownerMode() && saved?.sourceId !== input.sourceId) return;
   try { window.localStorage.removeItem(draftKey(conversationId)); }
   catch { /* Browser storage is optional. */ }
 }
 function fallbackTitle(id) { return '会话 · '+id.slice(-6); }
+const liveMode = () => state.workspace?.mode === 'live-research';
+const ownerMode = () => liveMode() && state.workspace?.liveNotice?.freeform === true;
+function confirmLive() {
+  const budget = state.workspace.liveNotice.maxModelCallsPerRun;
+  return window.confirm('将向启动时配置的真实模型发送本次问题，并提供所选演练资料。'
+    + '该任务最多调用模型 '+budget+' 次，费用由提供方计收。请勿输入敏感或未经授权的信息。确定继续？');
+}
 function controls() {
   const working = state.detail?.messages.some(m => m.working);
   byId('send').disabled = state.submitting || working === true || !state.workspace;
-  byId('send').textContent = state.pending ? '重试原提交' : '提交演练';
+  byId('send').textContent = state.pending ? '重试原提交' : liveMode() ? '提交真实模型' : '提交演练';
   byId('question').readOnly = Boolean(state.submitting || state.pending);
   byId('source').disabled = Boolean(state.submitting || state.pending);
   byId('new').disabled = Boolean(state.submitting || state.pending);
@@ -108,6 +115,12 @@ function render() {
     const status = isUnknown ? '结果未知' : m.working ? phaseLabels[m.phase] ?? '处理中' : statusLabels[m.status] ?? '状态待核对';
     header.append(make('strong','你'),make('span',status,'state'));
     article.append(header,make('p',m.question ?? '问题尚未读回','question'));
+    const providerFailure=(/^PROVIDER_HTTP_(403|429)$/).exec(m.code??'');
+    if (providerFailure) {
+      const guidance=providerFailure[1]==='403'?'提供方拒绝访问，请核对账户、地区及模型权限。'
+        :'提供方限制了请求，请核对可用额度或频率。';
+      article.append(make('p',m.code+' · '+guidance+' 本次未自动重发。','warning'));
+    }
     if (m.output?.warning) article.append(make('p',m.output.warning,'warning'));
     if (m.output?.answer && m.output.answer !== m.output?.report?.text) article.append(make('pre',m.output.answer));
     if (m.output?.report) {
@@ -149,12 +162,14 @@ function render() {
       actions.append(reuse);
     }
     if(actions.childElementCount) article.append(actions);
-    if (m.status === 'active' && !isUnknown) {
+    if (m.status === 'active' && !isUnknown && (!ownerMode() || m.sourceId===null)) {
       const action = m.working ? 'cancel' : 'work';
       const b = make('button',m.working?'取消本次':'继续原任务','secondary');
       b.type='button'; b.addEventListener('click',async()=> {
         try {
-          await api('/api/conversations/'+state.conversation+'/messages/'+m.id+'/'+action,{});
+          if (liveMode() && !ownerMode() && action==='work' && !confirmLive()) return;
+          await api('/api/conversations/'+state.conversation+'/messages/'+m.id+'/'+action,
+            liveMode()&&!ownerMode()&&action==='work'?{approveLive:true}:{});
           await refresh();
         } catch(e) { failed(e); }
       });
@@ -206,6 +221,23 @@ async function select(id) {
 }
 async function load() {
   state.workspace = await api('/api/workspace');
+  if (ownerMode()) {
+    const badge=byId('mode-badge');
+    badge.textContent='真实模型';
+    badge.title='提交后会向已配置的模型发送问题';
+    byId('mode-heading').textContent='今天想了解什么？';
+    byId('mode-intro').textContent='直接输入问题。回复保存在会话历史里。';
+    byId('mode-note').textContent='不联网检索新闻或行情。';
+    byId('source-picker').hidden=true;
+    byId('source').required=false;
+    byId('question').placeholder='输入你的问题';
+  } else if (liveMode()) {
+    const badge=byId('mode-badge');
+    badge.textContent='真实模型 · 仅本机';
+    badge.title='显式提交后会向已配置的提供方发送数据并可能计费';
+    byId('mode-intro').textContent='选择一份合成资料，明确同意后用所配置的模型生成可回读报告。';
+    byId('mode-note').textContent='真实模型，可能计费。每次提交前须同意发送本次问题与所选资料。';
+  }
   const s = byId('source'), old=s.value;
   s.replaceChildren();
   for (const source of state.workspace.sources) {
@@ -217,7 +249,7 @@ async function load() {
 async function create(initialDraft) {
   const c = await api('/api/conversations',{});
   await load();
-  if(initialDraft) { saveDraft(initialDraft,c.id); saveDraft({question:'',sourceId:state.workspace.sources[0].id},null); }
+  if(initialDraft) { saveDraft(initialDraft,c.id); saveDraft({question:'',sourceId:state.workspace.sources[0]?.id??''},null); }
   await select(c.id);
   return c.id;
 }
@@ -242,16 +274,17 @@ byId('composer').addEventListener('submit',async e=>{
   if (state.submitting) return;
   const q=byId('question');
   if (!q.value.trim() && !state.pending) return;
+  if (liveMode() && !ownerMode() && !confirmLive()) return;
   try {
     message(); state.submitting=true; controls();
     const original = formDraft();
     if (!state.conversation) await create(original);
     else if (!state.pending) saveDraft(original);
     state.pending ??= { conversationId:state.conversation,
-      input:{messageId:'m'+Date.now()+'-'+crypto.randomUUID().replaceAll('-','').slice(0,24),question:original.question,sourceId:original.sourceId} };
+      input:{messageId:'m'+Date.now()+'-'+crypto.randomUUID().replaceAll('-','').slice(0,24),question:original.question,...(ownerMode()?{}:{sourceId:original.sourceId})} };
     sessionStorage.setItem(pendingKey(),JSON.stringify(state.pending));
     const {conversationId,input}=state.pending;
-    await api('/api/conversations/'+conversationId+'/messages',input);
+    await api('/api/conversations/'+conversationId+'/messages',liveMode()&&!ownerMode()?{...input,approveLive:true}:input);
     clearMatchingDraft(state.pending);
     state.pending=null; sessionStorage.removeItem(pendingKey()); q.value='';
     await select(conversationId);
@@ -261,7 +294,8 @@ byId('composer').addEventListener('submit',async e=>{
 try {
   await load();
   const stored = sessionStorage.getItem(pendingKey());
-  const legacy = sessionStorage.getItem('local-gui-pending@1');
+  const legacy = sessionStorage.getItem('local-gui-pending@1')
+    || (ownerMode() && sessionStorage.getItem('local-gui-pending@2:'+state.workspace.projectId));
   const pending=stored ? JSON.parse(stored):null;
   const wanted=pending?.conversationId ?? location.hash.slice(1);
   const existing=state.workspace.conversations.find(c=>c.id===wanted) ?? state.workspace.conversations[0];

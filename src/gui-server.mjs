@@ -8,9 +8,10 @@ import {
   createConversation, inspectConversation, readConversationMessage, readConversationInput, readConversationTitle, titleForConversationInput, submitConversationMessage,
   workConversationMessage, cancelConversationMessage,
 } from './conversation.mjs';
-import { createResearchProject, inspectResearchProject, inspectResearchTask, validateResearchConfig } from './research-project.mjs';
+import { createResearchProject, inspectResearchProject, inspectResearchTask, supportsOwnerFreeform, validateResearchConfig } from './research-project.mjs';
 import { importProjectSources } from './project-sources.mjs';
 import { safeDirectory } from './storage-files.mjs';
+import { prepareGuiLiveConfig } from './gui-live-config.mjs';
 
 const routeId = '[A-Za-z0-9_-]{1,48}';
 const idPattern = new RegExp('^'+routeId+'$');
@@ -75,27 +76,33 @@ function demoGateway(source) {
     },
   };
 }
-async function demoProject(projectDir) {
+async function guiProject(projectDir, expectedConfig, live, freeform) {
   let project;
   try { project = await inspectResearchProject({ projectDir }); }
   catch (e) {
     if (e.code !== 'ENOENT') throw e;
-    project = await createResearchProject({ directory: projectDir, config });
+    project = await createResearchProject({ directory: projectDir, config:expectedConfig });
   }
-  if (!isDeepStrictEqual(project.config, validatedConfig)) {
-    reject(400, 'GUI_DEMO_PROJECT_REQUIRED');
+  if (!isDeepStrictEqual(project.config, expectedConfig)) {
+    reject(400, live?'GUI_LIVE_PROJECT_REQUIRED':'GUI_DEMO_PROJECT_REQUIRED');
   }
   projectDir = await safeDirectory(projectDir);
-  const sources = await Promise.all(seedFiles.map(async ([name, title]) => {
+  const sources = freeform?[]:await Promise.all(seedFiles.map(async ([name, title]) => {
     const { manifestSha256, catalog } = await importProjectSources({ projectDir, files: [fileURLToPath(new URL(name, uiRoot))] });
     return { id: manifestSha256, title, documentId: catalog.documents[0].id };
   }));
   return { projectDir, sources, projectId: project.projectId };
 }
 
-export async function startLocalGui({ projectDir, port = 0 } = {}) {
+export async function startLocalGui({ projectDir, port = 0, liveConfig, env = process.env, fetchImpl } = {}) {
   if (!Number.isInteger(port) || port < 0 || port > 65535) reject(400, 'INVALID_GUI_PORT');
-  const demo = await demoProject(projectDir);
+  const live = liveConfig === undefined ? null : prepareGuiLiveConfig(liveConfig,env);
+  const mode = live?'live-research':'offline-demo';
+  const expectedConfig=live?.config??validatedConfig;
+  const wrongProject=live?'GUI_LIVE_PROJECT_REQUIRED':'GUI_DEMO_PROJECT_REQUIRED';
+  const freeform=supportsOwnerFreeform(expectedConfig);
+  const needsConsent=live&&!freeform;
+  const demo = await guiProject(projectDir, expectedConfig, live, freeform);
   projectDir = demo.projectDir;
   const assetsByPath = new Map(await Promise.all([...assets].map(async ([route, [name,type]]) =>
     [route, { bytes: await readFile(new URL(name, uiRoot)), type }]
@@ -155,9 +162,10 @@ export async function startLocalGui({ projectDir, port = 0 } = {}) {
     if (working?.key === key) return;
     if (working) reject(409, 'GUI_WORKER_BUSY');
     const source = sourceFor(sourceId);
-    if (!source) reject(409, 'GUI_SOURCE_UNKNOWN');
+    if (freeform?sourceId!==null:!source) reject(409, 'GUI_SOURCE_UNKNOWN');
     const p = Promise.resolve().then(() =>
-      workConversationMessage({ projectDir, conversationId, messageId, gateway: demoGateway(source), hostSignal: hostSignal.signal })
+      workConversationMessage({ projectDir, conversationId, messageId,
+        ...(live?{apiKey:live.apiKey,fetchImpl}:{gateway:demoGateway(source)}), hostSignal: hostSignal.signal })
     ).catch(() => { /* Lifecycle and original execution evidence remain in Project. */ });
     working = { key, p };
     p.finally(() => { if (working?.p === p) working = null; });
@@ -181,7 +189,8 @@ export async function startLocalGui({ projectDir, port = 0 } = {}) {
         const asset = assetsByPath.get(req.url);
         if (asset) return send(200, asset.bytes, asset.type+'; charset=utf-8');
         if (req.url === '/api/workspace') return send(200, {
-          schemaVersion: 'local-gui@1', mode: 'offline-demo',
+          schemaVersion: 'local-gui@1', mode,
+          ...(live?{liveNotice:{maxModelCallsPerRun:expectedConfig.limits.model,...(freeform?{freeform:true}:{})}}:{}),
           capabilities: ['conversations','progress','reports','sources'],
           projectId: demo.projectId, conversations: await list({titles:true}), sources: publicSources,
         });
@@ -211,20 +220,31 @@ export async function startLocalGui({ projectDir, port = 0 } = {}) {
       const [,conversationId,messageId,action] = match;
       if (!action) {
         const input = await inputFor(req);
-        if (!exact(input, ['messageId','question','sourceId']) || typeof input.messageId !== 'string'
+        if (needsConsent && input?.approveLive!==true) reject(400,'GUI_LIVE_APPROVAL_REQUIRED');
+        if (!exact(input, freeform?['messageId','question']:needsConsent?['messageId','question','sourceId','approveLive']:['messageId','question','sourceId']) || typeof input.messageId !== 'string'
           || !idPattern.test(input.messageId) || typeof input.question !== 'string' || !input.question.trim()
-          || Buffer.byteLength(input.question)>12000 || !sourceFor(input.sourceId)) reject(400,'INVALID_MESSAGE');
+          || Buffer.byteLength(input.question)>12000 || !freeform&&!sourceFor(input.sourceId)) reject(400,'INVALID_MESSAGE');
         if (submitting || (working && working.key !== workKey(conversationId,input.messageId))) reject(409,'GUI_WORKER_BUSY');
         submitting = workKey(conversationId,input.messageId);
         try {
-          if (!isDeepStrictEqual((await inspectResearchProject({projectDir})).config,validatedConfig)) reject(409,'GUI_DEMO_PROJECT_REQUIRED');
+          if (!isDeepStrictEqual((await inspectResearchProject({projectDir})).config,expectedConfig)) reject(409,wrongProject);
+          // A live replay acknowledges the same accepted intent. It does not restart work.
+          let retry=false;
+          if (live) {
+            try { await readConversationInput({projectDir,conversationId,messageId:input.messageId}); retry=true; }
+            catch (error) { if (error.code!=='ENOENT') throw error; }
+          }
+          const sourceId=freeform?null:input.sourceId;
           const m = await submitConversationMessage({ projectDir, conversationId, messageId: input.messageId,
-            text: input.question, sourceManifestSha256: input.sourceId });
-          if (m.status === 'active') begin(conversationId,input.messageId,input.sourceId);
+            text: input.question, sourceManifestSha256: sourceId,
+            ...(live?{authorization:{providerApproved:true,dataApproved:true,costApproved:true}}:{}) });
+          if (m.status === 'active' && !retry) begin(conversationId,input.messageId,sourceId);
           return send(202,{ id:m.messageId,runId:m.runId,status:m.status });
         } finally { submitting = null; }
       }
-      if (!exact(await inputFor(req), [])) reject(400,'INVALID_ACTION');
+      const actionInput=await inputFor(req);
+      if (needsConsent && action==='work' && actionInput?.approveLive!==true) reject(400,'GUI_LIVE_APPROVAL_REQUIRED');
+      if (!exact(actionInput,needsConsent&&action==='work'?['approveLive']:[])) reject(400,'INVALID_ACTION');
       const m = await inspectConversation({ projectDir, conversationId });
       const found = m.messages.find(x => x.messageId === messageId);
       if (!found || found.status === 'admission-pending') reject(404,'NOT_FOUND');
@@ -234,7 +254,8 @@ export async function startLocalGui({ projectDir, port = 0 } = {}) {
       }
       if (submitting || found.status !== 'active') reject(409,'RUN_NOT_ACTIVE');
       const { definition } = await inspectResearchTask({ projectDir,runId:found.runId });
-      if (!isDeepStrictEqual(definition.config,validatedConfig)) reject(409,'GUI_DEMO_PROJECT_REQUIRED');
+      if (!isDeepStrictEqual(definition.config,expectedConfig)) reject(409,wrongProject);
+      if (freeform&&definition.sourceManifestSha256!==null) reject(409,'GUI_LIVE_LEGACY_RETRY_DISABLED');
       begin(conversationId,messageId,definition.sourceManifestSha256);
       return send(202, { id: messageId });
     } catch (e) {
@@ -251,7 +272,7 @@ export async function startLocalGui({ projectDir, port = 0 } = {}) {
   });
   origin = 'http://127.0.0.1:' + server.address().port;
   let closing;
-  return { origin, async close() {
+  return { origin, mode, async close() {
     if (!closing) {
       hostSignal.abort();
       closing = new Promise((resolve,reject) => server.close(e => e ? reject(e) : resolve()));

@@ -98,7 +98,8 @@ export async function createToolHost({ directory, extensions = [], hooks, allowe
   const catalog=documentCatalog===undefined?undefined:normalizeDocumentCatalog(documentCatalog);
   if(protection&&catalog)fail('CUSTOM_PROTECTED_CATALOG_UNSUPPORTED');
   const pdfDocumentId=pdfInput?.snapshot===undefined?undefined:'pdf:'+normalizePdfSnapshot(pdfInput.snapshot).originalSha256;
-  const input = catalog ?? JSON.parse(await readFile(new URL('../fixtures/documents.json', import.meta.url), 'utf8'));
+  const noToolSources=!catalog&&allowedTools?.length===0&&allowedDocuments===undefined;
+  const input = catalog ?? (noToolSources ? {documents:[]} : JSON.parse(await readFile(new URL('../fixtures/documents.json', import.meta.url), 'utf8')));
   if (allowedDocuments !== undefined && (!Array.isArray(allowedDocuments) || !allowedDocuments.length || allowedDocuments.some(id => id!==pdfDocumentId&&!input.documents.some(d => d.id === id)))) fail('Invalid document allowlist');
   const documents = new Map(input.documents.filter(d => allowedDocuments === undefined || allowedDocuments.includes(d.id)).map(d => [d.id, d]));
   const results = await createResultStore({ directory, allowedDocuments, readOnly, ...(hostProjection?{derivedOwner:projectionOwner}:{}) });
