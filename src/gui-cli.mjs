@@ -1,17 +1,27 @@
 import { resolve } from 'node:path';
 import { startLocalGui } from './gui-server.mjs';
+import { readProjectJson } from './research-project.mjs';
 
 let gui;
 try {
-  const args = process.argv.slice(2);
-  if (![2,4].includes(args.length) || args[0] !== '--project' || !args[1]
-      || (args.length === 4 && (args[2] !== '--port' || !/^\d+$/.test(args[3])))) {
-    throw new Error('Usage: npm run gui -- --project DIR [--port N]');
+  const args = process.argv.slice(2), options=new Map();
+  if (args.length%2!==0) throw new Error('INVALID_OPTIONS');
+  for (let i=0;i<args.length;i+=2) {
+    const [flag,value]=args.slice(i,i+2);
+    if (!['--project','--port','--live-config'].includes(flag)||options.has(flag)||!value||value.startsWith('--')) throw new Error('INVALID_OPTIONS');
+    options.set(flag,value);
   }
-  gui = await startLocalGui({ projectDir: resolve(args[1]), port: args.length === 4 ? Number(args[3]) : 0 });
-  process.stdout.write(JSON.stringify({ origin:gui.origin, mode:'offline-demo', providerCalls:0 })+'\n');
+  if (!options.has('--project')||(options.has('--port')&&!/^\d+$/.test(options.get('--port')))) throw new Error('INVALID_OPTIONS');
+  const liveConfig=options.has('--live-config')?await readProjectJson(options.get('--live-config'),16384):undefined;
+  gui = await startLocalGui({
+    projectDir: resolve(options.get('--project')),
+    port: options.has('--port')?Number(options.get('--port')):0,
+    liveConfig,
+  });
+  process.stdout.write(JSON.stringify({ origin:gui.origin, mode:gui.mode, providerCalls:0 })+'\n');
   await new Promise(resolve => { process.once('SIGINT',resolve);process.once('SIGTERM',resolve); });
 } catch (e) {
-  process.stderr.write('GUI_START_FAILED: '+(e.code ?? 'Check project path and command options')+'\n');
+  const code=typeof e?.code==='string'&&/^[A-Z][A-Z0-9_]{1,80}$/.test(e.code)?e.code:null;
+  process.stderr.write('GUI_START_FAILED: '+(code??'Usage: npm run gui -- --project DIR [--port N] [--live-config FILE]')+'\n');
   process.exitCode = 1;
 } finally { await gui?.close(); }

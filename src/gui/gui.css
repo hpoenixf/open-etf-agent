@@ -50,6 +50,7 @@ pre{font:inherit;margin:.4rem 0 1rem;white-space:pre-wrap;overflow-wrap:anywhere
 #composer{margin-top:1rem;padding:.9rem;background:var(--paper);border:1px solid var(--line);border-radius:.85rem}
 #composer label{font-size:.82rem;font-weight:670}
 .source-picker{display:flex;gap:.55rem;align-items:center;flex-wrap:wrap;margin-bottom:.55rem}
+.source-picker[hidden]{display:none}
 select,textarea{color:var(--ink);border:1px solid var(--line);border-radius:.45rem;background:white;padding:.55rem}
 select{min-height:44px}
 textarea{width:100%;resize:vertical;display:block;margin-top:.25rem;min-height:5.3rem}
@@ -80,3 +81,8 @@ dialog::backdrop{background:#14282480}
 #history-search:focus-visible,.download:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
 .turn-actions{display:flex;align-items:center;flex-wrap:wrap}
 .download{display:inline-flex;min-height:44px;padding:.5rem .75rem;border:1px solid var(--line);border-radius:.55rem;color:var(--ink);text-decoration:none;align-items:center;font-weight:600}
+
+.research-progress { margin-block: .8rem; padding: .55rem .7rem; border: 1px solid currentColor; border-radius: .45rem; }
+.research-progress summary { cursor: pointer; font-weight: 600; }
+.research-progress-body ol { margin: .35rem 0 .15rem; padding-inline-start: 1.5rem; }
+.research-progress-body li { margin-block: .25rem; }

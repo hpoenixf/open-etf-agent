@@ -1,9 +1,9 @@
 {
   "schemaVersion": 2,
-  "reviewedVersion": "0.39.0",
-  "reviewedSource": "aa2104e52c8ba9c16822387e7c3c0709531b221e",
+  "reviewedVersion": "0.41.0",
+  "reviewedSource": "762b78387d209582b2a49cc2495d94f5b42470aa",
   "articleSource": "https://github.com/hpoenixf/eff-agent-article/blob/249f0b866f9446f33b57f186fbc6d35b5d82c119/articles/open-etf-agent-v010-system-design.md",
-  "evidence": "docs/verification/v039-release.md",
+  "evidence": "docs/verification/v041-release-candidate.md",
   "layers": [
     {
       "id": "L1",
@@ -255,14 +255,14 @@
       "group": "task",
       "name": "Conversation",
       "summary": {
-        "zh": "澄清与显式继续",
-        "en": "Clarify and continue"
+        "zh": "同会话有限追问",
+        "en": "Bounded same-conversation follow-ups"
       },
       "boundary": {
-        "zh": "收到回复 ≠ 已采用",
-        "en": "Received ≠ adopted"
+        "zh": "附资料即隔离，不重跑旧任务",
+        "en": "Attachment boundary; no old Run replay"
       },
-      "status": "bounded",
+      "status": "enhanced",
       "source": "src/conversation.mjs",
       "kind": "module",
       "article": {
@@ -730,14 +730,14 @@
       "group": "tools",
       "name": "Web Acquisition",
       "summary": {
-        "zh": "采集公开静态页",
-        "en": "Acquire public static pages"
+        "zh": "搜索并读取公开静态页",
+        "en": "Discover and read public pages"
       },
       "boundary": {
-        "zh": "无浏览器渲染与爬虫",
-        "en": "No browser rendering or crawler"
+        "zh": "摘要不是原文证据",
+        "en": "Search snippets are not evidence"
       },
-      "status": "bounded",
+      "status": "enhanced",
       "source": "src/web-acquisition.mjs",
       "kind": "module",
       "article": {
@@ -755,14 +755,14 @@
       "group": "tools",
       "name": "PDF",
       "summary": {
-        "zh": "引用原生 PDF 单元格并回读原页",
-        "en": "Trace PDF cells to the original page"
+        "zh": "文字 PDF 附件和原页回读",
+        "en": "Text PDF and original page readback"
       },
       "boundary": {
-        "zh": "无 OCR / 视觉表格解析",
-        "en": "No OCR / visual table parsing"
+        "zh": "无 OCR / 视觉解析",
+        "en": "No OCR / visual parsing"
       },
-      "status": "bounded",
+      "status": "enhanced",
       "source": "src/pdf-input.mjs",
       "kind": "module",
       "article": {
@@ -1055,12 +1055,12 @@
       "group": "delivery",
       "name": "Local Research GUI",
       "summary": {
-        "zh": "会话、研究报告与原文",
-        "en": "Conversations, reports and sources"
+        "zh": "持有人问答与可见研究进度",
+        "en": "Owner Q&A with observable progress"
       },
       "boundary": {
-        "zh": "本机离线演练，只用模拟资料",
-        "en": "Loopback demo with synthetic sources"
+        "zh": "默认离线，单操作员",
+        "en": "Offline default; single operator"
       },
       "status": "enhanced",
       "source": "src/gui-server.mjs",

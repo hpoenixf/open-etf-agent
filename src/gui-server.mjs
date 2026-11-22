@@ -8,13 +8,19 @@ import {
   createConversation, inspectConversation, readConversationMessage, readConversationInput, readConversationTitle, titleForConversationInput, submitConversationMessage,
   workConversationMessage, cancelConversationMessage,
 } from './conversation.mjs';
-import { createResearchProject, inspectResearchProject, inspectResearchTask, validateResearchConfig } from './research-project.mjs';
-import { importProjectSources } from './project-sources.mjs';
-import { safeDirectory } from './storage-files.mjs';
+import { createResearchProject, inspectResearchProject, inspectResearchTask, readProjectJson, supportsOwnerFreeform, updateResearchProject, validateResearchConfig } from './research-project.mjs';
+import { importProjectSources, importUploadedPdf, PROJECT_SOURCE_LIMITS } from './project-sources.mjs';
+import { ensureSafeDirectory, publishImmutable, safeDirectory } from './storage-files.mjs';
+import { prepareOwnerSearch } from './gui-owner-web.mjs';
+import { readGuiResearchProgress } from './gui-progress.mjs';
+import { prepareGuiLiveConfig } from './gui-live-config.mjs';
 
 const routeId = '[A-Za-z0-9_-]{1,48}';
 const idPattern = new RegExp('^'+routeId+'$');
 const conversationPath = new RegExp('^/api/conversations/('+routeId+')$');
+const pdfPath = new RegExp('^/api/conversations/('+routeId+')/pdf$');
+const pdfId = /^[a-f0-9]{64}$/;
+const progressPath = new RegExp('^/api/conversations/('+routeId+')/messages/('+routeId+')/progress$');
 const reportPath = new RegExp('^/api/conversations/('+routeId+')/messages/('+routeId+')/report[.]md$');
 const actionPath = new RegExp('^/api/conversations/('+routeId+')/messages(?:/('+routeId+')/(work|cancel))?$');
 const config = {
@@ -34,16 +40,20 @@ function reject(status, code) { throw new RequestError(status, code); }
 function exact(input, keys) {
   return input && !Array.isArray(input) && Object.keys(input).sort().join() === [...keys].sort().join();
 }
-async function inputFor(req) {
-  if (req.headers['content-type']?.split(';',1)[0].trim() !== 'application/json') reject(415, 'JSON_REQUIRED');
+async function readBody(req,limit) {
   const chunks = [];
   let size = 0;
   for await (const chunk of req) {
     size += chunk.length;
-    if (size > 18432) reject(413, 'INPUT_TOO_LARGE');
+    if (size > limit) reject(413, 'INPUT_TOO_LARGE');
     chunks.push(chunk);
   }
-  try { return JSON.parse(Buffer.concat(chunks)); }
+  return Buffer.concat(chunks);
+}
+async function inputFor(req) {
+  if (req.headers['content-type']?.split(';',1)[0].trim() !== 'application/json') reject(415, 'JSON_REQUIRED');
+  const bytes=await readBody(req,18432);
+  try { return JSON.parse(bytes); }
   catch { reject(400, 'INVALID_JSON'); }
 }
 function projectedOutput(output) {
@@ -55,7 +65,7 @@ function projectedOutput(output) {
     report: output.report ? {
       text: output.report.text, sha256: output.report.sha256, revisionId: output.revision.revisionId,
     } : null,
-    sources: output.revision?.sources?.map(({ sourceId, text, sha256 }) => ({ sourceId, text, sha256 })) ?? [],
+    sources: output.revision?.sources?.map(({ sourceId, text, sha256, page, pdf }) => ({ sourceId, text, sha256, ...(pdf?{pdfPage:page}: {}) })) ?? [],
     warning: output.deliveryWarning ?? output.answer?.warning ?? null,
   };
 }
@@ -75,27 +85,44 @@ function demoGateway(source) {
     },
   };
 }
-async function demoProject(projectDir) {
+async function guiProject(projectDir, expectedConfig, live, freeform) {
   let project;
   try { project = await inspectResearchProject({ projectDir }); }
   catch (e) {
     if (e.code !== 'ENOENT') throw e;
-    project = await createResearchProject({ directory: projectDir, config });
+    project = await createResearchProject({ directory: projectDir, config:expectedConfig });
   }
-  if (!isDeepStrictEqual(project.config, validatedConfig)) {
-    reject(400, 'GUI_DEMO_PROJECT_REQUIRED');
+  if (!isDeepStrictEqual(project.config, expectedConfig)) {
+    const {ownerConnectivity:oldConnectivity,...oldBase}=project.config;
+    const {ownerConnectivity:nextConnectivity,...nextBase}=expectedConfig;
+    // Only the trusted launch config can change connectivity on this existing
+    // owner project. Other changes still fail closed. Old Run definitions
+    // retain their original profile and historical readback.
+    if(!freeform||!isDeepStrictEqual(oldBase,nextBase)||!nextConnectivity&&!oldConnectivity) {
+      reject(400, live?'GUI_LIVE_PROJECT_REQUIRED':'GUI_DEMO_PROJECT_REQUIRED');
+    }
+    project=await updateResearchProject({projectDir,config:expectedConfig,expectedConfigSha256:project.configSha256});
   }
   projectDir = await safeDirectory(projectDir);
-  const sources = await Promise.all(seedFiles.map(async ([name, title]) => {
+  const sources = freeform?[]:await Promise.all(seedFiles.map(async ([name, title]) => {
     const { manifestSha256, catalog } = await importProjectSources({ projectDir, files: [fileURLToPath(new URL(name, uiRoot))] });
     return { id: manifestSha256, title, documentId: catalog.documents[0].id };
   }));
   return { projectDir, sources, projectId: project.projectId };
 }
 
-export async function startLocalGui({ projectDir, port = 0 } = {}) {
+export async function startLocalGui({ projectDir, port = 0, liveConfig, env = process.env, fetchImpl, ownerWebTransport } = {}) {
   if (!Number.isInteger(port) || port < 0 || port > 65535) reject(400, 'INVALID_GUI_PORT');
-  const demo = await demoProject(projectDir);
+  const live = liveConfig === undefined ? null : prepareGuiLiveConfig(liveConfig,env);
+  const mode = live?'live-research':'offline-demo';
+  const expectedConfig=live?.config??validatedConfig;
+  const wrongProject=live?'GUI_LIVE_PROJECT_REQUIRED':'GUI_DEMO_PROJECT_REQUIRED';
+  const freeform=supportsOwnerFreeform(expectedConfig);
+  const needsConsent=live&&!freeform;
+  const connectivity=expectedConfig.ownerConnectivity??{};
+  const ownerSearchSettings=Object.fromEntries([connectivity.search,...(connectivity.searchAlternates??[])].filter(Boolean).map(provider=>[provider,prepareOwnerSearch(provider,env)]));
+  const ownerWindSettings=connectivity.wind?((await import('./gui-owner-wind.mjs')).prepareOwnerWind(true,env)):undefined;
+  const demo = await guiProject(projectDir, expectedConfig, live, freeform);
   projectDir = demo.projectDir;
   const assetsByPath = new Map(await Promise.all([...assets].map(async ([route, [name,type]]) =>
     [route, { bytes: await readFile(new URL(name, uiRoot)), type }]
@@ -145,19 +172,30 @@ export async function startLocalGui({ projectDir, port = 0 } = {}) {
         id: m.messageId, runId: m.runId, status, phase: run?.snapshot?.phase ?? null,
         // A worker can finish during these reads. Keep polling an active snapshot.
         code: run?.snapshot?.code ?? null, working: status === 'active' && (workerWasRunning || working?.key === key),
-        question: input.text, sourceId: input.sourceManifestSha256, output, error,
+        question: input.text, sourceId: input.sourceManifestSha256, ...(freeform&&input.sourceManifestSha256?{attachment:await pdfAttachment(conversationId,input.sourceManifestSha256)}:{}), output, error,
       });
     }
     return { id: c.conversationId, title: titleForConversationInput(messages[0]?.question), messages };
+  }
+  let uploading=false;
+  const pdfDirectory=conversationId=>join(projectDir,'conversations',conversationId,'pdf-uploads');
+  async function pdfAttachment(conversationId,id) {
+    if(typeof id!=='string'||!pdfId.test(id)) return null;
+    try {
+      const {id:storedId,name,pages}=await readProjectJson(join(pdfDirectory(conversationId),id+'.json'),4096);
+      if(storedId!==id||typeof name!=='string'||!Number.isSafeInteger(pages)||pages<1||pages>16) reject(500,'GUI_PDF_METADATA_INVALID');
+      return {id,name,pages};
+    } catch(e) { if(e.code==='ENOENT')return null; throw e; }
   }
   function begin(conversationId, messageId, sourceId) {
     const key = workKey(conversationId, messageId);
     if (working?.key === key) return;
     if (working) reject(409, 'GUI_WORKER_BUSY');
     const source = sourceFor(sourceId);
-    if (!source) reject(409, 'GUI_SOURCE_UNKNOWN');
+    if (!freeform&&!source) reject(409, 'GUI_SOURCE_UNKNOWN');
     const p = Promise.resolve().then(() =>
-      workConversationMessage({ projectDir, conversationId, messageId, gateway: demoGateway(source), hostSignal: hostSignal.signal })
+      workConversationMessage({ projectDir, conversationId, messageId,
+        ...(live?{apiKey:live.apiKey,fetchImpl,ownerWebTransport,ownerWindSettings,ownerSearchSettings}:{gateway:demoGateway(source)}), hostSignal: hostSignal.signal })
     ).catch(() => { /* Lifecycle and original execution evidence remain in Project. */ });
     working = { key, p };
     p.finally(() => { if (working?.p === p) working = null; });
@@ -181,10 +219,20 @@ export async function startLocalGui({ projectDir, port = 0 } = {}) {
         const asset = assetsByPath.get(req.url);
         if (asset) return send(200, asset.bytes, asset.type+'; charset=utf-8');
         if (req.url === '/api/workspace') return send(200, {
-          schemaVersion: 'local-gui@1', mode: 'offline-demo',
-          capabilities: ['conversations','progress','reports','sources'],
+          schemaVersion: 'local-gui@1', mode,
+          ...(live?{liveNotice:{maxModelCallsPerRun:expectedConfig.limits.model,...(freeform?{freeform:true,connectivity:{web:connectivity.web===true,search:!!connectivity.search,...(connectivity.search?{searchProvider:connectivity.search}:{}),...(connectivity.searchAlternates?{searchAlternates:connectivity.searchAlternates}:{}),wind:connectivity.wind===true}}:{})}}:{}),
+          capabilities: ['conversations','progress','reports','sources',...(freeform?['pdf-attachment']:[])],
           projectId: demo.projectId, conversations: await list({titles:true}), sources: publicSources,
         });
+        const progressMatch=progressPath.exec(req.url);
+        if(progressMatch){
+          const [,conversationId,messageId]=progressMatch;
+          const conversation=await inspectConversation({projectDir,conversationId});
+          const turn=conversation.messages.find(entry=>entry.messageId===messageId);
+          if(!turn)reject(404,'NOT_FOUND');
+          const run=turn.status==='admission-pending'?null:(await inspectResearchTask({projectDir,runId:turn.runId})).run;
+          return send(200,await readGuiResearchProgress(projectDir,run));
+        }
         const reportMatch = reportPath.exec(req.url);
         if (reportMatch) {
           const [,conversationId,messageId] = reportMatch;
@@ -206,25 +254,57 @@ export async function startLocalGui({ projectDir, port = 0 } = {}) {
         await createConversation({ projectDir, conversationId });
         return send(201, { id: conversationId });
       }
+      const pdfMatch=pdfPath.exec(req.url);
+      if(pdfMatch) {
+        if(!freeform)reject(404,'NOT_FOUND');
+        if(req.headers['content-type']!=='application/pdf'||req.headers['content-encoding']!==undefined)reject(415,'GUI_PDF_CONTENT_TYPE');
+        if(Number(req.headers['content-length'])>PROJECT_SOURCE_LIMITS.originalBytes)reject(413,'INPUT_TOO_LARGE');
+        if(uploading)reject(409,'GUI_PDF_UPLOAD_BUSY');
+        uploading=true;
+        try {
+          const [,conversationId]=pdfMatch;
+          await inspectConversation({projectDir,conversationId});
+          let name;try{name=decodeURIComponent(req.headers['x-pdf-name']??'');}catch{reject(400,'GUI_PDF_NAME_INVALID');}
+          const directory=await ensureSafeDirectory(pdfDirectory(conversationId));
+          const bytes=await readBody(req,PROJECT_SOURCE_LIMITS.originalBytes);
+          const source=await importUploadedPdf({projectDir,bytes,name,signal:hostSignal.signal});
+          try{await publishImmutable(directory,source.id+'.json',Buffer.from(JSON.stringify(source)),hostSignal.signal);}
+          catch(e){if(e.code!=='EEXIST'||!isDeepStrictEqual(await pdfAttachment(conversationId,source.id),source))throw e;}
+          return send(201,source);
+        }finally{uploading=false;}
+      }
       const match = actionPath.exec(req.url);
       if (!match) reject(404,'NOT_FOUND');
       const [,conversationId,messageId,action] = match;
       if (!action) {
         const input = await inputFor(req);
-        if (!exact(input, ['messageId','question','sourceId']) || typeof input.messageId !== 'string'
+        if (needsConsent && input?.approveLive!==true) reject(400,'GUI_LIVE_APPROVAL_REQUIRED');
+        if (!exact(input, freeform?(Object.hasOwn(input??{},'attachmentId')?['messageId','question','attachmentId']:['messageId','question']):needsConsent?['messageId','question','sourceId','approveLive']:['messageId','question','sourceId']) || typeof input.messageId !== 'string'
           || !idPattern.test(input.messageId) || typeof input.question !== 'string' || !input.question.trim()
-          || Buffer.byteLength(input.question)>12000 || !sourceFor(input.sourceId)) reject(400,'INVALID_MESSAGE');
+          || Buffer.byteLength(input.question)>12000 || !freeform&&!sourceFor(input.sourceId)) reject(400,'INVALID_MESSAGE');
         if (submitting || (working && working.key !== workKey(conversationId,input.messageId))) reject(409,'GUI_WORKER_BUSY');
         submitting = workKey(conversationId,input.messageId);
         try {
-          if (!isDeepStrictEqual((await inspectResearchProject({projectDir})).config,validatedConfig)) reject(409,'GUI_DEMO_PROJECT_REQUIRED');
+          if (!isDeepStrictEqual((await inspectResearchProject({projectDir})).config,expectedConfig)) reject(409,wrongProject);
+          // A live replay acknowledges the same accepted intent. It does not restart work.
+          let retry=false;
+          if (live) {
+            try { await readConversationInput({projectDir,conversationId,messageId:input.messageId}); retry=true; }
+            catch (error) { if (error.code!=='ENOENT') throw error; }
+          }
+          const attachment=freeform&&Object.hasOwn(input,'attachmentId')?await pdfAttachment(conversationId,input.attachmentId):null;
+          if(freeform&&Object.hasOwn(input,'attachmentId')&&!attachment) reject(400,'GUI_PDF_ATTACHMENT_UNKNOWN');
+          const sourceId=freeform?(attachment?.id??null):input.sourceId;
           const m = await submitConversationMessage({ projectDir, conversationId, messageId: input.messageId,
-            text: input.question, sourceManifestSha256: input.sourceId });
-          if (m.status === 'active') begin(conversationId,input.messageId,input.sourceId);
+            text: input.question, sourceManifestSha256: sourceId,
+            ...(live?{authorization:{providerApproved:true,dataApproved:true,costApproved:true}}:{}) });
+          if (m.status === 'active' && !retry) begin(conversationId,input.messageId,sourceId);
           return send(202,{ id:m.messageId,runId:m.runId,status:m.status });
         } finally { submitting = null; }
       }
-      if (!exact(await inputFor(req), [])) reject(400,'INVALID_ACTION');
+      const actionInput=await inputFor(req);
+      if (needsConsent && action==='work' && actionInput?.approveLive!==true) reject(400,'GUI_LIVE_APPROVAL_REQUIRED');
+      if (!exact(actionInput,needsConsent&&action==='work'?['approveLive']:[])) reject(400,'INVALID_ACTION');
       const m = await inspectConversation({ projectDir, conversationId });
       const found = m.messages.find(x => x.messageId === messageId);
       if (!found || found.status === 'admission-pending') reject(404,'NOT_FOUND');
@@ -234,12 +314,13 @@ export async function startLocalGui({ projectDir, port = 0 } = {}) {
       }
       if (submitting || found.status !== 'active') reject(409,'RUN_NOT_ACTIVE');
       const { definition } = await inspectResearchTask({ projectDir,runId:found.runId });
-      if (!isDeepStrictEqual(definition.config,validatedConfig)) reject(409,'GUI_DEMO_PROJECT_REQUIRED');
+      if (!isDeepStrictEqual(definition.config,expectedConfig)) reject(409,wrongProject);
+      if (freeform&&definition.sourceManifestSha256!==null&&!(await pdfAttachment(conversationId,definition.sourceManifestSha256))) reject(409,'GUI_LIVE_LEGACY_RETRY_DISABLED');
       begin(conversationId,messageId,definition.sourceManifestSha256);
       return send(202, { id: messageId });
     } catch (e) {
       const code = e.status ? e.message : typeof e.code === 'string' && /^[A-Z0-9_]+$/.test(e.code) ? e.code : 'GUI_REQUEST_FAILED';
-      const status = e.status ?? (code==='ENOENT'||code==='UNKNOWN_RUN'?404:code.includes('ID_CONFLICT')?409:500);
+      const status = e.status ?? (code==='ENOENT'||code==='UNKNOWN_RUN'?404:code.includes('ID_CONFLICT')?409:code==='PDF_LIMIT_BYTES'||code==='PDF_LIMIT_PAGES'||code==='PDF_LIMIT_TEXT'?413:code==='PROJECT_SOURCE_INVALID_INPUT'||code==='PDF_ENCRYPTED'||code==='PDF_PARSE_FAILED'||code==='PDF_INVALID_FORMAT'||code==='PDF_NO_TEXT_LAYER'||code==='PDF_TIMEOUT'?422:500);
       if (!res.headersSent && !res.destroyed) send(status,{ error:code });
     }
   });
@@ -251,7 +332,7 @@ export async function startLocalGui({ projectDir, port = 0 } = {}) {
   });
   origin = 'http://127.0.0.1:' + server.address().port;
   let closing;
-  return { origin, async close() {
+  return { origin, mode, async close() {
     if (!closing) {
       hostSignal.abort();
       closing = new Promise((resolve,reject) => server.close(e => e ? reject(e) : resolve()));

@@ -23,3 +23,5 @@ npm run build
 ```
 
 `local-gui@1` is a thin host view, not a new runtime or a replacement for Reader. The HTTP routes bind to loopback, strict Host and Origin; allowed same-origin mutations carry only a local conversation/message identity, typed action, or an explicit synthetic-manifest selector. The report download is an allowlisted read of the verified saved report, not a general file route. Raw source/report text is rendered as text. There is no public login, raw path/file route, upload, provider selection, private plugin import, runtime replacement, domain/DNS deployment, or extra dependency. The [release evidence](verification/v039-release.md) records desktop and narrow-width browser checks.
+
+A separately configured [real-model loopback preview](local-gui-live.md) uses a separate Project; the OpenCode Go owner profile accepts freeform questions without a source picker. It is not enabled by the command above.

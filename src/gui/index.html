@@ -13,7 +13,7 @@
     <button id="history-toggle" class="secondary mobile" aria-controls="history" aria-expanded="false">会话</button>
     <span class="brand-symbol" aria-hidden="true">E</span>
     <div><strong>Open ETF Agent</strong><span class="subbrand">研究工作台</span></div>
-    <span class="badge" title="不调用模型或外部数据">离线演练</span>
+    <span id="mode-badge" class="badge" title="不调用模型或外部数据">离线演练</span>
   </header>
   <div class="workspace">
     <aside id="history" class="history" aria-label="会话历史">
@@ -25,13 +25,14 @@
       <p class="muted">会话保存在本地 Project 中。</p>
     </aside>
     <main id="main">
-      <div class="intro" id="intro"><p class="eyebrow">LOCAL RESEARCH WORKSPACE</p><h1>做一份可以回查的 ETF 研究。</h1><p>选一份演练资料，观察从提交到报告和原文引用的过程。</p></div>
+      <div class="intro" id="intro"><p class="eyebrow">LOCAL RESEARCH WORKSPACE</p><h1 id="mode-heading">做一份可以回查的 ETF 研究。</h1><p id="mode-intro">选一份演练资料，观察从提交到报告和原文引用的过程。</p></div>
       <section id="transcript" aria-label="会话消息"></section>
       <form id="composer">
-        <div class="source-picker"><label for="source">演练资料</label><select id="source" required></select></div>
+        <div id="source-picker" class="source-picker"><label for="source">演练资料</label><select id="source" required></select></div>
+        <div id="pdf-picker" class="source-picker" hidden><label for="pdf-file">附加 PDF（可选）</label><input id="pdf-file" type="file" accept=".pdf,application/pdf" aria-describedby="pdf-note"><p id="pdf-note" class="muted">支持带文字层的 PDF，最多 1 MiB、16 页。不支持 OCR。模型读取的摘录会发给配置的模型服务；附有 PDF 的当轮不启用外部查询。</p></div>
         <label for="question">研究问题</label>
         <textarea id="question" rows="3" maxlength="3000" required placeholder="例如：对比 Alpha 与 Beta 的费率，并注明来源。"></textarea>
-        <div class="composer-actions"><p>固定脚本演练，不是 AI 对问题的分析，不计费。</p><button id="send" type="submit">提交演练</button></div>
+        <div class="composer-actions"><p id="mode-note">固定脚本演练，不是 AI 对问题的分析，不计费。</p><button id="send" type="submit">提交演练</button></div>
         <p id="notice" role="status" class="notice" hidden></p>
       </form>
     </main>
