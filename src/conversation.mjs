@@ -1,6 +1,7 @@
 import {readConversationCalculations} from './conversation-history.mjs';
 import {join} from 'node:path';
-import {readdir} from 'node:fs/promises';
+import {lstat,readdir} from 'node:fs/promises';
+import {buildOwnerFollowupQuestion,MAX_OWNER_HISTORY_CANDIDATES,MAX_OWNER_HISTORY_TURNS} from './conversation-owner-context.mjs';
 import {sha256} from './source.mjs';
 import {safeDirectory,ensureSafeDirectory,publishImmutable} from './storage-files.mjs';
 import {readProjectJson,inspectResearchProject,submitResearchTask,inspectResearchTask,workResearchTask,cancelResearchTask,readResearchReport,readResearchOutput,resumeResearchTaskAdmission,supportsOwnerFreeform,respondResearchTask,inspectResearchInteraction,listResearchInteractions,controlResearchTask,inspectResearchControl} from './research-project.mjs';
@@ -17,6 +18,37 @@ export async function createConversation({projectDir,conversationId}){projectDir
 function validateIntent(record,meta){const {digest,...body}=record;if(digest!==hash(body)||body.schemaVersion!=='conversation-message@1'||body.projectId!==meta.projectId||body.conversationId!==meta.conversationId)fail('CONVERSATION_MESSAGE_CHANGED');id(body.messageId);if(body.runId!=='conversation-'+hash([meta.projectId,meta.conversationId,body.messageId]).slice(0,40)||typeof body.question!=='string'||Buffer.byteLength(body.question)>16000)fail('CONVERSATION_MESSAGE_CHANGED');return record;}
 async function intent(loc,messageId){return validateIntent(await readProjectJson(join(loc.directory,'messages',id(messageId)+'.json')),loc.meta);}
 export async function inspectConversation({projectDir,conversationId}){const loc=await location(projectDir,conversationId);const names=await readdir(join(loc.directory,'messages'));if(names.length>1024)fail('CONVERSATION_LIST_TOO_LARGE');const messages=[];for(const name of names.sort()){if(!/^[A-Za-z0-9_-]{1,48}\.json$/.test(name))continue;const record=await intent(loc,name.slice(0,-5));let task;try{task=await checkedTask(loc,record);}catch(e){if(!['ENOENT','SESSION_NOT_FOUND','UNKNOWN_RUN'].includes(e.code))throw e;}messages.push({messageId:record.messageId,parentMessageId:record.input.parent?.messageId??null,runId:record.runId,status:task?.run?.status??'admission-pending',digest:record.digest});}return {...loc.meta,messages};}
+// User-visible history is not an execution lineage. Only clean, published
+// freeform turns in this exact conversation and authority profile can become
+// context. Read the original visible question, never a recursively framed one.
+async function ownerPreviousTurns(loc,messageId,configSha256){
+ const dir=await safeDirectory(join(loc.directory,'messages'));
+ const entries=await readdir(dir,{withFileTypes:true});
+ if(entries.length>1024)fail('CONVERSATION_LIST_TOO_LARGE');
+ const rows=[];
+ for(const entry of entries){
+  if(!entry.isFile()||!(/^[A-Za-z0-9_-]{1,48}\.json$/).test(entry.name)||entry.name===messageId+'.json')continue;
+  const stat=await lstat(join(dir,entry.name),{bigint:true});
+  if(stat.isFile())rows.push({name:entry.name,written:stat.mtimeNs});
+ }
+ rows.sort((a,b)=>a.written>b.written?-1:a.written<b.written?1:a.name<b.name?1:-1);
+ const turns=[];
+ for(const {name} of rows.slice(0,MAX_OWNER_HISTORY_CANDIDATES)){
+  const prior=await intent(loc,name.slice(0,-5));
+  // An attached turn or authority revision forms a boundary, even if an
+  // older turn used the current config. Never carry local material excerpts.
+  if(prior.input.sourceManifestSha256!==null||prior.configSha256!==configSha256)break;
+  let state;
+  try{state=await checkedTask(loc,prior);}catch(error){if(error.code==='ENOENT')break;throw error;}
+  const run=state.run,snapshot=run.snapshot;
+  if(run.status!=='completed'||run.rootStatus!=='completed'||snapshot.gatewayOutcome==='unknown'||snapshot.unknownEffects?.length||snapshot.partialEffects?.length||snapshot.inFlight)break;
+  const output=await readResearchOutput({projectDir:loc.projectDir,runId:prior.runId});
+  if(output.kind!=='published-answer'||output.publicationStatus!=='published'||typeof output.answer?.text!=='string'||sha256(output.answer.text)!==output.answer.sha256)break;
+  turns.unshift({question:prior.input.text,answer:output.answer.text});
+  if(turns.length>=MAX_OWNER_HISTORY_TURNS)break;
+ }
+ return turns;
+}
 export async function submitConversationMessage({projectDir,conversationId,messageId,text,sourceManifestSha256,parent=null,review=null,continuationOfMessageId=null,authorization}){
  const loc=await location(projectDir,conversationId);id(messageId);
  if(typeof text!=='string'||!text.trim()||text.includes('\0')||Buffer.byteLength(text)>12000||Buffer.from(text).toString('utf8')!==text)fail('CONVERSATION_INVALID_TEXT');
@@ -69,7 +101,8 @@ export async function submitConversationMessage({projectDir,conversationId,messa
    if(Buffer.byteLength(PREFIX+JSON.stringify(frame))<=16000)continuation.historicalCalculations=historicalCalculations;
    else {const unavailable={schemaVersion:'conversation-calculations@1',validity:'historical-only-not-current-evidence',items:[],unavailable:'context-capacity'};if(Buffer.byteLength(PREFIX+JSON.stringify({...frame,continuation:{...continuation,historicalCalculations:unavailable}}))<=16000)continuation.historicalCalculations=unavailable;}
   }
-  const question=freeform?text:PREFIX+JSON.stringify({request:text,previousReport:context,advisoryReview:advice,...(continuation?{continuation}: {})});if(Buffer.byteLength(question)>16000)fail('CONVERSATION_CONTEXT_TOO_LARGE');
+  if(freeform&&(!authorization?.providerApproved||!authorization?.dataApproved||!authorization?.costApproved))fail('PROJECT_LIVE_APPROVAL_REQUIRED');
+  const question=freeform?buildOwnerFollowupQuestion(text,await ownerPreviousTurns(loc,messageId,admittedProject.configSha256)):PREFIX+JSON.stringify({request:text,previousReport:context,advisoryReview:advice,...(continuation?{continuation}: {})});if(Buffer.byteLength(question)>16000)fail('CONVERSATION_CONTEXT_TOO_LARGE');
   const body={schemaVersion:'conversation-message@1',projectId:loc.meta.projectId,configSha256:admittedProject.configSha256,conversationId,messageId,runId:'conversation-'+hash([loc.meta.projectId,conversationId,messageId]).slice(0,40),input,question,...(continuationRoot?{continuationRoot}:{})};record={...body,digest:hash(body)};await immutable(join(loc.directory,'messages'),messageId+'.json',record);
  }
  let admission;try{admission=await readProjectJson(join(loc.directory,messageId+'.admitted.json'));}catch(e){if(e.code!=='ENOENT')throw e;}

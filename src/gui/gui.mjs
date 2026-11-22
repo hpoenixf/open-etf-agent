@@ -234,7 +234,8 @@ async function load() {
     const paidLabels={'deepseek-search':'DeepSeek','yuanbao-search':'腾讯元宝'};
     const alternates=(c.searchAlternates??[]).map(id=>paidLabels[id]).filter(Boolean);
     const capabilities=[c.search?(c.searchProvider==='deepseek-search'?'公开网页搜索（DeepSeek，可能计费）':c.searchProvider==='yuanbao-search'?'公开网页搜索（腾讯元宝，可能计费）':'公开网页搜索（Exa 预览）'):null,alternates.length?'补充搜索：'+alternates.join('、')+'（可能计费）':null,c.web?'公开网页读取':null,c.wind?'Wind 基金日收盘价':null].filter(Boolean);
-    byId('mode-note').textContent=capabilities.length?'已启用：'+capabilities.join('、')+'。当前事实以实际来源为准。':'不联网检索新闻或行情。';
+    byId('mode-note').textContent=(capabilities.length?'已启用：'+capabilities.join('、')+'。当前事实以实际来源为准。':'不联网检索新闻或行情。')
+      +' 普通问题可能连同本会话近期问答的摘录发给配置的模型；跨越 PDF 附件轮次不沿用历史。新建会话可从空白开始。';
     byId('source-picker').hidden=true;
     byId('pdf-picker').hidden=!state.workspace.capabilities.includes('pdf-attachment');
     byId('source').required=false;

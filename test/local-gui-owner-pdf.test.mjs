@@ -73,7 +73,10 @@ test('owner PDF upload binds one conversation, uses original page evidence and s
  assert.equal(a.name,'基金附件.pdf');
  assert.deepEqual(await gui.upload(path,pdf('text')).then(r=>r.json()),a);
  assert.equal(sent.length,0);
- const input={messageId:'pdf-turn',question:'附件里写了什么？',attachmentId:a.id};
+ const earlier={messageId:'before-pdf',question:'PLAIN_BEFORE_PDF_SENTINEL'};
+ assert.equal((await gui.post(path+'/messages',earlier)).status,202);
+ assert.equal((await settled(gui,path,earlier.messageId)).status,'completed');
+ const input={messageId:'pdf-turn',question:'PDF_TURN_ONLY_SENTINEL 附件里写了什么？',attachmentId:a.id};
  assert.equal((await gui.post(other+'/messages',input)).status,400);
  assert.equal((await gui.post(path+'/messages',input)).status,202);
  const m=await settled(gui,path,input.messageId);
@@ -83,17 +86,31 @@ test('owner PDF upload binds one conversation, uses original page evidence and s
  assert.equal(m.output.sources[0].pdfPage,1);
  assert.ok(m.output.report.text.includes(m.output.sources[0].text.trim()));
  assert.equal((await gui.get(path+'/messages/pdf-turn/report.md')).status,200);
- assert.equal(sent.length,3);
+ assert.equal(sent.length,4);
+ assert.ok(sent.slice(1).every(request=>!JSON.stringify(request).includes(earlier.question)));
  await gui.close();
  const cold=await start();
  assert.deepEqual(await settled(cold,path,input.messageId),m);
  assert.equal((await cold.post(path+'/messages',input)).status,202);
  assert.equal((await cold.post(path+'/messages',{...input,attachmentId:undefined})).status,409);
- assert.equal(sent.length,3);
+ assert.equal(sent.length,4);
  const plain={messageId:'plain-turn',question:'普通问题'};
  assert.equal((await cold.post(path+'/messages',plain)).status,202);
  assert.equal((await settled(cold,path,plain.messageId)).output.answer,'普通回答');
- assert.equal(sent.length,4);
+ assert.equal(sent.length,5);
+ const ordinaryWire=JSON.stringify(sent.at(-1));
+ for (const privateText of [earlier.question,input.question,m.output.sources[0].text.trim(),'已读取附件并保存报告。',a.name]) {
+  assert.ok(!ordinaryWire.includes(privateText),'the ordinary model packet must not carry pre-PDF or PDF data');
+ }
+ const after={messageId:'after-plain-turn',question:'继续刚刚的普通问题'};
+ assert.equal((await cold.post(path+'/messages',after)).status,202);
+ assert.equal((await settled(cold,path,after.messageId)).status,'completed');
+ assert.equal(sent.length,6);
+ const followupWire=JSON.stringify(sent.at(-1));
+ assert.ok(followupWire.includes(plain.question));
+ for (const privateText of [earlier.question,input.question,m.output.sources[0].text.trim(),'已读取附件并保存报告。',a.name]) {
+  assert.ok(!followupWire.includes(privateText),'post-PDF follow-ups must not cross the attachment boundary');
+ }
 });
 
 test('mobile browser can attach a PDF, open cited page evidence and revisit history', {skip:!process.env.GUI_PDF_PLAYWRIGHT},async t=>{
