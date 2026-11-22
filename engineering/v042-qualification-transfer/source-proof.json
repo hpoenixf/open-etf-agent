@@ -1,0 +1,31 @@
+{
+  "schemaVersion": "open-v042-sg-source-proof@1",
+  "candidate": "ca4161199ea4066bd0893f0c76c4835e4ebc9131",
+  "runtimeSrc": "8ef20d4b80fd0820403439ac23140d7126cb5f3f",
+  "site": "SG",
+  "networkProfile": "system-direct@1",
+  "modelRequests": 0,
+  "observation": "Summary provided by the operator who observed the isolated exact-candidate native preflight; no response bodies are stored here.",
+  "sources": [
+    {
+      "id": "spy-product",
+      "url": "https://www.ssga.com/us/en/individual/etfs/state-street-spdr-sp-500-etf-trust-spy",
+      "result": "native-page-read",
+      "markers": ["product", "benchmark", "distributions", "inception", "legal", "expense"],
+      "originalSha256": "9a82e63d96065e2548958be4ab9d0eb9037b5d5f32d45de3b15003fb6fde606c"
+    },
+    {
+      "id": "nobl-notice",
+      "url": "https://www.proshares.com/press-releases/proshares-announces-etf-share-splits-052826",
+      "result": "native-page-read",
+      "markers": ["announcement", "effective", "forward"],
+      "originalSha256": "572be0b2a05808abafaba4e5767a64dc4a105909864e4def9a47105043b283be"
+    },
+    {
+      "id": "nobl-product",
+      "url": "https://www.proshares.com/our-etfs/strategic/nobl",
+      "result": "not-verified",
+      "code": "WEB_BODY_LIMIT"
+    }
+  ]
+}

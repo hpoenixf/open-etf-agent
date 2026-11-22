@@ -1,0 +1,193 @@
+{
+  "schemaVersion": "open-v042-real-qualification@1",
+  "candidate": "ca4161199ea4066bd0893f0c76c4835e4ebc9131",
+  "runtimeSrc": "8ef20d4b80fd0820403439ac23140d7126cb5f3f",
+  "limits": {
+    "model": 36,
+    "maxRounds": 36,
+    "maxTools": 72,
+    "tool": 72,
+    "timeoutMs": 3600000
+  },
+  "maxPhysicalPosts": 49939,
+  "priorExcludedPhysicalPosts": 61,
+  "gate": {
+    "target": 10,
+    "minimumPassed": 9,
+    "noKnownInScopeRuntimeDefect": true
+  },
+  "cases": [
+    {
+      "id": "01",
+      "mode": "watch",
+      "watch": "A",
+      "day": 0,
+      "operation": "new",
+      "question": "请读 State Street 官方 SPY 产品页 https://www.ssga.com/us/en/individual/etfs/state-street-spdr-sp-500-etf-trust-spy，确认所跟踪的指数名称。区分来源事实发生日期和取回日期，注明实际读取的网址，不靠搜索摘要。",
+      "hosts": [
+        "ssga.com"
+      ],
+      "grade": "S&P 500，准确原文，首次无历史。",
+      "sourceIds": [
+        "spy-product"
+      ],
+      "primaryUrls": [
+        "https://www.ssga.com/us/en/individual/etfs/state-street-spdr-sp-500-etf-trust-spy"
+      ]
+    },
+    {
+      "id": "02",
+      "mode": "watch",
+      "watch": "B",
+      "day": 0,
+      "operation": "new",
+      "question": "请读取 ProShares 披露原文 https://www.proshares.com/press-releases/proshares-announces-etf-share-splits-052826，只查 NOBL：公告针对它的是正向还是反向拆分，比例是多少？说明不是从其他 ETF 的表格推断，附实际已读链接。",
+      "hosts": [
+        "proshares.com"
+      ],
+      "grade": "NOBL 为正向 2:1，不与公告中的其他基金反向拆分混淆；同槽 B 首次独立。",
+      "sourceIds": [
+        "nobl-notice"
+      ],
+      "primaryUrls": [
+        "https://www.proshares.com/press-releases/proshares-announces-etf-share-splits-052826"
+      ]
+    },
+    {
+      "id": "03",
+      "mode": "watch",
+      "watch": "A",
+      "day": 1,
+      "operation": "same",
+      "sameAs": "01",
+      "hosts": [
+        "ssga.com"
+      ],
+      "grade": "问题逐字同 01，同 A 上一已核实正文与本次真实重新取证；不得编造未核实的跨日变化。",
+      "sourceIds": [
+        "spy-product"
+      ],
+      "primaryUrls": [
+        "https://www.ssga.com/us/en/individual/etfs/state-street-spdr-sp-500-etf-trust-spy"
+      ]
+    },
+    {
+      "id": "04",
+      "mode": "watch",
+      "watch": "B",
+      "day": 1,
+      "operation": "edit",
+      "question": "请改为读取 State Street 官方 SPY 产品页 https://www.ssga.com/us/en/individual/etfs/state-street-spdr-sp-500-etf-trust-spy，核实分配频率，区分季度安排与每次派息金额；如该字段无日期，就说未注明。",
+      "hosts": [
+        "ssga.com"
+      ],
+      "grade": "B 改题后无 NOBL 基线；按季度，不是金额承诺，不借用别的日期。",
+      "sourceIds": [
+        "spy-product"
+      ],
+      "primaryUrls": [
+        "https://www.ssga.com/us/en/individual/etfs/state-street-spdr-sp-500-etf-trust-spy"
+      ]
+    },
+    {
+      "id": "05",
+      "mode": "watch",
+      "watch": "C",
+      "day": 2,
+      "operation": "new",
+      "question": "只尝试读取保留测试域名 https://example.invalid/open-etf-source-unavailable 这个指定网页，核实其是否能证明 VOO 的跟踪基准。不要找替代网页；若无法读取，明确说无法从指定来源核实，不给凭记忆推断的数值或结论。",
+      "unavailableUrl": "https://example.invalid/open-etf-source-unavailable",
+      "grade": "必须确实尝试指定页并记录原生获取失败，最终正文如实交付且不提供未经验证的 VOO 结论。没有任何读取不算此项通过。"
+    },
+    {
+      "id": "06",
+      "mode": "watch",
+      "watch": "C",
+      "day": 3,
+      "operation": "edit",
+      "question": "现在改读 ProShares 关于 NOBL 的正式公告 https://www.proshares.com/press-releases/proshares-announces-etf-share-splits-052826，说明公告机构是谁、查证关系是基金品牌还是与其同名的指数名称。明确该公告回答的是什么，不沿用旧测试网址。",
+      "hosts": [
+        "proshares.com"
+      ],
+      "grade": "C 次日改题后无旧拒绝基线；须真实 ProShares 原文，正确识别涉及 NOBL 的通知与基金全名；不要从基金名推断跟踪基准或费率。",
+      "sourceIds": [
+        "nobl-notice"
+      ],
+      "primaryUrls": [
+        "https://www.proshares.com/press-releases/proshares-announces-etf-share-splits-052826"
+      ]
+    },
+    {
+      "id": "07",
+      "mode": "manual",
+      "question": "请读 State Street 官方 SPY 产品页面 https://www.ssga.com/us/en/individual/etfs/state-street-spdr-sp-500-etf-trust-spy，查证 Fund Inception Date 和 SPY 法律结构，注明原始来源，不混淆其他份额或上市日。",
+      "hosts": [
+        "ssga.com"
+      ],
+      "grade": "1993-01-22 和 unit investment trust 各须明确原文。",
+      "sourceIds": [
+        "spy-product"
+      ],
+      "primaryUrls": [
+        "https://www.ssga.com/us/en/individual/etfs/state-street-spdr-sp-500-etf-trust-spy"
+      ]
+    },
+    {
+      "id": "08",
+      "mode": "manual",
+      "question": "读 ProShares 官方 NOBL 公告 https://www.proshares.com/press-releases/proshares-announces-etf-share-splits-052826 取证拆分比例。假设拆分前有 7 份、每份净值 80 美元，只按拆分比例推导拆分后份数和每份理论净值，不考虑市场动价；算出拆分前后理论总值，并把披露事实与示例假设分开。",
+      "hosts": [
+        "proshares.com"
+      ],
+      "grade": "真实原文证明 2:1，示例 7×80=14×40=560 美元；理论值不能当行情、费用或回报。",
+      "sourceIds": [
+        "nobl-notice"
+      ],
+      "primaryUrls": [
+        "https://www.proshares.com/press-releases/proshares-announces-etf-share-splits-052826"
+      ]
+    },
+    {
+      "id": "09",
+      "mode": "manual",
+      "question": "请读 ProShares 关于 NOBL 的正式拆分披露 https://www.proshares.com/press-releases/proshares-announces-etf-share-splits-052826。区分公告日期与生效日期，核实是正向还是反向、比例和代码，给出实际读到原文的链接。不要将其他基金的反向拆分或 CUSIP 规则套给 NOBL。",
+      "hosts": [
+        "proshares.com"
+      ],
+      "grade": "必须原文：2026-05-11 公告，2026-05-28 开盘前生效，NOBL 正向 2:1，代码不变。网页读不到就诚实注明但本题不通过。",
+      "sourceIds": [
+        "nobl-notice"
+      ],
+      "primaryUrls": [
+        "https://www.proshares.com/press-releases/proshares-announces-etf-share-splits-052826"
+      ]
+    },
+    {
+      "id": "10",
+      "mode": "manual",
+      "question": "分别读取 State Street 的 SPY 官方产品页 https://www.ssga.com/us/en/individual/etfs/state-street-spdr-sp-500-etf-trust-spy 和 ProShares 的 NOBL 拆分公告 https://www.proshares.com/press-releases/proshares-announces-etf-share-splits-052826。做一张简明对照：SPY 填基准、Gross Expense Ratio 及字段口径；NOBL 填公告日期、拆分方向与比例；把两类不同数据明确标为不可直接比较，不用 SPY 字段替 NOBL 补费率，也不把抓取时间当披露日期。各自附实际已读的链接。",
+      "hosts": [
+        "ssga.com",
+        "proshares.com"
+      ],
+      "grade": "须两个不同发行赞助机构的独立原文、不同内容哈希；SPY S&P 500 与 Gross Expense Ratio 0.0945%；NOBL 5/11/2026 公告、正向 2:1；不虚构 NOBL 费率/指数，不把拆分当回报。",
+      "dualPrimaryHosts": [
+        "ssga.com",
+        "proshares.com"
+      ],
+      "sourceIds": [
+        "spy-product",
+        "nobl-notice"
+      ],
+      "primaryUrls": [
+        "https://www.ssga.com/us/en/individual/etfs/state-street-spdr-sp-500-etf-trust-spy",
+        "https://www.proshares.com/press-releases/proshares-announces-etf-share-splits-052826"
+      ]
+    }
+  ],
+  "cohort": "v042-prospective-replacement-SG-native-amendment-1",
+  "supersedesMeasurement": false,
+  "sourceProofSha256": "f529eade8cc7ec7e3f3befba80af49d26af1981a72141c2696d92b1049a105e0",
+  "priorManifestSha256": "a3f3baa0f25ea49ec19320ba103dc8628065fc4b167a928e9434837b1cef8482",
+  "maxCohortPhysicalPosts": 360
+}
