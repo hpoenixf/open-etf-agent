@@ -42,9 +42,9 @@ GitHub 将 SVG 当作一张图片，不能在缩略图里逐卡点击；下表�
 | L3 Agent 决策与运行 | [Worker](https://hpoenixf.com/eff-agent-article/articles/open-etf-agent-v010-system-design) · [Admission](https://hpoenixf.com/eff-agent-article/articles/agent-provider-admission-capacity-lease) · [Gateway](https://hpoenixf.com/eff-agent-article/articles/agent-provider-architecture-and-admission) · [Runtime](https://hpoenixf.com/eff-agent-article/articles/etf-agent-model-harness-research-loop) · [Hooks](https://hpoenixf.com/eff-agent-article/articles/agent-multi-ecosystem-hook-execution) · [Run Control](https://hpoenixf.com/eff-agent-article/articles/agent-veto-authority-and-run-termination) · [Main → Child](https://hpoenixf.com/eff-agent-article/articles/agent-subagent-context-specialization) · [Child Lifecycle](https://hpoenixf.com/eff-agent-article/articles/agent-subagent-context-specialization) |
 | L4 工具与领域能力 | [Tool Host](https://hpoenixf.com/eff-agent-article/articles/agent-tool-lifecycle-and-model-input) · [MCP](https://hpoenixf.com/eff-agent-article/articles/mcp-host-from-discovery-to-consumption) · [Trusted Plugin](https://hpoenixf.com/eff-agent-article/articles/020-agent-extension-host-smartphone) · [Web Acquisition](https://hpoenixf.com/eff-agent-article/articles/021-agent-web-research-from-search-to-deep-reading) · [PDF](https://hpoenixf.com/eff-agent-article/articles/024-agent-pdf-from-text-to-evidence) · [Result / ResultRef](https://hpoenixf.com/eff-agent-article/articles/tool-results-outside-model-context) · [Retrieval](https://hpoenixf.com/eff-agent-article/articles/agent-knowledge-retrieval-end-to-end) · [Knowledge](https://hpoenixf.com/eff-agent-article/articles/agent-knowledge-retrieval-end-to-end) · [Calculation](https://hpoenixf.com/eff-agent-article/articles/open-etf-agent-v010-system-design) · [Child Results](https://hpoenixf.com/eff-agent-article/articles/agent-subagent-contribution-evidence) |
 | L5 结果发布与交付 | [Main → Report](https://hpoenixf.com/eff-agent-article/articles/open-etf-agent-v01-first-readable-report) · [Report](https://hpoenixf.com/eff-agent-article/articles/open-etf-agent-v01-first-readable-report) · [Artifact / Revision](https://hpoenixf.com/eff-agent-article/articles/agent-artifact-version-access-sharing) · [Publication](https://hpoenixf.com/eff-agent-article/articles/019-agent-answer-publication) · [Report Review](https://hpoenixf.com/eff-agent-article/articles/open-etf-agent-report-review-workshop) |
-| L6 用户界面 | [Loopback Reader](https://hpoenixf.com/eff-agent-article/articles/open-etf-agent-v010-system-design) · [CLI Readback](https://hpoenixf.com/eff-agent-article/articles/open-etf-agent-v01-first-readable-report) |
+| L6 用户界面 | [Loopback Reader](https://hpoenixf.com/eff-agent-article/articles/open-etf-agent-v010-system-design) · [Local Research GUI](https://hpoenixf.com/eff-agent-article/articles/agent-conversation-admission-task-continuation) · [CLI Readback](https://hpoenixf.com/eff-agent-article/articles/open-etf-agent-v01-first-readable-report) |
 
-**当前地图: v0.38.0** · [模块、源码与证据](docs/module-status.zh-CN.md) · [六层文章原文](https://github.com/hpoenixf/eff-agent-article/blob/249f0b866f9446f33b57f186fbc6d35b5d82c119/articles/open-etf-agent-v010-system-design.md)
+**当前地图: v0.39.0** · [模块、源码与证据](docs/module-status.zh-CN.md) · [六层文章原文](https://github.com/hpoenixf/eff-agent-article/blob/249f0b866f9446f33b57f186fbc6d35b5d82c119/articles/open-etf-agent-v010-system-design.md)
 
 文章关联是阅读导航，不等于实现全文能力或覆盖资格。图中是公开实现范围，不是全功能完成率。真实模型验证只覆盖[各版记录](docs/verification/README.md)中的指定路径；金融语义、生产与浏览器体验不因此获得认证。
 <!-- module-map:end -->
@@ -100,25 +100,24 @@ npm run demo -- --case document-compare
 <a id="最近三个模块"></a>
 ## 最近版本与开发状态
 
+**[v0.39.0 · 本地研究界面预览](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.39.0)。** 用 `npm run gui -- --project ./test-output/local-gui` 打开浏览器工作台。界面使用内置的两份 ETF 模拟资料，会话、报告和引用保存在本机。[启动方式和适用范围](docs/local-gui.md) · [验收证据](docs/verification/v039-release.md)
+
 **[v0.38.0 · Wind 基金日收盘价](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.38.0):** 显式查询一只场内基金的未复权日收盘价。默认研究流程不接入 Wind。 [用法](docs/wind-fund-mcp.zh-CN.md) · [证据与边界](docs/verification/v038-release.md).
 
 **[v0.37.0 · Main 上下文压缩](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.37.0)：** 按完整 Gateway 请求判断压缩；无缩减不重复摘要，最后一个模型调用留给交付。[用法](docs/project-context.zh-CN.md) · [证据与边界](docs/verification/v037-release.md).
 
-**v0.36.1 维护修复：** Main 上下文压缩不再摘要含有结构化项目记忆的已完成工具调用组，也不会复用覆盖这些调用组的旧摘要。原始结构化数据仍走原有的派发前资格核验。[验证与边界](docs/verification/v0361-maintenance.md)。
-
-
-
-
 | 最近版本 / 状态 | 能做什么 | 用法与边界 |
 | --- | --- | --- |
+| [v0.39.0 · 本地研究界面预览](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.39.0) | 在浏览器使用模拟资料，查看会话、保存的报告和来源原文 | [用法](docs/local-gui.md) |
 | [v0.38.0 · Wind 基金日收盘价](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.38.0) | 显式查询单只基金日收盘；不自动交给模型 | [用法](docs/wind-fund-mcp.zh-CN.md) |
 | [v0.37.0 · Main 上下文压缩](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.37.0) | 按完整 Gateway 请求判断压缩；无缩减不重复摘要，最后一个模型调用留给交付 | [用法](docs/project-context.zh-CN.md) |
-| [v0.36.1](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.36.1) | 禁止结构化项目记忆进入压缩摘要 | [证据与边界](docs/verification/v0361-maintenance.md) |
 
 [全部固定版本与命令](docs/module-guide.zh-CN.md#versions) · [版本谱系](versions.json) · [全部 Release](https://github.com/hpoenixf/open-etf-agent/releases) · [验证记录](docs/verification/README.zh-CN.md)
 
 <details>
 <summary>历史版本</summary>
+
+**[v0.36.1 维护修复](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.36.1)。** Main 上下文压缩会把含有结构化项目记忆的已完成工具调用组排除在新摘要和复用摘要之外。原始结构化数据仍走原有的派发前资格核验。[验证与边界](docs/verification/v0361-maintenance.md)
 
 **[v0.36.0 · 项目记忆生命周期](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.36.0)：** 项目记忆可显式固定、暂停、恢复与遗忘。任务可限定修订或临时禁用记忆；排队后、派发前重新核对资格。固定合成任务真实验收 10/10。[证据与边界](docs/verification/v036-release.md)。
 
