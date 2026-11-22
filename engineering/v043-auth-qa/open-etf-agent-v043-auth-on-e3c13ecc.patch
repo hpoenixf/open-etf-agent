@@ -1,0 +1,832 @@
+diff --git a/docs/verification/v043-account-site.md b/docs/verification/v043-account-site.md
+new file mode 100644
+index 0000000..8fa4d54
+--- /dev/null
++++ b/docs/verification/v043-account-site.md
+@@ -0,0 +1,84 @@
++# Open 0.43 account site | staged candidate, not activated
++
++The new account entrypoint does not replace the deployed single-owner gate and
++does not start a GUI socket behind each user. Production needs one HTTPS proxy
++to a single authenticated loopback listener. Every protected asset, API, report
++and write goes through that dispatcher. The ordinary `gui` command still exists
++only for explicitly local owner work; never route public traffic there.
++
++## Exact package gate
++
++Target candidate: official [Better Auth v1.7.27](https://github.com/better-auth/better-auth/releases/tag/v1.7.27),
++Git tag commit `9faf6f6a1155a6cdaf8ba2d25ce53e4f5a3fda72`.
++Use [Node built-in SQLite](https://better-auth.com/docs/adapters/sqlite), no extra
++native SQLite driver and no database credentials. Recheck the official supported
++stable release/advisories at activation; this evidence binds 1.7.27 specifically.
++The actual package and dependency lock are not in this staged patch because
++both direct and approved probes to the official npm registry timed out. Existing
++private cache found 1.7.7, not a permitted substitute. Do not deploy without
++an exact official install, audited npm integrity, and a clean test.
++
++In an authorized fresh checkout using supported Node 26 and official registry:
++```sh
++npm install --save-exact --ignore-scripts --no-audit --no-fund \
++  --registry=https://registry.npmjs.org better-auth@1.7.27
++npm ci --ignore-scripts --no-audit --no-fund --registry=https://registry.npmjs.org
++OPEN_ACCOUNT_REAL_TEST=1 node --test --test-concurrency=1 test/account-site.test.mjs
++```
++
++Audit the resolved origins, exact version, integrity, transitive license and
++security advisories before treating the lock as accepted. The opt-in test uses
++throwaway accounts/directories, not real emails or provider calls. Record both
++failed and successful phase results; normal fixture tests do not run it.
++
++## Operator configuration
++
++`node src/account-cli.mjs migrate --config FILE`: dedicated new owner-only
++state directory, fixed HTTPS origin, exact 32-byte base64url secret file.
++The command creates only the account database. Do not migrate the existing app
++Project or an open live DB. `serve` fails if migrations are pending.
++`node src/account-cli.mjs provision --config FILE`: while server is stopped,
++adds one explicitly selected account using its local mode-0600 password file,
++outputting only its bound project-directory basename. There is no default user
++or password, email delivery, cloud provider or Internet sign-up path.
++
++Configuration keys are exact. Migrate: `origin,secretFile,stateDir`. Provision
++adds `name,email,passwordFile`. Serve adds `projectRoot,port` to the migrate
++keys, not the enrollment keys. Use absolute canonical paths with auth state and
++Project roots separate; use an operator-protected file or systemd credential
++for the auth secret and do not place secret values in flags, Git or logs.
++Unlink each consumed plaintext provisioning file through the operator's own
++secure workflow; hashed credentials and signed sessions stay in dedicated DB.
++
++Cookies are Secure, HttpOnly, SameSite Strict and host-only. No cookie cache or
++secondary store, no OAuth, recovery email or open registration. A persistent
++sign-in rate budget uses a single trusted loopback bucket; client-forwarded
++Host and IP assertions are never used. The shared bucket suits an invite-only
++pilot, but login lock-out availability and real TLS on an Internet-facing app
++need separate qualification. Keep the existing outer gate unchanged during test.
++
++## Owner transfer and rollback
++
++1. Use a disposable/staging account namespace, never the production gate's
++   database or the live original Project. Verify no caller override and two
++   distinct account Projects with the same UI.
++2. Before any migration, finish/adjudicate active runs and quiesce old Project
++   writes by the old owner, not by the new server. Make a complete encrypted
++   out-of-instance backup and verify original Directory/file checksums (include
++   true app state and any valid SQLite sidecars). Do not replay ambiguous calls.
++3. Bind the chosen account by its immutable ID; only that account's deterministic
++   Project path may receive the copy. Preserve Project and report/source digests.
++   Do not move/delete/relabel the original or assign legacy data to the first
++   caller. The fixture-only current account server rejects any incompatible
++   live-owner config; do not relax that check. If the old Project is live, a
++   separately scoped operator provider mapping, no-email/no-schedule rehearsal
++   and compatible readback are prerequisites before any production adoption.
++4. On TLS staging, verify direct unauthenticated requests do not get app assets,
++   both accounts can only read their own History and files, original Markdown
++   download/source IDs match and old cookies fail after logout and restart.
++   Verify the proxy's canonical Host, no underlying ports publicly listening,
++   cookie behavior on real mobile and desktop, and continued original gate access.
++5. Only after a separate cutover decision change Caddy/DNS as applicable. Preserve
++   the old listener and immutable backup. To roll back, restore the old route
++   to the unchanged owner gate. Retain and separately reconcile any account
++   writes accepted after cutover; never silently overlay them onto the original.
+diff --git a/openspec/changes/v043-account-site/proposal.md b/openspec/changes/v043-account-site/proposal.md
+new file mode 100644
+index 0000000..f410463
+--- /dev/null
++++ b/openspec/changes/v043-account-site/proposal.md
+@@ -0,0 +1,28 @@
++## Why
++
++Open's current hosted owner gate intentionally provides one shared ingress
++identity. To let multiple invited people use Open, authentication must produce
++a server-side subject that selects a distinct Project and consistent access to
++every durable read and mutation; a login screen alone is not an account system.
++
++## What Changes
++
++- Add a separate loopback-only authenticated entrypoint behind one fixed HTTPS
++  origin. Preserve the existing owner GUI command and ingress deployment.
++- Use Better Auth email/password and durable sessions; no public sign-up,
++  built-in demo credential, OAuth, browser-only enforcement, or automatic adoption.
++- Resolve each Project exclusively from the validated account subject before
++  mounting any app route. Include all read and write surfaces in the boundary.
++- Add separate operator-only database initialization and account provisioning.
++- Preserve original owner History through explicit verified offline copy and
++  rollback, not implicit first-login adoption.
++- Keep the initial isolated account workbench in synthetic fixture mode; live
++  per-account model, data-service and notification authorization are separate
++  work. Do not move or change deployed owner state in this candidate.
++
++## Impact
++
++- Affected specs: account-site
++- Affected code: account site/driver/CLI/UI and GUI handler extraction.
++- Better Auth official version and lockfile, actual encrypted-cookie TLS
++  operation, and compatibility of migrated live owner state are release gates.
+diff --git a/openspec/changes/v043-account-site/specs/account-site/spec.md b/openspec/changes/v043-account-site/specs/account-site/spec.md
+new file mode 100644
+index 0000000..7663487
+--- /dev/null
++++ b/openspec/changes/v043-account-site/specs/account-site/spec.md
+@@ -0,0 +1,42 @@
++## ADDED Requirements
++
++### Requirement: Backend account authorization
++The authenticated site SHALL validate server-side session state before every
++Project operation and protected asset. The immutable session subject SHALL be
++the sole source for selecting a Project. Sign-up SHALL NOT be available by
++default, via browser or direct request.
++
++#### Scenario: Request received without an authenticated session
++- **WHEN** a caller requests the workbench or any protected app API or asset
++- **THEN** the server redirects only the workbench entry to login or rejects the request
++- **AND** there is no Project action or data in the response
++
++#### Scenario: Two accounts use the workbench
++- **WHEN** a caller supplies a valid session and requests a resource assigned to another account
++- **THEN** the server only reads the authenticated subject's Project
++- **AND** arbitrary identity and path hints cannot change the Project
++
++### Requirement: Durable, revocable session
++The service SHALL use explicit HTTPS origin and host-only secure HttpOnly SameSite
++cookies. It SHALL read the backing session without any stale cookie cache and
++SHALL NOT claim successful logout without checking the prior session.
++
++#### Scenario: Account signs out
++- **WHEN** a currently authenticated user signs out
++- **THEN** the prior cookie cannot authorize another protected request
++- **AND** other accounts' independent sessions remain valid
++
++#### Scenario: Auth state cannot be verified
++- **WHEN** required state is unavailable, migration is pending, or cookie policy cannot be verified
++- **THEN** the service fails closed without exposing a Project
++
++### Requirement: Explicit owner migration
++The authenticated candidate SHALL NOT use legacy owner data by default or as a
++fallback. Existing owner data SHALL remain unchanged until an explicit operator
++copy and verified readback, and restoration of the old ingress SHALL be possible.
++
++#### Scenario: Rehearse an owner cutover
++- **WHEN** the operator explicitly assigns a cold copy to a verified account
++- **THEN** the exact existing History, reports and evidence are verified against the copy
++- **AND** an independent account cannot see the copied Project
++- **AND** original data and ingress remain available for rollback
+diff --git a/openspec/changes/v043-account-site/tasks.md b/openspec/changes/v043-account-site/tasks.md
+new file mode 100644
+index 0000000..a91bab3
+--- /dev/null
++++ b/openspec/changes/v043-account-site/tasks.md
+@@ -0,0 +1,10 @@
++## Implementation
++
++- [x] Extract a listener-free workbench handler; preserve the explicit old loopback command.
++- [x] Protect every app route and resolve Project from verified subject.
++- [x] Implement same-origin Better Auth endpoint allowlist, offline account tools and revocation verification.
++- [x] Test backend guard, cross-account History, report readback, sign-out and fail-closed behavior with fixture auth.
++- [ ] Acquire and audit the exact Better Auth release and full npm integrity lock.
++- [ ] Run actual Better Auth and SQLite smoke plus durable session logout and duplicate enrollment checks.
++- [ ] Qualify the live-owner copy and restart/rollback under explicit deployment approval.
++- [ ] Validate actual public TLS and client cookies, with the original gate retained until separate cutover approval.
+diff --git a/src/account-better-auth.mjs b/src/account-better-auth.mjs
+new file mode 100644
+index 0000000..142d18b
+--- /dev/null
++++ b/src/account-better-auth.mjs
+@@ -0,0 +1,99 @@
++import {DatabaseSync} from 'node:sqlite';
++import {constants} from 'node:fs';
++import {lstat, open, readFile} from 'node:fs/promises';
++import {isAbsolute,join} from 'node:path';
++import {canonicalAccountOrigin} from './account-site.mjs';
++import {ensureSafeDirectory, safeDirectory} from './storage-files.mjs';
++
++const fail=code=>{throw Object.assign(new Error(code),{code});};
++const matchesSecret=value=>typeof value==='string'&&/^[A-Za-z0-9_-]{43}$/.test(value)&&
++  Buffer.from(value,'base64url').length===32&&Buffer.from(value,'base64url').toString('base64url')===value;
++async function privateRead(path,max){
++  if(typeof path!=='string'||!isAbsolute(path))fail('ACCOUNT_PRIVATE_ABSOLUTE_PATH_REQUIRED');
++  const file=await open(path,constants.O_RDONLY|constants.O_NOFOLLOW|constants.O_NONBLOCK);
++  try{
++    const stat=await file.stat();
++    if(!stat.isFile()||(stat.mode&0o077)!==0||stat.size>max)fail('ACCOUNT_PRIVATE_FILE_REQUIRED');
++    const data=await file.readFile();
++    if(data.length>max)fail('ACCOUNT_PRIVATE_INPUT_LIMIT');
++    return new TextDecoder('utf-8',{fatal:true}).decode(data);
++  }finally{await file.close();}
++}
++async function privateDatabase(root,{initialize}){
++  if(typeof root!=='string'||!isAbsolute(root))fail('ACCOUNT_DATABASE_PATH');
++  if(initialize)await ensureSafeDirectory(root);
++  await safeDirectory(root);
++  const rootMode=(await lstat(root)).mode;
++  if((rootMode&0o077)!==0)fail('ACCOUNT_DATABASE_PATH');
++  const filename=join(root,'accounts.sqlite');
++  if(initialize){
++    try{const owned=await open(filename,'wx',0o600);await owned.close();}
++    catch(e){if(e.code!=='EEXIST')throw e;}
++  }
++  const stat=await lstat(filename);
++  if(!stat.isFile()||(stat.mode&0o077)!==0||stat.nlink!==1)fail('ACCOUNT_DATABASE_PATH');
++  return new DatabaseSync(filename,{enableForeignKeyConstraints:true});
++}
++async function engine({origin,secretFile,stateDir,initialize=false,allowOfflineSignup=false}){
++  const canonical=canonicalAccountOrigin(origin);
++  const secret=(await privateRead(secretFile,128)).trim();
++  if(!matchesSecret(secret))fail('ACCOUNT_SECRET_INVALID');
++  let betterAuth,getMigrations,packageInfo;
++  try{
++    const entry=import.meta.resolve('better-auth');
++    packageInfo=JSON.parse(await readFile(new URL('../package.json',entry),'utf8'));
++  }catch{fail('ACCOUNT_DEPENDENCY_UNAVAILABLE');}
++  if(packageInfo.name!=='better-auth'||packageInfo.version!=='1.7.27')fail('ACCOUNT_DEPENDENCY_VERSION');
++  try {
++    ({betterAuth}=await import('better-auth'));
++    ({getMigrations}=await import('better-auth/db/migration'));
++  }catch{fail('ACCOUNT_DEPENDENCY_UNAVAILABLE');}
++  const database=await privateDatabase(stateDir,{initialize});
++  try{
++    database.exec('PRAGMA busy_timeout=5000');
++    const options={
++      baseURL:canonical.origin,basePath:'/api/auth',secret,database,trustedOrigins:[canonical.origin],
++      emailAndPassword:{enabled:true,disableSignUp:!allowOfflineSignup,autoSignIn:false,minPasswordLength:14,maxPasswordLength:128},
++      session:{expiresIn:8*60*60,disableSessionRefresh:true,cookieCache:{enabled:false}},
++      account:{accountLinking:{enabled:false}},
++      rateLimit:{enabled:true,window:60,max:12,storage:'database',customRules:{'/sign-out':false}},
++      advanced:{ipAddress:{ipAddressHeaders:['x-open-account-ip']},useSecureCookies:true,cookiePrefix:'open-etf-account',defaultCookieAttributes:{httpOnly:true,sameSite:'strict',secure:true,path:'/'}},
++      logger:{disabled:true},
++    };
++    const migration=await getMigrations(options);
++    if(initialize)await migration.runMigrations();
++    else if(migration.toBeCreated.length||migration.toBeAdded.length||migration.toBeAddedIndexes.length)fail('ACCOUNT_MIGRATION_REQUIRED');
++    const auth=betterAuth(options);
++    return {auth,database,canonical};
++  }catch(e){database.close();throw e;}
++}
++// Service never enables sign-up, automigrates, or opens raw DB tools over HTTP.
++export async function openBetterAuth(options={}){
++  const {auth,database}=await engine({...options,initialize:false,allowOfflineSignup:false});
++  return {handler:request=>auth.handler(request),getSession:headers=>auth.api.getSession({headers}),
++    close:()=>database.close()};
++}
++// Deliberately separate offline-only operator process. Do not run a public
++// listener on the account DB before the database and explicit users are staged.
++export async function prepareAccountDatabase(options={}){
++  const {database}=await engine({...options,initialize:true,allowOfflineSignup:false});
++  database.close();
++}
++export async function provisionOfflineAccount(options={}){
++  const {name,email}=options;
++  const password=(await privateRead(options.passwordFile,512)).replace(/\r?\n$/,'');
++  if(typeof name!=='string'||!name.trim()||name.length>128||typeof email!=='string'||email.length>254||
++     !password||password.length<14||password.length>128)fail('ACCOUNT_PROVISION_INVALID');
++  const {auth,database,canonical}=await engine({...options,initialize:false,allowOfflineSignup:true});
++  try {
++    const normalized=email.trim().toLowerCase();
++    const subjectAtEmail=database.prepare('SELECT id FROM user WHERE email = ?');
++    if(subjectAtEmail.get(normalized))fail('ACCOUNT_EMAIL_EXISTS');
++    const result=await auth.api.signUpEmail({body:{name,email:normalized,password},headers:new Headers({origin:canonical.origin})});
++    // With autoSignIn:false upstream intentionally returns opaque synthetic
++    // success for duplicates. Never use a returned subject absent on disk.
++    const persisted=subjectAtEmail.get(normalized);
++    if(!result?.user?.id||persisted?.id!==result.user.id)fail('ACCOUNT_PROVISION_FAILED');
++    return {subject:persisted.id};
++  }finally{database.close();}
++}
+diff --git a/src/account-cli.mjs b/src/account-cli.mjs
+new file mode 100644
+index 0000000..ab0fab3
+--- /dev/null
++++ b/src/account-cli.mjs
+@@ -0,0 +1,37 @@
++import {resolve} from 'node:path';
++import {readProjectJson} from './research-project.mjs';
++import {accountProjectBasename, startAccountSite} from './account-site.mjs';
++import {openBetterAuth, prepareAccountDatabase, provisionOfflineAccount} from './account-better-auth.mjs';
++
++let app,auth,stop;
++try{
++  const [action,flag,path,...extra]=process.argv.slice(2);
++  if(!['serve','migrate','provision'].includes(action)||flag!=='--config'||!path||extra.length)throw new Error('ACCOUNT_CLI_USAGE');
++  const config=await readProjectJson(resolve(path),8192);
++  const common=['origin','secretFile','stateDir'];
++  const keys=action==='serve'?[...common,'projectRoot','port']:action==='provision'?[...common,'name','email','passwordFile']:common;
++  if(!config||Object.keys(config).sort().join()!==keys.sort().join())throw new Error('ACCOUNT_CLI_CONFIG');
++  if(action==='migrate'){
++    await prepareAccountDatabase(config);process.stdout.write('Account database prepared.\n');
++  }else if(action==='provision'){
++    const {subject}=await provisionOfflineAccount(config);
++    process.stdout.write(JSON.stringify({projectBasename:accountProjectBasename(subject)})+'\n');
++  }else{
++    if(![config.projectRoot,config.stateDir].every(p=>typeof p==='string'&&p!=='/'&&resolve(p)===p)||
++      config.stateDir===config.projectRoot||config.stateDir.startsWith(config.projectRoot+'/')||
++      config.projectRoot.startsWith(config.stateDir+'/'))throw new Error('ACCOUNT_CLI_CONFIG');
++    auth=await openBetterAuth(config);
++    app=await startAccountSite({origin:config.origin,projectRoot:config.projectRoot,port:config.port,auth});
++    process.stdout.write(JSON.stringify({origin:app.origin,loopbackPort:app.port,mode:'fixture-accounts'})+'\n');
++    await new Promise(resolve=>{
++      stop=resolve;process.once('SIGTERM',stop);process.once('SIGINT',stop);
++    });
++  }
++}catch(e){
++  const safe=typeof e?.code==='string'&&/^ACCOUNT_[A-Z_]{3,64}$/.test(e.code)?e.code:
++    ['ACCOUNT_CLI_USAGE','ACCOUNT_CLI_CONFIG'].includes(e?.message)?e.message:'ACCOUNT_OPERATION_FAILED';
++  process.stderr.write(safe+'\n');process.exitCode=1;
++}finally{
++  if(stop){process.removeListener('SIGTERM',stop);process.removeListener('SIGINT',stop);}
++  try{await app?.close();}finally{auth?.close();}
++}
+diff --git a/src/account-site.mjs b/src/account-site.mjs
+new file mode 100644
+index 0000000..28ec87a
+--- /dev/null
++++ b/src/account-site.mjs
+@@ -0,0 +1,176 @@
++import {createServer} from 'node:http';
++import {createHash} from 'node:crypto';
++import {join} from 'node:path';
++import {readFile} from 'node:fs/promises';
++import {createLocalGuiWorkspace} from './gui-server.mjs';
++import {ensureSafeDirectory, safeDirectory} from './storage-files.mjs';
++
++const cleanHeaders={
++  'cache-control':'no-store','x-content-type-options':'nosniff','referrer-policy':'no-referrer',
++  'content-security-policy':"default-src 'none'; script-src 'self'; style-src 'self'; connect-src 'self'; frame-ancestors 'none'; form-action 'self'; base-uri 'none'",
++  'cross-origin-resource-policy':'same-origin',
++};
++const SESSION_COOKIE='__Secure-open-etf-account.session_token';
++const allowedAuth=new Map([['/api/auth/sign-in/email','sign-in'],['/api/auth/sign-out','sign-out']]);
++const identityHint=/^(?:x-(?:open-|agent-|verified-)?(?:user-id|tenant-id|scope-id|identity|scope)|authorization)$/i;
++const identityQuery=new Set(['userId','tenantId','scopeId','scope','verifiedIdentity','projectDir']);
++const err=(status,code)=>Object.assign(new Error(code),{status,code});
++
++export function canonicalAccountOrigin(value){
++  let url;
++  try{url=new URL(value);}catch{throw err(400,'ACCOUNT_ORIGIN_CONFIG');}
++  if(url.protocol!=='https:'||url.origin!==value||!url.hostname||url.username||url.password||
++    ['localhost','127.0.0.1','[::1]'].includes(url.hostname))throw err(400,'ACCOUNT_ORIGIN_CONFIG');
++  return url;
++}
++export function accountProjectBasename(subject){
++  if(typeof subject!=='string'||!/^[A-Za-z0-9_-]{1,128}$/.test(subject))throw err(503,'ACCOUNT_SUBJECT_UNAVAILABLE');
++  return 'u-'+createHash('sha256').update('open-etf-account-project@1\0').update(subject).digest('hex');
++}
++function json(res,status,value,{method='GET',headers={}}={}){
++  const bytes=Buffer.from(JSON.stringify(value));
++  res.writeHead(status,{...cleanHeaders,'content-type':'application/json; charset=utf-8','content-length':bytes.length,...headers});
++  res.end(method==='HEAD'?undefined:bytes);
++}
++function countHeaders(req,name){
++  return req.rawHeaders.reduce((n,value,i)=>(i%2===0&&value.toLowerCase()===name?n+1:n),0);
++}
++function checkRequest(req,canonical){
++  if(countHeaders(req,'host')!==1||req.headers.host!==canonical.host||
++    countHeaders(req,'origin')>1||(req.headers.origin&&req.headers.origin!==canonical.origin))throw err(403,'ACCOUNT_ORIGIN_REQUIRED');
++  if(!['GET','HEAD','POST'].includes(req.method))throw err(405,'ACCOUNT_METHOD');
++  if(req.method==='POST'&&(req.headers.origin!==canonical.origin||req.headers['sec-fetch-site']==='cross-site'))throw err(403,'ACCOUNT_ORIGIN_REQUIRED');
++  // Reject absolute-form, backslash canonicalization, encoded or dot paths
++  // before authorization dispatch. Routing accepts no client identity hint.
++  if(typeof req.url!=='string'||!req.url.startsWith('/')||req.url.startsWith('//')||
++     /[\\%\0]/.test(req.url.split('?')[0])||req.url.split('?')[0].split('/').some(part=>part==='.'||part==='..'))throw err(400,'ACCOUNT_PATH');
++  const url=new URL(req.url,canonical);
++  if(Object.keys(req.headers).some(k=>identityHint.test(k))||[...url.searchParams.keys()].some(k=>identityQuery.has(k)))throw err(400,'ACCOUNT_IDENTITY_OVERRIDE');
++  return url;
++}
++async function authBody(req,action){
++  if(req.headers['content-type']?.split(';')[0]!=='application/json'||req.headers['content-encoding']!==undefined)throw err(415,'ACCOUNT_JSON_REQUIRED');
++  if(Number(req.headers['content-length'])>4096)throw err(413,'ACCOUNT_INPUT_LIMIT');
++  const pieces=[];let bytes=0;
++  for await(const chunk of req){bytes+=chunk.length;if(bytes>4096)throw err(413,'ACCOUNT_INPUT_LIMIT');pieces.push(chunk);}
++  let value;
++  try{value=JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(Buffer.concat(pieces)));}catch{throw err(400,'ACCOUNT_INPUT');}
++  const exact=value&&typeof value==='object'&&!Array.isArray(value)&&Object.keys(value).sort().join(',')===(action==='sign-in'?'email,password':'');
++  if(!exact||(action==='sign-in'&&(![value.email,value.password].every(x=>typeof x==='string'&&x.length>0)||value.email.length>254||value.password.length>128)))throw err(400,'ACCOUNT_INPUT');
++  return action==='sign-in'?JSON.stringify({email:value.email,password:value.password,rememberMe:false}):'{}';
++}
++function authHeaders(req,canonical){
++  const headers=new Headers({origin:canonical.origin,'content-type':'application/json','x-open-account-ip':'127.0.0.1'});
++  if(typeof req.headers['sec-fetch-site']==='string')headers.set('sec-fetch-site',req.headers['sec-fetch-site']);
++  // Do not trust forwarded client IP from peer. A distinct local admission
++  // gate can later populate per-IP rate limits from a verified proxy boundary.
++  return headers;
++}
++function sessionHeaders(req){
++  const values=typeof req.headers.cookie==='string'?req.headers.cookie.split(';').map(v=>v.trim()).filter(v=>v.startsWith(SESSION_COOKIE+'=')):[];
++  if(values.length>1)throw err(400,'ACCOUNT_COOKIE_AMBIGUOUS');
++  return new Headers(values.length===1?{cookie:values[0]}:{});
++}
++function verifyCookieAttributes(cookies){
++  for(const cookie of cookies)if(!/;\s*Secure(?:;|$)/i.test(cookie)||!/;\s*HttpOnly(?:;|$)/i.test(cookie)||
++    !/;\s*SameSite=Strict(?:;|$)/i.test(cookie)||!/;\s*Path=\/(?:;|$)/i.test(cookie)||/;\s*Domain=/i.test(cookie))throw err(503,'ACCOUNT_COOKIE_POLICY');
++}
++const loginAssets = new Map([['/account/login',['login.html','text/html']],['/account/',['login.html','text/html']],['/account',['login.html','text/html']],['/account/login.mjs',['login.mjs','text/javascript']]]);
++export async function startAccountSite({origin,projectRoot,auth,port=0,maxWorkspaces=6}={}){
++  const canonical=canonicalAccountOrigin(origin);
++  if(!Number.isInteger(port)||port<0||port>65535||!Number.isInteger(maxWorkspaces)||maxWorkspaces<1||maxWorkspaces>16||
++    !auth||typeof auth.handler!=='function'||typeof auth.getSession!=='function')throw err(400,'ACCOUNT_SITE_CONFIG');
++  await ensureSafeDirectory(projectRoot);
++  const root=await safeDirectory(projectRoot), bySubject=new Map(),assets=new Map();
++  for(const [route,[file,type]] of loginAssets)assets.set(route,[await readFile(new URL('./account-ui/'+file,import.meta.url)),type]);
++  let closing;
++  async function workspace(subject){
++    if(closing)throw err(503,'ACCOUNT_SITE_CLOSING');
++    const key=accountProjectBasename(subject);
++    if(!bySubject.has(key)){
++      if(bySubject.size>=maxWorkspaces)throw err(503,'ACCOUNT_WORKSPACE_CAPACITY');
++      // Select only the authenticated subject's deterministic directory. Do
++      // not propagate deployment provider credentials or a live task config.
++      const path=join(root,key);
++      const pending=ensureSafeDirectory(path).then(projectDir=>createLocalGuiWorkspace({projectDir,origin:canonical.origin,env:Object.freeze({})}));
++      bySubject.set(key,pending);
++      pending.catch(()=>{if(bySubject.get(key)===pending)bySubject.delete(key);});
++    }
++    return bySubject.get(key);
++  }
++  async function handle(req,res){
++    try{
++      if(closing)throw err(503,'ACCOUNT_SITE_CLOSING');
++      const url=checkRequest(req,canonical);
++      if(assets.has(url.pathname)&&req.method!=='POST'&&!url.search){
++        const [bytes,type]=assets.get(url.pathname);
++        res.writeHead(200,{...cleanHeaders,'content-type':type+'; charset=utf-8','content-length':bytes.length});
++        res.end(req.method==='HEAD'?undefined:bytes);return;
++      }
++      const action=allowedAuth.get(url.pathname);
++      if(action&&req.method==='POST'&&!url.search){
++        const chosen=sessionHeaders(req);
++        const headers=authHeaders(req,canonical);
++        headers.delete('cookie');
++        if(chosen.has('cookie'))headers.set('cookie',chosen.get('cookie'));
++        const response=await auth.handler(new Request(url,{method:'POST',headers,body:await authBody(req,action)}));
++        const cookies=response.headers.getSetCookie();
++        if(response.ok&&!cookies.some(c=>c.startsWith(SESSION_COOKIE+'=')))throw err(503,'ACCOUNT_COOKIE_POLICY');
++        verifyCookieAttributes(cookies);
++        // Never expose the library's session token, error details, profile or
++        // redirect values to JavaScript; return only status and secured cookie.
++        if(!response.ok)throw err(response.status===429?429:401,response.status===429?'ACCOUNT_THROTTLED':'ACCOUNT_SIGN_IN_FAILED');
++        if(action==='sign-in'){
++          const signed=cookies.find(c=>c.startsWith(SESSION_COOKIE+'=')).split(';')[0];
++          let fresh;
++          try{fresh=await auth.getSession(new Headers({cookie:signed}));}
++          catch{throw err(503,'ACCOUNT_SESSION_UNAVAILABLE');}
++          if(!fresh?.user?.id)throw err(503,'ACCOUNT_SESSION_UNAVAILABLE');
++          accountProjectBasename(fresh.user.id);
++        }
++        if(action==='sign-out'){
++          // Upstream can return success after logging a delete error. Confirm
++          // the exact previously presented cookie no longer resolves on disk.
++          let old;
++          try{old=await auth.getSession(chosen);}catch{throw err(503,'ACCOUNT_REVOCATION_UNVERIFIED');}
++          if(old?.user?.id)throw err(503,'ACCOUNT_REVOCATION_UNVERIFIED');
++        }
++        json(res,200,{status:action==='sign-in'?'signed-in':'signed-out'},{method:req.method,headers:{'set-cookie':cookies}});
++        return;
++      }
++      if(url.pathname.startsWith('/api/auth/')||url.pathname==='/api/auth')throw err(404,'ACCOUNT_AUTH_ROUTE_DISABLED');
++      const chosen=sessionHeaders(req);
++      let session;
++      try { session=await auth.getSession(chosen); }
++      catch { throw err(503,'ACCOUNT_SESSION_UNAVAILABLE'); }
++      if(url.pathname==='/api/account/status'&&req.method==='GET'&&!url.search){
++        json(res,200,{authenticated:!!session?.user?.id});return;
++      }
++      if(!session?.user?.id){
++        if(req.method!=='POST'&&url.pathname==='/'&&!url.search){
++          res.writeHead(303,{...cleanHeaders,location:'/account/login'});res.end();return;
++        }
++        throw err(401,'ACCOUNT_REQUIRED');
++      }
++      const selected=await workspace(session.user.id);
++      return await selected.handle(req,res);
++    }catch(e){
++      if(!res.headersSent&&!res.destroyed)json(res,e.status??503,{error:e.status?e.code:'ACCOUNT_SERVICE_UNAVAILABLE'},{method:req.method});
++      else if(!res.writableEnded)res.destroy();
++    }
++  }
++  const server=createServer({maxHeaderSize:8192},handle);
++  server.requestTimeout=10000;server.headersTimeout=8000;server.keepAliveTimeout=5000;
++  await new Promise((resolve,reject)=>{
++    server.once('error',reject);
++    server.listen(port,'127.0.0.1',()=>{server.off('error',reject);resolve();});
++  });
++  return Object.freeze({port:server.address().port,origin:canonical.origin,async close(){
++    if(!closing){
++      // Stop admission first; let completion release exactly the selected workspaces.
++      const stopped=new Promise((resolve,reject)=>server.close(e=>e?reject(e):resolve()));
++      closing=Promise.all([stopped,...[...bySubject.values()].map(p=>p.then(w=>w.close(),()=>{}))]).then(()=>undefined);
++    }
++    await closing;
++  }});
++}
+diff --git a/src/account-ui/login.html b/src/account-ui/login.html
+new file mode 100644
+index 0000000..4a3ec63
+--- /dev/null
++++ b/src/account-ui/login.html
+@@ -0,0 +1,9 @@
++<!doctype html><html lang="zh-CN"><head>
++<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
++<title>Open ETF Agent · 工作台登录</title><script type="module" src="/account/login.mjs"></script></head>
++<body><main><h1>Open ETF Agent</h1><p>使用已经开通的账号登录。此工作台不开放自行注册。</p>
++<form id="login"><p><label>账号邮箱 <input id="email" type="email" required autocomplete="username"></label></p>
++<p><label>密码 <input id="password" type="password" required autocomplete="current-password"></label></p>
++<button type="submit">登录</button></form>
++<section id="session" hidden><p><a href="/">进入工作台</a></p><button type="button" id="logout">退出登录</button></section>
++<p id="status" role="status"></p></main></body></html>
+diff --git a/src/account-ui/login.mjs b/src/account-ui/login.mjs
+new file mode 100644
+index 0000000..42d47f2
+--- /dev/null
++++ b/src/account-ui/login.mjs
+@@ -0,0 +1,24 @@
++const find=id=>document.getElementById(id);
++const form=find('login'), scope=find('session'), status=find('status'), password=find('password');
++async function refresh(){
++  const response=await fetch('/api/account/status');
++  if(!response.ok)throw Error('无法确认会话状态。');
++  const value=await response.json();form.hidden=value.authenticated;scope.hidden=!value.authenticated;
++}
++async function submit(path,body){
++  const response=await fetch(path,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(body)});
++  if(!response.ok)throw Error(response.status===429?'请求过于频繁，请稍后再试。':'操作未完成，请重试。');
++}
++form.addEventListener('submit',async e=>{
++  e.preventDefault();const button=form.querySelector('button');button.disabled=true;status.textContent='';
++  try{await submit('/api/auth/sign-in/email',{email:find('email').value,password:password.value});await refresh();}
++  catch(e){status.textContent=e.message;}
++  finally{password.value='';button.disabled=false;}
++});
++find('logout').addEventListener('click',async e=>{
++  const button=e.currentTarget;button.disabled=true;status.textContent='';
++  try{await submit('/api/auth/sign-out',{});await refresh();}
++  catch(e){status.textContent=e.message;}
++  finally{button.disabled=false;}
++});
++refresh().catch(e=>{status.textContent=e.message;});
+diff --git a/src/gui-server.mjs b/src/gui-server.mjs
+index 7efe93f..29edc4c 100644
+--- a/src/gui-server.mjs
++++ b/src/gui-server.mjs
+@@ -116,8 +116,9 @@ async function guiProject(projectDir, expectedConfig, live, freeform) {
+   return { projectDir, sources, projectId: project.projectId };
+ }
+ 
+-export async function startLocalGui({ projectDir, port = 0, liveConfig, env = process.env, fetchImpl, ownerWebTransport, dailyClock, onDailyCompleted, smtpOptions, ownerDailyDigest } = {}) {
+-  if (!Number.isInteger(port) || port < 0 || port > 65535) reject(400, 'INVALID_GUI_PORT');
++// Trusted server composition only. An account host must authenticate and
++// resolve its Project before mounting this listener-free handler.
++export async function createLocalGuiWorkspace({ projectDir, origin: mountOrigin, liveConfig, env = process.env, fetchImpl, ownerWebTransport, dailyClock, onDailyCompleted, smtpOptions, ownerDailyDigest } = {}) {
+   const live = liveConfig === undefined ? null : prepareGuiLiveConfig(liveConfig,env);
+   const mode = live?'live-research':'offline-demo';
+   const expectedConfig=live?.config??validatedConfig;
+@@ -155,7 +156,11 @@ export async function startLocalGui({ projectDir, port = 0, liveConfig, env = pr
+   const dailyAutorun=!!daily&&env.ETF_GUI_DAILY_AUTORUN==='1';
+   let dailyLoop=null,dailyFlight=null,digestFlight=null;
+   const publicSources = demo.sources.map(({ id, title }) => ({ id, title }));
+-  let origin, working = null, submitting = null;
++  let origin=mountOrigin, working = null, submitting = null;
++  function setOrigin(value) {
++    if (origin !== undefined) throw new Error('GUI_ORIGIN_ALREADY_SET');
++    origin = value;
++  }
+   const workKey = (conversationId, messageId) => conversationId + '/' + messageId;
+   const sourceFor = id => demo.sources.find(s => s.id === id);
+ 
+@@ -332,7 +337,7 @@ export async function startLocalGui({ projectDir, port = 0, liveConfig, env = pr
+     dailyFlight=work;
+     try{await work;}finally{if(dailyFlight===work)dailyFlight=null;}
+   }
+-  const server = createServer({ maxHeaderSize: 8192 }, async (req, res) => {
++  async function handle(req, res) {
+     const headers = {
+       'cache-control': 'no-store', 'x-content-type-options': 'nosniff',
+       'content-security-policy': "default-src 'none'; script-src 'self'; style-src 'self'; connect-src 'self'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'",
+@@ -475,24 +480,38 @@ export async function startLocalGui({ projectDir, port = 0, liveConfig, env = pr
+       const status = e.status ?? (code==='ENOENT'||code==='UNKNOWN_RUN'?404:code.includes('ID_CONFLICT')?409:code==='PDF_LIMIT_BYTES'||code==='PDF_LIMIT_PAGES'||code==='PDF_LIMIT_TEXT'?413:code==='PROJECT_SOURCE_INVALID_INPUT'||code==='PDF_ENCRYPTED'||code==='PDF_PARSE_FAILED'||code==='PDF_INVALID_FORMAT'||code==='PDF_NO_TEXT_LAYER'||code==='PDF_TIMEOUT'?422:500);
+       if (!res.headersSent && !res.destroyed) send(status,{ error:code });
+     }
+-  });
+-  server.requestTimeout = 10000;
+-  server.headersTimeout = 8000;
+-  await new Promise((resolve,reject) => {
+-    server.once('error', reject);
+-    server.listen(port,'127.0.0.1',() => { server.off('error',reject); resolve(); });
+-  });
+-  origin = 'http://127.0.0.1:' + server.address().port;
++  }
+   if(dailyAutorun||digestProfile){dailyLoop=setInterval(()=>{void sweepDaily().catch(()=>{});void sweepDigest().catch(()=>{});},15_000);dailyLoop.unref();}
+   let closing;
+-  return { origin, mode, sweepDaily, sweepDigest, async close() {
+-    if (!closing) {
+-      clearInterval(dailyLoop);
+-      hostSignal.abort();
+-      closing=Promise.allSettled([new Promise((resolve,reject) => server.close(e => e ? reject(e) : resolve())),working?.p,dailyFlight,digestFlight]).then(results=>{
+-        daily?.close();if(results[0].status==='rejected')throw results[0].reason;
+-      });
++  return {handle,setOrigin,mode,sweepDaily,sweepDigest,async close(){
++    if(!closing){
++      clearInterval(dailyLoop);hostSignal.abort();
++      closing=Promise.allSettled([working?.p,dailyFlight,digestFlight]).then(()=>daily?.close());
+     }
+     await closing;
+-  } };
++  }};
++}
++export async function startLocalGui(options = {}) {
++  const {port = 0} = options;
++  if (!Number.isInteger(port) || port < 0 || port > 65535) reject(400, 'INVALID_GUI_PORT');
++  const workspace=await createLocalGuiWorkspace({...options,origin:undefined});
++  const server=createServer({maxHeaderSize:8192},workspace.handle);
++  server.requestTimeout=10000;
++  server.headersTimeout=8000;
++  try{
++    await new Promise((resolve,reject)=>{
++      server.once('error',reject);
++      server.listen(port,'127.0.0.1',()=>{server.off('error',reject);resolve();});
++    });
++  }catch(e){await workspace.close();throw e;}
++  const origin='http://127.0.0.1:'+server.address().port;
++  workspace.setOrigin(origin);
++  let closing;
++  return {origin,mode:workspace.mode,sweepDaily:workspace.sweepDaily,sweepDigest:workspace.sweepDigest,async close(){
++    closing??=Promise.all([
++      new Promise((resolve,reject)=>server.close(e=>e?reject(e):resolve())),
++      workspace.close(),
++    ]);
++    await closing;
++  }};
+ }
+diff --git a/test/account-site.test.mjs b/test/account-site.test.mjs
+new file mode 100644
+index 0000000..8860a88
+--- /dev/null
++++ b/test/account-site.test.mjs
+@@ -0,0 +1,170 @@
++import test from 'node:test';
++import assert from 'node:assert/strict';
++import {randomBytes} from 'node:crypto';
++import {request} from 'node:http';
++import {mkdir,mkdtemp,rm,writeFile} from 'node:fs/promises';
++import {join,resolve} from 'node:path';
++import {accountProjectBasename,startAccountSite} from '../src/account-site.mjs';
++import {sha256} from '../src/source.mjs';
++
++const origin='https://agent.example.test', host=new URL(origin).host;
++const creds=[
++  {email:'operator-one@example.test',password:'local-fixture-password-one'},
++  {email:'operator-two@example.test',password:'local-fixture-password-two'},
++];
++const cookieName='__Secure-open-etf-account.session_token';
++const attrs='; Path=/; HttpOnly; Secure; SameSite=Strict';
++const tokenOf=headers=>headers.get('cookie')?.split(';')[0].split('=')[1];
++function fixtureAuth(){
++ const active=new Map(), seen=[];
++ let failure=false;
++ return {seen,setUnavailable(v){failure=v;}, async getSession(headers){
++   if(failure)throw Error('test db unavailable');
++   return active.get(tokenOf(headers))??null;
++ },async handler(req){
++   const path=new URL(req.url).pathname;
++   seen.push({path,ip:req.headers.get('x-forwarded-for')});
++   if(path.endsWith('/email')){
++     const b=await req.json(),index=creds.findIndex(c=>c.email===b.email&&c.password===b.password);
++     if(index<0)return new Response('',{status:401});
++     const token=randomBytes(20).toString('hex');
++     active.set(token,{user:{id:'fixture-'+index}});
++     return Response.json({unwantedToken:token},{headers:{'set-cookie':cookieName+'='+token+attrs}});
++   }
++   active.delete(tokenOf(req.headers));
++   return Response.json({}, {headers:{'set-cookie':cookieName+'=; Max-Age=0'+attrs}});
++ }};
++}
++async function workspace(t) {
++ await mkdir('test-output',{recursive:true});
++ const root=await mkdtemp(resolve('test-output/accounts-'));
++ t.after(()=>rm(root,{recursive:true,force:true}));
++ return root;
++}
++function send(app,path,{method='GET',body,cookie,headers={}}={}){
++ const bytes=body!==undefined?Buffer.from(JSON.stringify(body)):undefined;
++ return new Promise((resolve,reject)=>{
++   const req=request({hostname:'127.0.0.1',port:app.port,path,method,
++     headers:{Host:host,...(method==='POST'?{Origin:origin}:{}),
++       ...(bytes?{'content-type':'application/json','content-length':bytes.length}:{}),
++       ...(cookie?{Cookie:cookie}:{}),...headers}},res=>{
++     const chunks=[];res.on('data',c=>chunks.push(c));res.on('error',reject);
++     res.on('end',()=>{const text=Buffer.concat(chunks).toString();let value;try{value=JSON.parse(text);}catch{}resolve({status:res.statusCode,text,value,headers:res.headers});});
++   });
++   req.on('error',reject);req.end(bytes);
++ });
++}
++const mutation=(app,path,body,cookie,headers)=>send(app,path,{method:'POST',body,cookie,headers});
++async function signIn(app,body){
++ const r=await mutation(app,'/api/auth/sign-in/email',body,undefined,{'x-forwarded-for':'192.0.2.44'});
++ assert.equal(r.status,200,r.text);
++ assert.deepEqual(r.value,{status:'signed-in'});
++ const header=r.headers['set-cookie'][0];
++ assert.match(header,/; HttpOnly/i);assert.match(header,/; Secure/i);assert.match(header,/; SameSite=Strict/i);
++ assert.doesNotMatch(header,/; Domain=/i);
++ return header.split(';')[0];
++}
++async function createSyntheticReport(app,cookie){
++ const w=await send(app,'/api/workspace',{cookie});assert.equal(w.status,200);
++ const c=await mutation(app,'/api/conversations',{},cookie);assert.equal(c.status,201);
++ const id=c.value.id, messageId='m-synthetic'+Date.now();
++ const turn=await mutation(app,'/api/conversations/'+id+'/messages',{
++   messageId,question:'fixture report for isolation',sourceId:w.value.sources[0].id,
++ },cookie);assert.equal(turn.status,202,turn.text);
++ const detailPath='/api/conversations/'+id, reportPath=detailPath+'/messages/'+messageId+'/report.md';
++ let deadline=Date.now()+5000;
++ while(Date.now()<deadline){
++   const result=await send(app,reportPath,{cookie});
++   if(result.status===200)return {projectId:w.value.projectId,detailPath,reportPath,sha256:sha256(result.text)};
++   await new Promise(r=>setTimeout(r,30));
++ }
++ assert.fail('fixture report not ready');
++}
++test('auth is a mandatory backend boundary; only intended public paths are exposed',async t=>{
++ const auth=fixtureAuth(),root=await workspace(t),app=await startAccountSite({projectRoot:root,origin,auth});
++ t.after(()=>app.close());
++ assert.equal((await send(app,'/')).status,303);
++ assert.equal((await send(app,'/account/login')).status,200);
++ for(const path of ['/api/workspace','/gui.mjs','/gui.css','/api/conversations/c/m/m/report.md'])
++   assert.equal((await send(app,path)).status,401,path);
++ assert.equal((await mutation(app,'/api/conversations',{})).status,401);
++ assert.equal((await mutation(app,'/api/auth/sign-up/email',creds[0])).status,404);
++ assert.equal((await mutation(app,'/api/auth/sign-in/email',creds[0],undefined,{Origin:''})).status,403);
++ assert.equal((await mutation(app,'/api/auth/sign-in/email',creds[0],undefined,{Origin:'https://wrong.example.test'})).status,403);
++ assert.equal((await send(app,'/api/workspace',{headers:{Host:'forwarded.example.test','X-Forwarded-Host':host}})).status,403);
++ assert.equal((await send(app,'/api/workspace?userId=someone')).status,400);
++ assert.equal((await send(app,'/api/workspace',{headers:{'X-Agent-User-Id':'someone'}})).status,400);
++ assert.equal((await send(app,'/api/%61uth/sign-up/email')).status,400);
++ assert.equal(auth.seen.length,0);
++ auth.setUnavailable(true);
++ assert.equal((await send(app,'/api/workspace')).status,503);
++});
++test('two accounts have distinct durable Projects and old cookies cannot replay after logout',async t=>{
++ const root=await workspace(t),auth=fixtureAuth(),app=await startAccountSite({projectRoot:root,origin,auth});
++ t.after(()=>app.close());
++ const a=await signIn(app,creds[0]),b=await signIn(app,creds[1]);
++ assert.ok(auth.seen.every(x=>x.ip===null));
++ const report=await createSyntheticReport(app,a);
++ const own=await send(app,report.reportPath,{cookie:a});
++ assert.equal(sha256(own.text),report.sha256);
++ const sibling=await send(app,'/api/workspace',{cookie:b});
++ assert.notEqual(report.projectId,sibling.value.projectId);
++ assert.deepEqual(sibling.value.conversations,[]);
++ assert.equal((await send(app,report.detailPath,{cookie:b})).status,404);
++ assert.equal((await send(app,report.reportPath,{cookie:b})).status,404);
++ assert.equal((await mutation(app,'/api/auth/sign-out',{},a)).status,200);
++ assert.equal((await send(app,report.reportPath,{cookie:a})).status,401);
++ assert.equal((await send(app,'/api/workspace',{cookie:b})).status,200);
++ const again=await signIn(app,creds[0]);
++ await app.close();
++ const reopen=await startAccountSite({projectRoot:root,origin,auth});
++ t.after(()=>reopen.close());
++ assert.equal(sha256((await send(reopen,report.reportPath,{cookie:again})).text),report.sha256);
++});
++test('operator cookie policy fails closed and unsafe subject cannot become a filesystem path',async t=>{
++ const root=await workspace(t);
++ const auth={getSession:async()=>({user:{id:'../escape'}}),
++   handler:async()=>new Response('',{headers:{'set-cookie':'sid=weak; SameSite=Lax'}})};
++ const app=await startAccountSite({origin,projectRoot:root,auth});t.after(()=>app.close());
++ assert.equal((await mutation(app,'/api/auth/sign-in/email',creds[0])).status,503);
++ assert.equal((await send(app,'/api/workspace')).status,503);
++ assert.throws(()=>accountProjectBasename('../escape'),{code:'ACCOUNT_SUBJECT_UNAVAILABLE'});
++ await assert.rejects(startAccountSite({origin:'https://unsafe.example.test/path',projectRoot:root,auth}),{code:'ACCOUNT_ORIGIN_CONFIG'});
++});
++test('real Better Auth database revokes prior cookies and survives process restart',
++ {skip:process.env.OPEN_ACCOUNT_REAL_TEST!=='1'},async t=>{
++ const {openBetterAuth,prepareAccountDatabase,provisionOfflineAccount}=await import('../src/account-better-auth.mjs');
++ const root=await workspace(t),stateDir=join(root,'auth'),secretFile=join(root,'secret');
++ await writeFile(secretFile,randomBytes(32).toString('base64url'),{mode:0o600});
++ const db={origin,secretFile,stateDir};
++ await prepareAccountDatabase(db);
++ for(const [i,c]of creds.entries()){
++   const passwordFile=join(root,'password-'+i);await writeFile(passwordFile,c.password,{mode:0o600});
++   const r=await provisionOfflineAccount({...db,...c,passwordFile,name:'Local fixture '+i});
++   assert.match(accountProjectBasename(r.subject),/^u-[a-f0-9]{64}$/);
++ }
++ let auth=await openBetterAuth(db);
++ const projectRoot=join(root,'projects');
++ let app=await startAccountSite({origin,projectRoot,auth});
++ t.after(async()=>{await app.close();auth?.close();});
++ const a=await signIn(app,creds[0]),b=await signIn(app,creds[1]);
++ const report=await createSyntheticReport(app,a);
++ assert.equal((await send(app,report.reportPath,{cookie:b})).status,404);
++ const out=await mutation(app,'/api/auth/sign-out',{},a);assert.equal(out.status,200,out.text);
++ assert.equal((await send(app,report.reportPath,{cookie:a})).status,401);
++ const again=await signIn(app,creds[0]);
++ await app.close();auth.close();auth=null;
++ auth=await openBetterAuth(db); app=await startAccountSite({origin,projectRoot,auth});
++ assert.equal(sha256((await send(app,report.reportPath,{cookie:again})).text),report.sha256);
++ assert.equal((await send(app,report.reportPath,{cookie:a})).status,401);
++});
++test('logout does not claim revocation if a previously issued cookie still resolves',async t=>{
++ const root=await workspace(t);
++ const auth={getSession:async headers=>headers.has('cookie')?{user:{id:'present'}}:null,
++   handler:async()=>new Response(null,{headers:{'set-cookie':cookieName+'=; Max-Age=0'+attrs}})};
++ const app=await startAccountSite({origin,projectRoot:root,auth}); t.after(()=>app.close());
++ const r=await mutation(app,'/api/auth/sign-out',{},cookieName+'=stale');
++ assert.equal(r.status,503);
++ assert.equal(r.value.error,'ACCOUNT_REVOCATION_UNVERIFIED');
++ assert.equal(r.headers['set-cookie'],undefined);
++});
