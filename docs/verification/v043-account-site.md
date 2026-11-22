@@ -24,10 +24,20 @@ per-account Project guard, stale-cookie rejection after sign-out, and restart
 readback. This is an isolated dependency and loopback record, not public TLS,
 real users, live owner-history migration or production readiness. The
 exact official manifest and lock are present in the optional install lane.
-The packaging-stage attempt using the new helper did not reach a package
-download: this cloud executor had a DNS error resolving the official registry.
-Do not substitute the earlier service-side package smoke for validating the
-final packaged installer on an authorized network.
+An earlier cloud packaging attempt stopped before download because the
+official npm registry could not resolve. The subsequent fresh, isolated
+Singapore run of the shipping installer passed at exact application commit
+`f0dc68b99f332e0f9cc2ed484f4c7e53db95963c`, root tree
+`8e3748da0a3fab8b30052679c925c4271268b1b2`, source tree
+`c96dfc06dc18441a254524c38475e2a50741a3d8`, on Node 26.11.1.
+The normal official-registry install added 100 dependencies and did not
+install Better Auth. The checked-in optional installer then installed the
+21 locked dependencies from the official registry and resolved Better Auth
+1.7.27 from the intended sidecar. All five account tests passed (no failure
+or skip), including actual Better Auth/SQLite and cold account readback.
+No external model, email, production Project or browser/TLS was exercised.
+This supersedes the installer blocker only; it does not qualify production
+activation or grant additional scope.
 
 Do not resolve fresh dependencies for a release test. First run the normal
 root install on Node 26. The verified manifest and lock live under
@@ -49,8 +59,9 @@ before npm or link writes; there is no placeholder graph or fallback install.
 
 The opt-in test uses throwaway accounts/directories, not real emails or
 provider calls. Normal fixture tests do not run it. The separate local
-non-browser baseline achieved 45 passed, 2 skipped, 0 failed; those counts
-overlap the account file and should not be added to the isolated result.
+non-browser baseline achieved 45 passed, 2 skipped, 0 failed. Those counts,
+the earlier five account tests, and the shipping five account tests overlap
+and must not be added together.
 
 ## Operator configuration
 

@@ -1,9 +1,9 @@
 {
   "schemaVersion": 2,
-  "reviewedVersion": "0.42.0",
-  "reviewedSource": "ca4161199ea4066bd0893f0c76c4835e4ebc9131",
+  "reviewedVersion": "0.43.0",
+  "reviewedSource": "f0dc68b99f332e0f9cc2ed484f4c7e53db95963c",
   "articleSource": "https://github.com/hpoenixf/eff-agent-article/blob/249f0b866f9446f33b57f186fbc6d35b5d82c119/articles/open-etf-agent-v010-system-design.md",
-  "evidence": "docs/verification/v042-runtime-qualification.md",
+  "evidence": "docs/verification/v043-account-site.md",
   "layers": [
     {
       "id": "L1",
@@ -237,7 +237,7 @@
         "zh": "邮件需另配且默认关闭",
         "en": "Digest requires separate opt-in"
       },
-      "status": "enhanced",
+      "status": "bounded",
       "source": "src/gui-daily-watch.mjs",
       "kind": "module",
       "article": {
@@ -1096,6 +1096,31 @@
         "title": {
           "zh": "“接着聊”不等于“接着执行”：Agent 对话接纳与任务接续的设计",
           "en": "Keep Chatting Is Not Keep Executing: Agent Conversation Admission and Task Continuation"
+        }
+      }
+    },
+    {
+      "id": "accountsite",
+      "layer": "L6",
+      "group": "delivery",
+      "name": "Account Site",
+      "summary": {
+        "zh": "受邀登录与独立账户项目",
+        "en": "Invited login and isolated Projects"
+      },
+      "boundary": {
+        "zh": "按需安装；未验证公网访问",
+        "en": "Optional; public TLS not qualified"
+      },
+      "status": "enhanced",
+      "source": "src/account-site.mjs",
+      "kind": "module",
+      "article": {
+        "slug": "open-etf-agent-v010-system-design",
+        "kind": "overview",
+        "title": {
+          "zh": "Agent 深入：从一份报告到持续执行与专家协作",
+          "en": "Agent Deep Dive: From One Report to Durable Execution and Specialist Collaboration"
         }
       }
     },
