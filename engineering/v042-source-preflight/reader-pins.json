@@ -1,0 +1,9 @@
+{
+  "src/gui-owner-web.mjs":"6201d4962c1337d895e05bea69547272d90cc5b5",
+  "src/web-acquisition.mjs":"78afe88b8f563c686960064e0987566dbe6bbfb6",
+  "src/web-transport.mjs":"60318aff7ded20027e70e048fe1f5c6b2dc8ed15",
+  "src/web-policy.mjs":"d680adf97e300e24181206b6a75c11e345f88ec5",
+  "src/web-platform-profile.mjs":"bb0e5211f234fc66903ea8a763689112b21204b4",
+  "src/web-extraction.mjs":"3af42df3c9e858f2c27db2a04018bbb57a19de33",
+  "src/web-acquisition-records.mjs":"55ad6cb80afac9566e4f54e3a30e233032d05eb6"
+}
