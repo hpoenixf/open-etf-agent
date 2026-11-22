@@ -227,7 +227,9 @@ async function load() {
     badge.title='提交后会向已配置的模型发送问题';
     byId('mode-heading').textContent='今天想了解什么？';
     byId('mode-intro').textContent='直接输入问题。回复保存在会话历史里。';
-    byId('mode-note').textContent='不联网检索新闻或行情。';
+    const c=state.workspace.liveNotice.connectivity??{};
+    const capabilities=[c.search?'公开网页搜索':null,c.web?'公开网页读取':null,c.wind?'Wind 基金日收盘价':null].filter(Boolean);
+    byId('mode-note').textContent=capabilities.length?'已启用：'+capabilities.join('、')+'。当前事实以实际来源为准。':'不联网检索新闻或行情。';
     byId('source-picker').hidden=true;
     byId('source').required=false;
     byId('question').placeholder='输入你的问题';

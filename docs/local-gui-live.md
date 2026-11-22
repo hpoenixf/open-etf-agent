@@ -44,7 +44,13 @@ Use these exact provider and endpoint values, and replace the model placeholder 
 }
 ```
 
-Go owner mode has no source picker, no seeded demo material and no per-message confirmation dialog. You can ask directly and reopen the answer in History. General answers do not have verified external sources, live market quotes or web access. Existing sourced reports remain readable. No other Go host or path is accepted by this GUI. The existing native adapter identifies itself as Open ETF Agent and sends the stable, opaque native Root session on each request for the same Run. It does not identify itself as another client. A 403 or 429 is shown on the original turn without the upstream body. The original Admission receipt remains unknown where applicable; the application does not retry, change model, or infer a zero charge.
+Go owner mode has no source picker, no seeded demo material and no per-message confirmation dialog. You can ask directly and reopen the answer in History. By default, general answers do not use external sources. The optional connectivity settings below enable online tools. Existing sourced reports remain readable. No other Go host or path is accepted by this GUI. The existing native adapter identifies itself as Open ETF Agent and sends the stable, opaque native Root session on each request for the same Run. It does not identify itself as another client. A 403 or 429 is shown on the original turn without the upstream body. The original Admission receipt remains unknown where applicable; the application does not retry, change model, or infer a zero charge.
+
+### Optional public web and Wind connectivity
+
+In the trusted launch file, add a top-level `"connectivity": {"web": true, "search": "exa-public-preview"}` to enable the existing public HTTPS reader and Exa’s documented no-key preview. The preview is rate-limited and does not fall back to a paid account. Exa receives public search terms. Search snippets are discovery only; the page reader must retrieve an original for a sourced claim. It checks robots and public addresses and reads static text, not logins, JavaScript, or PDFs. Page provenance is saved; the free-form answer may give source links but is not a formal cited Report.
+
+To additionally enable the typed Wind fund daily close tool, set `"wind": true` in the same object and inject `WIND_API_KEY` into the server process via an authorized secret store. Never store it in the launch JSON. The Wind tool is not a raw MCP passthrough, does not expose arbitrary service calls, and is not a universal live market feed. Restart the host with the same Project to preserve history. Old tasks keep their original configuration.
 
 ## Direct DeepSeek Flash profile
 
@@ -63,6 +69,6 @@ This explicit profile follows [DeepSeek's non-thinking tool-call contract](https
 
 ## 中文
 
-默认离线模式不变。只有显式传入 `--live-config`，且独立项目、服务端密钥环境变量和既有提供方配置都核验通过，才可启动本机真实模型预览。普通来源模式在提交前确认问题和选中的合成资料；Go 持有人模式可以直接提问，不加载演示资料。发送会使用所配置的模型与账户额度。该模式没有联网搜索或实时行情，通用回答与有来源的历史报告分开呈现。调用次数上限不是价格上限。刷新、History 和重复提交不会自动续跑，原任务需要另点确认恢复。应用本身仅监听回环地址，不自带公网入口和鉴权，不接入访客或私人材料。OpenCode Go 使用明确的账户持有人配置、官方端点及经核对的 Chat Completions 模型。内部使用不代表提供方已确认本用途；先核对用途、地区、账号、额度及 Extra Usage。不得伪装为编程流量绕过拒绝，也不会因 403/429 自动换模型或重试。
+默认离线模式不变。只有显式传入 `--live-config`，且独立项目、服务端密钥环境变量和既有提供方配置都核验通过，才可启动本机真实模型预览。普通来源模式在提交前确认问题和选中的合成资料；Go 持有人模式可以直接提问，不加载演示资料。发送会使用所配置的模型与账户额度。未配置联网工具时只使用模型知识。可选联网能力见上文；Wind 需单独授权密钥，目前工具用于基金日收盘价，不等于通用实时行情。调用次数上限不是价格上限。刷新、History 和重复提交不会自动续跑，原任务需要另点确认恢复。应用本身仅监听回环地址，不自带公网入口和鉴权，不接入访客或私人材料。OpenCode Go 使用明确的账户持有人配置、官方端点及经核对的 Chat Completions 模型。内部使用不代表提供方已确认本用途；先核对用途、地区、账号、额度及 Extra Usage。不得伪装为编程流量绕过拒绝，也不会因 403/429 自动换模型或重试。
 
 直连 DeepSeek 时，使用上面的 `deepseek-direct` / 官方端点 / `deepseek-flash` 组合。本配置按官方工具协议关闭 thinking，不会静默改用其他模型或重试其他提供方。

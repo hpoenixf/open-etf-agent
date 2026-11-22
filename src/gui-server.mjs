@@ -8,7 +8,7 @@ import {
   createConversation, inspectConversation, readConversationMessage, readConversationInput, readConversationTitle, titleForConversationInput, submitConversationMessage,
   workConversationMessage, cancelConversationMessage,
 } from './conversation.mjs';
-import { createResearchProject, inspectResearchProject, inspectResearchTask, supportsOwnerFreeform, validateResearchConfig } from './research-project.mjs';
+import { createResearchProject, inspectResearchProject, inspectResearchTask, supportsOwnerFreeform, updateResearchProject, validateResearchConfig } from './research-project.mjs';
 import { importProjectSources } from './project-sources.mjs';
 import { safeDirectory } from './storage-files.mjs';
 import { prepareGuiLiveConfig } from './gui-live-config.mjs';
@@ -84,7 +84,15 @@ async function guiProject(projectDir, expectedConfig, live, freeform) {
     project = await createResearchProject({ directory: projectDir, config:expectedConfig });
   }
   if (!isDeepStrictEqual(project.config, expectedConfig)) {
-    reject(400, live?'GUI_LIVE_PROJECT_REQUIRED':'GUI_DEMO_PROJECT_REQUIRED');
+    const {ownerConnectivity:oldConnectivity,...oldBase}=project.config;
+    const {ownerConnectivity:nextConnectivity,...nextBase}=expectedConfig;
+    // Only the trusted launch config can change connectivity on this existing
+    // owner project. Other changes still fail closed. Old Run definitions
+    // retain their original profile and historical readback.
+    if(!freeform||!isDeepStrictEqual(oldBase,nextBase)||!nextConnectivity&&!oldConnectivity) {
+      reject(400, live?'GUI_LIVE_PROJECT_REQUIRED':'GUI_DEMO_PROJECT_REQUIRED');
+    }
+    project=await updateResearchProject({projectDir,config:expectedConfig,expectedConfigSha256:project.configSha256});
   }
   projectDir = await safeDirectory(projectDir);
   const sources = freeform?[]:await Promise.all(seedFiles.map(async ([name, title]) => {
@@ -94,7 +102,7 @@ async function guiProject(projectDir, expectedConfig, live, freeform) {
   return { projectDir, sources, projectId: project.projectId };
 }
 
-export async function startLocalGui({ projectDir, port = 0, liveConfig, env = process.env, fetchImpl } = {}) {
+export async function startLocalGui({ projectDir, port = 0, liveConfig, env = process.env, fetchImpl, ownerWebTransport } = {}) {
   if (!Number.isInteger(port) || port < 0 || port > 65535) reject(400, 'INVALID_GUI_PORT');
   const live = liveConfig === undefined ? null : prepareGuiLiveConfig(liveConfig,env);
   const mode = live?'live-research':'offline-demo';
@@ -102,6 +110,8 @@ export async function startLocalGui({ projectDir, port = 0, liveConfig, env = pr
   const wrongProject=live?'GUI_LIVE_PROJECT_REQUIRED':'GUI_DEMO_PROJECT_REQUIRED';
   const freeform=supportsOwnerFreeform(expectedConfig);
   const needsConsent=live&&!freeform;
+  const connectivity=expectedConfig.ownerConnectivity??{};
+  const ownerWindSettings=connectivity.wind?((await import('./gui-owner-wind.mjs')).prepareOwnerWind(true,env)):undefined;
   const demo = await guiProject(projectDir, expectedConfig, live, freeform);
   projectDir = demo.projectDir;
   const assetsByPath = new Map(await Promise.all([...assets].map(async ([route, [name,type]]) =>
@@ -165,7 +175,7 @@ export async function startLocalGui({ projectDir, port = 0, liveConfig, env = pr
     if (freeform?sourceId!==null:!source) reject(409, 'GUI_SOURCE_UNKNOWN');
     const p = Promise.resolve().then(() =>
       workConversationMessage({ projectDir, conversationId, messageId,
-        ...(live?{apiKey:live.apiKey,fetchImpl}:{gateway:demoGateway(source)}), hostSignal: hostSignal.signal })
+        ...(live?{apiKey:live.apiKey,fetchImpl,ownerWebTransport,ownerWindSettings}:{gateway:demoGateway(source)}), hostSignal: hostSignal.signal })
     ).catch(() => { /* Lifecycle and original execution evidence remain in Project. */ });
     working = { key, p };
     p.finally(() => { if (working?.p === p) working = null; });
@@ -190,7 +200,7 @@ export async function startLocalGui({ projectDir, port = 0, liveConfig, env = pr
         if (asset) return send(200, asset.bytes, asset.type+'; charset=utf-8');
         if (req.url === '/api/workspace') return send(200, {
           schemaVersion: 'local-gui@1', mode,
-          ...(live?{liveNotice:{maxModelCallsPerRun:expectedConfig.limits.model,...(freeform?{freeform:true}:{})}}:{}),
+          ...(live?{liveNotice:{maxModelCallsPerRun:expectedConfig.limits.model,...(freeform?{freeform:true,connectivity:{web:connectivity.web===true,search:connectivity.search==='exa-public-preview',wind:connectivity.wind===true}}:{})}}:{}),
           capabilities: ['conversations','progress','reports','sources'],
           projectId: demo.projectId, conversations: await list({titles:true}), sources: publicSources,
         });
