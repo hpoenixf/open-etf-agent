@@ -96,3 +96,41 @@ dialog::backdrop{background:#14282480}
 .daily-item li button { margin-inline-start: .45rem; }
 #daily-digest-settings { border-block-start: 1px solid currentColor; margin-block-start: .7rem; padding-block-start: .35rem; }
 #daily-digest-form { display: flex; gap: .5rem; align-items:center; flex-wrap:wrap; }
+
+.markdown-body { min-width: 0; line-height: 1.68; overflow-wrap: anywhere; }
+.markdown-body > :first-child { margin-top: .45rem; }
+.markdown-body :is(h2,h3,h4,h5,h6) { line-height: 1.35; margin: 1.1em 0 .4em; }
+.markdown-body :is(ul,ol) { padding-inline-start: 1.6em; }
+.markdown-body blockquote { margin-inline: 0; padding-inline-start: .8em; border-inline-start: 3px solid currentColor; }
+.markdown-body pre { overflow-x: auto; white-space: pre; max-width: 100%; }
+.markdown-body a { text-underline-offset: .2em; }
+.markdown-table { overflow-x: auto; max-width: 100%; }
+.markdown-table table { border-collapse: collapse; margin-block: .5rem; }
+.markdown-table :is(th,td) { border-bottom: 1px solid #899892; padding: .35rem .7rem; text-align: start; }
+
+/* The draft and submit action stay visible; technical notes are optional. */
+.visually-hidden { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.composer-option[hidden] { display: none; }
+.composer-option { min-width: 0; color: var(--muted); font-size: .84rem; }
+.composer-option summary { cursor: pointer; min-height: 38px; padding-block: .45rem; }
+.composer-actions { align-items: start; }
+.composer-actions #send { margin-inline-start: auto; flex: 0 0 auto; }
+.composer-actions #pdf-picker { flex: 1 1 0; }
+.composer-actions #pdf-file { max-width: 100%; }
+#mode-disclosure p { margin: 0 0 .3rem; line-height: 1.5; }
+.research-progress { margin-block: .4rem; padding: .2rem .15rem; border: 0; }
+.research-progress summary { min-height: 36px; color: var(--muted); padding-block: .4rem; font-size: .88rem; }
+.research-progress[open] .research-progress-body { border-inline-start: 2px solid var(--line); margin-inline-start: .45rem; padding-inline-start: .55rem; }
+.turn-notice { color: var(--muted); font-size: .84rem; margin-block: .3rem; }
+.turn-notice summary { cursor: pointer; min-height: 34px; padding-block: .4rem; }
+.turn-notice p { margin-block: .25rem; }
+@media(max-width:700px) {
+  #composer { position: sticky; bottom: max(.35rem,env(safe-area-inset-bottom)); z-index: 2; box-shadow: 0 3px 18px #14282415; }
+  #composer textarea { min-height: 3.8rem; }
+}
+
+/* Keep inactive optional controls collapsed, including in the mobile composer. */
+.composer-actions #chart-skill-picker { flex: 0 1 auto; }
+.composer-actions #chart-skill-picker[open] { flex: 1 1 12rem; }
+.composer-actions #chart-skill { width: 100%; min-height: 40px; }
+@media (max-width: 540px) { .composer-actions { flex-wrap: wrap; } #daily-watch:not([open]) { padding: .25rem .65rem; } #daily-watch > summary { min-height: 36px; padding-block: .4rem; } }

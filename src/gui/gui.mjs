@@ -1,3 +1,5 @@
+import {createFinancialChartView} from './financial-chart-view.mjs';
+import { renderMarkdown } from './markdown.mjs';
 const byId = id => document.getElementById(id);
 const state = { workspace: null, conversation: null, detail: null, poll: null, submitting: false, pending: null, failures: 0, selection:0, progress:new Map() };
 const statusLabels = {
@@ -29,12 +31,13 @@ function draftKey(id = state.conversation) {
   return 'local-gui-draft@1:'+state.workspace.projectId+':'+(id ?? 'new');
 }
 function formDraft() {
-  return { question:byId('question').value, sourceId:byId('source').value };
+  return { question:byId('question').value, sourceId:byId('source').value,
+    ...(!byId('chart-skill-picker').hidden&&byId('chart-skill').value?{chartSkill:byId('chart-skill').value}:{}) };
 }
 function saveDraft(draft=formDraft(), id=state.conversation) {
   if (!state.workspace) return;
   try {
-    if (draft.question || draft.sourceId !== state.workspace.sources[0]?.id) {
+    if (draft.question || draft.chartSkill || draft.sourceId !== state.workspace.sources[0]?.id) {
       window.localStorage.setItem(draftKey(id),JSON.stringify(draft));
     } else window.localStorage.removeItem(draftKey(id));
   } catch { /* Browser storage is optional; don't block a normal submission. */ }
@@ -48,10 +51,12 @@ function restoreDraft() {
   const draft = state.pending?.conversationId === state.conversation ? state.pending.input : readDraft();
   byId('question').value = typeof draft?.question==='string' ? draft.question.slice(0,3000) : '';
   byId('source').value = state.workspace.sources.find(s=>s.id===draft?.sourceId)?.id ?? state.workspace.sources[0]?.id ?? '';
+  byId('chart-skill').value=!byId('chart-skill-picker').hidden&&draft?.chartSkill==='financial-chart@1'?draft.chartSkill:'';
+  updateChartSkillLabel();
 }
 function clearMatchingDraft({conversationId,input}) {
   const saved = readDraft(conversationId);
-  if (saved?.question !== input.question || !ownerMode() && saved?.sourceId !== input.sourceId) return;
+  if (saved?.question !== input.question || saved?.chartSkill !== input.chartSkill || !ownerMode() && saved?.sourceId !== input.sourceId) return;
   try { window.localStorage.removeItem(draftKey(conversationId)); }
   catch { /* Browser storage is optional. */ }
 }
@@ -69,6 +74,7 @@ function controls() {
   byId('send').textContent = state.pending ? '重试原提交' : liveMode() ? '提交真实模型' : '提交演练';
   byId('question').readOnly = Boolean(state.submitting || state.pending);
   byId('pdf-file').disabled = Boolean(state.submitting || state.pending);
+  byId('chart-skill').disabled = Boolean(state.submitting || state.pending);
   byId('source').disabled = Boolean(state.submitting || state.pending);
   byId('new').disabled = Boolean(state.submitting || state.pending);
   for (const b of document.querySelectorAll('[data-reuse-question]')) {
@@ -138,7 +144,7 @@ function progressDetails(message) {
   const entry=state.progress.get(message.id)??{open:false};
   entry.content=content;
   state.progress.set(message.id,entry);
-  details.append(make('summary','研究进度'),make('p','仅展示实际执行记录，不包含模型内部推理。','muted'),content);
+  details.append(make('summary','研究进度'),content);
   progressContent(content,entry.data);
   details.open=entry.open;
   details.addEventListener('toggle',()=>{
@@ -167,16 +173,26 @@ function render() {
         :'提供方限制了请求，请核对可用额度或频率。';
       article.append(make('p',m.code+' · '+guidance+' 本次未自动重发。','warning'));
     }
-    if (m.output?.warning) article.append(make('p',m.output.warning,'warning'));
-    if (m.output?.answer && m.output.answer !== m.output?.report?.text) article.append(make('pre',m.output.answer));
+    if (m.output?.warning) {
+      if(m.status==='completed'){
+        const disclosure=make('details',undefined,'turn-notice');
+        disclosure.append(make('summary','来源与限制'),make('p',m.output.warning,'muted'));
+        article.append(disclosure);
+      } else article.append(make('p',m.output.warning,'warning'));
+    }
+    if (m.output?.answer && m.output.answer !== m.output?.report?.text) article.append(renderMarkdown(document,m.output.answer));
     if (m.output?.report) {
-      article.append(make('h3','已保存的报告'),make('pre',m.output.report.text));
-    } else if (m.error || m.status==='completed') {
+      article.append(make('h3','已保存的报告'),renderMarkdown(document,m.output.report.text));
+    } else if (m.error || m.status==='completed' && !m.output?.answer) {
       article.append(make('p','没有读到已保存报告。','muted'));
     }
     for (const [i,source] of (m.output?.sources ?? []).entries()) {
       const citation = make('button','核对来源 ['+(i+1)+']','secondary');
       citation.type='button'; citation.addEventListener('click',() => showEvidence(source,i+1)); article.append(citation);
+    }
+    for(const chart of m.chartViews??[]){
+      try{article.append(createFinancialChartView(document,chart));}
+      catch{/* A rejected chart view must not hide the durable answer. */}
     }
     const actions = make('div',undefined,'turn-actions');
     if (m.output?.report) {
@@ -260,7 +276,8 @@ async function select(id,messageId) {
   if (state.conversation !== id) {
     state.progress.clear();
     message();
-    if(state.conversation)byId('pdf-file').value='';
+    if(state.conversation)byId('pdf-file').value='';byId('pdf-file').dispatchEvent(new Event('change'));
+    byId('chart-skill').value=''; updateChartSkillLabel();
     const dialog=byId('mobile-evidence');
     if (dialog.open) dialog.close();
     byId('mobile-evidence-content').replaceChildren();
@@ -292,6 +309,8 @@ async function load() {
       +' 普通问题可能连同本会话近期问答的摘录发给配置的模型；跨越 PDF 附件轮次不沿用历史。新建会话可从空白开始。';
     byId('source-picker').hidden=true;
     byId('pdf-picker').hidden=!state.workspace.capabilities.includes('pdf-attachment');
+    byId('chart-skill-picker').hidden=!state.workspace.capabilities.includes('financial-chart-skill');
+    byId('chart-skill').options[0].textContent=state.workspace.capabilities.includes('financial-chart-auto')?'自动（适用时使用图表）':'自动（图表需点选）';
     byId('source').required=false;
     byId('question').placeholder='输入你的问题';
   } else if (liveMode()) {
@@ -434,6 +453,19 @@ byId('history-toggle').addEventListener('click',()=> {
 });
 byId('history-search').addEventListener('input',()=>{if(state.workspace){refreshHistory();controls();}});
 byId('question').addEventListener('input',()=>{if(!state.pending){saveDraft();controls();}});
+byId('pdf-file').addEventListener('change',()=>{
+  const file=byId('pdf-file').files?.[0];
+  const toggle=byId('pdf-toggle');
+  toggle.textContent=file?'已附 PDF':'附加 PDF';
+  if(file)toggle.title=file.name;else toggle.removeAttribute('title');
+});
+function updateChartSkillLabel(){
+  byId('chart-skill-toggle').textContent=byId('chart-skill').value?'工具：金融图表':'工具';
+}
+byId('chart-skill').addEventListener('change',()=>{
+  updateChartSkillLabel();
+  if(!state.pending)saveDraft();
+});
 byId('source').addEventListener('change',()=>{if(!state.pending)saveDraft();});
 byId('close-evidence').addEventListener('click',()=>byId('mobile-evidence').close());
 byId('new').addEventListener('click',()=> {
@@ -451,6 +483,8 @@ byId('composer').addEventListener('submit',async e=>{
     message(); state.submitting=true; controls();
     const original = formDraft();
     const file=!state.pending&&!byId('pdf-picker').hidden?byId('pdf-file').files[0]:null;
+    const chartSkill=!state.pending&&!byId('chart-skill-picker').hidden?byId('chart-skill').value:'';
+    if(file&&chartSkill){message('请在图表 Skill 和 PDF 附件之间选择一种。');return;}
     if (!state.conversation) await create(original);
     else if (!state.pending) saveDraft(original);
     let attachment;
@@ -463,12 +497,13 @@ byId('composer').addEventListener('submit',async e=>{
       attachment=payload.id;
     }
     state.pending ??= { conversationId:state.conversation,
-      input:{messageId:'m'+Date.now()+'-'+crypto.randomUUID().replaceAll('-','').slice(0,24),question:original.question,...(ownerMode()?(attachment?{attachmentId:attachment}:{}):{sourceId:original.sourceId})} };
+      input:{messageId:'m'+Date.now()+'-'+crypto.randomUUID().replaceAll('-','').slice(0,24),question:original.question,...(ownerMode()?(attachment?{attachmentId:attachment}:chartSkill?{chartSkill}:{}):{sourceId:original.sourceId})} };
     sessionStorage.setItem(pendingKey(),JSON.stringify(state.pending));
     const {conversationId,input}=state.pending;
     await api('/api/conversations/'+conversationId+'/messages',liveMode()&&!ownerMode()?{...input,approveLive:true}:input);
     clearMatchingDraft(state.pending);
-    state.pending=null; sessionStorage.removeItem(pendingKey()); q.value=''; byId('pdf-file').value='';
+    state.pending=null; sessionStorage.removeItem(pendingKey()); q.value=''; byId('pdf-file').value='';byId('pdf-file').dispatchEvent(new Event('change'));
+    byId('chart-skill').value=''; updateChartSkillLabel();
     await select(conversationId);
   } catch(error){ failed(error); }
   finally { state.submitting=false; controls(); }

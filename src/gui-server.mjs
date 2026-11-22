@@ -1,3 +1,4 @@
+import {OWNER_CHART_SKILL,OWNER_CHART_AUTO} from './financial-chart-owner.mjs';
 import { createServer } from 'node:http';
 import { isDeepStrictEqual } from 'node:util';
 import { randomUUID } from 'node:crypto';
@@ -5,7 +6,7 @@ import { readFile, readdir } from 'node:fs/promises';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
-  createConversation, inspectConversation, inspectConversationMessage, readDailyConversationBaseline, readConversationMessage, readConversationInput, readConversationTitle, titleForConversationInput, submitConversationMessage,
+  createConversation, inspectConversation, inspectConversationMessage, readDailyConversationBaseline, readConversationMessage, readConversationCharts, readConversationInput, readConversationTitle, titleForConversationInput, submitConversationMessage,
   workConversationMessage, cancelConversationMessage,
 } from './conversation.mjs';
 import { createResearchProject, inspectResearchProject, inspectResearchTask, readProjectJson, supportsOwnerFreeform, updateResearchProject, validateResearchConfig } from './research-project.mjs';
@@ -36,7 +37,7 @@ const config = {
 const validatedConfig = validateResearchConfig({ ...config, contextBytes: 1048576 });
 const seedFiles = [['etf-fees.md', 'ETF 费率样例'], ['etf-tracking.md', 'ETF 跟踪样例']];
 const uiRoot = new URL('./gui/', import.meta.url);
-const assets = new Map([['/', ['index.html', 'text/html']], ['/gui.mjs', ['gui.mjs', 'text/javascript']], ['/gui.css', ['gui.css', 'text/css']]]);
+const assets = new Map([['/', ['index.html', 'text/html']], ['/gui.mjs', ['gui.mjs', 'text/javascript']], ['/markdown.mjs', ['markdown.mjs', 'text/javascript']], ['/vendor/marked-16.4.2.mjs', ['vendor/marked-16.4.2.mjs', 'text/javascript']], ['/gui.css', ['gui.css', 'text/css']], ['/financial-chart-view.mjs',['financial-chart-view.mjs','text/javascript']]]);
 
 class RequestError extends Error {
   constructor(status, code) { super(code); this.status = status; }
@@ -118,7 +119,7 @@ async function guiProject(projectDir, expectedConfig, live, freeform) {
 
 // Trusted server composition only. An account host must authenticate and
 // resolve its Project before mounting this listener-free handler.
-export async function createLocalGuiWorkspace({ projectDir, origin: mountOrigin, liveConfig, env = process.env, fetchImpl, ownerWebTransport, dailyClock, onDailyCompleted, smtpOptions, ownerDailyDigest } = {}) {
+export async function createLocalGuiWorkspace({ projectDir, origin: mountOrigin, liveConfig, env = process.env, fetchImpl, ownerWebTransport, ownerWindFetch, dailyClock, onDailyCompleted, smtpOptions, ownerDailyDigest } = {}) {
   const live = liveConfig === undefined ? null : prepareGuiLiveConfig(liveConfig,env);
   const mode = live?'live-research':'offline-demo';
   const expectedConfig=live?.config??validatedConfig;
@@ -126,6 +127,8 @@ export async function createLocalGuiWorkspace({ projectDir, origin: mountOrigin,
   const freeform=supportsOwnerFreeform(expectedConfig);
   const needsConsent=live&&!freeform;
   const connectivity=expectedConfig.ownerConnectivity??{};
+  const chartAvailable=freeform&&connectivity.wind===true;
+  const chartAuto=chartAvailable&&env.ETF_GUI_FINANCIAL_CHART_AUTO==='1';
   const ownerSearchSettings=Object.fromEntries([connectivity.search,...(connectivity.searchAlternates??[])].filter(Boolean).map(provider=>[provider,prepareOwnerSearch(provider,env)]));
   const ownerWindSettings=connectivity.wind?((await import('./gui-owner-wind.mjs')).prepareOwnerWind(true,env)):undefined;
   const demo = await guiProject(projectDir, expectedConfig, live, freeform);
@@ -199,11 +202,16 @@ export async function createLocalGuiWorkspace({ projectDir, origin: mountOrigin,
         }
       }
       const status = run?.status ?? m.status;
+      let chartViews=[];
+      if(input.chartSkill&&status==='completed'){
+        try{chartViews=await readConversationCharts({projectDir,conversationId,messageId:m.messageId});}
+        catch{/* Invalid or missing committed chart data is never shown. */}
+      }
       messages.push({
         id: m.messageId, runId: m.runId, status, phase: run?.snapshot?.phase ?? null,
         // A worker can finish during these reads. Keep polling an active snapshot.
         code: run?.snapshot?.code ?? null, working: status === 'active' && (workerWasRunning || working?.key === key),
-        question: input.text, sourceId: input.sourceManifestSha256, ...(freeform&&input.sourceManifestSha256?{attachment:await pdfAttachment(conversationId,input.sourceManifestSha256)}:{}), output, error,
+        question: input.text, sourceId: input.sourceManifestSha256, ...(chartViews.length?{chartViews}:{}), ...(freeform&&input.sourceManifestSha256?{attachment:await pdfAttachment(conversationId,input.sourceManifestSha256)}:{}), output, error,
       });
     }
     return { id: c.conversationId, title: titleForConversationInput(messages[0]?.question), messages };
@@ -226,7 +234,7 @@ export async function createLocalGuiWorkspace({ projectDir, origin: mountOrigin,
     if (!freeform&&!source) reject(409, 'GUI_SOURCE_UNKNOWN');
     const p = Promise.resolve().then(() =>
       workConversationMessage({ projectDir, conversationId, messageId,
-        ...(live?{apiKey:live.apiKey,fetchImpl,ownerWebTransport,ownerWindSettings,ownerSearchSettings}:{gateway:demoGateway(source)}), hostSignal: hostSignal.signal })
+        ...(live?{apiKey:live.apiKey,fetchImpl,ownerWebTransport,ownerWindSettings,ownerSearchSettings,ownerWindFetch}:{gateway:demoGateway(source)}), hostSignal: hostSignal.signal })
     ).catch(() => { /* Lifecycle and original execution evidence remain in Project. */ });
     working = { key, p };
     p.finally(() => { if (working?.p === p) working = null; });
@@ -358,7 +366,7 @@ export async function createLocalGuiWorkspace({ projectDir, origin: mountOrigin,
         if (req.url === '/api/workspace') return send(200, {
           schemaVersion: 'local-gui@1', mode,
           ...(live?{liveNotice:{maxModelCallsPerRun:expectedConfig.limits.model,...(freeform?{freeform:true,connectivity:{web:connectivity.web===true,search:!!connectivity.search,...(connectivity.search?{searchProvider:connectivity.search}:{}),...(connectivity.searchAlternates?{searchAlternates:connectivity.searchAlternates}:{}),wind:connectivity.wind===true}}:{})}}:{}),
-          capabilities: ['conversations','progress','reports','sources',...(freeform?['pdf-attachment','daily-watch']:[])],
+          capabilities: ['conversations','progress','reports','sources',...(freeform?['pdf-attachment','daily-watch']:[]),...(chartAvailable?['financial-chart-skill']:[]),...(chartAuto?['financial-chart-auto']:[])],
           projectId: demo.projectId, conversations: await list({titles:true}), sources: publicSources,
         });
         if(req.url==='/api/daily-watch'&&daily)return send(200,{timeZone:DAILY_TIME_ZONE,autorun:dailyAutorun,
@@ -436,24 +444,29 @@ export async function createLocalGuiWorkspace({ projectDir, origin: mountOrigin,
       if (!action) {
         const input = await inputFor(req);
         if (needsConsent && input?.approveLive!==true) reject(400,'GUI_LIVE_APPROVAL_REQUIRED');
-        if (!exact(input, freeform?(Object.hasOwn(input??{},'attachmentId')?['messageId','question','attachmentId']:['messageId','question']):needsConsent?['messageId','question','sourceId','approveLive']:['messageId','question','sourceId']) || typeof input.messageId !== 'string'
+        if (!exact(input, freeform?(Object.hasOwn(input??{},'attachmentId')?['messageId','question','attachmentId']:Object.hasOwn(input??{},'chartSkill')?['messageId','question','chartSkill']:['messageId','question']):needsConsent?['messageId','question','sourceId','approveLive']:['messageId','question','sourceId']) || typeof input.messageId !== 'string'
           || !idPattern.test(input.messageId) || typeof input.question !== 'string' || !input.question.trim()
           || Buffer.byteLength(input.question)>12000 || !freeform&&!sourceFor(input.sourceId)) reject(400,'INVALID_MESSAGE');
+        if (Object.hasOwn(input,'chartSkill')&&(!chartAvailable||input.chartSkill!==OWNER_CHART_SKILL))reject(400,'GUI_CHART_SKILL_UNAVAILABLE');
         if (submitting || (working && working.key !== workKey(conversationId,input.messageId))) reject(409,'GUI_WORKER_BUSY');
         submitting = workKey(conversationId,input.messageId);
         try {
           if (!isDeepStrictEqual((await inspectResearchProject({projectDir})).config,expectedConfig)) reject(409,wrongProject);
           // A live replay acknowledges the same accepted intent. It does not restart work.
-          let retry=false;
+          let retry=false,priorInput;
           if (live) {
-            try { await readConversationInput({projectDir,conversationId,messageId:input.messageId}); retry=true; }
+            try { priorInput=await readConversationInput({projectDir,conversationId,messageId:input.messageId}); retry=true; }
             catch (error) { if (error.code!=='ENOENT') throw error; }
           }
           const attachment=freeform&&Object.hasOwn(input,'attachmentId')?await pdfAttachment(conversationId,input.attachmentId):null;
           if(freeform&&Object.hasOwn(input,'attachmentId')&&!attachment) reject(400,'GUI_PDF_ATTACHMENT_UNKNOWN');
           const sourceId=freeform?(attachment?.id??null):input.sourceId;
+          // Auto follows the launch policy only at initial admission. An exact
+          // old replay cannot retroactively acquire the changed auto policy.
+          const chartSkill=input.chartSkill??(freeform&&!attachment&&
+            (retry?priorInput?.chartSkill===OWNER_CHART_AUTO:chartAuto)?OWNER_CHART_AUTO:undefined);
           const m = await submitConversationMessage({ projectDir, conversationId, messageId: input.messageId,
-            text: input.question, sourceManifestSha256: sourceId,
+            text: input.question, sourceManifestSha256: sourceId,...(chartSkill?{chartSkill}:{}),
             ...(live?{authorization:{providerApproved:true,dataApproved:true,costApproved:true}}:{}) });
           if (m.status === 'active' && !retry) begin(conversationId,input.messageId,sourceId);
           return send(202,{ id:m.messageId,runId:m.runId,status:m.status });
