@@ -11,6 +11,7 @@ import {
 import { createResearchProject, inspectResearchProject, inspectResearchTask, supportsOwnerFreeform, updateResearchProject, validateResearchConfig } from './research-project.mjs';
 import { importProjectSources } from './project-sources.mjs';
 import { safeDirectory } from './storage-files.mjs';
+import { prepareOwnerSearch } from './gui-owner-web.mjs';
 import { prepareGuiLiveConfig } from './gui-live-config.mjs';
 
 const routeId = '[A-Za-z0-9_-]{1,48}';
@@ -111,6 +112,7 @@ export async function startLocalGui({ projectDir, port = 0, liveConfig, env = pr
   const freeform=supportsOwnerFreeform(expectedConfig);
   const needsConsent=live&&!freeform;
   const connectivity=expectedConfig.ownerConnectivity??{};
+  const ownerSearchSettings=Object.fromEntries([connectivity.search,...(connectivity.searchAlternates??[])].filter(Boolean).map(provider=>[provider,prepareOwnerSearch(provider,env)]));
   const ownerWindSettings=connectivity.wind?((await import('./gui-owner-wind.mjs')).prepareOwnerWind(true,env)):undefined;
   const demo = await guiProject(projectDir, expectedConfig, live, freeform);
   projectDir = demo.projectDir;
@@ -175,7 +177,7 @@ export async function startLocalGui({ projectDir, port = 0, liveConfig, env = pr
     if (freeform?sourceId!==null:!source) reject(409, 'GUI_SOURCE_UNKNOWN');
     const p = Promise.resolve().then(() =>
       workConversationMessage({ projectDir, conversationId, messageId,
-        ...(live?{apiKey:live.apiKey,fetchImpl,ownerWebTransport,ownerWindSettings}:{gateway:demoGateway(source)}), hostSignal: hostSignal.signal })
+        ...(live?{apiKey:live.apiKey,fetchImpl,ownerWebTransport,ownerWindSettings,ownerSearchSettings}:{gateway:demoGateway(source)}), hostSignal: hostSignal.signal })
     ).catch(() => { /* Lifecycle and original execution evidence remain in Project. */ });
     working = { key, p };
     p.finally(() => { if (working?.p === p) working = null; });
@@ -200,7 +202,7 @@ export async function startLocalGui({ projectDir, port = 0, liveConfig, env = pr
         if (asset) return send(200, asset.bytes, asset.type+'; charset=utf-8');
         if (req.url === '/api/workspace') return send(200, {
           schemaVersion: 'local-gui@1', mode,
-          ...(live?{liveNotice:{maxModelCallsPerRun:expectedConfig.limits.model,...(freeform?{freeform:true,connectivity:{web:connectivity.web===true,search:connectivity.search==='exa-public-preview',wind:connectivity.wind===true}}:{})}}:{}),
+          ...(live?{liveNotice:{maxModelCallsPerRun:expectedConfig.limits.model,...(freeform?{freeform:true,connectivity:{web:connectivity.web===true,search:!!connectivity.search,...(connectivity.search?{searchProvider:connectivity.search}:{}),...(connectivity.searchAlternates?{searchAlternates:connectivity.searchAlternates}:{}),wind:connectivity.wind===true}}:{})}}:{}),
           capabilities: ['conversations','progress','reports','sources'],
           projectId: demo.projectId, conversations: await list({titles:true}), sources: publicSources,
         });
