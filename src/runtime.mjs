@@ -461,6 +461,7 @@ async function drive({ question, gateway, outputRoot='runs', requireReport=false
             // An arbitrary code, incomplete stream/body or cancelled late reply is not settlement.
             const diagnostic=projectProviderProtocolDiagnostic(error);
             if(isKnownAdmissionNonDispatch(error)||!controller.signal.aborted&&diagnostic?.reason==='NON_SUCCESS_FINISH'&&diagnostic.hashScope==='complete-body')gatewayUnsettled=false;
+            if(reservation&&diagnostic)await record('model_protocol_rejected',{modelOrdinal:reservation.modelOrdinal,inputHash:reservation.inputHash,diagnostic}).catch(()=>{});
             throw error;
           }
           state.gatewayOutcome='settled';validateProposal(proposal);
@@ -473,7 +474,7 @@ async function drive({ question, gateway, outputRoot='runs', requireReport=false
           if(claim)durable.store.validateCheckpoint({...state,phase:'proposal-sealed',proposal:structuredClone(proposal),cursor:0,result:null,working:null,messages:proposal.kind==='calls'?[...state.messages,{role:'assistant',calls:structuredClone(proposal.calls)}]:state.messages});
           state.proposal=structuredClone(proposal);state.cursor=0;state.result=null;state.working=null;
           if(proposal.kind==='calls')state.messages.push({role:'assistant',calls:structuredClone(proposal.calls)});
-          await checkpoint('proposal-sealed');await record('model_proposal',{kind:proposal.kind,callIds:proposal.calls?.map(c=>c.id)||[],usage:proposal.usage??null,cost:null,durationMs:performance.now()-start});
+          await checkpoint('proposal-sealed');await record('model_proposal',{kind:proposal.kind,callIds:proposal.calls?.map(c=>c.id)||[],usage:proposal.usage??null,cost:null,...(reservation?{modelOrdinal:reservation.modelOrdinal,inputHash:reservation.inputHash}:{}),durationMs:performance.now()-start});
         }
         if(state.proposal.kind==='final'){
           if(state.messages.at(-1)?.result?.validation?.schemaVersion===ORIGINAL_READ_CORRECTION)throw failure('RECOVERY_CORRECTION_MISMATCH');

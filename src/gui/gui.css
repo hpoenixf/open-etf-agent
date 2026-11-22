@@ -86,3 +86,13 @@ dialog::backdrop{background:#14282480}
 .research-progress summary { cursor: pointer; font-weight: 600; }
 .research-progress-body ol { margin: .35rem 0 .15rem; padding-inline-start: 1.5rem; }
 .research-progress-body li { margin-block: .25rem; }
+
+#daily-watch { border: 1px solid currentColor; padding: .75rem; border-radius: .45rem; margin-block: .8rem; }
+#daily-watch summary { cursor: pointer; font-weight: 600; }
+#daily-form { display: flex; gap: .5rem; align-items: center; flex-wrap: wrap; }
+#daily-question { flex: 1 1 14rem; }
+.daily-item { margin-block: .6rem; padding-block: .5rem; border-top: 1px solid currentColor; overflow-wrap: anywhere; }
+.daily-item button { margin-inline-end: .45rem; }
+.daily-item li button { margin-inline-start: .45rem; }
+#daily-digest-settings { border-block-start: 1px solid currentColor; margin-block-start: .7rem; padding-block-start: .35rem; }
+#daily-digest-form { display: flex; gap: .5rem; align-items:center; flex-wrap:wrap; }

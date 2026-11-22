@@ -100,6 +100,8 @@ npm run demo -- --case document-compare
 <a id="最近三个模块"></a>
 ## 最近版本与开发状态
 
+**v0.42.0 · 每日研究与可选的持有人摘要。** 同一问题续用上一份已核实的回答，修改问题后重建基线。邮件需另行启用，未完成外部投递验收。[使用说明](docs/local-gui-daily-watch.md) · [运行验收](docs/verification/v042-runtime-qualification.md)
+
 **v0.41.0 候选 · 持有人研究工作台。** 支持同会话有限追问、按轮附带文字 PDF、查看研究进度，以及可选公开检索及 Wind 基金日收盘价。默认仍是离线演练。[持有人用法](docs/local-gui-live.md) · [候选范围与验证](docs/verification/v041-release-candidate.md)
 
 **[v0.39.0 · 本地研究界面预览](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.39.0)。** 用 `npm run gui -- --project ./test-output/local-gui` 打开浏览器工作台。界面使用内置的两份 ETF 模拟资料，会话、报告和引用保存在本机。[启动方式和适用范围](docs/local-gui.md) · [验收证据](docs/verification/v039-release.md)

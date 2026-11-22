@@ -100,6 +100,8 @@ npm run demo -- --case document-compare
 <a id="latest-three-modules"></a>
 ## Releases and development status
 
+**v0.42.0 · Daily research and an optional owner digest.** Track an unchanged question against the last verified answer. A changed question starts a new baseline. Delivery remains opt-in; external email was not qualified. [Usage](docs/local-gui-daily-watch.md) · [Runtime verification](docs/verification/v042-runtime-qualification.md)
+
 **v0.41.0 release candidate · Owner research workspace.** Bounded follow-ups, per-question text PDF evidence, observable research progress, and opt-in public research tools. Default startup remains offline. [Owner setup](docs/local-gui-live.md) · [Candidate scope and verification](docs/verification/v041-release-candidate.md)
 
 **[v0.39.0 · Local research GUI preview](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.39.0).** Open the browser workspace with `npm run gui -- --project ./test-output/local-gui`. The workspace uses two bundled synthetic ETF sources and saves conversations, reports and citations locally. [Setup and scope](docs/local-gui.md) · [Verification](docs/verification/v039-release.md)
