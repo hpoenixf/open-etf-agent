@@ -1,5 +1,5 @@
 import {OWNER_CHART_SKILL,OWNER_CHART_AUTO} from './financial-chart-owner.mjs';
-import {readResearchIntent} from './research-intent.mjs';
+import {readResearchIntent,isAutoResearchProfile,isDeepResearchProfile,readDeepResearchProgress} from './research-intent.mjs';
 import { createServer } from 'node:http';
 import { isDeepStrictEqual } from 'node:util';
 import { randomUUID } from 'node:crypto';
@@ -64,6 +64,7 @@ async function inputFor(req) {
   try { return JSON.parse(bytes); }
   catch { reject(400, 'INVALID_JSON'); }
 }
+const readableDelivery=output=>Boolean(output?.answer||output?.report?.text);
 function projectedOutput(output) {
   const answer = output.answer ?? output.publication?.content;
   return {
@@ -165,12 +166,12 @@ export async function createLocalGuiWorkspace({ projectDir, origin: mountOrigin,
   let origin=mountOrigin, working = null, submitting = null;
   function observedResearchRoute(input,run) {
     if(!run)return null;
-    if(input.researchDepth==='auto'&&run.definition?.config?.researchProfile==='auto-intent@1'){
+    if(input.researchDepth==='auto'&&isAutoResearchProfile(run.definition?.config?.researchProfile)){
       const adopted=readResearchIntent(run.snapshot?.messages??[]);
       return adopted!=='direct'?adopted:run.status==='completed'?'direct':null;
     }
-    const mode=input.researchDepth,expected=mode==='deep'?'deep-evidence@1':mode==='standard'?'standard-research@1':null;
-    if(!expected||run.definition?.config?.researchProfile!==expected)return null;
+    const mode=input.researchDepth, profile=run.definition?.config?.researchProfile;
+    if(!(mode==='deep'&&isDeepResearchProfile(profile)||mode==='standard'&&profile==='standard-research@1'))return null;
     return run.status==='completed'||run.snapshot?.proposal||run.snapshot?.messages?.some(m=>m.role==='assistant'&&m.calls?.length)?mode:null;
   }
   function setOrigin(value) {
@@ -221,12 +222,13 @@ export async function createLocalGuiWorkspace({ projectDir, origin: mountOrigin,
         catch{/* Invalid or missing committed chart data is never shown. */}
       }
       const effectiveResearchIntent=observedResearchRoute(input,run);
+      const deepProgress=readDeepResearchProgress(run?.definition?.config?.researchProfile,run?.snapshot,{deliveryReadback:status==='completed'&&readableDelivery(output)});
       const effort=await readGuiReasoningEffort(projectDir,run,input.reasoningEffort);
       messages.push({
         id: m.messageId, runId: m.runId, status, phase: run?.snapshot?.phase ?? null,
         // A worker can finish during these reads. Keep polling an active snapshot.
         code: run?.snapshot?.code ?? null, working: status === 'active' && (workerWasRunning || working?.key === key),
-        question: input.text, sourceId: input.sourceManifestSha256, ...(effort?{reasoningEffort:effort}:{}), ...(chartViews.length?{chartViews}:{}), ...(input.researchDepth===undefined?{}:{researchDepth:input.researchDepth}), ...(effectiveResearchIntent?{effectiveResearchIntent}:{}), ...(['research','deep'].includes(effectiveResearchIntent)&&output?{evidenceAssessment:'unreviewed'}:{}), ...(freeform&&input.sourceManifestSha256?{attachment:await pdfAttachment(conversationId,input.sourceManifestSha256)}:{}), output, error,
+        question: input.text, sourceId: input.sourceManifestSha256, ...(effort?{reasoningEffort:effort}:{}), ...(chartViews.length?{chartViews}:{}), ...(input.researchDepth===undefined?{}:{researchDepth:input.researchDepth}), ...(effectiveResearchIntent?{effectiveResearchIntent}:{}), ...(deepProgress?{deepProgress}:{}), ...(['research','deep'].includes(effectiveResearchIntent)&&output?{evidenceAssessment:'unreviewed'}:{}), ...(freeform&&input.sourceManifestSha256?{attachment:await pdfAttachment(conversationId,input.sourceManifestSha256)}:{}), output, error,
       });
     }
     return { id: c.conversationId, title: titleForConversationInput(messages[0]?.question), messages };
@@ -398,7 +400,13 @@ export async function createLocalGuiWorkspace({ projectDir, origin: mountOrigin,
           const timeline=await readGuiResearchProgress(projectDir,run);
           const input=await readConversationInput({projectDir,conversationId,messageId});
           const researchIntent=observedResearchRoute(input,run);
-          return send(200,{...timeline,...(researchIntent&&researchIntent!=='direct'?{researchIntent}:{})});
+          let deepProgress=readDeepResearchProgress(run?.definition?.config?.researchProfile,run?.snapshot);
+          if(deepProgress?.phase==='delivery-unverified'){
+            try{const view=await readConversationMessage({projectDir,conversationId,messageId});
+              if(readableDelivery(projectedOutput(view.output)))deepProgress=readDeepResearchProgress(run.definition.config.researchProfile,run.snapshot,{deliveryReadback:true});
+            }catch{/* A terminal Run by itself does not prove readable delivery. */}
+          }
+          return send(200,{...timeline,...(researchIntent&&researchIntent!=='direct'?{researchIntent}:{}),...(deepProgress?{deepProgress}:{})});
         }
         const reportMatch = reportPath.exec(req.url);
         if (reportMatch) {
