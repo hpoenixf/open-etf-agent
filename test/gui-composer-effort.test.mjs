@@ -115,3 +115,33 @@ test('History only reports authoritative request and wire status, not provider a
  assert.equal(run("effortHistory({requested:'medium',serialized:'high'})"),null);
  assert.equal(run('effortHistory(undefined)'),null);
 });
+
+test('daily watch starts as one native disclosure, with the complete control panel inside',()=>{
+ const daily=html.match(/<details id="daily-watch"([^>]*)>([\s\S]*?)<\/details>/);
+ assert.ok(daily);
+ assert.doesNotMatch(daily[1],/\bopen\b/);
+ assert.match(daily[2],/^\s*<summary class="daily-capsule">[\s\S]*?<span>每日追踪<\/span>[\s\S]*?<\/summary>\s*<div class="daily-panel">/);
+ assert.equal((daily[2].match(/<summary\b/g)??[]).length,1);
+ for(const id of ['daily-form','daily-digest-form','daily-refresh','daily-items']){
+  assert.equal((daily[2].match(new RegExp(`id="${id}"`,'g'))??[]).length,1);
+ }
+});
+
+test('daily disclosure refreshes on opening, not closing, and does not clear an unsaved question',async()=>{
+ const {get,run,calls}=boot();
+ const daily=get('daily-watch');
+ const toggle=daily.listeners.toggle;
+ run(`api=async(path)=>{calls.push(path); return {items:[],autorun:false};}`);
+ get('daily-question').value='比较黄金 ETF';
+ daily.open=false;
+ toggle();
+ assert.equal(calls.length,0);
+ daily.open=true;
+ toggle();
+ await Promise.resolve();
+ assert.deepEqual(calls,['/api/daily-watch']);
+ daily.open=false;
+ toggle();
+ assert.equal(get('daily-question').value,'比较黄金 ETF');
+ assert.deepEqual(calls,['/api/daily-watch']);
+});
