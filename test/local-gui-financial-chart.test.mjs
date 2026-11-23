@@ -10,7 +10,7 @@ test('selected chart Skill calls native Wind then compiles original same-Run too
  const projectDir=await mkdtemp(resolve('.chart-test-'));
  const env={ETF_GUI_PROVIDER_KEY:'synthetic-model-key',WIND_API_KEY:'synthetic-wind-key'};
  const liveConfig={gateway:{provider:'opencode-go-owner',endpoint:'https://opencode.ai/inference/go/openai/v1/chat/completions',
-  model:'fixture',apiKeyEnv:'ETF_GUI_PROVIDER_KEY'},limits:{model:4},connectivity:{wind:true}};
+  model:'glm-5.3-flash',apiKeyEnv:'ETF_GUI_PROVIDER_KEY'},limits:{model:4},connectivity:{wind:true},reasoningEffortProfile:'opencode-go-glm-5.3-flash-preview@1'};
  let gui,calls=0,windCalls=0;
  t.after(async()=>{await gui?.close();await rm(projectDir,{recursive:true,force:true});});
  const windQuery={windCode:'588200.SH',beginDate:'2026-06-01',endDate:'2026-06-03'};
@@ -33,6 +33,7 @@ test('selected chart Skill calls native Wind then compiles original same-Run too
    assert.match(JSON.stringify(req.messages),/If a supported daily exchange-close chart materially assists/);
    return result({content:'No chart necessary.'});
   }
+  assert.equal(req.reasoning_effort,'max');
   assert.deepEqual(req.tools.find(x=>x.function.name==='build_financial_chart').function.parameters.properties.kind.enum,['exchange-close-line']);
   if(responses.length===0)return modelCall('wind_fund_daily_close','wind-evidence',windQuery);
   if(responses.length===1){
@@ -48,9 +49,9 @@ test('selected chart Skill calls native Wind then compiles original same-Run too
  await start();
  assert.ok((await get('/api/workspace')).capabilities.includes('financial-chart-skill'));
  const conv='/api/conversations/'+(await post('/api/conversations',{}).then(r=>r.json())).id;
- async function done(messageId){
+ async function done(messageId,path=conv){
   for(let i=0;i<100;i++){
-   const m=(await get(conv)).messages.find(x=>x.id===messageId);
+   const m=(await get(path)).messages.find(x=>x.id===messageId);
    if(m&&m.status!=='active'&&m.status!=='admission-pending')return m;
    await new Promise(r=>setTimeout(r,15));
   }
@@ -58,7 +59,7 @@ test('selected chart Skill calls native Wind then compiles original same-Run too
  }
  assert.equal((await post(conv+'/messages',{messageId:'auto-1',question:'No chart explicitly selected'})).status,202);
  assert.equal((await done('auto-1')).chartViews,undefined);
- const input={messageId:'chart-1',question:'Draw a daily close line',chartSkill:'financial-chart@1'};
+ const input={messageId:'chart-1',question:'Draw a daily close line',chartSkill:'financial-chart@1',researchDepth:'deep',reasoningEffort:'max'};
  assert.equal((await post(conv+'/messages',{...input,attachmentId:'0'.repeat(64)})).status,400);
  assert.equal((await post(conv+'/messages',input)).status,202);
  const chart=await done('chart-1');
@@ -68,6 +69,8 @@ test('selected chart Skill calls native Wind then compiles original same-Run too
  assert.deepEqual(chart.chartViews[0].series[0].values,[1.32,null,1.35]);
  assert.equal(chart.chartViews[0].series[0].label,windQuery.windCode);
  assert.doesNotMatch(JSON.stringify(chart),/synthetic-wind-key|synthetic-model-key/);
+ assert.equal(chart.effectiveResearchIntent,'deep');
+ assert.deepEqual(chart.reasoningEffort,{requested:'max',serialized:'max',providerAdoption:'unconfirmed'});
  const {run}=await inspectResearchTask({projectDir,runId:chart.runId});
  const forged=structuredClone(run);
  const old=forged.snapshot.messages.find(m=>m.role==='tool'&&m.callId==='wind-evidence');
@@ -79,6 +82,7 @@ test('selected chart Skill calls native Wind then compiles original same-Run too
  await start();
  assert.deepEqual((await done('chart-1')).chartViews,chart.chartViews);
  assert.equal((await post(conv+'/messages',input)).status,202);
+ assert.equal((await post(conv+'/messages',{...input,reasoningEffort:'high'})).status,409);
  const {chartSkill:_,...changed}=input;assert.equal((await post(conv+'/messages',changed)).status,409);
  assert.equal(calls,4);
  assert.equal(windCalls,3);
@@ -93,4 +97,19 @@ test('selected chart Skill calls native Wind then compiles original same-Run too
  assert.equal((await inspectResearchTask({projectDir,runId:plain.runId})).definition.chartSkill,'financial-chart-auto@1');
  assert.equal(calls,5);
  assert.equal(windCalls,3);
+ // Explicit Standard ignores implicit Chart even while the launch policy offers it.
+ assert.equal((await post(conv+'/messages',{messageId:'standard-plain',question:'Ordinary answer with no selected Skill',researchDepth:'standard'})).status,202);
+ assert.equal((await done('standard-plain')).chartViews,undefined);
+ assert.equal(calls,6);
+ assert.equal(windCalls,3);
+ const standardInput={...input,messageId:'standard-chart',researchDepth:'standard'};
+ const standardConv='/api/conversations/'+(await post('/api/conversations',{}).then(r=>r.json())).id;
+ assert.equal((await post(standardConv+'/messages',standardInput)).status,202);
+ const standard=await done('standard-chart',standardConv);
+ assert.equal(standard.status,'completed',JSON.stringify(standard));
+ assert.equal(standard.effectiveResearchIntent,'standard');
+ assert.deepEqual(standard.reasoningEffort,{requested:'max',serialized:'max',providerAdoption:'unconfirmed'});
+ assert.deepEqual(standard.chartViews[0].series[0].values,[1.32,null,1.35]);
+ assert.equal(calls,9);
+ assert.equal(windCalls,6);
 });

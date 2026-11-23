@@ -1,5 +1,16 @@
 import { dirname, resolve } from 'node:path';
 import { readTimeline } from './observe.mjs';
+import {isReasoningEffort} from './gateway.mjs';
+export async function readGuiReasoningEffort(projectDir,run,requested){
+  if(!isReasoningEffort(requested))return undefined;
+  const result={requested,serialized:null,providerAdoption:'unconfirmed'};
+  if(typeof run?.directory!=='string'||dirname(resolve(run.directory))!==resolve(projectDir,'outputs')||run.definition?.config?.reasoningEffort!==requested)return result;
+  try {
+    const {entries}=await readTimeline(run.directory);
+    if(entries.some(e=>e.type==='model_proposal'&&e.runId===run.runId&&e.rootId===run.rootId&&Number.isSafeInteger(e.sequence)&&e.reasoningEffort===requested))result.serialized=requested;
+  }catch{/* No readable evidence is not proof of serialization. */}
+  return result;
+}
 
 const TOOLS = Object.freeze({
   public_web_search:'公开网页搜索', public_web_search_deepseek:'DeepSeek 网页搜索',

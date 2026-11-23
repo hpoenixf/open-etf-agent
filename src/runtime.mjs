@@ -1,3 +1,4 @@
+import {validResearchProfile} from './research-intent.mjs';
 import {settleAsyncChildExecutions} from './child-execution.mjs';
 import {publicReportAssessment} from './report-assessment.mjs';
 import {INTERACTION_PROFILE, hasInteractionBinding, validateInteractionCheckpoint, validateInteractionConfig} from './human-interaction.mjs';
@@ -17,7 +18,7 @@ import { projectContext, projectControlProofs, assertContextCapacity } from './c
 import { activateTrustedPlugins, inspectTrustedPlugins } from './plugins.mjs';
 import { sha256, DOCUMENT_REVOCATION_PROFILE, normalizeDocumentCatalog, documentCatalogBinding } from './source.mjs';
 import { PUBLICATION_BINDING, PUBLICATION_TEXT_MAX_BYTES, preparePublication } from './publication.mjs';
-import { projectProviderProtocolDiagnostic } from './gateway.mjs';
+import { isReasoningEffort, projectProviderProtocolDiagnostic } from './gateway.mjs';
 import { isKnownAdmissionNonDispatch } from './admission.mjs';
 
 const failure = code => Object.assign(new Error(code), { code });
@@ -115,7 +116,7 @@ export function materializeScheduledRun(options, reference, observation = {}) {
  const prior=options.durable.store.inspectSchedule(reference);
  return drive(options, true, {kind:'materialize',schedule:prior.envelope.schedule,reference,reportFresh:observation.reportFresh===true});
 }
-async function drive({ question, gateway, outputRoot='runs', requireReport=false, reportDelivery, signal, hostSignal, limits={}, extensions=[], hooks, plugins, rootBudget, allowedTools, allowedDocuments, taskId=null, contextBytes, contextWorkingSetBytes, workingInput, durable, publication = false, pdfInput, taskTime, ordinaryResponse = false, documentProtection = false, documentCatalog, interaction, hostProjection, knowledgeQueryEffects }, submitting, scheduleOperation) {
+async function drive({ question, gateway, outputRoot='runs', requireReport=false, reportDelivery, signal, hostSignal, limits={}, extensions=[], hooks, plugins, rootBudget, allowedTools, allowedDocuments, taskId=null, contextBytes, contextWorkingSetBytes, workingInput, durable, publication = false, pdfInput, taskTime, ordinaryResponse = false, documentProtection = false, documentCatalog, interaction, hostProjection, knowledgeQueryEffects, researchProfile, reasoningEffort }, submitting, scheduleOperation) {
   if(pdfInput?.snapshot!==undefined){if(Object.keys(pdfInput).length!==1)throw failure('PDF_INVALID_INPUT');pdfInput=Object.freeze({snapshot:normalizePdfSnapshot(pdfInput.snapshot)});}
   documentCatalog=documentCatalog===undefined?undefined:normalizeDocumentCatalog(documentCatalog);
   if(documentCatalog&&documentProtection)throw failure('CUSTOM_PROTECTED_CATALOG_UNSUPPORTED');
@@ -169,6 +170,8 @@ async function drive({ question, gateway, outputRoot='runs', requireReport=false
   const publicationBinding = durable?.bindings?.adapters?.find(item => item.id === PUBLICATION_BINDING.id);
   if(typeof publication !== 'boolean' || (publication ? !durable || canonical(publicationBinding) !== canonical(PUBLICATION_BINDING) : publicationBinding !== undefined))throw failure('PUBLICATION_BINDING_MISMATCH');
   if(publication && durable.parentRunId)throw failure('PUBLICATION_SCOPE_MISMATCH');
+  if(reasoningEffort!==undefined&&(!isReasoningEffort(reasoningEffort)||!durable||durable.parentRunId||gateway.mode!=='live'||!publication||scheduleOperation))throw failure('INVALID_REASONING_EFFORT');
+  if(researchProfile!==undefined&&(!validResearchProfile(researchProfile)||!durable||durable.parentRunId||gateway.mode!=='live'||!publication||scheduleOperation))throw failure('INVALID_RESEARCH_PROFILE');
   // Worker reuses the original durable Host/working-input lifecycle. Trusted plugin
   // Nested Child ownership remains a separate contract; submit never activates plugins.
   if((submitting||hostSignal!==undefined)&&(!durable||durable.parentRunId))throw failure('UNSUPPORTED_WORKER_CONFIGURATION');
@@ -212,7 +215,7 @@ async function drive({ question, gateway, outputRoot='runs', requireReport=false
       } catch (error) { if (error.code !== 'UNKNOWN_RUN') throw error; }
     }
     if (!temporal && taskTime !== undefined) temporal = createTaskTime(taskTime);
-    const config={requireReport,...(knowledgeQueryEffects?{knowledgeQueryEffects}:{}),...(reportDelivery===undefined?{}:{reportDelivery}),...(hostProjection?{hostProjection}:{}),...(pdfInput?.snapshot?{pdfSnapshot:pdfSnapshotBinding(pdfInput.snapshot)}:{}),...(documentCatalog?{documentCatalog:documentCatalogBinding(documentCatalog)}:{}),...(protectedMode?{documentProtection:{authorityId:authority.authorityId,libraryId:authority.libraryId}}:{}),...(ordinaryResponse?{ordinaryResponse:multiResponse?INTERACTION_PROFILE:RESPONSE_PROFILE,...(multiResponse?{interaction}:{})}:{}),...(temporal?{taskTime:temporal}:{}),...(publication?{publication:PUBLICATION_BINDING.version}:{}),...(allowedTools?{allowedTools}:{}),...(allowedDocuments?{allowedDocuments}:{}),...(contextBytes===undefined?{}:{contextBytes}),...(contextWorkingSetBytes===undefined?{}:{contextWorkingSetBytes}),taskId,...(workingInput?{workingInput:{...(workingInput.memoryLibrary?{memoryLibraryId:workingInput.memoryLibrary.libraryId}:{}),...(workingInput.compaction?{compaction:{thresholdBytes:workingInput.compaction.thresholdBytes,summaryTimeoutMs:workingInput.compaction.summaryTimeoutMs??2000,version:encodedCompaction?'gateway-history-compaction@3':workingInput.compaction.mode==='gateway'?'gateway-history-compaction@2':'history-compaction@1',...(encodedCompaction?{encodedMaxBytes:workingInput.compaction.encodedMaxBytes??gateway.inputBudget?.maxBytes??null}:{}),...(workingInput.compaction.mode==='gateway'?{maxSummaryRounds:workingInput.compaction.maxSummaryRounds??6}:{})}}:{})}}:{})};
+    const config={requireReport,...(reasoningEffort===undefined?{}:{reasoningEffort}),...(researchProfile?{researchProfile}:{}),...(knowledgeQueryEffects?{knowledgeQueryEffects}:{}),...(reportDelivery===undefined?{}:{reportDelivery}),...(hostProjection?{hostProjection}:{}),...(pdfInput?.snapshot?{pdfSnapshot:pdfSnapshotBinding(pdfInput.snapshot)}:{}),...(documentCatalog?{documentCatalog:documentCatalogBinding(documentCatalog)}:{}),...(protectedMode?{documentProtection:{authorityId:authority.authorityId,libraryId:authority.libraryId}}:{}),...(ordinaryResponse?{ordinaryResponse:multiResponse?INTERACTION_PROFILE:RESPONSE_PROFILE,...(multiResponse?{interaction}:{})}:{}),...(temporal?{taskTime:temporal}:{}),...(publication?{publication:PUBLICATION_BINDING.version}:{}),...(allowedTools?{allowedTools}:{}),...(allowedDocuments?{allowedDocuments}:{}),...(contextBytes===undefined?{}:{contextBytes}),...(contextWorkingSetBytes===undefined?{}:{contextWorkingSetBytes}),taskId,...(workingInput?{workingInput:{...(workingInput.memoryLibrary?{memoryLibraryId:workingInput.memoryLibrary.libraryId}:{}),...(workingInput.compaction?{compaction:{thresholdBytes:workingInput.compaction.thresholdBytes,summaryTimeoutMs:workingInput.compaction.summaryTimeoutMs??2000,version:encodedCompaction?'gateway-history-compaction@3':workingInput.compaction.mode==='gateway'?'gateway-history-compaction@2':'history-compaction@1',...(encodedCompaction?{encodedMaxBytes:workingInput.compaction.encodedMaxBytes??gateway.inputBudget?.maxBytes??null}:{}),...(workingInput.compaction.mode==='gateway'?{maxSummaryRounds:workingInput.compaction.maxSummaryRounds??6}:{})}}:{})}}:{})};
     let stored,claim,directory,runId,boundChild=false,deadlineAt=Date.now()+budget.timeoutMs;
     let state={schemaVersion:'runtime-checkpoint@1',phase:'ready',messages:[{role:'user',content:question}],usedIds:[],rounds:0,toolsDispatched:0,proposal:null,cursor:0,result:null,host:null,working:null,gatewayOutcome:'settled',answer:'',status:'failed',code:null,unknownEffects:[],partialEffects:[],hookErrors:[]};
     function verifyCorrectionHistory(host){
@@ -474,7 +477,7 @@ async function drive({ question, gateway, outputRoot='runs', requireReport=false
           if(claim)durable.store.validateCheckpoint({...state,phase:'proposal-sealed',proposal:structuredClone(proposal),cursor:0,result:null,working:null,messages:proposal.kind==='calls'?[...state.messages,{role:'assistant',calls:structuredClone(proposal.calls)}]:state.messages});
           state.proposal=structuredClone(proposal);state.cursor=0;state.result=null;state.working=null;
           if(proposal.kind==='calls')state.messages.push({role:'assistant',calls:structuredClone(proposal.calls)});
-          await checkpoint('proposal-sealed');await record('model_proposal',{kind:proposal.kind,callIds:proposal.calls?.map(c=>c.id)||[],usage:proposal.usage??null,cost:null,...(reservation?{modelOrdinal:reservation.modelOrdinal,inputHash:reservation.inputHash}:{}),durationMs:performance.now()-start});
+          await checkpoint('proposal-sealed');await record('model_proposal',{kind:proposal.kind,...(reasoningEffort===undefined||!reservation||reservation.runId!==reservation.rootId||reservation.purpose!==undefined?{}:{reasoningEffort}),callIds:proposal.calls?.map(c=>c.id)||[],usage:proposal.usage??null,cost:null,...(reservation?{modelOrdinal:reservation.modelOrdinal,inputHash:reservation.inputHash}:{}),durationMs:performance.now()-start});
         }
         if(state.proposal.kind==='final'){
           if(state.messages.at(-1)?.result?.validation?.schemaVersion===ORIGINAL_READ_CORRECTION)throw failure('RECOVERY_CORRECTION_MISMATCH');

@@ -59,16 +59,28 @@
         <label for="question">研究问题</label>
         <textarea id="question" rows="3" maxlength="3000" required placeholder="例如：对比 Alpha 与 Beta 的费率，并注明来源。"></textarea>
         <div class="composer-actions">
+          <div id="chart-skill-slot" hidden>
           <details id="chart-skill-picker" class="composer-option" hidden>
-            <summary id="chart-skill-toggle">工具</summary>
+            <summary id="chart-skill-toggle">选工具</summary>
             <label for="chart-skill" class="visually-hidden">选择 Skill</label>
-            <select id="chart-skill"><option value="">自动</option><option value="financial-chart@1">金融图表（场内基金日收盘价）</option></select>
+            <div class="composer-panel"><select id="chart-skill"><option value="">自动</option><option value="financial-chart@1">金融图表（场内基金日收盘价）</option></select></div>
           </details>
+          <button id="chart-skill-clear" class="secondary" type="button" aria-label="移除金融图表 Skill" title="移除金融图表 Skill" hidden>×</button>
+          </div>
           <details id="pdf-picker" class="composer-option" hidden>
-            <summary id="pdf-toggle">附加 PDF</summary>
+            <summary id="pdf-toggle"><span aria-hidden="true">＋ </span>PDF</summary>
+            <div class="composer-panel">
             <label for="pdf-file" class="visually-hidden">选择 PDF 文件</label>
             <input id="pdf-file" type="file" accept=".pdf,application/pdf" aria-describedby="pdf-note">
             <p id="pdf-note">目前支持带文字层的 PDF。摘录会发给模型；附有 PDF 时不启用外部查询。上传上限和页数以当前部署为准。</p>
+            </div>
+          </details>
+          <details id="research-settings" class="composer-option" hidden>
+            <summary id="research-settings-toggle">设置</summary>
+            <div class="composer-panel">
+        <label id="research-depth-picker" hidden>研究模式 <select id="research-depth" aria-describedby="research-depth-help"><option value="auto">自动</option><option value="standard">标准研究</option><option value="deep">深度研究</option></select><small id="research-depth-help">自动由系统选择；标准研究不自动升级为深度；深度研究优先查原文和交叉核对。</small></label>
+        <label id="reasoning-effort-picker" hidden>模型思考强度 <select id="reasoning-effort" aria-describedby="reasoning-effort-help"><option value="">默认（不指定）</option></select><small id="reasoning-effort-help">只调整模型请求选项，不改变研究模式或查证流程。</small></label>
+            </div>
           </details>
           <button id="send" type="submit">提交演练</button>
         </div>
