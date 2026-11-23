@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Open ETF Agent · 游客</title>
+<link rel="stylesheet" href="/guest.css">
+<script type="module" src="/guest.mjs"></script>
+</head>
+<body>
+<header><div><strong>Open ETF Agent</strong> <span class="badge">游客</span></div><button type="button" id="logout" hidden>退出并清除对话</button></header>
+<main>
+<section id="entry">
+  <h1>游客入口</h1>
+  <p>可以聊 ETF 和基金研究。游客模式不读取持仓、不使用长期记忆，也不联网核实行情。对话仅临时保存在当前标签页，并发送给配置的模型供应商以生成回答。</p>
+  <form id="login">
+    <label for="phrase">游客访问口令</label>
+    <input id="phrase" type="password" autocomplete="off" required>
+    <button type="submit">进入游客模式</button>
+  </form>
+</section>
+<section id="chat" aria-label="游客对话" hidden>
+  <h1>研究对话</h1>
+  <p class="description">不会读取持仓，不记录长期记忆。退出会清除此标签页的对话。</p>
+  <ol id="transcript"></ol>
+  <form id="composer">
+    <label for="question">问题</label>
+    <textarea id="question" rows="3" required placeholder="例如：ETF 的跟踪误差和跟踪偏离度有什么区别？"></textarea>
+    <button type="submit">发送</button>
+  </form>
+</section>
+<p id="notice" role="status" aria-live="polite"></p>
+</main>
+</body>
+</html>

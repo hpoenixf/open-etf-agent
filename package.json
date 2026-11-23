@@ -19,7 +19,8 @@
     "wind:fund": "node src/wind-fund-cli.mjs",
     "docs:sync": "node scripts/sync-module-map.mjs",
     "docs:check": "node scripts/sync-module-map.mjs --check",
-    "gui": "node src/gui-cli.mjs"
+    "gui": "node src/gui-cli.mjs",
+    "gui:guest": "node src/guest-cli.mjs"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "1.32.2",
