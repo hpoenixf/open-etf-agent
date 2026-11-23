@@ -100,22 +100,28 @@ npm run demo -- --case document-compare
 <a id="latest-three-modules"></a>
 ## Releases and development status
 
+**[v0.46.0 · Deep research evidence milestones](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.46.0).** Deep research distinguishes original entries actually read, checks that returned no readable source, and an answer saved and read back. In isolated staging, all ten fixed tasks completed and their exact answers read back. The browser check covered one explicit Deep turn. This does not verify the conclusions or change hosted production. [Scope and verification](docs/verification/v046-deep-evidence-milestones.md) · [PR #26](https://github.com/hpoenixf/open-etf-agent/pull/26)
+
 **[v0.45.0 · Research modes and a compact composer](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.45.0).** Choose Auto, Standard or Deep in the composer, or select the Financial Chart Skill explicitly. Thinking effort is a separate preview for the explicitly enabled OpenCode Go GLM-5.3-Flash route; Default sends no override. In the fixed isolated-staging cohort, Runtime delivery and History readback passed 10/10; the stricter release checks passed 9/10. Hosted production was not changed. [Scope and verification](docs/verification/v045-research-intent.md)
 
 **[v0.44.0 · Research workspace GUI](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.44.0).** Saved reports render as Markdown. The Financial Chart Skill uses verified evidence from the same Run and preserves missing observations. Default local startup stays offline. Isolated staging covered desktop and a narrow viewport, not browser PDF or a physical phone; hosted production was unchanged. [Scope and verification](docs/verification/v044-gui-candidate.md)
 
-**[v0.43.0 · Isolated account workspace](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.43.0).** Opt in to invitation-only sign-in with a separate Project for each account. Default startup remains offline. The installer was verified in isolation; public TLS and live data migration were not qualified. [Setup and scope](docs/verification/v043-account-site.md)
-
 | Recent version / status | What it enables | Usage and boundaries |
 | --- | --- | --- |
+| [v0.46.0 · Deep research evidence milestones](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.46.0) | Evidence-based progress, honest source gaps and saved-answer readback | [Scope and verification](docs/verification/v046-deep-evidence-milestones.md) |
 | [v0.45.0 · Research modes and a compact composer](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.45.0) | Three research modes, a Chart Skill picker, and an optional thinking effort preview | [Scope and verification](docs/verification/v045-research-intent.md) |
 | [v0.44.0 · Research workspace GUI](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.44.0) | Markdown reports and saved same-Run charts; missing observations stay missing | [Scope and verification](docs/verification/v044-gui-candidate.md) |
-| [v0.43.0 · Isolated account workspace](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.43.0) | Invite-only login and isolated Projects; public deployment not qualified | [Setup and scope](docs/verification/v043-account-site.md) |
 
 [All fixed versions and commands](docs/module-guide.md#versions) · [Version lineage](versions.json) · [All releases](https://github.com/hpoenixf/open-etf-agent/releases) · [Verification records](docs/verification/README.md)
 
 <details>
 <summary>Earlier versions</summary>
+
+**[v0.43.0 · Isolated account workspace](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.43.0).** Opt in to invitation-only sign-in with a separate Project for each account. Default startup remains offline. The installer was verified in isolation; public TLS and live data migration were not qualified. [Setup and scope](docs/verification/v043-account-site.md)
+
+| Recent version / status | What it enables | Usage and boundaries |
+| --- | --- | --- |
+| [v0.43.0 · Isolated account workspace](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.43.0) | Invite-only login and isolated Projects; public deployment not qualified | [Setup and scope](docs/verification/v043-account-site.md) |
 
 **[v0.42.0 · Daily research and an optional owner digest](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.42.0).** Track an unchanged question against the last verified answer. A changed question starts a new baseline. Delivery remains opt-in; external email was not qualified. [Usage](docs/local-gui-daily-watch.md) · [Runtime verification](docs/verification/v042-runtime-qualification.md)
 
