@@ -2,7 +2,7 @@
 
 [简体中文](module-status.zh-CN.md) · [README](../README.md#module-map)
 
-Reviewed version: **v0.44.0**. [Fixed code baseline](https://github.com/hpoenixf/open-etf-agent/tree/62f34f60c48fc41af00190cf731b1bce08e8a037) · [Version evidence and limits](verification/v044-gui-candidate.md).
+Reviewed version: **v0.45.0**. [Fixed code baseline](https://github.com/hpoenixf/open-etf-agent/tree/62f34f60c48fc41af00190cf731b1bce08e8a037) · [Version evidence and limits](verification/v044-gui-candidate.md).
 
 Implementation, offline checks, live workflows, release and deployment are different facts. This is not a per-module qualification checklist; modules can span layers.
 
@@ -170,7 +170,7 @@ Review frozen report text. **Advisory review, not certification**.  [After the r
 
 Read reports and attachments. **Local HTTP, not full Web UI**.  [Agent Deep Dive: From One Report to Durable Execution and Specialist Collaboration](https://hpoenixf.com/eff-agent-article/en/articles/open-etf-agent-v010-system-design) (open-walkthrough) · [Fixed source](https://github.com/hpoenixf/open-etf-agent/blob/62f34f60c48fc41af00190cf731b1bce08e8a037/src/reader.mjs) · [Scope guide](module-guide.md)
 
-### Local Research GUI · v0.44.0 enhanced
+### Local Research GUI · v0.45.0 enhanced
 
 Markdown, compact controls and charts. **Wind closes only; browser gate pending**. This is an existing owner’s call-site, not another independent module. [Keep Chatting Is Not Keep Executing: Agent Conversation Admission and Task Continuation](https://hpoenixf.com/eff-agent-article/en/articles/agent-conversation-admission-task-continuation) (module-article) · [Fixed source](https://github.com/hpoenixf/open-etf-agent/blob/62f34f60c48fc41af00190cf731b1bce08e8a037/src/gui-server.mjs) · [Scope guide](module-guide.md)
 
