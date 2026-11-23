@@ -8,7 +8,17 @@
 4. Derive the current decision from immutable receipts and documented input equivalence. Run `node scripts/release-qualification.mjs DECISION.json`. Rejection/incompleteness blocks formal release. This declaration guard does not fabricate evidence, call models or grant permission.
 5. Independently review required safety, install and original output/readback. Keep real-provider API, fixture CLI, semantic quality and unsupported scope distinct. A fixture-only profile has no live pass and is not a blanket version exemption.
 6. Audit all newly reachable objects. The sole publisher uses authorized non-force writes, preserves remote content and verifies ref/tree/blob/actual bytes plus original CI. Tag/Release points to the actual final package, not merely a local/source hash.
-7. Update README, article mappings and deployment claims only to proved scope. Norm/metadata correction is not a product release. Historical tags and measurements remain unchanged.
+7. After verifying a stable GitHub Release and its exact tag, proceed directly to the [production server rollout](#production-server-rollout-after-a-stable-release) as part of the same release workflow.
+8. Update README, article mappings and deployment claims only to proved scope. Norm/metadata correction is not a product release. Historical tags and measurements remain unchanged.
+
+## Production server rollout after a stable release
+
+This is an operator step for the authorized production deployment, not an automatic GitHub trigger. A draft, prerelease or docs-only update does not trigger production rollout. Keep three outcomes distinct: **GitHub release**, **staging qualification**, and **production rollout**.
+
+- [ ] **Pin the build.** Read back the GitHub Release and confirm its stable tag resolves to the final qualified commit. Prepare a separate installation from that commit and its dependency lock using the supported runtime; verify commit, lock and build before switching. Do not deploy moving `main` or substitute a staging checkout or state.
+- [ ] **Check compatibility and rollback.** Follow the [operator upgrade checklist](upgrade-guide.md#operator-release-checklist). Retain the current known-good artifact, service configuration and recoverable backups. Stop new admissions and let old Runs finish on their original Runtime, or isolate that deployment and its data. Rehearse any required state migration and rollback in isolation before cutover. If active or unsettled work, state compatibility, or safe rollback cannot be established, leave production unchanged and record the rollout as blocked.
+- [ ] **Switch and verify.** Use the existing authorized operator path. Preserve the production configuration, access controls, credentials and data; do not copy staging state. Verify the active service is running the tagged build, health checks pass, sign-in still works, and a previously saved answer can be reopened from History without replay. Verify scheduled work cannot run twice. Prefer provider-free checks and reuse valid staging evidence; do not rerun the live cohort in production.
+- [ ] **Record the outcome.** Mark production complete only after those checks pass. On failure, stop new admissions, restore the previous known-good service when safe, and verify health, sign-in and History again. Preserve original Runs, committed outputs and uncertain effects; never restore a stale snapshot over newly committed work. Record the deployed or restored version and the blocker, without private infrastructure or user data in public evidence. A published tag remains published even if rollout is blocked or rolled back.
 
 ## Test completion includes evidence-preserving cleanup
 

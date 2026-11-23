@@ -10,7 +10,7 @@ Retained output has separate Result, Artifact and Publication readers. Readabili
 
 ## Operator release checklist
 
-This checklist is an operational condition, not an implemented deployment-wide preflight, automatic drain or migration command.
+This checklist is an operational condition, not an implemented deployment-wide preflight, automatic drain or migration command. For the release-to-production sequence and completion criteria, see the [production rollout step](release-workflow.md#production-server-rollout-after-a-stable-release).
 
 1. Record the installed and candidate code versions, dependency locks and their supported stored-data and Host versions. Stop new admissions before replacing an installed version.
 2. Let active Runs finish on their original Runtime. If that is not possible, isolate the entire old deployment and its data instead of silently switching those Runs to the new Runtime. Retain the matching original code, dependencies, configuration and backups. Isolation preserves recovery options; it does not override original deadlines, unknown effects or other recovery restrictions.
