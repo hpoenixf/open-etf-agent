@@ -5,6 +5,7 @@ import {createContext, runInContext} from 'node:vm';
 
 const src=await readFile(new URL('../src/gui/gui.mjs',import.meta.url),'utf8');
 const html=await readFile(new URL('../src/gui/index.html',import.meta.url),'utf8');
+const css=await readFile(new URL('../src/gui/gui.css',import.meta.url),'utf8');
 const nodes=()=>new Map();
 function boot(){
  const list=nodes(), values=new Map(), calls=[], media=new Map();
@@ -266,4 +267,14 @@ test('clicking a citation automatically opens the matching evidence panel and ke
  assert.equal(get('desktop-evidence').hidden,true);
  get('evidence-toggle').listeners.click();
  assert.equal(get('desktop-evidence-content').children[0].fields.pre.textContent,'不可变原文');
+});
+
+
+test('the host status notice does not claim the app shell’s remaining height',()=>{
+ const hosted=html.replace('<body>','<body><p>Fixture host status notice</p>');
+ assert.match(hosted,/<body><p>Fixture host status notice<\/p>\s*<header class="masthead"/);
+ assert.match(css,/body\{[^}]+display:flex;flex-direction:column\}/);
+ assert.match(css,/body > :not\(#workspace\)\{flex:none\}/);
+ assert.match(css,/\.workspace\{[^}]+flex:1 1 0;min-height:0/);
+ assert.match(css,/\.reading-pane\{min-height:0/);
 });

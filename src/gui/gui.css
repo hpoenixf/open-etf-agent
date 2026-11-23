@@ -6,7 +6,9 @@
   font-size:16px; line-height:1.5; color:var(--ink); background:var(--base);
 }
 *{box-sizing:border-box}
-body{margin:0;min-inline-size:280px;block-size:100vh;block-size:var(--workbench-height,100dvh);overflow:hidden;display:grid;grid-template-rows:auto minmax(0,1fr)}
+/* The host can prepend a status notice. Only the workbench fills the remaining height. */
+body{margin:0;min-inline-size:280px;block-size:100vh;block-size:var(--workbench-height,100dvh);overflow:hidden;display:flex;flex-direction:column}
+body > :not(#workspace){flex:none}
 button,input,textarea,select{font:inherit}
 button{
   background:var(--primary);color:#fff;border:1px solid var(--primary);border-radius:.55rem;
@@ -25,7 +27,7 @@ button[disabled]{opacity:.65;cursor:wait}
 .panel-toggle{flex:none;min-width:44px;display:inline-flex;align-items:center;justify-content:center;gap:.35rem;padding-inline:.55rem;border-color:transparent;background:transparent;color:var(--muted);font-weight:550}
 .panel-toggle svg{width:1.15rem;height:1.15rem;flex:none}
 .panel-toggle:hover,.panel-toggle[aria-expanded="true"]{color:var(--ink);background:#eeefe9}
-.workspace{--left:0px;--right:0px;min-height:0;display:grid;position:relative;grid-template-columns:var(--left) minmax(0,1fr) var(--right);grid-template-rows:minmax(0,1fr)}
+.workspace{--left:0px;--right:0px;flex:1 1 0;min-height:0;display:grid;position:relative;grid-template-columns:var(--left) minmax(0,1fr) var(--right);grid-template-rows:minmax(0,1fr)}
 .workspace[data-history="true"]{--left:clamp(12rem,18vw,16rem)}
 .workspace[data-evidence="true"]{--right:clamp(12rem,18vw,16rem)}
 .history{grid-column:1}
