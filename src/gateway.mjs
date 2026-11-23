@@ -1,4 +1,4 @@
-import {AUTO_RESEARCH_INTENT,DEEP_RESEARCH_CONTRACT,RESEARCH_INTENT_TOOL,hasResearchEvidence,readResearchIntent,validResearchProfile} from './research-intent.mjs';
+import {isAutoResearchProfile,isDeepResearchProfile,usesDeepEvidenceMilestones,RESEARCH_INTENT_TOOL,hasResearchEvidence,readResearchIntent,validResearchProfile} from './research-intent.mjs';
 import { createHash, randomUUID } from 'node:crypto';
 // Serialized arguments and transport framing are not provider token windows.
 export const MAX_TOOL_ARGUMENT_BYTES = 2 * 1048576;
@@ -109,11 +109,11 @@ export function createChatGateway({ provider, endpoint, model, apiKey, authoriza
   // This adapter only encodes durable tool messages, not provider reasoning.
   // Keep the explicit direct profile in documented non-thinking mode every round.
   const encodeInput = ({messages,tools,wireEffort}) => {
-    const automatic=researchProfile===AUTO_RESEARCH_INTENT;
+    const automatic=isAutoResearchProfile(researchProfile);
     const first=automatic&&hasResearchEvidence(tools)&&tools.some(t=>t.name===RESEARCH_INTENT_TOOL)&&!messages.some(m=>m.role==='assistant'||m.role==='tool');
     const depth=automatic?readResearchIntent(messages):null;
     const policy=first?'Choose the normal question path. Answer simple or ambiguous requests directly; use the optional intent tool alone for a current evidentiary lookup (research) or substantial multi-source synthesis (deep), and only when authorized evidence tools can help. Do not use it for its own sake. This never expands rights or budgets.'
-      :researchProfile===DEEP_RESEARCH_CONTRACT||depth==='deep'?DEEP_RESEARCH_SYSTEM
+      :isDeepResearchProfile(researchProfile)||depth==='deep'?(usesDeepEvidenceMilestones(researchProfile)?DEEP_RESEARCH_SYSTEM.replace('deep-evidence@1','deep-evidence@2'):DEEP_RESEARCH_SYSTEM)
       :depth==='research'?'Check the available original source and its date or scope before answering verifiable current claims. Be candid if no source confirms them.':null;
     const exposed=automatic&&!first?tools.filter(t=>t.name!==RESEARCH_INTENT_TOOL):tools;
     return JSON.stringify({ model, stream, ...(stream ? { stream_options: { include_usage: true } } : {}),

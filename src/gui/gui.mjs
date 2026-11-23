@@ -150,6 +150,9 @@ function showEvidence(source,index) {
 function progressContent(target, value) {
   target.replaceChildren();
   if(value?.researchIntent==='deep'||value?.researchIntent==='research')target.append(make('p',value.researchIntent==='deep'?'当前模式：深度研究':'当前模式：资料查证','muted'));
+  const deep=value?.deepProgress;
+  const label={ 'awaiting-first-proposal':'等待首轮研究',collecting:'正在查找原始资料','sources-checked':'已完成来源查询，暂无可用原文','originals-read':'已读取原始资料','delivery-unverified':'运行结束，正文尚未核验','delivered':'正文已保存并读回',stopped:'研究已停止' }[deep?.phase];
+  if(label)target.append(make('p',label+' · 已读取原文条目 '+deep.originalsRead+(deep.unavailableSourceChecks?' · 无可用原文的查询 '+deep.unavailableSourceChecks+' 次':''),'muted'));
   if (!value || value.status!=='available' || !value.steps?.length) {
     target.append(make('p',value?.status==='unavailable'?'暂未读到可显示的研究记录。':'尚无已记录的步骤。','muted'));
     return;
@@ -180,7 +183,7 @@ function progressDetails(message) {
   entry.content=content;
   state.progress.set(message.id,entry);
   details.append(make('summary','研究进度'),content);
-  progressContent(content,entry.data);
+  progressContent(content,{...entry.data,...(message.deepProgress?{deepProgress:message.deepProgress}:{})});
   details.open=entry.open;
   details.addEventListener('toggle',()=>{
     if(!details.isConnected)return;

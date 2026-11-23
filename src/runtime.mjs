@@ -1,4 +1,4 @@
-import {validResearchProfile} from './research-intent.mjs';
+import {validResearchProfile,readDeepResearchProgress,deepResearchInstruction} from './research-intent.mjs';
 import {settleAsyncChildExecutions} from './child-execution.mjs';
 import {publicReportAssessment} from './report-assessment.mjs';
 import {INTERACTION_PROFILE, hasInteractionBinding, validateInteractionCheckpoint, validateInteractionConfig} from './human-interaction.mjs';
@@ -448,6 +448,17 @@ async function drive({ question, gateway, outputRoot='runs', requireReport=false
               if(managed&&state.purpose==='compaction'&&gatewayUnsettled)throw failure('COMPACTION_OUTCOME_UNKNOWN');
               if(managed)state.compactionState={frontier:compacted.frontier??null,summaryAttempts:state.compactionState?.summaryAttempts??compactionState.summaryAttempts,...(encodedCompaction?{noGainHash:compacted.noGainHash??(compacted.observation.status==='applied'?null:compactionState.noGainHash)}:{})};
               requestMessages=contextBytes===undefined&&!hostProjection&&contextWorkingSetBytes===undefined?compacted.messages:await projectContext({olderReadBytes:contextWorkingSetBytes,onFit:fact=>record('context_fit',fact),messages:compacted.messages,maxBytes:contextBytes??1048576,lookupSource:host.lookupContextSource,...(hostProjection?{projectOwnedResult:host.projectOwnedResult,projectOwnedCall:host.projectOwnedCall}:{}),...encodedBudget});noteRef=compacted.noteRef;delete state.purpose;delete state.summaryRequest;await record('working_note',{...compacted.observation,noteRef});
+            }
+            const deep=readDeepResearchProgress(researchProfile,state);
+            if(deep){
+              const modelLimit=durable?.rootLimits?.model??budget.maxRounds;
+              // Any optional compaction reservation above already consumed the
+              // original budget. No new slot or tool is added/removed here.
+              const last=budget.maxRounds-state.rounds===1||modelLimit-rootBudget.snapshot().model===1;
+              const guidance={role:'system',content:deepResearchInstruction(deep,last)};
+              const guided=[requestMessages[0],guidance,...requestMessages.slice(1)];
+              // Omit this advisory if it does not fit the original input budgets.
+              if(Buffer.byteLength(JSON.stringify(guided))<=(contextBytes??1048576)&&(!gateway.inputBudget||gateway.inputBudget.measure({messages:guided,tools:host.definitions})<=gateway.inputBudget.maxBytes))requestMessages=guided;
             }
             state.working={schemaVersion:'working-input@1',messages:requestMessages,noteRef,hash:sha256(JSON.stringify(requestMessages))};await checkpoint('working-input');
           }

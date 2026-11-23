@@ -6,7 +6,7 @@ import {setTimeout as sleep} from 'node:timers/promises';
 import {startLocalGui} from '../src/gui-server.mjs';
 import {inspectResearchTask} from '../src/research-project.mjs';
 
-const config={gateway:{provider:'opencode-go-owner',endpoint:'https://opencode.ai/inference/go/openai/v1/chat/completions',model:'synthetic-deep',apiKeyEnv:'ETF_GUI_PROVIDER_KEY'},limits:{model:4},connectivity:{web:true}};
+const config={gateway:{provider:'opencode-go-owner',endpoint:'https://opencode.ai/inference/go/openai/v1/chat/completions',model:'synthetic-deep',apiKeyEnv:'ETF_GUI_PROVIDER_KEY'},limits:{model:2},connectivity:{web:true}};
 const question='请深度研究这个公开合成基金资料的日期';
 const url='https://example.com/first';
 const known={manifestSha256:'a'.repeat(64),catalog:{documents:[{pages:['Evidence dated 2020-01-01.'],web:{requestedUrl:url,finalUrl:url,retrievedAt:'2020-01-02T00:00:00Z',originalSha256:'b'.repeat(64)}}]}};
@@ -20,7 +20,7 @@ test('manual depth frozen across exact replay and cold history; default remains 
   const fetchImpl=async(_url,{body})=>{
     const input=JSON.parse(body);requests.push(input);
     if(input.messages.some(m=>m.content?.includes('synthetic-fail-only')))return new Response('not valid JSON',{status:200});
-    if(input.messages.some(m=>m.role==='system'&&m.content?.includes('[Research contract: deep-evidence@1]'))){
+    if(input.messages.some(m=>m.role==='system'&&m.content?.includes('[Research contract: deep-evidence@2]'))){
       assert.ok(input.messages.find(m=>m.role==='user')?.content.includes(question));
       assert.ok(!input.messages.find(m=>m.role==='user')?.content.includes('deep-evidence@1'));
       if(!input.messages.some(m=>m.role==='tool'))return Response.json({choices:[{message:{role:'assistant',tool_calls:[{type:'function',id:'read-one',function:{name:'public_web_read',arguments:JSON.stringify({url})}}]},finish_reason:'tool_calls'}]});
@@ -48,17 +48,26 @@ test('manual depth frozen across exact replay and cold history; default remains 
   assert.equal(a.m.researchDepth,'auto');assert.equal(a.m.effectiveResearchIntent,'direct');assert.equal(d.m.researchDepth,'deep');assert.equal(d.m.question,question);
   assert.equal(d.m.output.answer,'Verified original: 2020-01-01 '+url);
   assert.equal(requests.length,3);assert.equal(acq,1);
+  assert.equal(requests[0].messages.some(m=>m.content?.includes('[Deep research evidence state]')),false);
+  assert.match(requests[1].messages.filter(m=>m.role==='system').map(m=>m.content).join(' '),/No original source is recorded yet/);
+  assert.match(requests[2].messages.filter(m=>m.role==='system').map(m=>m.content).join(' '),/Original sources have been acquired/);
+  assert.match(requests[2].messages.filter(m=>m.role==='system').map(m=>m.content).join(' '),/last remaining Main round/);
+  assert.doesNotMatch(requests[1].messages.filter(m=>m.role==='system').map(m=>m.content).join(' '),/last remaining Main round/);
+  assert.deepEqual(requests[1].tools,requests[2].tools);
+  assert.deepEqual(d.m.deepProgress,{schemaVersion:'evidence-milestones@1',phase:'delivered',originalsRead:1,settledSourceChecks:1,unavailableSourceChecks:0});
   const frozen=await inspectResearchTask({projectDir,runId:d.m.runId});
-  assert.equal(frozen.definition.researchDepth,'deep');assert.equal(frozen.run.definition.config.researchProfile,'deep-evidence@1');
+  assert.equal(frozen.definition.researchDepth,'deep');assert.equal(frozen.run.definition.config.researchProfile,'deep-evidence@2');
   assert.doesNotMatch(frozen.definition.question,/deep-evidence@1/);
   assert.equal(d.m.evidenceAssessment,'unreviewed');
   const progress=await get(g,d.path+'/messages/deep-id/progress');
   assert.equal(progress.researchIntent,'deep');
+  assert.deepEqual(progress.deepProgress,d.m.deepProgress);
   assert.match(JSON.stringify(progress), /tool|source/i);
   assert.doesNotMatch(JSON.stringify(progress),/deep-evidence@1|Evidence dated 2020/);
   await g.close();
   const cold=await launch();
   assert.equal((await get(cold,d.path)).messages[0].researchDepth,'deep');
+  assert.deepEqual((await get(cold,d.path)).messages[0].deepProgress,d.m.deepProgress);
   assert.equal((await post(cold,d.path+'/messages',d.body)).status,202);
   assert.notEqual((await post(cold,d.path+'/messages',{...d.body,researchDepth:'auto'})).status,202);
   assert.notEqual((await post(cold,d.path+'/messages',{...d.body,researchDepth:'unknown'})).status,202);
@@ -68,7 +77,7 @@ test('manual depth frozen across exact replay and cold history; default remains 
   assert.equal((await post(cold,path+'/messages',failure)).status,202);
   let m;
   for(let i=0;i<100;i++){m=(await get(cold,path)).messages[0];if(m?.status==='failed'&&!m.working)break;await sleep(20);}
-  assert.equal(m.researchDepth,'deep');assert.equal(m.code,'PROVIDER_PROTOCOL_INVALID');assert.equal(m.output,null);
+  assert.equal(m.researchDepth,'deep');assert.equal(m.code,'PROVIDER_PROTOCOL_INVALID');assert.equal(m.output,null);assert.equal(m.deepProgress.phase,'stopped');
   await cold.close();
   const reopen=await launch();
   assert.equal((await get(reopen,path)).messages[0].researchDepth,'deep');
@@ -132,8 +141,10 @@ test('automatic intent uses the first normal proposal; durable Research/Deep, ma
  assert.equal((await get(g,f.path+'/messages/false-label/progress')).researchIntent,undefined);
  assert.equal(f.turn.evidenceAssessment,undefined);assert.equal(d.turn.evidenceAssessment,'unreviewed');
  assert.equal(calls.length,6);
+ assert.equal(r.turn.deepProgress,undefined);assert.equal(f.turn.deepProgress,undefined);
+ assert.equal(d.turn.deepProgress.phase,'delivered');assert.equal(d.turn.deepProgress.originalsRead,0);
  const frozen=await inspectResearchTask({projectDir,runId:d.turn.runId});
- assert.equal(frozen.definition.researchDepth,'auto');assert.equal(frozen.run.definition.config.researchProfile,'auto-intent@1');
+ assert.equal(frozen.definition.researchDepth,'auto');assert.equal(frozen.run.definition.config.researchProfile,'auto-intent@2');
  await g.close();
  const cold=await launch();
  assert.equal((await get(cold,d.path)).messages[0].effectiveResearchIntent,'deep');
