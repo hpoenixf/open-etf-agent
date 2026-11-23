@@ -20,7 +20,7 @@ test('manual depth frozen across exact replay and cold history; default remains 
   const fetchImpl=async(_url,{body})=>{
     const input=JSON.parse(body);requests.push(input);
     if(input.messages.some(m=>m.content?.includes('synthetic-fail-only')))return new Response('not valid JSON',{status:200});
-    if(input.messages.some(m=>m.role==='system'&&m.content?.includes('[Research contract: deep-evidence@2]'))){
+    if(input.messages.some(m=>m.role==='system'&&m.content?.includes('[Research contract: deep-evidence@3]'))){
       assert.ok(input.messages.find(m=>m.role==='user')?.content.includes(question));
       assert.ok(!input.messages.find(m=>m.role==='user')?.content.includes('deep-evidence@1'));
       if(!input.messages.some(m=>m.role==='tool'))return Response.json({choices:[{message:{role:'assistant',tool_calls:[{type:'function',id:'read-one',function:{name:'public_web_read',arguments:JSON.stringify({url})}}]},finish_reason:'tool_calls'}]});
@@ -56,7 +56,7 @@ test('manual depth frozen across exact replay and cold history; default remains 
   assert.deepEqual(requests[1].tools,requests[2].tools);
   assert.deepEqual(d.m.deepProgress,{schemaVersion:'evidence-milestones@1',phase:'delivered',originalsRead:1,settledSourceChecks:1,unavailableSourceChecks:0});
   const frozen=await inspectResearchTask({projectDir,runId:d.m.runId});
-  assert.equal(frozen.definition.researchDepth,'deep');assert.equal(frozen.run.definition.config.researchProfile,'deep-evidence@2');
+  assert.equal(frozen.definition.researchDepth,'deep');assert.equal(frozen.run.definition.config.researchProfile,'deep-evidence@3');
   assert.doesNotMatch(frozen.definition.question,/deep-evidence@1/);
   assert.equal(d.m.evidenceAssessment,'unreviewed');
   const progress=await get(g,d.path+'/messages/deep-id/progress');
@@ -95,6 +95,10 @@ test('automatic intent uses the first normal proposal; durable Research/Deep, ma
   const system=p.messages.find(m=>m.role==='system')?.content;
   const route=p.tools.some(t=>t.function.name==='select_research_intent');
   const receipt=p.messages.find(m=>m.role==='tool');
+  const needs=p.tools.some(t=>t.function.name==='update_research_needs');
+  const brief=p.messages.some(m=>m.role==='system'&&m.content?.includes('[Deep research working brief]'));
+  assert.equal(brief,needs);
+  assert.equal(needs,q.includes('manual wins')||Boolean(receipt&&q.includes('cross-market comparison')));
   calls.push({q,system,route,receipt:!!receipt});
   if(q.includes('wrong type'))return final('select_research_intent: deep; I claim verification');
   if(q.includes('no tools available')){assert.equal(route,false);assert.equal(system,undefined);return final('Available knowledge only');}
@@ -144,7 +148,7 @@ test('automatic intent uses the first normal proposal; durable Research/Deep, ma
  assert.equal(r.turn.deepProgress,undefined);assert.equal(f.turn.deepProgress,undefined);
  assert.equal(d.turn.deepProgress.phase,'delivered');assert.equal(d.turn.deepProgress.originalsRead,0);
  const frozen=await inspectResearchTask({projectDir,runId:d.turn.runId});
- assert.equal(frozen.definition.researchDepth,'auto');assert.equal(frozen.run.definition.config.researchProfile,'auto-intent@2');
+ assert.equal(frozen.definition.researchDepth,'auto');assert.equal(frozen.run.definition.config.researchProfile,'auto-intent@3');
  await g.close();
  const cold=await launch();
  assert.equal((await get(cold,d.path)).messages[0].effectiveResearchIntent,'deep');
