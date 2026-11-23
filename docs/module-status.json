@@ -1,9 +1,9 @@
 {
   "schemaVersion": 2,
-  "reviewedVersion": "0.46.0",
-  "reviewedSource": "9b7cbfc358fd2688fc69a2af5b0c263016fc1eb9",
+  "reviewedVersion": "0.46.1",
+  "reviewedSource": "1bbabf0dca0da23ee3cafcdb565340dd379b7acd",
   "articleSource": "https://github.com/hpoenixf/eff-agent-article/blob/249f0b866f9446f33b57f186fbc6d35b5d82c119/articles/open-etf-agent-v010-system-design.md",
-  "evidence": "docs/verification/v046-deep-evidence-milestones.md",
+  "evidence": "docs/verification/v0461-compact-workbench.md",
   "layers": [
     {
       "id": "L1",
@@ -562,7 +562,7 @@
         "zh": "未知派发不重放；不复核结论",
         "en": "No unknown replay or conclusion review"
       },
-      "status": "enhanced",
+      "status": "bounded",
       "source": "src/runtime.mjs",
       "kind": "module",
       "article": {
@@ -1080,15 +1080,15 @@
       "group": "delivery",
       "name": "Local Research GUI",
       "summary": {
-        "zh": "Markdown、紧凑控件与图表 Skill",
-        "en": "Markdown, compact controls and charts"
+        "zh": "固定输入区、可折叠会话与来源",
+        "en": "Docked composer and compact panels"
       },
       "boundary": {
-        "zh": "图表仅接 Wind 日收盘，公网页面待验",
-        "en": "Wind closes only; browser gate pending"
+        "zh": "已验桌面与窄屏；未验真机及浏览器 PDF",
+        "en": "Desktop/narrow; no phone or PDF check"
       },
-      "status": "bounded",
-      "source": "src/gui-server.mjs",
+      "status": "enhanced",
+      "source": "src/gui/gui.mjs",
       "kind": "call-site",
       "article": {
         "slug": "agent-conversation-admission-task-continuation",
