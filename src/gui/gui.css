@@ -1,5 +1,6 @@
 :root{
   color-scheme: light;
+  overflow:clip;
   --base:#faf9f6; --paper:#fff; --panel:#f3f2ee; --ink:#202b27; --muted:#54615b;
   --line:#dedfd8; --primary:#215f52; --accent:#e8f2ec; --focus:#216b5c;
   font-family: system-ui, -apple-system, BlinkMacSystemFont, "Microsoft YaHei", sans-serif;
@@ -7,7 +8,7 @@
 }
 *{box-sizing:border-box}
 /* The host can prepend a status notice. Only the workbench fills the remaining height. */
-body{margin:0;min-inline-size:280px;block-size:100vh;block-size:var(--workbench-height,100dvh);overflow:hidden;display:flex;flex-direction:column}
+body{position:fixed;inset:0 0 auto;margin:0;min-inline-size:280px;block-size:100vh;block-size:var(--workbench-height,100dvh);overflow:hidden;overflow:clip;display:flex;flex-direction:column}
 body > :not(#workspace){flex:none}
 button,input,textarea,select{font:inherit}
 button{
@@ -220,7 +221,7 @@ dialog::backdrop{background:#14282480}
 .composer-actions summary::-webkit-details-marker { display: none; }
 .composer-actions summary:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
 .composer-actions summary[data-active="true"] { border-color: var(--focus); font-weight: 680; }
-.composer-panel { position: absolute; inset-inline: 0; bottom: calc(100% + .35rem); z-index: 3; width: min(100%,26rem); padding: .72rem; border: 1px solid var(--line); border-radius: .72rem; background: var(--paper); box-shadow: 0 6px 22px #14282422; max-height: min(calc(var(--workbench-height,100dvh) * .36),20rem); overflow: auto; }
+.composer-panel { position: absolute; inset-inline: 0; bottom: calc(100% + .35rem); z-index: 3; width: min(100%,26rem); padding: .72rem; border: 1px solid var(--line); border-radius: .72rem; background: var(--paper); box-shadow: 0 6px 22px #14282422; max-height: min(var(--composer-panel-room,42dvh),20rem); overflow: auto; overscroll-behavior: contain; }
 .composer-panel select, .composer-panel input { max-width: 100%; }
 .composer-panel > button { margin-top: .45rem; }
 @media (max-width: 540px) {
@@ -243,3 +244,15 @@ dialog::backdrop{background:#14282480}
 :root[data-short-viewport="true"] .masthead{min-height:0;padding-block:.12rem}
 :root[data-short-viewport="true"] #question{height:3rem;min-height:3rem;resize:none}
 :root[data-short-viewport="true"] #mode-disclosure p{max-height:3rem;overflow:auto}
+
+/* Keep a useful reading slice beside an on-screen keyboard or a short window. */
+@media (max-height: 380px) {
+  #composer { padding: .3rem .45rem; }
+  #question { height: 2.5rem; min-height: 2.5rem; padding-block: .25rem; }
+  .composer-actions { margin-block-start: .16rem; }
+  #mode-disclosure summary { min-height: 1.6rem; padding-block: .1rem; }
+}
+:root[data-very-short-viewport="true"] #composer { padding: .3rem .45rem; }
+:root[data-very-short-viewport="true"] #question { height: 2.5rem; min-height: 2.5rem; padding-block: .25rem; }
+:root[data-very-short-viewport="true"] .composer-actions { margin-block-start: .16rem; }
+:root[data-very-short-viewport="true"] #mode-disclosure summary { min-height: 1.6rem; padding-block: .1rem; }

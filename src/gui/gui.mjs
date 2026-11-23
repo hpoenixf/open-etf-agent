@@ -166,6 +166,13 @@ function setEvidenceOpen(open) {
   if(compact&&open&&!dialog.open)dialog.showModal();
   if((!compact||!open)&&dialog.open)dialog.close();
 }
+function fitComposerPanels() {
+  const toolbar=byId('composer-actions');
+  const viewport=window.visualViewport;
+  const spill=toolbar.getBoundingClientRect().top-(viewport?.offsetTop??0);
+  // 6px for the panel-to-toolbar gap, 8px clear of the top of the visible page.
+  toolbar.style.setProperty('--composer-panel-room',Math.max(44,Math.floor(spill)-14)+'px');
+}
 function initWorkbench() {
   const historyMedia=window.matchMedia('(max-width:700px)');
   const evidenceMedia=window.matchMedia('(max-width:930px)');
@@ -177,6 +184,12 @@ function initWorkbench() {
   evidenceMedia.addEventListener('change',sync);
   sync();
   const viewport=window.visualViewport;
+  // The dock may change size as the textarea or permissions disclosure changes.
+  if(window.ResizeObserver){
+    const fit=new window.ResizeObserver(fitComposerPanels);
+    fit.observe(byId('composer'));
+    fit.observe(byId('workspace'));
+  }
   if(viewport){
     const fit=()=>{
       const root=document.documentElement;
@@ -184,6 +197,8 @@ function initWorkbench() {
       if(useHeight)root.style.setProperty('--workbench-height',Math.floor(viewport.height)+'px');
       else root.style.removeProperty('--workbench-height');
       root.dataset.shortViewport=String(useHeight&&viewport.height<=550);
+      root.dataset.veryShortViewport=String(useHeight&&viewport.height<=380);
+      fitComposerPanels();
     };
     viewport.addEventListener('resize',fit);
     evidenceMedia.addEventListener('change',fit);
@@ -623,12 +638,12 @@ function closeComposerOptions(except){
 }
 for(const id of ['chart-skill-picker','pdf-picker','research-settings']){
   const panel=byId(id);
-  panel.addEventListener('toggle',()=>{if(panel.open)closeComposerOptions(panel);});
+  panel.addEventListener('toggle',()=>{if(panel.open){closeComposerOptions(panel);fitComposerPanels();}});
   panel.addEventListener('keydown',event=>{
     if(event.key!=='Escape'||!panel.open)return;
     event.preventDefault();
     panel.open=false;
-    panel.querySelector('summary').focus();
+    panel.querySelector('summary').focus({preventScroll:true});
   });
 }
 byId('chart-skill-clear').addEventListener('click',()=>{
@@ -637,13 +652,13 @@ byId('chart-skill-clear').addEventListener('click',()=>{
   updateChartSkillLabel();
   saveDraft();
   byId('chart-skill-picker').open=false;
-  byId('chart-skill-toggle').focus();
+  byId('chart-skill-toggle').focus({preventScroll:true});
 });
 byId('chart-skill').addEventListener('change',()=>{
   updateChartSkillLabel();
   if(!state.pending)saveDraft();
   byId('chart-skill-picker').open=false;
-  byId('chart-skill-toggle').focus();
+  byId('chart-skill-toggle').focus({preventScroll:true});
 });
 byId('source').addEventListener('change',()=>{if(!state.pending)saveDraft();});
 for(const id of ['research-depth','reasoning-effort'])byId(id).addEventListener('change',()=>{

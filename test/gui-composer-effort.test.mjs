@@ -11,6 +11,7 @@ function boot(){
  const list=nodes(), values=new Map(), calls=[], media=new Map();
  const make=tag=>({
   tag,value:'',hidden:false,children:[],dataset:{},listeners:{},attrs:{},scrollTop:0,
+  style:{setProperty(name,value){this[name]=value;},removeProperty(name){delete this[name];}},
   get childElementCount(){return this.children.length;},
   append(...children){this.children.push(...children);},
   replaceChildren(...children){this.children=children;},
@@ -277,4 +278,18 @@ test('the host status notice does not claim the app shell’s remaining height',
  assert.match(css,/body > :not\(#workspace\)\{flex:none\}/);
  assert.match(css,/\.workspace\{[^}]+flex:1 1 0;min-height:0/);
  assert.match(css,/\.reading-pane\{min-height:0/);
+});
+
+
+test('the short-viewport toolbar bounds its own scrollable popup without scrolling the workbench',()=>{
+ const {get,run}=boot();
+ assert.match(css,/body\{position:fixed;[^}]+overflow:clip/);
+ assert.match(css,/\.composer-panel \{[^}]+var\(--composer-panel-room,42dvh\)[^}]+overflow: auto; overscroll-behavior: contain/);
+ const toolbar=get('composer-actions');
+ toolbar.getBoundingClientRect=()=>({top:119});
+ run("window.visualViewport={offsetTop:5}; fitComposerPanels()");
+ assert.equal(toolbar.style['--composer-panel-room'],'100px');
+ toolbar.getBoundingClientRect=()=>({top:40});
+ run('fitComposerPanels()');
+ assert.equal(toolbar.style['--composer-panel-room'],'44px');
 });
