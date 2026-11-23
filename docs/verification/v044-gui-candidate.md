@@ -30,3 +30,11 @@ Before release, verify chosen code and version pins independently, run the
 exact candidate checks, and complete isolated desktop/mobile preview. Do not
 configure a production URL, live provider credential, account database,
 scheduled mail or migration in order to preview this UI.
+
+## Isolated staging API smoke check
+
+An authenticated HTTPS client created an ordinary empty conversation
+(HTTP 201) and read the History list and detail (HTTP 200 for each) on the
+isolated staging candidate. No model calls were made. This verifies the
+basic authenticated HTTP path only; desktop and mobile browser interaction
+remain unverified.

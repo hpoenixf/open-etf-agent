@@ -44,7 +44,7 @@ GitHub treats embedded SVG as one image, so its cards are not individually click
 | L5 Publication & delivery | [Main → Report](https://hpoenixf.com/eff-agent-article/en/articles/open-etf-agent-v01-first-readable-report) · [Report](https://hpoenixf.com/eff-agent-article/en/articles/open-etf-agent-v01-first-readable-report) · [Artifact / Revision](https://hpoenixf.com/eff-agent-article/en/articles/agent-artifact-version-access-sharing) · [Publication](https://hpoenixf.com/eff-agent-article/en/articles/019-agent-answer-publication) · [Report Review](https://hpoenixf.com/eff-agent-article/en/articles/open-etf-agent-report-review-workshop) |
 | L6 User interfaces | [Loopback Reader](https://hpoenixf.com/eff-agent-article/en/articles/open-etf-agent-v010-system-design) · [Local Research GUI](https://hpoenixf.com/eff-agent-article/en/articles/agent-conversation-admission-task-continuation) · [Account Site](https://hpoenixf.com/eff-agent-article/en/articles/open-etf-agent-v010-system-design) · [CLI Readback](https://hpoenixf.com/eff-agent-article/en/articles/open-etf-agent-v01-first-readable-report) |
 
-**Current map: v0.43.0** · [Modules, source & evidence](docs/module-status.md) · [Six-layer article (Chinese original)](https://github.com/hpoenixf/eff-agent-article/blob/249f0b866f9446f33b57f186fbc6d35b5d82c119/articles/open-etf-agent-v010-system-design.md)
+**Current map: v0.44.0** · [Modules, source & evidence](docs/module-status.md) · [Six-layer article (Chinese original)](https://github.com/hpoenixf/eff-agent-article/blob/249f0b866f9446f33b57f186fbc6d35b5d82c119/articles/open-etf-agent-v010-system-design.md)
 
 Article links are reading navigation, not implementation parity or coverage qualification. This maps public implementation, not completion percentages. Live-model evidence qualifies only the paths in [version records](docs/verification/README.md), not financial accuracy, production or browser experience.
 <!-- module-map:end -->
@@ -100,22 +100,24 @@ npm run demo -- --case document-compare
 <a id="latest-three-modules"></a>
 ## Releases and development status
 
+**[v0.43.0 · Isolated account workspace](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.43.0).** Opt in to invitation-only sign-in with a separate Project for each account. Default startup remains offline. The installer was verified in isolation; public TLS and live data migration were not qualified. [Setup and scope](docs/verification/v043-account-site.md)
+
 **[v0.42.0 · Daily research and an optional owner digest](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.42.0).** Track an unchanged question against the last verified answer. A changed question starts a new baseline. Delivery remains opt-in; external email was not qualified. [Usage](docs/local-gui-daily-watch.md) · [Runtime verification](docs/verification/v042-runtime-qualification.md)
 
 **[v0.41.0 · Owner research workspace](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.41.0).** Bounded follow-ups, observable research progress, and opt-in public research tools. Default startup remains offline. Per-question text PDF support is implemented, but browser PDF acceptance was deferred. [Owner setup](docs/local-gui-live.md) · [Scope and verification](docs/verification/v041-release-candidate.md)
 
-**[v0.39.0 · Local research GUI preview](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.39.0).** Open the browser workspace with `npm run gui -- --project ./test-output/local-gui`. The workspace uses two bundled synthetic ETF sources and saves conversations, reports and citations locally. [Setup and scope](docs/local-gui.md) · [Verification](docs/verification/v039-release.md)
-
 | Recent version / status | What it enables | Usage and boundaries |
 | --- | --- | --- |
+| [v0.43.0 · Isolated account workspace](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.43.0) | Invite-only login and isolated Projects; public deployment not qualified | [Setup and scope](docs/verification/v043-account-site.md) |
 | [v0.42.0 · Daily research and an optional owner digest](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.42.0) | Daily watch, reusable baseline and optional digest; external mail not qualified | [Usage](docs/local-gui-daily-watch.md) |
 | [v0.41.0 · Owner research workspace](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.41.0) | Follow-ups, public evidence and progress; browser PDF acceptance deferred | [Usage](docs/local-gui-live.md) |
-| [v0.39.0 · Local research GUI preview](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.39.0) | Browser conversations, saved reports and original citations using synthetic sources | [Usage](docs/local-gui.md) |
 
 [All fixed versions and commands](docs/module-guide.md#versions) · [Version lineage](versions.json) · [All releases](https://github.com/hpoenixf/open-etf-agent/releases) · [Verification records](docs/verification/README.md)
 
 <details>
 <summary>Earlier versions</summary>
+
+**[v0.39.0 · Local research GUI preview](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.39.0).** Open the browser workspace with `npm run gui -- --project ./test-output/local-gui`. The workspace uses two bundled synthetic ETF sources and saves conversations, reports and citations locally. [Setup and scope](docs/local-gui.md) · [Verification](docs/verification/v039-release.md)
 
 **[v0.38.0 · Wind ETF daily closes](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.38.0):** Opt in to fetch unadjusted daily exchange closes for one ETF. Default research does not contact Wind. [Usage](docs/wind-fund-mcp.md) · [Evidence and limits](docs/verification/v038-release.md).
 
