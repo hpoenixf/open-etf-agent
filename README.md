@@ -68,8 +68,8 @@ Articles can describe a broader system than the public module. Coverage records 
 
 **Recently updated reading**
 
-<!-- Recent reading source: hpoenixf/eff-agent-article@43be7ca0b4e97a77eacf86fe6c2a535bad0b3a89 README.md; Chinese-source Git history order, translated editions are not separate entries. -->
-[Why a Research Report Must Become an Asset Before an Agent Can Reuse It](https://hpoenixf.com/eff-agent-article/en/articles/agent-research-assets-identity-version-lifecycle) · [Start with a Report You Can Read Back: Open ETF Agent v0.1](https://hpoenixf.com/eff-agent-article/en/articles/open-etf-agent-v01-first-readable-report) · [The File Is Right There. Why Can't the Agent Read It?](https://hpoenixf.com/eff-agent-article/en/articles/agent-document-navigation-after-empty-search)
+<!-- Recent reading source: hpoenixf/eff-agent-article@e9e33242b10a548e236b98311a21ee00ec215ac9 README.en.md; Chinese-source Git history order, translated editions are not separate entries. -->
+[From the Command Line to a Research Workspace: How to Pick Up Where You Left Off](https://hpoenixf.com/eff-agent-article/en/articles/open-etf-agent-research-workbench) · [Deploy Open ETF Agent from Scratch: Run the Research Workspace on Your Own Server](https://hpoenixf.com/eff-agent-article/en/articles/open-etf-agent-staged-deployment) · [Six-Layer Request Lifecycle: From Prompt to Visible Answer](https://hpoenixf.com/eff-agent-article/en/articles/017-prompt-to-answer-six-layer-panorama-v3)
 
 <a id="quickstart"></a>
 ## Quickstart
@@ -100,22 +100,24 @@ npm run demo -- --case document-compare
 <a id="latest-three-modules"></a>
 ## Releases and development status
 
+**[v0.44.0 · Research workspace GUI](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.44.0).** Saved reports render as Markdown. The Financial Chart Skill uses verified evidence from the same Run and preserves missing observations. Default local startup stays offline. Isolated staging covered desktop and a narrow viewport, not browser PDF or a physical phone; hosted production was unchanged. [Scope and verification](docs/verification/v044-gui-candidate.md)
+
 **[v0.43.0 · Isolated account workspace](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.43.0).** Opt in to invitation-only sign-in with a separate Project for each account. Default startup remains offline. The installer was verified in isolation; public TLS and live data migration were not qualified. [Setup and scope](docs/verification/v043-account-site.md)
 
 **[v0.42.0 · Daily research and an optional owner digest](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.42.0).** Track an unchanged question against the last verified answer. A changed question starts a new baseline. Delivery remains opt-in; external email was not qualified. [Usage](docs/local-gui-daily-watch.md) · [Runtime verification](docs/verification/v042-runtime-qualification.md)
 
-**[v0.41.0 · Owner research workspace](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.41.0).** Bounded follow-ups, observable research progress, and opt-in public research tools. Default startup remains offline. Per-question text PDF support is implemented, but browser PDF acceptance was deferred. [Owner setup](docs/local-gui-live.md) · [Scope and verification](docs/verification/v041-release-candidate.md)
-
 | Recent version / status | What it enables | Usage and boundaries |
 | --- | --- | --- |
+| [v0.44.0 · Research workspace GUI](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.44.0) | Markdown reports and saved same-Run charts; missing observations stay missing | [Scope and verification](docs/verification/v044-gui-candidate.md) |
 | [v0.43.0 · Isolated account workspace](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.43.0) | Invite-only login and isolated Projects; public deployment not qualified | [Setup and scope](docs/verification/v043-account-site.md) |
 | [v0.42.0 · Daily research and an optional owner digest](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.42.0) | Daily watch, reusable baseline and optional digest; external mail not qualified | [Usage](docs/local-gui-daily-watch.md) |
-| [v0.41.0 · Owner research workspace](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.41.0) | Follow-ups, public evidence and progress; browser PDF acceptance deferred | [Usage](docs/local-gui-live.md) |
 
 [All fixed versions and commands](docs/module-guide.md#versions) · [Version lineage](versions.json) · [All releases](https://github.com/hpoenixf/open-etf-agent/releases) · [Verification records](docs/verification/README.md)
 
 <details>
 <summary>Earlier versions</summary>
+
+**[v0.41.0 · Owner research workspace](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.41.0).** Bounded follow-ups, observable research progress, and opt-in public research tools. Default startup remains offline. Per-question text PDF support is implemented, but browser PDF acceptance was deferred. [Owner setup](docs/local-gui-live.md) · [Scope and verification](docs/verification/v041-release-candidate.md)
 
 **[v0.39.0 · Local research GUI preview](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.39.0).** Open the browser workspace with `npm run gui -- --project ./test-output/local-gui`. The workspace uses two bundled synthetic ETF sources and saves conversations, reports and citations locally. [Setup and scope](docs/local-gui.md) · [Verification](docs/verification/v039-release.md)
 

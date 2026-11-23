@@ -68,8 +68,8 @@ GitHub 将 SVG 当作一张图片，不能在缩略图里逐卡点击；下表�
 
 **近期更新的阅读素材**
 
-<!-- Recent reading source: hpoenixf/eff-agent-article@43be7ca0b4e97a77eacf86fe6c2a535bad0b3a89 README.md; Chinese-source Git history order, translated editions are not separate entries. -->
-[一份研究报告，为什么需要先变成「资产」？](https://hpoenixf.com/eff-agent-article/articles/agent-research-assets-identity-version-lifecycle) · [Open ETF Agent v0.1：从第一份可回读报告开始](https://hpoenixf.com/eff-agent-article/articles/open-etf-agent-v01-first-readable-report) · [资料明明在，Agent 为什么读不到？](https://hpoenixf.com/eff-agent-article/articles/agent-document-navigation-after-empty-search)
+<!-- Recent reading source: hpoenixf/eff-agent-article@e9e33242b10a548e236b98311a21ee00ec215ac9 README.md; Chinese-source Git history order, translated editions are not separate entries. -->
+[从命令行到研究工作台：让一份研究下次还能接着做](https://hpoenixf.com/eff-agent-article/articles/open-etf-agent-research-workbench) · [从零上线 Open ETF Agent：把研究工作台部署到自己的服务器](https://hpoenixf.com/eff-agent-article/articles/open-etf-agent-staged-deployment) · [从一次提问到答案可见：ETF Agent 六层调用全景](https://hpoenixf.com/eff-agent-article/articles/017-prompt-to-answer-six-layer-panorama-v3)
 
 <a id="quickstart"></a>
 ## 快速运行 · Quickstart
@@ -100,22 +100,24 @@ npm run demo -- --case document-compare
 <a id="最近三个模块"></a>
 ## 最近版本与开发状态
 
+**[v0.44.0 · 研究工作台界面](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.44.0)。** 历史报告以 Markdown 显示，金融图表 Skill 只呈现同一轮研究中经过核验的数据，缺值不填补。默认本地启动仍离线；隔离预发通过桌面和窄视口检查，未验收浏览器 PDF 或真机手机，未部署托管正式环境。[范围与验证](docs/verification/v044-gui-candidate.md)
+
 **[v0.43.0 · 隔离账户工作台](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.43.0)。** 按需启用受邀账户登录，每个账户使用独立项目，原默认离线工作台不变。正式安装器已通过隔离验收，公网 TLS 和真实数据迁移未验收。[设置与范围](docs/verification/v043-account-site.md)
 
 **[v0.42.0 · 每日研究与可选的持有人摘要](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.42.0).** 同一问题续用上一份已核实的回答，修改问题后重建基线。邮件需另行启用，未完成外部投递验收。[使用说明](docs/local-gui-daily-watch.md) · [运行验收](docs/verification/v042-runtime-qualification.md)
 
-**[v0.41.0 · 持有人研究工作台](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.41.0).** 支持同会话有限追问、查看实际研究进度，以及可选公开检索及 Wind 基金日收盘价。默认仍是离线演练。已实现按轮附带文字 PDF，但浏览器 PDF 验收延期。[持有人用法](docs/local-gui-live.md) · [范围与验证](docs/verification/v041-release-candidate.md)
-
 | 最近版本 / 状态 | 能做什么 | 用法与边界 |
 | --- | --- | --- |
+| [v0.44.0 · 研究工作台界面](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.44.0) | Markdown 报告与同轮图表回读；缺值不填补 | [范围与验证](docs/verification/v044-gui-candidate.md) |
 | [v0.43.0 · 隔离账户工作台](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.43.0) | 受邀登录与独立项目；未验收公网部署 | [设置与范围](docs/verification/v043-account-site.md) |
 | [v0.42.0 · 每日研究与可选的持有人摘要](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.42.0) | 按日追踪、复用基线，可选摘要；未验收外部邮件投递 | [用法](docs/local-gui-daily-watch.md) |
-| [v0.41.0 · 持有人研究工作台](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.41.0) | 追问、公开取证与真实进度；浏览器 PDF 验收延期 | [用法](docs/local-gui-live.md) |
 
 [全部固定版本与命令](docs/module-guide.zh-CN.md#versions) · [版本谱系](versions.json) · [全部 Release](https://github.com/hpoenixf/open-etf-agent/releases) · [验证记录](docs/verification/README.zh-CN.md)
 
 <details>
 <summary>历史版本</summary>
+
+**[v0.41.0 · 持有人研究工作台](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.41.0).** 支持同会话有限追问、查看实际研究进度，以及可选公开检索及 Wind 基金日收盘价。默认仍是离线演练。已实现按轮附带文字 PDF，但浏览器 PDF 验收延期。[持有人用法](docs/local-gui-live.md) · [范围与验证](docs/verification/v041-release-candidate.md)
 
 **[v0.39.0 · 本地研究界面预览](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.39.0)。** 用 `npm run gui -- --project ./test-output/local-gui` 打开浏览器工作台。界面使用内置的两份 ETF 模拟资料，会话、报告和引用保存在本机。[启动方式和适用范围](docs/local-gui.md) · [验收证据](docs/verification/v039-release.md)
 
