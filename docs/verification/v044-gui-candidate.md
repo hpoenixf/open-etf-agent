@@ -36,5 +36,25 @@ scheduled mail or migration in order to preview this UI.
 An authenticated HTTPS client created an ordinary empty conversation
 (HTTP 201) and read the History list and detail (HTTP 200 for each) on the
 isolated staging candidate. No model calls were made. This verifies the
-basic authenticated HTTP path only; desktop and mobile browser interaction
-remain unverified.
+basic authenticated HTTP path only.
+
+## Isolated staging browser check
+
+The deployed isolated staging candidate used the same application source
+tree above. The [candidate Verify run](https://github.com/hpoenixf/open-etf-agent/actions/runs/45092590146)
+passed on the packaged candidate before this documentation update. The
+browser check did not exercise production.
+
+- Signed in using the HTML form. From Tools, selected the Financial Chart
+  Skill and completed a synthetic fund daily-close question. The answer
+  rendered a Markdown heading, list, table, and chart. The chart showed
+  two markers and left the missing observation visibly unconnected.
+- At a desktop viewport, reloaded the page and reopened the saved
+  conversation from History. The completed answer, table, and chart read back.
+- At a narrow browser viewport (454 CSS pixels), opened the History drawer
+  and reopened the same saved chart. The question and send controls fit
+  without root horizontal overflow. This was not a physical phone test.
+
+No external model, Wind, or mail request was made. Actual PDF upload,
+other chart formats, physical-device behavior, and production operation
+remain outside this browser check.
