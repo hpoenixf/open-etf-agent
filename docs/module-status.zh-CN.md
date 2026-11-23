@@ -2,7 +2,7 @@
 
 [English](module-status.md) · [README](../README.zh-CN.md#module-map)
 
-审阅版本: **v0.44.0**. [固定代码基线](https://github.com/hpoenixf/open-etf-agent/tree/62f34f60c48fc41af00190cf731b1bce08e8a037) · [本版验证范围与限制](verification/v044-gui-candidate.md).
+审阅版本: **v0.45.0**. [固定代码基线](https://github.com/hpoenixf/open-etf-agent/tree/62f34f60c48fc41af00190cf731b1bce08e8a037) · [本版验证范围与限制](verification/v044-gui-candidate.md).
 
 实现、离线检查、真实任务、发布和部署是不同事实。下表不是逐模块验收通过清单；模块可参与多层。
 
@@ -170,7 +170,7 @@
 
 回读报告和附件. **本机 HTTP；非完整 Web UI**.  [Agent 深入：从一份报告到持续执行与专家协作](https://hpoenixf.com/eff-agent-article/articles/open-etf-agent-v010-system-design) (open-walkthrough) · [固定源码](https://github.com/hpoenixf/open-etf-agent/blob/62f34f60c48fc41af00190cf731b1bce08e8a037/src/reader.mjs) · [范围导读](module-guide.zh-CN.md)
 
-### Local Research GUI · v0.44.0 增强
+### Local Research GUI · v0.45.0 增强
 
 Markdown、紧凑控件与图表 Skill. **图表仅接 Wind 日收盘，公网页面待验**. 这是既有 Owner 的调用位置，不另算独立模块。 [“接着聊”不等于“接着执行”：Agent 对话接纳与任务接续的设计](https://hpoenixf.com/eff-agent-article/articles/agent-conversation-admission-task-continuation) (module-article) · [固定源码](https://github.com/hpoenixf/open-etf-agent/blob/62f34f60c48fc41af00190cf731b1bce08e8a037/src/gui-server.mjs) · [范围导读](module-guide.zh-CN.md)
 

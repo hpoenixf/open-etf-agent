@@ -1,3 +1,4 @@
+import {isReasoningEffort} from './gateway.mjs';
 import {projectArtifactEffects} from './artifacts.mjs';
 import { projectMemoryEffect } from './memory-effects.mjs';
 import { open, constants } from 'node:fs/promises';
@@ -34,6 +35,7 @@ export async function readTimeline(directory) {
     if (!event || typeof event !== 'object' || Array.isArray(event) || !checks.type(event.type)) throw new Error('Malformed or unsupported timeline event');
     const entry = {};
     for (const [key, valid] of Object.entries(checks)) if (Object.hasOwn(event, key) && valid(event[key])) entry[key] = event[key];
+    if(event.type==='model_proposal'&&isReasoningEffort(event.reasoningEffort))entry.reasoningEffort=event.reasoningEffort;
     if (event.type === 'model_proposal' || event.type === 'summary_proposal') {
       const usage = {};
       if (event.usage && typeof event.usage === 'object' && !Array.isArray(event.usage)) {

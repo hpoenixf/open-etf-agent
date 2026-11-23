@@ -1,5 +1,7 @@
 **English** | [简体中文](README.zh-CN.md)
 
+- [v0.45 research controls: real Runtime 10/10 delivery, 9/10 release qualification](v045-research-intent.md)
+
 - [v0.44 GUI candidate: Markdown, compact tools and native chart evidence](v044-gui-candidate.md)
 
 - [v0.41 candidate: owner chat, PDF, external tools and verification boundaries](v041-release-candidate.md)

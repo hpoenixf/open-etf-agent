@@ -48,6 +48,7 @@ pre{font:inherit;margin:.4rem 0 1rem;white-space:pre-wrap;overflow-wrap:anywhere
 .turn .warning{background:#fff5d9;color:#704e00;border-radius:.4rem;padding:.4rem .55rem}
 .turn .secondary{font-size:.85rem;margin-top:.5rem;margin-inline-end:.4rem}
 #composer{margin-top:1rem;padding:.9rem;background:var(--paper);border:1px solid var(--line);border-radius:.85rem}
+#research-depth-picker:not([hidden]),#reasoning-effort-picker:not([hidden]){display:flex;flex-wrap:wrap;align-items:center;gap:.45rem;margin:.45rem 0}
 #composer label{font-size:.82rem;font-weight:670}
 .source-picker{display:flex;gap:.55rem;align-items:center;flex-wrap:wrap;margin-bottom:.55rem}
 .source-picker[hidden]{display:none}
@@ -115,7 +116,7 @@ dialog::backdrop{background:#14282480}
 .composer-option summary { cursor: pointer; min-height: 38px; padding-block: .45rem; }
 .composer-actions { align-items: start; }
 .composer-actions #send { margin-inline-start: auto; flex: 0 0 auto; }
-.composer-actions #pdf-picker { flex: 1 1 0; }
+.composer-actions #pdf-picker { flex: 0 1 auto; }
 .composer-actions #pdf-file { max-width: 100%; }
 #mode-disclosure p { margin: 0 0 .3rem; line-height: 1.5; }
 .research-progress { margin-block: .4rem; padding: .2rem .15rem; border: 0; }
@@ -131,6 +132,26 @@ dialog::backdrop{background:#14282480}
 
 /* Keep inactive optional controls collapsed, including in the mobile composer. */
 .composer-actions #chart-skill-picker { flex: 0 1 auto; }
-.composer-actions #chart-skill-picker[open] { flex: 1 1 12rem; }
+
 .composer-actions #chart-skill { width: 100%; min-height: 40px; }
 @media (max-width: 540px) { .composer-actions { flex-wrap: wrap; } #daily-watch:not([open]) { padding: .25rem .65rem; } #daily-watch > summary { min-height: 36px; padding-block: .4rem; } }
+
+/* Keep idle controls together. Expanded native panels are positioned above the
+   row so optional guidance cannot make the sticky mobile composer taller. */
+.composer-actions { position: relative; flex-wrap: wrap; align-items: center; justify-content: flex-start; }
+.composer-actions summary { display: inline-block; padding: .46rem .65rem; min-height: 38px; border: 1px solid var(--line); border-radius: 999px; white-space: nowrap; color: var(--ink); }
+.composer-actions summary::-webkit-details-marker { display: none; }
+.composer-actions summary:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+.composer-actions summary[data-active="true"] { border-color: var(--focus); font-weight: 680; }
+.composer-panel { position: absolute; inset-inline: 0; bottom: calc(100% + .35rem); z-index: 3; width: min(100%,26rem); padding: .72rem; border: 1px solid var(--line); border-radius: .72rem; background: var(--paper); box-shadow: 0 6px 22px #14282422; max-height: min(42dvh,20rem); overflow: auto; }
+.composer-panel select, .composer-panel input { max-width: 100%; }
+.composer-panel > button { margin-top: .45rem; }
+@media (max-width: 540px) {
+  #composer { padding: .68rem; border-radius: 1rem; }
+  .composer-actions { column-gap: .36rem; row-gap: .35rem; }
+  .composer-actions summary { min-height: 40px; padding-inline: .56rem; }
+  .composer-actions #send { min-height: 40px; }
+}
+
+#chart-skill-slot:not([hidden]) { display: inline-flex; align-items: center; min-width: 0; gap: .18rem; }
+#chart-skill-clear { border-radius: 999px; min-width: 36px; min-height: 38px; line-height: 1; padding: .28rem; }

@@ -30,14 +30,42 @@ function pendingKey() { return (ownerMode()?'local-gui-pending@3:':'local-gui-pe
 function draftKey(id = state.conversation) {
   return 'local-gui-draft@1:'+state.workspace.projectId+':'+(id ?? 'new');
 }
+const effortLabels = new Map([['low','低'],['high','高'],['max','最高']]);
+function availableEffort() {
+  const policy=state.workspace?.reasoningEffort;
+  if(!ownerMode()||policy?.status!=='available'||!Array.isArray(policy.options))return [];
+  return [...effortLabels.keys()].filter(option=>policy.options.includes(option));
+}
+function requestedEffort(value) { return availableEffort().includes(value) ? value : undefined; }
+function effortField(value) {
+  const reasoningEffort=requestedEffort(value);
+  return reasoningEffort ? {reasoningEffort} : {};
+}
+function configureEffortPicker() {
+  const field=byId('reasoning-effort'), selected=field.value, options=availableEffort();
+  byId('reasoning-effort-picker').hidden=options.length===0;
+  field.replaceChildren(...['',...options].map(value=>{
+    const option=make('option',effortLabels.get(value)??'默认（不指定）');
+    option.value=value;
+    return option;
+  }));
+  field.value=options.includes(selected)?selected:'';
+}
+function effortHistory(value) {
+  const requested=effortLabels.get(value?.requested), serialized=effortLabels.get(value?.serialized);
+  if(!requested)return null;
+  if(!serialized)return '模型思考强度：请求 '+requested+'；未记录发送值。';
+  return '模型思考强度：请求 '+requested+' · 已写入请求 '+serialized+'；提供方实际采用情况未确认。';
+}
 function formDraft() {
-  return { question:byId('question').value, sourceId:byId('source').value,
+  return { question:byId('question').value, sourceId:byId('source').value, researchDepth:byId('research-depth').value,
+    ...effortField(byId('reasoning-effort').value),
     ...(!byId('chart-skill-picker').hidden&&byId('chart-skill').value?{chartSkill:byId('chart-skill').value}:{}) };
 }
 function saveDraft(draft=formDraft(), id=state.conversation) {
   if (!state.workspace) return;
   try {
-    if (draft.question || draft.chartSkill || draft.sourceId !== state.workspace.sources[0]?.id) {
+    if (draft.question || ['standard','deep'].includes(draft.researchDepth) || draft.reasoningEffort || draft.chartSkill || draft.sourceId !== state.workspace.sources[0]?.id) {
       window.localStorage.setItem(draftKey(id),JSON.stringify(draft));
     } else window.localStorage.removeItem(draftKey(id));
   } catch { /* Browser storage is optional; don't block a normal submission. */ }
@@ -51,12 +79,15 @@ function restoreDraft() {
   const draft = state.pending?.conversationId === state.conversation ? state.pending.input : readDraft();
   byId('question').value = typeof draft?.question==='string' ? draft.question.slice(0,3000) : '';
   byId('source').value = state.workspace.sources.find(s=>s.id===draft?.sourceId)?.id ?? state.workspace.sources[0]?.id ?? '';
+  byId('research-depth').value=!byId('research-depth-picker').hidden&&['standard','deep'].includes(draft?.researchDepth)?draft.researchDepth:'auto';
+  byId('reasoning-effort').value=requestedEffort(draft?.reasoningEffort)??'';
   byId('chart-skill').value=!byId('chart-skill-picker').hidden&&draft?.chartSkill==='financial-chart@1'?draft.chartSkill:'';
   updateChartSkillLabel();
+  updateSettingsLabel();
 }
 function clearMatchingDraft({conversationId,input}) {
   const saved = readDraft(conversationId);
-  if (saved?.question !== input.question || saved?.chartSkill !== input.chartSkill || !ownerMode() && saved?.sourceId !== input.sourceId) return;
+  if (saved?.question !== input.question || saved?.chartSkill !== input.chartSkill || saved?.reasoningEffort !== input.reasoningEffort || ownerMode() && (saved?.researchDepth??'auto')!==(input?.researchDepth??'auto') || !ownerMode() && saved?.sourceId !== input.sourceId) return;
   try { window.localStorage.removeItem(draftKey(conversationId)); }
   catch { /* Browser storage is optional. */ }
 }
@@ -74,6 +105,9 @@ function controls() {
   byId('send').textContent = state.pending ? '重试原提交' : liveMode() ? '提交真实模型' : '提交演练';
   byId('question').readOnly = Boolean(state.submitting || state.pending);
   byId('pdf-file').disabled = Boolean(state.submitting || state.pending);
+  byId('research-depth').disabled = Boolean(state.submitting || state.pending);
+  byId('reasoning-effort').disabled = Boolean(state.submitting || state.pending);
+  byId('chart-skill-clear').disabled = Boolean(state.submitting || state.pending);
   byId('chart-skill').disabled = Boolean(state.submitting || state.pending);
   byId('source').disabled = Boolean(state.submitting || state.pending);
   byId('new').disabled = Boolean(state.submitting || state.pending);
@@ -115,6 +149,7 @@ function showEvidence(source,index) {
 }
 function progressContent(target, value) {
   target.replaceChildren();
+  if(value?.researchIntent==='deep'||value?.researchIntent==='research')target.append(make('p',value.researchIntent==='deep'?'当前模式：深度研究':'当前模式：资料查证','muted'));
   if (!value || value.status!=='available' || !value.steps?.length) {
     target.append(make('p',value?.status==='unavailable'?'暂未读到可显示的研究记录。':'尚无已记录的步骤。','muted'));
     return;
@@ -165,6 +200,12 @@ function render() {
     const status = isUnknown ? '结果未知' : m.working ? phaseLabels[m.phase] ?? '处理中' : statusLabels[m.status] ?? '状态待核对';
     header.append(make('strong','你'),make('span',status,'state'));
     article.append(header,make('p',m.question ?? '问题尚未读回','question'));
+    const route={deep:'深度研究',research:'资料查证',direct:'普通回答',standard:'标准研究'}[m.effectiveResearchIntent];
+    const requested={auto:'自动',standard:'标准研究',deep:'深度研究'}[m.researchDepth];
+    if(requested||route)article.append(make('p',(requested?'研究模式：'+requested:'')+(route?(requested?' · ':'')+'实际路线：'+route:''),'muted'));
+    const effort=effortHistory(m.reasoningEffort);
+    if(effort)article.append(make('p',effort,'muted'));
+    if(m.evidenceAssessment==='unreviewed')article.append(make('p','结论与引文未独立核验。','muted'));
     if(m.attachment) article.append(make('p','PDF：'+m.attachment.name+' · '+m.attachment.pages+' 页','muted'));
     article.append(progressDetails(m));
     const providerFailure=(/^PROVIDER_HTTP_(403|429)$/).exec(m.code??'');
@@ -277,7 +318,7 @@ async function select(id,messageId) {
     state.progress.clear();
     message();
     if(state.conversation)byId('pdf-file').value='';byId('pdf-file').dispatchEvent(new Event('change'));
-    byId('chart-skill').value=''; updateChartSkillLabel();
+    byId('research-depth').value='auto'; byId('reasoning-effort').value=''; byId('chart-skill').value=''; updateChartSkillLabel(); updateSettingsLabel(); closeComposerOptions();
     const dialog=byId('mobile-evidence');
     if (dialog.open) dialog.close();
     byId('mobile-evidence-content').replaceChildren();
@@ -295,6 +336,8 @@ async function select(id,messageId) {
 }
 async function load() {
   state.workspace = await api('/api/workspace');
+  configureEffortPicker();
+  updateSettingsLabel();
   if (ownerMode()) {
     const badge=byId('mode-badge');
     badge.textContent='真实模型';
@@ -309,7 +352,10 @@ async function load() {
       +' 普通问题可能连同本会话近期问答的摘录发给配置的模型；跨越 PDF 附件轮次不沿用历史。新建会话可从空白开始。';
     byId('source-picker').hidden=true;
     byId('pdf-picker').hidden=!state.workspace.capabilities.includes('pdf-attachment');
+    byId('research-depth-picker').hidden=!state.workspace.capabilities.includes('deep-research');
+    updateSettingsLabel();
     byId('chart-skill-picker').hidden=!state.workspace.capabilities.includes('financial-chart-skill');
+    byId('chart-skill-slot').hidden=byId('chart-skill-picker').hidden;
     byId('chart-skill').options[0].textContent=state.workspace.capabilities.includes('financial-chart-auto')?'自动（适用时使用图表）':'自动（图表需点选）';
     byId('source').required=false;
     byId('question').placeholder='输入你的问题';
@@ -456,17 +502,60 @@ byId('question').addEventListener('input',()=>{if(!state.pending){saveDraft();co
 byId('pdf-file').addEventListener('change',()=>{
   const file=byId('pdf-file').files?.[0];
   const toggle=byId('pdf-toggle');
-  toggle.textContent=file?'已附 PDF':'附加 PDF';
+  toggle.textContent=file?'已附 PDF':'＋ PDF';
+  toggle.dataset.active=String(Boolean(file));
   if(file)toggle.title=file.name;else toggle.removeAttribute('title');
 });
 function updateChartSkillLabel(){
-  byId('chart-skill-toggle').textContent=byId('chart-skill').value?'工具：金融图表':'工具';
+  const hasSkill=byId('chart-skill').value==='financial-chart@1';
+  const trigger=byId('chart-skill-toggle');
+  trigger.textContent=hasSkill?'金融图表':'选工具';
+  trigger.dataset.active=String(hasSkill);
+  byId('chart-skill-clear').hidden=!hasSkill;
 }
+function updateSettingsLabel(){
+  const settings=byId('research-settings');
+  settings.hidden=byId('research-depth-picker').hidden&&byId('reasoning-effort-picker').hidden;
+  const active=(!byId('research-depth-picker').hidden&&byId('research-depth').value!=='auto') ||
+    (!byId('reasoning-effort-picker').hidden&&Boolean(byId('reasoning-effort').value));
+  byId('research-settings-toggle').textContent=active?'设置 · 已选':'设置';
+  byId('research-settings-toggle').dataset.active=String(active);
+}
+function closeComposerOptions(except){
+  for(const id of ['chart-skill-picker','pdf-picker','research-settings']){
+    const panel=byId(id);
+    if(panel!==except)panel.open=false;
+  }
+}
+for(const id of ['chart-skill-picker','pdf-picker','research-settings']){
+  const panel=byId(id);
+  panel.addEventListener('toggle',()=>{if(panel.open)closeComposerOptions(panel);});
+  panel.addEventListener('keydown',event=>{
+    if(event.key!=='Escape'||!panel.open)return;
+    event.preventDefault();
+    panel.open=false;
+    panel.querySelector('summary').focus();
+  });
+}
+byId('chart-skill-clear').addEventListener('click',()=>{
+  if(state.pending||state.submitting)return;
+  byId('chart-skill').value='';
+  updateChartSkillLabel();
+  saveDraft();
+  byId('chart-skill-picker').open=false;
+  byId('chart-skill-toggle').focus();
+});
 byId('chart-skill').addEventListener('change',()=>{
   updateChartSkillLabel();
   if(!state.pending)saveDraft();
+  byId('chart-skill-picker').open=false;
+  byId('chart-skill-toggle').focus();
 });
 byId('source').addEventListener('change',()=>{if(!state.pending)saveDraft();});
+for(const id of ['research-depth','reasoning-effort'])byId(id).addEventListener('change',()=>{
+  updateSettingsLabel();
+  if(!state.pending)saveDraft();
+});
 byId('close-evidence').addEventListener('click',()=>byId('mobile-evidence').close());
 byId('new').addEventListener('click',()=> {
   if (state.submitting || state.pending || !state.workspace) return;
@@ -481,6 +570,7 @@ byId('composer').addEventListener('submit',async e=>{
   if (liveMode() && !ownerMode() && !confirmLive()) return;
   try {
     message(); state.submitting=true; controls();
+    closeComposerOptions();
     const original = formDraft();
     const file=!state.pending&&!byId('pdf-picker').hidden?byId('pdf-file').files[0]:null;
     const chartSkill=!state.pending&&!byId('chart-skill-picker').hidden?byId('chart-skill').value:'';
@@ -497,13 +587,13 @@ byId('composer').addEventListener('submit',async e=>{
       attachment=payload.id;
     }
     state.pending ??= { conversationId:state.conversation,
-      input:{messageId:'m'+Date.now()+'-'+crypto.randomUUID().replaceAll('-','').slice(0,24),question:original.question,...(ownerMode()?(attachment?{attachmentId:attachment}:chartSkill?{chartSkill}:{}):{sourceId:original.sourceId})} };
+      input:{messageId:'m'+Date.now()+'-'+crypto.randomUUID().replaceAll('-','').slice(0,24),question:original.question,...(ownerMode()?{...(attachment?{attachmentId:attachment}:chartSkill?{chartSkill}:{}),researchDepth:original.researchDepth,...effortField(original.reasoningEffort)}:{sourceId:original.sourceId})} };
     sessionStorage.setItem(pendingKey(),JSON.stringify(state.pending));
     const {conversationId,input}=state.pending;
     await api('/api/conversations/'+conversationId+'/messages',liveMode()&&!ownerMode()?{...input,approveLive:true}:input);
     clearMatchingDraft(state.pending);
     state.pending=null; sessionStorage.removeItem(pendingKey()); q.value=''; byId('pdf-file').value='';byId('pdf-file').dispatchEvent(new Event('change'));
-    byId('chart-skill').value=''; updateChartSkillLabel();
+    byId('research-depth').value='auto'; byId('reasoning-effort').value=''; byId('chart-skill').value=''; updateChartSkillLabel(); updateSettingsLabel(); closeComposerOptions();
     await select(conversationId);
   } catch(error){ failed(error); }
   finally { state.submitting=false; controls(); }

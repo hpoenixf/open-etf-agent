@@ -1,5 +1,7 @@
 [English](README.md) | **简体中文**
 
+- [v0.45 研究控制：真实 Runtime 交付 10/10，发布资格 9/10](v045-research-intent.md)
+
 - [v0.44 GUI 候选：Markdown、紧凑工具栏和原生图表证据](v044-gui-candidate.md)
 
 - [v0.41 候选：持有人会话、PDF、外部工具和验证边界](v041-release-candidate.md)

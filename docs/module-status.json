@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "reviewedVersion": "0.44.0",
+  "reviewedVersion": "0.45.0",
   "reviewedSource": "62f34f60c48fc41af00190cf731b1bce08e8a037",
   "articleSource": "https://github.com/hpoenixf/eff-agent-article/blob/249f0b866f9446f33b57f186fbc6d35b5d82c119/articles/open-etf-agent-v010-system-design.md",
   "evidence": "docs/verification/v044-gui-candidate.md",

@@ -1,4 +1,5 @@
 import {OWNER_CHART_SKILL,OWNER_CHART_AUTO} from './financial-chart-owner.mjs';
+import {readResearchIntent} from './research-intent.mjs';
 import { createServer } from 'node:http';
 import { isDeepStrictEqual } from 'node:util';
 import { randomUUID } from 'node:crypto';
@@ -17,7 +18,8 @@ import { prepareOwnerDailyDigest } from './gui-daily-digest-delivery.mjs';
 import { prepareScheduledSmtp } from './scheduled-smtp.mjs';
 import { createScheduledReportEmailHook, inspectScheduledEmailDelivery } from './scheduled-report-email.mjs';
 import { openGuiDailyWatch, DAILY_TIME_ZONE } from './gui-daily-watch.mjs';
-import { readGuiResearchProgress } from './gui-progress.mjs';
+import {offerReasoningEffort} from './gateway.mjs';
+import { readGuiResearchProgress, readGuiReasoningEffort } from './gui-progress.mjs';
 import { prepareGuiLiveConfig } from './gui-live-config.mjs';
 
 const routeId = '[A-Za-z0-9_-]{1,48}';
@@ -126,6 +128,7 @@ export async function createLocalGuiWorkspace({ projectDir, origin: mountOrigin,
   const wrongProject=live?'GUI_LIVE_PROJECT_REQUIRED':'GUI_DEMO_PROJECT_REQUIRED';
   const freeform=supportsOwnerFreeform(expectedConfig);
   const needsConsent=live&&!freeform;
+  const reasoningEffort=offerReasoningEffort(expectedConfig);
   const connectivity=expectedConfig.ownerConnectivity??{};
   const chartAvailable=freeform&&connectivity.wind===true;
   const chartAuto=chartAvailable&&env.ETF_GUI_FINANCIAL_CHART_AUTO==='1';
@@ -160,6 +163,16 @@ export async function createLocalGuiWorkspace({ projectDir, origin: mountOrigin,
   let dailyLoop=null,dailyFlight=null,digestFlight=null;
   const publicSources = demo.sources.map(({ id, title }) => ({ id, title }));
   let origin=mountOrigin, working = null, submitting = null;
+  function observedResearchRoute(input,run) {
+    if(!run)return null;
+    if(input.researchDepth==='auto'&&run.definition?.config?.researchProfile==='auto-intent@1'){
+      const adopted=readResearchIntent(run.snapshot?.messages??[]);
+      return adopted!=='direct'?adopted:run.status==='completed'?'direct':null;
+    }
+    const mode=input.researchDepth,expected=mode==='deep'?'deep-evidence@1':mode==='standard'?'standard-research@1':null;
+    if(!expected||run.definition?.config?.researchProfile!==expected)return null;
+    return run.status==='completed'||run.snapshot?.proposal||run.snapshot?.messages?.some(m=>m.role==='assistant'&&m.calls?.length)?mode:null;
+  }
   function setOrigin(value) {
     if (origin !== undefined) throw new Error('GUI_ORIGIN_ALREADY_SET');
     origin = value;
@@ -207,11 +220,13 @@ export async function createLocalGuiWorkspace({ projectDir, origin: mountOrigin,
         try{chartViews=await readConversationCharts({projectDir,conversationId,messageId:m.messageId});}
         catch{/* Invalid or missing committed chart data is never shown. */}
       }
+      const effectiveResearchIntent=observedResearchRoute(input,run);
+      const effort=await readGuiReasoningEffort(projectDir,run,input.reasoningEffort);
       messages.push({
         id: m.messageId, runId: m.runId, status, phase: run?.snapshot?.phase ?? null,
         // A worker can finish during these reads. Keep polling an active snapshot.
         code: run?.snapshot?.code ?? null, working: status === 'active' && (workerWasRunning || working?.key === key),
-        question: input.text, sourceId: input.sourceManifestSha256, ...(chartViews.length?{chartViews}:{}), ...(freeform&&input.sourceManifestSha256?{attachment:await pdfAttachment(conversationId,input.sourceManifestSha256)}:{}), output, error,
+        question: input.text, sourceId: input.sourceManifestSha256, ...(effort?{reasoningEffort:effort}:{}), ...(chartViews.length?{chartViews}:{}), ...(input.researchDepth===undefined?{}:{researchDepth:input.researchDepth}), ...(effectiveResearchIntent?{effectiveResearchIntent}:{}), ...(['research','deep'].includes(effectiveResearchIntent)&&output?{evidenceAssessment:'unreviewed'}:{}), ...(freeform&&input.sourceManifestSha256?{attachment:await pdfAttachment(conversationId,input.sourceManifestSha256)}:{}), output, error,
       });
     }
     return { id: c.conversationId, title: titleForConversationInput(messages[0]?.question), messages };
@@ -364,9 +379,9 @@ export async function createLocalGuiWorkspace({ projectDir, origin: mountOrigin,
         const asset = assetsByPath.get(req.url);
         if (asset) return send(200, asset.bytes, asset.type+'; charset=utf-8');
         if (req.url === '/api/workspace') return send(200, {
-          schemaVersion: 'local-gui@1', mode,
+          schemaVersion: 'local-gui@1', mode, reasoningEffort,
           ...(live?{liveNotice:{maxModelCallsPerRun:expectedConfig.limits.model,...(freeform?{freeform:true,connectivity:{web:connectivity.web===true,search:!!connectivity.search,...(connectivity.search?{searchProvider:connectivity.search}:{}),...(connectivity.searchAlternates?{searchAlternates:connectivity.searchAlternates}:{}),wind:connectivity.wind===true}}:{})}}:{}),
-          capabilities: ['conversations','progress','reports','sources',...(freeform?['pdf-attachment','daily-watch']:[]),...(chartAvailable?['financial-chart-skill']:[]),...(chartAuto?['financial-chart-auto']:[])],
+          capabilities: ['conversations','progress','reports','sources',...(freeform?['pdf-attachment','daily-watch','deep-research','research-intent']:[]),...(chartAvailable?['financial-chart-skill']:[]),...(chartAuto?['financial-chart-auto']:[])],
           projectId: demo.projectId, conversations: await list({titles:true}), sources: publicSources,
         });
         if(req.url==='/api/daily-watch'&&daily)return send(200,{timeZone:DAILY_TIME_ZONE,autorun:dailyAutorun,
@@ -380,7 +395,10 @@ export async function createLocalGuiWorkspace({ projectDir, origin: mountOrigin,
           const turn=conversation.messages.find(entry=>entry.messageId===messageId);
           if(!turn)reject(404,'NOT_FOUND');
           const run=turn.status==='admission-pending'?null:(await inspectResearchTask({projectDir,runId:turn.runId})).run;
-          return send(200,await readGuiResearchProgress(projectDir,run));
+          const timeline=await readGuiResearchProgress(projectDir,run);
+          const input=await readConversationInput({projectDir,conversationId,messageId});
+          const researchIntent=observedResearchRoute(input,run);
+          return send(200,{...timeline,...(researchIntent&&researchIntent!=='direct'?{researchIntent}:{})});
         }
         const reportMatch = reportPath.exec(req.url);
         if (reportMatch) {
@@ -444,9 +462,10 @@ export async function createLocalGuiWorkspace({ projectDir, origin: mountOrigin,
       if (!action) {
         const input = await inputFor(req);
         if (needsConsent && input?.approveLive!==true) reject(400,'GUI_LIVE_APPROVAL_REQUIRED');
-        if (!exact(input, freeform?(Object.hasOwn(input??{},'attachmentId')?['messageId','question','attachmentId']:Object.hasOwn(input??{},'chartSkill')?['messageId','question','chartSkill']:['messageId','question']):needsConsent?['messageId','question','sourceId','approveLive']:['messageId','question','sourceId']) || typeof input.messageId !== 'string'
+        if (!exact(input, freeform?['messageId','question',...(Object.hasOwn(input??{},'attachmentId')?['attachmentId']:Object.hasOwn(input??{},'chartSkill')?['chartSkill']:[]),...(Object.hasOwn(input??{},'researchDepth')?['researchDepth']:[]),...(Object.hasOwn(input??{},'reasoningEffort')?['reasoningEffort']:[])]:needsConsent?['messageId','question','sourceId','approveLive']:['messageId','question','sourceId']) || typeof input.messageId !== 'string'
           || !idPattern.test(input.messageId) || typeof input.question !== 'string' || !input.question.trim()
-          || Buffer.byteLength(input.question)>12000 || !freeform&&!sourceFor(input.sourceId)) reject(400,'INVALID_MESSAGE');
+          || (Object.hasOwn(input,'researchDepth')&&!['auto','standard','deep'].includes(input.researchDepth)) || Buffer.byteLength(input.question)>12000 || !freeform&&!sourceFor(input.sourceId)) reject(400,'INVALID_MESSAGE');
+        if (Object.hasOwn(input,'reasoningEffort')&&!reasoningEffort.options.includes(input.reasoningEffort))reject(400,'GUI_REASONING_EFFORT_UNSUPPORTED');
         if (Object.hasOwn(input,'chartSkill')&&(!chartAvailable||input.chartSkill!==OWNER_CHART_SKILL))reject(400,'GUI_CHART_SKILL_UNAVAILABLE');
         if (submitting || (working && working.key !== workKey(conversationId,input.messageId))) reject(409,'GUI_WORKER_BUSY');
         submitting = workKey(conversationId,input.messageId);
@@ -463,10 +482,10 @@ export async function createLocalGuiWorkspace({ projectDir, origin: mountOrigin,
           const sourceId=freeform?(attachment?.id??null):input.sourceId;
           // Auto follows the launch policy only at initial admission. An exact
           // old replay cannot retroactively acquire the changed auto policy.
-          const chartSkill=input.chartSkill??(freeform&&!attachment&&
+          const chartSkill=input.chartSkill??(freeform&&!attachment&&input.researchDepth!=='standard'&&
             (retry?priorInput?.chartSkill===OWNER_CHART_AUTO:chartAuto)?OWNER_CHART_AUTO:undefined);
           const m = await submitConversationMessage({ projectDir, conversationId, messageId: input.messageId,
-            text: input.question, sourceManifestSha256: sourceId,...(chartSkill?{chartSkill}:{}),
+            text: input.question, sourceManifestSha256: sourceId,...(chartSkill?{chartSkill}:{}),...(input.researchDepth===undefined?{}:{researchDepth:input.researchDepth}),...(input.reasoningEffort===undefined?{}:{reasoningEffort:input.reasoningEffort}),
             ...(live?{authorization:{providerApproved:true,dataApproved:true,costApproved:true}}:{}) });
           if (m.status === 'active' && !retry) begin(conversationId,input.messageId,sourceId);
           return send(202,{ id:m.messageId,runId:m.runId,status:m.status });

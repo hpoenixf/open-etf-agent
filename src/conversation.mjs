@@ -1,3 +1,4 @@
+import {offerReasoningEffort} from './gateway.mjs';
 import {ownerChartChoice, readOwnerChartViews} from './financial-chart-owner.mjs';
 import { validateDailyContext, buildDailyQuestion } from './conversation-daily-context.mjs';
 import {readConversationCalculations} from './conversation-history.mjs';
@@ -51,7 +52,7 @@ async function ownerPreviousTurns(loc,messageId,configSha256){
  }
  return turns;
 }
-export async function submitConversationMessage({projectDir,conversationId,messageId,text,sourceManifestSha256,parent=null,review=null,continuationOfMessageId=null,authorization,dailyResearch,chartSkill}){
+export async function submitConversationMessage({projectDir,conversationId,messageId,text,sourceManifestSha256,parent=null,review=null,continuationOfMessageId=null,authorization,dailyResearch,chartSkill,researchDepth,reasoningEffort}){
  const loc=await location(projectDir,conversationId);id(messageId);
  if(typeof text!=='string'||!text.trim()||text.includes('\0')||Buffer.byteLength(text)>12000||Buffer.from(text).toString('utf8')!==text)fail('CONVERSATION_INVALID_TEXT');
  const freeform=sourceManifestSha256===null;
@@ -63,7 +64,13 @@ export async function submitConversationMessage({projectDir,conversationId,messa
  if(dailyResearch!==undefined){if(!freeform)fail('CONVERSATION_DAILY_CONTEXT_INVALID');validateDailyContext(dailyResearch,{conversationId,messageId});}
  if(chartSkill!==undefined&&(!freeform||dailyResearch!==undefined||!ownerChartChoice(chartSkill)||
    (await inspectResearchProject({projectDir:loc.projectDir})).config.ownerConnectivity?.wind!==true))fail('CONVERSATION_CHART_UNAVAILABLE');
- const input={text,sourceManifestSha256,parent,review,...(chartSkill===undefined?{}:{chartSkill}),...(dailyResearch===undefined?{}:{dailyResearch}),...(continuationOfMessageId===null?{}:{continuationOfMessageId})};await immutable(loc.directory,messageId+'.request.json',{schemaVersion:'conversation-request@1',projectId:loc.meta.projectId,conversationId,messageId,input});const admittedProject=await inspectResearchProject({projectDir:loc.projectDir});let record;
+ if(researchDepth!==undefined&&(!['auto','standard','deep'].includes(researchDepth)||dailyResearch!==undefined||parent!==null||review!==null||continuationOfMessageId!==null||
+   !authorization?.providerApproved||!authorization?.dataApproved||!authorization?.costApproved||
+   !supportsOwnerFreeform((await inspectResearchProject({projectDir:loc.projectDir})).config)))fail('CONVERSATION_RESEARCH_DEPTH_UNAVAILABLE');
+ if(reasoningEffort!==undefined&&(dailyResearch!==undefined||parent!==null||review!==null||continuationOfMessageId!==null||
+   !authorization?.providerApproved||!authorization?.dataApproved||!authorization?.costApproved||
+   !offerReasoningEffort((await inspectResearchProject({projectDir:loc.projectDir})).config).options.includes(reasoningEffort)))fail('CONVERSATION_REASONING_EFFORT_UNAVAILABLE');
+ const input={text,sourceManifestSha256,parent,review,...(reasoningEffort===undefined?{}:{reasoningEffort}),...(researchDepth===undefined?{}:{researchDepth}),...(chartSkill===undefined?{}:{chartSkill}),...(dailyResearch===undefined?{}:{dailyResearch}),...(continuationOfMessageId===null?{}:{continuationOfMessageId})};await immutable(loc.directory,messageId+'.request.json',{schemaVersion:'conversation-request@1',projectId:loc.meta.projectId,conversationId,messageId,input});const admittedProject=await inspectResearchProject({projectDir:loc.projectDir});let record;
  try{record=await intent(loc,messageId);if(!same(record.input,input))fail('CONVERSATION_ID_CONFLICT');}catch(e){if(e.code!=='ENOENT')throw e;}
  if(!record){
   if(admittedProject.config.capabilities.includes('schedule'))fail('CONVERSATION_SCHEDULE_UNSUPPORTED');
@@ -121,9 +128,9 @@ export async function submitConversationMessage({projectDir,conversationId,messa
  let admission;try{admission=await readProjectJson(join(loc.directory,messageId+'.admitted.json'));}catch(e){if(e.code!=='ENOENT')throw e;}
  if(admission){const admitted=await checkedTask(loc,record);return {conversationId,messageId,runId:record.runId,digest:record.digest,status:admitted.run.status};}
  let taskFile;try{taskFile=await readProjectJson(join(loc.projectDir,'tasks',record.runId+'.json'));}catch(e){if(e.code!=='ENOENT')throw e;}
- if(taskFile){const existing=await resumeResearchTaskAdmission({projectDir:loc.projectDir,runId:record.runId,question:record.question,sourceManifestSha256:record.input.sourceManifestSha256,expectedConfigSha256:record.configSha256,chartSkill:record.input.chartSkill});await saveAdmission(loc,record);return {conversationId,messageId,runId:record.runId,digest:record.digest,status:existing.status};}
+ if(taskFile){const existing=await resumeResearchTaskAdmission({projectDir:loc.projectDir,runId:record.runId,question:record.question,sourceManifestSha256:record.input.sourceManifestSha256,expectedConfigSha256:record.configSha256,chartSkill:record.input.chartSkill,researchDepth:record.input.researchDepth,reasoningEffort:record.input.reasoningEffort});await saveAdmission(loc,record);return {conversationId,messageId,runId:record.runId,digest:record.digest,status:existing.status};}
  if(admittedProject.configSha256!==record.configSha256)fail('CONVERSATION_CONFIG_CHANGED_BEFORE_ADMISSION');
- const task=await submitResearchTask({projectDir:loc.projectDir,runId:record.runId,question:record.question,sourceManifestSha256:record.input.sourceManifestSha256,authorization,expectedConfigSha256:record.configSha256,chartSkill:record.input.chartSkill});await saveAdmission(loc,record);return {conversationId,messageId,runId:record.runId,digest:record.digest,status:task.status};
+ const task=await submitResearchTask({projectDir:loc.projectDir,runId:record.runId,question:record.question,sourceManifestSha256:record.input.sourceManifestSha256,authorization,expectedConfigSha256:record.configSha256,chartSkill:record.input.chartSkill,researchDepth:record.input.researchDepth,reasoningEffort:record.input.reasoningEffort});await saveAdmission(loc,record);return {conversationId,messageId,runId:record.runId,digest:record.digest,status:task.status};
 }
 export async function workConversationMessage({projectDir,conversationId,messageId,...controls}){const loc=await location(projectDir,conversationId),record=await intent(loc,messageId);const task=await checkedTask(loc,record);if(task.run.status==='active'&&(await inspectResearchProject({projectDir:loc.projectDir})).configSha256!==record.configSha256)fail('CONVERSATION_EXECUTION_AUTHORITY_CHANGED');return workResearchTask({...controls,projectDir:loc.projectDir,runId:record.runId});}
 export async function cancelConversationMessage({projectDir,conversationId,messageId}){const loc=await location(projectDir,conversationId),record=await intent(loc,messageId);await checkedTask(loc,record);return cancelResearchTask({projectDir:loc.projectDir,runId:record.runId});}
@@ -164,12 +171,12 @@ export async function readConversationCharts({projectDir,conversationId,messageI
  const {run}=await checkedTask(loc,record);
  return ownerChartChoice(record.input.chartSkill)?readOwnerChartViews(run):[];
 }
-export async function readConversationInput({projectDir,conversationId,messageId}){const loc=await location(projectDir,conversationId),record=await intent(loc,messageId);return {text:record.input.text,sourceManifestSha256:record.input.sourceManifestSha256,...(record.input.chartSkill?{chartSkill:record.input.chartSkill}:{})};}
+export async function readConversationInput({projectDir,conversationId,messageId}){const loc=await location(projectDir,conversationId),record=await intent(loc,messageId);return {text:record.input.text,sourceManifestSha256:record.input.sourceManifestSha256,...(record.input.chartSkill?{chartSkill:record.input.chartSkill}:{}),...(record.input.researchDepth===undefined?{}:{researchDepth:record.input.researchDepth}),...(record.input.reasoningEffort===undefined?{}:{reasoningEffort:record.input.reasoningEffort})};}
 export async function readConversationMessage({projectDir,conversationId,messageId}){const loc=await location(projectDir,conversationId),record=await intent(loc,messageId);await checkedTask(loc,record);const output=await readResearchOutput({projectDir:loc.projectDir,runId:record.runId});return {conversationId,messageId,input:record.input,digest:record.digest,output};}
 
 function admissionFact(record,task){return {schemaVersion:'conversation-admission@1',intentDigest:record.digest,taskDefinitionHash:hash(canonical(task.definition)),sessionDefinitionHash:hash(canonical(task.run.definition))};}
 async function saveAdmission(loc,record){const task=await inspectResearchTask({projectDir:loc.projectDir,runId:record.runId});await immutable(loc.directory,record.messageId+'.admitted.json',admissionFact(record,task));}
-async function checkedTask(loc,record){const admission=await readProjectJson(join(loc.directory,record.messageId+'.admitted.json'));let task;try{task=await inspectResearchTask({projectDir:loc.projectDir,runId:record.runId});}catch(e){if(['ENOENT','SESSION_NOT_FOUND','UNKNOWN_RUN'].includes(e.code))fail('CONVERSATION_ADMITTED_SESSION_UNAVAILABLE');throw e;}if(!same(admission,admissionFact(record,task))||hash(canonical(task.definition.config))!==record.configSha256||task.definition.projectId!==loc.meta.projectId||task.definition.question!==record.question||task.definition.sourceManifestSha256!==record.input.sourceManifestSha256||task.definition.chartSkill!==record.input.chartSkill)fail('CONVERSATION_TASK_MISMATCH');return task;}
+async function checkedTask(loc,record){const admission=await readProjectJson(join(loc.directory,record.messageId+'.admitted.json'));let task;try{task=await inspectResearchTask({projectDir:loc.projectDir,runId:record.runId});}catch(e){if(['ENOENT','SESSION_NOT_FOUND','UNKNOWN_RUN'].includes(e.code))fail('CONVERSATION_ADMITTED_SESSION_UNAVAILABLE');throw e;}if(!same(admission,admissionFact(record,task))||hash(canonical(task.definition.config))!==record.configSha256||task.definition.projectId!==loc.meta.projectId||task.definition.question!==record.question||task.definition.sourceManifestSha256!==record.input.sourceManifestSha256||task.definition.chartSkill!==record.input.chartSkill||task.definition.researchDepth!==record.input.researchDepth||task.definition.reasoningEffort!==record.input.reasoningEffort)fail('CONVERSATION_TASK_MISMATCH');return task;}
 
 
 // Clarification is routed to the original persisted question, never inferred
