@@ -24,3 +24,21 @@ documentation, not this application tree or its dependency graph.
   unrelated tools and production deployment are not qualified here. Explicit
   effort is a preview for the declared exact route; Default does not send an
   override. No provider reasoning is shown in History.
+
+## Web document URL correction, 2026-11-23
+
+A separate real Runtime cohort against the pre-correction candidate was
+stopped after five tasks: four completed with saved History, one failed,
+and five were not submitted. The native ledger recorded 12 completed model
+requests. The failed task reached a tool argument containing a valid public
+HTTPS document URL with a fragment. The local reader rejected that call
+before dispatch and the run delivered no answer. This was not a provider
+failure, and the task was not retried or removed from the original record.
+
+The owner web reader now reads the document URL without its fragment. It
+does not establish that a specific section was read. The underlying URL
+still passes the existing public HTTPS checks and the existing transport
+policy. The focused provider-free regression proves a single canonical
+acquisition, normal continuation and the same saved History after restart.
+The pre-correction real cohort is not an eligible release cohort and is
+not counted again for the corrected candidate.

@@ -23,7 +23,7 @@ async function scratch(t) {
  t.after(()=>rm(projectDir,{recursive:true,force:true}));
  return projectDir;
 }
-test('owner can enable explicitly bound search/read on an existing Project; mock search, read, citation, and cold restore',async t=>{
+test('owner can enable explicitly bound search/read on an existing Project; fragment reads one original document and cold restores',async t=>{
  const projectDir=await scratch(t),instances=[];
  t.after(async()=>{for(const instance of instances)await instance.close();});
  let modelCalls=0,searchCalls=0,pageCalls=0,stored=null;
@@ -55,9 +55,10 @@ test('owner can enable explicitly bound search/read on an existing Project; mock
   assert.doesNotMatch(body.messages[0].content,/Alpha ETF|Beta ETF/);
   assert.deepEqual(body.tools.map(x=>x.function.name),['public_web_read','public_web_search']);
   if(!toolResults.length)return spec('public_web_search',{query:'gold historical market data'});
-  if(toolResults.length===1)return spec('public_web_read',{url});
+  if(toolResults.length===1)return spec('public_web_read',{url:url+'#market-history'});
   const result=JSON.parse(toolResults[1].content).value;
   assert.equal(result.url,url);
+  assert.doesNotMatch(JSON.stringify(result),/market-history/);
   assert.equal(result.manifestSha256,manifestSha256);
   assert.equal(result.originalSha256,originalSha256);
   assert.match(result.text,/historical gold/);
@@ -114,6 +115,16 @@ test('page uses native HTTPS syntax guard, and Exa quota is never retried with s
  const [page,search]=tools;
  assert.throws(()=>page.validate({url:'https://127.0.0.1/a'}),{code:'WEB_URL_INVALID'});
  assert.throws(()=>page.validate({url:'http://example.com/a'}),{code:'WEB_URL_INVALID'});
+ for(const rejected of [
+  'http://example.com/a#section',
+  'https://127.0.0.1/a#section',
+  'https://user:pass@example.com/a#section',
+  'https://example.com./a#section',
+  'https://example.com:9999/a#section',
+  'https://example.com/a#invalid\n',
+  'https://example.com/a#invalid\\suffix',
+  'https://example.com/a#'+'a'.repeat(2048),
+ ])assert.throws(()=>page.validate({url:rejected}),{code:'WEB_URL_INVALID'});
  const query={query:'gold data'},context={callId:'original-search'};
  const unavailable=await search.execute(query,context);
  assert.equal(unavailable.reason,'WEB_SEARCH_QUOTA');

@@ -38,6 +38,16 @@ const unavailable=(type,provider,reason,requestOutcome)=>({kind:`public-web-${ty
  reason,observedAt:new Date().toISOString(),requestOutcome,automaticReplayAllowed:false});
 const schema=(key,description)=>({type:'object',properties:{[key]:{type:'string',description}},required:[key],additionalProperties:false});
 
+// A literal fragment selects a location in the browser's representation, not
+// a resource sent to HTTP. Keep the original proposal, but validate and acquire
+// only the document. The full model input retains its original size/character
+// guards; the underlying URL still passes the unchanged public web validator.
+function ownerDocumentUrl(value){
+ if(typeof value!=='string'||value.length>2048||/[\u0000-\u0020\u007f\\]/.test(value))fail('WEB_URL_INVALID');
+ const fragment=value.indexOf('#');
+ return normalizeWebUrl(fragment<0?value:value.slice(0,fragment));
+}
+
 function parseExa(text,id,mediaType){
  const raw=mediaType.startsWith('text/event-stream')?text.split(/\r?\n\r?\n/).map(event=>event.split(/\r?\n/).filter(l=>l.startsWith('data:')).map(l=>l.slice(5).trimStart()).join('\n')).filter(Boolean):[text];
  for(const frame of raw){
@@ -113,7 +123,7 @@ export function openOwnerWeb({profile,projectDir,runId,transport={},searchSettin
  const acquire=transport.acquire??acquireProjectWebSources, inspect=transport.inspect??inspectWebAcquisition, load=transport.load??loadProjectSources;
  const fetchImpl=transport.searchFetch??globalThis.fetch;
  const operation=(name,callId)=>name+'-'+hash(JSON.stringify([runId,callId])).slice(0,40);
- const validateUrl=args=>{if(!shape(args,'url'))fail('WEB_URL_INVALID');normalizeWebUrl(args.url);};
+ const validateUrl=args=>{if(!shape(args,'url'))fail('WEB_URL_INVALID');ownerDocumentUrl(args.url);};
  const pageProjection=(acquired,url)=>{
   const document=acquired.catalog?.documents?.[0],web=document?.web;
   if(!web||web.requestedUrl!==url||typeof document.pages?.[0]!=='string')fail('WEB_PAGE_EVIDENCE_MISSING');
@@ -130,7 +140,7 @@ export function openOwnerWeb({profile,projectDir,runId,transport={},searchSettin
   return saved.value;
  };
  const pageReplay=async(args,{callId,signal})=>{
-  const url=normalizeWebUrl(args.url),acquisitionId=operation('page',callId);
+  const url=ownerDocumentUrl(args.url),acquisitionId=operation('page',callId);
   const saved=await readPageFailure(url,callId);if(saved)return saved;
   let receipt;try{receipt=await inspect({projectDir,acquisitionId});}catch(error){if(error.code==='ENOENT')return null;throw error;}
   if(receipt.status!=='succeeded')return null;
@@ -143,7 +153,7 @@ export function openOwnerWeb({profile,projectDir,runId,transport={},searchSettin
   parameters:schema('url','Exact public HTTPS page URL. Do not include private data in the URL.'),
   validate:validateUrl,
   async execute(args,{callId,signal}){
-   const url=normalizeWebUrl(args.url);
+   const url=ownerDocumentUrl(args.url);
    const acquisitionId=operation('page',callId);
    let acquired;
    try{acquired=await acquire({projectDir,acquisitionId,urls:[url],approvePublicFetch:true,signal});}
