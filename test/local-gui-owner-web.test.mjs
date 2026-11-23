@@ -53,7 +53,7 @@ test('owner can enable explicitly bound search/read on an existing Project; frag
   const body=JSON.parse(options.body),toolResults=body.messages.filter(m=>m.role==='tool');
   assert.ok(body.messages[0].content.startsWith('金价下跌的常见原因和近期行情？'));
   assert.doesNotMatch(body.messages[0].content,/Alpha ETF|Beta ETF/);
-  assert.deepEqual(body.tools.map(x=>x.function.name),['public_web_read','public_web_search']);
+  assert.deepEqual(body.tools.map(x=>x.function.name),['public_web_read','public_web_continue','public_web_search']);
   if(!toolResults.length)return spec('public_web_search',{query:'gold historical market data'});
   if(toolResults.length===1)return spec('public_web_read',{url:url+'#market-history'});
   const result=JSON.parse(toolResults[1].content).value;
