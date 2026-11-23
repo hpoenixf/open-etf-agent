@@ -1,7 +1,7 @@
 import {createFinancialChartView} from './financial-chart-view.mjs';
 import { renderMarkdown } from './markdown.mjs';
 const byId = id => document.getElementById(id);
-const state = { workspace: null, conversation: null, detail: null, poll: null, submitting: false, pending: null, failures: 0, selection:0, progress:new Map() };
+const state = { workspace: null, conversation: null, detail: null, poll: null, submitting: false, pending: null, failures: 0, selection:0, refreshSequence:0, appliedRefresh:0, progress:new Map(), stopping:new Map() };
 const statusLabels = {
   'admission-pending':'接收待确认', 'completed':'已完成', 'failed':'未完成', 'cancelled':'已取消',
   'active':'等待执行', 'fenced':'已暂停', 'unknown':'结果未知',
@@ -99,10 +99,51 @@ function confirmLive() {
   return window.confirm('将向启动时配置的真实模型发送本次问题，并提供所选演练资料。'
     + '该任务最多调用模型 '+budget+' 次，费用由提供方计收。请勿输入敏感或未经授权的信息。确定继续？');
 }
+function isUnknownRun(message) { return /UNKNOWN|MISSING/.test(message.code ?? ''); }
+function canActOnRun(message) {
+  return message.status==='active'&&!isUnknownRun(message)&&(!ownerMode()||message.sourceId===null||message.attachment);
+}
+function stopKey(conversationId,message) { return JSON.stringify([conversationId,message.id,message.runId]); }
+function activeStopTarget() {
+  const conversationId=state.conversation;
+  if(!conversationId||state.detail?.id!==conversationId)return null;
+  const workers=state.detail.messages.filter(message=>message.working);
+  if(workers.length!==1)return null; // An ambiguous Run cannot be stopped by guesswork.
+  const [message]=workers;
+  if(!canActOnRun(message)||!message.id||!message.runId)return null;
+  return {conversationId,messageId:message.id,key:stopKey(conversationId,message),selection:state.selection};
+}
+async function stopCurrentRun() {
+  const target=activeStopTarget();
+  if(!target||state.stopping.has(target.key))return;
+  const stillSelected=()=>state.conversation===target.conversationId&&state.selection===target.selection;
+  state.stopping.set(target.key,target);
+  message();
+  controls();
+  try {
+    await api('/api/conversations/'+encodeURIComponent(target.conversationId)+'/messages/'+encodeURIComponent(target.messageId)+'/cancel',{});
+  } catch {
+    state.stopping.delete(target.key);
+    if(stillSelected())message('未能确认停止，请查看当前任务状态；可在仍运行时重试。');
+  }
+  if(!stillSelected())return;
+  controls();
+  try { await refresh(); }
+  catch { scheduleRefresh(); } // Keep the pending state until a fresh Run view, not the POST alone.
+}
 function controls() {
   const working = state.detail?.messages.some(m => m.working);
+  const target=activeStopTarget(), stopping=target&&state.stopping.has(target.key);
+  const stop=byId('stop'), send=byId('send');
+  stop.hidden=!target;
+  stop.setAttribute('aria-disabled',String(Boolean(stopping)));
+  stop.title=stopping?'正在停止…':'停止研究';
+  stop.setAttribute('aria-label',stop.title);
+  send.hidden=Boolean(target);
   byId('send').disabled = state.submitting || working === true || !state.workspace;
-  byId('send').textContent = state.pending ? '重试原提交' : liveMode() ? '提交真实模型' : '提交演练';
+  send.title = state.pending ? '重试原提交' : liveMode() ? '提交真实模型' : '提交演练';
+  send.setAttribute('aria-label',send.title);
+  send.dataset.retry=String(Boolean(state.pending));
   byId('question').readOnly = Boolean(state.submitting || state.pending);
   byId('pdf-file').disabled = Boolean(state.submitting || state.pending);
   byId('research-depth').disabled = Boolean(state.submitting || state.pending);
@@ -285,7 +326,7 @@ function render() {
     const response = make('section',undefined,'turn-response');
     response.setAttribute('aria-label','研究助手');
     const header = make('div',undefined,'turn-header');
-    const isUnknown = /UNKNOWN|MISSING/.test(m.code ?? '');
+    const isUnknown = isUnknownRun(m);
     const status = isUnknown ? '结果未知' : m.working ? phaseLabels[m.phase] ?? '处理中' : statusLabels[m.status] ?? '状态待核对';
     const badge=make('span',status,m.status==='completed'&&!isUnknown&&!m.working?'visually-hidden':'state');
     header.append(make('h2','研究助手','speaker'),badge);
@@ -359,16 +400,17 @@ function render() {
       actions.append(reuse);
     }
     if(actions.childElementCount) response.append(actions);
-    if (m.status === 'active' && !isUnknown && (!ownerMode() || m.sourceId===null || m.attachment)) {
-      const action = m.working ? 'cancel' : 'work';
-      const b = make('button',m.working?'取消本次':'继续原任务','secondary');
+    if (!m.working && canActOnRun(m)) {
+      const conversationId=state.conversation;
+      const b = make('button','继续原任务','secondary');
       b.type='button'; b.addEventListener('click',async()=> {
+        if(state.conversation!==conversationId)return;
         try {
-          if (liveMode() && !ownerMode() && action==='work' && !confirmLive()) return;
-          await api('/api/conversations/'+state.conversation+'/messages/'+m.id+'/'+action,
-            liveMode()&&!ownerMode()&&action==='work'?{approveLive:true}:{});
-          await refresh();
-        } catch(e) { failed(e); }
+          if (liveMode() && !ownerMode() && !confirmLive()) return;
+          await api('/api/conversations/'+conversationId+'/messages/'+m.id+'/work',
+            liveMode()&&!ownerMode()?{approveLive:true}:{});
+          if(state.conversation===conversationId)await refresh();
+        } catch(e) { if(state.conversation===conversationId)failed(e); }
       });
       response.append(b);
     }
@@ -389,8 +431,13 @@ function scheduleRefresh() {
 async function refresh() {
   const selected = state.conversation, selection = state.selection;
   if (!selected) return;
+  const seq=++state.refreshSequence;
   const detail = await api('/api/conversations/'+selected);
-  if (state.selection !== selection) return;
+  if (state.selection !== selection||seq<state.appliedRefresh) return;
+  state.appliedRefresh=seq;
+  for(const [key,request] of state.stopping){
+    if(request.conversationId===selected&&!detail.messages.some(m=>m.working&&canActOnRun(m)&&stopKey(selected,m)===key))state.stopping.delete(key);
+  }
   state.failures = 0;
   const old = JSON.stringify(state.detail);
   state.detail = detail;
@@ -398,7 +445,10 @@ async function refresh() {
   const title = detail.title;
   if (row && row.title !== title) { row.title=title; refreshHistory(); controls(); }
   if (old !== JSON.stringify(detail)) render();
-  else for (const item of detail.messages){const entry=state.progress.get(item.id);if(entry?.open)void loadProgress(selected,entry,item);}
+  else {
+    controls();
+    for (const item of detail.messages){const entry=state.progress.get(item.id);if(entry?.open)void loadProgress(selected,entry,item);}
+  }
   scheduleRefresh();
 }
 function conversationHash(hash=location.hash){
@@ -627,16 +677,19 @@ function updateSettingsLabel(){
   settings.hidden=byId('research-depth-picker').hidden&&byId('reasoning-effort-picker').hidden;
   const active=(!byId('research-depth-picker').hidden&&byId('research-depth').value!=='auto') ||
     (!byId('reasoning-effort-picker').hidden&&Boolean(byId('reasoning-effort').value));
-  byId('research-settings-toggle').textContent=active?'设置 · 已选':'设置';
-  byId('research-settings-toggle').dataset.active=String(active);
+  const trigger=byId('research-settings-toggle');
+  trigger.title=active?'设置（已选研究选项）':'设置';
+  trigger.setAttribute('aria-label',trigger.title);
+  trigger.dataset.active=String(active);
 }
+const composerOptions=['chart-skill-picker','pdf-picker','research-settings','mode-disclosure'];
 function closeComposerOptions(except){
-  for(const id of ['chart-skill-picker','pdf-picker','research-settings']){
+  for(const id of composerOptions){
     const panel=byId(id);
     if(panel!==except)panel.open=false;
   }
 }
-for(const id of ['chart-skill-picker','pdf-picker','research-settings']){
+for(const id of composerOptions){
   const panel=byId(id);
   panel.addEventListener('toggle',()=>{if(panel.open){closeComposerOptions(panel);fitComposerPanels();}});
   panel.addEventListener('keydown',event=>{
@@ -678,9 +731,10 @@ byId('new').addEventListener('click',()=> {
   state.submitting=true; controls();
   create().catch(failed).finally(()=>{state.submitting=false;controls();});
 });
+byId('stop').addEventListener('click',stopCurrentRun);
 byId('composer').addEventListener('submit',async e=>{
   e.preventDefault();
-  if (state.submitting) return;
+  if (state.submitting || state.detail?.messages.some(m=>m.working)) return;
   const q=byId('question');
   if (!q.value.trim() && !state.pending) return;
   if (liveMode() && !ownerMode() && !confirmLive()) return;

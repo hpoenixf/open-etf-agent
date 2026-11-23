@@ -39,7 +39,7 @@ function boot(){
    return media.get(query);
   }},sessionStorage:storage, calls,
   crypto:{randomUUID(){return '01234567-89ab-cdef-0123-456789abcdef';}},
-  Event:globalThis.Event
+  setTimeout:()=>null,clearTimeout(){},Event:globalThis.Event
  });
  const start=src.lastIndexOf('\ntry {\n  initWorkbench();');
  assert.ok(start>0);
@@ -292,4 +292,105 @@ test('the short-viewport toolbar bounds its own scrollable popup without scrolli
  toolbar.getBoundingClientRect=()=>({top:40});
  run('fitComposerPanels()');
  assert.equal(toolbar.style['--composer-panel-room'],'44px');
+});
+
+test('one icon action slot contains the Send, Stop, and toolbar info popover with readable control names',()=>{
+ const {get}=boot();
+ assert.match(html,/<div id="composer-actions"[\s\S]+<details id="mode-disclosure"[^>]*>\s*<summary aria-label="本次权限与数据说明"/);
+ assert.match(html,/<div class="composer-submit-slot">\s*<button id="send" type="submit" aria-label="提交演练"/);
+ assert.match(html,/<button id="stop" type="button" aria-label="停止研究"[^>]*hidden/);
+ get('mode-disclosure').open=true;
+ get('pdf-picker').open=true;
+ get('mode-disclosure').listeners.toggle();
+ assert.equal(get('pdf-picker').open,false);
+ let handled=false;
+ get('mode-disclosure').listeners.keydown({key:'Escape',preventDefault(){handled=true;}});
+ assert.equal(handled,true);
+ assert.equal(get('mode-disclosure').open,false);
+ assert.equal(get('summary-focus').focused,true);
+});
+
+const stopFixture = `
+ const active={id:'msg-1',runId:'run-1',sourceId:null,status:'active',working:true,question:'原始问题'};
+ state.detail={id:'test-conv',messages:[active]};
+ let finishCancel;
+ let terminal=false;
+ api=async(path,body)=>{
+   calls.push({path,body});
+   if(path.endsWith('/cancel'))return new Promise(resolve=>{finishCancel=resolve;});
+   return {id:'test-conv',messages:[terminal?{...active,status:'cancelled',working:false}:active]};
+ };
+ controls();
+`;
+test('Stop stays in the composer while the exact request settles; accepted is not a terminal success',async()=>{
+ const {get,run,calls}=boot();
+ run(stopFixture);
+ assert.equal(get('stop').hidden,false);
+ assert.equal(get('send').hidden,true);
+ assert.equal(get('stop').getAttribute('aria-label'),'停止研究');
+ const first=get('stop').listeners.click();
+ assert.equal(get('stop').getAttribute('aria-disabled'),'true');
+ assert.equal(get('stop').getAttribute('aria-label'),'正在停止…');
+ await get('stop').listeners.click();
+ assert.deepEqual(calls.map(x=>x.path),['/api/conversations/test-conv/messages/msg-1/cancel']);
+ run("finishCancel({status:'cancel-requested'})");
+ await first;
+ assert.equal(get('stop').hidden,false);
+ assert.equal(get('stop').getAttribute('aria-disabled'),'true');
+ assert.equal(get('notice').hidden,true);
+ run('terminal=true');
+ await run('refresh()');
+ assert.equal(get('stop').hidden,true);
+ assert.equal(get('send').hidden,false);
+ assert.equal(get('notice').hidden,true);
+ assert.equal(run('state.stopping.size'),0);
+});
+
+test('rejected Stop reports an unconfirmed result and remains retryable only while active',async()=>{
+ const {get,run,calls}=boot();
+ run(stopFixture);
+ run(`api=async(path,body)=>{
+   calls.push({path,body});
+   if(path.endsWith('/cancel'))throw Error('STOP_REJECTED');
+   return {id:'test-conv',messages:[terminal?{...active,status:'completed',working:false}:active]};
+ };`);
+ await get('stop').listeners.click();
+ assert.match(get('notice').textContent,/未能确认停止/);
+ assert.equal(get('stop').getAttribute('aria-disabled'),'false');
+ assert.equal(get('stop').hidden,false);
+ run('terminal=true');
+ await get('stop').listeners.click();
+ assert.equal(get('send').hidden,false);
+ assert.equal(get('stop').hidden,true);
+ assert.equal(calls.filter(c=>c.path.endsWith('/cancel')).length,2);
+});
+
+test('Stop never uses a foreign, unknown or ambiguous Run; switching does not redirect an in-flight cancel',async()=>{
+ const {get,run,calls}=boot();
+ run(stopFixture);
+ run("state.detail={id:'foreign',messages:[active]}; controls()");
+ assert.equal(get('stop').hidden,true);
+ await get('stop').listeners.click();
+ run("state.detail={id:'test-conv',messages:[{...active,code:'RUN_UNKNOWN'}]}; controls()");
+ assert.equal(get('stop').hidden,true);
+ await get('stop').listeners.click();
+ run("state.detail={id:'test-conv',messages:[active,{...active,id:'msg-2',runId:'run-2'}]}; controls()");
+ await get('stop').listeners.click();
+ assert.equal(calls.length,0);
+ run("state.detail={id:'test-conv',messages:[active]}; controls()");
+ const cancel=get('stop').listeners.click();
+ run("state.conversation='other'; state.selection++; state.detail={id:'other',messages:[]}; controls(); finishCancel({status:'cancel-requested'})");
+ await cancel;
+ assert.deepEqual(calls.map(x=>x.path),['/api/conversations/test-conv/messages/msg-1/cancel']);
+ assert.equal(get('stop').hidden,true);
+ assert.equal(get('notice').hidden,true);
+});
+
+
+test('the masthead contains only panel navigation, with model mode inside the permission popover',()=>{
+ const masthead=html.match(/<header class="masthead"[^>]*>([\s\S]*?)<\/header>/);
+ assert.ok(masthead);
+ assert.equal((masthead[1].match(/<button\b/g)??[]).length,2);
+ assert.doesNotMatch(masthead[1],/mode-badge|brand-symbol|subbrand/);
+ assert.match(html,/<details id="mode-disclosure"[\s\S]*?<p id="mode-badge"/);
 });
