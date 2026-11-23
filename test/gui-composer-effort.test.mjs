@@ -7,28 +7,39 @@ const src=await readFile(new URL('../src/gui/gui.mjs',import.meta.url),'utf8');
 const html=await readFile(new URL('../src/gui/index.html',import.meta.url),'utf8');
 const nodes=()=>new Map();
 function boot(){
- const list=nodes(), values=new Map(), calls=[];
+ const list=nodes(), values=new Map(), calls=[], media=new Map();
+ const make=tag=>({
+  tag,value:'',hidden:false,children:[],dataset:{},listeners:{},attrs:{},scrollTop:0,
+  get childElementCount(){return this.children.length;},
+  append(...children){this.children.push(...children);},
+  replaceChildren(...children){this.children=children;},
+  addEventListener(name,fn){this.listeners[name]=fn;},
+  querySelectorAll(){return [];},
+  getBoundingClientRect(){return {top:0,bottom:600};},
+  getAttribute(name){return this.attrs[name]??null;},
+  setAttribute(name,value){this.attrs[name]=value;},
+  showModal(){this.open=true;},
+  close(){this.open=false;this.listeners.close?.();},
+  removeAttribute(name){delete this[name];},
+  querySelector(){return get('summary-focus');},
+  focus(){this.focused=true;},
+  dispatchEvent(event){this.listeners[event.type]?.(event);}
+ });
  const get=id=>{
-  if(!list.has(id))list.set(id,{
-   value:'',hidden:false,children:[],dataset:{},listeners:{},
-   replaceChildren(...children){this.children=children;},
-   addEventListener(name,fn){this.listeners[name]=fn;},
-   querySelectorAll(){return [];},
-   removeAttribute(name){delete this[name];},
-   querySelector(){return get('summary-focus');},
-   focus(){this.focused=true;},
-   dispatchEvent(event){this.listeners[event.type]?.(event);}
-  });
+  if(!list.has(id))list.set(id,make());
   return list.get(id);
  };
  const storage={getItem(k){return values.get(k)??null;},setItem(k,v){values.set(k,v);},removeItem(k){values.delete(k);}};
  const context=createContext({
-  document:{getElementById:get,querySelectorAll(){return[];},createElement:()=>({})},
-  window:{localStorage:storage},sessionStorage:storage, calls,
+  document:{getElementById:get,querySelectorAll(){return[];},createElement:make},
+  window:{localStorage:storage,matchMedia(query){
+   if(!media.has(query))media.set(query,{matches:false,addEventListener(){}});
+   return media.get(query);
+  }},sessionStorage:storage, calls,
   crypto:{randomUUID(){return '01234567-89ab-cdef-0123-456789abcdef';}},
   Event:globalThis.Event
  });
- const start=src.lastIndexOf('\ntry {\n  await load();');
+ const start=src.lastIndexOf('\ntry {\n  initWorkbench();');
  assert.ok(start>0);
  runInContext(src.slice(0,start).replace(/^import[^\n]*\n/gm,''),context);
  const run=code=>runInContext(code,context);
@@ -38,7 +49,7 @@ function boot(){
  get('source').value='';
  get('research-depth').value='auto';
  get('pdf-file').files=[];
- return {get,run,calls};
+ return {get,run,calls,media};
 }
 test('only verified owner capabilities display known provider choices; default is omitted',()=>{
  const {get,run}=boot();
@@ -144,4 +155,115 @@ test('daily disclosure refreshes on opening, not closing, and does not clear an 
  toggle();
  assert.equal(get('daily-question').value,'比较黄金 ETF');
  assert.deepEqual(calls,['/api/daily-watch']);
+});
+
+test('transcript separates user question, rendered answer, and neutral optional settings',()=>{
+ const {get,run}=boot();
+ run(`globalThis.renderMarkdown=(doc,value)=>{const element=doc.createElement('div');element.className='markdown-body';element.textContent=value;return element;};
+  state.detail={messages:[{id:'q1',status:'completed',question:'比较黄金 ETF',researchDepth:'deep',effectiveResearchIntent:'deep',
+    reasoningEffort:{requested:'max',serialized:'high'}, evidenceAssessment:'unreviewed',
+    output:{answer:'原样 Markdown',report:{text:'原样 Markdown'},sources:[{text:'原文'}]}}]};render();`);
+ const [turn]=get('transcript').children;
+ const [prompt,answer]=turn.children;
+ assert.equal(get('intro').hidden,true);
+ assert.equal(turn.dataset.turnId,'q1');
+ assert.equal(prompt.attrs['aria-label'],'你的问题');
+ assert.equal(prompt.children[1].textContent,'比较黄金 ETF');
+ assert.equal(answer.attrs['aria-label'],'研究助手');
+ assert.equal(answer.children[0].children[1].textContent,'已完成');
+ assert.equal(answer.children[0].children[1].className,'visually-hidden');
+ const disclosure=answer.children.find(x=>x.className==='research-progress');
+ assert.equal(disclosure.open,false);
+ const [summary,context]=disclosure.children;
+ assert.equal(summary.textContent,'研究进度');
+ assert.match(context.children[0].textContent,/实际路线：深度研究/);
+ assert.match(context.children[1].textContent,/已写入请求 高/);
+ assert.equal(answer.children.find(x=>x.className==='markdown-body').textContent,'原样 Markdown');
+ assert.equal(answer.children.find(x=>x.className==='citation-actions').children[0].textContent,'核对来源 [1]');
+ assert.equal(answer.children.find(x=>x.className==='turn-actions').children.length,3);
+});
+
+test('transcript keeps active progress and provider rejection visible without burying them in settings',()=>{
+ const {get,run}=boot();
+ run(`state.detail={messages:[{id:'q2',status:'active',working:true,phase:'proposal-sealed',question:'当前任务'},
+   {id:'q3',status:'failed',code:'PROVIDER_HTTP_429',question:'需要重试'}]};render();`);
+ const [active,failed]=get('transcript').children.map(turn=>turn.children[1]);
+ assert.equal(active.children[0].children[1].className,'state');
+ assert.equal(active.children[0].children[1].textContent,'正在处理');
+ assert.equal(active.children.find(x=>x.className==='research-progress').children[0].textContent,'研究进度');
+ assert.match(failed.children.find(x=>x.className==='warning').textContent,/PROVIDER_HTTP_429/);
+});
+
+test('dock lives outside the scrollable reading pane and panel triggers are independently labelled',()=>{
+ assert.match(html,/<meta name="viewport"[^>]+interactive-widget=resizes-content/);
+ assert.match(html,/<section id="transcript"[^>]*><\/section>\s*<\/div>\s*<div class="composer-dock">\s*<form id="composer">/);
+ assert.match(html,/<button id="history-toggle"[^>]+aria-label="会话历史"[^>]+aria-controls="history"/);
+ assert.match(html,/<button id="evidence-toggle"[^>]+aria-label="来源与核对"[^>]+aria-controls="desktop-evidence"/);
+});
+
+test('desktop workbench panels collapse independently and anchor the reading position',()=>{
+ const {get,run}=boot();
+ run('initWorkbench()');
+ const pane=get('reading-pane');
+ let anchorTop=110;
+ pane.scrollTop=245;
+ pane.querySelectorAll=()=>[{getBoundingClientRect:()=>({top:anchorTop,bottom:anchorTop+20})}];
+ const evidence=get('desktop-evidence');
+ const updateEvidence=evidence.hidden;
+ Object.defineProperty(evidence,'hidden',{get(){return updateEvidence;},set(value){anchorTop=value?110:140;}});
+ assert.equal(get('history').hidden,false);
+ get('evidence-toggle').listeners.click();
+ assert.equal(get('evidence-toggle').getAttribute('aria-expanded'),'true');
+ assert.equal(pane.scrollTop,275);
+ get('history-toggle').listeners.click();
+ assert.equal(get('history').hidden,true);
+ assert.equal(get('evidence-toggle').getAttribute('aria-expanded'),'true');
+ let handled=false;
+ get('desktop-evidence').listeners.keydown({key:'Escape',preventDefault(){handled=true;}});
+ assert.equal(handled,true);
+ assert.equal(get('evidence-toggle').getAttribute('aria-expanded'),'false');
+ assert.equal(get('evidence-toggle').focused,true);
+ assert.equal(pane.scrollTop,245);
+});
+
+test('compact history is closed by default and sources open and dismiss in a dialog',()=>{
+ const {get,run,media}=boot();
+ run(`window.matchMedia('(max-width:700px)').matches=true;
+   window.matchMedia('(max-width:930px)').matches=true;
+   initWorkbench();`);
+ assert.equal(media.size,2);
+ assert.equal(get('history').hidden,true);
+ get('history-toggle').listeners.click();
+ assert.equal(get('history').hidden,false);
+ get('evidence-toggle').listeners.click();
+ assert.equal(get('history').hidden,false);
+ assert.equal(get('workspace').dataset.evidence,'false');
+ assert.equal(get('evidence-toggle').getAttribute('aria-controls'),'mobile-evidence');
+ assert.equal(get('mobile-evidence').open,true);
+ get('close-evidence').listeners.click();
+ assert.equal(get('mobile-evidence').open,false);
+ assert.equal(get('evidence-toggle').getAttribute('aria-expanded'),'false');
+ assert.equal(get('evidence-toggle').focused,true);
+});
+
+test('clicking a citation automatically opens the matching evidence panel and keeps the original source',()=>{
+ const {get,run}=boot();
+ const makeSource=()=>{
+  const fields={h3:{},pre:{},small:{}};
+  return {fields,cloneNode(){
+    const clone=makeSource();
+    for(const name of Object.keys(fields))clone.fields[name].textContent=fields[name].textContent;
+    return clone;
+   },querySelector(name){return fields[name];}};
+ };
+ get('evidence-template').content={cloneNode:makeSource};
+ run("initWorkbench(); showEvidence({pdfPage:2,text:'不可变原文',sha256:'receipt'},2)");
+ assert.equal(get('evidence-toggle').getAttribute('aria-expanded'),'true');
+ assert.equal(get('desktop-evidence').dataset.selected,'true');
+ assert.equal(get('desktop-evidence-content').children[0].fields.pre.textContent,'不可变原文');
+ assert.equal(get('desktop-evidence-content').children[0].fields.h3.textContent,'来源 [2] · PDF 第 2 页');
+ get('evidence-toggle').listeners.click();
+ assert.equal(get('desktop-evidence').hidden,true);
+ get('evidence-toggle').listeners.click();
+ assert.equal(get('desktop-evidence-content').children[0].fields.pre.textContent,'不可变原文');
 });

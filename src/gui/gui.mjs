@@ -135,17 +135,79 @@ function refreshHistory() {
     li.append(b); list.append(li);
   }
 }
-function showEvidence(source,index) {
+const workbench = { desktopHistory:true, compactHistory:false, desktopEvidence:false, lastCitation:null };
+const compactHistory = () => window.matchMedia('(max-width:700px)').matches;
+const compactEvidence = () => window.matchMedia('(max-width:930px)').matches;
+const panelExpanded = id => byId(id).getAttribute('aria-expanded')==='true';
+function preserveReadingAnchor(layout) {
+  const pane=byId('reading-pane'), bounds=pane.getBoundingClientRect();
+  const anchor=[...pane.querySelectorAll('.question,.markdown-body > *,.turn-actions')].find(node=>{
+    const box=node.getBoundingClientRect();
+    return box.bottom>bounds.top&&box.top<bounds.bottom;
+  });
+  const top=anchor?.getBoundingClientRect().top;
+  layout();
+  if(top!==undefined)pane.scrollTop+=anchor.getBoundingClientRect().top-top;
+}
+function setHistoryOpen(open) {
+  workbench[compactHistory()?'compactHistory':'desktopHistory']=open;
+  byId('history').hidden=!open;
+  byId('history-toggle').setAttribute('aria-expanded',String(open));
+  byId('workspace').dataset.history=String(open);
+}
+function setEvidenceOpen(open) {
+  const toggle=byId('evidence-toggle'), dialog=byId('mobile-evidence');
+  const compact=compactEvidence(), desktopOpen=!compact&&open;
+  if (!compact)workbench.desktopEvidence=open;
+  byId('workspace').dataset.evidence=String(desktopOpen);
+  byId('desktop-evidence').hidden=!desktopOpen;
+  toggle.setAttribute('aria-controls',compact?'mobile-evidence':'desktop-evidence');
+  toggle.setAttribute('aria-expanded',String(open));
+  if(compact&&open&&!dialog.open)dialog.showModal();
+  if((!compact||!open)&&dialog.open)dialog.close();
+}
+function initWorkbench() {
+  const historyMedia=window.matchMedia('(max-width:700px)');
+  const evidenceMedia=window.matchMedia('(max-width:930px)');
+  const sync=()=>{
+    setHistoryOpen(historyMedia.matches?workbench.compactHistory:workbench.desktopHistory);
+    setEvidenceOpen(evidenceMedia.matches?byId('mobile-evidence').open:workbench.desktopEvidence);
+  };
+  historyMedia.addEventListener('change',sync);
+  evidenceMedia.addEventListener('change',sync);
+  sync();
+  const viewport=window.visualViewport;
+  if(viewport){
+    const fit=()=>{
+      const root=document.documentElement;
+      const useHeight=compactEvidence()&&Math.abs(viewport.scale-1)<.02;
+      if(useHeight)root.style.setProperty('--workbench-height',Math.floor(viewport.height)+'px');
+      else root.style.removeProperty('--workbench-height');
+      root.dataset.shortViewport=String(useHeight&&viewport.height<=550);
+    };
+    viewport.addEventListener('resize',fit);
+    evidenceMedia.addEventListener('change',fit);
+    fit();
+  }
+}
+function showEvidence(source,index,trigger) {
   const node = byId('evidence-template').content.cloneNode(true);
   node.querySelector('h3').textContent = '来源 ['+index+']'+(source.pdfPage?' · PDF 第 '+source.pdfPage+' 页':'');
   node.querySelector('pre').textContent = source.text;
   node.querySelector('small').textContent = source.sha256 ? 'SHA-256 '+source.sha256 : '';
-  if (window.matchMedia('(max-width:930px)').matches) {
-    byId('mobile-evidence-content').replaceChildren(node);
-    if (!byId('mobile-evidence').open) byId('mobile-evidence').showModal();
-  } else {
-    byId('desktop-evidence').replaceChildren(make('h2','来源与核对'),node);
+  byId('desktop-evidence-content').replaceChildren(node.cloneNode(true));
+  byId('mobile-evidence-content').replaceChildren(node);
+  byId('desktop-evidence').dataset.selected='true';
+  workbench.lastCitation=trigger;
+  preserveReadingAnchor(()=>setEvidenceOpen(true));
+}
+function resetEvidence() {
+  byId('desktop-evidence').dataset.selected='false';
+  for(const id of ['desktop-evidence-content','mobile-evidence-content']) {
+    byId(id).replaceChildren(make('p','点击回答中的来源，即可查看原文。','muted'));
   }
+  workbench.lastCitation=null;
+  if(byId('mobile-evidence').open)setEvidenceOpen(false);
 }
 function progressContent(target, value) {
   target.replaceChildren();
@@ -175,14 +237,16 @@ async function loadProgress(conversation, entry, message) {
     if(entry.content?.isConnected)progressContent(entry.content,{status:'unavailable'});
   } finally { entry.loading=false; }
 }
-function progressDetails(message) {
+function progressDetails(message, context) {
   const details=make('details',undefined,'research-progress');
   const content=make('div',undefined,'research-progress-body');
   const conversation=state.conversation;
   const entry=state.progress.get(message.id)??{open:false};
   entry.content=content;
   state.progress.set(message.id,entry);
-  details.append(make('summary','研究进度'),content);
+  details.append(make('summary','研究进度'));
+  if(context.childElementCount)details.append(context);
+  details.append(content);
   progressContent(content,{...entry.data,...(message.deepProgress?{deepProgress:message.deepProgress}:{})});
   details.open=entry.open;
   details.addEventListener('toggle',()=>{
@@ -194,48 +258,60 @@ function progressDetails(message) {
   return details;
 }
 function render() {
-  const t = byId('transcript');
+  const t = byId('transcript'), pane=byId('reading-pane');
+  const savedTop=pane.scrollTop;
   t.replaceChildren();
   for (const m of state.detail?.messages ?? []) {
-    const article = make('article',undefined,'turn'), header = make('div',undefined,'turn-header');
+    const article = make('article',undefined,'turn');
     article.dataset.turnId=m.id;
+    const prompt = make('section',undefined,'turn-prompt');
+    prompt.setAttribute('aria-label','你的问题');
+    prompt.append(make('span','你','speaker'),make('p',m.question ?? '问题尚未读回','question'));
+    const response = make('section',undefined,'turn-response');
+    response.setAttribute('aria-label','研究助手');
+    const header = make('div',undefined,'turn-header');
     const isUnknown = /UNKNOWN|MISSING/.test(m.code ?? '');
     const status = isUnknown ? '结果未知' : m.working ? phaseLabels[m.phase] ?? '处理中' : statusLabels[m.status] ?? '状态待核对';
-    header.append(make('strong','你'),make('span',status,'state'));
-    article.append(header,make('p',m.question ?? '问题尚未读回','question'));
+    const badge=make('span',status,m.status==='completed'&&!isUnknown&&!m.working?'visually-hidden':'state');
+    header.append(make('h2','研究助手','speaker'),badge);
+    response.append(header);
     const route={deep:'深度研究',research:'资料查证',direct:'普通回答',standard:'标准研究'}[m.effectiveResearchIntent];
     const requested={auto:'自动',standard:'标准研究',deep:'深度研究'}[m.researchDepth];
-    if(requested||route)article.append(make('p',(requested?'研究模式：'+requested:'')+(route?(requested?' · ':'')+'实际路线：'+route:''),'muted'));
+    const context=make('div',undefined,'research-context');
+    if(requested||route)context.append(make('p',(requested?'研究模式：'+requested:'')+(route?(requested?' · ':'')+'实际路线：'+route:''),'muted'));
     const effort=effortHistory(m.reasoningEffort);
-    if(effort)article.append(make('p',effort,'muted'));
-    if(m.evidenceAssessment==='unreviewed')article.append(make('p','结论与引文未独立核验。','muted'));
-    if(m.attachment) article.append(make('p','PDF：'+m.attachment.name+' · '+m.attachment.pages+' 页','muted'));
-    article.append(progressDetails(m));
+    if(effort)context.append(make('p',effort,'muted'));
+    if(m.attachment)prompt.append(make('p','PDF：'+m.attachment.name+' · '+m.attachment.pages+' 页','attachment'));
+    response.append(progressDetails(m,context));
+    if(m.evidenceAssessment==='unreviewed')response.append(make('p','结论与引文未独立核验。','evidence-note muted'));
     const providerFailure=(/^PROVIDER_HTTP_(403|429)$/).exec(m.code??'');
     if (providerFailure) {
       const guidance=providerFailure[1]==='403'?'提供方拒绝访问，请核对账户、地区及模型权限。'
         :'提供方限制了请求，请核对可用额度或频率。';
-      article.append(make('p',m.code+' · '+guidance+' 本次未自动重发。','warning'));
+      response.append(make('p',m.code+' · '+guidance+' 本次未自动重发。','warning'));
     }
     if (m.output?.warning) {
       if(m.status==='completed'){
         const disclosure=make('details',undefined,'turn-notice');
         disclosure.append(make('summary','来源与限制'),make('p',m.output.warning,'muted'));
-        article.append(disclosure);
-      } else article.append(make('p',m.output.warning,'warning'));
+        response.append(disclosure);
+      } else response.append(make('p',m.output.warning,'warning'));
     }
-    if (m.output?.answer && m.output.answer !== m.output?.report?.text) article.append(renderMarkdown(document,m.output.answer));
+    const hasSeparateAnswer=m.output?.answer && m.output.answer !== m.output?.report?.text;
+    if (hasSeparateAnswer) response.append(renderMarkdown(document,m.output.answer));
     if (m.output?.report) {
-      article.append(make('h3','已保存的报告'),renderMarkdown(document,m.output.report.text));
+      response.append(make('h3','已保存的报告',hasSeparateAnswer?'report-heading':'visually-hidden'),renderMarkdown(document,m.output.report.text));
     } else if (m.error || m.status==='completed' && !m.output?.answer) {
-      article.append(make('p','没有读到已保存报告。','muted'));
+      response.append(make('p','没有读到已保存报告。','muted'));
     }
+    const sources=make('div',undefined,'citation-actions');
     for (const [i,source] of (m.output?.sources ?? []).entries()) {
       const citation = make('button','核对来源 ['+(i+1)+']','secondary');
-      citation.type='button'; citation.addEventListener('click',() => showEvidence(source,i+1)); article.append(citation);
+      citation.type='button'; citation.addEventListener('click',() => showEvidence(source,i+1,citation)); sources.append(citation);
     }
+    if(sources.childElementCount)response.append(sources);
     for(const chart of m.chartViews??[]){
-      try{article.append(createFinancialChartView(document,chart));}
+      try{response.append(createFinancialChartView(document,chart));}
       catch{/* A rejected chart view must not hide the durable answer. */}
     }
     const actions = make('div',undefined,'turn-actions');
@@ -267,7 +343,7 @@ function render() {
       });
       actions.append(reuse);
     }
-    if(actions.childElementCount) article.append(actions);
+    if(actions.childElementCount) response.append(actions);
     if (m.status === 'active' && !isUnknown && (!ownerMode() || m.sourceId===null || m.attachment)) {
       const action = m.working ? 'cancel' : 'work';
       const b = make('button',m.working?'取消本次':'继续原任务','secondary');
@@ -279,11 +355,13 @@ function render() {
           await refresh();
         } catch(e) { failed(e); }
       });
-      article.append(b);
+      response.append(b);
     }
+    article.append(prompt,response);
     t.append(article);
   }
   byId('intro').hidden = (state.detail?.messages.length ?? 0)>0;
+  pane.scrollTop=savedTop;
   controls();
 }
 function scheduleRefresh() {
@@ -317,22 +395,22 @@ function focusTurn(messageId){
 }
 async function select(id,messageId) {
   if (state.pending && state.pending.conversationId !== id) return;
-  if (state.conversation !== id) {
+  const changed=state.conversation!==id;
+  if (changed) {
     state.progress.clear();
     message();
     if(state.conversation)byId('pdf-file').value='';byId('pdf-file').dispatchEvent(new Event('change'));
     byId('research-depth').value='auto'; byId('reasoning-effort').value=''; byId('chart-skill').value=''; updateChartSkillLabel(); updateSettingsLabel(); closeComposerOptions();
-    const dialog=byId('mobile-evidence');
-    if (dialog.open) dialog.close();
-    byId('mobile-evidence-content').replaceChildren();
-    byId('desktop-evidence').replaceChildren(make('h2','来源与核对'),make('p','选中报告的引用，即可核对保存的原文。','muted'));
+    resetEvidence();
+    byId('reading-pane').scrollTop=0;
+    state.detail=null;
   }
   clearTimeout(state.poll);
-  state.selection++; state.conversation=id; state.detail=null;
+  state.selection++; state.conversation=id;
   restoreDraft();
   location.hash=id+(messageId?'~'+messageId:'');
   refreshHistory();
-  byId('history').dataset.open='false'; byId('history-toggle').setAttribute('aria-expanded','false');
+  if(compactHistory())setHistoryOpen(false);
   render();
   await refresh();
   if(state.conversation===id)focusTurn(messageId);
@@ -496,9 +574,22 @@ byId('daily-digest-form').addEventListener('submit',async event=>{
   }catch{byId('daily-digest-status').textContent='未确认保存，请刷新后再核对。';}
   finally{save.disabled=false;}
 });
-byId('history-toggle').addEventListener('click',()=> {
-  const b = byId('history-toggle'), isOpen=b.getAttribute('aria-expanded')==='true';
-  b.setAttribute('aria-expanded',String(!isOpen)); byId('history').dataset.open=String(!isOpen);
+byId('history-toggle').addEventListener('click',()=>preserveReadingAnchor(()=>setHistoryOpen(!panelExpanded('history-toggle'))));
+for(const id of ['history-toggle','history'])byId(id).addEventListener('keydown',event=>{
+  if(event.key!=='Escape'||!panelExpanded('history-toggle'))return;
+  event.preventDefault();
+  preserveReadingAnchor(()=>setHistoryOpen(false));
+  byId('history-toggle').focus();
+});
+byId('evidence-toggle').addEventListener('click',()=>{
+  workbench.lastCitation=null;
+  preserveReadingAnchor(()=>setEvidenceOpen(!panelExpanded('evidence-toggle')));
+});
+byId('desktop-evidence').addEventListener('keydown',event=>{
+  if(event.key!=='Escape')return;
+  event.preventDefault();
+  preserveReadingAnchor(()=>setEvidenceOpen(false));
+  byId('evidence-toggle').focus();
 });
 byId('history-search').addEventListener('input',()=>{if(state.workspace){refreshHistory();controls();}});
 byId('question').addEventListener('input',()=>{if(!state.pending){saveDraft();controls();}});
@@ -560,6 +651,13 @@ for(const id of ['research-depth','reasoning-effort'])byId(id).addEventListener(
   if(!state.pending)saveDraft();
 });
 byId('close-evidence').addEventListener('click',()=>byId('mobile-evidence').close());
+byId('mobile-evidence').addEventListener('close',()=>{
+  if(!compactEvidence())return;
+  byId('evidence-toggle').setAttribute('aria-expanded','false');
+  const trigger=workbench.lastCitation;
+  workbench.lastCitation=null;
+  (trigger?.isConnected?trigger:byId('evidence-toggle')).focus({preventScroll:true});
+});
 byId('new').addEventListener('click',()=> {
   if (state.submitting || state.pending || !state.workspace) return;
   state.submitting=true; controls();
@@ -602,6 +700,7 @@ byId('composer').addEventListener('submit',async e=>{
   finally { state.submitting=false; controls(); }
 });
 try {
+  initWorkbench();
   await load();
   const stored = sessionStorage.getItem(pendingKey());
   const legacy = sessionStorage.getItem('local-gui-pending@1')
