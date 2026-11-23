@@ -42,3 +42,22 @@ policy. The focused provider-free regression proves a single canonical
 acquisition, normal continuation and the same saved History after restart.
 The pre-correction real cohort is not an eligible release cohort and is
 not counted again for the corrected candidate.
+
+## Corrected candidate: separate fixed ten-task cohort
+
+- Execution source: `a37c44e4e3dce05e317dab10248a6489600e0c5f`, application tree
+  `09bbde5a476e91cf1164542dda5df32082b3d893`. [Exact CI](https://github.com/hpoenixf/open-etf-agent/actions/runs/45111846119)
+  and 21 focused offline regressions passed. The release-evidence-only
+  update does not change application code, configuration or dependencies.
+- On isolated staging, all ten fresh coding tasks completed the Runtime path,
+  published an answer and matched an independent History read. This used 18
+  settled native model requests, with no retries or unknown outcomes. The
+  previous incomplete cohort and two-request browser smoke are separate.
+- **Release qualification: 9/10** after the repository decision guard.
+  The anchored case reached the canonical document-read path without the
+  old validation abort and delivered an answer. The existing response-body
+  policy denied that original page, so the required original-text read
+  was not proven and the case is not counted as a qualification pass.
+  Other source availability and the model's Auto routing choices are
+  separate from Runtime delivery. No provider effort adoption, full Private
+  execution parity, financial correctness or production rollout is claimed.
