@@ -85,7 +85,7 @@ test('auth is a mandatory backend boundary; only intended public paths are expos
  t.after(()=>app.close());
  assert.equal((await send(app,'/')).status,303);
  assert.equal((await send(app,'/account/login')).status,200);
- for(const path of ['/api/workspace','/gui.mjs','/gui.css','/api/conversations/c/m/m/report.md'])
+ for(const path of ['/api/workspace','/gui.mjs','/gui.css','/markdown.mjs','/vendor/marked-16.4.2.mjs','/financial-chart-view.mjs','/api/conversations/c/m/m/report.md'])
    assert.equal((await send(app,path)).status,401,path);
  assert.equal((await mutation(app,'/api/conversations',{})).status,401);
  assert.equal((await mutation(app,'/api/auth/sign-up/email',creds[0])).status,404);
@@ -103,6 +103,17 @@ test('two accounts have distinct durable Projects and old cookies cannot replay 
  const root=await workspace(t),auth=fixtureAuth(),app=await startAccountSite({projectRoot:root,origin,auth});
  t.after(()=>app.close());
  const a=await signIn(app,creds[0]),b=await signIn(app,creds[1]);
+ for(const path of ['/markdown.mjs','/vendor/marked-16.4.2.mjs','/financial-chart-view.mjs']){
+   const asset=await send(app,path,{cookie:a});
+   assert.equal(asset.status,200,path);
+   assert.match(asset.headers['content-type'],/^text\/javascript/);
+ }
+ const html=(await send(app,'/',{cookie:a})).text;
+ assert.match(html,/<details id="daily-watch" hidden>/);
+ assert.match(html,/<details id="chart-skill-picker" class="composer-option" hidden>/);
+ assert.match(html,/<details id="pdf-picker" class="composer-option" hidden>/);
+ const caps=(await send(app,'/api/workspace',{cookie:a})).value.capabilities;
+ for(const cap of ['financial-chart-skill','financial-chart-auto','daily-watch','pdf-attachment'])assert.equal(caps.includes(cap),false,cap);
  assert.ok(auth.seen.every(x=>x.ip===null));
  const report=await createSyntheticReport(app,a);
  const own=await send(app,report.reportPath,{cookie:a});

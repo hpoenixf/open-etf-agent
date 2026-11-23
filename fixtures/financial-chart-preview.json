@@ -1,0 +1,12 @@
+{
+  "schemaVersion": "financial-chart-developer-fixture@1",
+  "scope": "Synthetic values, old calendar dates and public ticker label. This is not VOO market history, official NAV, or genuine holdings. Never loaded in the owner application or used as chart evidence.",
+  "exampleLabel": "VOO（开发演示，合成数据）",
+  "asOf": "2026-06-03",
+  "examples": [
+    {"kind": "nav-series", "unit": "USD/unit", "basis": "fund-nav-per-unit", "rows": [{"key":"2026-06-01","value":100},{"key":"2026-06-02","value":null},{"key":"2026-06-03","value":102}]},
+    {"kind": "return-comparison", "unit": "%", "basis": "total-return", "periodStart": "2026-05-03", "rows": [{"key":"合成样本 A","value":2.1},{"key":"合成样本 B","value":-0.7}]},
+    {"kind": "holdings-pie", "unit": "%", "basis": "percent-of-fund-net-assets", "rows": [{"key":"合成持仓 A","value":40},{"key":"合成持仓 B","value":10}]},
+    {"kind": "ohlc-candlestick", "unit": "USD/share", "basis": "exchange-daily-ohlc-unadjusted", "rows": [{"key":"2026-06-01","value":{"open":100,"high":103,"low":98,"close":102}},{"key":"2026-06-03","value":{"open":102,"high":106,"low":101,"close":104}}]}
+  ]
+}

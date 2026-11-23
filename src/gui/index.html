@@ -56,10 +56,26 @@
       <section id="transcript" aria-label="会话消息"></section>
       <form id="composer">
         <div id="source-picker" class="source-picker"><label for="source">演练资料</label><select id="source" required></select></div>
-        <div id="pdf-picker" class="source-picker" hidden><label for="pdf-file">附加 PDF（可选）</label><input id="pdf-file" type="file" accept=".pdf,application/pdf" aria-describedby="pdf-note"><p id="pdf-note" class="muted">支持带文字层的 PDF，最多 1 MiB、16 页。不支持 OCR。模型读取的摘录会发给配置的模型服务；附有 PDF 的当轮不启用外部查询。</p></div>
         <label for="question">研究问题</label>
         <textarea id="question" rows="3" maxlength="3000" required placeholder="例如：对比 Alpha 与 Beta 的费率，并注明来源。"></textarea>
-        <div class="composer-actions"><p id="mode-note">固定脚本演练，不是 AI 对问题的分析，不计费。</p><button id="send" type="submit">提交演练</button></div>
+        <div class="composer-actions">
+          <details id="chart-skill-picker" class="composer-option" hidden>
+            <summary id="chart-skill-toggle">工具</summary>
+            <label for="chart-skill" class="visually-hidden">选择 Skill</label>
+            <select id="chart-skill"><option value="">自动</option><option value="financial-chart@1">金融图表（场内基金日收盘价）</option></select>
+          </details>
+          <details id="pdf-picker" class="composer-option" hidden>
+            <summary id="pdf-toggle">附加 PDF</summary>
+            <label for="pdf-file" class="visually-hidden">选择 PDF 文件</label>
+            <input id="pdf-file" type="file" accept=".pdf,application/pdf" aria-describedby="pdf-note">
+            <p id="pdf-note">目前支持带文字层的 PDF。摘录会发给模型；附有 PDF 时不启用外部查询。上传上限和页数以当前部署为准。</p>
+          </details>
+          <button id="send" type="submit">提交演练</button>
+        </div>
+        <details id="mode-disclosure" class="composer-option">
+          <summary>本次权限与数据说明</summary>
+          <p id="mode-note">固定脚本演练，不计费。</p>
+        </details>
         <p id="notice" role="status" class="notice" hidden></p>
       </form>
     </main>
