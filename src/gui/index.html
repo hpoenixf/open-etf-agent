@@ -2,98 +2,126 @@
 <html lang="zh-CN">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
   <meta name="color-scheme" content="light">
   <title>Open ETF Agent · 研究工作台</title>
   <link rel="stylesheet" href="/gui.css">
   <script type="module" src="/gui.mjs"></script>
 </head>
 <body>
-  <header class="masthead">
-    <button id="history-toggle" class="secondary mobile" aria-controls="history" aria-expanded="false">会话</button>
-    <span class="brand-symbol" aria-hidden="true">E</span>
-    <div><strong>Open ETF Agent</strong><span class="subbrand">研究工作台</span></div>
-    <span id="mode-badge" class="badge" title="不调用模型或外部数据">离线演练</span>
+  <header class="masthead" aria-label="Open ETF Agent 研究工作台">
+    <button id="history-toggle" type="button" class="panel-toggle" aria-label="会话历史" aria-controls="history" aria-expanded="true">
+      <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="14" height="12" rx="2"/><path d="M8 4v12"/></svg>
+      <span>会话</span>
+    </button>
+    <button id="evidence-toggle" type="button" class="panel-toggle" aria-label="来源与核对" aria-controls="desktop-evidence" aria-expanded="false">
+      <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="14" height="12" rx="2"/><path d="M12 4v12"/></svg>
+      <span>来源</span>
+    </button>
   </header>
-  <div class="workspace">
+  <div id="workspace" class="workspace" data-history="true" data-evidence="false">
     <aside id="history" class="history" aria-label="会话历史">
       <header><h2>会话</h2><button id="new" type="button" class="secondary">＋ 新会话</button></header>
-      <label for="history-search" class="history-label">搜索会话</label>
-      <input id="history-search" type="search" autocomplete="off" maxlength="120" placeholder="按首个问题或编号搜索">
+      <label for="history-search" class="visually-hidden">搜索会话</label>
+      <input id="history-search" type="search" autocomplete="off" maxlength="120" placeholder="搜索会话">
       <ul id="conversation-list"></ul>
       <p id="history-empty" class="muted" role="status" hidden></p>
-      <p class="muted">会话保存在本地 Project 中。</p>
+      <p class="history-footnote muted">会话保存在本地 Project 中。</p>
     </aside>
     <main id="main">
-      <div class="intro" id="intro"><p class="eyebrow">LOCAL RESEARCH WORKSPACE</p><h1 id="mode-heading">做一份可以回查的 ETF 研究。</h1><p id="mode-intro">选一份演练资料，观察从提交到报告和原文引用的过程。</p></div>
-      <details id="daily-watch" hidden>
-        <summary>每日追踪</summary>
-        <p id="daily-note" class="muted">按北京时间定时执行你选择的问题，运行可能产生费用。白天可在这里回看结果。</p>
-        <form id="daily-form">
-          <label for="daily-question">追踪问题</label><input id="daily-question" type="text" required maxlength="3000" placeholder="例如：今天黄金 ETF 有什么值得关注的变化？">
-          <label for="daily-time">北京时间</label><input id="daily-time" type="time" required>
-          <label><input id="daily-enabled" type="checkbox">启用自动执行</label>
-          <label id="daily-digest-watch-choice" hidden><input id="daily-digest-watch" type="checkbox">纳入每日邮件摘要</label>
-          <label id="daily-email-choice" hidden><input id="daily-email" type="checkbox">完成后发邮件给已配置收件人<span id="daily-email-target"></span></label>
-          <button id="daily-save" type="submit">保存追踪</button>
-          <button id="daily-reset" type="button" class="secondary" hidden>取消编辑</button>
-        </form>
-        <section id="daily-digest-settings" hidden>
-          <h3>每日邮件摘要</h3>
-          <p id="daily-digest-note" class="muted">独立设定北京时间；当时只发一封摘要，不会启动研究。</p>
-          <form id="daily-digest-form">
-            <label for="daily-digest-time">北京时间</label><input id="daily-digest-time" type="time" required>
-            <label><input id="daily-digest-on" type="checkbox">启用每日摘要</label>
-            <button id="daily-digest-save" type="submit">保存摘要设置</button>
-          </form>
-          <p id="daily-digest-status" class="muted" role="status"></p>
-          <ul id="daily-digest-history"></ul>
-        </section>
-        <p id="daily-status" class="muted" role="status"></p>
-        <button id="daily-refresh" type="button" class="secondary">刷新状态</button>
-        <div id="daily-items"></div>
-      </details>
-      <section id="transcript" aria-label="会话消息"></section>
-      <form id="composer">
-        <div id="source-picker" class="source-picker"><label for="source">演练资料</label><select id="source" required></select></div>
-        <label for="question">研究问题</label>
-        <textarea id="question" rows="3" maxlength="3000" required placeholder="例如：对比 Alpha 与 Beta 的费率，并注明来源。"></textarea>
-        <div class="composer-actions">
-          <div id="chart-skill-slot" hidden>
-          <details id="chart-skill-picker" class="composer-option" hidden>
-            <summary id="chart-skill-toggle">选工具</summary>
-            <label for="chart-skill" class="visually-hidden">选择 Skill</label>
-            <div class="composer-panel"><select id="chart-skill"><option value="">自动</option><option value="financial-chart@1">金融图表（场内基金日收盘价）</option></select></div>
-          </details>
-          <button id="chart-skill-clear" class="secondary" type="button" aria-label="移除金融图表 Skill" title="移除金融图表 Skill" hidden>×</button>
+      <div id="reading-pane" class="reading-pane" role="region" aria-label="研究内容" tabindex="0">
+        <details id="daily-watch" hidden>
+          <summary class="daily-capsule">
+            <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4.5" width="14" height="12" rx="2"/><path d="M6.5 3v3m7-3v3M3 8h14m-9 4 1.5 1.5 2.5-3"/></svg>
+            <span>每日追踪</span>
+            <svg class="daily-chevron" aria-hidden="true" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="m4.5 6 3.5 3.5L11.5 6"/></svg>
+          </summary>
+          <div class="daily-panel">
+            <p id="daily-note" class="muted">按北京时间定时执行你选择的问题，运行可能产生费用。白天可在这里回看结果。</p>
+            <form id="daily-form">
+              <label for="daily-question">追踪问题</label><input id="daily-question" type="text" required maxlength="3000" placeholder="例如：今天黄金 ETF 有什么值得关注的变化？">
+              <label for="daily-time">北京时间</label><input id="daily-time" type="time" required>
+              <label><input id="daily-enabled" type="checkbox">启用自动执行</label>
+              <label id="daily-digest-watch-choice" hidden><input id="daily-digest-watch" type="checkbox">纳入每日邮件摘要</label>
+              <label id="daily-email-choice" hidden><input id="daily-email" type="checkbox">完成后发邮件给已配置收件人<span id="daily-email-target"></span></label>
+              <button id="daily-save" type="submit">保存追踪</button>
+              <button id="daily-reset" type="button" class="secondary" hidden>取消编辑</button>
+            </form>
+            <section id="daily-digest-settings" hidden>
+              <h3>每日邮件摘要</h3>
+              <p id="daily-digest-note" class="muted">独立设定北京时间；当时只发一封摘要，不会启动研究。</p>
+              <form id="daily-digest-form">
+                <label for="daily-digest-time">北京时间</label><input id="daily-digest-time" type="time" required>
+                <label><input id="daily-digest-on" type="checkbox">启用每日摘要</label>
+                <button id="daily-digest-save" type="submit">保存摘要设置</button>
+              </form>
+              <p id="daily-digest-status" class="muted" role="status"></p>
+              <ul id="daily-digest-history"></ul>
+            </section>
+            <p id="daily-status" class="muted" role="status"></p>
+            <button id="daily-refresh" type="button" class="secondary">刷新状态</button>
+            <div id="daily-items"></div>
           </div>
-          <details id="pdf-picker" class="composer-option" hidden>
-            <summary id="pdf-toggle"><span aria-hidden="true">＋ </span>PDF</summary>
-            <div class="composer-panel">
-            <label for="pdf-file" class="visually-hidden">选择 PDF 文件</label>
-            <input id="pdf-file" type="file" accept=".pdf,application/pdf" aria-describedby="pdf-note">
-            <p id="pdf-note">目前支持带文字层的 PDF。摘录会发给模型；附有 PDF 时不启用外部查询。上传上限和页数以当前部署为准。</p>
-            </div>
-          </details>
-          <details id="research-settings" class="composer-option" hidden>
-            <summary id="research-settings-toggle">设置</summary>
-            <div class="composer-panel">
-        <label id="research-depth-picker" hidden>研究模式 <select id="research-depth" aria-describedby="research-depth-help"><option value="auto">自动</option><option value="standard">标准研究</option><option value="deep">深度研究</option></select><small id="research-depth-help">自动由系统选择；标准研究不自动升级为深度；深度研究优先查原文和交叉核对。</small></label>
-        <label id="reasoning-effort-picker" hidden>模型思考强度 <select id="reasoning-effort" aria-describedby="reasoning-effort-help"><option value="">默认（不指定）</option></select><small id="reasoning-effort-help">只调整模型请求选项，不改变研究模式或查证流程。</small></label>
-            </div>
-          </details>
-          <button id="send" type="submit">提交演练</button>
-        </div>
-        <details id="mode-disclosure" class="composer-option">
-          <summary>本次权限与数据说明</summary>
-          <p id="mode-note">固定脚本演练，不计费。</p>
         </details>
-        <p id="notice" role="status" class="notice" hidden></p>
-      </form>
+        <div class="intro" id="intro"><h1 id="mode-heading">做一份可以回查的 ETF 研究。</h1><p id="mode-intro">选一份演练资料，观察从提交到报告和原文引用的过程。</p></div>
+        <section id="transcript" aria-label="会话消息"></section>
+      </div>
+      <div class="composer-dock">
+        <form id="composer">
+          <div id="source-picker" class="source-picker"><label for="source">演练资料</label><select id="source" required></select></div>
+          <label for="question" class="visually-hidden">研究问题</label>
+          <textarea id="question" rows="3" maxlength="3000" required placeholder="例如：对比 Alpha 与 Beta 的费率，并注明来源。"></textarea>
+          <div id="composer-actions" class="composer-actions">
+            <div id="chart-skill-slot" hidden>
+            <details id="chart-skill-picker" class="composer-option" hidden>
+              <summary id="chart-skill-toggle">选工具</summary>
+              <label for="chart-skill" class="visually-hidden">选择 Skill</label>
+              <div class="composer-panel"><select id="chart-skill"><option value="">自动</option><option value="financial-chart@1">金融图表（场内基金日收盘价）</option></select></div>
+            </details>
+            <button id="chart-skill-clear" class="secondary" type="button" aria-label="移除金融图表 Skill" title="移除金融图表 Skill" hidden>×</button>
+            </div>
+            <details id="pdf-picker" class="composer-option" hidden>
+              <summary id="pdf-toggle"><span aria-hidden="true">＋ </span>PDF</summary>
+              <div class="composer-panel">
+              <label for="pdf-file" class="visually-hidden">选择 PDF 文件</label>
+              <input id="pdf-file" type="file" accept=".pdf,application/pdf" aria-describedby="pdf-note">
+              <p id="pdf-note">目前支持带文字层的 PDF。摘录会发给模型；附有 PDF 时不启用外部查询。上传上限和页数以当前部署为准。</p>
+              </div>
+            </details>
+            <details id="research-settings" class="composer-option" hidden>
+              <summary id="research-settings-toggle">设置</summary>
+              <div class="composer-panel">
+          <label id="research-depth-picker" hidden>研究模式 <select id="research-depth" aria-describedby="research-depth-help"><option value="auto">自动</option><option value="standard">标准研究</option><option value="deep">深度研究</option></select><small id="research-depth-help">自动由系统选择；标准研究不自动升级为深度；深度研究优先查原文和交叉核对。</small></label>
+          <label id="reasoning-effort-picker" hidden>模型思考强度 <select id="reasoning-effort" aria-describedby="reasoning-effort-help"><option value="">默认（不指定）</option></select><small id="reasoning-effort-help">只调整模型请求选项，不改变研究模式或查证流程。</small></label>
+              </div>
+            </details>
+            <details id="mode-disclosure" class="composer-option">
+              <summary aria-label="本次权限与数据说明" title="本次权限与数据说明">
+                <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="10" cy="10" r="7"/><path d="M10 9v5"/><circle cx="10" cy="6.3" r=".8" fill="currentColor" stroke="none"/></svg>
+              </summary>
+              <div class="composer-panel">
+                <p class="permission-heading">本次权限与数据说明</p>
+                <p id="mode-badge" class="permission-mode" title="不调用模型或外部数据">离线演练</p>
+                <p id="mode-note">固定脚本演练，不计费。</p>
+              </div>
+            </details>
+            <div class="composer-submit-slot">
+              <button id="send" type="submit" aria-label="提交演练" title="提交演练">
+                <svg class="send-icon" aria-hidden="true" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M10 15V5M5.5 9.5 10 5l4.5 4.5"/></svg>
+                <svg class="retry-icon" aria-hidden="true" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 8A5 5 0 1 0 15 12M14.5 4.5V8h-3.7"/></svg>
+              </button>
+              <button id="stop" type="button" aria-label="停止研究" title="停止研究" hidden>
+                <svg aria-hidden="true" viewBox="0 0 20 20" fill="currentColor"><rect x="5.5" y="5.5" width="9" height="9" rx="1.4"/></svg>
+              </button>
+            </div>
+          </div>
+          <p id="notice" role="status" class="notice" hidden></p>
+        </form>
+      </div>
     </main>
-    <aside id="desktop-evidence" class="evidence" aria-label="研究证据"><h2>来源与核对</h2><p class="muted">选中报告的引用，即可核对保存的原文。</p></aside>
+    <aside id="desktop-evidence" class="evidence" data-selected="false" hidden aria-label="研究证据"><h2>来源与核对</h2><div id="desktop-evidence-content"><p class="muted">点击回答中的来源，即可查看原文。</p></div></aside>
   </div>
-  <dialog id="mobile-evidence" aria-label="研究证据"><header><h2>来源与核对</h2><button id="close-evidence" class="secondary">关闭</button></header><div id="mobile-evidence-content"></div></dialog>
+  <dialog id="mobile-evidence" aria-label="研究证据"><header><h2>来源与核对</h2><button id="close-evidence" class="secondary">关闭</button></header><div id="mobile-evidence-content"><p class="muted">点击回答中的来源，即可查看原文。</p></div></dialog>
   <template id="evidence-template"><div><p class="eyebrow">报告引用</p><h3></h3><pre></pre><small></small></div></template>
 </body>
 </html>

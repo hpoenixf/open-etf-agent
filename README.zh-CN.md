@@ -44,7 +44,7 @@ GitHub 将 SVG 当作一张图片，不能在缩略图里逐卡点击；下表�
 | L5 结果发布与交付 | [Main → Report](https://hpoenixf.com/eff-agent-article/articles/open-etf-agent-v01-first-readable-report) · [Report](https://hpoenixf.com/eff-agent-article/articles/open-etf-agent-v01-first-readable-report) · [Artifact / Revision](https://hpoenixf.com/eff-agent-article/articles/agent-artifact-version-access-sharing) · [Publication](https://hpoenixf.com/eff-agent-article/articles/019-agent-answer-publication) · [Report Review](https://hpoenixf.com/eff-agent-article/articles/open-etf-agent-report-review-workshop) |
 | L6 用户界面 | [Loopback Reader](https://hpoenixf.com/eff-agent-article/articles/open-etf-agent-v010-system-design) · [Local Research GUI](https://hpoenixf.com/eff-agent-article/articles/agent-conversation-admission-task-continuation) · [Account Site](https://hpoenixf.com/eff-agent-article/articles/open-etf-agent-v010-system-design) · [CLI Readback](https://hpoenixf.com/eff-agent-article/articles/open-etf-agent-v01-first-readable-report) |
 
-**当前地图: v0.46.0** · [模块、源码与证据](docs/module-status.zh-CN.md) · [六层文章原文](https://github.com/hpoenixf/eff-agent-article/blob/249f0b866f9446f33b57f186fbc6d35b5d82c119/articles/open-etf-agent-v010-system-design.md)
+**当前地图: v0.46.1** · [模块、源码与证据](docs/module-status.zh-CN.md) · [六层文章原文](https://github.com/hpoenixf/eff-agent-article/blob/249f0b866f9446f33b57f186fbc6d35b5d82c119/articles/open-etf-agent-v010-system-design.md)
 
 文章关联是阅读导航，不等于实现全文能力或覆盖资格。图中是公开实现范围，不是全功能完成率。真实模型验证只覆盖[各版记录](docs/verification/README.md)中的指定路径；金融语义、生产与浏览器体验不因此获得认证。
 <!-- module-map:end -->
@@ -100,27 +100,30 @@ npm run demo -- --case document-compare
 <a id="最近三个模块"></a>
 ## 最近版本与开发状态
 
+**[v0.46.1 · 紧凑研究工作台](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.46.1)。** 输入固定在底部，会话与来源分别折叠，每日追踪默认收成胶囊，停止研究移到发送位置。预发检查覆盖桌面和窄视口，本版未重跑付费十题。 [范围与验证](docs/verification/v0461-compact-workbench.zh-CN.md)
+
 **[v0.46.0 · 深度研究证据进度](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.46.0)。** 深度研究会区分读到原文、检查后未取得可读来源，以及正文已保存并可读回。隔离预发的十个固定任务均完成，正文均原样读回；浏览器验证覆盖一轮显式深度研究。这不代表结论已独立核验，托管正式环境也未变更。 [范围与验证](docs/verification/v046-deep-evidence-milestones.md) · [PR #26](https://github.com/hpoenixf/open-etf-agent/pull/26)
 
 **[v0.45.0 · 研究模式与紧凑输入区](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.45.0)。** 在同一个输入区选择自动、标准或深度模式，也可点「选工具」指定金融图表 Skill。思考强度独立设置，仅对明确启用的 OpenCode Go GLM-5.3-Flash 路线提供预览；使用默认项不发送覆盖值。隔离预发固定十题运行交付与历史回读均为 10/10，按更严格的发布条件为 9/10。未部署托管正式环境。 [范围与验证](docs/verification/v045-research-intent.md)
 
-**[v0.44.0 · 研究工作台界面](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.44.0)。** 历史报告以 Markdown 显示，金融图表 Skill 只呈现同一轮研究中经过核验的数据，缺值不填补。默认本地启动仍离线；隔离预发通过桌面和窄视口检查，未验收浏览器 PDF 或真机手机，未部署托管正式环境。[范围与验证](docs/verification/v044-gui-candidate.md)
-
 | 最近版本 / 状态 | 能做什么 | 用法与边界 |
 | --- | --- | --- |
+| [v0.46.1 · 紧凑研究工作台](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.46.1) | 固定输入、折叠两侧与停止入口 | [范围与验证](docs/verification/v0461-compact-workbench.zh-CN.md) |
 | [v0.46.0 · 深度研究证据进度](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.46.0) | 据实显示来源进度与缺口，保存的正文可读回 | [范围与验证](docs/verification/v046-deep-evidence-milestones.md) |
 | [v0.45.0 · 研究模式与紧凑输入区](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.45.0) | 三种研究模式、图表 Skill、可选思考强度预览 | [范围与验证](docs/verification/v045-research-intent.md) |
-| [v0.44.0 · 研究工作台界面](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.44.0) | Markdown 报告与同轮图表回读；缺值不填补 | [范围与验证](docs/verification/v044-gui-candidate.md) |
 
 [全部固定版本与命令](docs/module-guide.zh-CN.md#versions) · [版本谱系](versions.json) · [全部 Release](https://github.com/hpoenixf/open-etf-agent/releases) · [验证记录](docs/verification/README.zh-CN.md)
 
 <details>
 <summary>历史版本</summary>
 
+**[v0.44.0 · 研究工作台界面](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.44.0)。** 历史报告以 Markdown 显示，金融图表 Skill 只呈现同一轮研究中经过核验的数据，缺值不填补。默认本地启动仍离线；隔离预发通过桌面和窄视口检查，未验收浏览器 PDF 或真机手机，未部署托管正式环境。[范围与验证](docs/verification/v044-gui-candidate.md)
+
 **[v0.43.0 · 隔离账户工作台](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.43.0)。** 按需启用受邀账户登录，每个账户使用独立项目，原默认离线工作台不变。正式安装器已通过隔离验收，公网 TLS 和真实数据迁移未验收。[设置与范围](docs/verification/v043-account-site.md)
 
 | 最近版本 / 状态 | 能做什么 | 用法与边界 |
 | --- | --- | --- |
+| [v0.44.0 · 研究工作台界面](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.44.0) | Markdown 报告与同轮图表回读；缺值不填补 | [范围与验证](docs/verification/v044-gui-candidate.md) |
 | [v0.43.0 · 隔离账户工作台](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.43.0) | 受邀登录与独立项目；未验收公网部署 | [设置与范围](docs/verification/v043-account-site.md) |
 
 **[v0.42.0 · 每日研究与可选的持有人摘要](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.42.0).** 同一问题续用上一份已核实的回答，修改问题后重建基线。邮件需另行启用，未完成外部投递验收。[使用说明](docs/local-gui-daily-watch.md) · [运行验收](docs/verification/v042-runtime-qualification.md)

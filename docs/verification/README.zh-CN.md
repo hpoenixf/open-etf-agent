@@ -1,5 +1,7 @@
 [English](README.md) | **简体中文**
 
+- [v0.46.1 紧凑研究工作台](v0461-compact-workbench.zh-CN.md)
+
 - [v0.46 深度研究的证据进度](v046-deep-evidence-milestones.md)
 
 - [v0.45 研究控制：真实 Runtime 交付 10/10，发布资格 9/10](v045-research-intent.md)
