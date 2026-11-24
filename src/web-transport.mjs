@@ -48,7 +48,15 @@ function requestBytes(url,address,signal,maximum,state,platformConfig,extraHeade
 }
 function httpFailure(status){if(status===401||status===403)return webFailure('WEB_ACCESS_DENIED',{httpStatus:status});if(status===429)return webFailure('WEB_RATE_LIMITED',{httpStatus:status});return webFailure('WEB_HTTP_STATUS',{httpStatus:status});}
 /** Explicitly admitted pages only. This API accepts no transport/proxy injection. */
-export async function acquireWebPage({url,allowedUrls,signal,limits:input,networkProfile='system-direct@1',preparedNetworkProfile}={}){
+export async function acquireWebPage(options){
+ return acquirePublicDocument(options);
+}
+// This host-only entry point is never a model tool; caller owns exact link authorization.
+// One exact admitted URL, no redirects beyond the existing robot rules.
+export async function acquireApprovedWebPdf({url,signal,networkProfile,preparedNetworkProfile}={}){
+ return acquirePublicDocument({url,allowedUrls:[url],signal,networkProfile,preparedNetworkProfile},true);
+}
+async function acquirePublicDocument({url,allowedUrls,signal,limits:input,networkProfile='system-direct@1',preparedNetworkProfile}={},pdf=false){
  if(!['system-direct@1',PLATFORM_PROFILE].includes(networkProfile))throw webFailure('WEB_NETWORK_PROFILE_INVALID');
  const platformConfig=readPreparedWebNetworkProfile(preparedNetworkProfile??prepareWebNetworkProfile(networkProfile),networkProfile);
  const limits=webLimits(input),requestedUrl=normalizeWebUrl(url);
@@ -61,7 +69,7 @@ export async function acquireWebPage({url,allowedUrls,signal,limits:input,networ
  function checkDeadline(){if(Date.now()>=deadlineAt&&!controller.signal.aborted)controller.abort(webFailure('WEB_TIMEOUT'));aborted(controller.signal);}
  async function fetchPinned(u,address,maximum,headers={}){checkDeadline();if(state.requests>=limits.requests)throw webFailure('WEB_REQUEST_LIMIT');return requestBytes(u,address,controller.signal,maximum,state,platformConfig,headers);}
  const platformResolve=platformConfig?createPlatformResolver(fetchPinned,dnsObservations):null;
- async function fetchOne(href,maximum){checkDeadline();const u=new URL(normalizeWebUrl(href)),address=platformResolve?await platformResolve(u.hostname):await resolveAddress(u.hostname,controller.signal,Math.min(limits.dnsMs,limits.timeoutMs));aborted(controller.signal);return fetchPinned(u,address,maximum);}
+ async function fetchOne(href,maximum,headers){checkDeadline();const u=new URL(normalizeWebUrl(href)),address=platformResolve?await platformResolve(u.hostname):await resolveAddress(u.hostname,controller.signal,Math.min(limits.dnsMs,limits.timeoutMs));aborted(controller.signal);return fetchPinned(u,address,maximum,headers);}
  async function rulesFor(page){
   const origin=new URL(page).origin;if(cache.has(origin))return cache.get(origin);
   let href=origin+'/robots.txt',redirectCount=0;const hops=[];
@@ -83,13 +91,17 @@ export async function acquireWebPage({url,allowedUrls,signal,limits:input,networ
   for(let i=0;;i++){
    const rules=await rulesFor(href);aborted(controller.signal);
    if(rules&&rules.isAllowed(normalizeRobotsOctets(href),WEB_USER_AGENT)!==true)throw webFailure('WEB_ROBOTS_DISALLOWED');
-   const response=await fetchOne(href,limits.bodyBytes);
+   const response=await fetchOne(href,limits.bodyBytes,pdf?{'Accept':'application/pdf'}:undefined);
    if(redirectCodes.has(response.status)){
     if(i>=limits.redirects||typeof response.location!=='string')throw webFailure('WEB_REDIRECT_LIMIT');
     const next=normalizeWebUrl(new URL(response.location,href).href);if(!allowed.has(next))throw webFailure('WEB_REDIRECT_NOT_ADMITTED');redirects.push({url:href,status:response.status,location:next});href=next;continue;
    }
    if(response.status!==200)throw httpFailure(response.status);
-   aborted(controller.signal);const extraction=extractWebText(response.body,response.contentType,{limits});checkDeadline();
+   aborted(controller.signal);
+   const extraction=pdf?{}:extractWebText(response.body,response.contentType,{limits});
+   if(pdf&&(typeof response.contentType!=='string'||response.contentType.trim().toLowerCase()!=='application/pdf'))throw webFailure('WEB_PDF_CONTENT_TYPE');
+   if(pdf&&!response.body.subarray(0,5).equals(Buffer.from('%PDF-')))throw webFailure('WEB_PDF_INVALID_MAGIC');
+   checkDeadline();
    return {body:response.body,requestedUrl,finalUrl:href,fetchedAt:new Date().toISOString(),contentType:response.contentType,redirects,robots,...extraction,networkProfile,dnsObservations,proxyConnectionAttempts:state.proxyConnectionAttempts,receivedBytes:state.receivedBytes,requestCount:state.requests};
   }
  }catch(error){

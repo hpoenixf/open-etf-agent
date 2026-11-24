@@ -333,16 +333,23 @@ function readSourcesContent(target, value) {
   }[value.availability];
   if(note)target.append(make('p',note,'muted'));
   for(const source of Array.isArray(value.readSources)?value.readSources:[]){
-    if(source?.kind!=='web-original-excerpt'||typeof source.text!=='string'||
+    const pdf=source?.kind==='web-pdf-original-page';
+    if((!pdf&&source?.kind!=='web-original-excerpt')||typeof source.text!=='string'||
        !Number.isSafeInteger(source.page)||source.page<1||!Number.isSafeInteger(source.pages)||source.pages<source.page)continue;
     const url=originalWebLink(source.url);
     if(!url)continue;
+    let parent=target;
+    if(pdf){
+      parent=target.querySelector('.linked-pdf-records');
+      if(!parent){parent=make('section',undefined,'linked-pdf-records');parent.append(make('h4','公开 PDF 原文页'));target.append(parent);}
+    }
     const excerpt=make('details',undefined,'web-source-excerpt');
-    excerpt.append(make('summary',url.hostname+' · 原文摘录 '+source.page+'/'+source.pages));
-    const link=make('a','打开原网页');
+    excerpt.append(make('summary',url.hostname+(pdf?' · PDF 物理页 ':' · 网页原文摘录 ')+source.page+'/'+source.pages+(pdf?(source.cited?' · 已引用':' · 已读，未引用'):'')));
+    const link=make('a',pdf?'打开来源 PDF（可能更新）':'打开原网页');
+    if(pdf)url.hash='page='+source.page;
     link.href=url.href;link.target='_blank';link.rel='noopener noreferrer';link.referrerPolicy='no-referrer';
     excerpt.append(link,make('pre',source.text,'web-source-text'));
-    target.append(excerpt);
+    parent.append(excerpt);
   }
   if(!target.childElementCount)target.append(make('p','暂时无法核对已读取的网页摘录。','muted'));
 }
@@ -372,7 +379,7 @@ function readSourcesDetails(message) {
     state.readSources.set(message.id,entry);
   }
   entry.content=content;
-  details.append(make('summary','已读网页（不等于已引用）'),content);
+  details.append(make('summary',state.workspace?.liveNotice?.connectivity?.linkedPdf?'已读网页与 PDF（不等于已引用）':'已读网页（不等于已引用）'),content);
   details.open=entry.open;
   if(entry.open)readSourcesContent(content,entry.value);
   details.addEventListener('toggle',()=>{
