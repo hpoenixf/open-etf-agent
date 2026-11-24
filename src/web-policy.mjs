@@ -2,6 +2,14 @@ import ipaddr from 'ipaddr.js';
 export const WEB_USER_AGENT = 'OpenETFResearch';
 export const WEB_LIMITS = Object.freeze({bodyBytes:262144,robotsBytes:65536,totalBytes:524288,timeoutMs:30000,dnsMs:3000,redirects:3,requests:16,nodes:40000,textBytes:262144});
 export function webFailure(code,details={}){return Object.assign(new Error(code),{code,requestCount:0,responseCount:0,receivedBytes:0,dispatchState:'not-dispatched',automaticReplayAllowed:false,...details});}
+// A code on arbitrary AbortSignal reasons cannot assign deadline ownership.
+const acquisitionDeadlines=new WeakSet();
+export function webAcquisitionDeadline(){
+ const reason=webFailure('WEB_TIMEOUT');acquisitionDeadlines.add(reason);return reason;
+}
+export function forwardWebAcquisitionAbort(reason){
+ return webFailure(acquisitionDeadlines.has(reason)?'WEB_TIMEOUT':'WEB_CANCELLED');
+}
 export function normalizeWebUrl(value){
  if(typeof value!=='string'||value.length>2048||/[\u0000-\u0020\u007f\\]/.test(value)||!value.startsWith('https://')||value.includes('#'))throw webFailure('WEB_URL_INVALID');
  let u;try{u=new URL(value);}catch{throw webFailure('WEB_URL_INVALID');}
