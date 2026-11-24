@@ -1,3 +1,4 @@
+import { OWNER_METERED_TOOL_ACCOUNTING, OWNER_TOOL_ACCOUNTING_BINDING } from './tool-accounting.mjs';
 import {researchNeedsTool,RESEARCH_NEEDS_RECEIPT} from './research-needs.mjs';
 import {OWNER_CHART_AUTO, OWNER_CHART_GUIDANCE, OWNER_CHART_AUTO_GUIDANCE, ownerChartChoice, windChartExtension, openOwnerChartSkill} from './financial-chart-owner.mjs';
 import {AUTO_RESEARCH_INTENT,hasResearchEvidence,researchIntentTool,researchProfileFor,RESEARCH_NEEDS_REVISION,usesResearchNeeds} from './research-intent.mjs';
@@ -102,7 +103,7 @@ async function initializeProjectCapacity(projectDir,config,{newProject=false}={}
  const owner=await createSharedAdmission({directory,routeId:group.groupId});owner.close();const parent=await open(join(projectDir,'admission'),'r');try{await parent.sync();}finally{await parent.close();}
 }
 export function validateResearchConfig(input){
- keys(input,['schemaVersion','gateway','capabilities','allowedTools','childMethod','compaction','limits','timeZone','trustedPackages','interaction','childExecution','knowledge','knowledgeQuery','contextBytes','contextWorkingSetBytes','ownerConnectivity','ownerReasoningEffort']);
+ keys(input,['schemaVersion','gateway','capabilities','allowedTools','childMethod','compaction','limits','timeZone','trustedPackages','interaction','childExecution','knowledge','knowledgeQuery','contextBytes','contextWorkingSetBytes','ownerConnectivity','ownerReasoningEffort','ownerToolAccounting']);
  if(input.contextWorkingSetBytes!==undefined&&!integer(input.contextWorkingSetBytes,1,1048576))fail('PROJECT_CONTEXT_WORKING_SET_BYTES');
  if(input.contextBytes!==undefined&&!integer(input.contextBytes,1,1048576))fail('PROJECT_CONTEXT_BYTES');
  if(input.schemaVersion!=='research-project@1')fail('PROJECT_CONFIG_VERSION');
@@ -119,6 +120,8 @@ export function validateResearchConfig(input){
   const q=input.knowledgeQuery;keys(q,['schemaVersion','sourceManifestSha256','modelManifestSha256','pageEvidenceSha256','maxTokens','maxQueries']);
   if(q.schemaVersion!=='local-knowledge-query@1'||!['sourceManifestSha256','modelManifestSha256','pageEvidenceSha256'].every(k=>hex(q[k]))||!integer(q.maxTokens,1,1048576)||!integer(q.maxQueries,1,16)||input.knowledge?.algorithm!=='hybrid'||!input.capabilities.includes('knowledge')||input.capabilities.some(c=>!['report','knowledge'].includes(c)))fail('PROJECT_KNOWLEDGE_QUERY_SCOPE');
  }
+ if(input.ownerToolAccounting!==undefined&&(input.ownerToolAccounting!==OWNER_METERED_TOOL_ACCOUNTING||
+   !supportsOwnerFreeform(input)||input.trustedPackages!==undefined||input.compaction!==undefined))fail('PROJECT_OWNER_TOOL_ACCOUNTING');
  if(input.ownerConnectivity!==undefined){
   const c=input.ownerConnectivity;keys(c,['web','search','searchAlternates','wind']);
   if(!supportsOwnerFreeform(input)||!Object.keys(c).length||c.web!==undefined&&c.web!==true||c.wind!==undefined&&c.wind!==true||
@@ -318,6 +321,7 @@ async function assemble(projectDir,definition,{gateway,apiKey,fetchImpl,hostSign
   // allowlist. Unknown ordinary tool names still fail the original validation.
   const allowedTools=freeform?extensions.map(x=>x.name):(definition.memoryMode===TEMPORARY_MEMORY_MODE?config.allowedTools?.filter(name=>!isNativeMemoryTool(name)):definition.memoryMode===SELECTED_MEMORY_MODE?config.allowedTools?.filter(name=>!isNativeMemoryTool(name)||available.includes(name)):config.allowedTools)??available;if(allowedTools.some(t=>!available.includes(t))||!freeform&&!allowedTools.includes('save_report'))fail('PROJECT_UNAVAILABLE_TOOL');
   if(caps.includes('child')&&(config.childExecution?normalizeChildExecution(config.childExecution).methods.flatMap(m=>m.allowedTools):config.childMethod?normalizeChildMethod(config.childMethod).allowedTools:['read_page']).some(t=>!allowedTools.includes(t)))fail('PROJECT_CHILD_TOOL_SCOPE');
+  if(freeform&&config.ownerToolAccounting===OWNER_METERED_TOOL_ACCOUNTING)adapters.push(OWNER_TOOL_ACCOUNTING_BINDING);
   const limits=config.limits;const options={question:originalQuestion,observeToolResult:observeGuiRun,researchProfile:researchProfileFor(definition.researchDepth,definition.researchProfileRevision),reasoningEffort:definition.reasoningEffort,...(knowledgeQueryEffects?{knowledgeQueryEffects}:{}),...(definition.reportDelivery===undefined?{}:{reportDelivery:definition.reportDelivery}),...(definition.hostProjection===undefined?{}:{hostProjection:definition.hostProjection}),documentCatalog:sources.catalog??undefined,pdfInput:sources.pdfSnapshot?{snapshot:sources.pdfSnapshot}:undefined,allowedDocuments:freeform?undefined:documents,allowedTools,publication:true,requireReport:!freeform,ordinaryResponse:caps.includes('response'),...(config.interaction?{interaction:config.interaction}:{}),extensions,plugins,workingInput,taskTime:definition.taskTime?{anchorInstant:definition.taskTime.anchorInstant,timeZone:definition.taskTime.timeZone}:undefined,...(config.contextWorkingSetBytes===undefined?{}:{contextWorkingSetBytes:config.contextWorkingSetBytes}),contextBytes:config.contextBytes??(caps.includes('knowledge')?KNOWLEDGE_CONTEXT_BYTES:32000),gateway:wrapped,outputRoot:p.runs,limits:{maxRounds:limits.maxRounds,maxTools:limits.maxTools,timeoutMs:limits.timeoutMs},hostSignal,signal,durable:{store,runId,grantId:definition.grantId,rootLimits:{model:limits.model,tool:limits.tool},bindings:{gateway:gatewayBinding(config),plugins:inspected.bindings,adapters},onClaim:v=>{claim=v;},onCheckpoint}};
   return{options,store,sources,runId,close:async()=>{try{for(const close of closers.reverse())await close();}finally{try{admission.close();}finally{store.close();}}}};
  }catch(error){admission?.close();store.close();throw error;}
