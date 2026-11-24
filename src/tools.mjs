@@ -1,5 +1,6 @@
 import {projectControlProofs} from './context.mjs';
 import {ORIGINAL_READ_CORRECTION} from './run-control.mjs';
+import {validateOwnerWebPageInput} from './web-policy.mjs';
 import {webOriginalArtifactId,webOriginalBytes,webProvenanceSha256} from './web-source.mjs';
 import {prepareReportAssessment,assessmentHash} from './report-assessment.mjs';
 import {verifyKnowledgeResult} from './knowledge.mjs';
@@ -434,6 +435,18 @@ export async function createToolHost({ directory, extensions = [], hooks, allowe
       validateReportInputShape(call.arguments);const expected=await assessReport(call.arguments,call.id);if(!expected||!isDeepStrictEqual(expected,result.deliveryAssessment))recoveryFail('Report delivery assessment mismatch');return {text:call.arguments.text,assessment:expected};
     },
     correctionEligible(call,result){return result?.validation===undefined||result.validation.schemaVersion==='specialist-group-refusal@1'?false:verifyLocalRejection(call,result);},
+    ownerWebUrlRefusalProved(call,result){
+      // A plugin error string is not authority. Recompute the same pure
+      // validation against the selected original call, without dispatch.
+      const binding=bindings.public_web_read;
+      if(!runIdentity||hooks||protection||call?.name!=='public_web_read'||
+        binding?.validate!==validateOwnerWebPageInput||!['owner-public-page@1','owner-public-page@2'].includes(binding.recoveryVersion)||
+        !checkpointJsonStable(call)||result?.status!=='rejected'||result.dispatched!==false||result.callId!==call.id||
+        result.error!=='WEB_URL_INVALID'||!Number.isFinite(result.durationMs)||result.durationMs<0||
+        Object.keys(result).some(k=>!['callId','status','dispatched','error','durationMs'].includes(k)))return false;
+      try{validateOwnerWebPageInput(call.arguments);return false;}
+      catch(error){return error?.code==='WEB_URL_INVALID';}
+    },
     async canCompactHistory(call,result){
       // Working-view redaction is not an original memory_read receipt. Keep this
       // group pinned rather than submitting a projection to the Result verifier.

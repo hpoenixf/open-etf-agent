@@ -20,6 +20,11 @@ export function decideRunControl(fact, context = {}) {
   if(fact.correctionProved && context.singleCall && !context.hooks && !context.partial && !context.unknown){
    return context.corrections>=1?stop('CORRECTION_LIMIT'):{action:'continue',reason:'LOCAL_CORRECTION'};
   }
+  // Keep a proved public read refusal in the original tool group. This is
+  // neither a retry nor permission to fetch; the model may use other results
+  // within its existing budget and normal Publication rules.
+  if(fact.ownerWebUrlRefusalProved===true && fact.dispatched===false && !context.hooks && !context.partial && !context.unknown)
+   return {action:'continue',reason:'LOCAL_WEB_URL_REFUSAL'};
   return stop(fact.dispatched?'TOOL_FAILED':'TOOL_REJECTED');
  }
  if(fact.kind==='sealed-final'){
