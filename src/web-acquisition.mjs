@@ -4,7 +4,7 @@ import {inspectResearchProject,readProjectJson} from './research-project.mjs';
 import {loadProjectSources,persistWebAcquisition} from './project-sources.mjs';
 import {safeDirectory,ensureSafeDirectory,publishImmutable} from './storage-files.mjs';
 import {acquireWebPage,prepareWebNetworkProfile} from './web-transport.mjs';
-import {normalizeWebUrl} from './web-policy.mjs';
+import {normalizeWebUrl,webAcquisitionDeadline} from './web-policy.mjs';
 import {normalizeWebAcquisitionPlan,validateWebAcquisitionTerminal,acquisitionBytes,acquisitionHash,ACQUISITION_LIMITS,ACQUISITION_PLATFORM_LIMITS} from './web-acquisition-records.mjs';
 
 const fail=code=>{throw Object.assign(new Error(code),{code});};
@@ -28,7 +28,7 @@ export async function acquireProjectWebSources({projectDir,acquisitionId,urls,al
  // publication leaves a held identity; neither failure nor time permits replay.
  try{await mkdir(directory,{mode:0o700});}catch(error){if(error.code==='EEXIST')fail('WEB_ACQUISITION_ALREADY_EXISTS');throw error;}
  await syncDirectory(operations);await safeDirectory(directory);await publish(directory,'plan.json',plan);
- const controller=new AbortController(),forward=()=>controller.abort(Object.assign(new Error('WEB_CANCELLED'),{code:'WEB_CANCELLED'})),timer=setTimeout(()=>controller.abort(Object.assign(new Error('WEB_TIMEOUT'),{code:'WEB_TIMEOUT'})),ACQUISITION_LIMITS.timeoutMs);
+ const controller=new AbortController(),forward=()=>controller.abort(Object.assign(new Error('WEB_CANCELLED'),{code:'WEB_CANCELLED'})),timer=setTimeout(()=>controller.abort(webAcquisitionDeadline()),ACQUISITION_LIMITS.timeoutMs);
  signal?.addEventListener('abort',forward,{once:true});if(signal?.aborted)forward();
  const observations=[];let requests=0,bytes=0,textBytes=0,receivedBytes=0,active=false;
  try{
