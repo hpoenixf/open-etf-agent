@@ -3,9 +3,16 @@ import https from 'node:https';
 import {EventEmitter} from 'node:events';
 import {PassThrough} from 'node:stream';
 /** Test-only stdlib seam. Every request must match a fixture route; never falls back to network. */
-export function mockWebNetwork(t,{routes={},addresses=[{address:'93.184.216.34',family:4}],lookupError=null}={}){
+export function mockWebNetwork(t,{routes={},addresses=[{address:'93.184.216.34',family:4}],lookupError=null,passthroughLoopback=false}={}){
  const calls=[],lookups=[],requests=[];
- t.mock.method(dns,'lookup',(hostname,options,callback)=>{lookups.push(hostname);queueMicrotask(()=>callback(lookupError,typeof addresses==='function'?addresses(hostname):addresses));});
+ const nativeLookup=dns.lookup;
+ t.mock.method(dns,'lookup',(hostname,...args)=>{
+  // The local GUI listener is not part of the mocked public acquisition.
+  // Use one registration so repeated tests restore the real lookup.
+  if(passthroughLoopback&&hostname==='127.0.0.1')return nativeLookup(hostname,...args);
+  const [,callback]=args;
+  lookups.push(hostname);queueMicrotask(()=>callback(lookupError,typeof addresses==='function'?addresses(hostname):addresses));
+ });
  t.mock.method(https,'request',(url,options,callback)=>{
   const request=new EventEmitter();request.destroyed=false;request.destroy=()=>{request.destroyed=true;request.response?.destroy();return request;};
   request.end=()=>{calls.push({url:url.href,options});queueMicrotask(()=>{
