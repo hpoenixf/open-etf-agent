@@ -368,16 +368,6 @@ async function drive({ question, gateway, outputRoot='runs', requireReport=false
     async function publishAnswer(assessment){
       await settleAsyncChildExecutions(extensions,{phase:'before-final',signal:controller.signal});
       controller.signal.throwIfAborted();if(gatewayUnsettled||state.gatewayOutcome!=='settled'||state.unknownEffects.length)throw failure('OUTCOME_UNKNOWN');
-      // A strict Run needs the Host's report receipt before a new answer can
-      // be committed. Ordinary Runs can still use Publication as delivery.
-      if(reportDelivery!==undefined){
-        const decision=decideRunControl({kind:'publication-intent',reportPresent:!!host.receipt},{reportDelivery});
-        if(decision.action==='stop'){
-          claim.read(); // Preserve cancellation/fence precedence without writing.
-          if(Date.now()>=deadlineAt)throw failure('DEADLINE_EXPIRED');
-          throw failure(decision.reason);
-        }
-      }
       const prepared=preparePublication({runId,rootId:claim.rootId,text:state.answer,...(assessment?{assessment:publicReportAssessment(assessment,state.answer)}:{})});
       let committed;
       try{committed=claim.publish(prepared);}

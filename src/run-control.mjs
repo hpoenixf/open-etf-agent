@@ -22,11 +22,9 @@ export function decideRunControl(fact, context = {}) {
   }
   return stop(fact.dispatched?'TOOL_FAILED':'TOOL_REJECTED');
  }
- const reportArtifactMissing=context.reportDelivery==='artifact-required@1'&&!fact.reportPresent;
- if(fact.kind==='publication-intent')return reportArtifactMissing?stop('REPORT_ARTIFACT_REQUIRED'):{action:'continue',reason:'PUBLICATION_ALLOWED'};
  if(fact.kind==='sealed-final'){
   if(context.unknown)return stop('OUTCOME_UNKNOWN');
-  if(reportArtifactMissing)return stop('REPORT_ARTIFACT_REQUIRED');
+  if(context.reportDelivery==='artifact-required@1'&&!fact.reportPresent)return stop('REPORT_ARTIFACT_REQUIRED');
   if(context.requireReport&&!fact.reportPresent&&!fact.publicationCommitted)return stop('REPORT_REQUIRED');
   return {action:'finalize',reason:'SEALED_FINAL'};
  }
