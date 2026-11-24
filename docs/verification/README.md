@@ -1,5 +1,6 @@
 **English** | [简体中文](README.zh-CN.md)
 
+- [v0.49.0: Research runtime reliability](v049-research-runtime-reliability.md)
 - [v0.48.0 candidate: Verified web sources for saved answers](v048-verified-web-sources.md)
 - [v0.47.0 retained web excerpts and readable answers](v047-retained-web-and-answer-delivery.md)
 - [v0.46.1 compact research workbench](v0461-compact-workbench.md)
