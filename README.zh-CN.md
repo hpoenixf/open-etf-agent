@@ -68,8 +68,8 @@ GitHub 将 SVG 当作一张图片，不能在缩略图里逐卡点击；下表�
 
 **近期更新的阅读素材**
 
-<!-- Recent reading source: hpoenixf/eff-agent-article@cda4cc530641bd20e08ac2b172f614c620b33a36 README.md; Chinese-source Git history order, translated editions are not separate entries. -->
-[金融 Agent 如何成为专业研究者：从用户目的到研究系统](https://hpoenixf.com/eff-agent-article/articles/financial-agent-from-talk-to-research) · [从命令行到研究工作台：让一份研究下次还能接着做](https://hpoenixf.com/eff-agent-article/articles/open-etf-agent-research-workbench) · [从零上线 Open ETF Agent：把研究工作台部署到自己的服务器](https://hpoenixf.com/eff-agent-article/articles/open-etf-agent-staged-deployment)
+<!-- Recent reading source: hpoenixf/eff-agent-article@8ed23b7c67c52b15b2696bcdb4580d6df12e11ab README.md; Chinese-source Git history order, translated editions are not separate entries. -->
+[从第一次提问到重新打开：用 Open ETF Agent 做一次可回看的研究](https://hpoenixf.com/eff-agent-article/articles/open-etf-agent-verify-and-reopen-research) · [Publication：为什么需要独立发布系统](https://hpoenixf.com/eff-agent-article/articles/019-agent-answer-publication) · [Web：从搜索到连续阅读](https://hpoenixf.com/eff-agent-article/articles/021-agent-web-research-from-search-to-deep-reading)
 
 <a id="quickstart"></a>
 ## 快速运行 · Quickstart
@@ -100,22 +100,24 @@ npm run demo -- --case document-compare
 <a id="最近三个模块"></a>
 ## 最近版本与开发状态
 
+**[v0.48.0 · 回看已保存回答的已读网页](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.48.0)。** 打开已保存回答旁的「已读网页」，可回看本轮实际读取的原文链接和已核验的留存摘录。缺失或无法核验的来源不展示，已保存正文不变。隔离预发验证了刷新后的回读，未重新发起模型请求。 [范围与验证](docs/verification/v048-verified-web-sources.md)
+
 **[v0.47.0 · 续读已留存的公开网页与答案正文](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.47.0)。** 同一轮研究可以继续读已留存的同一公开网页，原文缺失或已更改时不会重新抓取。已确认提交的正文不会因后续失败或取消而消失；任务若要求保存报告，正文不能代替报告。这里的固定代码验收未调用外部模型。 [范围与验证](docs/verification/v047-retained-web-and-answer-delivery.md)
 
 **[v0.46.1 · 紧凑研究工作台](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.46.1)。** 输入固定在底部，会话与来源分别折叠，每日追踪默认收成胶囊，停止研究移到发送位置。预发检查覆盖桌面和窄视口，本版未重跑付费十题。 [范围与验证](docs/verification/v0461-compact-workbench.zh-CN.md)
 
-**[v0.46.0 · 深度研究证据进度](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.46.0)。** 深度研究会区分读到原文、检查后未取得可读来源，以及正文已保存并可读回。隔离预发的十个固定任务均完成，正文均原样读回；浏览器验证覆盖一轮显式深度研究。这不代表结论已独立核验，托管正式环境也未变更。 [范围与验证](docs/verification/v046-deep-evidence-milestones.md) · [PR #26](https://github.com/hpoenixf/open-etf-agent/pull/26)
-
 | 最近版本 / 状态 | 能做什么 | 用法与边界 |
 | --- | --- | --- |
+| [v0.48.0 · 回看已保存回答的已读网页](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.48.0) | 回看同一已保存回答的已核验摘录和原文链接 | [范围与验证](docs/verification/v048-verified-web-sources.md) |
 | [v0.47.0 · 续读已留存的公开网页与答案正文](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.47.0) | 同轮续读留存原文；已提交正文可独立读回 | [范围与验证](docs/verification/v047-retained-web-and-answer-delivery.md) |
 | [v0.46.1 · 紧凑研究工作台](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.46.1) | 固定输入、折叠两侧与停止入口 | [范围与验证](docs/verification/v0461-compact-workbench.zh-CN.md) |
-| [v0.46.0 · 深度研究证据进度](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.46.0) | 据实显示来源进度与缺口，保存的正文可读回 | [范围与验证](docs/verification/v046-deep-evidence-milestones.md) |
 
 [全部固定版本与命令](docs/module-guide.zh-CN.md#versions) · [版本谱系](versions.json) · [全部 Release](https://github.com/hpoenixf/open-etf-agent/releases) · [验证记录](docs/verification/README.zh-CN.md)
 
 <details>
 <summary>历史版本</summary>
+
+**[v0.46.0 · 深度研究证据进度](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.46.0)。** 深度研究会区分读到原文、检查后未取得可读来源，以及正文已保存并可读回。隔离预发的十个固定任务均完成，正文均原样读回；浏览器验证覆盖一轮显式深度研究。这不代表结论已独立核验，托管正式环境也未变更。 [范围与验证](docs/verification/v046-deep-evidence-milestones.md) · [PR #26](https://github.com/hpoenixf/open-etf-agent/pull/26)
 
 **[v0.45.0 · 研究模式与紧凑输入区](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.45.0)。** 在同一个输入区选择自动、标准或深度模式，也可点「选工具」指定金融图表 Skill。思考强度独立设置，仅对明确启用的 OpenCode Go GLM-5.3-Flash 路线提供预览；使用默认项不发送覆盖值。隔离预发固定十题运行交付与历史回读均为 10/10，按更严格的发布条件为 9/10。未部署托管正式环境。 [范围与验证](docs/verification/v045-research-intent.md)
 
