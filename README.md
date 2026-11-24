@@ -68,8 +68,8 @@ Articles can describe a broader system than the public module. Coverage records 
 
 **Recently updated reading**
 
-<!-- Recent reading source: hpoenixf/eff-agent-article@e9e33242b10a548e236b98311a21ee00ec215ac9 README.en.md; Chinese-source Git history order, translated editions are not separate entries. -->
-[From the Command Line to a Research Workspace: How to Pick Up Where You Left Off](https://hpoenixf.com/eff-agent-article/en/articles/open-etf-agent-research-workbench) · [Deploy Open ETF Agent from Scratch: Run the Research Workspace on Your Own Server](https://hpoenixf.com/eff-agent-article/en/articles/open-etf-agent-staged-deployment) · [Six-Layer Request Lifecycle: From Prompt to Visible Answer](https://hpoenixf.com/eff-agent-article/en/articles/017-prompt-to-answer-six-layer-panorama-v3)
+<!-- Recent reading source: hpoenixf/eff-agent-article@cda4cc530641bd20e08ac2b172f614c620b33a36 README.en.md; Chinese-source Git history order, translated editions are not separate entries. -->
+[How a Financial Agent Becomes a Professional Researcher: From User Goals to a Research System](https://hpoenixf.com/eff-agent-article/en/articles/financial-agent-from-talk-to-research) · [From the Command Line to a Research Workspace: How to Pick Up Where You Left Off](https://hpoenixf.com/eff-agent-article/en/articles/open-etf-agent-research-workbench) · [Deploy Open ETF Agent from Scratch: Run the Research Workspace on Your Own Server](https://hpoenixf.com/eff-agent-article/en/articles/open-etf-agent-staged-deployment)
 
 <a id="quickstart"></a>
 ## Quickstart
@@ -100,22 +100,24 @@ npm run demo -- --case document-compare
 <a id="latest-three-modules"></a>
 ## Releases and development status
 
+**[v0.47.0 · Retained web excerpts and verified answer delivery](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.47.0).** An owner turn can continue reading the same retained public webpage without refetching missing or changed originals. A confirmed answer stays readable after a later failure or cancellation, but does not satisfy a required report. The pinned code verification did not call an external model. [Scope and verification](docs/verification/v047-retained-web-and-answer-delivery.md)
+
 **[v0.46.1 · Compact research workbench](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.46.1).** The bottom composer stays in view, History and Sources fold independently, and Daily Watch opens from a capsule. Stop shares the Send slot. Staging covered desktop and narrow viewports, without a new paid cohort. [Scope and verification](docs/verification/v0461-compact-workbench.md)
 
 **[v0.46.0 · Deep research evidence milestones](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.46.0).** Deep research distinguishes original entries actually read, checks that returned no readable source, and an answer saved and read back. In isolated staging, all ten fixed tasks completed and their exact answers read back. The browser check covered one explicit Deep turn. This does not verify the conclusions or change hosted production. [Scope and verification](docs/verification/v046-deep-evidence-milestones.md) · [PR #26](https://github.com/hpoenixf/open-etf-agent/pull/26)
 
-**[v0.45.0 · Research modes and a compact composer](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.45.0).** Choose Auto, Standard or Deep in the composer, or select the Financial Chart Skill explicitly. Thinking effort is a separate preview for the explicitly enabled OpenCode Go GLM-5.3-Flash route; Default sends no override. In the fixed isolated-staging cohort, Runtime delivery and History readback passed 10/10; the stricter release checks passed 9/10. Hosted production was not changed. [Scope and verification](docs/verification/v045-research-intent.md)
-
 | Recent version / status | What it enables | Usage and boundaries |
 | --- | --- | --- |
+| [v0.47.0 · Retained web excerpts and verified answer delivery](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.47.0) | Continue a retained page and read back the committed answer separately | [Scope and verification](docs/verification/v047-retained-web-and-answer-delivery.md) |
 | [v0.46.1 · Compact research workbench](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.46.1) | Docked input, foldable panels and a Stop action | [Scope and verification](docs/verification/v0461-compact-workbench.md) |
 | [v0.46.0 · Deep research evidence milestones](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.46.0) | Evidence-based progress, honest source gaps and saved-answer readback | [Scope and verification](docs/verification/v046-deep-evidence-milestones.md) |
-| [v0.45.0 · Research modes and a compact composer](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.45.0) | Three research modes, a Chart Skill picker, and an optional thinking effort preview | [Scope and verification](docs/verification/v045-research-intent.md) |
 
 [All fixed versions and commands](docs/module-guide.md#versions) · [Version lineage](versions.json) · [All releases](https://github.com/hpoenixf/open-etf-agent/releases) · [Verification records](docs/verification/README.md)
 
 <details>
 <summary>Earlier versions</summary>
+
+**[v0.45.0 · Research modes and a compact composer](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.45.0).** Choose Auto, Standard or Deep in the composer, or select the Financial Chart Skill explicitly. Thinking effort is a separate preview for the explicitly enabled OpenCode Go GLM-5.3-Flash route; Default sends no override. In the fixed isolated-staging cohort, Runtime delivery and History readback passed 10/10; the stricter release checks passed 9/10. Hosted production was not changed. [Scope and verification](docs/verification/v045-research-intent.md)
 
 **[v0.44.0 · Research workspace GUI](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.44.0).** Saved reports render as Markdown. The Financial Chart Skill uses verified evidence from the same Run and preserves missing observations. Default local startup stays offline. Isolated staging covered desktop and a narrow viewport, not browser PDF or a physical phone; hosted production was unchanged. [Scope and verification](docs/verification/v044-gui-candidate.md)
 
@@ -123,6 +125,7 @@ npm run demo -- --case document-compare
 
 | Recent version / status | What it enables | Usage and boundaries |
 | --- | --- | --- |
+| [v0.45.0 · Research modes and a compact composer](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.45.0) | Three research modes, a Chart Skill picker, and an optional thinking effort preview | [Scope and verification](docs/verification/v045-research-intent.md) |
 | [v0.44.0 · Research workspace GUI](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.44.0) | Markdown reports and saved same-Run charts; missing observations stay missing | [Scope and verification](docs/verification/v044-gui-candidate.md) |
 | [v0.43.0 · Isolated account workspace](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.43.0) | Invite-only login and isolated Projects; public deployment not qualified | [Setup and scope](docs/verification/v043-account-site.md) |
 
