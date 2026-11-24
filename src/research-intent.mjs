@@ -75,7 +75,7 @@ export function readDeepResearchProgress(profile,snapshot,{deliveryReadback=fals
    const {status,dispatched,value}=reply.result;
    if(dispatched!==true||status!=='succeeded')continue;
    if(call.name==='public_web_read'){
-    if(value?.kind==='public-web-page@1'&&originalDigest(value.originalSha256)&&originalDigest(value.manifestSha256)&&
+    if(['public-web-page@1','public-web-page@2'].includes(value?.kind)&&originalDigest(value.originalSha256)&&originalDigest(value.manifestSha256)&&
       originalDigest(value.textSha256)&&textPresent(value.text)&&typeof value.url==='string'&&value.url.startsWith('https://')&&
       value.page===1&&Number.isSafeInteger(value.pages)&&value.pages>=1){
       attempts++;originals.add('web:'+JSON.stringify([value.url,value.originalSha256]));

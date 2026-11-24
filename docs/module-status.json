@@ -1,9 +1,9 @@
 {
   "schemaVersion": 2,
-  "reviewedVersion": "0.46.0",
-  "reviewedSource": "9b7cbfc358fd2688fc69a2af5b0c263016fc1eb9",
+  "reviewedVersion": "0.48.0",
+  "reviewedSource": "d349a38631324929a974341c70ff9a9fc5b6ee1e",
   "articleSource": "https://github.com/hpoenixf/eff-agent-article/blob/249f0b866f9446f33b57f186fbc6d35b5d82c119/articles/open-etf-agent-v010-system-design.md",
-  "evidence": "docs/verification/v046-deep-evidence-milestones.md",
+  "evidence": "docs/verification/v048-verified-web-sources.md",
   "layers": [
     {
       "id": "L1",
@@ -562,7 +562,7 @@
         "zh": "未知派发不重放；不复核结论",
         "en": "No unknown replay or conclusion review"
       },
-      "status": "enhanced",
+      "status": "bounded",
       "source": "src/runtime.mjs",
       "kind": "module",
       "article": {
@@ -605,12 +605,12 @@
       "group": "main",
       "name": "Run Control",
       "summary": {
-        "zh": "继续或停止的决策",
-        "en": "Continue or stop decision"
+        "en": "Decide terminal Run outcome",
+        "zh": "决定 Run 是否及如何终结"
       },
       "boundary": {
-        "zh": "Host stop ≠ 用户取消",
-        "en": "Host stop ≠ user cancellation"
+        "en": "Verified answers survive later faults",
+        "zh": "次要错误不抹掉已确认正文"
       },
       "status": "bounded",
       "source": "src/run-control.mjs",
@@ -755,12 +755,12 @@
       "group": "tools",
       "name": "Web Acquisition",
       "summary": {
-        "zh": "搜索并读取公开静态页",
-        "en": "Discover and read public pages"
+        "en": "Continue reading one public page",
+        "zh": "继续读取同一公开网页的摘录"
       },
       "boundary": {
-        "zh": "摘要不是原文证据",
-        "en": "Search snippets are not evidence"
+        "en": "Uses retained bytes; no second fetch",
+        "zh": "复用原始留存内容，不重新抓取"
       },
       "status": "bounded",
       "source": "src/web-acquisition.mjs",
@@ -1005,12 +1005,12 @@
       "group": "delivery",
       "name": "Publication",
       "summary": {
-        "zh": "接纳回答正文",
-        "en": "Accept answer body"
+        "en": "Read back the verified original body",
+        "zh": "回读已核验的原始回答正文"
       },
       "boundary": {
-        "zh": "原版本与提交回执",
-        "en": "Original revision and commit receipt"
+        "en": "Body is not proof of a saved report",
+        "zh": "已发布正文不等于已交付报告"
       },
       "status": "bounded",
       "source": "src/publication.mjs",
@@ -1080,15 +1080,15 @@
       "group": "delivery",
       "name": "Local Research GUI",
       "summary": {
-        "zh": "Markdown、紧凑控件与图表 Skill",
-        "en": "Markdown, compact controls and charts"
+        "en": "Reopen exact saved web excerpts",
+        "zh": "回看该回答已读的网页摘录"
       },
       "boundary": {
-        "zh": "图表仅接 Wind 日收盘，公网页面待验",
-        "en": "Wind closes only; browser gate pending"
+        "en": "Same owner and turn; not citations",
+        "zh": "仅同一项目、本轮；不等于引用"
       },
-      "status": "bounded",
-      "source": "src/gui-server.mjs",
+      "status": "enhanced",
+      "source": "src/gui/gui.mjs",
       "kind": "call-site",
       "article": {
         "slug": "agent-conversation-admission-task-continuation",

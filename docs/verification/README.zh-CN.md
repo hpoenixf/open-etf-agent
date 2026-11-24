@@ -1,5 +1,9 @@
 [English](README.md) | **简体中文**
 
+- [v0.48.0 候选：已保存回答的网页原文回看](v048-verified-web-sources.md)
+- [v0.47.0 网页摘录续读与答案正文回读](v047-retained-web-and-answer-delivery.md)
+- [v0.46.1 紧凑研究工作台](v0461-compact-workbench.zh-CN.md)
+
 - [v0.46 深度研究的证据进度](v046-deep-evidence-milestones.md)
 
 - [v0.45 研究控制：真实 Runtime 交付 10/10，发布资格 9/10](v045-research-intent.md)

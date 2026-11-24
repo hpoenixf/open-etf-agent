@@ -117,7 +117,7 @@ export function materializeScheduledRun(options, reference, observation = {}) {
  const prior=options.durable.store.inspectSchedule(reference);
  return drive(options, true, {kind:'materialize',schedule:prior.envelope.schedule,reference,reportFresh:observation.reportFresh===true});
 }
-async function drive({ question, gateway, outputRoot='runs', requireReport=false, reportDelivery, signal, hostSignal, limits={}, extensions=[], hooks, plugins, rootBudget, allowedTools, allowedDocuments, taskId=null, contextBytes, contextWorkingSetBytes, workingInput, durable, publication = false, pdfInput, taskTime, ordinaryResponse = false, documentProtection = false, documentCatalog, interaction, hostProjection, knowledgeQueryEffects, researchProfile, reasoningEffort }, submitting, scheduleOperation) {
+async function drive({ question, gateway, outputRoot='runs', requireReport=false, reportDelivery, signal, hostSignal, limits={}, extensions=[], hooks, plugins, rootBudget, allowedTools, allowedDocuments, taskId=null, contextBytes, contextWorkingSetBytes, workingInput, durable, publication = false, pdfInput, taskTime, ordinaryResponse = false, documentProtection = false, documentCatalog, interaction, hostProjection, knowledgeQueryEffects, researchProfile, reasoningEffort, observeToolResult }, submitting, scheduleOperation) {
   if(pdfInput?.snapshot!==undefined){if(Object.keys(pdfInput).length!==1)throw failure('PDF_INVALID_INPUT');pdfInput=Object.freeze({snapshot:normalizePdfSnapshot(pdfInput.snapshot)});}
   documentCatalog=documentCatalog===undefined?undefined:normalizeDocumentCatalog(documentCatalog);
   if(documentCatalog&&documentProtection)throw failure('CUSTOM_PROTECTED_CATALOG_UNSUPPORTED');
@@ -311,17 +311,30 @@ async function drive({ question, gateway, outputRoot='runs', requireReport=false
     rootBudget=claim?.rootBudget??rootBudget??createRootBudget({model:budget.maxRounds,tool:budget.maxTools});
     const controller=new AbortController();
     let interrupted=false,effectsStopped=true,pendingEffect,hostInitialization,hostInitializationAbandoned=false,awaitingResponse=false;
+    let cancellationReservation;
     const stop=()=>{if(!controller.signal.aborted){interrupted=true;controller.abort(failure('HOST_STOPPED'));}};
     const cancel=()=>{
       // New explicit Child execution binding preserves cooperative Host stops.
       // Cancellation, stale writers and deadlines retain their original authority.
       if(boundChild&&signal?.reason?.code==='HOST_STOPPED'&&durable.bindings.adapters.some(b=>['serial-child-execution','async-child-execution'].includes(b.id)&&b.version==='1')){stop();return;}
+      if(claim&&!boundChild&&!protectedMode&&!ordinaryResponse&&!scheduleOperation&&publication&&!requireReport&&
+         reportDelivery===undefined&&!durable.bindings.adapters.some(binding=>['serial-child-execution','async-child-execution'].includes(binding.id))){
+       try{
+        const prior=claim.read();
+        boundToOriginal(prior);
+        if(prior.runId===runId&&prior.rootId===runId&&prior.fence===claim.fence&&prior.owner===claim.owner&&
+           prior.status==='active'&&prior.rootStatus==='active'&&prior.snapshot.phase==='model-reserved'&&prior.snapshot.gatewayOutcome==='unknown')
+         cancellationReservation=prior;
+       }catch{/* Do not extend this path to unproved or replayable checkpoints. */}
+      }
       if(claim&&!boundChild){try{durable.store.cancel(runId);}catch{}}
-      controller.abort(boundChild?(signal?.reason instanceof Error?signal.reason:failure('INTERRUPTED')):failure('CANCELLED'));
+      controller.abort(cancellationReservation?failure('OPERATOR_CANCEL_REQUESTED'):boundChild?(signal?.reason instanceof Error?signal.reason:failure('INTERRUPTED')):failure('CANCELLED'));
     };
     signal?.addEventListener('abort',cancel,{once:true});if(signal?.aborted)cancel();
     hostSignal?.addEventListener('abort',stop,{once:true});if(hostSignal?.aborted)stop();
-    const timer=setTimeout(()=>controller.abort(failure('TIMEOUT')),Math.max(1,deadlineAt-Date.now()));
+    const ownDeadline=failure('TIMEOUT');
+    let postPublicationCheckpointDeadline=false;
+    const timer=setTimeout(()=>controller.abort(ownDeadline),Math.max(1,deadlineAt-Date.now()));
     let heartbeat;if(claim)heartbeat=setInterval(()=>{try{claim.renew();}catch(error){controller.abort(failure(error.code==='RUN_CANCELLED'?'CANCELLED':error.code||'LEASE_LOST'));}},Math.max(10,Math.floor(durable.store.leaseMs/3)));
     let host,log,inFlight=state.phase==='tool-dispatched'?state.inFlight:null;
     let gatewayUnsettled=state.phase==='model-reserved';
@@ -339,7 +352,9 @@ async function drive({ question, gateway, outputRoot='runs', requireReport=false
       try{return await Promise.race([pendingEffect,new Promise(resolve=>{timeout=setTimeout(()=>resolve(false),500);})]);}
       finally{clearTimeout(timeout);}
     }
-    async function record(type,data={}){if(!log)return;try{await log.write(JSON.stringify({runId,rootId:rootBudget.rootId,taskId,sequence:++record.sequence,type,...data})+'\n');}catch{if(!logErrors.includes('LOG_WRITE_FAILED'))logErrors.push('LOG_WRITE_FAILED');observeControl('log','LOG_WRITE_FAILED');}}
+    async function record(type,data={}){
+      if(type==='tool_result')try{observeToolResult?.({type:'tool-result',toolId:data.callId,at:Date.now(),name:data.name,status:data.status,dispatched:data.dispatched,duration:data.durationMs});}catch{}
+      if(!log)return;try{await log.write(JSON.stringify({runId,rootId:rootBudget.rootId,taskId,sequence:++record.sequence,type,...data})+'\n');}catch{if(!logErrors.includes('LOG_WRITE_FAILED'))logErrors.push('LOG_WRITE_FAILED');observeControl('log','LOG_WRITE_FAILED');}}
     record.sequence=0;
     async function checkpoint(phase,{reserve}={}){
       const previousPhase=state.phase;state.phase=phase;state.host=host.snapshot();state.inFlight=inFlight;state.logSequence=record.sequence;
@@ -356,10 +371,25 @@ async function drive({ question, gateway, outputRoot='runs', requireReport=false
     async function publishAnswer(assessment){
       await settleAsyncChildExecutions(extensions,{phase:'before-final',signal:controller.signal});
       controller.signal.throwIfAborted();if(gatewayUnsettled||state.gatewayOutcome!=='settled'||state.unknownEffects.length)throw failure('OUTCOME_UNKNOWN');
-      const committed=claim.publish(preparePublication({runId,rootId:claim.rootId,text:state.answer,...(assessment?{assessment:publicReportAssessment(assessment,state.answer)}:{})}));
+      const prepared=preparePublication({runId,rootId:claim.rootId,text:state.answer,...(assessment?{assessment:publicReportAssessment(assessment,state.answer)}:{})});
+      let committed;
+      try{committed=claim.publish(prepared);}
+      catch(error){
+       let proof;
+       if(!assessment&&!boundChild&&!protectedMode&&!ordinaryResponse&&!scheduleOperation&&!requireReport&&reportDelivery===undefined&&
+          !state.partialEffects.length&&typeof claim.confirmInitialPublication==='function'){
+        controller.signal.throwIfAborted();
+        try{proof=claim.confirmInitialPublication(prepared);}catch{/* No readable owner proof: keep the original failure. */}
+       }
+       if(decideRunControl({kind:'publication-ack-missing',proof}).action!=='continue')throw error;
+       committed={receipt:proof.receipt,idempotent:false};
+      }
       state.publication=committed.receipt;
       // A control checkpoint is deliberately separate from delivery observation.
-      if(durable.onCheckpoint)await bounded(Promise.resolve().then(()=>durable.onCheckpoint({phase:'publication-committed',runId,directory,receipt:structuredClone(committed.receipt),fence:claim.fence})),controller.signal);
+      if(durable.onCheckpoint){
+       try{await bounded(Promise.resolve().then(()=>durable.onCheckpoint({phase:'publication-committed',runId,directory,receipt:structuredClone(committed.receipt),fence:claim.fence})),controller.signal);}
+       catch(error){postPublicationCheckpointDeadline=error===ownDeadline;throw error;}
+      }
       controller.signal.throwIfAborted();claim.read();durable.store.confirmPublication(committed.receipt);
       // There is no more model/tool dispatch on this sealed-final path. Keep
       // user cancellation and fence protection, not a notification-owned deadline.
@@ -549,13 +579,13 @@ async function drive({ question, gateway, outputRoot='runs', requireReport=false
         if(result.memoryEffect)state.partialEffects.push({callId:call.id,name:effectiveName,memoryEffect:structuredClone(result.memoryEffect)});
         let correctionOffered=false;
         const candidate=await host.answerCandidate(call,result);
-        const toolDecision=decideRunControl({kind:'tool-result',succeeded:result.status==='succeeded',dispatched:result.dispatched,answerProved:Boolean(candidate),correctionProved:await host.correctionEligible(call,result)},
+        const toolDecision=decideRunControl({kind:'tool-result',succeeded:result.status==='succeeded',dispatched:result.dispatched,answerProved:Boolean(candidate),correctionProved:await host.correctionEligible(call,result),ownerWebUrlRefusalProved:!gatewayUnsettled&&state.gatewayOutcome==='settled'&&host.ownerWebUrlRefusalProved(call,result)},
           {singleCall:state.proposal.calls.length===1,hooks:!!hooks,partial:state.partialEffects.length>0,unknown:state.unknownEffects.length>0,corrections:state.corrections??0});
         state.failureCode=toolDecision.action==='stop'?toolDecision.reason:null;
         if(toolDecision.reason==='LOCAL_CORRECTION'){state.corrections=1;correctionOffered=true;}
         state.messages.push({role:'tool',callId:call.id,result:structuredClone(result)});state.cursor++;state.result=null;
         await checkpoint('result-consumed');
-        await record('tool_result',{callId:call.id,name:effectiveName,status:result.status,dispatched:result.dispatched,partialPaths,memoryEffect:result.memoryEffect,artifactEffects:result.artifactEffects,artifactId:result.value?.artifactId,durationMs:result.durationMs,resultRef:result.value?.resultRef,sourceAcquisition:result.value?.mcp?{serverName:result.value.mcp.serverName,protocolVersion:result.value.mcp.protocolVersion,protocolRequestId:result.value.mcp.protocolRequestId,modelCallId:result.value.mcp.modelCallId}:undefined,original:result.original,effective:result.effective,hookErrors:result.hookErrors||[]});
+        await record('tool_result',{callId:call.id,name:effectiveName,status:result.status,dispatched:result.dispatched,...(toolDecision.reason==='LOCAL_WEB_URL_REFUSAL'?{code:'WEB_URL_INVALID'}:{}),partialPaths,memoryEffect:result.memoryEffect,artifactEffects:result.artifactEffects,artifactId:result.value?.artifactId,durationMs:result.durationMs,resultRef:result.value?.resultRef,sourceAcquisition:result.value?.mcp?{serverName:result.value.mcp.serverName,protocolVersion:result.value.mcp.protocolVersion,protocolRequestId:result.value.mcp.protocolRequestId,modelCallId:result.value.mcp.modelCallId}:undefined,original:result.original,effective:result.effective,hookErrors:result.hookErrors||[]});
         if(effectiveName==='save_report'&&result.status==='succeeded')await record('file_saved',{receipt:result.value});
         if(correctionOffered)await record('validation_correction_offered',{callId:call.id,code:result.validation.code,remainingRounds:budget.maxRounds-state.rounds});
         if(state.failureCode)throw failure(state.failureCode);
@@ -585,7 +615,7 @@ async function drive({ question, gateway, outputRoot='runs', requireReport=false
       try{const cleanup=await settleAsyncChildExecutions(extensions,{phase:'close',interrupted});if(cleanup.effectsStopped===false)effectsStopped=false;}catch{effectsStopped=false;secondary('child-cleanup','CHILD_CLEANUP_FAILED');}
       if(pdfInput!==undefined){try{await host?.close();}catch{secondary('pdf-cleanup','PDF_CLEANUP_FAILED');}}
       if(allowedTools&&host){try{sourceSnapshots=await host.getSources();resultRefs=await host.getResultRefs();}catch{secondary('result-readback','RESULT_READBACK_FAILED');}}
-      if(log){try{await record(awaitingResponse?'run_yielded':interrupted?'worker_interrupted':'run_finished',{settlementPhase:'pre-settlement',terminalAuthority:claim?'Session.finish':'Runtime.return',status:awaitingResponse?'awaiting-response':interrupted?'interrupted':state.status,code:state.code,toolsDispatched:state.toolsDispatched,receipt:host?.receipt,unknownEffects:state.unknownEffects,partialEffects:state.partialEffects});}catch{secondary('log','LOG_WRITE_FAILED',false);}await log.close().catch(()=>logErrors.push('LOG_CLOSE_FAILED'));}
+      if(log){try{if(cancellationReservation)await record('worker_cancel_requested',{settlementPhase:'observation',status:'unconfirmed'});else await record(awaitingResponse?'run_yielded':interrupted?'worker_interrupted':'run_finished',{settlementPhase:'pre-settlement',terminalAuthority:claim?'Session.finish':'Runtime.return',status:awaitingResponse?'awaiting-response':interrupted?'interrupted':state.status,code:state.code,toolsDispatched:state.toolsDispatched,receipt:host?.receipt,unknownEffects:state.unknownEffects,partialEffects:state.partialEffects});}catch{secondary('log','LOG_WRITE_FAILED',false);}await log.close().catch(()=>logErrors.push('LOG_CLOSE_FAILED'));}
       if(hooks){try{state.hookErrors.push(...await hooks.observe('release',{runId,rootId:rootBudget.rootId,taskId,status:state.status,code:state.code,logErrors:[...logErrors],receipt:host?.receipt}));}catch{state.hookErrors.push({phase:'release',error:'HOOK_RELEASE_FAILED'});secondary('hook-release','HOOK_RELEASE_FAILED',false);}}
     }
     // Keep external cancellation observable through asynchronous cleanup/release.
@@ -594,7 +624,44 @@ async function drive({ question, gateway, outputRoot='runs', requireReport=false
     signal?.removeEventListener('abort',cancel);hostSignal?.removeEventListener('abort',stop);
     if(protectedMode&&state.status!=='completed')state.answer='';
     state.gatewayOutcome=gatewayUnsettled?'unknown':'settled';
+    if(cancellationReservation&&pendingEffect)effectsStopped=false;
     const outcome={...(!effectsStopped?{cleanup:{effectsStopped:false,...(hostInitializationAbandoned?{pending:'host-initialization'}:{})}}:{}),...(state.controlObservations?{controlObservations:structuredClone(state.controlObservations)}:{}),runId,rootId:rootBudget.rootId,directory:resolve(directory),status:state.status,code:state.code,gatewayOutcome:state.gatewayOutcome,answer:state.answer,...(state.publication?{publication:structuredClone(state.publication)}:{}),receipt:host?.receipt??null,toolsDispatched:state.toolsDispatched,rounds:state.rounds,logErrors,unknownEffects:state.unknownEffects,partialEffects:state.partialEffects,hookErrors:state.hookErrors,rootUsage:rootBudget.snapshot(),taskId,...(allowedTools?{sources:sourceSnapshots,resultRefs}:{}),semanticStatus:'unreviewed'};
+    if(cancellationReservation){
+     let proof;
+     try{
+      const prior=cancellationReservation,current=durable.store.inspect(runId);
+      boundToOriginal(current);
+      if(current.runId===prior.runId&&current.rootId===prior.rootId&&current.fence===prior.fence&&current.owner===null&&current.leaseUntil===0&&
+         current.status==='cancelled'&&current.rootStatus==='cancelled'&&canonical(current.definition)===canonical(prior.definition)&&
+         canonical(current.rootUsage)===canonical(prior.rootUsage)&&canonical(current.snapshot)===canonical(cancelRuntimeCheckpoint(prior.snapshot)))
+       proof={kind:'same-fence-persisted-cancellation'};
+     }catch{/* No exact readback does not establish cancellation. */}
+     const decision=decideRunControl({kind:'operator-cancel-at-model-reservation',proof});
+     // The earlier durable reservation is the no-redispatch barrier. Do not
+     // publish a late answer, write a competing terminal row or release a claim.
+     return {...outcome,status:decision.status,code:decision.reason,gatewayOutcome:'unknown'};
+    }
+    if(postPublicationCheckpointDeadline&&controller.signal.reason===ownDeadline&&claim&&!interrupted&&!boundChild&&!scheduleOperation&&
+       !ordinaryResponse&&!protectedMode&&!requireReport&&reportDelivery===undefined&&state.code==='TIMEOUT'&&state.publication&&
+       state.phase==='proposal-sealed'&&state.proposal?.kind==='final'&&effectsStopped&&!pendingEffect&&!gatewayUnsettled&&
+       !state.inFlight&&!state.partialEffects.length&&!state.unknownEffects.length&&
+       !durable.bindings.adapters.some(binding=>['serial-child-execution','async-child-execution'].includes(binding.id))){
+     let proof,saved;
+     try{
+      saved=durable.store.confirmPublication(state.publication);
+      const current=claim.read(),snapshot=current.snapshot;
+      boundToOriginal(current);
+      if(current.runId===runId&&current.rootId===runId&&current.fence===claim.fence&&current.status==='active'&&current.rootStatus==='active'&&
+         canonical(saved.receipt)===canonical(state.publication)&&saved.content.text===state.answer&&
+         snapshot.phase==='proposal-sealed'&&snapshot.gatewayOutcome==='settled'&&canonical(snapshot.proposal)===canonical(state.proposal)&&
+         !snapshot.inFlight&&!snapshot.unknownEffects.length&&!snapshot.partialEffects.length)
+       proof={kind:'same-fence-publication-and-settled-effects'};
+     }catch{/* An unavailable body, cancellation or lost fence cannot prove this path. */}
+     const decision=decideRunControl({kind:'post-publication-checkpoint-deadline',proof});
+     // This is a worker observation, not a new Session terminal state. Do not
+     // finish, release, publish, notify again or dispatch after this deadline.
+     if(decision.action==='return-without-finish')return {...outcome,status:decision.status,code:decision.reason,answer:saved.content.text};
+    }
     if(awaitingResponse){
       try{
         claim.release();
@@ -610,7 +677,19 @@ async function drive({ question, gateway, outputRoot='runs', requireReport=false
       const original=durable.store.inspect(runId);
       return{...outcome,status:original.status==='active'?'interrupted':original.status,code:original.status==='active'?'HOST_STOPPED':original.snapshot.code,interruption:{effectsStopped,leaseReleased}};
     }
-    if(claim){try{state.phase='terminal';state.host=host?.snapshot()??state.host;state.outcome=outcome;claim.finish(state);}catch(error){outcome.status=error.code==='RUN_CANCELLED'?'cancelled':'failed';outcome.code=error.code==='RUN_CANCELLED'?'CANCELLED':error.code||'CHECKPOINT_FAILED';}finally{try{claim.release();}catch{}}}
+    if(claim){
+     let verifiedFinish=false;
+     try{state.phase='terminal';state.host=host?.snapshot()??state.host;state.outcome=outcome;claim.finish(state);}
+     catch(error){
+      let proof;
+      if(!boundChild&&!protectedMode&&!ordinaryResponse&&!scheduleOperation&&reportDelivery===undefined&&publication&&effectsStopped&&
+         state.status==='completed'&&state.publication&&typeof claim.confirmTerminalFinish==='function'){
+       try{proof=claim.confirmTerminalFinish(state);}catch{/* Unreadable state is not proof. */}
+      }
+      verifiedFinish=decideRunControl({kind:'finish-ack-missing',proof}).action==='preserve';
+      if(!verifiedFinish){outcome.status=error.code==='RUN_CANCELLED'?'cancelled':'failed';outcome.code=error.code==='RUN_CANCELLED'?'CANCELLED':error.code||'CHECKPOINT_FAILED';}
+     }finally{if(!verifiedFinish){try{claim.release();}catch{}}}
+    }
     return outcome;
     }finally{
       clearInterval(heartbeat);clearTimeout(timer);

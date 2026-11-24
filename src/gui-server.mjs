@@ -9,6 +9,7 @@ import { fileURLToPath } from 'node:url';
 import {
   createConversation, inspectConversation, inspectConversationMessage, readDailyConversationBaseline, readConversationMessage, readConversationCharts, readConversationInput, readConversationTitle, titleForConversationInput, submitConversationMessage,
   workConversationMessage, cancelConversationMessage,
+  readConversationBody, readConversationSources,
 } from './conversation.mjs';
 import { createResearchProject, inspectResearchProject, inspectResearchTask, readProjectJson, supportsOwnerFreeform, updateResearchProject, validateResearchConfig } from './research-project.mjs';
 import { importProjectSources, importUploadedPdf, PROJECT_SOURCE_LIMITS } from './project-sources.mjs';
@@ -21,6 +22,7 @@ import { openGuiDailyWatch, DAILY_TIME_ZONE } from './gui-daily-watch.mjs';
 import {offerReasoningEffort} from './gateway.mjs';
 import { readGuiResearchProgress, readGuiReasoningEffort } from './gui-progress.mjs';
 import { prepareGuiLiveConfig } from './gui-live-config.mjs';
+import { prepareOwnerLangfuse } from './gui-langfuse.mjs';
 
 const routeId = '[A-Za-z0-9_-]{1,48}';
 const idPattern = new RegExp('^'+routeId+'$');
@@ -30,6 +32,8 @@ const pdfId = /^[a-f0-9]{64}$/;
 const dailyPath = new RegExp('^/api/daily-watch(?:/(w[a-f0-9]{24}))?$');
 const progressPath = new RegExp('^/api/conversations/('+routeId+')/messages/('+routeId+')/progress$');
 const reportPath = new RegExp('^/api/conversations/('+routeId+')/messages/('+routeId+')/report[.]md$');
+const bodyPath = new RegExp('^/api/conversations/('+routeId+')/messages/('+routeId+')/body$');
+const sourcesPath = new RegExp('^/api/conversations/('+routeId+')/messages/('+routeId+')/sources$');
 const actionPath = new RegExp('^/api/conversations/('+routeId+')/messages(?:/('+routeId+')/(work|cancel))?$');
 const config = {
   schemaVersion: 'research-project@1',
@@ -122,9 +126,10 @@ async function guiProject(projectDir, expectedConfig, live, freeform) {
 
 // Trusted server composition only. An account host must authenticate and
 // resolve its Project before mounting this listener-free handler.
-export async function createLocalGuiWorkspace({ projectDir, origin: mountOrigin, liveConfig, env = process.env, fetchImpl, ownerWebTransport, ownerWindFetch, dailyClock, onDailyCompleted, smtpOptions, ownerDailyDigest } = {}) {
+export async function createLocalGuiWorkspace({ projectDir, origin: mountOrigin, liveConfig, env = process.env, fetchImpl, ownerWebTransport, ownerWindFetch, dailyClock, onDailyCompleted, smtpOptions, ownerDailyDigest, langfuseOptions } = {}) {
   const live = liveConfig === undefined ? null : prepareGuiLiveConfig(liveConfig,env);
   const mode = live?'live-research':'offline-demo';
+  const telemetry=live?prepareOwnerLangfuse(env,langfuseOptions):null;
   const expectedConfig=live?.config??validatedConfig;
   const wrongProject=live?'GUI_LIVE_PROJECT_REQUIRED':'GUI_DEMO_PROJECT_REQUIRED';
   const freeform=supportsOwnerFreeform(expectedConfig);
@@ -249,10 +254,32 @@ export async function createLocalGuiWorkspace({ projectDir, origin: mountOrigin,
     if (working) reject(409, 'GUI_WORKER_BUSY');
     const source = sourceFor(sourceId);
     if (!freeform&&!source) reject(409, 'GUI_SOURCE_UNKNOWN');
+    const trace=telemetry?.start();
     const p = Promise.resolve().then(() =>
       workConversationMessage({ projectDir, conversationId, messageId,
-        ...(live?{apiKey:live.apiKey,fetchImpl,ownerWebTransport,ownerWindSettings,ownerSearchSettings,ownerWindFetch}:{gateway:demoGateway(source)}), hostSignal: hostSignal.signal })
+        ...(live?{apiKey:live.apiKey,fetchImpl,ownerWebTransport,ownerWindSettings,ownerSearchSettings,ownerWindFetch,observeGuiRun:trace?.observe}:{gateway:demoGateway(source)}), hostSignal: hostSignal.signal })
     ).catch(() => { /* Lifecycle and original execution evidence remain in Project. */ });
+    if(trace)void p.then(async()=>{
+      const turn=await inspectConversationMessage({projectDir,conversationId,messageId});
+      if(!turn?.runId)return;
+      const {run,definition}=await inspectResearchTask({projectDir,runId:turn.runId});
+      if(!['completed','failed','cancelled'].includes(run?.status))return;
+      // Use the same narrow persisted-body boundary as the GUI, never the bulk
+      // History read, and never treat provider completion as delivery.
+      let delivery='unavailable';
+      try {
+        const exact=await readConversationBody({projectDir,conversationId,messageId});
+        if(exact.body?.text)delivery='publication';
+        else {
+          const {output}=await readConversationMessage({projectDir,conversationId,messageId});
+          delivery=output?.kind==='report'?'report':'not-created';
+        }
+      } catch(error) {
+        if(error?.code==='PROJECT_REPORT_NOT_READY')delivery='not-created';
+      }
+      trace.finish(projectDir,{runId:run.runId,status:run.status,code:run.snapshot.code,delivery,
+        modelUsed:run.rootUsage.model,toolUsed:run.rootUsage.tool,modelLimit:definition.config.limits.model,toolLimit:definition.config.limits.tool});
+    }).catch(()=>{});
     working = { key, p };
     p.finally(() => { if (working?.p === p) working = null; });
     return p;
@@ -383,7 +410,7 @@ export async function createLocalGuiWorkspace({ projectDir, origin: mountOrigin,
         if (req.url === '/api/workspace') return send(200, {
           schemaVersion: 'local-gui@1', mode, reasoningEffort,
           ...(live?{liveNotice:{maxModelCallsPerRun:expectedConfig.limits.model,...(freeform?{freeform:true,connectivity:{web:connectivity.web===true,search:!!connectivity.search,...(connectivity.search?{searchProvider:connectivity.search}:{}),...(connectivity.searchAlternates?{searchAlternates:connectivity.searchAlternates}:{}),wind:connectivity.wind===true}}:{})}}:{}),
-          capabilities: ['conversations','progress','reports','sources',...(freeform?['pdf-attachment','daily-watch','deep-research','research-intent']:[]),...(chartAvailable?['financial-chart-skill']:[]),...(chartAuto?['financial-chart-auto']:[])],
+          capabilities: ['conversations','progress','reports','sources','read-web-sources',...(freeform?['pdf-attachment','daily-watch','deep-research','research-intent']:[]),...(chartAvailable?['financial-chart-skill']:[]),...(chartAuto?['financial-chart-auto']:[])],
           projectId: demo.projectId, conversations: await list({titles:true}), sources: publicSources,
         });
         if(req.url==='/api/daily-watch'&&daily)return send(200,{timeZone:DAILY_TIME_ZONE,autorun:dailyAutorun,
@@ -407,6 +434,30 @@ export async function createLocalGuiWorkspace({ projectDir, origin: mountOrigin,
             }catch{/* A terminal Run by itself does not prove readable delivery. */}
           }
           return send(200,{...timeline,...(researchIntent&&researchIntent!=='direct'?{researchIntent}:{}),...(deepProgress?{deepProgress}:{})});
+        }
+        const bodyMatch=bodyPath.exec(req.url);
+        if(bodyMatch){
+          const [,conversationId,messageId]=bodyMatch;
+          let result;
+          try{result=await readConversationBody({projectDir,conversationId,messageId});}
+          catch(error){
+            if(['ENOENT','UNKNOWN_RUN','CONVERSATION_PROJECT_MISMATCH'].includes(error.code))return send(404,{error:'NOT_FOUND'});
+            return send(503,{error:'BODY_READ_UNAVAILABLE'});
+          }
+          if(!result.body)return send(409,{error:'BODY_NOT_PUBLISHED',status:result.status});
+          return send(200,result);
+        }
+        const sourcesMatch=sourcesPath.exec(req.url);
+        if(sourcesMatch){
+          const [,conversationId,messageId]=sourcesMatch;
+          let result;
+          try{result=await readConversationSources({projectDir,conversationId,messageId});}
+          catch(error){
+            if(['ENOENT','UNKNOWN_RUN','CONVERSATION_PROJECT_MISMATCH'].includes(error.code))return send(404,{error:'NOT_FOUND'});
+            return send(503,{error:'SOURCES_READ_UNAVAILABLE'});
+          }
+          if(!result.published)return send(409,{error:'BODY_NOT_PUBLISHED',status:result.status});
+          return send(200,result.view);
         }
         const reportMatch = reportPath.exec(req.url);
         if (reportMatch) {

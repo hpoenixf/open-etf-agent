@@ -1,7 +1,7 @@
 import {createFinancialChartView} from './financial-chart-view.mjs';
 import { renderMarkdown } from './markdown.mjs';
 const byId = id => document.getElementById(id);
-const state = { workspace: null, conversation: null, detail: null, poll: null, submitting: false, pending: null, failures: 0, selection:0, progress:new Map() };
+const state = { workspace: null, conversation: null, detail: null, poll: null, submitting: false, pending: null, failures: 0, selection:0, refreshSequence:0, appliedRefresh:0, progress:new Map(), readSources:new Map(), stopping:new Map() };
 const statusLabels = {
   'admission-pending':'接收待确认', 'completed':'已完成', 'failed':'未完成', 'cancelled':'已取消',
   'active':'等待执行', 'fenced':'已暂停', 'unknown':'结果未知',
@@ -99,10 +99,51 @@ function confirmLive() {
   return window.confirm('将向启动时配置的真实模型发送本次问题，并提供所选演练资料。'
     + '该任务最多调用模型 '+budget+' 次，费用由提供方计收。请勿输入敏感或未经授权的信息。确定继续？');
 }
+function isUnknownRun(message) { return /UNKNOWN|MISSING/.test(message.code ?? ''); }
+function canActOnRun(message) {
+  return message.status==='active'&&!isUnknownRun(message)&&(!ownerMode()||message.sourceId===null||message.attachment);
+}
+function stopKey(conversationId,message) { return JSON.stringify([conversationId,message.id,message.runId]); }
+function activeStopTarget() {
+  const conversationId=state.conversation;
+  if(!conversationId||state.detail?.id!==conversationId)return null;
+  const workers=state.detail.messages.filter(message=>message.working);
+  if(workers.length!==1)return null; // An ambiguous Run cannot be stopped by guesswork.
+  const [message]=workers;
+  if(!canActOnRun(message)||!message.id||!message.runId)return null;
+  return {conversationId,messageId:message.id,key:stopKey(conversationId,message),selection:state.selection};
+}
+async function stopCurrentRun() {
+  const target=activeStopTarget();
+  if(!target||state.stopping.has(target.key))return;
+  const stillSelected=()=>state.conversation===target.conversationId&&state.selection===target.selection;
+  state.stopping.set(target.key,target);
+  message();
+  controls();
+  try {
+    await api('/api/conversations/'+encodeURIComponent(target.conversationId)+'/messages/'+encodeURIComponent(target.messageId)+'/cancel',{});
+  } catch {
+    state.stopping.delete(target.key);
+    if(stillSelected())message('未能确认停止，请查看当前任务状态；可在仍运行时重试。');
+  }
+  if(!stillSelected())return;
+  controls();
+  try { await refresh(); }
+  catch { scheduleRefresh(); } // Keep the pending state until a fresh Run view, not the POST alone.
+}
 function controls() {
   const working = state.detail?.messages.some(m => m.working);
+  const target=activeStopTarget(), stopping=target&&state.stopping.has(target.key);
+  const stop=byId('stop'), send=byId('send');
+  stop.hidden=!target;
+  stop.setAttribute('aria-disabled',String(Boolean(stopping)));
+  stop.title=stopping?'正在停止…':'停止研究';
+  stop.setAttribute('aria-label',stop.title);
+  send.hidden=Boolean(target);
   byId('send').disabled = state.submitting || working === true || !state.workspace;
-  byId('send').textContent = state.pending ? '重试原提交' : liveMode() ? '提交真实模型' : '提交演练';
+  send.title = state.pending ? '重试原提交' : liveMode() ? '提交真实模型' : '提交演练';
+  send.setAttribute('aria-label',send.title);
+  send.dataset.retry=String(Boolean(state.pending));
   byId('question').readOnly = Boolean(state.submitting || state.pending);
   byId('pdf-file').disabled = Boolean(state.submitting || state.pending);
   byId('research-depth').disabled = Boolean(state.submitting || state.pending);
@@ -135,17 +176,94 @@ function refreshHistory() {
     li.append(b); list.append(li);
   }
 }
-function showEvidence(source,index) {
+const workbench = { desktopHistory:true, compactHistory:false, desktopEvidence:false, lastCitation:null };
+const compactHistory = () => window.matchMedia('(max-width:700px)').matches;
+const compactEvidence = () => window.matchMedia('(max-width:930px)').matches;
+const panelExpanded = id => byId(id).getAttribute('aria-expanded')==='true';
+function preserveReadingAnchor(layout) {
+  const pane=byId('reading-pane'), bounds=pane.getBoundingClientRect();
+  const anchor=[...pane.querySelectorAll('.question,.markdown-body > *,.turn-actions')].find(node=>{
+    const box=node.getBoundingClientRect();
+    return box.bottom>bounds.top&&box.top<bounds.bottom;
+  });
+  const top=anchor?.getBoundingClientRect().top;
+  layout();
+  if(top!==undefined)pane.scrollTop+=anchor.getBoundingClientRect().top-top;
+}
+function setHistoryOpen(open) {
+  workbench[compactHistory()?'compactHistory':'desktopHistory']=open;
+  byId('history').hidden=!open;
+  byId('history-toggle').setAttribute('aria-expanded',String(open));
+  byId('workspace').dataset.history=String(open);
+}
+function setEvidenceOpen(open) {
+  const toggle=byId('evidence-toggle'), dialog=byId('mobile-evidence');
+  const compact=compactEvidence(), desktopOpen=!compact&&open;
+  if (!compact)workbench.desktopEvidence=open;
+  byId('workspace').dataset.evidence=String(desktopOpen);
+  byId('desktop-evidence').hidden=!desktopOpen;
+  toggle.setAttribute('aria-controls',compact?'mobile-evidence':'desktop-evidence');
+  toggle.setAttribute('aria-expanded',String(open));
+  if(compact&&open&&!dialog.open)dialog.showModal();
+  if((!compact||!open)&&dialog.open)dialog.close();
+}
+function fitComposerPanels() {
+  const toolbar=byId('composer-actions');
+  const viewport=window.visualViewport;
+  const spill=toolbar.getBoundingClientRect().top-(viewport?.offsetTop??0);
+  // 6px for the panel-to-toolbar gap, 8px clear of the top of the visible page.
+  toolbar.style.setProperty('--composer-panel-room',Math.max(44,Math.floor(spill)-14)+'px');
+}
+function initWorkbench() {
+  const historyMedia=window.matchMedia('(max-width:700px)');
+  const evidenceMedia=window.matchMedia('(max-width:930px)');
+  const sync=()=>{
+    setHistoryOpen(historyMedia.matches?workbench.compactHistory:workbench.desktopHistory);
+    setEvidenceOpen(evidenceMedia.matches?byId('mobile-evidence').open:workbench.desktopEvidence);
+  };
+  historyMedia.addEventListener('change',sync);
+  evidenceMedia.addEventListener('change',sync);
+  sync();
+  const viewport=window.visualViewport;
+  // The dock may change size as the textarea or permissions disclosure changes.
+  if(window.ResizeObserver){
+    const fit=new window.ResizeObserver(fitComposerPanels);
+    fit.observe(byId('composer'));
+    fit.observe(byId('workspace'));
+  }
+  if(viewport){
+    const fit=()=>{
+      const root=document.documentElement;
+      const useHeight=compactEvidence()&&Math.abs(viewport.scale-1)<.02;
+      if(useHeight)root.style.setProperty('--workbench-height',Math.floor(viewport.height)+'px');
+      else root.style.removeProperty('--workbench-height');
+      root.dataset.shortViewport=String(useHeight&&viewport.height<=550);
+      root.dataset.veryShortViewport=String(useHeight&&viewport.height<=380);
+      fitComposerPanels();
+    };
+    viewport.addEventListener('resize',fit);
+    evidenceMedia.addEventListener('change',fit);
+    fit();
+  }
+}
+function showEvidence(source,index,trigger) {
   const node = byId('evidence-template').content.cloneNode(true);
   node.querySelector('h3').textContent = '来源 ['+index+']'+(source.pdfPage?' · PDF 第 '+source.pdfPage+' 页':'');
   node.querySelector('pre').textContent = source.text;
   node.querySelector('small').textContent = source.sha256 ? 'SHA-256 '+source.sha256 : '';
-  if (window.matchMedia('(max-width:930px)').matches) {
-    byId('mobile-evidence-content').replaceChildren(node);
-    if (!byId('mobile-evidence').open) byId('mobile-evidence').showModal();
-  } else {
-    byId('desktop-evidence').replaceChildren(make('h2','来源与核对'),node);
+  byId('desktop-evidence-content').replaceChildren(node.cloneNode(true));
+  byId('mobile-evidence-content').replaceChildren(node);
+  byId('desktop-evidence').dataset.selected='true';
+  workbench.lastCitation=trigger;
+  preserveReadingAnchor(()=>setEvidenceOpen(true));
+}
+function resetEvidence() {
+  byId('desktop-evidence').dataset.selected='false';
+  for(const id of ['desktop-evidence-content','mobile-evidence-content']) {
+    byId(id).replaceChildren(make('p','点击回答中的来源，即可查看原文。','muted'));
   }
+  workbench.lastCitation=null;
+  if(byId('mobile-evidence').open)setEvidenceOpen(false);
 }
 function progressContent(target, value) {
   target.replaceChildren();
@@ -158,9 +276,12 @@ function progressContent(target, value) {
     return;
   }
   if(value.omitted>0)target.append(make('p','仅展示最近的步骤。','muted'));
+  const sequence=make('details');
+  sequence.append(make('summary','查看技术步骤'));
   const list=make('ol');
   for(const step of value.steps)list.append(make('li',step.label));
-  target.append(list);
+  sequence.append(list);
+  target.append(sequence);
 }
 async function loadProgress(conversation, entry, message) {
   if(entry.loading||(!message.working&&entry.cachedTerminal))return;
@@ -175,14 +296,16 @@ async function loadProgress(conversation, entry, message) {
     if(entry.content?.isConnected)progressContent(entry.content,{status:'unavailable'});
   } finally { entry.loading=false; }
 }
-function progressDetails(message) {
+function progressDetails(message, context) {
   const details=make('details',undefined,'research-progress');
   const content=make('div',undefined,'research-progress-body');
   const conversation=state.conversation;
   const entry=state.progress.get(message.id)??{open:false};
   entry.content=content;
   state.progress.set(message.id,entry);
-  details.append(make('summary','研究进度'),content);
+  details.append(make('summary','研究进度'));
+  if(context.childElementCount)details.append(context);
+  details.append(content);
   progressContent(content,{...entry.data,...(message.deepProgress?{deepProgress:message.deepProgress}:{})});
   details.open=entry.open;
   details.addEventListener('toggle',()=>{
@@ -193,49 +316,131 @@ function progressDetails(message) {
   if(details.open)void loadProgress(conversation,entry,message);
   return details;
 }
+function originalWebLink(href) {
+  if(typeof href!=='string')return null;
+  try {
+    const url=new URL(href);
+    return url.protocol==='https:'&&!url.username&&!url.password&&!url.search&&!url.hash?url:null;
+  } catch {return null;}
+}
+function readSourcesContent(target, value) {
+  target.replaceChildren();
+  if(!value){target.append(make('p','正在读取这条回答已保存的网页记录。','muted'));return;}
+  const note={
+    none:'没有查到本次已读取的网页原文。搜索预览不算原文。',
+    partial:'仅显示仍可核对的网页摘录，记录不完整。',
+    unavailable:'暂时无法核对已读取的网页摘录。',
+  }[value.availability];
+  if(note)target.append(make('p',note,'muted'));
+  for(const source of Array.isArray(value.readSources)?value.readSources:[]){
+    if(source?.kind!=='web-original-excerpt'||typeof source.text!=='string'||
+       !Number.isSafeInteger(source.page)||source.page<1||!Number.isSafeInteger(source.pages)||source.pages<source.page)continue;
+    const url=originalWebLink(source.url);
+    if(!url)continue;
+    const excerpt=make('details',undefined,'web-source-excerpt');
+    excerpt.append(make('summary',url.hostname+' · 原文摘录 '+source.page+'/'+source.pages));
+    const link=make('a','打开原网页');
+    link.href=url.href;link.target='_blank';link.rel='noopener noreferrer';link.referrerPolicy='no-referrer';
+    excerpt.append(link,make('pre',source.text,'web-source-text'));
+    target.append(excerpt);
+  }
+  if(!target.childElementCount)target.append(make('p','暂时无法核对已读取的网页摘录。','muted'));
+}
+async function loadReadSources(entry) {
+  if(entry.loading||typeof entry.project!=='string'||!entry.project)return;
+  const identity=()=>state.workspace?.projectId===entry.project&&state.conversation===entry.conversation&&
+    state.selection===entry.selection&&state.readSources.get(entry.messageId)===entry;
+  entry.loading=true;
+  try {
+    const value=await api('/api/conversations/'+encodeURIComponent(entry.conversation)+
+      '/messages/'+encodeURIComponent(entry.messageId)+'/sources');
+    if(!identity())return;
+    entry.value=value?.projectId===entry.project&&value.messageId===entry.messageId&&value.conversationId===entry.conversation?
+      value:{availability:'unavailable'};
+  } catch {if(identity())entry.value={availability:'unavailable'};}
+  finally {
+    entry.loading=false;
+    if(identity()&&entry.open&&entry.content?.isConnected)readSourcesContent(entry.content,entry.value);
+  }
+}
+function readSourcesDetails(message) {
+  const details=make('details',undefined,'research-progress read-web-sources');
+  const content=make('div',undefined,'research-progress-body');
+  let entry=state.readSources.get(message.id);
+  if(!entry||entry.selection!==state.selection){
+    entry={project:state.workspace.projectId,conversation:state.conversation,selection:state.selection,messageId:message.id,open:false};
+    state.readSources.set(message.id,entry);
+  }
+  entry.content=content;
+  details.append(make('summary','已读网页（不等于已引用）'),content);
+  details.open=entry.open;
+  if(entry.open)readSourcesContent(content,entry.value);
+  details.addEventListener('toggle',()=>{
+    if(!details.isConnected||entry.content!==content)return;
+    const opened=details.open&&!entry.open;
+    entry.open=details.open;
+    if(opened){readSourcesContent(content,entry.value);void loadReadSources(entry);}
+  });
+  return details;
+}
 function render() {
-  const t = byId('transcript');
+  const t = byId('transcript'), pane=byId('reading-pane');
+  const savedTop=pane.scrollTop;
   t.replaceChildren();
   for (const m of state.detail?.messages ?? []) {
-    const article = make('article',undefined,'turn'), header = make('div',undefined,'turn-header');
+    const article = make('article',undefined,'turn');
     article.dataset.turnId=m.id;
-    const isUnknown = /UNKNOWN|MISSING/.test(m.code ?? '');
+    const prompt = make('section',undefined,'turn-prompt');
+    prompt.setAttribute('aria-label','你的问题');
+    prompt.append(make('span','你','speaker'),make('p',m.question ?? '问题尚未读回','question'));
+    const response = make('section',undefined,'turn-response');
+    response.setAttribute('aria-label','研究助手');
+    const header = make('div',undefined,'turn-header');
+    const isUnknown = isUnknownRun(m);
     const status = isUnknown ? '结果未知' : m.working ? phaseLabels[m.phase] ?? '处理中' : statusLabels[m.status] ?? '状态待核对';
-    header.append(make('strong','你'),make('span',status,'state'));
-    article.append(header,make('p',m.question ?? '问题尚未读回','question'));
+    const badge=make('span',status,m.status==='completed'&&!isUnknown&&!m.working?'visually-hidden':'state');
+    header.append(make('h2','研究助手','speaker'),badge);
+    response.append(header);
     const route={deep:'深度研究',research:'资料查证',direct:'普通回答',standard:'标准研究'}[m.effectiveResearchIntent];
     const requested={auto:'自动',standard:'标准研究',deep:'深度研究'}[m.researchDepth];
-    if(requested||route)article.append(make('p',(requested?'研究模式：'+requested:'')+(route?(requested?' · ':'')+'实际路线：'+route:''),'muted'));
+    const context=make('div',undefined,'research-context');
+    if(requested||route)context.append(make('p',(requested?'研究模式：'+requested:'')+(route?(requested?' · ':'')+'实际路线：'+route:''),'muted'));
     const effort=effortHistory(m.reasoningEffort);
-    if(effort)article.append(make('p',effort,'muted'));
-    if(m.evidenceAssessment==='unreviewed')article.append(make('p','结论与引文未独立核验。','muted'));
-    if(m.attachment) article.append(make('p','PDF：'+m.attachment.name+' · '+m.attachment.pages+' 页','muted'));
-    article.append(progressDetails(m));
+    if(effort)context.append(make('p',effort,'muted'));
+    if(m.attachment)prompt.append(make('p','PDF：'+m.attachment.name+' · '+m.attachment.pages+' 页','attachment'));
+    response.append(progressDetails(m,context));
+    if(m.evidenceAssessment==='unreviewed')response.append(make('p','结论与引文未独立核验。','evidence-note muted'));
     const providerFailure=(/^PROVIDER_HTTP_(403|429)$/).exec(m.code??'');
     if (providerFailure) {
       const guidance=providerFailure[1]==='403'?'提供方拒绝访问，请核对账户、地区及模型权限。'
         :'提供方限制了请求，请核对可用额度或频率。';
-      article.append(make('p',m.code+' · '+guidance+' 本次未自动重发。','warning'));
+      response.append(make('p',m.code+' · '+guidance+' 本次未自动重发。','warning'));
     }
     if (m.output?.warning) {
       if(m.status==='completed'){
         const disclosure=make('details',undefined,'turn-notice');
         disclosure.append(make('summary','来源与限制'),make('p',m.output.warning,'muted'));
-        article.append(disclosure);
-      } else article.append(make('p',m.output.warning,'warning'));
+        response.append(disclosure);
+      } else response.append(make('p',m.output.warning,'warning'));
     }
-    if (m.output?.answer && m.output.answer !== m.output?.report?.text) article.append(renderMarkdown(document,m.output.answer));
+    const hasSeparateAnswer=m.output?.answer && m.output.answer !== m.output?.report?.text;
+    if (hasSeparateAnswer) response.append(renderMarkdown(document,m.output.answer));
     if (m.output?.report) {
-      article.append(make('h3','已保存的报告'),renderMarkdown(document,m.output.report.text));
+      response.append(make('h3','已保存的报告',hasSeparateAnswer?'report-heading':'visually-hidden'),renderMarkdown(document,m.output.report.text));
     } else if (m.error || m.status==='completed' && !m.output?.answer) {
-      article.append(make('p','没有读到已保存报告。','muted'));
+      response.append(make('p','没有读到已保存报告。','muted'));
     }
+    const sources=make('div',undefined,'citation-actions');
     for (const [i,source] of (m.output?.sources ?? []).entries()) {
-      const citation = make('button','核对来源 ['+(i+1)+']','secondary');
-      citation.type='button'; citation.addEventListener('click',() => showEvidence(source,i+1)); article.append(citation);
+      const label=Number.isSafeInteger(source.pdfPage)&&source.pdfPage>0?'PDF 第 '+source.pdfPage+' 页':'核对来源';
+      const citation = make('button',label+' ['+(i+1)+']','secondary');
+      citation.type='button'; citation.addEventListener('click',() => showEvidence(source,i+1,citation)); sources.append(citation);
     }
+    if(sources.childElementCount)response.append(sources);
+    if(state.workspace.capabilities.includes('read-web-sources')&&m.output?.publicationStatus==='published')
+      response.append(readSourcesDetails(m));
     for(const chart of m.chartViews??[]){
-      try{article.append(createFinancialChartView(document,chart));}
+      try{response.append(createFinancialChartView(document,chart));}
       catch{/* A rejected chart view must not hide the durable answer. */}
     }
     const actions = make('div',undefined,'turn-actions');
@@ -267,23 +472,26 @@ function render() {
       });
       actions.append(reuse);
     }
-    if(actions.childElementCount) article.append(actions);
-    if (m.status === 'active' && !isUnknown && (!ownerMode() || m.sourceId===null || m.attachment)) {
-      const action = m.working ? 'cancel' : 'work';
-      const b = make('button',m.working?'取消本次':'继续原任务','secondary');
+    if(actions.childElementCount) response.append(actions);
+    if (!m.working && canActOnRun(m)) {
+      const conversationId=state.conversation;
+      const b = make('button','继续原任务','secondary');
       b.type='button'; b.addEventListener('click',async()=> {
+        if(state.conversation!==conversationId)return;
         try {
-          if (liveMode() && !ownerMode() && action==='work' && !confirmLive()) return;
-          await api('/api/conversations/'+state.conversation+'/messages/'+m.id+'/'+action,
-            liveMode()&&!ownerMode()&&action==='work'?{approveLive:true}:{});
-          await refresh();
-        } catch(e) { failed(e); }
+          if (liveMode() && !ownerMode() && !confirmLive()) return;
+          await api('/api/conversations/'+conversationId+'/messages/'+m.id+'/work',
+            liveMode()&&!ownerMode()?{approveLive:true}:{});
+          if(state.conversation===conversationId)await refresh();
+        } catch(e) { if(state.conversation===conversationId)failed(e); }
       });
-      article.append(b);
+      response.append(b);
     }
+    article.append(prompt,response);
     t.append(article);
   }
   byId('intro').hidden = (state.detail?.messages.length ?? 0)>0;
+  pane.scrollTop=savedTop;
   controls();
 }
 function scheduleRefresh() {
@@ -296,8 +504,13 @@ function scheduleRefresh() {
 async function refresh() {
   const selected = state.conversation, selection = state.selection;
   if (!selected) return;
+  const seq=++state.refreshSequence;
   const detail = await api('/api/conversations/'+selected);
-  if (state.selection !== selection) return;
+  if (state.selection !== selection||seq<state.appliedRefresh) return;
+  state.appliedRefresh=seq;
+  for(const [key,request] of state.stopping){
+    if(request.conversationId===selected&&!detail.messages.some(m=>m.working&&canActOnRun(m)&&stopKey(selected,m)===key))state.stopping.delete(key);
+  }
   state.failures = 0;
   const old = JSON.stringify(state.detail);
   state.detail = detail;
@@ -305,7 +518,10 @@ async function refresh() {
   const title = detail.title;
   if (row && row.title !== title) { row.title=title; refreshHistory(); controls(); }
   if (old !== JSON.stringify(detail)) render();
-  else for (const item of detail.messages){const entry=state.progress.get(item.id);if(entry?.open)void loadProgress(selected,entry,item);}
+  else {
+    controls();
+    for (const item of detail.messages){const entry=state.progress.get(item.id);if(entry?.open)void loadProgress(selected,entry,item);}
+  }
   scheduleRefresh();
 }
 function conversationHash(hash=location.hash){
@@ -317,28 +533,31 @@ function focusTurn(messageId){
 }
 async function select(id,messageId) {
   if (state.pending && state.pending.conversationId !== id) return;
-  if (state.conversation !== id) {
+  const changed=state.conversation!==id;
+  if (changed) {
     state.progress.clear();
+    state.readSources.clear();
     message();
     if(state.conversation)byId('pdf-file').value='';byId('pdf-file').dispatchEvent(new Event('change'));
     byId('research-depth').value='auto'; byId('reasoning-effort').value=''; byId('chart-skill').value=''; updateChartSkillLabel(); updateSettingsLabel(); closeComposerOptions();
-    const dialog=byId('mobile-evidence');
-    if (dialog.open) dialog.close();
-    byId('mobile-evidence-content').replaceChildren();
-    byId('desktop-evidence').replaceChildren(make('h2','来源与核对'),make('p','选中报告的引用，即可核对保存的原文。','muted'));
+    resetEvidence();
+    byId('reading-pane').scrollTop=0;
+    state.detail=null;
   }
   clearTimeout(state.poll);
-  state.selection++; state.conversation=id; state.detail=null;
+  state.selection++; state.conversation=id;
   restoreDraft();
   location.hash=id+(messageId?'~'+messageId:'');
   refreshHistory();
-  byId('history').dataset.open='false'; byId('history-toggle').setAttribute('aria-expanded','false');
+  if(compactHistory())setHistoryOpen(false);
   render();
   await refresh();
   if(state.conversation===id)focusTurn(messageId);
 }
 async function load() {
-  state.workspace = await api('/api/workspace');
+  const workspace = await api('/api/workspace');
+  if(workspace.projectId!==state.workspace?.projectId)state.readSources.clear();
+  state.workspace = workspace;
   configureEffortPicker();
   updateSettingsLabel();
   if (ownerMode()) {
@@ -496,9 +715,22 @@ byId('daily-digest-form').addEventListener('submit',async event=>{
   }catch{byId('daily-digest-status').textContent='未确认保存，请刷新后再核对。';}
   finally{save.disabled=false;}
 });
-byId('history-toggle').addEventListener('click',()=> {
-  const b = byId('history-toggle'), isOpen=b.getAttribute('aria-expanded')==='true';
-  b.setAttribute('aria-expanded',String(!isOpen)); byId('history').dataset.open=String(!isOpen);
+byId('history-toggle').addEventListener('click',()=>preserveReadingAnchor(()=>setHistoryOpen(!panelExpanded('history-toggle'))));
+for(const id of ['history-toggle','history'])byId(id).addEventListener('keydown',event=>{
+  if(event.key!=='Escape'||!panelExpanded('history-toggle'))return;
+  event.preventDefault();
+  preserveReadingAnchor(()=>setHistoryOpen(false));
+  byId('history-toggle').focus();
+});
+byId('evidence-toggle').addEventListener('click',()=>{
+  workbench.lastCitation=null;
+  preserveReadingAnchor(()=>setEvidenceOpen(!panelExpanded('evidence-toggle')));
+});
+byId('desktop-evidence').addEventListener('keydown',event=>{
+  if(event.key!=='Escape')return;
+  event.preventDefault();
+  preserveReadingAnchor(()=>setEvidenceOpen(false));
+  byId('evidence-toggle').focus();
 });
 byId('history-search').addEventListener('input',()=>{if(state.workspace){refreshHistory();controls();}});
 byId('question').addEventListener('input',()=>{if(!state.pending){saveDraft();controls();}});
@@ -521,23 +753,26 @@ function updateSettingsLabel(){
   settings.hidden=byId('research-depth-picker').hidden&&byId('reasoning-effort-picker').hidden;
   const active=(!byId('research-depth-picker').hidden&&byId('research-depth').value!=='auto') ||
     (!byId('reasoning-effort-picker').hidden&&Boolean(byId('reasoning-effort').value));
-  byId('research-settings-toggle').textContent=active?'设置 · 已选':'设置';
-  byId('research-settings-toggle').dataset.active=String(active);
+  const trigger=byId('research-settings-toggle');
+  trigger.title=active?'设置（已选研究选项）':'设置';
+  trigger.setAttribute('aria-label',trigger.title);
+  trigger.dataset.active=String(active);
 }
+const composerOptions=['chart-skill-picker','pdf-picker','research-settings','mode-disclosure'];
 function closeComposerOptions(except){
-  for(const id of ['chart-skill-picker','pdf-picker','research-settings']){
+  for(const id of composerOptions){
     const panel=byId(id);
     if(panel!==except)panel.open=false;
   }
 }
-for(const id of ['chart-skill-picker','pdf-picker','research-settings']){
+for(const id of composerOptions){
   const panel=byId(id);
-  panel.addEventListener('toggle',()=>{if(panel.open)closeComposerOptions(panel);});
+  panel.addEventListener('toggle',()=>{if(panel.open){closeComposerOptions(panel);fitComposerPanels();}});
   panel.addEventListener('keydown',event=>{
     if(event.key!=='Escape'||!panel.open)return;
     event.preventDefault();
     panel.open=false;
-    panel.querySelector('summary').focus();
+    panel.querySelector('summary').focus({preventScroll:true});
   });
 }
 byId('chart-skill-clear').addEventListener('click',()=>{
@@ -546,13 +781,13 @@ byId('chart-skill-clear').addEventListener('click',()=>{
   updateChartSkillLabel();
   saveDraft();
   byId('chart-skill-picker').open=false;
-  byId('chart-skill-toggle').focus();
+  byId('chart-skill-toggle').focus({preventScroll:true});
 });
 byId('chart-skill').addEventListener('change',()=>{
   updateChartSkillLabel();
   if(!state.pending)saveDraft();
   byId('chart-skill-picker').open=false;
-  byId('chart-skill-toggle').focus();
+  byId('chart-skill-toggle').focus({preventScroll:true});
 });
 byId('source').addEventListener('change',()=>{if(!state.pending)saveDraft();});
 for(const id of ['research-depth','reasoning-effort'])byId(id).addEventListener('change',()=>{
@@ -560,14 +795,22 @@ for(const id of ['research-depth','reasoning-effort'])byId(id).addEventListener(
   if(!state.pending)saveDraft();
 });
 byId('close-evidence').addEventListener('click',()=>byId('mobile-evidence').close());
+byId('mobile-evidence').addEventListener('close',()=>{
+  if(!compactEvidence())return;
+  byId('evidence-toggle').setAttribute('aria-expanded','false');
+  const trigger=workbench.lastCitation;
+  workbench.lastCitation=null;
+  (trigger?.isConnected?trigger:byId('evidence-toggle')).focus({preventScroll:true});
+});
 byId('new').addEventListener('click',()=> {
   if (state.submitting || state.pending || !state.workspace) return;
   state.submitting=true; controls();
   create().catch(failed).finally(()=>{state.submitting=false;controls();});
 });
+byId('stop').addEventListener('click',stopCurrentRun);
 byId('composer').addEventListener('submit',async e=>{
   e.preventDefault();
-  if (state.submitting) return;
+  if (state.submitting || state.detail?.messages.some(m=>m.working)) return;
   const q=byId('question');
   if (!q.value.trim() && !state.pending) return;
   if (liveMode() && !ownerMode() && !confirmLive()) return;
@@ -602,6 +845,7 @@ byId('composer').addEventListener('submit',async e=>{
   finally { state.submitting=false; controls(); }
 });
 try {
+  initWorkbench();
   await load();
   const stored = sessionStorage.getItem(pendingKey());
   const legacy = sessionStorage.getItem('local-gui-pending@1')
