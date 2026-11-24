@@ -1,6 +1,7 @@
 import {paginateWebText,webTextProfile} from './web-text-pages.mjs';
 import {parse,defaultTreeAdapter} from 'parse5';
-import {webFailure,webLimits} from './web-policy.mjs';
+import {webFailure,webLimits,normalizeWebUrl} from './web-policy.mjs';
+import {createHash} from 'node:crypto';
 const OMIT=new Set(['script','style','template','noscript','svg','math','head','iframe','object','embed']);
 const BLOCK=new Set(['p','div','section','article','main','header','footer','nav','aside','h1','h2','h3','h4','h5','h6','li','ul','ol','table','tr','br','pre','blockquote','hr']);
 // Bound parser work during construction, not only after an AST already exists.
@@ -38,7 +39,10 @@ function boundedTreeAdapter(limits){
  adapter.adoptAttributes=(recipient,attrs)=>{charge(recipient.attrs.length+attrs.length);base.adoptAttributes(recipient,attrs);};
  return adapter;
 }
-export function extractWebText(body,contentType,{limits:input}={}){
+export function extractWebText(body,contentType,options={}){
+ return extract(body,contentType,options.limits);
+}
+function extract(body,contentType,input,pdfInventory){
  const limits=webLimits(input);if(!Buffer.isBuffer(body)||!body.length||body.length>limits.bodyBytes)throw webFailure('WEB_BODY_LIMIT');
  if(typeof contentType!=='string'||contentType.length>256)throw webFailure('WEB_CONTENT_TYPE');
  const match=/^\s*(text\/html|text\/plain)\s*(?:;\s*charset\s*=\s*(?:"(utf-8|us-ascii)"|(utf-8|us-ascii))\s*)?$/i.exec(contentType);
@@ -55,6 +59,7 @@ export function extractWebText(body,contentType,{limits:input}={}){
   }
   const append=s=>{size+=Buffer.byteLength(s);if(size>limits.textBytes)throw webFailure('WEB_TEXT_LIMIT');parts.push(s);};
   while(stack.length){const {node,end}=stack.pop();if(end){append('\n');continue;}if(OMIT.has(node.tagName))continue;
+   pdfInventory?.observe(node);
    if(node.nodeName==='#text'){append(node.value);continue;}
    if(BLOCK.has(node.tagName)){append('\n');stack.push({node,end:true});}
    for(let i=(node.childNodes?.length??0)-1;i>=0;i--)stack.push({node:node.childNodes[i],end:false});
@@ -64,4 +69,58 @@ export function extractWebText(body,contentType,{limits:input}={}){
  if(!text.trim())throw webFailure('WEB_TEXT_EMPTY');if(Buffer.byteLength(text)>limits.textBytes)throw webFailure('WEB_TEXT_LIMIT');
  const pages=paginateWebText(text);
  return {text,pages,originalMediaType:match[1].toLowerCase(),extraction:{profile:parser,coverage:'static-text-only',visualInspection:'not-performed'}};
+}
+
+// Voluntary, versioned inventory of PDF candidates from retained HTML bytes.
+// A match does not assert media type, public DNS reachability, or permission to fetch.
+const inventoryLimit=64;
+const sha256=value=>createHash('sha256').update(value).digest('hex');
+const blocked=new Set(['iframe','object','embed','form','input','textarea','select','button','dialog','template','script','style','noscript','svg','math','head']);
+function anchorsIn(body,contentType,finalUrl,limits){
+ const parent=normalizeWebUrl(finalUrl);
+ if(!Buffer.isBuffer(body)||body.length>webLimits(limits).bodyBytes)throw webFailure('WEB_BODY_LIMIT');
+ const originalSha256=sha256(body);
+ const urls=new Map(), excluded=new WeakSet();
+ let complete=true;
+ const omit=attrs=>Object.hasOwn(attrs,'hidden')||Object.hasOwn(attrs,'inert')||
+  attrs['aria-hidden']?.toLowerCase()==='true'||/(?:^|;)\s*(?:display\s*:\s*none|visibility\s*:\s*(?:hidden|collapse))\s*(?:!important\s*)?(?:;|$)/i.test(attrs.style??'');
+ extract(body,contentType,limits,{observe(node){
+  if(excluded.has(node.parentNode)){excluded.add(node);return;}
+  if(!node.tagName)return;
+  const attrs=Object.fromEntries((node.attrs??[]).map(a=>[a.name,a.value]));
+  if(blocked.has(node.tagName)||omit(attrs)){excluded.add(node);return;}
+  if(node.tagName!=='a'||typeof attrs.href!=='string')return;
+  const raw=attrs.href.trim();
+  if(!raw||raw.startsWith('#')||raw.length>2048||/[\u0000-\u0020\u007f\\]/.test(raw))return;
+  let url;
+  try{
+   const resolved=new URL(raw,parent);
+   if(resolved.search)return;
+   resolved.hash='';
+   url=normalizeWebUrl(resolved.href);
+   if(/(?:^|\.)(?:localhost|local|internal|home\.arpa)$/i.test(resolved.hostname))return;
+   if(!/\.pdf$/i.test(resolved.pathname)&&attrs.type?.trim().toLowerCase()!=='application/pdf')return;
+  }catch{return;}
+  if(urls.has(url))return;
+  if(urls.size>=inventoryLimit){complete=false;return;}
+  const id='web-pdf-link:sha256:'+sha256(JSON.stringify(['web-pdf-link@1',parent,originalSha256,url]));
+  urls.set(url,Object.freeze({id,url}));
+ }});
+ return Object.freeze({schemaVersion:'web-pdf-link-inventory@1',finalUrl:parent,originalSha256,complete,links:Object.freeze([...urls.values()])});
+}
+
+/** Source owner supplies retained HTTPS final URL and exact received bytes.
+ * Ignore HTML base, resources/scripts and explicitly hidden structural branches.
+ * This is not a browser and cannot claim whether arbitrary external CSS shows an anchor.
+ */
+export function extractWebPdfLinks(body,contentType,{finalUrl,limits}={}){
+ return anchorsIn(body,contentType,finalUrl,limits);
+}
+
+export function verifyWebPdfLink(body,contentType,{finalUrl,originalSha256,linkId,limits}={}){
+ if(typeof originalSha256!=='string'||!/^[a-f0-9]{64}$/.test(originalSha256)||
+    typeof linkId!=='string'||!/^web-pdf-link:sha256:[a-f0-9]{64}$/.test(linkId))return null;
+ if(!Buffer.isBuffer(body)||body.length>webLimits(limits).bodyBytes||sha256(body)!==originalSha256)return null;
+ const inventory=anchorsIn(body,contentType,finalUrl,limits);
+ return inventory.links.find(link=>link.id===linkId)??null;
 }
