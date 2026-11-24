@@ -10,6 +10,7 @@ import {safeDirectory,ensureSafeDirectory,publishImmutable} from './storage-file
 import {readProjectJson,inspectResearchProject,submitResearchTask,inspectResearchTask,workResearchTask,cancelResearchTask,readResearchReport,readResearchOutput,resumeResearchTaskAdmission,supportsOwnerFreeform,respondResearchTask,inspectResearchInteraction,listResearchInteractions,controlResearchTask,inspectResearchControl} from './research-project.mjs';
 import {readReportReview} from './report-review.mjs';
 import {readResearchPublication} from './research-project.mjs';
+import {readOwnerWebSources} from './conversation-owner-read-sources.mjs';
 const fail=code=>{throw Object.assign(new Error(code),{code});};
 const id=v=>{if(typeof v!=='string'||!/^[A-Za-z0-9_-]{1,48}$/.test(v))fail('CONVERSATION_INVALID_ID');return v;};
 const hash=v=>sha256(JSON.stringify(v));
@@ -184,6 +185,22 @@ export async function readConversationBody({projectDir,conversationId,messageId}
  if(publication.receipt.runId!==record.runId||publication.receipt.rootId!==record.runId)fail('CONVERSATION_TASK_MISMATCH');
  const text=publication.content.text;
  return {conversationId,messageId,status,body:{text,sha256:sha256(text),revision:publication.receipt.revision}};
+}
+
+
+// Lazy readback. Keep Publication and its exact body path independent of the
+// availability of a supplemental original-excerpts list.
+export async function readConversationSources({projectDir,conversationId,messageId}){
+ const loc=await location(projectDir,conversationId),record=await intent(loc,messageId);
+ if(record.messageId!==messageId)fail('CONVERSATION_MESSAGE_CHANGED');
+ const {definition,run}=await checkedTask(loc,record);
+ const {status,publication}=await readResearchPublication({projectDir:loc.projectDir,runId:record.runId});
+ if(!publication)return {status,published:false};
+ if(publication.receipt.runId!==record.runId||publication.receipt.rootId!==record.runId)fail('CONVERSATION_TASK_MISMATCH');
+ let sources;
+ try{sources=await readOwnerWebSources({projectDir:loc.projectDir,definition,run,publication});}
+ catch{sources={availability:'unavailable',readSources:[]};}
+ return {published:true,view:{...sources,projectId:loc.meta.projectId,conversationId,messageId}};
 }
 
 function admissionFact(record,task){return {schemaVersion:'conversation-admission@1',intentDigest:record.digest,taskDefinitionHash:hash(canonical(task.definition)),sessionDefinitionHash:hash(canonical(task.run.definition))};}

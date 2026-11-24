@@ -9,7 +9,7 @@ import { fileURLToPath } from 'node:url';
 import {
   createConversation, inspectConversation, inspectConversationMessage, readDailyConversationBaseline, readConversationMessage, readConversationCharts, readConversationInput, readConversationTitle, titleForConversationInput, submitConversationMessage,
   workConversationMessage, cancelConversationMessage,
-  readConversationBody,
+  readConversationBody, readConversationSources,
 } from './conversation.mjs';
 import { createResearchProject, inspectResearchProject, inspectResearchTask, readProjectJson, supportsOwnerFreeform, updateResearchProject, validateResearchConfig } from './research-project.mjs';
 import { importProjectSources, importUploadedPdf, PROJECT_SOURCE_LIMITS } from './project-sources.mjs';
@@ -32,6 +32,7 @@ const dailyPath = new RegExp('^/api/daily-watch(?:/(w[a-f0-9]{24}))?$');
 const progressPath = new RegExp('^/api/conversations/('+routeId+')/messages/('+routeId+')/progress$');
 const reportPath = new RegExp('^/api/conversations/('+routeId+')/messages/('+routeId+')/report[.]md$');
 const bodyPath = new RegExp('^/api/conversations/('+routeId+')/messages/('+routeId+')/body$');
+const sourcesPath = new RegExp('^/api/conversations/('+routeId+')/messages/('+routeId+')/sources$');
 const actionPath = new RegExp('^/api/conversations/('+routeId+')/messages(?:/('+routeId+')/(work|cancel))?$');
 const config = {
   schemaVersion: 'research-project@1',
@@ -385,7 +386,7 @@ export async function createLocalGuiWorkspace({ projectDir, origin: mountOrigin,
         if (req.url === '/api/workspace') return send(200, {
           schemaVersion: 'local-gui@1', mode, reasoningEffort,
           ...(live?{liveNotice:{maxModelCallsPerRun:expectedConfig.limits.model,...(freeform?{freeform:true,connectivity:{web:connectivity.web===true,search:!!connectivity.search,...(connectivity.search?{searchProvider:connectivity.search}:{}),...(connectivity.searchAlternates?{searchAlternates:connectivity.searchAlternates}:{}),wind:connectivity.wind===true}}:{})}}:{}),
-          capabilities: ['conversations','progress','reports','sources',...(freeform?['pdf-attachment','daily-watch','deep-research','research-intent']:[]),...(chartAvailable?['financial-chart-skill']:[]),...(chartAuto?['financial-chart-auto']:[])],
+          capabilities: ['conversations','progress','reports','sources','read-web-sources',...(freeform?['pdf-attachment','daily-watch','deep-research','research-intent']:[]),...(chartAvailable?['financial-chart-skill']:[]),...(chartAuto?['financial-chart-auto']:[])],
           projectId: demo.projectId, conversations: await list({titles:true}), sources: publicSources,
         });
         if(req.url==='/api/daily-watch'&&daily)return send(200,{timeZone:DAILY_TIME_ZONE,autorun:dailyAutorun,
@@ -421,6 +422,18 @@ export async function createLocalGuiWorkspace({ projectDir, origin: mountOrigin,
           }
           if(!result.body)return send(409,{error:'BODY_NOT_PUBLISHED',status:result.status});
           return send(200,result);
+        }
+        const sourcesMatch=sourcesPath.exec(req.url);
+        if(sourcesMatch){
+          const [,conversationId,messageId]=sourcesMatch;
+          let result;
+          try{result=await readConversationSources({projectDir,conversationId,messageId});}
+          catch(error){
+            if(['ENOENT','UNKNOWN_RUN','CONVERSATION_PROJECT_MISMATCH'].includes(error.code))return send(404,{error:'NOT_FOUND'});
+            return send(503,{error:'SOURCES_READ_UNAVAILABLE'});
+          }
+          if(!result.published)return send(409,{error:'BODY_NOT_PUBLISHED',status:result.status});
+          return send(200,result.view);
         }
         const reportMatch = reportPath.exec(req.url);
         if (reportMatch) {

@@ -1,7 +1,7 @@
 import {createFinancialChartView} from './financial-chart-view.mjs';
 import { renderMarkdown } from './markdown.mjs';
 const byId = id => document.getElementById(id);
-const state = { workspace: null, conversation: null, detail: null, poll: null, submitting: false, pending: null, failures: 0, selection:0, refreshSequence:0, appliedRefresh:0, progress:new Map(), stopping:new Map() };
+const state = { workspace: null, conversation: null, detail: null, poll: null, submitting: false, pending: null, failures: 0, selection:0, refreshSequence:0, appliedRefresh:0, progress:new Map(), readSources:new Map(), stopping:new Map() };
 const statusLabels = {
   'admission-pending':'接收待确认', 'completed':'已完成', 'failed':'未完成', 'cancelled':'已取消',
   'active':'等待执行', 'fenced':'已暂停', 'unknown':'结果未知',
@@ -276,9 +276,12 @@ function progressContent(target, value) {
     return;
   }
   if(value.omitted>0)target.append(make('p','仅展示最近的步骤。','muted'));
+  const sequence=make('details');
+  sequence.append(make('summary','查看技术步骤'));
   const list=make('ol');
   for(const step of value.steps)list.append(make('li',step.label));
-  target.append(list);
+  sequence.append(list);
+  target.append(sequence);
 }
 async function loadProgress(conversation, entry, message) {
   if(entry.loading||(!message.working&&entry.cachedTerminal))return;
@@ -311,6 +314,73 @@ function progressDetails(message, context) {
     if(details.open)void loadProgress(conversation,entry,message);
   });
   if(details.open)void loadProgress(conversation,entry,message);
+  return details;
+}
+function originalWebLink(href) {
+  if(typeof href!=='string')return null;
+  try {
+    const url=new URL(href);
+    return url.protocol==='https:'&&!url.username&&!url.password&&!url.search&&!url.hash?url:null;
+  } catch {return null;}
+}
+function readSourcesContent(target, value) {
+  target.replaceChildren();
+  if(!value){target.append(make('p','正在读取这条回答已保存的网页记录。','muted'));return;}
+  const note={
+    none:'没有查到本次已读取的网页原文。搜索预览不算原文。',
+    partial:'仅显示仍可核对的网页摘录，记录不完整。',
+    unavailable:'暂时无法核对已读取的网页摘录。',
+  }[value.availability];
+  if(note)target.append(make('p',note,'muted'));
+  for(const source of Array.isArray(value.readSources)?value.readSources:[]){
+    if(source?.kind!=='web-original-excerpt'||typeof source.text!=='string'||
+       !Number.isSafeInteger(source.page)||source.page<1||!Number.isSafeInteger(source.pages)||source.pages<source.page)continue;
+    const url=originalWebLink(source.url);
+    if(!url)continue;
+    const excerpt=make('details',undefined,'web-source-excerpt');
+    excerpt.append(make('summary',url.hostname+' · 原文摘录 '+source.page+'/'+source.pages));
+    const link=make('a','打开原网页');
+    link.href=url.href;link.target='_blank';link.rel='noopener noreferrer';link.referrerPolicy='no-referrer';
+    excerpt.append(link,make('pre',source.text,'web-source-text'));
+    target.append(excerpt);
+  }
+  if(!target.childElementCount)target.append(make('p','暂时无法核对已读取的网页摘录。','muted'));
+}
+async function loadReadSources(entry) {
+  if(entry.loading||typeof entry.project!=='string'||!entry.project)return;
+  const identity=()=>state.workspace?.projectId===entry.project&&state.conversation===entry.conversation&&
+    state.selection===entry.selection&&state.readSources.get(entry.messageId)===entry;
+  entry.loading=true;
+  try {
+    const value=await api('/api/conversations/'+encodeURIComponent(entry.conversation)+
+      '/messages/'+encodeURIComponent(entry.messageId)+'/sources');
+    if(!identity())return;
+    entry.value=value?.projectId===entry.project&&value.messageId===entry.messageId&&value.conversationId===entry.conversation?
+      value:{availability:'unavailable'};
+  } catch {if(identity())entry.value={availability:'unavailable'};}
+  finally {
+    entry.loading=false;
+    if(identity()&&entry.open&&entry.content?.isConnected)readSourcesContent(entry.content,entry.value);
+  }
+}
+function readSourcesDetails(message) {
+  const details=make('details',undefined,'research-progress read-web-sources');
+  const content=make('div',undefined,'research-progress-body');
+  let entry=state.readSources.get(message.id);
+  if(!entry||entry.selection!==state.selection){
+    entry={project:state.workspace.projectId,conversation:state.conversation,selection:state.selection,messageId:message.id,open:false};
+    state.readSources.set(message.id,entry);
+  }
+  entry.content=content;
+  details.append(make('summary','已读网页（不等于已引用）'),content);
+  details.open=entry.open;
+  if(entry.open)readSourcesContent(content,entry.value);
+  details.addEventListener('toggle',()=>{
+    if(!details.isConnected||entry.content!==content)return;
+    const opened=details.open&&!entry.open;
+    entry.open=details.open;
+    if(opened){readSourcesContent(content,entry.value);void loadReadSources(entry);}
+  });
   return details;
 }
 function render() {
@@ -362,10 +432,13 @@ function render() {
     }
     const sources=make('div',undefined,'citation-actions');
     for (const [i,source] of (m.output?.sources ?? []).entries()) {
-      const citation = make('button','核对来源 ['+(i+1)+']','secondary');
+      const label=Number.isSafeInteger(source.pdfPage)&&source.pdfPage>0?'PDF 第 '+source.pdfPage+' 页':'核对来源';
+      const citation = make('button',label+' ['+(i+1)+']','secondary');
       citation.type='button'; citation.addEventListener('click',() => showEvidence(source,i+1,citation)); sources.append(citation);
     }
     if(sources.childElementCount)response.append(sources);
+    if(state.workspace.capabilities.includes('read-web-sources')&&m.output?.publicationStatus==='published')
+      response.append(readSourcesDetails(m));
     for(const chart of m.chartViews??[]){
       try{response.append(createFinancialChartView(document,chart));}
       catch{/* A rejected chart view must not hide the durable answer. */}
@@ -463,6 +536,7 @@ async function select(id,messageId) {
   const changed=state.conversation!==id;
   if (changed) {
     state.progress.clear();
+    state.readSources.clear();
     message();
     if(state.conversation)byId('pdf-file').value='';byId('pdf-file').dispatchEvent(new Event('change'));
     byId('research-depth').value='auto'; byId('reasoning-effort').value=''; byId('chart-skill').value=''; updateChartSkillLabel(); updateSettingsLabel(); closeComposerOptions();
@@ -481,7 +555,9 @@ async function select(id,messageId) {
   if(state.conversation===id)focusTurn(messageId);
 }
 async function load() {
-  state.workspace = await api('/api/workspace');
+  const workspace = await api('/api/workspace');
+  if(workspace.projectId!==state.workspace?.projectId)state.readSources.clear();
+  state.workspace = workspace;
   configureEffortPicker();
   updateSettingsLabel();
   if (ownerMode()) {

@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdir, mkdtemp, rm } from 'node:fs/promises';
+import {createHash} from 'node:crypto';
+import { mkdir, mkdtemp, rm, rename, writeFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import { setTimeout as delay } from 'node:timers/promises';
 import { startLocalGui } from '../src/gui-server.mjs';
@@ -93,6 +94,8 @@ for(const scenario of ['normal','malformed-then-honest-answer','malformed-then-e
  const post=(path,body)=>fetch(gui.origin+path,{method:'POST',headers:{origin:gui.origin,'content-type':'application/json'},body:JSON.stringify(body)});
  const get=path=>fetch(gui.origin+path).then(r=>r.json());
  gui=await startLocalGui(options);
+ const workspace=await get('/api/workspace');
+ assert.ok(workspace.capabilities.includes('read-web-sources'));
  const {id}=await post('/api/conversations',{}).then(r=>r.json()),path='/api/conversations/'+id;
  const input={messageId:'reading',question:'请依据网页后段给出累计赎回数据。'};
  assert.equal((await post(path+'/messages',input)).status,202);
@@ -109,8 +112,48 @@ for(const scenario of ['normal','malformed-then-honest-answer','malformed-then-e
  assert.equal(readDeepResearchProgress(researchProfileFor("deep",DEEP_EVIDENCE_REVISION),run.snapshot).originalsRead,1);
  const expectedModelRequests=scenario==='malformed-then-exact-correction'?4:3;
  assert.equal(modelRequests,expectedModelRequests);assert.deepEqual(requested(),['https://example.com/robots.txt',url]);
+ const exactBody=path+'/messages/reading/body', exactSources=path+'/messages/reading/sources';
+ const bodyBefore=await get(exactBody);
+ assert.ok(!Object.hasOwn(bodyBefore,'readSources'));
+ const readSources=async(unavailable='available')=>{
+  const res=await fetch(gui.origin+exactSources);
+  assert.equal(res.status,200);assert.equal(res.headers.get('cache-control'),'no-store');
+  const raw=await res.text(),parsed=JSON.parse(raw);
+  assert.ok(!raw.includes('not-an-extraction-anchor')&&!raw.includes(first.nextCursor)&&!raw.includes(invalidCursor));
+  assert.deepEqual(Object.keys(parsed).sort(),['availability','conversationId','messageId','projectId','readSources']);
+  assert.equal(parsed.projectId,workspace.projectId);
+  assert.equal(parsed.conversationId,id);assert.equal(parsed.messageId,'reading');assert.equal(parsed.availability,unavailable);
+  return parsed;
+ };
+ const readback=await readSources();
+ assert.deepEqual(readback.readSources.map(row=>row.page),scenario==='malformed-then-honest-answer'?[1]:[1,2]);
+ for(const row of readback.readSources){
+  assert.deepEqual(Object.keys(row).sort(),['id','kind','page','pages','retrievedAt','sha256','text','url']);
+  assert.match(row.id,/^source-[a-f0-9]{64}$/);
+  assert.equal(row.kind,'web-original-excerpt');assert.equal(row.url,url);assert.equal(row.pages,2);
+  assert.equal(row.text,pages[row.page-1]);
+  assert.equal(row.sha256,createHash('sha256').update(row.text).digest('hex'));
+ }
+ const other=await post('/api/conversations',{}).then(r=>r.json());
+ assert.equal((await fetch(gui.origin+'/api/conversations/'+other.id+'/messages/reading/sources')).status,404);
+ assert.equal((await fetch(gui.origin+exactSources+'?runId='+run.runId)).status,404);
+ assert.equal((await fetch(gui.origin+exactSources,{headers:{origin:'https://elsewhere.invalid'}})).status,403);
  await gui.close();gui=await startLocalGui(options);
+ assert.deepEqual(await readSources(),readback);
  assert.deepEqual(await get(path),result);
+ const broken=join(projectDir,'conversations',id,'messages','other-turn.json');
+ await writeFile(broken,'not a valid separate message');
+ assert.equal((await fetch(gui.origin+path)).status,500);
+ assert.deepEqual(await readSources(),readback);
+ const acquisitionId='page-'+createHash('sha256').update(JSON.stringify([run.runId,firstCall.id])).digest('hex').slice(0,40);
+ const receipt=join(projectDir,'web-acquisitions',acquisitionId,'terminal.json');
+ await rename(receipt,receipt+'.hidden-fixture');
+ assert.deepEqual((await readSources('unavailable')).readSources,[]);
+ assert.deepEqual(await get(exactBody),bodyBefore);
+ assert.equal(modelRequests,expectedModelRequests);assert.deepEqual(requested(),['https://example.com/robots.txt',url]);
+ await rename(receipt+'.hidden-fixture',receipt);
+ await rm(broken);
+
  assert.equal((await post(path+'/messages',input)).status,202);
  assert.equal(modelRequests,expectedModelRequests);assert.deepEqual(requested(),['https://example.com/robots.txt',url]);
  });
@@ -219,4 +262,61 @@ test('legacy frozen page tool keeps its exact v1 value and replay with no model-
  assert.ok(!Object.hasOwn(value,'nextCursor'));assert.ok(!Object.hasOwn(value,'firstCallId'));
  assert.deepEqual(await legacy.reconcile(c.arguments,{callId:c.id}),value);
  await legacy.verifyResult(value,{call:c});assert.equal(f.counts.acquire,1);
+});
+
+test('only original accepted reads are projected: search preview ignored, query-bearing URL withheld as unavailable or partial',async t=>{
+ const projectDir=await scratch(t);
+ const publicUrl='https://example.com/public-evidence';
+ const queryUrl='https://example.com/another-document?token=synthetic-secret-sentinel';
+ const previewText='SYNTHETIC_PREVIEW_NOT_ORIGINAL';
+ const publicText='Synthetic first-party public text; plain output.';
+ const queryText='Underlying excerpt must not be exposed with withheld query URL.';
+ const network=mockWebNetwork(t,{passthroughLoopback:true,routes:{
+  'https://example.com/robots.txt':{body:'User-agent: *\nAllow: /\n'},
+  [publicUrl]:{body:publicText},[queryUrl]:{body:queryText},
+ }});
+ let modelRequests=0,searchRequests=0;
+ const gui=await startLocalGui({projectDir,liveConfig:{
+  gateway:{provider:'opencode-go-owner',endpoint:'https://opencode.ai/inference/go/openai/v1/chat/completions',model:'synthetic',apiKeyEnv:'ETF_GUI_PROVIDER_KEY'},
+  limits:{model:5},connectivity:{web:true,search:'exa-public-preview'},
+ },env:{ETF_GUI_PROVIDER_KEY:'synthetic-placeholder'},
+ ownerWebTransport:{async searchFetch(_url,{body}){
+  searchRequests++;
+  const {id}=JSON.parse(body);
+  return Response.json({jsonrpc:'2.0',id,result:{content:[{type:'text',text:previewText}]}});
+ }},
+ async fetchImpl(_url,{body}){
+  modelRequests++;
+  const request=JSON.parse(body), prior=request.messages.filter(message=>message.role==='tool');
+  const question=request.messages[0].content;
+  if(!prior.length)return proposal(call('preview','public_web_search',{query:'synthetic preview query'}));
+  assert.ok(prior[0].content.includes(previewText));
+  if(prior.length===1&&!question.includes('preview-only'))return proposal(call('protected-link','public_web_read',{url:queryUrl}));
+  if(prior.length===2&&question.includes('mixed'))return proposal(call('original','public_web_read',{url:publicUrl}));
+  return Response.json({choices:[{message:{role:'assistant',content:'The answer mentions a fake source https://elsewhere.invalid/fake.'},finish_reason:'stop'}]});
+ }});
+ t.after(async()=>await gui.close());
+ const post=(path,input)=>fetch(gui.origin+path,{method:'POST',headers:{origin:gui.origin,'content-type':'application/json'},body:JSON.stringify(input)});
+ const get=path=>fetch(gui.origin+path);
+ for(const [turn,availability,rows] of [['preview-only','none',0],['query-only','unavailable',0],['mixed','partial',1]]){
+  const {id}=await post('/api/conversations',{}).then(r=>r.json()),path='/api/conversations/'+id;
+  assert.equal((await post(path+'/messages',{messageId:'turn',question:'Synthetic '+turn})).status,202);
+  let body;
+  for(let i=0;i<100;i++){
+   const got=await get(path+'/messages/turn/body');
+   if(got.status===200){body=await got.json();break;}
+   await delay(25);
+  }
+  assert.match(body.body.text,/fake source/u);
+  const counts=[modelRequests,searchRequests,network.calls.length];
+  const response=await get(path+'/messages/turn/sources');
+  assert.equal(response.status,200);
+  const raw=await response.text(),projected=JSON.parse(raw);
+  for(const hidden of [previewText,queryUrl,queryText,'synthetic-secret-sentinel','elsewhere.invalid'])
+   assert.ok(!raw.includes(hidden));
+  assert.equal(projected.availability,availability);
+  assert.equal(projected.readSources.length,rows);
+  if(rows)assert.equal(projected.readSources[0].text,publicText);
+  assert.deepEqual([modelRequests,searchRequests,network.calls.length],counts);
+ }
 });
