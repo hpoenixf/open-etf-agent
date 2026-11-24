@@ -1,4 +1,5 @@
-import {validResearchProfile,readDeepResearchProgress,deepResearchInstruction} from './research-intent.mjs';
+import {readResearchNeeds,researchNeedsInstruction,RESEARCH_NEEDS_TOOL} from './research-needs.mjs';
+import {validResearchProfile,isDeepResearchNeedsActive,readDeepResearchProgress,deepResearchInstruction} from './research-intent.mjs';
 import {settleAsyncChildExecutions} from './child-execution.mjs';
 import {publicReportAssessment} from './report-assessment.mjs';
 import {INTERACTION_PROFILE, hasInteractionBinding, validateInteractionCheckpoint, validateInteractionConfig} from './human-interaction.mjs';
@@ -443,10 +444,11 @@ async function drive({ question, gateway, outputRoot='runs', requireReport=false
           if(!state.working){
             const lookupMemory=ref=>{if(ref.libraryId!==workingInput.memoryLibrary.libraryId)throw failure('MEMORY_SCOPE_MISMATCH');return workingInput.memoryLibrary.state(ref.id);};
             const memoryMessages=workingInput?.memoryLibrary?await projectMemory({messages:state.messages,lookupState:lookupMemory}):structuredClone(state.messages);
+            const mainTools=host.definitions.filter(tool=>tool.name!==RESEARCH_NEEDS_TOOL||isDeepResearchNeedsActive(researchProfile,state.messages));
             const workingMessages=projectControlProofs(projectTaskTime(memoryMessages, temporal));
-            const encodedBudget=gateway.inputBudget?{additionalBudget:{maxBytes:gateway.inputBudget.maxBytes,measure:messages=>gateway.inputBudget.measure({messages,tools:host.definitions})}}:{};
+            const encodedBudget=gateway.inputBudget?{additionalBudget:{maxBytes:gateway.inputBudget.maxBytes,measure:messages=>gateway.inputBudget.measure({messages,tools:mainTools})}}:{};
             let requestMessages=contextBytes===undefined&&!hostProjection&&contextWorkingSetBytes===undefined?workingMessages:await projectContext({olderReadBytes:contextWorkingSetBytes,onFit:fact=>record('context_fit',fact),messages:workingMessages,maxBytes:contextBytes??1048576,lookupSource:host.lookupContextSource,...(hostProjection?{projectOwnedResult:host.projectOwnedResult,projectOwnedCall:host.projectOwnedCall}:{}),...encodedBudget,...(encodedCompaction&&gateway.inputBudget?{allowUnfitted:true}:{})});let noteRef=null;
-            const measured=encodedCompaction&&gateway.inputBudget?gateway.inputBudget.measure({messages:structuredClone(requestMessages),tools:structuredClone(host.definitions)}):null;
+            const measured=encodedCompaction&&gateway.inputBudget?gateway.inputBudget.measure({messages:structuredClone(requestMessages),tools:structuredClone(mainTools)}):null;
             if(measured!==null&&(!Number.isSafeInteger(measured)||measured<0))throw failure('INVALID_COMPACTION_PRESSURE_MEASUREMENT');
             const highPressure=workingInput?.compaction&&(encodedCompaction?measured!==null&&(measured>=workingInput.compaction.thresholdBytes||measured>gateway.inputBudget.maxBytes):Buffer.byteLength(JSON.stringify(requestMessages))>=workingInput.compaction.thresholdBytes);
             if(encodedCompaction)await record('compaction_pressure',{status:measured===null?'capacity-unknown':highPressure?'pressured':'under-threshold',requestBytes:measured,thresholdBytes:workingInput.compaction.thresholdBytes,limitBytes:gateway.inputBudget?.maxBytes??null});
@@ -485,20 +487,27 @@ async function drive({ question, gateway, outputRoot='runs', requireReport=false
               // Any optional compaction reservation above already consumed the
               // original budget. No new slot or tool is added/removed here.
               const last=budget.maxRounds-state.rounds===1||modelLimit-rootBudget.snapshot().model===1;
-              const guidance={role:'system',content:deepResearchInstruction(deep,last)};
-              const guided=[requestMessages[0],guidance,...requestMessages.slice(1)];
-              // Omit this advisory if it does not fit the original input budgets.
-              if(Buffer.byteLength(JSON.stringify(guided))<=(contextBytes??1048576)&&(!gateway.inputBudget||gateway.inputBudget.measure({messages:guided,tools:host.definitions})<=gateway.inputBudget.maxBytes))requestMessages=guided;
+              const needs=readResearchNeeds(researchProfile,state);
+              const brief=researchNeedsInstruction(needs,{last,hasUnavailable:deep.unavailableSourceChecks>0});
+              const guidance=deepResearchInstruction(deep,last);
+              // Drop a large optional brief before the original evidence advisory.
+              for(const content of brief?[guidance+'\n'+brief,guidance]:[guidance]){
+                const guided=[requestMessages[0],{role:'system',content},...requestMessages.slice(1)];
+                if(Buffer.byteLength(JSON.stringify(guided))<=(contextBytes??1048576)&&(!gateway.inputBudget||gateway.inputBudget.measure({messages:guided,tools:mainTools})<=gateway.inputBudget.maxBytes)){
+                  requestMessages=guided;break;
+                }
+              }
             }
             state.working={schemaVersion:'working-input@1',messages:requestMessages,noteRef,hash:sha256(JSON.stringify(requestMessages))};await checkpoint('working-input');
           }
           // Forgetting after adoption but before dispatch removes old typed Memory from the next actual input.
           if(workingInput?.memoryLibrary){state.working.messages=await projectMemory({messages:state.working.messages,lookupState:ref=>workingInput.memoryLibrary.state(ref.id)});state.working.hash=sha256(JSON.stringify(state.working.messages));}
-          assertContextCapacity({messages:state.working.messages,tools:host.definitions,maxBytes:contextBytes,inputBudget:gateway.inputBudget});
+          const mainTools=host.definitions.filter(tool=>tool.name!==RESEARCH_NEEDS_TOOL||isDeepResearchNeedsActive(researchProfile,state.messages));
+          assertContextCapacity({messages:state.working.messages,tools:mainTools,maxBytes:contextBytes,inputBudget:gateway.inputBudget});
           state.rounds++;state.gatewayOutcome='unknown';let reservation;if(claim){const reservedView=await checkpoint('model-reserved',{reserve:'model'});if(gateway.admission==='shared-admission@1')reservation=modelReservation(reservedView);}else{rootBudget.claim('model');gatewayUnsettled=true;}
           const start=performance.now();let proposal;
           try{
-            proposal=await effect(Promise.resolve().then(()=>{controller.signal.throwIfAborted();gatewayUnsettled=true;return gateway.next({messages:structuredClone(state.working.messages),tools:structuredClone(host.definitions),signal:controller.signal,...(reservation?{reservation}:{})});}));
+            proposal=await effect(Promise.resolve().then(()=>{controller.signal.throwIfAborted();gatewayUnsettled=true;return gateway.next({messages:structuredClone(state.working.messages),tools:structuredClone(mainTools),signal:controller.signal,...(reservation?{reservation}:{})});}));
             controller.signal.throwIfAborted();gatewayUnsettled=false;
           }catch(error){
             // Only the original Gateway can brand a recognized terminal finish.

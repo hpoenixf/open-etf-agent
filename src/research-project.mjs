@@ -1,5 +1,6 @@
+import {researchNeedsTool,RESEARCH_NEEDS_RECEIPT} from './research-needs.mjs';
 import {OWNER_CHART_AUTO, OWNER_CHART_GUIDANCE, OWNER_CHART_AUTO_GUIDANCE, ownerChartChoice, windChartExtension, openOwnerChartSkill} from './financial-chart-owner.mjs';
-import {AUTO_RESEARCH_INTENT,DEEP_EVIDENCE_REVISION,hasResearchEvidence,researchIntentTool,researchProfileFor} from './research-intent.mjs';
+import {AUTO_RESEARCH_INTENT,hasResearchEvidence,researchIntentTool,researchProfileFor,RESEARCH_NEEDS_REVISION,usesResearchNeeds} from './research-intent.mjs';
 import {matchesFrozenPdfCell,pdfSnapshotBinding} from './pdf-input.mjs';
 import {createDynamicKnowledgeTool,pageVectorIdentity} from './knowledge-query-tool.mjs';
 import {createProjectLocalEmbedding} from './local-knowledge-runtime.mjs';
@@ -202,7 +203,7 @@ function validateOwnerWebExcerpts({config,sourceManifestSha256,schedule,ownerWeb
     schedule!==undefined||config.ownerConnectivity?.web!==true||!supportsOwnerFreeform(config)))fail('PROJECT_WEB_EXCERPT_VERSION');
 }
 function validateResearchDepth({researchDepth,config,schedule,researchProfileRevision}){
- if(researchProfileRevision!==undefined&&(!researchProfileFor(researchDepth,researchProfileRevision)||researchProfileRevision!==DEEP_EVIDENCE_REVISION))fail('PROJECT_RESEARCH_DEPTH');
+ if(researchProfileRevision!==undefined&&!researchProfileFor(researchDepth,researchProfileRevision))fail('PROJECT_RESEARCH_DEPTH');
  if(researchDepth!==undefined&&(!researchProfileFor(researchDepth)||schedule!==undefined||!supportsOwnerFreeform(config)))fail('PROJECT_RESEARCH_DEPTH');
 }
 function validateReasoningEffort({reasoningEffort,config,schedule}){
@@ -306,6 +307,11 @@ async function assemble(projectDir,definition,{gateway,apiKey,fetchImpl,hostSign
    extensions.push(researchIntentTool(()=>store.inspect(runId).snapshot));
    adapters.push({id:'research-intent',version:AUTO_RESEARCH_INTENT});
   }
+  const researchProfile=researchProfileFor(definition.researchDepth,definition.researchProfileRevision);
+  if(usesResearchNeeds(researchProfile)){
+   extensions.push(researchNeedsTool(researchProfile,()=>store.inspect(runId).snapshot));
+   adapters.push({id:'research-needs',version:RESEARCH_NEEDS_RECEIPT});
+  }
   const available=['read_result','save_report',...(caps.includes('compaction')?['read_note']:[]),...(sources.catalog?['read_page']:[]),...(sources.pdfSnapshot?['read_pdf_page',...(sources.pdfSnapshot.schemaVersion==='pdf-input-snapshot@2'?['read_pdf_cell']:[])]:[]),...(caps.includes('calculation')?['calculate_change']:[]),...(caps.includes('csv')?['create_csv']:[]),...(caps.includes('response')?['ask_response']:[]),...extensions.map(t=>t.name)];
   const inspected=await inspectTrustedPlugins({plugins,signal});available.push(...inspected.extensions.map(t=>t.name));
   // Only exact existing native Memory names are removed from the explicit
@@ -361,7 +367,7 @@ export async function submitResearchTask({projectDir,runId,question,sourceManife
   if(frozen.provider.id!=='local-sentence-transformers'||frozen.provider.revision!==config.knowledgeQuery.modelManifestSha256||pageVectorIdentity(frozen)!==config.knowledgeQuery.pageEvidenceSha256)fail('PROJECT_KNOWLEDGE_QUERY_BINDING');
  }
  if(knowledgeVectorEvidence!==undefined&&(!config.capabilities.includes('knowledge')||config.knowledge?.algorithm!=='hybrid'))fail('PROJECT_KNOWLEDGE_VECTOR_CONFIG');
- const researchProfileRevision=prior?prior.researchProfileRevision:['auto','deep'].includes(researchDepth)?DEEP_EVIDENCE_REVISION:undefined;
+ const researchProfileRevision=prior?prior.researchProfileRevision:['auto','deep'].includes(researchDepth)?RESEARCH_NEEDS_REVISION:undefined;
  const ownerWebExcerptRevision=prior?prior.ownerWebExcerptRevision:sourceManifestSha256===null&&config.ownerConnectivity?.web===true?OWNER_WEB_EXCERPTS_LOCAL_MISS:undefined;
  validateOwnerWebExcerpts({config,sourceManifestSha256,schedule,ownerWebExcerptRevision});
  const definition={...(ownerWebExcerptRevision===undefined?{}:{ownerWebExcerptRevision}),...(researchProfileRevision===undefined?{}:{researchProfileRevision}),...(reasoningEffort===undefined?{}:{reasoningEffort}),...(researchDepth===undefined?{}:{researchDepth}),...(chartSkill===undefined?{}:{chartSkill}),...(knowledgeVectorEvidence===undefined?{}:{knowledgeVectorEvidence}),...(prior?(Object.hasOwn(prior,'knowledgeVersion')?{knowledgeVersion:prior.knowledgeVersion}:{}):config.capabilities.includes('knowledge')?{knowledgeVersion:config.knowledge?.algorithm==='hybrid'?HYBRID_KNOWLEDGE_VERSION:config.knowledge?.algorithm==='bm25'?BM25_HEALTH_KNOWLEDGE_VERSION:KNOWLEDGE_VERSION}:{}),...(reportDelivery===undefined?{}:{reportDelivery}),...(prior?(Object.hasOwn(prior,'hostProjection')?{hostProjection:prior.hostProjection}:{}):{hostProjection:'host-results@3'}),...(prior?(Object.hasOwn(prior,'childInputProjection')?{childInputProjection:prior.childInputProjection}:{}):config.childExecution?{childInputProjection:'host-context@1'}:{}),...(prior?(Object.hasOwn(prior,'reportGuidance')?{reportGuidance:prior.reportGuidance}:{}):{reportGuidance:config.knowledgeQuery?LOCAL_QUERY_GUIDANCE_PROFILE:REPORT_GUIDANCE_PROFILE}),schemaVersion:projectTaskSchema(project.schemaVersion,memoryMode),...(project.schemaVersion===PROJECT_V2?{admission:capacityBinding(config,project.schemaVersion)}:{}),runId,projectId:project.projectId,config,question,sourceManifestSha256,...(selectionMetadata?{specialistSelection:selectionMetadata}:{}),grantId:prior?.grantId??('project-'+randomUUID()),authorization:config.gateway.mode==='live'?{providerApproved:true,dataApproved:true,costApproved:true}:null,...(memoryMode===undefined?{}:{memoryMode}),...(memorySelection===undefined?{}:{memorySelection}),memoryLibraryId,memoryIntents:structuredClone(memoryIntents),...(config.capabilities.includes('task-time')?{taskTime:schedule?createTaskTime({anchorInstant:schedule.scheduledInstant,timeZone:schedule.timeZone}):taskTime?createTaskTime({...taskTime,...(prior?.taskTime&&taskTime.anchorInstant===undefined?{anchorInstant:prior.taskTime.anchorInstant}:{})}):(prior?.taskTime??createTaskTime({timeZone:config.timeZone??'UTC'}))}:{}),...(schedule?{schedule:structuredClone(schedule)}:{})};

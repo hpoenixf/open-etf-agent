@@ -2,14 +2,20 @@ export const AUTO_RESEARCH_INTENT='auto-intent@1';
 export const DEEP_RESEARCH_CONTRACT='deep-evidence@1';
 export const STANDARD_RESEARCH_CONTRACT='standard-research@1';
 export const DEEP_EVIDENCE_REVISION='evidence-milestones@1';
+export const RESEARCH_NEEDS_REVISION='research-needs@1';
+const DEEP_NEEDS_PROFILE='deep-evidence@3';
+const AUTO_NEEDS_PROFILE='auto-intent@3';
+export const usesResearchNeeds=profile=>profile===DEEP_NEEDS_PROFILE||profile===AUTO_NEEDS_PROFILE;
+export const isDeepResearchNeedsActive=(profile,messages)=>profile===DEEP_NEEDS_PROFILE||profile===AUTO_NEEDS_PROFILE&&readResearchIntent(messages)==='deep';
 const DEEP_EVIDENCE_PROFILE='deep-evidence@2';
 const AUTO_EVIDENCE_PROFILE='auto-intent@2';
-export const isAutoResearchProfile=profile=>profile===AUTO_RESEARCH_INTENT||profile===AUTO_EVIDENCE_PROFILE;
-export const usesDeepEvidenceMilestones=profile=>profile===DEEP_EVIDENCE_PROFILE||profile===AUTO_EVIDENCE_PROFILE;
-export const isDeepResearchProfile=profile=>profile===DEEP_RESEARCH_CONTRACT||profile===DEEP_EVIDENCE_PROFILE;
+export const isAutoResearchProfile=profile=>profile===AUTO_RESEARCH_INTENT||profile===AUTO_EVIDENCE_PROFILE||profile===AUTO_NEEDS_PROFILE;
+export const usesDeepEvidenceMilestones=profile=>profile===DEEP_EVIDENCE_PROFILE||profile===AUTO_EVIDENCE_PROFILE||usesResearchNeeds(profile);
+export const isDeepResearchProfile=profile=>profile===DEEP_RESEARCH_CONTRACT||profile===DEEP_EVIDENCE_PROFILE||profile===DEEP_NEEDS_PROFILE;
 export const RESEARCH_INTENT_TOOL='select_research_intent';
 export function researchProfileFor(mode,revision){
  if(revision!==undefined){
+  if(revision===RESEARCH_NEEDS_REVISION)return mode==='deep'?DEEP_NEEDS_PROFILE:mode==='auto'?AUTO_NEEDS_PROFILE:undefined;
   if(revision!==DEEP_EVIDENCE_REVISION)return undefined;
   return mode==='deep'?DEEP_EVIDENCE_PROFILE:mode==='auto'?AUTO_EVIDENCE_PROFILE:undefined;
  }
@@ -56,7 +62,7 @@ const textPresent=value=>typeof value==='string'&&value.trim().length>0;
 // whether evidence supports the conclusion. No search snippets or prose count.
 export function readDeepResearchProgress(profile,snapshot,{deliveryReadback=false}={}){
  const messages=snapshot?.messages??[];
- if(profile!==DEEP_EVIDENCE_PROFILE&&(profile!==AUTO_EVIDENCE_PROFILE||readResearchIntent(messages)!=='deep'))return null;
+ if(profile!==DEEP_EVIDENCE_PROFILE&&(profile!==AUTO_EVIDENCE_PROFILE||readResearchIntent(messages)!=='deep')&&!isDeepResearchNeedsActive(profile,messages))return null;
  const originals=new Set();
  let unavailable=0, attempts=0;
  for(let i=0;i<messages.length;i++){

@@ -1,0 +1,9 @@
+# Deep research working needs
+
+New owner Deep runs pin the `research-needs@1` revision at admission. A new Auto run participates only after an actual first-round Host receipt chooses Deep. Standard and older admitted runs retain their original prompts, tools and persisted profile.
+
+Each Main request receives a Deep working brief within the existing context limits. Before a valid note, the brief points to the exact current user request, not a generated interpretation. The optional `update_research_needs` Host tool replaces the note with up to 12 concise `id`, `need`, `status` entries. Status is one of `open`, `resolved`, `unresolved`, or `not_needed`. A later valid update may revise or reopen an entry. Invalid updates do not erase the last valid note. Only settled matching results in the owning transcript can commit the note. A note is planning data, not a citation, an applicability judgment, a tool permission, or independent proof.
+
+For causal market questions the Deep prompt checks the actual interval, index, measure, and size; separates competing explanations and their timing; and distinguishes read originals, discovery summaries and inaccessible material. Unknown or failed retrieval and contradictory evidence trigger reconsideration, not an automatic retry of the same refusal. Pursue a useful authorized alternative if one is available; otherwise explain the remaining gaps and finish with the evidence available.
+
+There is no separate classifier or planning model invocation, minimum number of calls, forced duration, quantity of sources, or new publication condition. The note tool uses the existing tool allowance if chosen, and the model can still provide an early scoped final. No hidden reasoning is captured. If the optional brief would exceed the original input constraints, the previous evidence advisory takes priority.
