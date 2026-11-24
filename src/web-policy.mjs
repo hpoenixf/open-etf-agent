@@ -8,6 +8,16 @@ export function normalizeWebUrl(value){
  if(u.protocol!=='https:'||u.username||u.password||u.port||!u.hostname.includes('.')||u.hostname.endsWith('.')||u.hostname.startsWith('[')||ipaddr.isValid(u.hostname)||!/^([a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9-]+$/.test(u.hostname))throw webFailure('WEB_URL_INVALID');
  if(u.href.length>2048)throw webFailure('WEB_URL_INVALID');return u.href;
 }
+// A fragment selects a browser location; it is not part of an HTTP request.
+export function ownerDocumentUrl(value){
+ if(typeof value!=='string'||value.length>2048||/[\u0000-\u0020\u007f\\]/.test(value))throw webFailure('WEB_URL_INVALID');
+ const fragment=value.indexOf('#');
+ return normalizeWebUrl(fragment<0?value:value.slice(0,fragment));
+}
+export function validateOwnerWebPageInput(args){
+ if(!args||typeof args!=='object'||Array.isArray(args)||Object.keys(args).length!==1||!Object.hasOwn(args,'url'))throw webFailure('WEB_URL_INVALID');
+ ownerDocumentUrl(args.url);
+}
 export function publicAddresses(records){
  if(!Array.isArray(records)||records.length<1||records.length>16)throw webFailure('WEB_DNS_UNAVAILABLE');
  const out=[];

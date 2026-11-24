@@ -570,13 +570,13 @@ async function drive({ question, gateway, outputRoot='runs', requireReport=false
         if(result.memoryEffect)state.partialEffects.push({callId:call.id,name:effectiveName,memoryEffect:structuredClone(result.memoryEffect)});
         let correctionOffered=false;
         const candidate=await host.answerCandidate(call,result);
-        const toolDecision=decideRunControl({kind:'tool-result',succeeded:result.status==='succeeded',dispatched:result.dispatched,answerProved:Boolean(candidate),correctionProved:await host.correctionEligible(call,result)},
+        const toolDecision=decideRunControl({kind:'tool-result',succeeded:result.status==='succeeded',dispatched:result.dispatched,answerProved:Boolean(candidate),correctionProved:await host.correctionEligible(call,result),ownerWebUrlRefusalProved:!gatewayUnsettled&&state.gatewayOutcome==='settled'&&host.ownerWebUrlRefusalProved(call,result)},
           {singleCall:state.proposal.calls.length===1,hooks:!!hooks,partial:state.partialEffects.length>0,unknown:state.unknownEffects.length>0,corrections:state.corrections??0});
         state.failureCode=toolDecision.action==='stop'?toolDecision.reason:null;
         if(toolDecision.reason==='LOCAL_CORRECTION'){state.corrections=1;correctionOffered=true;}
         state.messages.push({role:'tool',callId:call.id,result:structuredClone(result)});state.cursor++;state.result=null;
         await checkpoint('result-consumed');
-        await record('tool_result',{callId:call.id,name:effectiveName,status:result.status,dispatched:result.dispatched,partialPaths,memoryEffect:result.memoryEffect,artifactEffects:result.artifactEffects,artifactId:result.value?.artifactId,durationMs:result.durationMs,resultRef:result.value?.resultRef,sourceAcquisition:result.value?.mcp?{serverName:result.value.mcp.serverName,protocolVersion:result.value.mcp.protocolVersion,protocolRequestId:result.value.mcp.protocolRequestId,modelCallId:result.value.mcp.modelCallId}:undefined,original:result.original,effective:result.effective,hookErrors:result.hookErrors||[]});
+        await record('tool_result',{callId:call.id,name:effectiveName,status:result.status,dispatched:result.dispatched,...(toolDecision.reason==='LOCAL_WEB_URL_REFUSAL'?{code:'WEB_URL_INVALID'}:{}),partialPaths,memoryEffect:result.memoryEffect,artifactEffects:result.artifactEffects,artifactId:result.value?.artifactId,durationMs:result.durationMs,resultRef:result.value?.resultRef,sourceAcquisition:result.value?.mcp?{serverName:result.value.mcp.serverName,protocolVersion:result.value.mcp.protocolVersion,protocolRequestId:result.value.mcp.protocolRequestId,modelCallId:result.value.mcp.modelCallId}:undefined,original:result.original,effective:result.effective,hookErrors:result.hookErrors||[]});
         if(effectiveName==='save_report'&&result.status==='succeeded')await record('file_saved',{receipt:result.value});
         if(correctionOffered)await record('validation_correction_offered',{callId:call.id,code:result.validation.code,remainingRounds:budget.maxRounds-state.rounds});
         if(state.failureCode)throw failure(state.failureCode);
