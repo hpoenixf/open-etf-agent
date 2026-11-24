@@ -10,6 +10,7 @@ function setup(){
   tag,text,cls,children:[],isConnected:true,listeners:{},open:false,
   get childElementCount(){return this.children.length;},
   append(...nodes){this.children.push(...nodes);},
+  querySelector(selector){return this.children.find(node=>"."+node.cls===selector)??null;},
   replaceChildren(...nodes){this.children=nodes;},
   addEventListener(type,fn){this.listeners[type]=fn;},
   toggle(open){this.open=open;this.listeners.toggle?.();}
@@ -102,4 +103,23 @@ test('credential can rotate before workspace refresh: same conversation and turn
  await flush();
  assert.equal(calls.length,3);
  assert.equal(view.children[1].children[0].children[1].href,'https://example.org/a');
+});
+
+test('PDF pages are grouped and link to the cited physical page without changing web labels',async()=>{
+ const {details,calls,requests}=setup();
+ const view=details({id:'turn'});
+ view.toggle(true);
+ const pdf={...web('https://example.org/source.pdf'),kind:'web-pdf-original-page',cited:true};
+ requests[0](result([web(),pdf,{...pdf,page:3,cited:false}]));
+ await flush();
+ const [webExcerpt,pdfGroup]=view.children[1].children;
+ assert.equal(webExcerpt.children[0].text,'example.org · 原文摘录 2/3');
+ assert.equal(pdfGroup.cls,'linked-pdf-records');
+ const [heading,cited,uncited]=pdfGroup.children;
+ assert.equal(heading.text,'公开 PDF 原文页');
+ assert.equal(cited.children[0].text,'example.org · PDF 物理页 2/3 · 已引用');
+ assert.equal(cited.children[1].href,'https://example.org/source.pdf#page=2');
+ assert.equal(uncited.children[0].text,'example.org · PDF 物理页 3/3 · 已读，未引用');
+ assert.equal(uncited.children[1].href,'https://example.org/source.pdf#page=3');
+ assert.equal(calls.length,1);
 });

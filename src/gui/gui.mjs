@@ -344,7 +344,7 @@ function readSourcesContent(target, value) {
       if(!parent){parent=make('section',undefined,'linked-pdf-records');parent.append(make('h4','公开 PDF 原文页'));target.append(parent);}
     }
     const excerpt=make('details',undefined,'web-source-excerpt');
-    excerpt.append(make('summary',url.hostname+(pdf?' · PDF 物理页 ':' · 网页原文摘录 ')+source.page+'/'+source.pages+(pdf?(source.cited?' · 已引用':' · 已读，未引用'):'')));
+    excerpt.append(make('summary',url.hostname+(pdf?' · PDF 物理页 ':' · 原文摘录 ')+source.page+'/'+source.pages+(pdf?(source.cited?' · 已引用':' · 已读，未引用'):'')));
     const link=make('a',pdf?'打开来源 PDF（可能更新）':'打开原网页');
     if(pdf)url.hash='page='+source.page;
     link.href=url.href;link.target='_blank';link.rel='noopener noreferrer';link.referrerPolicy='no-referrer';
