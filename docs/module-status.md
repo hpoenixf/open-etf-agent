@@ -2,7 +2,7 @@
 
 [简体中文](module-status.zh-CN.md) · [README](../README.md#module-map)
 
-Reviewed version: **v0.49.0**. [Fixed code baseline](https://github.com/hpoenixf/open-etf-agent/tree/a506cf7c74649ce2ba7a167ace65f344de1bdcc8) · [Version evidence and limits](verification/v049-research-runtime-reliability.md).
+Reviewed version: **v0.50.0**. [Fixed code baseline](https://github.com/hpoenixf/open-etf-agent/tree/a506cf7c74649ce2ba7a167ace65f344de1bdcc8) · [Version evidence and limits](verification/v049-research-runtime-reliability.md).
 
 Implementation, offline checks, live workflows, release and deployment are different facts. This is not a per-module qualification checklist; modules can span layers.
 
@@ -80,7 +80,7 @@ Admission and capacity. **Queue, do not expand concurrency**.  [Why the Next Mod
 
 Encode / receive model actions. **Incomplete response is not action**.  [Inside an Agent’s Provider Layer: Why a Unified API Still Needs Shared Admission](https://hpoenixf.com/eff-agent-article/en/articles/agent-provider-architecture-and-admission) (module-article) · [Fixed source](https://github.com/hpoenixf/open-etf-agent/blob/a506cf7c74649ce2ba7a167ace65f344de1bdcc8/src/gateway.mjs) · [Scope guide](child-lifecycle.md)
 
-### Runtime · v0.49.0 enhanced
+### Runtime · v0.50.0 enhanced
 
 Deep needs and bounded tool faults. **URL policy and unknown replay unchanged**.  [A Research Agent Needs More Than Tools: How Model, Harness, and Loop Work Together](https://hpoenixf.com/eff-agent-article/en/articles/etf-agent-model-harness-research-loop) (overview) · [Fixed source](https://github.com/hpoenixf/open-etf-agent/blob/a506cf7c74649ce2ba7a167ace65f344de1bdcc8/src/runtime.mjs) · [Scope guide](child-lifecycle.md)
 

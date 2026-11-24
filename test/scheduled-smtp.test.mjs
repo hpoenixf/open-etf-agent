@@ -64,11 +64,17 @@ test('local authenticated TLS SMTP accepted, pre-DATA refusal not dispatched, po
  assert.deepEqual(accepted,{status:'accepted',receiptId:'smtp-'+payload.idempotencyKey});
  assert.match(content[0],/Plain exact report lines\./);
  assert.doesNotMatch(content[0],/fixture-password|fixture-user/);
+ const alternative={...payload,html:'<main><h2>完整报告</h2><p>Last paragraph.</p></main>'};
+ assert.equal((await adapter.transport(alternative)).status,'accepted');
+ const mime=JSON.parse(execFileSync('/usr/bin/python3',['-c',
+  'import email,email.policy,json,sys; m=email.message_from_bytes(sys.stdin.buffer.read(),policy=email.policy.SMTP); print(json.dumps([(p.get_content_type(),p.get_content()) for p in m.iter_parts()]))'],
+  {encoding:'utf8',input:content[1]}));
+ assert.deepEqual(mime.map(([type,text])=>[type,text.trimEnd()]),[['text/plain',payload.text],['text/html',alternative.html]]);
  behavior='before-data';
  assert.deepEqual(await adapter.transport(payload),{status:'not-dispatched'});
- assert.equal(dataAttempts,1);
+ assert.equal(dataAttempts,2);
  behavior='unknown';
  assert.deepEqual(await adapter.transport(payload),{status:'unknown'});
- assert.equal(dataAttempts,2);
- assert.equal(authenticated,3);
+ assert.equal(dataAttempts,3);
+ assert.equal(authenticated,4);
 });

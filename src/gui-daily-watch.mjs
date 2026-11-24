@@ -56,6 +56,7 @@ export async function openGuiDailyWatch(projectDir,{now=Date.now}={}){
   try{
    const watchColumns=new Set(db.prepare('PRAGMA table_info(watch)').all().map(x=>x.name));
    const occurrenceColumns=new Set(db.prepare('PRAGMA table_info(occurrence)').all().map(x=>x.name));
+   if(!watchColumns.has('email_confirmed_at_ms'))db.exec('ALTER TABLE watch ADD COLUMN email_confirmed_at_ms INTEGER');
    if(!watchColumns.has('digest_version'))db.exec('ALTER TABLE watch ADD COLUMN digest_version TEXT');
    if(!watchColumns.has('question_revision'))db.exec('ALTER TABLE watch ADD COLUMN question_revision INTEGER NOT NULL DEFAULT 1');
    if(!occurrenceColumns.has('question_revision'))db.exec('ALTER TABLE occurrence ADD COLUMN question_revision INTEGER');
@@ -72,30 +73,33 @@ export async function openGuiDailyWatch(projectDir,{now=Date.now}={}){
    digestEnabled:row.digest_version!=null,digestConfirmed:digestVersion!==null&&row.digest_version===digestVersion,
    emailConfirmed:emailVersion!==null&&row.email_version===emailVersion,requiresReview:row.enabled===1&&row.config_version!==configVersion,
    history:latest.all(row.id).map(occurrence)})),
-  save(value,id,{emailVersion:confirmedVersion=null,configVersion=null,digestVersion:confirmedDigest=null}={}){
+  save(value,id,{emailVersion:confirmedVersion=null,configVersion=null,digestVersion:confirmedDigest=null,fullWatchEmail=false}={}){
    const {question,localTime,enabled,requestId}=watchInput(value),time=Number(now());
    let emailEnabled=value.emailEnabled,emailVersion=emailEnabled===true?confirmedVersion??null:null;
    let digestVersion=value.digestEnabled===true?confirmedDigest:null;
    if(id===undefined){
     emailEnabled??=false;
     id=requestId??'w'+randomUUID().replaceAll('-','').slice(0,24);
-    db.prepare('INSERT OR IGNORE INTO watch (id,question,local_time,enabled,after_ms,email_enabled,email_version,config_version,digest_version) VALUES(?,?,?,?,?,?,?,?,?)').run(id,question,localTime,Number(enabled),time,Number(emailEnabled),emailVersion,configVersion,digestVersion);
+    db.prepare('INSERT OR IGNORE INTO watch (id,question,local_time,enabled,after_ms,email_enabled,email_version,config_version,digest_version,email_confirmed_at_ms) VALUES(?,?,?,?,?,?,?,?,?,?)').run(id,question,localTime,Number(enabled),time,Number(emailEnabled),emailVersion,configVersion,digestVersion,fullWatchEmail&&emailEnabled===true&&emailVersion?time:null);
     const saved=byId.get(id);
     if(saved.question!==question||saved.local_time!==localTime||saved.enabled!==Number(enabled)||saved.email_enabled!==Number(emailEnabled)||saved.email_version!==emailVersion||saved.config_version!==configVersion||saved.digest_version!==digestVersion)reject(409,'GUI_DAILY_ID_CONFLICT');
    }else{
     if(requestId!==undefined)reject(400,'GUI_DAILY_WATCH_INVALID');
     const before=watchId.test(id)&&byId.get(id);
     if(!before)reject(404,'NOT_FOUND');
+    const emailConfirmedAt=value.emailEnabled===undefined?before.email_confirmed_at_ms:
+     fullWatchEmail&&emailEnabled&&emailVersion?(before.email_enabled===1&&before.email_version===emailVersion?before.email_confirmed_at_ms??time:time):null;
     if(value.digestEnabled===undefined)digestVersion=before.digest_version;
     if(emailEnabled===undefined){emailEnabled=before.email_enabled===1;emailVersion=before.email_version;}
     if(before.local_time!==localTime||before.question!==question||before.enabled!==Number(enabled)||before.config_version!==configVersion)
-     db.prepare('UPDATE watch SET question=?,local_time=?,enabled=?,after_ms=?,email_enabled=?,email_version=?,config_version=?,question_revision=question_revision+? WHERE id=?').run(question,localTime,Number(enabled),time,Number(emailEnabled),emailVersion,configVersion,Number(before.question!==question),id);
-    else if(before.email_enabled!==Number(emailEnabled)||before.email_version!==emailVersion)db.prepare('UPDATE watch SET email_enabled=?,email_version=? WHERE id=?').run(Number(emailEnabled),emailVersion,id);
+     db.prepare('UPDATE watch SET question=?,local_time=?,enabled=?,after_ms=?,email_enabled=?,email_version=?,email_confirmed_at_ms=?,config_version=?,question_revision=question_revision+? WHERE id=?').run(question,localTime,Number(enabled),time,Number(emailEnabled),emailVersion,emailConfirmedAt,configVersion,Number(before.question!==question),id);
+    else if(before.email_enabled!==Number(emailEnabled)||before.email_version!==emailVersion||before.email_confirmed_at_ms!==emailConfirmedAt)
+     db.prepare('UPDATE watch SET email_enabled=?,email_version=?,email_confirmed_at_ms=? WHERE id=?').run(Number(emailEnabled),emailVersion,emailConfirmedAt,id);
     if(before.digest_version!==digestVersion)db.prepare('UPDATE watch SET digest_version=? WHERE id=?').run(digestVersion,id);
    }
    return show(byId.get(id));
   },
-  claim(configVersion=null,{perWatchEmail=true}={}){
+  claim(configVersion=null,{perWatchEmail=true,fullWatchEmail=false,emailVersion=null}={}){
    db.exec('BEGIN IMMEDIATE');
    try{
     const time=Number(now());
@@ -105,7 +109,8 @@ export async function openGuiDailyWatch(projectDir,{now=Date.now}={}){
      // watch after the slot. Keep one occurrence identity even after edits.
      if(instant>time||instant<row.after_ms||row.config_version!==configVersion)continue;
      const conversationId='daily-'+row.id+'-'+date.slice(0,4),messageId='day-'+date;
-     const inserted=db.prepare("INSERT OR IGNORE INTO occurrence (watch_id,day,instant,question,conversation_id,message_id,run_id,status,email_state,email_version,question_revision) VALUES(?,?,?,?,?,?,NULL,'claimed',?,?,?)").run(row.id,date,instant,row.question,conversationId,messageId,perWatchEmail&&row.email_enabled?'pending':'off',row.email_version,row.question_revision);
+     const emailAllowed=perWatchEmail&&row.email_enabled&&(!fullWatchEmail||(emailVersion!==null&&row.email_version===emailVersion&&row.email_confirmed_at_ms!==null&&row.email_confirmed_at_ms<=instant));
+     const inserted=db.prepare("INSERT OR IGNORE INTO occurrence (watch_id,day,instant,question,conversation_id,message_id,run_id,status,email_state,email_version,question_revision) VALUES(?,?,?,?,?,?,NULL,'claimed',?,?,?)").run(row.id,date,instant,row.question,conversationId,messageId,emailAllowed?'pending':'off',row.email_version,row.question_revision);
      if(inserted.changes){db.exec('COMMIT');return {watchId:row.id,date,question:row.question,revision:row.question_revision,conversationId,messageId};}
     }
     db.exec('COMMIT');return null;
@@ -124,11 +129,15 @@ export async function openGuiDailyWatch(projectDir,{now=Date.now}={}){
    if(!statusMap.has(status))reject(500,'GUI_DAILY_SETTLEMENT_INVALID');
    db.prepare("UPDATE occurrence SET status=?, run_id=COALESCE(run_id,?) WHERE watch_id=? AND day=? AND status IN ('claimed','submitted')").run(status,runId,id,date);
   },
-  emailConfirmed(id,date,version){
-   const binding=db.prepare("SELECT o.email_version AS old,w.email_version AS current FROM occurrence o JOIN watch w ON w.id=o.watch_id WHERE o.watch_id=? AND o.day=? AND o.status='completed' AND o.email_state='pending' AND w.email_enabled=1").get(id,date);
-   return version!==null&&binding?.old===version&&binding.current===version;
+  emailConfirmed(id,date,version,{fullWatchEmail=false}={}){
+   const binding=db.prepare("SELECT o.email_version AS old,w.email_version AS current,w.enabled,w.email_confirmed_at_ms AS consentAt,o.instant FROM occurrence o JOIN watch w ON w.id=o.watch_id WHERE o.watch_id=? AND o.day=? AND o.status='completed' AND o.email_state='pending' AND w.email_enabled=1").get(id,date);
+   return version!==null&&binding?.old===version&&binding.current===version&&
+    (!fullWatchEmail||(binding.enabled===1&&binding.consentAt!==null&&binding.consentAt<=binding.instant));
   },
-  pendingEmail:()=>db.prepare("SELECT * FROM occurrence WHERE status='completed' AND email_state='pending' ORDER BY day LIMIT 8").all().map(row=>({...occurrence(row),watchId:row.watch_id})),
+  pendingEmail:()=>db.prepare("SELECT * FROM occurrence WHERE status='completed' AND email_state='pending' ORDER BY day LIMIT 8").all().map(row=>{
+   const label=/^(?:【(早报|晚报)】|(早报|晚报)(?:[：:]|\r?\n|$))/u.exec(row.question);
+   return {...occurrence(row),watchId:row.watch_id,...(label?{briefLabel:label[1]??label[2]}:{})};
+  }),
   emailSettlement({watchId:id,date},state){
    if(!['accepted','not-dispatched','unknown','unavailable'].includes(state))reject(500,'GUI_DAILY_EMAIL_SETTLEMENT_INVALID');
    db.prepare("UPDATE occurrence SET email_state=? WHERE watch_id=? AND day=? AND email_state='pending'").run(state,id,date);

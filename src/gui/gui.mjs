@@ -624,7 +624,7 @@ async function showDaily(){
   if(dailyEmailToken&&dailyEmailToken!==nextEmailToken)byId('daily-email').checked=false;
   dailyEmailToken=nextEmailToken;
   byId('daily-email-choice').hidden=!data.emailAvailable;
-  byId('daily-email-target').textContent=data.emailPreview?'（'+data.emailPreview+'）':'';
+  byId('daily-email-target').textContent=(data.emailContentMode==='full-report'?'（包含完整正文）':'')+(data.emailPreview?'（'+data.emailPreview+'）':'');
   const digest=data.digest;
   const newDigestToken=digest?.consentToken??null;
   if(dailyDigestToken&&dailyDigestToken!==newDigestToken)byId('daily-digest-watch').checked=false;
@@ -634,7 +634,7 @@ async function showDaily(){
   if(digest?.available){
     byId('daily-digest-time').value=digest.localTime??'';
     byId('daily-digest-on').checked=digest.enabled&&!digest.requiresConfirmation;
-    byId('daily-digest-note').textContent='在设定的北京时间发一封摘要，不会启动研究。'+(digest.recipientPreview?'收件人：'+digest.recipientPreview+'。':'');
+    byId('daily-digest-note').textContent=(digest.contentMode==='full-report'?'在设定的北京时间发送一封邮件，包含已纳入追踪的完整报告正文。未完成项目只显示状态；不会启动研究。':'在设定的北京时间发一封摘要，仅含状态和工作台链接，不会启动研究。')+(digest.recipientPreview?'收件人：'+digest.recipientPreview+'。':'');
     byId('daily-digest-status').textContent=digest.requiresConfirmation?'投递配置已变更，请重新确认。':digest.enabled?'当前已启用。':'当前未启用。';
     byId('daily-digest-history').replaceChildren(...digest.history.map(item=>make('li',item.date+' · '+(emailStatuses[item.status]??'状态待核对'))));
   }

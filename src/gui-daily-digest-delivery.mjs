@@ -14,14 +14,16 @@ export function prepareOwnerDailyDigest(env,smtpOptions){
  if(!adapter)fail();
  const recipient=adapter.resolveDestination();
  const ownerOrigin=env.ETF_DAILY_DIGEST_OWNER_ORIGIN;
- createDailyDigestHook({ownerOrigin,transport:adapter.transport,resolveConfirmedDestination:()=>null}); // Validate declared origin at startup.
- const version='digest-resend-'+createHash('sha256').update(JSON.stringify([recipient.version,ownerOrigin])).digest('hex');
+ const mode=env.ETF_DAILY_DIGEST_CONTENT??'links-only';
+ if(!['links-only','full-report'].includes(mode))fail();
+ createDailyDigestHook({ownerOrigin,mode,transport:adapter.transport,resolveConfirmedDestination:()=>null}); // Validate declared origin at startup.
+ const version='digest-resend-'+createHash('sha256').update(JSON.stringify([recipient.version,ownerOrigin,...(mode==='full-report'?[mode]:[])])).digest('hex');
  return Object.freeze({
-  version,
+  version,contentMode:mode,
   recipientPreview:recipient.address.replace(/^(.).*@/,'$1***@'),
   inspect:inspectDailyDigestEmail,
   deliver(job){
-   const hook=createDailyDigestHook({ownerOrigin,transport:adapter.transport,
+   const hook=createDailyDigestHook({ownerOrigin,mode,transport:adapter.transport,
     resolveConfirmedDestination:selector=>selector.ownerId===job.ownerId&&selector.date===job.date&&job.confirmed()?recipient:null});
    return hook(job);
   },

@@ -32,6 +32,8 @@ def run():
                 return state
             text["Resend-Idempotency-Key"] = key
         text.set_content(request["text"], charset="utf-8")
+        if "html" in request:
+            text.add_alternative(request["html"], subtype="html", charset="utf-8")
         if os.environ["SMTP_TLS"] == "implicit":
             connection = smtplib.SMTP_SSL(host, port, timeout=8, context=context)
         else:

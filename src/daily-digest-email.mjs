@@ -6,8 +6,12 @@ import {open} from 'node:fs/promises';
 import {join} from 'node:path';
 import {ensureSafeDirectory,publishImmutable,safeDirectory} from './storage-files.mjs';
 import {readCompletedConversationEmailReport} from './scheduled-report-email.mjs';
+import {renderFullDailyDigestHtml} from './daily-digest-render.mjs';
 
 const SCHEMA='daily-research-digest-email@1';
+const MODES=['links-only','full-report'];
+const verifiedText=original=>typeof original.text==='string'&&original.text.trim()&&
+ Buffer.byteLength(original.text)<=128000&&Buffer.from(original.text).toString('utf8')===original.text&&hash(original.text)===original.sha256;
 export const MAX_DAILY_DIGEST_ROWS=24;
 const hash=value=>createHash('sha256').update(value).digest('hex');
 const fail=code=>{throw Object.assign(new Error(code),{code});};
@@ -45,17 +49,20 @@ function safeRows(rows){
  }).sort((a,b)=>a.localTime.localeCompare(b.localTime)||a.watchId.localeCompare(b.watchId));
 }
 
-export async function composeDailyDigest({projectDir,date:day,rows,ownerOrigin,readOriginal=readCompletedConversationEmailReport}){
+export async function composeDailyDigest({projectDir,date:day,rows,ownerOrigin,mode='links-only',readOriginal=readCompletedConversationEmailReport}){
  if(!date(day))fail('DIGEST_DAY_INVALID');
+ if(!MODES.includes(mode))fail('DIGEST_MODE_INVALID');
+ const full=mode==='full-report';
  const origin=originFor(ownerOrigin), ordered=safeRows(rows), summaries=[];
  for(const item of ordered){
-  let status=item.status,link=null,evidenceDate=null;
+  let status=item.status,link=null,evidenceDate=null,body=null;
   if(status==='completed'){
    const conversationId='daily-'+item.watchId+'-'+day.slice(0,4),messageId='day-'+day;
    if(item.conversationId===conversationId&&item.messageId===messageId&&id(item.runId,/^conversation-[a-f0-9]{40}$/)){
     try{
      const original=await readOriginal({projectDir,conversationId,messageId,runId:item.runId});
-     if(original?.status==='completed'&&original.conversationId===conversationId&&original.messageId===messageId&&original.runId===item.runId){
+     if(original?.status==='completed'&&original.conversationId===conversationId&&original.messageId===messageId&&original.runId===item.runId&&(!full||verifiedText(original))){
+      if(full)body=original.text;
       link=origin+'/#'+conversationId+'~'+messageId;
       // Called only with a typed fact from the Scheduler's trusted projection;
       // do not extract a date from generated prose or substitute the Run date.
@@ -65,7 +72,18 @@ export async function composeDailyDigest({projectDir,date:day,rows,ownerOrigin,r
    }
    if(!link)status='unavailable';
   }
-  summaries.push({status,localTime:item.localTime,link,evidenceDate});
+  summaries.push({status,localTime:item.localTime,link,evidenceDate,body});
+ }
+ if(full){
+  const subject='每日研究报告 · '+day, heading=subject+'（北京时间）';
+  const intro='计划事项：'+summaries.length+'；已核实完成：'+summaries.filter(x=>x.status==='completed').length+'。';
+  const footer='已核实完成的报告均完整展示。未完成或无法核实正文的项目只显示状态；这不代表市场没有变化。原报告链接需要登录。';
+  const rows=summaries.map(({status,localTime,link,evidenceDate,body},i)=>({
+   label:(i+1)+'. '+localTime+' · '+(status==='completed'?'已完成':states[status])+'。',
+   detail:link?'证据日期：'+(evidenceDate??'未记录')+'。':null,link,body,
+  }));
+  const text=[heading,intro,...rows.map(r=>[r.label,r.detail,r.link,r.body].filter(x=>x!==null).join('\n')),footer].join('\n\n');
+  return {subject,text,html:renderFullDailyDigestHtml({subject:heading,intro,rows,footer}),count:rows.length};
  }
  const subject='每日研究摘要 · '+day;
  const text=[subject+'（北京时间）','',
@@ -97,7 +115,9 @@ async function inspect(root,key){
  try{path=await safeDirectory(join(root,key));}catch(error){if(error.code==='ENOENT')return {status:'not-started'};throw error;}
  const frozen=await read(path,'digest.json');
  if(!frozen)return {status:'not-started'};
- if(frozen.schema!==SCHEMA||frozen.key!==key||frozen.payloadSha256!==hash(JSON.stringify([frozen.subject,frozen.text]))
+ if(frozen.schema!==SCHEMA||frozen.key!==key||
+     (frozen.mode==='full-report'?frozen.subject!==undefined||frozen.text!==undefined||frozen.html!==undefined||!id(frozen.payloadSha256,/^[a-f0-9]{64}$/):
+        frozen.mode!==undefined||frozen.payloadSha256!==hash(JSON.stringify([frozen.subject,frozen.text])))
      ||!id(frozen.idempotencyKey,/^[a-f0-9]{64}$/)||!id(frozen.destinationHash,/^[a-f0-9]{64}$/))fail('DIGEST_LEDGER_INVALID');
  const claim=await read(path,'claim.json');
  if(!claim)return {status:'not-started',frozen};
@@ -116,8 +136,9 @@ export async function inspectDailyDigestEmail({projectDir,ownerId,date:day}){
 
 // resolveConfirmedDestination reads the current server confirmation, never a
 // browser-controlled address. No attempt, including unknown, is retried here.
-export function createDailyDigestHook({resolveConfirmedDestination,ownerOrigin,transport,readOriginal}){
- const origin=originFor(ownerOrigin);
+export function createDailyDigestHook({resolveConfirmedDestination,ownerOrigin,transport,readOriginal,mode='links-only'}){
+ const origin=originFor(ownerOrigin),full=mode==='full-report';
+ if(!MODES.includes(mode))fail('DIGEST_MODE_INVALID');
  if(typeof resolveConfirmedDestination!=='function'||typeof transport!=='function')fail('DIGEST_TRANSPORT_NOT_CONFIGURED');
  return async ({projectDir,ownerId,date:day,rows,signal})=>{
   const key=dayKey(ownerId,day),root=join(await safeDirectory(projectDir),'daily-digest-email');
@@ -126,22 +147,35 @@ export function createDailyDigestHook({resolveConfirmedDestination,ownerOrigin,t
   const destinationSelector={projectDir,ownerId,date:day};
   const target=targetFor(await resolveConfirmedDestination(destinationSelector));
   if(!target||signal?.aborted)return {status:'not-configured',attempts:0};
-  const destinationHash=hash(JSON.stringify([target.address,target.version,origin]));
+  const destinationHash=hash(JSON.stringify([target.address,target.version,origin,...(full?[mode]:[])]));
   let plan=previous.frozen;
+  const matchesTarget=p=>p?.destinationHash===destinationHash&&(full?p.mode===mode:p.mode===undefined);
+  if(plan&&!matchesTarget(plan))return {status:'not-configured',attempts:0};
   const path=join(root,key);
-  if(!plan){
-   const {subject,text,count}=await composeDailyDigest({projectDir,date:day,rows,ownerOrigin:origin,readOriginal});
+  let payload;
+  if(!plan||full){
+   const {subject,text,html,count}=await composeDailyDigest({projectDir,date:day,rows,ownerOrigin:origin,readOriginal,mode});
    if(!count)return {status:'empty',attempts:0};
-   const payloadSha256=hash(JSON.stringify([subject,text]));
+   payload={subject,text,...(full?{html}:{})};
+   // Do not silently truncate the complete report. Reconstruct full payloads
+   // from canonical History rather than persist another copy in the ledger.
+   if(full&&Buffer.byteLength(JSON.stringify({to:target.address,...payload,idempotencyKey:'0'.repeat(64)}))>800000)
+    return {status:'unavailable',attempts:0};
+  }
+  const payloadHash=p=>hash(JSON.stringify([p.subject,p.text,...(full?[p.html]:[])]));
+  if(!plan){
+   const payloadSha256=payloadHash(payload);
    const idempotencyKey=hash(JSON.stringify([SCHEMA,key,destinationHash,payloadSha256]));
-   const next={schema:SCHEMA,key,subject,text,payloadSha256,idempotencyKey,destinationHash};
+   const next={schema:SCHEMA,key,...(full?{mode}:{subject:payload.subject,text:payload.text}),payloadSha256,idempotencyKey,destinationHash};
    await ensureSafeDirectory(path);
    await write(path,'digest.json',next);
    const state=await inspect(root,key);
    if(state.attempts)return {status:state.status,attempts:1};
    plan=state.frozen;
   }
-  if(!plan||plan.destinationHash!==destinationHash)return {status:'not-configured',attempts:0};
+  if(!matchesTarget(plan))return {status:'not-configured',attempts:0};
+  if(full&&plan.payloadSha256!==payloadHash(payload))return {status:'unavailable',attempts:0};
+  if(!full)payload={subject:plan.subject,text:plan.text};
   // Serialize claim before any possible external dispatch. Re-check opt-in
   // afterward; a crash during either gap is conservatively unknown.
   if(!await write(path,'claim.json',{key,payloadSha256:plan.payloadSha256,idempotencyKey:plan.idempotencyKey}))return inspectDailyDigestEmail({projectDir,ownerId,date:day});
@@ -150,7 +184,7 @@ export function createDailyDigestHook({resolveConfirmedDestination,ownerOrigin,t
    const fresh=targetFor(await resolveConfirmedDestination(destinationSelector));
    if(!signal?.aborted&&fresh?.address===target.address&&fresh.version===target.version){
     status='unknown';
-    const outcome=await transport({to:target.address,subject:plan.subject,text:plan.text,idempotencyKey:plan.idempotencyKey});
+    const outcome=await transport({to:target.address,...payload,idempotencyKey:plan.idempotencyKey});
     if(outcome?.status==='accepted'&&receiptId(outcome.receiptId)){status='accepted';receipt=outcome.receiptId;}
     else if(outcome?.status==='not-dispatched')status='not-dispatched';
    }
