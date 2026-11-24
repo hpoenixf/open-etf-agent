@@ -1,5 +1,6 @@
 **English** | [简体中文](README.zh-CN.md)
 
+- [v0.47.0 retained web excerpts and readable answers](v047-retained-web-and-answer-delivery.md)
 - [v0.46.1 compact research workbench](v0461-compact-workbench.md)
 
 - [v0.46 Deep research evidence milestones](v046-deep-evidence-milestones.md)
