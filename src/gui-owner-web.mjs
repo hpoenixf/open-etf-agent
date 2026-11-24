@@ -43,6 +43,23 @@ const unavailable=(type,provider,reason,requestOutcome)=>({kind:`public-web-${ty
  reason,observedAt:new Date().toISOString(),requestOutcome,automaticReplayAllowed:false});
 const schema=(key,description)=>({type:'object',properties:{[key]:{type:'string',description}},required:[key],additionalProperties:false});
 
+const exaReadGuidance='Search snippets are discovery, not original evidence. Use an offered HTTPS URL to read the original, or search for another HTTPS source. Plain HTTP URLs are discovery-only: do not call public_web_read with them or silently change their scheme.';
+function exaTransportHints(snippets){
+ const hints=[];
+ for(let snippetIndex=0;snippetIndex<snippets.length&&hints.length<3;snippetIndex++){
+  const snippet=snippets[snippetIndex];
+  // Only recognize an unambiguous leading hit header or standalone URL.
+  // Anything appearing in a snippet body remains untrusted discovery text.
+  const url=snippet.match(/^Title:[^\r\n]+\r?\nURL:[ \t]+(http:\/\/[^\u0000-\u0020\u007f\\]+)[ \t]*(?:\r?\n|$)/)?.[1]
+    ??snippet.match(/^(http:\/\/[^\u0000-\u0020\u007f\\]+)$/)?.[1];
+  if(!url||url.length>2048)continue;
+  let parsed;try{parsed=new URL(url);}catch{continue;}
+  if(parsed.protocol!=='http:'||parsed.username||parsed.password)continue;
+  hints.push({snippetIndex,url,status:'discovery-only',reason:'HTTPS_REQUIRED'});
+ }
+ return hints;
+}
+
 function parseExa(text,id,mediaType){
  const raw=mediaType.startsWith('text/event-stream')?text.split(/\r?\n\r?\n/).map(event=>event.split(/\r?\n/).filter(l=>l.startsWith('data:')).map(l=>l.slice(5).trimStart()).join('\n')).filter(Boolean):[text];
  for(const frame of raw){
@@ -53,7 +70,8 @@ function parseExa(text,id,mediaType){
   if(envelope.error||result?.isError||!Array.isArray(result?.content))fail('WEB_SEARCH_PROVIDER_ERROR');
   const snippets=result.content.filter(row=>row?.type==='text'&&typeof row.text==='string').map(row=>row.text);
   if(!snippets.length)fail('WEB_SEARCH_RESPONSE_INVALID');
-  return {kind:'public-web-search@1',provider:'exa-public-preview',snippets};
+  const transportHints=exaTransportHints(snippets);
+  return {kind:'public-web-search@1',provider:'exa-public-preview',snippets,readGuidance:exaReadGuidance,...(transportHints.length?{transportHints}:{})};
  }
  fail('WEB_SEARCH_RESPONSE_INVALID');
 }
@@ -170,6 +188,8 @@ export function openOwnerWeb({profile,projectDir,projectId,runId,transport={},se
     const native=await inspect({projectDir,acquisitionId});
     if(native.status!=='failed'||native.code!==error.code||native.plan?.urls?.length!==1||native.plan.urls[0]!==url)throw error;
     const requestOutcome=native.dispatchOutcomeKnown&&native.unknownRequests===0?'no-unobserved-dispatch':'unknown';
+    // A timeout may become a model-visible missing source only after original settlement is proved.
+    if(error.code==='WEB_TIMEOUT'&&(requestOutcome==='unknown'||native.automaticReplayAllowed!==false))throw error;
     const value=unavailable('page','public-static-web',error.code,requestOutcome);
     await ensureSafeDirectory(join(projectDir,'owner-web-page-refusals'));
     const directory=pageFailureDirectory(callId);await mkdir(directory,{mode:0o700});

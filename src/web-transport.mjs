@@ -3,7 +3,7 @@ import {PLATFORM_PROFILE,prepareWebNetworkProfile,readPreparedWebNetworkProfile,
 import https from 'node:https';
 import {createHash} from 'node:crypto';
 import robotsParser from 'robots-parser';
-import {WEB_USER_AGENT,normalizeWebUrl,publicAddresses,webLimits,webFailure,boundedRobotsText,normalizeRobotsOctets} from './web-policy.mjs';
+import {WEB_USER_AGENT,normalizeWebUrl,publicAddresses,webLimits,webFailure,forwardWebAcquisitionAbort,boundedRobotsText,normalizeRobotsOctets} from './web-policy.mjs';
 import {extractWebText} from './web-extraction.mjs';
 export {prepareWebNetworkProfile} from './web-platform-profile.mjs';
 export {WEB_LIMITS,WEB_USER_AGENT,normalizeWebUrl} from './web-policy.mjs';
@@ -55,7 +55,7 @@ export async function acquireWebPage({url,allowedUrls,signal,limits:input,networ
  if(!Array.isArray(allowedUrls)||allowedUrls.length<1||allowedUrls.length>16)throw webFailure('WEB_AUTHORITY_INVALID');
  const allowed=new Set(allowedUrls.map(normalizeWebUrl));if(allowed.size!==allowedUrls.length||!allowed.has(requestedUrl))throw webFailure('WEB_URL_NOT_ADMITTED');
  const deadlineAt=Date.now()+limits.timeoutMs;
- const controller=new AbortController(),timeout=setTimeout(()=>controller.abort(webFailure('WEB_TIMEOUT')),limits.timeoutMs),forward=()=>controller.abort(webFailure('WEB_CANCELLED'));
+ const controller=new AbortController(),timeout=setTimeout(()=>controller.abort(webFailure('WEB_TIMEOUT')),limits.timeoutMs),forward=()=>controller.abort(forwardWebAcquisitionAbort(signal?.reason));
  signal?.addEventListener('abort',forward,{once:true});if(signal?.aborted)forward();
  const state={requests:0,responses:0,receivedBytes:0,proxyConnectionAttempts:0,remainingBytes:limits.totalBytes},redirects=[],robots=[],cache=new Map(),dnsObservations=[];
  function checkDeadline(){if(Date.now()>=deadlineAt&&!controller.signal.aborted)controller.abort(webFailure('WEB_TIMEOUT'));aborted(controller.signal);}
