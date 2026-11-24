@@ -46,7 +46,7 @@ async function fixture(t){
   const add=(messageId,dir=projectDir)=>submitConversationMessage({projectDir:dir,conversationId:'exact',
     messageId,text:'synthetic question '+messageId,sourceManifestSha256:(dir===projectDir?workspace:otherWorkspace).sources[0].id});
   const session=(runId)=>openSession({directory:join(projectDir,'sessions',runId)});
-  return {get,post,workspace,add,session,projectDir,otherDir};
+  return {get,post,workspace,otherWorkspace,add,session,projectDir,otherDir};
 }
 async function readJson(response,status){
   assert.equal(response.status,status);
@@ -76,10 +76,36 @@ test('exact body is scoped to the authenticated mounted Project, not supplied ID
   assert.deepEqual(await readJson(await f.get(exactBody('original')),200),{
     conversationId:'exact',messageId:'original',status:'active',body:{text:bodyText,sha256:sha(bodyText),revision:1},
   });
+  const sourcesPath=exactBody('original').replace(/body$/,'sources');
+  assert.equal((await f.get(sourcesPath,{account:null})).status,401);
+  assert.deepEqual(await readJson(await f.get(sourcesPath,{account:'other'}),409),{error:'BODY_NOT_PUBLISHED',status:'active'});
+  assert.deepEqual(await readJson(await f.get(sourcesPath),200),{
+    projectId:f.workspace.projectId,conversationId:'exact',messageId:'original',availability:'none',readSources:[],
+  });
+  assert.deepEqual(await readJson(await f.get(sourcesPath.replace('/original/','/alias/')),503),
+    {error:'SOURCES_READ_UNAVAILABLE'});
   const head=await f.get(exactBody('original'),{method:'HEAD'});
   assert.equal(head.status,200);
   assert.equal(head.headers.get('cache-control'),'no-store');
   assert.equal(await head.text(),'');
+});
+
+test('source DTO independently identifies the mounted project when two owner credentials reuse exact turn IDs',async t=>{
+  const f=await fixture(t);
+  const path='/api/conversations/exact/messages/reused/sources';
+  for(const [dir,account,expected] of [[f.projectDir,'owner',f.workspace],[f.otherDir,'other',f.otherWorkspace]]){
+    const {runId}=await f.add('reused',dir);
+    const store=await openSession({directory:join(dir,'sessions',runId)});
+    try{
+      const claim=store.claim(runId,'auth-switch-test');
+      claim.publish(preparePublication({runId,rootId:runId,text:bodyText}));
+      claim.release();
+    }finally{store.close();}
+    assert.deepEqual(await readJson(await f.get(path,{account}),200),{
+      projectId:expected.projectId,conversationId:'exact',messageId:'reused',availability:'none',readSources:[],
+    });
+  }
+  assert.notEqual(f.workspace.projectId,f.otherWorkspace.projectId);
 });
 
 test('Publication alone controls exact body; reads cannot change the original active or cancelled Run',async t=>{

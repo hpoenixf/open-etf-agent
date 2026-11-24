@@ -208,6 +208,8 @@ dialog::backdrop{background:#14282480}
 .research-progress[open] .research-context{padding-inline-start:.85rem}
 .research-progress summary { cursor:pointer; min-height: 36px; color: var(--muted); padding-block: .52rem; font-size: .8125rem; font-weight:500; }
 .research-progress[open] .research-progress-body { border-inline-start: 2px solid var(--line); margin-inline-start: .45rem; padding-inline-start: .55rem; }
+.read-web-sources .web-source-excerpt{padding-inline-start:.35rem}
+.read-web-sources .web-source-text{white-space:pre-wrap;overflow-wrap:anywhere;max-height:20rem;overflow:auto}
 .turn-notice { color: var(--muted); font-size: .8125rem; margin-block: .12rem; }
 .turn-notice summary { cursor: pointer; min-height: 34px; padding-block: .4rem; }
 .turn-notice p { margin-block: .25rem; }
