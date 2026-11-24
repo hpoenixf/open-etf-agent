@@ -22,6 +22,7 @@ import { openGuiDailyWatch, DAILY_TIME_ZONE } from './gui-daily-watch.mjs';
 import {offerReasoningEffort} from './gateway.mjs';
 import { readGuiResearchProgress, readGuiReasoningEffort } from './gui-progress.mjs';
 import { prepareGuiLiveConfig } from './gui-live-config.mjs';
+import { prepareOwnerLangfuse } from './gui-langfuse.mjs';
 
 const routeId = '[A-Za-z0-9_-]{1,48}';
 const idPattern = new RegExp('^'+routeId+'$');
@@ -125,9 +126,10 @@ async function guiProject(projectDir, expectedConfig, live, freeform) {
 
 // Trusted server composition only. An account host must authenticate and
 // resolve its Project before mounting this listener-free handler.
-export async function createLocalGuiWorkspace({ projectDir, origin: mountOrigin, liveConfig, env = process.env, fetchImpl, ownerWebTransport, ownerWindFetch, dailyClock, onDailyCompleted, smtpOptions, ownerDailyDigest } = {}) {
+export async function createLocalGuiWorkspace({ projectDir, origin: mountOrigin, liveConfig, env = process.env, fetchImpl, ownerWebTransport, ownerWindFetch, dailyClock, onDailyCompleted, smtpOptions, ownerDailyDigest, langfuseOptions } = {}) {
   const live = liveConfig === undefined ? null : prepareGuiLiveConfig(liveConfig,env);
   const mode = live?'live-research':'offline-demo';
+  const telemetry=live?prepareOwnerLangfuse(env,langfuseOptions):null;
   const expectedConfig=live?.config??validatedConfig;
   const wrongProject=live?'GUI_LIVE_PROJECT_REQUIRED':'GUI_DEMO_PROJECT_REQUIRED';
   const freeform=supportsOwnerFreeform(expectedConfig);
@@ -252,10 +254,32 @@ export async function createLocalGuiWorkspace({ projectDir, origin: mountOrigin,
     if (working) reject(409, 'GUI_WORKER_BUSY');
     const source = sourceFor(sourceId);
     if (!freeform&&!source) reject(409, 'GUI_SOURCE_UNKNOWN');
+    const trace=telemetry?.start();
     const p = Promise.resolve().then(() =>
       workConversationMessage({ projectDir, conversationId, messageId,
-        ...(live?{apiKey:live.apiKey,fetchImpl,ownerWebTransport,ownerWindSettings,ownerSearchSettings,ownerWindFetch}:{gateway:demoGateway(source)}), hostSignal: hostSignal.signal })
+        ...(live?{apiKey:live.apiKey,fetchImpl,ownerWebTransport,ownerWindSettings,ownerSearchSettings,ownerWindFetch,observeGuiRun:trace?.observe}:{gateway:demoGateway(source)}), hostSignal: hostSignal.signal })
     ).catch(() => { /* Lifecycle and original execution evidence remain in Project. */ });
+    if(trace)void p.then(async()=>{
+      const turn=await inspectConversationMessage({projectDir,conversationId,messageId});
+      if(!turn?.runId)return;
+      const {run,definition}=await inspectResearchTask({projectDir,runId:turn.runId});
+      if(!['completed','failed','cancelled'].includes(run?.status))return;
+      // Use the same narrow persisted-body boundary as the GUI, never the bulk
+      // History read, and never treat provider completion as delivery.
+      let delivery='unavailable';
+      try {
+        const exact=await readConversationBody({projectDir,conversationId,messageId});
+        if(exact.body?.text)delivery='publication';
+        else {
+          const {output}=await readConversationMessage({projectDir,conversationId,messageId});
+          delivery=output?.kind==='report'?'report':'not-created';
+        }
+      } catch(error) {
+        if(error?.code==='PROJECT_REPORT_NOT_READY')delivery='not-created';
+      }
+      trace.finish(projectDir,{runId:run.runId,status:run.status,code:run.snapshot.code,delivery,
+        modelUsed:run.rootUsage.model,toolUsed:run.rootUsage.tool,modelLimit:definition.config.limits.model,toolLimit:definition.config.limits.tool});
+    }).catch(()=>{});
     working = { key, p };
     p.finally(() => { if (working?.p === p) working = null; });
     return p;
