@@ -9,6 +9,7 @@ import { fileURLToPath } from 'node:url';
 import {
   createConversation, inspectConversation, inspectConversationMessage, readDailyConversationBaseline, readConversationMessage, readConversationCharts, readConversationInput, readConversationTitle, titleForConversationInput, submitConversationMessage,
   workConversationMessage, cancelConversationMessage,
+  readConversationBody,
 } from './conversation.mjs';
 import { createResearchProject, inspectResearchProject, inspectResearchTask, readProjectJson, supportsOwnerFreeform, updateResearchProject, validateResearchConfig } from './research-project.mjs';
 import { importProjectSources, importUploadedPdf, PROJECT_SOURCE_LIMITS } from './project-sources.mjs';
@@ -30,6 +31,7 @@ const pdfId = /^[a-f0-9]{64}$/;
 const dailyPath = new RegExp('^/api/daily-watch(?:/(w[a-f0-9]{24}))?$');
 const progressPath = new RegExp('^/api/conversations/('+routeId+')/messages/('+routeId+')/progress$');
 const reportPath = new RegExp('^/api/conversations/('+routeId+')/messages/('+routeId+')/report[.]md$');
+const bodyPath = new RegExp('^/api/conversations/('+routeId+')/messages/('+routeId+')/body$');
 const actionPath = new RegExp('^/api/conversations/('+routeId+')/messages(?:/('+routeId+')/(work|cancel))?$');
 const config = {
   schemaVersion: 'research-project@1',
@@ -407,6 +409,18 @@ export async function createLocalGuiWorkspace({ projectDir, origin: mountOrigin,
             }catch{/* A terminal Run by itself does not prove readable delivery. */}
           }
           return send(200,{...timeline,...(researchIntent&&researchIntent!=='direct'?{researchIntent}:{}),...(deepProgress?{deepProgress}:{})});
+        }
+        const bodyMatch=bodyPath.exec(req.url);
+        if(bodyMatch){
+          const [,conversationId,messageId]=bodyMatch;
+          let result;
+          try{result=await readConversationBody({projectDir,conversationId,messageId});}
+          catch(error){
+            if(['ENOENT','UNKNOWN_RUN','CONVERSATION_PROJECT_MISMATCH'].includes(error.code))return send(404,{error:'NOT_FOUND'});
+            return send(503,{error:'BODY_READ_UNAVAILABLE'});
+          }
+          if(!result.body)return send(409,{error:'BODY_NOT_PUBLISHED',status:result.status});
+          return send(200,result);
         }
         const reportMatch = reportPath.exec(req.url);
         if (reportMatch) {

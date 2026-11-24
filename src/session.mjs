@@ -705,6 +705,10 @@ export async function openSession({ directory, clock = Date.now, leaseMs = 1000,
     db.prepare('UPDATE runs SET owner=?,fence=fence+1,lease_until=? WHERE run_id=?').run(owner, time + leaseMs, runId); return view(getRun(runId));
    });
    const { rootId, fence } = initial;
+   // This claim-local witness is minted only after its SQLite transaction
+   // successfully returns. It proves caller acknowledgement loss, not an
+   // ambiguous native COMMIT, a prior writer, or anything after process death.
+   let initialPublicationAck;
    const reserve = (kind, snapshot) => {
     if (!['model', 'tool'].includes(kind)) fail('INVALID_BUDGET_KIND'); const encoded = snapshot === undefined ? undefined : encodeCheckpoint(snapshot);
     return transaction(() => {
@@ -834,7 +838,39 @@ export async function openSession({ directory, clock = Date.now, leaseMs = 1000,
      });
     },
     reserve,
-    publish(prepared) { return transaction(() => commitPublication(writer(runId, owner, fence), prepared)); },
+    publish(prepared) {
+     initialPublicationAck=undefined;
+     let candidate;
+     const committed=transaction(()=>{
+      const row=writer(runId,owner,fence);
+      const result=commitPublication(row,prepared);
+      if(!result.idempotent&&result.receipt.revision===1&&!scheduled&&!protectedProfile&&!ordinary){
+       const {definition,snapshot}=view(row);
+       if(!definition.config.requireReport&&definition.config.reportDelivery===undefined&&
+          !definition.bindings.adapters.some(binding=>['serial-child-execution','async-child-execution'].includes(binding.id))&&
+          snapshot.phase==='proposal-sealed'&&snapshot.proposal?.kind==='final'&&snapshot.proposal.text===prepared.content.text&&
+          !prepared.content.assessment&&snapshot.gatewayOutcome==='settled'&&
+          !snapshot.inFlight&&!snapshot.unknownEffects.length&&!snapshot.partialEffects.length){
+        candidate={prepared:canonical(prepared),snapshot:row.snapshot,definition:row.definition,receipt:structuredClone(result.receipt)};
+       }
+      }
+      return result;
+     });
+     if(candidate)initialPublicationAck=candidate;
+     return committed;
+    },
+    confirmInitialPublication(prepared) {
+     const witness=initialPublicationAck;
+     if(!witness||canonical(validatePublication(prepared))!==witness.prepared)return null;
+     return transaction(()=>{
+      const row=writer(runId,owner,fence);
+      if(row.snapshot!==witness.snapshot||row.definition!==witness.definition)return null;
+      const values=publicationFacts(row),saved=values[0];
+      if(values.length!==1||canonical(saved.receipt)!==canonical(witness.receipt)||
+         canonical(saved.content)!==canonical(prepared.content))return null;
+      return {kind:'same-fence-initial-publication-committed',receipt:structuredClone(saved.receipt)};
+     });
+    },
     replacePublication(prepared, expectedRevision) {
      if (expectedRevision === undefined) fail('INVALID_PUBLICATION_REVISION');
      return transaction(() => commitPublication(writer(runId, owner, fence), prepared, expectedRevision));
@@ -846,6 +882,26 @@ export async function openSession({ directory, clock = Date.now, leaseMs = 1000,
       if (row.parent_run_id === null && snapshot.status === 'completed' && db.prepare("SELECT 1 FROM runs WHERE root_id=? AND run_id<>? AND status='active'").get(rootId, runId)) fail('ACTIVE_CHILD');
       db.prepare('UPDATE runs SET snapshot=?,status=?,owner=NULL,lease_until=0 WHERE run_id=?').run(encoded, snapshot.status, runId);
       if (row.parent_run_id === null) db.prepare('UPDATE roots SET status=? WHERE root_id=?').run(snapshot.status, rootId); return view(getRun(runId));
+     });
+    },
+    confirmTerminalFinish(expected) {
+     // Read proof only. A terminal row is no longer an active claim; the fence
+     // is retained by finish even after owner/lease are cleared.
+     if(scheduled||protectedProfile||ordinary||expected?.phase!=='terminal'||expected.status!=='completed'||
+        expected.gatewayOutcome!=='settled'||expected.inFlight||expected.unknownEffects?.length||expected.partialEffects?.length||
+        expected.cleanup?.effectsStopped===false||expected.outcome?.cleanup?.effectsStopped===false||!expected.publication)return null;
+     encodeCheckpoint(expected,true);
+     return transaction(()=>{
+      const row=getRun(runId),state=view(row);
+      if(row.parent_run_id!==null||runId!==rootId||state.rootId!==rootId||state.fence!==fence||
+         state.owner!==null||state.leaseUntil!==0||state.status!=='completed'||state.rootStatus!=='completed'||
+         state.definition.config.reportDelivery!==undefined||
+         canonical(state.definition)!==canonical(initial.definition)||canonical(state.snapshot)!==canonical(expected))return null;
+      const saved=publicationFacts(row).at(-1);
+      if(!saved||canonical(saved.receipt)!==canonical(expected.publication)||
+         canonical(saved.receipt)!==canonical(expected.outcome?.publication)||
+         saved.content.text!==expected.answer||saved.content.text!==expected.outcome?.answer)return null;
+      return {kind:'same-fence-finish-committed',status:state.status};
      });
     },
     release() { return transaction(() => { const row = getRun(runId); if (row.owner === null && row.fence === fence) return false; writer(runId, owner, fence, false); db.prepare('UPDATE runs SET owner=NULL,lease_until=0 WHERE run_id=?').run(runId); return true; }); },

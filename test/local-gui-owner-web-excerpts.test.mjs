@@ -1,6 +1,5 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import dns from 'node:dns';
 import { mkdir, mkdtemp, rm } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import { setTimeout as delay } from 'node:timers/promises';
@@ -8,7 +7,7 @@ import { startLocalGui } from '../src/gui-server.mjs';
 import { createResearchProject, inspectResearchTask, submitResearchTask, workResearchTask } from '../src/research-project.mjs';
 import { readDeepResearchProgress, researchProfileFor, DEEP_EVIDENCE_REVISION } from '../src/research-intent.mjs';
 import { prepareGuiLiveConfig } from '../src/gui-live-config.mjs';
-import { openOwnerWeb, OWNER_WEB_EXCERPTS } from '../src/gui-owner-web.mjs';
+import { openOwnerWeb, OWNER_WEB_EXCERPTS, OWNER_WEB_EXCERPTS_LOCAL_MISS } from '../src/gui-owner-web.mjs';
 import { mockWebNetwork } from './fixtures/web-network.mjs';
 import { paginateWebText, WEB_TEXT_PAGE_BYTES, webTextPageSizes } from '../src/web-text-pages.mjs';
 
@@ -42,15 +41,19 @@ async function scratch(t){
  return path;
 }
 
-test('normal GUI delivers a real retained second excerpt through the model wire and cold-reads without any additional acquisition',async t=>{
+const invalidCursor='not-the-issued-cursor';
+const cursorMiss={
+ kind:'public-web-continuation-unavailable@1',status:'unavailable',reason:'WEB_CONTINUATION_CURSOR_INVALID',
+ networkAttempted:false,automaticReplayAllowed:false,
+};
+const honestAnswer='已读取第一个摘录，但没有核实后续摘录；不能确认其中的数字。';
+for(const scenario of ['normal','malformed-then-honest-answer','malformed-then-exact-correction']){
+ test('normal GUI retained excerpt and cold History: '+scenario,async t=>{
  const projectDir=await scratch(t);
  const firstCall=call('initial','public_web_read',{url:url+'#not-an-extraction-anchor'});
- const nativeLookup=dns.lookup;
- const network=mockWebNetwork(t,{routes:{
+ const network=mockWebNetwork(t,{passthroughLoopback:true,routes:{
   'https://example.com/robots.txt':{body:'User-agent: *\nAllow: /\n'},[url]:{body:text},
  }});
- const publicFixtureLookup=dns.lookup;
- t.mock.method(dns,'lookup',(host,...args)=>host==='127.0.0.1'?nativeLookup(host,...args):publicFixtureLookup(host,...args));
  const requested=()=>network.calls.map(value=>value.url);
  let modelRequests=0,gui,first,second;
  t.after(async()=>await gui?.close());
@@ -68,8 +71,19 @@ test('normal GUI delivers a real retained second excerpt through the model wire 
   assert.equal(first.kind,'public-web-page@2');assert.equal(first.page,1);
   assert.match(first.nextCursor,/^[a-f0-9]{64}$/);
   assert.ok(!first.text.includes(marker));assert.equal(first.url,url);
-  if(prior.length===1)return proposal(call('next','public_web_continue',{cursor:first.nextCursor}));
-  second=JSON.parse(prior[1].content).value;
+  if(prior.length===1)return proposal(scenario==='normal'
+   ?call('next','public_web_continue',{cursor:first.nextCursor})
+   :call('bad','public_web_continue',{cursor:invalidCursor}));
+  if(scenario!=='normal'){
+   const packet=JSON.parse(prior[1].content);
+   assert.deepEqual(packet.value,cursorMiss);
+   assert.ok(!prior[1].content.includes(invalidCursor),'typed result does not echo malformed token');
+   if(prior.length===2){
+    if(scenario==='malformed-then-honest-answer')return Response.json({choices:[{message:{role:'assistant',content:honestAnswer},finish_reason:'stop'}]});
+    return proposal(call('next','public_web_continue',{cursor:first.nextCursor}));
+   }
+  }
+  second=JSON.parse(prior.at(-1).content).value;
   assert.ok(second.text.includes(marker));assert.equal(second.page,2);assert.equal(second.nextCursor,null);
   assert.equal(second.originalSha256,first.originalSha256);assert.equal(second.manifestSha256,first.manifestSha256);
   assert.equal(first.text+second.text,text);
@@ -89,15 +103,45 @@ test('normal GUI delivers a real retained second excerpt through the model wire 
   await delay(30);
  }
  assert.equal(result.messages[0].status,'completed',JSON.stringify(result.messages[0]));
- assert.equal(result.messages[0].output.answer,marker);
+ assert.equal(result.messages[0].output.answer,scenario==='malformed-then-honest-answer'?honestAnswer:marker);
  const {definition,run}=await inspectResearchTask({projectDir,runId:result.messages[0].runId});
- assert.equal(definition.ownerWebExcerptRevision,OWNER_WEB_EXCERPTS);
+ assert.equal(definition.ownerWebExcerptRevision,OWNER_WEB_EXCERPTS_LOCAL_MISS);
  assert.equal(readDeepResearchProgress(researchProfileFor("deep",DEEP_EVIDENCE_REVISION),run.snapshot).originalsRead,1);
- assert.equal(modelRequests,3);assert.deepEqual(requested(),['https://example.com/robots.txt',url]);
+ const expectedModelRequests=scenario==='malformed-then-exact-correction'?4:3;
+ assert.equal(modelRequests,expectedModelRequests);assert.deepEqual(requested(),['https://example.com/robots.txt',url]);
  await gui.close();gui=await startLocalGui(options);
  assert.deepEqual(await get(path),result);
  assert.equal((await post(path+'/messages',input)).status,202);
- assert.equal(modelRequests,3);assert.deepEqual(requested(),['https://example.com/robots.txt',url]);
+ assert.equal(modelRequests,expectedModelRequests);assert.deepEqual(requested(),['https://example.com/robots.txt',url]);
+ });
+}
+
+test('v2 wrong format settles locally without authority or storage access; v1 frozen tool stays strict',async t=>{
+ const f=fixture(),projectDir=await scratch(t),runId='local-invalid';
+ let readRunCalls=0;
+ const options={...binding,projectDir,runId,transport:f.transport,readRun:()=>{
+  readRunCalls++;return {runId,snapshot:{messages:[]}};
+ }};
+ const [,legacy]=openOwnerWeb(options);
+ const [,active]=openOwnerWeb({...options,excerptRevision:OWNER_WEB_EXCERPTS_LOCAL_MISS});
+ assert.equal(legacy.recoveryVersion,'owner-public-continuation@1');
+ assert.throws(()=>legacy.validate({cursor:invalidCursor}),{code:'WEB_CONTINUATION_CURSOR_INVALID'});
+ assert.equal(active.recoveryVersion,'owner-public-continuation@2');
+ const malformed=call('wrong','public_web_continue',{cursor:invalidCursor});
+ assert.deepEqual(await active.execute(malformed.arguments,{callId:malformed.id}),cursorMiss);
+ assert.deepEqual(await active.reconcile(malformed.arguments,{callId:malformed.id}),cursorMiss);
+ await active.verifyResult(cursorMiss,{call:malformed});
+ await assert.rejects(active.verifyResult({...cursorMiss,reason:'other'},{call:malformed}),{code:'WEB_PAGE_EVIDENCE_CHANGED'});
+ const signal=AbortSignal.abort();
+ await assert.rejects(active.reconcile(malformed.arguments,{callId:malformed.id,signal}),{name:'AbortError'});
+ assert.equal(readRunCalls,0);
+ for(const args of [{},{cursor:null},{cursor:'' ,url},{cursor:'f'.repeat(129)},{cursor:'f\n'}])
+  assert.throws(()=>active.validate(args),{code:'WEB_CONTINUATION_CURSOR_INVALID'});
+ // A type-correct forgery reaches only same-Run receipt lookup, not storage.
+ const forged=await active.execute({cursor:'f'.repeat(64)},{callId:'forged'});
+ assert.equal(forged.reason,'WEB_CONTINUATION_NOT_AVAILABLE');
+ assert.equal(readRunCalls,1);
+ assert.deepEqual(f.counts,{acquire:0,inspect:0,load:0});
 });
 
 test('only a prior committed cursor authorizes the same run; missing or changed artifacts and cancellation never re-fetch',async t=>{
