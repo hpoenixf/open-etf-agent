@@ -2,7 +2,7 @@
 
 [English](module-status.md) · [README](../README.zh-CN.md#module-map)
 
-审阅版本: **v0.49.0**. [固定代码基线](https://github.com/hpoenixf/open-etf-agent/tree/a506cf7c74649ce2ba7a167ace65f344de1bdcc8) · [本版验证范围与限制](verification/v049-research-runtime-reliability.md).
+审阅版本: **v0.50.0**. [固定代码基线](https://github.com/hpoenixf/open-etf-agent/tree/a506cf7c74649ce2ba7a167ace65f344de1bdcc8) · [本版验证范围与限制](verification/v049-research-runtime-reliability.md).
 
 实现、离线检查、真实任务、发布和部署是不同事实。下表不是逐模块验收通过清单；模块可参与多层。
 
@@ -80,7 +80,7 @@
 
 编码与接收模型动作. **不完整响应不作动作**.  [Agent 供应商模块精讲：为什么统一接口之后，还需要共享准入](https://hpoenixf.com/eff-agent-article/articles/agent-provider-architecture-and-admission) (module-article) · [固定源码](https://github.com/hpoenixf/open-etf-agent/blob/a506cf7c74649ce2ba7a167ace65f344de1bdcc8/src/gateway.mjs) · [范围导读](child-lifecycle.zh-CN.md)
 
-### Runtime · v0.49.0 增强
+### Runtime · v0.50.0 增强
 
 深研工作需求与有界工具故障. **不放宽 URL 或未知派发规则**.  [投研 Agent 的关键不是多调用工具：从 Model、Harness 到会修正判断的 Loop](https://hpoenixf.com/eff-agent-article/articles/etf-agent-model-harness-research-loop) (overview) · [固定源码](https://github.com/hpoenixf/open-etf-agent/blob/a506cf7c74649ce2ba7a167ace65f344de1bdcc8/src/runtime.mjs) · [范围导读](child-lifecycle.zh-CN.md)
 

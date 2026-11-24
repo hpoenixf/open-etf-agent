@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "reviewedVersion": "0.49.0",
+  "reviewedVersion": "0.50.0",
   "reviewedSource": "a506cf7c74649ce2ba7a167ace65f344de1bdcc8",
   "articleSource": "https://github.com/hpoenixf/eff-agent-article/blob/249f0b866f9446f33b57f186fbc6d35b5d82c119/articles/open-etf-agent-v010-system-design.md",
   "evidence": "docs/verification/v049-research-runtime-reliability.md",
