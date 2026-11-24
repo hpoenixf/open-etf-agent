@@ -1,0 +1,35 @@
+{
+  "notice": "全部为本系列自编练习。此文件不是模型输入安全策略、产品配置或真实业务资料。",
+  "material_readback": {
+    "question": "截至 2026-03-08，库房访客能否凭培训截图进入？给出本园区适用规则。",
+    "as_of": "2026-03-08",
+    "scope": "东区库房",
+    "documents": [
+      {"id": "W-17-R1", "scope": "东区库房", "published": "2026-02-12", "effective": "2026-02-20", "state": "read", "locator": "政策第 3 条", "text": "访客应由持证成员全程陪同。"},
+      {"id": "W-17-R2", "scope": "东区库房", "published": "2026-03-11", "effective": "2026-03-17", "state": "read", "locator": "修订第 2 条", "text": "在预约审查完成后允许特定访客自行进入。"},
+      {"id": "N-04", "scope": "东区库房", "published": "2026-03-06", "effective": null, "state": "discovery-only", "locator": null, "text": "搜索摘要：培训截图也能用？"},
+      {"id": "W-42", "scope": "西区资料室", "published": "2026-01-04", "effective": "2026-01-04", "state": "read", "locator": "流程第 4 条", "text": "管理员可登记培训记录，供内部人员复核。"}
+    ]
+  },
+  "dispatch_settlement": [
+    {"id": "T-201", "operation": "publish-note", "effect": "not-dispatched", "run": "failed", "body": "not-saved", "known_idempotency": true},
+    {"id": "T-202", "operation": "send-summary", "effect": "unknown", "run": "interrupted", "body": "saved", "known_idempotency": false},
+    {"id": "T-203", "operation": "read-page", "effect": "settled", "run": "cancelled", "body": "saved", "known_idempotency": true},
+    {"id": "T-204", "operation": "publish-note", "effect": "settled", "run": "completed", "body": "not-saved", "known_idempotency": true}
+  ],
+  "grading_cases": [
+    {"id": "G-1", "expected": "2026-03-17", "statement": "2026-03-11", "saved": true, "readback_matches": true, "evidence_locator": "修订第 2 条"},
+    {"id": "G-2", "expected": "2026-03-17", "statement": "2026-03-17", "saved": true, "readback_matches": false, "evidence_locator": "修订第 2 条"},
+    {"id": "G-3", "expected": "2026-03-17", "statement": "2026-03-17", "saved": true, "readback_matches": true, "evidence_locator": null},
+    {"id": "G-4", "expected": "2026-03-17", "statement": "2026-03-17", "saved": true, "readback_matches": true, "evidence_locator": "修订第 2 条"}
+  ],
+  "proposal_cases": [
+    {"id": "P-1", "role": "viewer", "workspace": "north", "family": "search-handbook", "schema": 1, "args": {"workspace": "north", "query": "值班交接"}, "expected": "ready-for-read"},
+    {"id": "P-2", "role": "viewer", "workspace": "north", "family": "search-handbook", "schema": 1, "args": {"workspace": "west", "query": "值班交接"}, "expected": "deny-outside-workspace"},
+    {"id": "P-3", "role": "editor", "workspace": "north", "family": "update-handbook", "schema": 1, "args": {"workspace": "north", "draft_id": "demo-4"}, "expected": "approval-required"},
+    {"id": "P-4", "role": "editor", "workspace": "north", "family": "update-handbook", "schema": 2, "args": {"workspace": "north", "draft_id": "demo-4"}, "expected": "unsupported-contract"},
+    {"id": "P-5", "role": "viewer", "workspace": "north", "family": "update-handbook", "schema": 1, "args": {"workspace": "north", "draft_id": "demo-4"}, "expected": "deny-role"},
+    {"id": "P-6", "role": "editor", "workspace": "north", "family": "search-handbook", "schema": 1, "args": {"workspace": "north", "query": "  "}, "expected": "invalid-arguments"},
+    {"id": "P-7", "role": "editor", "workspace": "north", "family": "search-handbook", "schema": 1, "args": {"workspace": "north", "query": "值班交接", "user_role": "admin"}, "expected": "invalid-arguments"}
+  ]
+}
