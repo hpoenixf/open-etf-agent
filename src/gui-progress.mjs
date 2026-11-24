@@ -14,7 +14,7 @@ export async function readGuiReasoningEffort(projectDir,run,requested){
 
 const TOOLS = Object.freeze({
   public_web_search:'公开网页搜索', public_web_search_deepseek:'DeepSeek 网页搜索',
-  public_web_search_yuanbao:'腾讯元宝网页搜索', public_web_read:'读取公开网页',
+  public_web_search_yuanbao:'腾讯元宝网页搜索', public_web_read:'读取公开网页', public_web_continue:'继续读取已取得的网页',
   wind_fund_daily_close:'查询 Wind 基金日收盘价', read_page:'读取所选资料',
   read_pdf_page:'读取 PDF 文字', read_pdf_cell:'核对 PDF 表格',
   save_report:'保存报告', read_result:'读取已保存资料',

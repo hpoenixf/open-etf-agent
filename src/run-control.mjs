@@ -28,6 +28,24 @@ export function decideRunControl(fact, context = {}) {
   if(context.requireReport&&!fact.reportPresent&&!fact.publicationCommitted)return stop('REPORT_REQUIRED');
   return {action:'finalize',reason:'SEALED_FINAL'};
  }
+ if(fact.kind==='publication-ack-missing'){
+  return fact.proof?.kind==='same-fence-initial-publication-committed'
+   ?{action:'continue',reason:'PUBLICATION_COMMIT_VERIFIED'}:{action:'unconfirmed',reason:'PUBLICATION_COMMIT_UNCONFIRMED'};
+ }
+ if(fact.kind==='finish-ack-missing'){
+  return fact.proof?.kind==='same-fence-finish-committed'&&fact.proof.status==='completed'
+   ?{action:'preserve',reason:'FINISH_COMMIT_VERIFIED'}:{action:'unconfirmed',reason:'FINISH_COMMIT_UNCONFIRMED'};
+ }
+ if(fact.kind==='post-publication-checkpoint-deadline'){
+  return fact.proof?.kind==='same-fence-publication-and-settled-effects'
+   ?{action:'return-without-finish',status:'unconfirmed',reason:'POST_PUBLICATION_CHECKPOINT_TIMEOUT'}
+   :{action:'legacy',reason:'POST_PUBLICATION_CHECKPOINT_UNPROVEN'};
+ }
+ if(fact.kind==='operator-cancel-at-model-reservation'){
+  return fact.proof?.kind==='same-fence-persisted-cancellation'
+   ?{action:'return-without-finish',status:'cancelled',reason:'CANCELLED'}
+   :{action:'retain-reservation',status:'unconfirmed',reason:'CANCEL_COMMIT_UNCONFIRMED'};
+ }
  if(fact.kind==='committed-notification')return {action:'continue',reason:'COMMIT_PRESERVED_NOTIFICATION_UNCONFIRMED'};
  if(fact.kind==='secondary-failure'){
   // An observed cleanup failure must never replace cancellation, unknown, or the
@@ -38,8 +56,8 @@ export function decideRunControl(fact, context = {}) {
  throw Object.assign(new Error('INVALID_CONTROL_FACT'),{code:'INVALID_CONTROL_FACT'});
 }
 export function validateControlObservations(state, runId) {
- const codes={'publication-notification':'PUBLICATION_NOTIFICATION_UNCONFIRMED','pdf-cleanup':'PDF_CLEANUP_FAILED','result-readback':'RESULT_READBACK_FAILED',log:'LOG_WRITE_FAILED','hook-release':'HOOK_RELEASE_FAILED'};
+ const codes={'child-cleanup':'CHILD_CLEANUP_FAILED','publication-notification':'PUBLICATION_NOTIFICATION_UNCONFIRMED','pdf-cleanup':'PDF_CLEANUP_FAILED','result-readback':'RESULT_READBACK_FAILED',log:'LOG_WRITE_FAILED','hook-release':'HOOK_RELEASE_FAILED'};
  if(state.controlObservations===undefined)return;
  if(!Array.isArray(state.controlObservations)||state.controlObservations.length>32)throw new Error('INVALID_CONTROL_OBSERVATIONS');
- for(const f of state.controlObservations)if(!f||Object.keys(f).sort().join(',')!=='code,owner,runId,status'||typeof f.runId!=='string'||!f.runId||!['publication-notification','pdf-cleanup','result-readback','log','hook-release'].includes(f.owner)||typeof f.code!=='string'||!/^[A-Z][A-Z0-9_]{0,79}$/.test(f.code)||f.status!=='unconfirmed'||codes[f.owner]!==f.code||runId!==undefined&&f.runId!==runId)throw new Error('INVALID_CONTROL_OBSERVATIONS');
+ for(const f of state.controlObservations)if(!f||Object.keys(f).sort().join(',')!=='code,owner,runId,status'||typeof f.runId!=='string'||!f.runId||typeof f.owner!=='string'||!Object.hasOwn(codes,f.owner)||typeof f.code!=='string'||!/^[A-Z][A-Z0-9_]{0,79}$/.test(f.code)||f.status!=='unconfirmed'||codes[f.owner]!==f.code||runId!==undefined&&f.runId!==runId)throw new Error('INVALID_CONTROL_OBSERVATIONS');
 }

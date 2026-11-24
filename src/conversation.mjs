@@ -9,6 +9,7 @@ import {sha256} from './source.mjs';
 import {safeDirectory,ensureSafeDirectory,publishImmutable} from './storage-files.mjs';
 import {readProjectJson,inspectResearchProject,submitResearchTask,inspectResearchTask,workResearchTask,cancelResearchTask,readResearchReport,readResearchOutput,resumeResearchTaskAdmission,supportsOwnerFreeform,respondResearchTask,inspectResearchInteraction,listResearchInteractions,controlResearchTask,inspectResearchControl} from './research-project.mjs';
 import {readReportReview} from './report-review.mjs';
+import {readResearchPublication} from './research-project.mjs';
 const fail=code=>{throw Object.assign(new Error(code),{code});};
 const id=v=>{if(typeof v!=='string'||!/^[A-Za-z0-9_-]{1,48}$/.test(v))fail('CONVERSATION_INVALID_ID');return v;};
 const hash=v=>sha256(JSON.stringify(v));
@@ -173,6 +174,17 @@ export async function readConversationCharts({projectDir,conversationId,messageI
 }
 export async function readConversationInput({projectDir,conversationId,messageId}){const loc=await location(projectDir,conversationId),record=await intent(loc,messageId);return {text:record.input.text,sourceManifestSha256:record.input.sourceManifestSha256,...(record.input.chartSkill?{chartSkill:record.input.chartSkill}:{}),...(record.input.researchDepth===undefined?{}:{researchDepth:record.input.researchDepth}),...(record.input.reasoningEffort===undefined?{}:{reasoningEffort:record.input.reasoningEffort})};}
 export async function readConversationMessage({projectDir,conversationId,messageId}){const loc=await location(projectDir,conversationId),record=await intent(loc,messageId);await checkedTask(loc,record);const output=await readResearchOutput({projectDir:loc.projectDir,runId:record.runId});return {conversationId,messageId,input:record.input,digest:record.digest,output};}
+// Exact canonical answer only: no aggregate History, report, or Progress reads.
+export async function readConversationBody({projectDir,conversationId,messageId}){
+ const loc=await location(projectDir,conversationId),record=await intent(loc,messageId);
+ if(record.messageId!==messageId)fail('CONVERSATION_MESSAGE_CHANGED');
+ await checkedTask(loc,record);
+ const {status,publication}=await readResearchPublication({projectDir:loc.projectDir,runId:record.runId});
+ if(!publication)return {conversationId,messageId,status,body:null};
+ if(publication.receipt.runId!==record.runId||publication.receipt.rootId!==record.runId)fail('CONVERSATION_TASK_MISMATCH');
+ const text=publication.content.text;
+ return {conversationId,messageId,status,body:{text,sha256:sha256(text),revision:publication.receipt.revision}};
+}
 
 function admissionFact(record,task){return {schemaVersion:'conversation-admission@1',intentDigest:record.digest,taskDefinitionHash:hash(canonical(task.definition)),sessionDefinitionHash:hash(canonical(task.run.definition))};}
 async function saveAdmission(loc,record){const task=await inspectResearchTask({projectDir:loc.projectDir,runId:record.runId});await immutable(loc.directory,record.messageId+'.admitted.json',admissionFact(record,task));}

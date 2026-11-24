@@ -1,9 +1,9 @@
 {
   "schemaVersion": 2,
-  "reviewedVersion": "0.46.1",
-  "reviewedSource": "1bbabf0dca0da23ee3cafcdb565340dd379b7acd",
+  "reviewedVersion": "0.47.0",
+  "reviewedSource": "8f9f2adcdc4abfefcacddbc0dd843b99462abbf7",
   "articleSource": "https://github.com/hpoenixf/eff-agent-article/blob/249f0b866f9446f33b57f186fbc6d35b5d82c119/articles/open-etf-agent-v010-system-design.md",
-  "evidence": "docs/verification/v0461-compact-workbench.md",
+  "evidence": "docs/verification/v047-retained-web-and-answer-delivery.md",
   "layers": [
     {
       "id": "L1",
@@ -605,14 +605,14 @@
       "group": "main",
       "name": "Run Control",
       "summary": {
-        "zh": "继续或停止的决策",
-        "en": "Continue or stop decision"
+        "en": "Decide terminal Run outcome",
+        "zh": "决定 Run 是否及如何终结"
       },
       "boundary": {
-        "zh": "Host stop ≠ 用户取消",
-        "en": "Host stop ≠ user cancellation"
+        "en": "Verified answers survive later faults",
+        "zh": "次要错误不抹掉已确认正文"
       },
-      "status": "bounded",
+      "status": "enhanced",
       "source": "src/run-control.mjs",
       "kind": "module",
       "article": {
@@ -755,14 +755,14 @@
       "group": "tools",
       "name": "Web Acquisition",
       "summary": {
-        "zh": "搜索并读取公开静态页",
-        "en": "Discover and read public pages"
+        "en": "Continue reading one public page",
+        "zh": "继续读取同一公开网页的摘录"
       },
       "boundary": {
-        "zh": "摘要不是原文证据",
-        "en": "Search snippets are not evidence"
+        "en": "Uses retained bytes; no second fetch",
+        "zh": "复用原始留存内容，不重新抓取"
       },
-      "status": "bounded",
+      "status": "enhanced",
       "source": "src/web-acquisition.mjs",
       "kind": "module",
       "article": {
@@ -1005,14 +1005,14 @@
       "group": "delivery",
       "name": "Publication",
       "summary": {
-        "zh": "接纳回答正文",
-        "en": "Accept answer body"
+        "en": "Read back the verified original body",
+        "zh": "回读已核验的原始回答正文"
       },
       "boundary": {
-        "zh": "原版本与提交回执",
-        "en": "Original revision and commit receipt"
+        "en": "Body is not proof of a saved report",
+        "zh": "已发布正文不等于已交付报告"
       },
-      "status": "bounded",
+      "status": "enhanced",
       "source": "src/publication.mjs",
       "kind": "module",
       "article": {
@@ -1087,7 +1087,7 @@
         "zh": "已验桌面与窄屏；未验真机及浏览器 PDF",
         "en": "Desktop/narrow; no phone or PDF check"
       },
-      "status": "enhanced",
+      "status": "bounded",
       "source": "src/gui/gui.mjs",
       "kind": "call-site",
       "article": {

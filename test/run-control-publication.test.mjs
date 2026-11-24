@@ -6,6 +6,9 @@ import {randomUUID} from 'node:crypto';
 import {DatabaseSync} from 'node:sqlite';
 import {run} from '../src/runtime.mjs';
 import {openSession} from '../src/session.mjs';
+import {validateControlObservations} from '../src/run-control.mjs';
+import {childExecutionBinding,createAsyncChildExecutionBindings} from '../src/child-execution.mjs';
+import {CLAIM_COMPARISON_METHOD} from '../src/child.mjs';
 
 const bindings={gateway:{mode:'fixture',provider:'local',protocol:'fixture@1',model:'run-control-publication-test',version:'1'},plugins:[],adapters:[{id:'publication',version:'publication@1'}]};
 async function fixture(name,{controlledLease=false}={}){
@@ -53,4 +56,45 @@ for(const corruption of ['tampered-commit','missing-commit'])test(`unified contr
   const outcome=await run({...f.options,durable:{...f.options.durable,onPublication({runId,receipt}){committed=structuredClone(receipt);const db=new DatabaseSync(join(f.directory,'session.sqlite'));try{if(corruption==='tampered-commit')db.prepare('UPDATE publication_versions SET payload_hash=? WHERE run_id=?').run('0'.repeat(64),runId);else{db.prepare('DELETE FROM publication_events WHERE run_id=?').run(runId);db.prepare('DELETE FROM publication_versions WHERE run_id=?').run(runId);}}finally{db.close();}throw notificationFailure();}}});f.evidence.outcome=outcome;f.evidence.originalReceipt=committed;
   assert.equal(outcome.status,'failed');assert.equal(outcome.code,'PUBLICATION_IDENTITY_UNAVAILABLE');assert.throws(()=>f.store.confirmPublication(committed),{code:'PUBLICATION_IDENTITY_UNAVAILABLE'});assert.notEqual(f.store.inspect(outcome.runId).status,'completed');assert.equal((outcome.controlObservations??[]).filter(x=>x.owner==='publication-notification').length,0);assert.equal(f.calls(),1);
  }finally{await f.close();}
+});
+
+test('typed Child cleanup reason accepts only its declared owner/code pair',()=>{
+ const fact={owner:'child-cleanup',runId:'child-cleanup-run',code:'CHILD_CLEANUP_FAILED',status:'unconfirmed'};
+ assert.doesNotThrow(()=>validateControlObservations({controlObservations:[fact]},fact.runId));
+ for(const change of [{owner:'log'},{owner:['child-cleanup']},{owner:{toString:()=> 'child-cleanup'}},{code:'LOG_WRITE_FAILED'},{status:'settled'},{runId:'different-run'}])
+  assert.throws(()=>validateControlObservations({controlObservations:[{...fact,...change}]},fact.runId),/INVALID_CONTROL_OBSERVATIONS/);
+});
+for(const primaryFailure of [false,true])test('durable Child cleanup failure preserves '+(primaryFailure?'the original failure':'the committed Publication'),async()=>{
+ const f=await fixture(primaryFailure?'child-close-after-error':'child-close-after-commit');
+ let token,failClose=false,failedReads=0,modelCalls=0;
+ const selected={question:f.options.question,documents:['atlas-a'],execution:{schemaVersion:'child-execution@2',maxChildren:1,maxConcurrent:1,methods:[CLAIM_COMPARISON_METHOD]}};
+ const childBindings=createAsyncChildExecutionBindings({
+  ...selected,outputRoot:f.options.outputRoot,parentClaim:()=>token,
+  store:{...f.store,listChildren(runId){
+   if(failClose){failedReads++;throw new Error('Synthetic Child cleanup could not inspect original children');}
+   return f.store.listChildren(runId);
+  }},
+  gatewayFactory(){assert.fail('No Child request was admitted by this fixture');}
+ });
+ const options={...f.options,extensions:childBindings,allowedDocuments:selected.documents,
+  gateway:{mode:'fixture',async next(){modelCalls++;if(primaryFailure){failClose=true;throw Object.assign(new Error('Synthetic primary failure'),{code:'SYNTHETIC_PRIMARY_FAILURE'});}return {kind:'final',text:'Original synthetic committed body.'};}},
+  durable:{...f.options.durable,bindings:{...bindings,adapters:[...bindings.adapters,childExecutionBinding(selected)]},onClaim:value=>{token=value;},onPublication:()=>{failClose=true;}}
+ };
+ try{
+  const result=await run(options);
+  assert.equal(failedReads,1);
+  assert.equal(modelCalls,1);
+  assert.equal(result.cleanup.effectsStopped,false);
+  const persisted=f.store.inspect(result.runId);
+  assert.equal(persisted.status,primaryFailure?'failed':'completed');
+  assert.equal(persisted.snapshot.code,primaryFailure?'SYNTHETIC_PRIMARY_FAILURE':null);
+  assert.equal(persisted.snapshot.phase,'terminal');
+  assert.deepEqual(persisted.snapshot.controlObservations,[{owner:'child-cleanup',runId:result.runId,code:'CHILD_CLEANUP_FAILED',status:'unconfirmed'}]);
+  const original=f.store.publication(result.runId);
+  if(primaryFailure)assert.equal(original,null);
+  else{
+   assert.equal(original.content.text,'Original synthetic committed body.');
+   assert.deepEqual(f.store.confirmPublication(result.publication).receipt,original.receipt);
+  }
+ }finally{f.store.close();await rm(f.directory,{recursive:true,force:true});}
 });
