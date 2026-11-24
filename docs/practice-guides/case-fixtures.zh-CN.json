@@ -1,0 +1,22 @@
+{
+  "notice": "合成教学材料：基金、文件与日期均为虚构；不是 Open ETF Agent 运行配置，不反映真实费率、交易或收益。",
+  "subject": "示例宽基 ETF",
+  "dateConvention": "同一个虚构年度；日期使用 MM-DD；观察截止日包含当天",
+  "sources": [
+    {"id": "A", "kind": "原始文件", "title": "产品说明书", "published": "04-01",
+     "facts": [
+       {"location": "第 2 页", "text": "业绩比较基准：示例宽基指数。"},
+       {"location": "第 4 页", "text": "年度管理费率为 0.20%。"}
+     ]},
+    {"id": "B", "kind": "原始文件", "title": "更新通知", "published": "04-10",
+     "facts": [{"location": "第 1 段", "text": "4 月 15 日起，年度管理费率调整为 0.15%；其他事项以原产品说明书为准。"}]},
+    {"id": "C", "kind": "搜索线索", "title": "新闻简讯", "published": "04-10",
+     "facts": [{"location": "摘要", "text": "产品近期可能换基准。简讯没有给出对应公告。"}]}
+  ],
+  "scenarios": [
+    {"id": "T1", "asOf": "04-12", "available": ["A", "B", "C"], "expect": "已公告、尚未生效；原文未见基准更新；更换基准待核。"},
+    {"id": "T2", "asOf": "04-12", "available": ["A", "C"], "expect": "只复述历史基线，当前费率与更新未知，不采用 C。"},
+    {"id": "T3", "asOf": "04-09", "available": ["A", "B", "C"], "expect": "不采用 B 或 C；材料存在不等于截止当日已公开。"},
+    {"id": "T4", "asOf": "04-16", "available": ["A", "B", "C"], "expect": "按 B 自 04-15 起适用 0.15%；不推断实际账单、收益或交易决定。"}
+  ]
+}
