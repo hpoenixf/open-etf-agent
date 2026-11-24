@@ -38,7 +38,10 @@ export function prepareScheduledSmtp(env,{python='/usr/bin/python3',testCaFile}=
   resolveDestination:()=>destination,
   async transport(payload){
    if(payload?.to!==target||typeof payload.subject!=='string'||typeof payload.text!=='string'||
+      payload.html!==undefined&&typeof payload.html!=='string'||
       !(/^[a-f0-9]{64}$/).test(payload.idempotencyKey))return {status:'not-dispatched'};
+   const envelope=JSON.stringify(payload);
+   if(Buffer.byteLength(envelope)>800000)return {status:'not-dispatched'};
    return new Promise(resolve=>{
     const proc=execFile(python,['-I',worker],{env:childEnv,timeout:25000,maxBuffer:1024},(error,stdout)=>{
      if(error)return resolve({status:['ENOENT','EACCES'].includes(error.code)?'not-dispatched':'unknown'});
@@ -49,7 +52,7 @@ export function prepareScheduledSmtp(env,{python='/usr/bin/python3',testCaFile}=
      resolve({status:status==='not-dispatched'?status:'unknown'});
     });
     proc.stdin.on('error',()=>{});
-    proc.stdin.end(JSON.stringify(payload));
+    proc.stdin.end(envelope);
    });
   }
  });

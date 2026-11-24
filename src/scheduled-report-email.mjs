@@ -1,4 +1,5 @@
 // Delivery only: no scheduler, model, deployment credential, SMTP or vendor client.
+import {renderFullDailyDigestHtml} from './daily-digest-render.mjs';
 import { createHash, randomUUID } from 'node:crypto';
 import { constants } from 'node:fs';
 import { open } from 'node:fs/promises';
@@ -8,6 +9,36 @@ import { ensureSafeDirectory, publishImmutable, safeDirectory } from './storage-
 const PURPOSE='scheduled-research-email@1';
 const MAX_ATTEMPTS=2;
 const SUBJECT='Scheduled research report';
+export const WATCH_FULL_EMAIL_TEMPLATE='watch-full-report@1';
+function watchOrigin(origin){
+ let url;
+ try{url=new URL(origin);}catch{fail('WATCH_FULL_EMAIL_ORIGIN');}
+ if(url.protocol!=='https:'||url.origin!==origin||url.username||url.password||url.pathname!=='/'||url.search||url.hash)fail('WATCH_FULL_EMAIL_ORIGIN');
+ return origin;
+}
+export function prepareFullWatchEmail({recipient,origin}){
+ const target=destinationBinding(recipient);
+ return {ownerOrigin:watchOrigin(origin),destination:Object.freeze({...recipient,
+  version:'watch-full-'+hash(JSON.stringify([target.version,WATCH_FULL_EMAIL_TEMPLATE,origin]))})};
+}
+function fullReportDetails({ownerOrigin,date,scheduledAt,briefLabel},ref){
+ if(!/^\d{4}-\d{2}-\d{2}$/.test(date)||!Number.isFinite(Date.parse(scheduledAt))||
+  !/^daily-w[a-f0-9]{24}-\d{4}$/.test(ref.conversationId)||ref.messageId!=='day-'+date)fail('WATCH_FULL_EMAIL_SLOT');
+ const parts=new Intl.DateTimeFormat('sv-SE',{timeZone:'Asia/Shanghai',year:'numeric',month:'2-digit',day:'2-digit',
+  hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).formatToParts(Date.parse(scheduledAt));
+ const f=Object.fromEntries(parts.map(({type,value})=>[type,value]));
+ if(f.year+'-'+f.month+'-'+f.day!==date)fail('WATCH_FULL_EMAIL_SLOT');
+ const time=f.hour+':'+f.minute;
+ const label=['早报','晚报'].includes(briefLabel)?briefLabel:'定时研究';
+ const subject=label+' · '+date+' '+time+'（北京时间）';
+ const link=watchOrigin(ownerOrigin)+'/#'+ref.conversationId+'~'+ref.messageId;
+ return {label,subject,link};
+}
+function fullEnvelope({subject,label,link},body){
+ const html=renderFullDailyDigestHtml({subject,intro:'完整报告',rows:[{label,detail:'按计划时段留存的原始正文。',link,body}],
+  footer:'原报告链接需要工作台登录。'});
+ return {subject,text:body,html};
+}
 const hash=value=>createHash('sha256').update(value).digest('hex');
 const fail=code=>{throw Object.assign(new Error(code),{code});};
 const token=(value, max=200)=>typeof value==='string'&&value.length<=max&&/^[A-Za-z0-9][A-Za-z0-9_.:-]*$/.test(value);
@@ -79,11 +110,15 @@ export async function inspectScheduledEmailDelivery({directory,occurrenceId}){
 
 // The trusted caller resolves destination from the *confirmed schedule revision*
 // and supplies fresh owner verification. Never call with browser-controlled To.
-export async function deliverScheduledReportEmail({directory,occurrenceId,reportRef,destination,readCompletedReport,transport,retryNotDispatched=false,recheckDestination}){
+export async function deliverScheduledReportEmail({directory,occurrenceId,reportRef,destination,readCompletedReport,transport,retryNotDispatched=false,recheckDestination,fullReport}){
  const key=occurrenceKey(occurrenceId), target=destinationBinding(destination), ref=reportBinding(reportRef);
  const previous=await locate(directory,occurrenceId,false);
  const view=await journal(previous.path,key);
- const bindingHash=hash(JSON.stringify([PURPOSE,key,target.address,target.version,ref,SUBJECT]));
+ // Existing per-watch receipts keep the exact legacy binding. On the native
+ // full path the date, slot and template are trusted frozen inputs, not a new occurrence.
+ const template=fullReport?fullReportDetails(fullReport,ref):null;
+ const bindingHash=hash(JSON.stringify([PURPOSE,key,target.address,target.version,ref,template?.subject??SUBJECT,
+  ...(fullReport?[WATCH_FULL_EMAIL_TEMPLATE,fullReport.ownerOrigin,fullReport.scheduledAt]:[])]));
  const idempotencyKey=hash(JSON.stringify([PURPOSE,key,bindingHash]));
  const intent={schema:PURPOSE,occurrenceKey:key,bindingHash,idempotencyKey};
  if(view.intent&&!matches(view.intent,intent))fail('EMAIL_OCCURRENCE_BINDING_CHANGED');
@@ -94,6 +129,7 @@ export async function deliverScheduledReportEmail({directory,occurrenceId,report
  if(verified?.status!=='completed'||!matches(reportBinding(verified),ref)||
     typeof verified.text!=='string'||!verified.text.trim()||Buffer.byteLength(verified.text)>128000||
     Buffer.from(verified.text).toString('utf8')!==verified.text||hash(verified.text)!==ref.sha256)fail('EMAIL_REPORT_NOT_VERIFIED');
+ const payload=template?fullEnvelope(template,verified.text):{subject:SUBJECT,text:verified.text};
  const {path}=await locate(directory,occurrenceId,true);
  if(!await record(path,'intent.json',intent)&&!matches(await read(path,'intent.json'),intent))fail('EMAIL_OCCURRENCE_BINDING_CHANGED');
  const fresh=await journal(path,key);
@@ -107,7 +143,7 @@ export async function deliverScheduledReportEmail({directory,occurrenceId,report
  }
  if(!enabled)settlement={generation,status:'not-dispatched'};
  else try{
-  const outcome=await transport({to:target.address,subject:SUBJECT,text:verified.text,idempotencyKey});
+  const outcome=await transport({to:target.address,...payload,idempotencyKey});
   if(outcome?.status==='accepted'&&token(outcome.receiptId))settlement={generation,status:'accepted',receiptId:outcome.receiptId};
   // Only the trusted transport can assert there was definitively no dispatch.
   else if(outcome?.status==='not-dispatched')settlement={generation,status:'not-dispatched'};
@@ -134,9 +170,9 @@ export async function readCompletedConversationEmailReport({projectDir,conversat
 // Host composition for the existing daily worker. The resolver must read the
 // server's confirmed per-watch opt-in and account verification, not a request
 // body. Absence of configuration has no side effects.
-export function createScheduledReportEmailHook({resolveConfirmedDestination,transport}){
+export function createScheduledReportEmailHook({resolveConfirmedDestination,transport,fullReportOrigin}){
  if(typeof resolveConfirmedDestination!=='function'||typeof transport!=='function')fail('EMAIL_TRANSPORT_NOT_CONFIGURED');
- return async ({projectDir,watchId,date,conversationId,messageId,runId,signal})=>{
+ return async ({projectDir,watchId,date,conversationId,messageId,runId,scheduledAt,briefLabel,signal})=>{
   if(!token(watchId,128)||typeof date!=='string'||!/^\d{4}-\d{2}-\d{2}$/.test(date))fail('EMAIL_OCCURRENCE_REQUIRED');
   const selector={projectDir,watchId,date};
   const destination=await resolveConfirmedDestination(selector);
@@ -146,7 +182,7 @@ export function createScheduledReportEmailHook({resolveConfirmedDestination,tran
    directory:join(projectDir,'scheduled-email'),occurrenceId:watchId+':'+date,reportRef:ref,destination,
    readCompletedReport:value=>readCompletedConversationEmailReport({projectDir,...value}),
    recheckDestination:()=>signal?.aborted?null:resolveConfirmedDestination(selector),
-   transport,
+   transport,...(fullReportOrigin?{fullReport:{ownerOrigin:fullReportOrigin,date,scheduledAt,briefLabel}}:{}),
   });
  };
 }

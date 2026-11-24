@@ -42,6 +42,7 @@ test('daily continuity pins same unchanged Watch, ignores failed and missing sou
  assert.equal(first.status,'completed',JSON.stringify(first));
  assert.equal(first.baseline,null);
  assert.match(seen.at(-1),/Prior baseline: none/);
+ assert.doesNotMatch(seen.at(-1),/Daily Watch Skill/);
  assert.match(seen.at(-1),/no confirmed change/);
  assert.doesNotMatch(seen.at(-1),/Prior gold observation/);
  const second=await advance(g,'23');
@@ -124,4 +125,132 @@ test('upgrade preserves v1 history, never infers historical question revision, a
   assert.throws(()=>current.freezeBaseline(next,{date:oldDate}),{code:'GUI_DAILY_BASELINE_CHANGED'});
   assert.equal(current.list({configVersion:profile})[0].history[0].baseline,null);
  }finally{current.close();}
+});
+
+test('daily brief Skill is selected only at the scheduler boundary and preserves the original watch and full body',{timeout:5000},async t=>{
+ await mkdir('test-output',{recursive:true});
+ const projectDir=await mkdtemp(resolve('test-output/daily-brief-'));
+ t.after(()=>rm(projectDir,{recursive:true,force:true}));
+ let now=at('24','12:58');const prompts=[];
+ let manualDispatch;const manualSeen=new Promise(resolve=>{manualDispatch=resolve;});
+ const question='跟踪纳指 ETF 和红利低波 ETF 各自重要的新消息。';
+ const body='# 纳指 ETF\n\n公告提示了溢价风险。接下来核对 IOPV。\n\n# 红利低波 ETF\n\n暂未核实到足以改变判断的新消息。';
+ const gui=await startLocalGui({projectDir,liveConfig,env:{...env,ETF_GUI_DAILY_WATCH_SKILL:'daily-watch-brief'},dailyClock:()=>now,
+  async fetchImpl(_endpoint,options){const prompt=JSON.parse(options.body).messages[0].content;prompts.push(prompt);
+   if(prompt.startsWith('Manual news question'))manualDispatch(prompt);
+   return Response.json({choices:[{message:{role:'assistant',content:body},finish_reason:'stop'}]});}});
+ t.after(()=>gui.close());
+ const get=path=>fetch(gui.origin+path).then(r=>r.json());
+ const post=(path,value)=>fetch(gui.origin+path,{method:'POST',headers:{origin:gui.origin,'content-type':'application/json'},body:JSON.stringify(value)});
+ const created=await post(api,{question,localTime:'13:00',enabled:true});
+ assert.equal(created.status,201);
+ const watchId=(await created.json()).id;
+ now=at('24','13:00');
+ await gui.sweepDaily();
+ const watch=(await get(api)).items.find(x=>x.id===watchId),today=watch.history[0];
+ assert.equal(today.status,'completed');
+ assert.equal(watch.question,question);
+ const history=await get('/api/conversations/'+today.conversationId);
+ assert.equal(history.messages.at(-1).question,question);
+ const report=await get('/api/conversations/'+today.conversationId+'/messages/'+today.messageId+'/body');
+ assert.equal(report.body.text,body);
+ await gui.sweepDaily();
+ assert.equal(prompts.length,1);
+ assert.ok(prompts[0].startsWith(question+'\n'));
+ assert.match(prompts[0],/Daily Watch Skill: daily-watch-brief sha256:[a-f0-9]{64}/);
+ assert.match(prompts[0],/10–20 candidate items/);
+ assert.match(prompts[0],/3–5 material developments overall/);
+ assert.match(prompts[0],/2–3 material news items per subject/);
+ assert.match(prompts[0],/Never pad/);
+ assert.match(prompts[0],/What happened → Why it matters → What to watch/);
+ assert.match(prompts[0],/Never label an intraday or provisional value as the official close/);
+ assert.match(prompts[0],/Run as of: 2026-11-24T05:00:00.000Z/);
+ assert.doesNotMatch(prompts[0],/News window \(Asia\/Shanghai\):/);
+ const manual=(await post('/api/conversations',{}).then(r=>r.json())).id;
+ assert.equal((await post('/api/conversations/'+manual+'/messages',{question:'Manual news question',messageId:'manual'})).status,202);
+ const manualPrompt=await manualSeen;
+ assert.equal(prompts.length,2);
+ assert.doesNotMatch(manualPrompt,/Daily Watch Skill|Authoritative report calendar/);
+});
+
+test('labeled morning and evening watches use distinct Shanghai windows; delayed evening stays capped at 20:00',{timeout:5000},async t=>{
+ await mkdir('test-output',{recursive:true});
+ const projectDir=await mkdtemp(resolve('test-output/daily-windows-'));
+ let now=Date.parse('2027-01-01T08:50:00+08:00');
+ const prompts=[];
+ const gui=await startLocalGui({projectDir,liveConfig,env:{...env,ETF_GUI_DAILY_WATCH_SKILL:'daily-watch-brief'},dailyClock:()=>now,
+  async fetchImpl(_url,request){
+   prompts.push(JSON.parse(request.body).messages[0].content);
+   return Response.json({choices:[{message:{role:'assistant',content:'已保存的样例正文'},finish_reason:'stop'}]});
+  }});
+ t.after(async()=>{await gui.close();await rm(projectDir,{recursive:true,force:true});});
+ const post=body=>fetch(gui.origin+api,{method:'POST',headers:{origin:gui.origin,'content-type':'application/json'},body:JSON.stringify(body)});
+ const get=path=>fetch(gui.origin+path).then(r=>r.json());
+ const morning='【早报】纳指和红利低波的重点新闻';
+ const evening='晚报：纳指和红利低波的重点新闻';
+ assert.equal((await post({question:morning,localTime:'09:00',enabled:true})).status,201);
+ assert.equal((await post({question:evening,localTime:'20:00',enabled:true})).status,201);
+ now=Date.parse('2027-01-01T09:00:00+08:00');await gui.sweepDaily();
+ assert.equal(prompts.length,1);
+ assert.ok(prompts[0].startsWith(morning+'\n'));
+ assert.ok(prompts[0].includes('News window (Asia/Shanghai): [2026-12-31T00:00:00+08:00, 2027-01-01T00:00:00+08:00)'));
+ now=Date.parse('2027-01-01T20:07:00+08:00');await gui.sweepDaily();
+ assert.equal(prompts.length,2);
+ assert.ok(prompts[1].startsWith(evening+'\n'));
+ assert.ok(prompts[1].includes('News window (Asia/Shanghai): [2027-01-01T00:00:00+08:00, 2027-01-01T20:00:00+08:00]'));
+ assert.ok(prompts[1].includes('Run as of: 2027-01-01T12:07:00.000Z'));
+ assert.ok(prompts.every(p=>p.includes('Authoritative report calendar (Asia/Shanghai): 2027-01-01 周五')));
+ assert.ok(prompts[1].includes('Prior baseline: none.'));
+ assert.doesNotMatch(prompts[1],/Prior report:/);
+ assert.equal((await get(api)).items.filter(x=>x.history[0]?.status==='completed').length,2);
+});
+
+test('evening Skill freezes Shanghai Tuesday and excludes stale or unknown publication times without a Runtime veto',{timeout:5000},async t=>{
+ await mkdir('test-output',{recursive:true});
+ const projectDir=await mkdtemp(resolve('test-output/daily-calendar-evidence-'));
+ let now=Date.parse('2026-11-24T18:54:00+08:00');
+ const prompts=[];
+ const old='2026-11-23T21:12:00+08:00';
+ const actualUpdate='2026-11-23T18:15:00Z';
+ const unverified='2026-11-24'; // Date alone, no zone.
+ const notice='官方原文标注 2026-11-24，发布方时区 Asia/Shanghai，无小时';
+ const beforeRead='2026-11-24T18:55:23+08:00';
+ const afterRead='2026-11-24T18:55:25+08:00';
+ const body='## 纳斯达克\n\n- 已核实更新：北京时间 11 月 24 日 02:15。\n\n## 红利低波\n\n- 已核实官方通知发布日期：11 月 24 日（上海，时刻未知）。另一份截点后才读到，暂未核实。';
+ const gui=await startLocalGui({projectDir,liveConfig,env:{...env,ETF_GUI_DAILY_WATCH_SKILL:'daily-watch-brief'},dailyClock:()=>now,
+  async fetchImpl(_url,request){
+   const prompt=JSON.parse(request.body).messages[0].content;
+   prompts.push(prompt);
+   // The outgoing Skill contract is asserted below, not inferred from the canned answer.
+   return Response.json({choices:[{message:{role:'assistant',content:body},finish_reason:'stop'}]});
+  }});
+ t.after(async()=>{await gui.close();await rm(projectDir,{recursive:true,force:true});});
+ const get=path=>fetch(gui.origin+path).then(r=>r.json());
+ const watch='【晚报】核查纳斯达克和红利低波，测试候选发布时间：'+[old,actualUpdate,unverified,notice+'；甲已留存原文读取 '+beforeRead,notice+'；乙首个确认原文读取 '+afterRead].join('；');
+ const created=await fetch(gui.origin+api,{method:'POST',headers:{origin:gui.origin,'content-type':'application/json'},body:JSON.stringify({question:watch,localTime:'18:55',enabled:true})});
+ assert.equal(created.status,201);
+ now=Date.parse('2026-11-24T18:55:24+08:00');await gui.sweepDaily();
+ assert.equal(prompts.length,1);
+ const prompt=prompts[0];
+ assert.ok(prompt.startsWith(watch+'\n'));
+ assert.match(prompt,/Authoritative report calendar \(Asia\/Shanghai\): 2026-11-24 周二/);
+ assert.doesNotMatch(prompt,/2026-11-24 周一/);
+ assert.ok(prompt.includes('News window (Asia/Shanghai): [2026-11-24T00:00:00+08:00, 2026-11-24T18:55:24.000+08:00]'));
+ const [start,end]=[Date.parse('2026-11-24T00:00:00+08:00'),now];
+ assert.ok(Date.parse(old)<start);
+ assert.ok(Date.parse(actualUpdate)>=start&&Date.parse(actualUpdate)<=end);
+ assert.ok(Date.parse('2026-11-24T00:00:00+08:00')>=start);
+ assert.ok(Date.parse('2026-11-25T00:00:00+08:00')>end);
+ assert.ok(Date.parse(beforeRead)<=end&&Date.parse(afterRead)>end);
+ assert.match(prompt,/Date-only official notices need a known publisher zone and a local day beginning at\/after the window start/);
+ assert.match(prompt,/Accept if the whole local day fits, or if a recorded read of that original occurred by the cutoff/);
+ assert.match(prompt,/A read only bounds publication; it is not a publication timestamp/);
+ assert.match(prompt,/exact zoned timestamp or the bounded publication date \(hour unavailable\)/);
+ assert.match(prompt,/An out-of-window original is background only, unless a separate opened source proves a distinct in-window update/);
+ assert.match(prompt,/If the first confirmed read is after cutoff and the day does not fit, or date\/zone is unknown, mark unverified and do not select/);
+ assert.match(prompt,/Start with the news, not a date\/weekday title/);
+ const settled=(await get(api)).items[0].history[0];
+ assert.equal(settled.status,'completed');
+ const readback=await get('/api/conversations/'+settled.conversationId+'/messages/'+settled.messageId+'/body');
+ assert.equal(readback.body.text,body);
 });

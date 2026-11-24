@@ -17,8 +17,9 @@ import { ensureSafeDirectory, publishImmutable, safeDirectory } from './storage-
 import { prepareOwnerSearch } from './gui-owner-web.mjs';
 import { prepareOwnerDailyDigest } from './gui-daily-digest-delivery.mjs';
 import { prepareScheduledSmtp } from './scheduled-smtp.mjs';
-import { createScheduledReportEmailHook, inspectScheduledEmailDelivery } from './scheduled-report-email.mjs';
+import { createScheduledReportEmailHook, inspectScheduledEmailDelivery, prepareFullWatchEmail } from './scheduled-report-email.mjs';
 import { openGuiDailyWatch, DAILY_TIME_ZONE } from './gui-daily-watch.mjs';
+import { createSkillCatalog } from './skills.mjs';
 import {offerReasoningEffort} from './gateway.mjs';
 import { readGuiResearchProgress, readGuiReasoningEffort } from './gui-progress.mjs';
 import { prepareGuiLiveConfig } from './gui-live-config.mjs';
@@ -147,19 +148,27 @@ export async function createLocalGuiWorkspace({ projectDir, origin: mountOrigin,
   )));
   const hostSignal = new AbortController();
   const dailyConfigVersion=freeform?(await inspectResearchProject({projectDir})).configSha256:null;
+  const dailyBriefSkill=freeform&&env.ETF_GUI_DAILY_AUTORUN==='1'&&env.ETF_GUI_DAILY_WATCH_SKILL==='daily-watch-brief'
+    ?await (await createSkillCatalog({root:fileURLToPath(new URL('./owner-skills/',import.meta.url)),maxBytes:3000})).read('daily-watch-brief'):undefined;
   const daily=freeform?await openGuiDailyWatch(projectDir,{now:dailyClock}):null;
-  let smtp,digestProfile;
+  let smtp,digestProfile,fullWatch;
   try {
     digestProfile=daily?(ownerDailyDigest??prepareOwnerDailyDigest(env,smtpOptions)):null;
     smtp=daily&&!digestProfile?prepareScheduledSmtp(env,smtpOptions):null;
+    const watchContent=env.ETF_DAILY_WATCH_EMAIL_CONTENT??'text';
+    if(!['text','full-report'].includes(watchContent))reject(500,'WATCH_FULL_EMAIL_MODE');
+    if(daily&&watchContent==='full-report'){
+      if(digestProfile||!smtp||onDailyCompleted)reject(500,'WATCH_FULL_EMAIL_MODE');
+      fullWatch=prepareFullWatchEmail({recipient:smtp.resolveDestination(),origin:env.ETF_DAILY_WATCH_EMAIL_OWNER_ORIGIN});
+    }
   }
   catch(error){daily?.close();throw error;}
-  const ownerMailbox=smtp?.resolveDestination();
+  const ownerMailbox=fullWatch?.destination??smtp?.resolveDestination();
   // Bind owner confirmation to the provider's recipient+revision identity.
   const emailVersion=ownerMailbox?.version??(onDailyCompleted?'injected-owner-mail@1':null);
   const deliveryHook=onDailyCompleted??(smtp?createScheduledReportEmailHook({
-    resolveConfirmedDestination:({watchId,date})=>daily.emailConfirmed(watchId,date,emailVersion)?ownerMailbox:null,
-    transport:smtp.transport,
+    resolveConfirmedDestination:({watchId,date})=>daily.emailConfirmed(watchId,date,emailVersion,{fullWatchEmail:!!fullWatch})?ownerMailbox:null,
+    transport:smtp.transport,fullReportOrigin:fullWatch?.ownerOrigin,
   }):undefined);
   const emailConsentToken=deliveryHook?randomUUID():null;
   const emailPreview=ownerMailbox?.address.replace(/^(.).*@/,'$1***@');
@@ -294,7 +303,7 @@ export async function createLocalGuiWorkspace({ projectDir, origin: mountOrigin,
         const delivery=await inspectScheduledEmailDelivery({directory:join(projectDir,'scheduled-email'),occurrenceId:previous.watchId+':'+previous.date});
         if(['accepted','unknown','not-dispatched'].includes(delivery.status)){daily.emailSettlement(previous,delivery.status);continue;}
         if(digestProfile){daily.emailSettlement(previous,'not-dispatched');continue;}
-        if(!daily.emailConfirmed(previous.watchId,previous.date,emailVersion)){daily.emailSettlement(previous,'not-dispatched');continue;}
+        if(!daily.emailConfirmed(previous.watchId,previous.date,emailVersion,{fullWatchEmail:!!fullWatch})){daily.emailSettlement(previous,'not-dispatched');continue;}
         const result=await deliveryHook({projectDir,...previous,signal:hostSignal.signal});
         if(result?.status==='not-started')continue;
         daily.emailSettlement(previous,result?.status==='not-configured'?'not-dispatched':result?.status??'unknown');
@@ -352,7 +361,7 @@ export async function createLocalGuiWorkspace({ projectDir, origin: mountOrigin,
       }
       await sweepDailyEmail();
       if(working||submitting||hostSignal.signal.aborted||!isDeepStrictEqual((await inspectResearchProject({projectDir})).config,expectedConfig)||working||submitting||hostSignal.signal.aborted)return;
-      const occurrence=daily.claim(dailyConfigVersion,{perWatchEmail:!digestProfile});
+      const occurrence=daily.claim(dailyConfigVersion,{perWatchEmail:!digestProfile,fullWatchEmail:!!fullWatch,emailVersion});
       if(!occurrence)return;
       const {conversationId,messageId,question}=occurrence;
       submitting=workKey(conversationId,messageId);
@@ -375,6 +384,7 @@ export async function createLocalGuiWorkspace({ projectDir, origin: mountOrigin,
         daily.freezeBaseline(occurrence,baseline);
         const turn=await submitConversationMessage({projectDir,conversationId,messageId,text:question,sourceManifestSha256:null,
           dailyResearch:{watchId:occurrence.watchId,date:occurrence.date,revision:occurrence.revision,baseline},
+          dailyBrief:dailyBriefSkill?{skill:dailyBriefSkill,asOf:new Date((dailyClock??Date.now)()).toISOString()}:undefined,
           authorization:{providerApproved:true,dataApproved:true,costApproved:true}});
         runId=turn.runId;
         daily.settlement(occurrence,'submitted',runId);
@@ -414,8 +424,8 @@ export async function createLocalGuiWorkspace({ projectDir, origin: mountOrigin,
           projectId: demo.projectId, conversations: await list({titles:true}), sources: publicSources,
         });
         if(req.url==='/api/daily-watch'&&daily)return send(200,{timeZone:DAILY_TIME_ZONE,autorun:dailyAutorun,
-          emailAvailable:!digestProfile&&!!deliveryHook,...(!digestProfile&&emailConsentToken?{emailConsentToken}:{}),...(!digestProfile&&emailPreview?{emailPreview}:{}),
-          digest:{available:!!digestProfile,...daily.digest.describe(digestVersion),...(digestProfile?{consentToken:digestConsentToken,recipientPreview:digestProfile.recipientPreview}: {})},
+          emailAvailable:!digestProfile&&!!deliveryHook,...(!digestProfile&&emailConsentToken?{emailConsentToken}:{}),...(!digestProfile&&emailPreview?{emailPreview}:{}),...(fullWatch?{emailContentMode:'full-report'}:{}),
+          digest:{available:!!digestProfile,...daily.digest.describe(digestVersion),...(digestProfile?{consentToken:digestConsentToken,recipientPreview:digestProfile.recipientPreview,contentMode:digestProfile.contentMode??'links-only'}: {})},
           items:daily.list({emailVersion,configVersion:dailyConfigVersion,digestVersion})});
         const progressMatch=progressPath.exec(req.url);
         if(progressMatch){
@@ -486,7 +496,7 @@ export async function createLocalGuiWorkspace({ projectDir, origin: mountOrigin,
         if(input?.emailEnabled===true&&(digestProfile||!deliveryHook))reject(400,'GUI_DAILY_EMAIL_NOT_CONFIGURED');
         if(input?.emailEnabled===true&&input?.emailConsentToken!==emailConsentToken)reject(409,'GUI_DAILY_EMAIL_RECONFIRM');
         if(input&&Object.hasOwn(input,'emailConsentToken'))delete input.emailConsentToken;
-        return send(dailyMatch[1]?200:201,daily.save(input,dailyMatch[1],{emailVersion,configVersion:dailyConfigVersion,digestVersion}));
+        return send(dailyMatch[1]?200:201,daily.save(input,dailyMatch[1],{emailVersion,configVersion:dailyConfigVersion,digestVersion,fullWatchEmail:!!fullWatch}));
       }
       if (req.url === '/api/conversations') {
         if (!exact(await inputFor(req), [])) reject(400,'INVALID_CONVERSATION');

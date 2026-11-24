@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import {createHash} from 'node:crypto';
 import {mkdtemp,rm,readdir,readFile} from 'node:fs/promises';
 import {resolve,join} from 'node:path';
 import {composeDailyDigest,createDailyDigestHook,inspectDailyDigestEmail} from '../src/daily-digest-email.mjs';
@@ -72,5 +73,40 @@ test('empty opt-in set and unverified destination do not create an email effect'
  const options={ownerOrigin,readOriginal:read,transport(){assert.fail('unexpected dispatch');}};
  assert.deepEqual(await createDailyDigestHook({...options,resolveConfirmedDestination:async()=>recipient})(args),{status:'empty',attempts:0});
  assert.deepEqual(await createDailyDigestHook({...options,resolveConfirmedDestination:async()=>({...recipient,verified:false})})(args),{status:'not-configured',attempts:0});
+ assert.deepEqual(await inspectDailyDigestEmail(args),{status:'not-started',attempts:0});
+});
+
+test('full digest rejects altered bodies, keeps original text out of its receipt ledger and refuses duplicate unknown dispatch',async t=>{
+ const projectDir=await project(t),calls=[];
+ const original='## 核实正文\n\n完整报告\n\n最后一段。';
+ const sha256=createHash('sha256').update(original).digest('hex');
+ const args={projectDir,date,ownerId:'owner-1',rows:[done(),done(2),pending(3)]};
+ const options={ownerOrigin,mode:'full-report',resolveConfirmedDestination:()=>recipient,
+  readOriginal:async x=>({...x,status:'completed',sha256,text:x.conversationId.includes(w(1))?original:'FORGED_BODY'}),
+  transport:async x=>{calls.push(x);throw Error('synthetic ambiguous dispatch');}};
+ const make=()=>createDailyDigestHook(options);
+ assert.deepEqual(await make()(args),{status:'unknown',attempts:1});
+ assert.deepEqual(await make()(args),{status:'unknown',attempts:1});
+ assert.equal(calls.length,1);
+ const [sent]=calls;
+ assert.ok(sent.text.includes(original));
+ assert.match(sent.text,/已核实完成：1/);
+ assert.match(sent.text,/未核实完成结果/);
+ assert.doesNotMatch(sent.text+sent.html,/FORGED_BODY/);
+ const [dir]=await readdir(join(projectDir,'daily-digest-email'));
+ for(const file of await readdir(join(projectDir,'daily-digest-email',dir))){
+  const saved=await readFile(join(projectDir,'daily-digest-email',dir,file),'utf8');
+  assert.doesNotMatch(saved,/完整报告|FORGED_BODY|test-owner@example|<html|每日研究报告/);
+ }
+});
+
+test('a full digest over its transport bound refuses to send instead of truncating',async t=>{
+ const projectDir=await project(t);
+ const text='<'.repeat(126000)+'END';
+ const sha256=createHash('sha256').update(text).digest('hex');
+ const args={projectDir,date,ownerId:'owner-1',rows:[done(),done(2)]};
+ const send=createDailyDigestHook({ownerOrigin,mode:'full-report',resolveConfirmedDestination:()=>recipient,
+  readOriginal:async identity=>({...identity,status:'completed',text,sha256}),transport(){assert.fail('unexpected dispatch');}});
+ assert.deepEqual(await send(args),{status:'unavailable',attempts:0});
  assert.deepEqual(await inspectDailyDigestEmail(args),{status:'not-started',attempts:0});
 });

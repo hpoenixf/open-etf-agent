@@ -133,9 +133,79 @@ test('Resend digest requires explicit exact transport and authenticated configur
   ETF_SCHEDULED_SMTP_PASSWORD:'synthetic-no-call',ETF_SCHEDULED_SMTP_VERIFIED_TO:'only-owner@example.invalid',
   ETF_SCHEDULED_SMTP_VERIFIED_TO_VERSION:'confirmed-1'};
  const current=prepareOwnerDailyDigest(profile);
+ assert.equal(current.contentMode,'links-only');
+ const full=prepareOwnerDailyDigest({...profile,ETF_DAILY_DIGEST_CONTENT:'full-report'});
+ assert.equal(full.contentMode,'full-report');
+ assert.notEqual(full.version,current.version);
+ assert.throws(()=>prepareOwnerDailyDigest({...profile,ETF_DAILY_DIGEST_CONTENT:'invalid'}),{code:'GUI_DAILY_DIGEST_CONFIG_INVALID'});
  assert.equal(current.recipientPreview,'o***@example.invalid');
  assert.notEqual(prepareOwnerDailyDigest({...profile,ETF_DAILY_DIGEST_OWNER_ORIGIN:'https://rotated.example.invalid'}).version,current.version);
  assert.notEqual(prepareOwnerDailyDigest({...profile,ETF_SCHEDULED_SMTP_VERIFIED_TO:'changed@example.invalid'}).version,current.version);
  assert.throws(()=>prepareOwnerDailyDigest({...profile,ETF_DAILY_DIGEST_OWNER_ORIGIN:'https://owner.example.invalid/report/debug'}),{code:'DIGEST_ORIGIN_INVALID'});
  assert.throws(()=>prepareOwnerDailyDigest({...profile,ETF_SCHEDULED_SMTP_HOST:'other.example.invalid'}),{code:'SCHEDULED_SMTP_CONFIG_INVALID'});
+});
+
+test('Daily Watch Skill to full digest: fresh consent, exact Markdown, safe HTML, no repeat dispatch',async t=>{
+ const {createDailyDigestHook,inspectDailyDigestEmail}=await import('../src/daily-digest-email.mjs');
+ let time=at('22','07:45'),modelCalls=0,mails=[];
+ const launch=await setup(t);
+ const ownerOrigin='https://workbench.example.invalid';
+ const answer='## 纳指\n\n- **变化**：重大消息。\n- **建议**：等待公告。\n\n[来源](https://exchange.example.invalid/item?p=1&n=2)\n\n[危险链接](javascript:fixture)\n\n![远程图片](https://tracking.example.invalid/pixel)\n\n<img src="https://tracking.example.invalid/extra">\n\n## 红利低波\n\n末尾校验：这是完整正文。';
+ const profile=mode=>{
+  const target={address:'only-owner@example.invalid',version:mode,enabled:true,verified:true};
+  return {contentMode:mode,version:mode,inspect:inspectDailyDigestEmail,deliver:job=>createDailyDigestHook({
+   ownerOrigin,mode,resolveConfirmedDestination:()=>job.confirmed()?target:null,transport:async payload=>{
+    mails.push(payload);return {status:'accepted',receiptId:'test-full-report-accepted'};
+   },
+  })(job)};
+ };
+ const fetchImpl=async(_url,request)=>{
+  modelCalls++;
+  const prompt=JSON.parse(request.body).messages[0].content;
+  assert.match(prompt,/Daily Watch Skill: daily-watch-brief sha256:[a-f0-9]{64}/);
+  assert.match(prompt,/10–20 candidate items/);
+  assert.match(prompt,/3–5 material developments overall/);
+  assert.match(prompt,/Run as of: 2026-11-22T00:00:00.000Z/);
+  assert.ok(prompt.startsWith('只供测试的追踪问题\n'));
+  return Response.json({choices:[{message:{role:'assistant',content:answer},finish_reason:'stop'}]});};
+ const previous=await launch({dailyClock:()=>time,fetchImpl,ownerDailyDigest:profile('links-only')});
+ const oldToken=(await previous.daily()).digest.consentToken;
+ const originalWatch={question:'只供测试的追踪问题',localTime:'08:00',enabled:true,digestEnabled:true};
+ const watched=await (await previous.post('/api/daily-watch',{...originalWatch,digestConsentToken:oldToken})).json();
+ assert.equal((await previous.post('/api/daily-digest',{localTime:'09:00',enabled:true,consentToken:oldToken})).status,200);
+ await previous.close();
+ const briefEnv={...env,ETF_GUI_DAILY_WATCH_SKILL:'daily-watch-brief'};
+ const site=await launch({env:briefEnv,dailyClock:()=>time,fetchImpl,ownerDailyDigest:profile('full-report')});
+ const configured=await site.daily();
+ assert.equal(configured.digest.contentMode,'full-report');
+ assert.equal(configured.digest.requiresConfirmation,true);
+ assert.equal(configured.items[0].digestConfirmed,false);
+ assert.equal((await site.post('/api/daily-digest',{localTime:'09:00',enabled:true,consentToken:oldToken})).status,409);
+ const token=configured.digest.consentToken;
+ assert.equal((await site.post('/api/daily-watch/'+watched.id,{...originalWatch,digestConsentToken:token})).status,200);
+ assert.equal((await site.post('/api/daily-digest',{localTime:'09:00',enabled:true,consentToken:token})).status,200);
+ const pending=await site.post('/api/daily-watch',{question:'尚未执行',localTime:'10:00',enabled:true,digestEnabled:true,digestConsentToken:token});
+ assert.equal(pending.status,201);
+ time=at('22','08:00');await site.sweepDaily();
+ const exact=(await site.daily()).items.find(item=>item.id===watched.id).history[0];
+ assert.equal(exact.status,'completed');
+ const stored=await site.get('/api/conversations/'+exact.conversationId+'/messages/'+exact.messageId+'/body');
+ assert.equal(stored.body.text,answer);
+ time=at('22','09:00');await Promise.all([site.sweepDigest(),site.sweepDigest()]);
+ assert.equal(modelCalls,1);
+ assert.equal(mails.length,1);
+ const [message]=mails;
+ assert.equal(message.to,'only-owner@example.invalid');
+ assert.ok(message.text.includes(answer));
+ assert.match(message.text,/10:00 · 未执行/);
+ assert.match(message.html,/<h2[^>]*>纳指<\/h2>/);
+ assert.match(message.html,/<li[^>]*><strong>建议<\/strong>：等待公告。<\/li>/);
+ assert.match(message.html,/href="https:\/\/exchange\.example\.invalid\/item\?p=1&amp;n=2"/);
+ assert.match(message.html,/末尾校验：这是完整正文/);
+ assert.doesNotMatch(message.html,/<img|<script|href="javascript:|href="https:\/\/tracking\./i);
+ await site.close();
+ const cold=await launch({env:briefEnv,dailyClock:()=>time,fetchImpl,ownerDailyDigest:profile('full-report')});
+ await cold.sweepDigest();
+ assert.deepEqual([modelCalls,mails.length],[1,1]);
+ assert.equal((await cold.daily()).digest.history[0].status,'accepted');
 });
