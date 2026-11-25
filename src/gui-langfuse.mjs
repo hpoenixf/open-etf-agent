@@ -1,5 +1,6 @@
 import {createHmac} from 'node:crypto';
 import {join} from 'node:path';
+import {jaegerTransport} from './gui-jaeger-transport.mjs';
 import {ensureSafeDirectory,publishImmutable} from './storage-files.mjs';
 
 const endpoint=new Map([['eu','https://cloud.langfuse.com'],['us','https://us.cloud.langfuse.com'],['jp','https://jp.cloud.langfuse.com']]);
@@ -25,11 +26,25 @@ function tokenUsage(value) {
 function integer(n){return Number.isSafeInteger(n)&&n>=0?n:null;}
 export function prepareOwnerLangfuse(env={}, {send=globalThis.fetch,now=Date.now}={}) {
   if(env.ETF_LANGFUSE_ENABLED!=='1')return null;
-  const origin=endpoint.get(env.ETF_LANGFUSE_REGION??'us');
-  const publicKey=env.ETF_LANGFUSE_PUBLIC_KEY,secret=env.ETF_LANGFUSE_SECRET_KEY;
+  const profile=env.ETF_LANGFUSE_PROFILE??'cloud';
   const salt=env.ETF_LANGFUSE_TRACE_SALT;
-  if(!origin||!key(publicKey,'pk-lf-')||!key(secret,'sk-lf-')||!key(salt,'trace-')||salt.length<38||typeof send!=='function')return null;
-  const auth='Basic '+Buffer.from(publicKey+':'+secret).toString('base64');
+  if(!key(salt,'trace-')||salt.length<38)return null;
+  let transmit;
+  const jaeger=profile==='jaeger';
+  if(jaeger){
+    if([env.ETF_LANGFUSE_REGION,env.ETF_LANGFUSE_PUBLIC_KEY,env.ETF_LANGFUSE_SECRET_KEY].some(v=>v!==undefined))return null;
+    transmit=jaegerTransport(env.ETF_JAEGER_OTLP_PORT);
+    if(!transmit)return null;
+  }else if(profile==='cloud'){
+    if(env.ETF_JAEGER_OTLP_PORT!==undefined)return null;
+    const origin=endpoint.get(env.ETF_LANGFUSE_REGION??'us');
+    const publicKey=env.ETF_LANGFUSE_PUBLIC_KEY,secret=env.ETF_LANGFUSE_SECRET_KEY;
+    if(!origin||!key(publicKey,'pk-lf-')||!key(secret,'sk-lf-')||typeof send!=='function')return null;
+    const auth='Basic '+Buffer.from(publicKey+':'+secret).toString('base64');
+    transmit=(body,signal)=>send(origin+'/api/public/otel/v1/traces',{method:'POST',redirect:'error',signal,headers:{
+      authorization:auth,'content-type':'application/json','x-langfuse-ingestion-version':'4',
+    },body});
+  }else return null;
   const id=(kind,...parts)=>createHmac('sha256',salt).update(JSON.stringify([kind,...parts])).digest('hex');
   let pending=0;
   const work=new Set();
@@ -43,14 +58,14 @@ export function prepareOwnerLangfuse(env={}, {send=globalThis.fetch,now=Date.now
           if(!ord||ord>200||attempts.has(ord)||attempts.size>=100||!['responded','http-error','protocol-error','unknown'].includes(fact.status))return;
           attempts.set(ord,{
             ord, at:safeTime(fact.at,opened), end:safeTime(fact.end,opened), status:fact.status, code:cleanCode(fact.code),
-            model:typeof fact.model==='string'&&ID.test(fact.model)&&!fact.model.includes('://')?fact.model:null,
+            model:!jaeger&&typeof fact.model==='string'&&ID.test(fact.model)&&!fact.model.includes('://')?fact.model:null,
             usage:tokenUsage(fact.usage),
           });
         } else if(fact?.type==='tool-result'){
           const ordinal=typeof fact.toolId==='string'&&fact.toolId.length>0&&fact.toolId.length<=128?id('tool-call',fact.toolId):null;
           if(!ordinal||tools.has(ordinal)||tools.size>=200||!['succeeded','failed','rejected','unknown'].includes(fact.status)
             ||typeof fact.name!=='string'||!/^[a-z][a-z0-9_]{0,63}$/.test(fact.name))return;
-          tools.set(ordinal,{ordinal,at:safeTime(fact.at,opened),duration:Math.round(Math.max(0,Math.min(3600000,Number(fact.duration)||0))),name:fact.dispatched===true?fact.name:'not-dispatched',status:fact.status,dispatched:fact.dispatched===true});
+          tools.set(ordinal,{ordinal,at:safeTime(fact.at,opened),duration:Math.round(Math.max(0,Math.min(3600000,Number(fact.duration)||0))),name:jaeger?null:fact.dispatched===true?fact.name:'not-dispatched',status:fact.status,dispatched:fact.dispatched===true});
         }
       },
       finish(projectDir,final){
@@ -77,7 +92,7 @@ export function prepareOwnerLangfuse(env={}, {send=globalThis.fetch,now=Date.now
           ...(a.usage?[attr('langfuse.observation.usage_details',JSON.stringify(a.usage))]:[]),
         ],root,a.status==='responded'));
         for(const t of tools.values())spans.push(span('Tool result','tool',same('tool',t.ordinal),Math.max(opened,t.at-t.duration),t.at,[
-          metadata('tool_name',t.name),metadata('tool_status',t.status),metadata('tool_dispatched',t.dispatched),
+          ...(t.name?[metadata('tool_name',t.name)]:[]),metadata('tool_status',t.status),metadata('tool_dispatched',t.dispatched),
         ],root,t.status==='succeeded'));
         if(['publication','report'].includes(final.delivery))spans.push(span('Delivery confirmed','event',same('delivery',1),end,end,[metadata('readback',final.delivery)],root,true));
         const payload=JSON.stringify({resourceSpans:[{resource:{attributes:[attr('service.name','open-etf-agent')]},scopeSpans:[{scope:{name:'open-etf-agent.owner-telemetry'},spans}]}]});
@@ -88,9 +103,7 @@ export function prepareOwnerLangfuse(env={}, {send=globalThis.fetch,now=Date.now
           // Once a delivery is ambiguous do not retry the OTLP export, and never retry the research.
           let state='unknown';
           try {
-            const response=await send(origin+'/api/public/otel/v1/traces',{method:'POST',redirect:'error',signal:AbortSignal.timeout(4000),headers:{
-              authorization:auth,'content-type':'application/json','x-langfuse-ingestion-version':'4',
-            },body:payload});
+            const response=await transmit(payload,AbortSignal.timeout(4000));
             if(!response.ok)state='rejected';
             else{
               const reader=response.body?.getReader(), parts=[];let bytes=0;
@@ -99,10 +112,15 @@ export function prepareOwnerLangfuse(env={}, {send=globalThis.fetch,now=Date.now
                 bytes+=v.value.length;if(bytes>8192){await reader.cancel();break;}
                 parts.push(v.value);
               }}finally{reader.releaseLock();}
-              if(bytes<=8192){const body=bytes?JSON.parse(Buffer.concat(parts).toString('utf8')):{};
+              if(bytes<=8192){const body=bytes?JSON.parse(Buffer.concat(parts).toString('utf8')):jaeger?null:{};
                 if(body&&typeof body==='object'&&!Array.isArray(body)&&Object.keys(body).every(k=>k==='partialSuccess')){
-                  const rejected=body.partialSuccess?.rejectedSpans;
-                  if(rejected===undefined||/^[0-9]+$/.test(String(rejected)))
+                  const partial=body.partialSuccess;
+                  const validPartial=!jaeger||partial===undefined||
+                    (partial&&typeof partial==='object'&&!Array.isArray(partial)&&
+                    Object.keys(partial).every(k=>k==='rejectedSpans'||k==='errorMessage')&&
+                    (partial.errorMessage===undefined||typeof partial.errorMessage==='string'));
+                  const rejected=partial?.rejectedSpans;
+                  if(validPartial&&(rejected===undefined||/^[0-9]+$/.test(String(rejected))))
                     state=Number(rejected)>0?'partial':'transport-accepted';
                 }
               }
