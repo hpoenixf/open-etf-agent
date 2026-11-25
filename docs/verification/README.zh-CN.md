@@ -1,5 +1,6 @@
 [English](README.md) | **简体中文**
 
+- [v0.69.0 · Skill 开发与预检](v069-skill-author-preflight.zh-CN.md)
 - [v0.68.0 · ETF 快照对比与复算](v068-etf-snapshot-comparison.zh-CN.md)
 - [v0.67.0 · 离线研究交付包](v067-offline-report-bundle.zh-CN.md)
 - [v0.51.0 · CLI 离线交付测评](v051-offline-delivery-evaluation.zh-CN.md)

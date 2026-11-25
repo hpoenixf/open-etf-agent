@@ -1,9 +1,9 @@
 {
   "schemaVersion": 2,
-  "reviewedVersion": "0.68.0",
-  "reviewedSource": "0d46ab558e64328cc860319e8bc2b995ae5ea4e8",
+  "reviewedVersion": "0.69.0",
+  "reviewedSource": "1e9f4d300b6dbef5df5ea2262891020acb4bb193",
   "articleSource": "https://github.com/hpoenixf/eff-agent-article/blob/249f0b866f9446f33b57f186fbc6d35b5d82c119/articles/open-etf-agent-v010-system-design.md",
-  "evidence": "docs/verification/v068-etf-snapshot-comparison.md",
+  "evidence": "docs/verification/v069-skill-author-preflight.md",
   "layers": [
     {
       "id": "L1",
@@ -1187,7 +1187,7 @@
         "en": "Local inputs and exact dates",
         "zh": "本地快照与精确日期"
       },
-      "status": "enhanced",
+      "status": "bounded",
       "source": "src/etf-compare-cli.mjs",
       "kind": "call-site",
       "article": {
@@ -1196,6 +1196,31 @@
         "title": {
           "zh": "从第一份可回读报告开始：Open ETF Agent v0.1",
           "en": "Start with a Report You Can Read Back: Open ETF Agent v0.1"
+        }
+      }
+    },
+    {
+      "id": "skill-preflight",
+      "layer": "L6",
+      "group": "task",
+      "name": "Skill Author Preflight",
+      "summary": {
+        "en": "Preview the exact method text",
+        "zh": "预览实际加载的方法正文"
+      },
+      "boundary": {
+        "en": "Host authority stays separate",
+        "zh": "工具权限归调用方"
+      },
+      "status": "enhanced",
+      "source": "src/skill-preflight-cli.mjs",
+      "kind": "call-site",
+      "article": {
+        "slug": "agent-skill-from-markdown-to-callable-research",
+        "kind": "module-article",
+        "title": {
+          "zh": "Skill 与普通 Prompt 有什么不同？从按需加载到脚本执行",
+          "en": "How Is a Skill Different from a Prompt? From Loading to Script Execution"
         }
       }
     }
