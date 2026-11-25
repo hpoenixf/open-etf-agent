@@ -291,3 +291,5 @@ The later [main CI failure](https://github.com/hpoenixf/open-etf-agent/actions/r
 ## v0.31 Local Knowledge
 
 [9/10 Runtime cohort, exact-query score, retained failures and release equivalence](v031-release.md) · [Runtime declaration](v031-decision.safe.json) · [Execution inputs](v031-execution-inputs.safe.json) · [Release packaging](v031-packaging.safe.json).
+
+- [v1.0.0: Integrated research, evidence and operation](v100-release.md)

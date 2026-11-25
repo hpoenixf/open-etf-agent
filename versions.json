@@ -179,6 +179,10 @@
     "0.70": {
       "commit": "7b7e3a586c8bae962359654247680a2fe3db3e54",
       "tree": "98c0842a31ccd53093e339d4baad1790e24d6394"
+    },
+    "1.0": {
+      "commit": "d9b44f0508d15c35f9e7f52da27d7bdb8c4eb704",
+      "tree": "75255e8b3611275d040daf05fa8bb4c7066041f4"
     }
   },
   "targets": {

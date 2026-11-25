@@ -31,3 +31,22 @@ Exit codes: **0** successful command (for comparison: no comparable regression),
 ## Reading the diagnosis / 如何排查
 
 Compare three independent fields for each case: `runtime.status` tells whether the producer completed; `evaluation.status` tells whether the published report and evidence could be read back; `timeline.status` tells whether a matching local lifecycle log was observed. A report can pass even if the timeline is unavailable: observing it is not a prerequisite for delivery. `not-run`, `unavailable`, `incomplete` and `mismatch` are kept distinct. Timeline entries are observations before settlement, not an independent terminal decision. For diagnosis, the sidecar counts scripted fixture proposals and tool results; those counts are not live model calls or billed usage. The sidecar does not carry prompt text, source content, report body, paths, web URLs, or credentials and is not sent anywhere. This CLI does not configure or verify Langfuse.
+
+## Export a recorded live qualification campaign
+
+```sh
+npm run -s eval -- export-live ./campaign.json ./private-receipts CANDIDATE_GIT_SHA
+```
+
+This read-only command converts the 200-case qualification manifest and its
+operator-owned ledger into `open-live-evaluation@1`. It does **not** dispatch,
+retry, query the provider, charge, read report text, or export the manifest's
+prompts. Run IDs and pseudonymous trace IDs can still be sensitive operational
+metadata; keep the bundle private unless independently cleared for publication.
+
+The output distinguishes exact cold body readback, a weaker readback without
+restart, local timeline evidence, a stored Jaeger trace that was queried, and
+objective checks on individual claims. Matching a numeric component or an
+original PDF page does not assess the overall answer. Semantic status stays
+unreviewed. Receipt evidence from other candidate commits is not counted for
+the selected commit, and unresolved attempts are never treated as passes.

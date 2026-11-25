@@ -173,12 +173,12 @@ test('daily brief Skill is selected only at the scheduler boundary and preserves
  assert.doesNotMatch(manualPrompt,/Daily Watch Skill|Authoritative report calendar/);
 });
 
-test('labeled morning and evening watches use distinct Shanghai windows; delayed evening stays capped at 20:00',{timeout:5000},async t=>{
+test('labeled morning and evening watches use distinct Shanghai windows; an existing 09:30 Watch stays unmodified',{timeout:5000},async t=>{
  await mkdir('test-output',{recursive:true});
  const projectDir=await mkdtemp(resolve('test-output/daily-windows-'));
  let now=Date.parse('2027-01-01T08:50:00+08:00');
  const prompts=[];
- const gui=await startLocalGui({projectDir,liveConfig,env:{...env,ETF_GUI_DAILY_WATCH_SKILL:'daily-watch-brief'},dailyClock:()=>now,
+ const gui=await startLocalGui({projectDir,liveConfig,env:{...env,ETF_GUI_DAILY_WATCH_SKILL:'daily-watch-brief',ETF_GUI_DAILY_WATCH_SKILL_SCOPE:'labeled'},dailyClock:()=>now,
   async fetchImpl(_url,request){
    prompts.push(JSON.parse(request.body).messages[0].content);
    return Response.json({choices:[{message:{role:'assistant',content:'已保存的样例正文'},finish_reason:'stop'}]});
@@ -187,22 +187,28 @@ test('labeled morning and evening watches use distinct Shanghai windows; delayed
  const post=body=>fetch(gui.origin+api,{method:'POST',headers:{origin:gui.origin,'content-type':'application/json'},body:JSON.stringify(body)});
  const get=path=>fetch(gui.origin+path).then(r=>r.json());
  const morning='【早报】纳指和红利低波的重点新闻';
+ const ordinary='原有 09:30 追踪，不属于早晚报';
  const evening='晚报：纳指和红利低波的重点新闻';
  assert.equal((await post({question:morning,localTime:'09:00',enabled:true})).status,201);
+ assert.equal((await post({question:ordinary,localTime:'09:30',enabled:true})).status,201);
  assert.equal((await post({question:evening,localTime:'20:00',enabled:true})).status,201);
  now=Date.parse('2027-01-01T09:00:00+08:00');await gui.sweepDaily();
  assert.equal(prompts.length,1);
  assert.ok(prompts[0].startsWith(morning+'\n'));
  assert.ok(prompts[0].includes('News window (Asia/Shanghai): [2026-12-31T00:00:00+08:00, 2027-01-01T00:00:00+08:00)'));
- now=Date.parse('2027-01-01T20:07:00+08:00');await gui.sweepDaily();
+ now=Date.parse('2027-01-01T09:30:00+08:00');await gui.sweepDaily();
  assert.equal(prompts.length,2);
- assert.ok(prompts[1].startsWith(evening+'\n'));
- assert.ok(prompts[1].includes('News window (Asia/Shanghai): [2027-01-01T00:00:00+08:00, 2027-01-01T20:00:00+08:00]'));
- assert.ok(prompts[1].includes('Run as of: 2027-01-01T12:07:00.000Z'));
- assert.ok(prompts.every(p=>p.includes('Authoritative report calendar (Asia/Shanghai): 2027-01-01 周五')));
- assert.ok(prompts[1].includes('Prior baseline: none.'));
- assert.doesNotMatch(prompts[1],/Prior report:/);
- assert.equal((await get(api)).items.filter(x=>x.history[0]?.status==='completed').length,2);
+ assert.ok(prompts[1].startsWith(ordinary+'\n'));
+ assert.doesNotMatch(prompts[1],/Daily Watch Skill|News window|Authoritative report calendar/);
+ now=Date.parse('2027-01-01T20:07:00+08:00');await gui.sweepDaily();
+ assert.equal(prompts.length,3);
+ assert.ok(prompts[2].startsWith(evening+'\n'));
+ assert.ok(prompts[2].includes('News window (Asia/Shanghai): [2027-01-01T00:00:00+08:00, 2027-01-01T20:00:00+08:00]'));
+ assert.ok(prompts[2].includes('Run as of: 2027-01-01T12:07:00.000Z'));
+ assert.ok([prompts[0],prompts[2]].every(p=>p.includes('Authoritative report calendar (Asia/Shanghai): 2027-01-01 周五')));
+ assert.ok(prompts[2].includes('Prior baseline: none.'));
+ assert.doesNotMatch(prompts[2],/Prior report:/);
+ assert.equal((await get(api)).items.filter(x=>x.history[0]?.status==='completed').length,3);
 });
 
 test('evening Skill freezes Shanghai Tuesday and excludes stale or unknown publication times without a Runtime veto',{timeout:5000},async t=>{

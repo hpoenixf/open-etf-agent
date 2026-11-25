@@ -1,3 +1,4 @@
+import {dailyBriefLabel} from './conversation-daily-context.mjs';
 import {OWNER_CHART_SKILL,OWNER_CHART_AUTO} from './financial-chart-owner.mjs';
 import {readResearchIntent,isAutoResearchProfile,isDeepResearchProfile,readDeepResearchProgress} from './research-intent.mjs';
 import { createServer } from 'node:http';
@@ -11,10 +12,10 @@ import {
   workConversationMessage, cancelConversationMessage,
   readConversationBody, readConversationSources,
 } from './conversation.mjs';
-import { createResearchProject, inspectResearchProject, inspectResearchTask, readProjectJson, supportsOwnerFreeform, updateResearchProject, validateResearchConfig } from './research-project.mjs';
+import { createResearchProject, dailyWatchConfigVersion, inspectResearchProject, inspectResearchTask, readProjectJson, supportsOwnerFreeform, updateResearchProject, validateResearchConfig } from './research-project.mjs';
 import { importProjectSources, importUploadedPdf, PROJECT_SOURCE_LIMITS } from './project-sources.mjs';
 import { ensureSafeDirectory, publishImmutable, safeDirectory } from './storage-files.mjs';
-import { prepareOwnerSearch } from './gui-owner-web.mjs';
+import { OWNER_LINKED_PDF_REVISION, prepareOwnerSearch } from './gui-owner-web.mjs';
 import { prepareOwnerDailyDigest } from './gui-daily-digest-delivery.mjs';
 import { prepareScheduledSmtp } from './scheduled-smtp.mjs';
 import { createScheduledReportEmailHook, inspectScheduledEmailDelivery, prepareFullWatchEmail } from './scheduled-report-email.mjs';
@@ -131,6 +132,7 @@ export async function createLocalGuiWorkspace({ projectDir, origin: mountOrigin,
   const live = liveConfig === undefined ? null : prepareGuiLiveConfig(liveConfig,env);
   const mode = live?'live-research':'offline-demo';
   const telemetry=live?prepareOwnerLangfuse(env,langfuseOptions):null;
+  let telemetryLoop;
   const expectedConfig=live?.config??validatedConfig;
   const wrongProject=live?'GUI_LIVE_PROJECT_REQUIRED':'GUI_DEMO_PROJECT_REQUIRED';
   const freeform=supportsOwnerFreeform(expectedConfig);
@@ -147,7 +149,8 @@ export async function createLocalGuiWorkspace({ projectDir, origin: mountOrigin,
     [route, { bytes: await readFile(new URL(name, uiRoot)), type }]
   )));
   const hostSignal = new AbortController();
-  const dailyConfigVersion=freeform?(await inspectResearchProject({projectDir})).configSha256:null;
+  const dailyConfigVersion=freeform?dailyWatchConfigVersion(await inspectResearchProject({projectDir})):null;
+  const labeledDailyBriefOnly=env.ETF_GUI_DAILY_WATCH_SKILL_SCOPE==='labeled';
   const dailyBriefSkill=freeform&&env.ETF_GUI_DAILY_AUTORUN==='1'&&env.ETF_GUI_DAILY_WATCH_SKILL==='daily-watch-brief'
     ?await (await createSkillCatalog({root:fileURLToPath(new URL('./owner-skills/',import.meta.url)),maxBytes:3000})).read('daily-watch-brief'):undefined;
   const daily=freeform?await openGuiDailyWatch(projectDir,{now:dailyClock}):null;
@@ -287,6 +290,7 @@ export async function createLocalGuiWorkspace({ projectDir, origin: mountOrigin,
         if(error?.code==='PROJECT_REPORT_NOT_READY')delivery='not-created';
       }
       trace.finish(projectDir,{runId:run.runId,status:run.status,code:run.snapshot.code,delivery,
+        admittedAt:run.definition?.deadlineAt-run.definition?.limits?.timeoutMs,
         modelUsed:run.rootUsage.model,toolUsed:run.rootUsage.tool,modelLimit:definition.config.limits.model,toolLimit:definition.config.limits.tool});
     }).catch(()=>{});
     working = { key, p };
@@ -384,7 +388,7 @@ export async function createLocalGuiWorkspace({ projectDir, origin: mountOrigin,
         daily.freezeBaseline(occurrence,baseline);
         const turn=await submitConversationMessage({projectDir,conversationId,messageId,text:question,sourceManifestSha256:null,
           dailyResearch:{watchId:occurrence.watchId,date:occurrence.date,revision:occurrence.revision,baseline},
-          dailyBrief:dailyBriefSkill?{skill:dailyBriefSkill,asOf:new Date((dailyClock??Date.now)()).toISOString()}:undefined,
+          dailyBrief:dailyBriefSkill&&(!labeledDailyBriefOnly||dailyBriefLabel(question))?{skill:dailyBriefSkill,asOf:new Date((dailyClock??Date.now)()).toISOString()}:undefined,
           authorization:{providerApproved:true,dataApproved:true,costApproved:true}});
         runId=turn.runId;
         daily.settlement(occurrence,'submitted',runId);
@@ -419,7 +423,7 @@ export async function createLocalGuiWorkspace({ projectDir, origin: mountOrigin,
         if (asset) return send(200, asset.bytes, asset.type+'; charset=utf-8');
         if (req.url === '/api/workspace') return send(200, {
           schemaVersion: 'local-gui@1', mode, reasoningEffort,
-          ...(live?{liveNotice:{maxModelCallsPerRun:expectedConfig.limits.model,...(freeform?{freeform:true,connectivity:{web:connectivity.web===true,search:!!connectivity.search,...(connectivity.search?{searchProvider:connectivity.search}:{}),...(connectivity.searchAlternates?{searchAlternates:connectivity.searchAlternates}:{}),wind:connectivity.wind===true}}:{})}}:{}),
+          ...(live?{liveNotice:{maxModelCallsPerRun:expectedConfig.limits.model,...(freeform?{freeform:true,connectivity:{web:connectivity.web===true,...(connectivity.linkedPdf===true?{linkedPdf:true}:{}),search:!!connectivity.search,...(connectivity.search?{searchProvider:connectivity.search}:{}),...(connectivity.searchAlternates?{searchAlternates:connectivity.searchAlternates}:{}),wind:connectivity.wind===true}}:{})}}:{}),
           capabilities: ['conversations','progress','reports','sources','read-web-sources',...(freeform?['pdf-attachment','daily-watch','deep-research','research-intent']:[]),...(chartAvailable?['financial-chart-skill']:[]),...(chartAuto?['financial-chart-auto']:[])],
           projectId: demo.projectId, conversations: await list({titles:true}), sources: publicSources,
         });
@@ -554,7 +558,8 @@ export async function createLocalGuiWorkspace({ projectDir, origin: mountOrigin,
           const chartSkill=input.chartSkill??(freeform&&!attachment&&input.researchDepth!=='standard'&&
             (retry?priorInput?.chartSkill===OWNER_CHART_AUTO:chartAuto)?OWNER_CHART_AUTO:undefined);
           const m = await submitConversationMessage({ projectDir, conversationId, messageId: input.messageId,
-            text: input.question, sourceManifestSha256: sourceId,...(chartSkill?{chartSkill}:{}),...(input.researchDepth===undefined?{}:{researchDepth:input.researchDepth}),...(input.reasoningEffort===undefined?{}:{reasoningEffort:input.reasoningEffort}),
+            text: input.question, sourceManifestSha256: sourceId,
+            ownerLinkedPdfRevision:retry?priorInput?.ownerLinkedPdfRevision:live&&freeform&&!attachment&&connectivity.linkedPdf===true?OWNER_LINKED_PDF_REVISION:undefined,...(chartSkill?{chartSkill}:{}),...(input.researchDepth===undefined?{}:{researchDepth:input.researchDepth}),...(input.reasoningEffort===undefined?{}:{reasoningEffort:input.reasoningEffort}),
             ...(live?{authorization:{providerApproved:true,dataApproved:true,costApproved:true}}:{}) });
           if (m.status === 'active' && !retry) begin(conversationId,input.messageId,sourceId);
           return send(202,{ id:m.messageId,runId:m.runId,status:m.status });
@@ -582,11 +587,17 @@ export async function createLocalGuiWorkspace({ projectDir, origin: mountOrigin,
       if (!res.headersSent && !res.destroyed) send(status,{ error:code });
     }
   }
+  if(telemetry?.sweep){
+    // Initialize the telemetry horizon before this workspace can admit new runs.
+    await telemetry.sweep(projectDir).catch(()=>{});
+    telemetryLoop=setInterval(()=>{void telemetry.sweep(projectDir).catch(()=>{});},3600000);
+    telemetryLoop.unref();
+  }
   if(dailyAutorun||digestProfile){dailyLoop=setInterval(()=>{void sweepDaily().catch(()=>{});void sweepDigest().catch(()=>{});},15_000);dailyLoop.unref();}
   let closing;
   return {handle,setOrigin,mode,sweepDaily,sweepDigest,async close(){
     if(!closing){
-      clearInterval(dailyLoop);hostSignal.abort();
+      clearInterval(dailyLoop);clearInterval(telemetryLoop);hostSignal.abort();
       closing=Promise.allSettled([working?.p,dailyFlight,digestFlight]).then(()=>daily?.close());
     }
     await closing;

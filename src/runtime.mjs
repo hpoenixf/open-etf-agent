@@ -129,7 +129,7 @@ async function drive({ question, gateway, outputRoot='runs', requireReport=false
   }
   if(typeof question!=='string'||!question.trim()||(hostProjection===undefined&&Buffer.byteLength(question)>16000)||typeof gateway?.next!=='function')throw failure('INVALID_INPUT');
   if (gateway.admission === 'shared-admission@1' && (!durable || workingInput?.compaction&&workingInput.compaction.mode!=='gateway' || durable.parentRunId&&typeof gateway.bindRun!=='function')) throw failure('ADMISSION_EXECUTION_UNSUPPORTED');
-  if (taskTime !== undefined && (!taskTime || typeof taskTime !== 'object' || Array.isArray(taskTime) || Object.keys(taskTime).some(key => !['anchorInstant', 'timeZone'].includes(key)))) throw failure('INVALID_TASK_TIME_INPUT');
+  if (taskTime !== undefined && (!taskTime || typeof taskTime !== 'object' || Array.isArray(taskTime) || Object.keys(taskTime).some(key => !['anchorInstant', 'timeZone', 'marketCalendar'].includes(key)))) throw failure('INVALID_TASK_TIME_INPUT');
   const budget={maxRounds:24,maxTools:64,timeoutMs:120000,...limits};
   for(const [key,value] of Object.entries(budget))if(!['maxRounds','maxTools','timeoutMs'].includes(key)||!Number.isSafeInteger(value)||value<1||value>(key==='timeoutMs'?3600000:1000))throw failure('INVALID_LIMIT');
   if(reportDelivery!==undefined&&(reportDelivery!=='artifact-required@1'||!requireReport||!publication||!durable||durable.parentRunId||durable.store?.schemaVersion===5||documentProtection||scheduleOperation))throw failure('INVALID_REPORT_DELIVERY');
@@ -252,7 +252,9 @@ async function drive({ question, gateway, outputRoot='runs', requireReport=false
         const saved=durable.store.inspect(durable.runId);
         // A concurrent first submit may have won after our preflight read. An omitted
         // instant means adopt that first admission, never compare a second wall clock.
-        if (taskTime && taskTime.anchorInstant === undefined && saved.definition.config.taskTime?.timeZone === taskTime.timeZone) {
+        if (taskTime && taskTime.anchorInstant === undefined && saved.definition.config.taskTime && saved.definition.config.taskTime.timeZone === taskTime.timeZone) {
+          const requestedAtWinner = createTaskTime({ ...taskTime, anchorInstant: saved.definition.config.taskTime.anchorInstant });
+          if (canonical(requestedAtWinner) !== canonical(saved.definition.config.taskTime)) throw failure('RUN_BINDINGS_MISMATCH');
           temporal = saved.definition.config.taskTime; config.taskTime = temporal;
         }
         boundToOriginal(saved);
