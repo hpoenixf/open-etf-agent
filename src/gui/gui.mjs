@@ -1,5 +1,6 @@
 import {createFinancialChartView} from './financial-chart-view.mjs';
 import { renderMarkdown } from './markdown.mjs';
+import {downloadAnswerImage} from './answer-image.mjs';
 const byId = id => document.getElementById(id);
 const state = { workspace: null, conversation: null, detail: null, poll: null, submitting: false, pending: null, failures: 0, selection:0, refreshSequence:0, appliedRefresh:0, progress:new Map(), readSources:new Map(), stopping:new Map() };
 const statusLabels = {
@@ -430,10 +431,12 @@ function render() {
         response.append(disclosure);
       } else response.append(make('p',m.output.warning,'warning'));
     }
+    const imageBlocks=[];
+    const renderAnswer=value=>{const block=renderMarkdown(document,value);imageBlocks.push(block);return block;};
     const hasSeparateAnswer=m.output?.answer && m.output.answer !== m.output?.report?.text;
-    if (hasSeparateAnswer) response.append(renderMarkdown(document,m.output.answer));
+    if (hasSeparateAnswer) response.append(renderAnswer(m.output.answer));
     if (m.output?.report) {
-      response.append(make('h3','已保存的报告',hasSeparateAnswer?'report-heading':'visually-hidden'),renderMarkdown(document,m.output.report.text));
+      response.append(make('h3','已保存的报告',hasSeparateAnswer?'report-heading':'visually-hidden'),renderAnswer(m.output.report.text));
     } else if (m.error || m.status==='completed' && !m.output?.answer) {
       response.append(make('p','没有读到已保存报告。','muted'));
     }
@@ -465,6 +468,18 @@ function render() {
       download.href='/api/conversations/'+encodeURIComponent(state.conversation)+'/messages/'+encodeURIComponent(m.id)+'/report.md';
       download.download='etf-report-'+m.id+'.md';
       actions.append(copy,download);
+    }
+    if (m.status==='completed'&&!m.working&&imageBlocks.some(block=>block.textContent.trim())) {
+      const save=make('button','导出图片','secondary');
+      save.type='button';
+      save.addEventListener('click',async()=>{
+        if(save.disabled)return;
+        save.disabled=true;
+        try{await downloadAnswerImage(document,imageBlocks,m.id);message('已导出回答图片。');}
+        catch(error){message(error.message==='ANSWER_IMAGE_TOO_LONG'?'回答过长，无法导出为单张图片。请使用 Markdown 下载或复制正文。':'未能生成图片，请重试。');}
+        finally{save.disabled=false;}
+      });
+      actions.append(save);
     }
     if (m.question) {
       const reuse = make('button','复用这个问题','secondary');
