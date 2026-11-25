@@ -283,6 +283,8 @@ node dist/src/session-cli.mjs publication-revisions --session runs/publication-d
 
 <a id="versions"></a>
 
+**[v0.68.0 · ETF 快照对比与复算](https://github.com/hpoenixf/open-etf-agent/commit/0d46ab558e64328cc860319e8bc2b995ae5ea4e8).** 用本地快照复算费率差、持仓与行业重叠以及同口径收益。 [范围与验证](verification/v068-etf-snapshot-comparison.zh-CN.md)
+
 **[v0.67.0 · 离线研究交付包](https://github.com/hpoenixf/open-etf-agent/commit/3e3fa36832f721957c811f111f87d1b50d2918f7).** 导出已发布报告，保留公开引用定位，断网核验全部文件。 [范围与验证](verification/v067-offline-report-bundle.zh-CN.md)
 
 **[v0.51.0 · CLI 离线交付测评](https://github.com/hpoenixf/open-etf-agent/commit/599c512e5220a7d474ad1a021faa87897157ff36).** 四个合成用例核对正文和来源 HTTP 回读，并逐题关联本地 Runtime 时间线。不调用模型、不改 GUI。 [范围与验证](../docs/verification/v051-offline-delivery-evaluation.zh-CN.md).

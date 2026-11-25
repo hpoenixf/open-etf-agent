@@ -1,9 +1,9 @@
 {
   "schemaVersion": 2,
-  "reviewedVersion": "0.67.0",
-  "reviewedSource": "3e3fa36832f721957c811f111f87d1b50d2918f7",
+  "reviewedVersion": "0.68.0",
+  "reviewedSource": "0d46ab558e64328cc860319e8bc2b995ae5ea4e8",
   "articleSource": "https://github.com/hpoenixf/eff-agent-article/blob/249f0b866f9446f33b57f186fbc6d35b5d82c119/articles/open-etf-agent-v010-system-design.md",
-  "evidence": "docs/verification/v067-offline-report-bundle.md",
+  "evidence": "docs/verification/v068-etf-snapshot-comparison.md",
   "layers": [
     {
       "id": "L1",
@@ -1162,8 +1162,33 @@
         "en": "Public citations and checksums",
         "zh": "公开引用与内容校验"
       },
-      "status": "enhanced",
+      "status": "bounded",
       "source": "src/report-bundle-cli.mjs",
+      "kind": "call-site",
+      "article": {
+        "slug": "open-etf-agent-v01-first-readable-report",
+        "kind": "open-walkthrough",
+        "title": {
+          "zh": "从第一份可回读报告开始：Open ETF Agent v0.1",
+          "en": "Start with a Report You Can Read Back: Open ETF Agent v0.1"
+        }
+      }
+    },
+    {
+      "id": "etf-compare",
+      "layer": "L6",
+      "group": "task",
+      "name": "ETF Snapshot Compare",
+      "summary": {
+        "en": "Compare two share classes",
+        "zh": "对比两个明确份额类别"
+      },
+      "boundary": {
+        "en": "Local inputs and exact dates",
+        "zh": "本地快照与精确日期"
+      },
+      "status": "enhanced",
+      "source": "src/etf-compare-cli.mjs",
       "kind": "call-site",
       "article": {
         "slug": "open-etf-agent-v01-first-readable-report",
