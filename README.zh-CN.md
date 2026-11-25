@@ -44,7 +44,7 @@ GitHub 将 SVG 当作一张图片，不能在缩略图里逐卡点击；下表�
 | L5 结果发布与交付 | [Main → Report](https://hpoenixf.com/eff-agent-article/articles/open-etf-agent-v01-first-readable-report) · [Report](https://hpoenixf.com/eff-agent-article/articles/open-etf-agent-v01-first-readable-report) · [Artifact / Revision](https://hpoenixf.com/eff-agent-article/articles/agent-artifact-version-access-sharing) · [Publication](https://hpoenixf.com/eff-agent-article/articles/019-agent-answer-publication) · [Report Review](https://hpoenixf.com/eff-agent-article/articles/open-etf-agent-report-review-workshop) |
 | L6 用户界面 | [Loopback Reader](https://hpoenixf.com/eff-agent-article/articles/open-etf-agent-v010-system-design) · [Local Research GUI](https://hpoenixf.com/eff-agent-article/articles/agent-conversation-admission-task-continuation) · [Account Site](https://hpoenixf.com/eff-agent-article/articles/open-etf-agent-v010-system-design) · [CLI Delivery Eval](https://hpoenixf.com/eff-agent-article/articles/open-etf-agent-v01-first-readable-report) |
 
-**当前地图: v0.51.0** · [模块、源码与证据](docs/module-status.zh-CN.md) · [六层文章原文](https://github.com/hpoenixf/eff-agent-article/blob/249f0b866f9446f33b57f186fbc6d35b5d82c119/articles/open-etf-agent-v010-system-design.md)
+**当前地图: v0.52.0** · [模块、源码与证据](docs/module-status.zh-CN.md) · [六层文章原文](https://github.com/hpoenixf/eff-agent-article/blob/249f0b866f9446f33b57f186fbc6d35b5d82c119/articles/open-etf-agent-v010-system-design.md)
 
 文章关联是阅读导航，不等于实现全文能力或覆盖资格。图中是公开实现范围，不是全功能完成率。真实模型验证只覆盖[各版记录](docs/verification/README.md)中的指定路径；金融语义、生产与浏览器体验不因此获得认证。
 <!-- module-map:end -->
@@ -102,22 +102,24 @@ npm run demo -- --case document-compare
 <a id="最近三个模块"></a>
 ## 最近版本与开发状态
 
+**[v0.52.0 · 自建 Jaeger 观测](https://github.com/hpoenixf/open-etf-agent/commit/b487d43628432ed80e8ce1e00c86f3b05d9f97c5).** 可选的本机 OTLP/HTTP 运行观测，默认关闭。七天回执保留窗口不影响正文交付。 [范围与验证](docs/verification/v052-local-jaeger.md)
+
 **[v0.51.0 · CLI 离线交付测评](https://github.com/hpoenixf/open-etf-agent/commit/599c512e5220a7d474ad1a021faa87897157ff36).** 四个合成用例核对正文和来源 HTTP 回读，并逐题关联本地 Runtime 时间线。不调用模型、不改 GUI。 [范围与验证](docs/verification/v051-offline-delivery-evaluation.zh-CN.md)
 
 **[v0.50.0 · 每日研究与完整定时邮件](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.50.0).** 每日追踪按北京时间划分新闻窗口。Owner 可单独确认完整每日摘要或逐条发送早晚报告，邮件不会重复发起研究。邮件默认关闭。 [范围与验证](docs/verification/v050-daily-brief-and-complete-email.md)
 
-**[v0.49.0 · 研究运行时可靠性](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.49.0).** 深度研究可维护本轮工作需求。经证实的本地 URL 拒绝和已结算的可选网页超时，不必抹掉已经取得的研究材料；URL 许可规则保持不变。工作台观测为可选，默认关闭。 [范围与验证](docs/verification/v049-research-runtime-reliability.md)
-
 | 最近版本 / 状态 | 能做什么 | 用法与边界 |
 | --- | --- | --- |
+| [v0.52.0 · 自建 Jaeger 观测](https://github.com/hpoenixf/open-etf-agent/commit/b487d43628432ed80e8ce1e00c86f3b05d9f97c5) | 可选的本机 OTLP/HTTP 运行观测，默认关闭。七天回执保留窗口不影响正文交付。 | [范围与验证](docs/verification/v052-local-jaeger.md) |
 | [v0.51.0 · CLI 离线交付测评](https://github.com/hpoenixf/open-etf-agent/commit/599c512e5220a7d474ad1a021faa87897157ff36) | 核验正文回读、比较基线并关联本地时间线 | [范围与验证](docs/verification/v051-offline-delivery-evaluation.zh-CN.md) |
 | [v0.50.0 · 每日研究与完整定时邮件](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.50.0) | 可选完整摘要或逐条发送早晚报 | [范围与验证](docs/verification/v050-daily-brief-and-complete-email.md) |
-| [v0.49.0 · 研究运行时可靠性](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.49.0) | 深研工作需求与有界的可选网页工具失败 | [范围与验证](docs/verification/v049-research-runtime-reliability.md) |
 
 [全部固定版本与命令](docs/module-guide.zh-CN.md#versions) · [版本谱系](versions.json) · [全部 Release](https://github.com/hpoenixf/open-etf-agent/releases) · [验证记录](docs/verification/README.zh-CN.md)
 
 <details>
 <summary>历史版本</summary>
+
+**[v0.49.0 · 研究运行时可靠性](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.49.0).** 深度研究可维护本轮工作需求。经证实的本地 URL 拒绝和已结算的可选网页超时，不必抹掉已经取得的研究材料；URL 许可规则保持不变。工作台观测为可选，默认关闭。 [范围与验证](docs/verification/v049-research-runtime-reliability.md)
 
 **[v0.48.0 · 回看已保存回答的已读网页](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.48.0)。** 打开已保存回答旁的「已读网页」，可回看本轮实际读取的原文链接和已核验的留存摘录。缺失或无法核验的来源不展示，已保存正文不变。隔离预发验证了刷新后的回读，未重新发起模型请求。 [范围与验证](docs/verification/v048-verified-web-sources.md)
 

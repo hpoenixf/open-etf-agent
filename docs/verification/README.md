@@ -1,5 +1,6 @@
 **English** | [简体中文](README.zh-CN.md)
 
+- [v0.52.0 · Optional local Jaeger observation](v052-local-jaeger.md)
 - [v0.51.0 · Offline delivery evaluation](v051-offline-delivery-evaluation.md)
 - [v0.50.0 candidate: Daily Brief and complete scheduled email](v050-daily-brief-and-complete-email.md)
 - [v0.49.0: Research runtime reliability](v049-research-runtime-reliability.md)

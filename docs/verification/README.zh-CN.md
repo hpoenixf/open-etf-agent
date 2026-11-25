@@ -1,5 +1,6 @@
 [English](README.md) | **简体中文**
 
+- [v0.52.0 · 可选的本机 Jaeger 观测](v052-local-jaeger.md)
 - [v0.51.0 · CLI 离线交付测评](v051-offline-delivery-evaluation.zh-CN.md)
 - [v0.48.0 候选：已保存回答的网页原文回看](v048-verified-web-sources.md)
 - [v0.47.0 网页摘录续读与答案正文回读](v047-retained-web-and-answer-delivery.md)

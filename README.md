@@ -44,7 +44,7 @@ GitHub treats embedded SVG as one image, so its cards are not individually click
 | L5 Publication & delivery | [Main → Report](https://hpoenixf.com/eff-agent-article/en/articles/open-etf-agent-v01-first-readable-report) · [Report](https://hpoenixf.com/eff-agent-article/en/articles/open-etf-agent-v01-first-readable-report) · [Artifact / Revision](https://hpoenixf.com/eff-agent-article/en/articles/agent-artifact-version-access-sharing) · [Publication](https://hpoenixf.com/eff-agent-article/en/articles/019-agent-answer-publication) · [Report Review](https://hpoenixf.com/eff-agent-article/en/articles/open-etf-agent-report-review-workshop) |
 | L6 User interfaces | [Loopback Reader](https://hpoenixf.com/eff-agent-article/en/articles/open-etf-agent-v010-system-design) · [Local Research GUI](https://hpoenixf.com/eff-agent-article/en/articles/agent-conversation-admission-task-continuation) · [Account Site](https://hpoenixf.com/eff-agent-article/en/articles/open-etf-agent-v010-system-design) · [CLI Delivery Eval](https://hpoenixf.com/eff-agent-article/en/articles/open-etf-agent-v01-first-readable-report) |
 
-**Current map: v0.51.0** · [Modules, source & evidence](docs/module-status.md) · [Six-layer article (Chinese original)](https://github.com/hpoenixf/eff-agent-article/blob/249f0b866f9446f33b57f186fbc6d35b5d82c119/articles/open-etf-agent-v010-system-design.md)
+**Current map: v0.52.0** · [Modules, source & evidence](docs/module-status.md) · [Six-layer article (Chinese original)](https://github.com/hpoenixf/eff-agent-article/blob/249f0b866f9446f33b57f186fbc6d35b5d82c119/articles/open-etf-agent-v010-system-design.md)
 
 Article links are reading navigation, not implementation parity or coverage qualification. This maps public implementation, not completion percentages. Live-model evidence qualifies only the paths in [version records](docs/verification/README.md), not financial accuracy, production or browser experience.
 <!-- module-map:end -->
@@ -102,22 +102,24 @@ npm run demo -- --case document-compare
 <a id="latest-three-modules"></a>
 ## Releases and development status
 
+**[v0.52.0 · Local Jaeger observation](https://github.com/hpoenixf/open-etf-agent/commit/b487d43628432ed80e8ce1e00c86f3b05d9f97c5).** Optional, bounded run metadata over loopback OTLP/HTTP. Disabled by default; the seven-day local receipt window does not affect answer delivery. [Scope and verification](docs/verification/v052-local-jaeger.md)
+
 **[v0.51.0 · Offline delivery evaluation](https://github.com/hpoenixf/open-etf-agent/commit/599c512e5220a7d474ad1a021faa87897157ff36).** Four synthetic cases verify report and source readback over HTTP and correlate each case with its local runtime timeline. No model calls or GUI changes. [Scope and verification](docs/verification/v051-offline-delivery-evaluation.md)
 
 **[v0.50.0 · Daily Brief and complete scheduled email](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.50.0).** Daily watches use Beijing-local news windows. The owner can choose a complete daily digest or two separate full-report watch emails after consent, without rerunning research. Email is off by default. [Scope and verification](docs/verification/v050-daily-brief-and-complete-email.md)
 
-**[v0.49.0 · Research runtime reliability](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.49.0).** Deep research can keep a run-scoped working brief. Proved local URL refusals and settled optional page timeouts need not erase the research. An admissible URL still has to pass the original checks. Owner telemetry is optional and off by default. [Scope and verification](docs/verification/v049-research-runtime-reliability.md)
-
 | Recent version / status | What it enables | Usage and boundaries |
 | --- | --- | --- |
+| [v0.52.0 · Local Jaeger observation](https://github.com/hpoenixf/open-etf-agent/commit/b487d43628432ed80e8ce1e00c86f3b05d9f97c5) | Optional, bounded run metadata over loopback OTLP/HTTP. Disabled by default; the seven-day local receipt window does not affect answer delivery. | [Scope and verification](docs/verification/v052-local-jaeger.md) |
 | [v0.51.0 · Offline delivery evaluation](https://github.com/hpoenixf/open-etf-agent/commit/599c512e5220a7d474ad1a021faa87897157ff36) | Verify readback, compare baselines and correlate local timelines | [Scope and verification](docs/verification/v051-offline-delivery-evaluation.md) |
 | [v0.50.0 · Daily Brief and complete scheduled email](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.50.0) | Opt-in complete daily digest or per-watch email | [Scope and verification](docs/verification/v050-daily-brief-and-complete-email.md) |
-| [v0.49.0 · Research runtime reliability](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.49.0) | Deep working needs and bounded failures of optional web tools | [Scope and verification](docs/verification/v049-research-runtime-reliability.md) |
 
 [All fixed versions and commands](docs/module-guide.md#versions) · [Version lineage](versions.json) · [All releases](https://github.com/hpoenixf/open-etf-agent/releases) · [Verification records](docs/verification/README.md)
 
 <details>
 <summary>Earlier versions</summary>
+
+**[v0.49.0 · Research runtime reliability](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.49.0).** Deep research can keep a run-scoped working brief. Proved local URL refusals and settled optional page timeouts need not erase the research. An admissible URL still has to pass the original checks. Owner telemetry is optional and off by default. [Scope and verification](docs/verification/v049-research-runtime-reliability.md)
 
 **[v0.48.0 · Verified web sources for saved answers](https://github.com/hpoenixf/open-etf-agent/releases/tag/v0.48.0).** Reopen the original webpage links and verified retained excerpts for the exact saved answer. Missing or unverified sources are omitted without changing the saved answer. Isolated browser staging verified readback after refresh without a new model request. [Scope and verification](docs/verification/v048-verified-web-sources.md)
 

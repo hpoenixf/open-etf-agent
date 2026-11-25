@@ -1,9 +1,9 @@
 {
   "schemaVersion": 2,
-  "reviewedVersion": "0.51.0",
-  "reviewedSource": "599c512e5220a7d474ad1a021faa87897157ff36",
+  "reviewedVersion": "0.52.0",
+  "reviewedSource": "b487d43628432ed80e8ce1e00c86f3b05d9f97c5",
   "articleSource": "https://github.com/hpoenixf/eff-agent-article/blob/249f0b866f9446f33b57f186fbc6d35b5d82c119/articles/open-etf-agent-v010-system-design.md",
-  "evidence": "docs/verification/v051-offline-delivery-evaluation.md",
+  "evidence": "docs/verification/v052-local-jaeger.md",
   "layers": [
     {
       "id": "L1",
@@ -1137,7 +1137,7 @@
         "en": "Offline; not answer-quality scoring",
         "zh": "离线不判正文语义；本地时间线"
       },
-      "status": "enhanced",
+      "status": "bounded",
       "source": "src/public-eval-cli.mjs",
       "kind": "call-site",
       "article": {
