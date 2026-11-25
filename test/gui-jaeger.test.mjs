@@ -3,9 +3,11 @@ import assert from 'node:assert/strict';
 import {createServer} from 'node:http';
 import {once} from 'node:events';
 import {join,resolve} from 'node:path';
-import {mkdir,mkdtemp,readFile,readdir,rm} from 'node:fs/promises';
+import {mkdir,mkdtemp,readFile,writeFile,rm} from 'node:fs/promises';
 import {setTimeout as delay} from 'node:timers/promises';
 import {prepareOwnerLangfuse} from '../src/gui-langfuse.mjs';
+import {DatabaseSync} from 'node:sqlite';
+import {receiptRetentionMs} from '../src/gui-jaeger-receipts.mjs';
 import {startLocalGui} from '../src/gui-server.mjs';
 
 const localEnv={
@@ -31,10 +33,15 @@ async function collector(t,{status=200,body='{}',headers={}}={}){
   return {packets,port:String(server.address().port)};
 }
 const meta=(span,k)=>span.attributes.find(a=>a.key==='langfuse.observation.metadata.'+k)?.value.stringValue;
+function stored(dir){
+  const db=new DatabaseSync(join(dir,'jaeger-export','receipts.sqlite'),{readOnly:true});
+  try{return db.prepare('SELECT trace_id AS id,recorded,state FROM receipt ORDER BY trace_id').all();}
+  finally{db.close();}
+}
 async function receipt(dir){
   for(let i=0;i<150;i++){
-    const file=(await readdir(join(dir,'langfuse-export')).catch(()=>[])).find(f=>f.endsWith('.settled.json'));
-    if(file)return JSON.parse(await readFile(join(dir,'langfuse-export',file),'utf8'));
+    const rows=stored(dir);
+    if(rows[0]?.state!=='unknown'&&rows.length)return rows[0];
     await delay(20);
   }
   throw Error('missing settled export receipt');
@@ -84,13 +91,45 @@ test('follow-up destinations are never contacted and rejected/partial/ambiguous 
     [{body:'x'.repeat(8193)},'unknown'],
   ]){
     const sink=await collector(t,config),dir=await project(t);
+    const admittedAt=Date.now();
     for(let i=0;i<2;i++){
-      const exporter=prepareOwnerLangfuse({...localEnv,ETF_JAEGER_OTLP_PORT:sink.port});
-      exporter.start().finish(dir,{runId:'synthetic-test-run',status:'failed',delivery:'not-created'});
+      const exporter=prepareOwnerLangfuse({...localEnv,ETF_JAEGER_OTLP_PORT:sink.port},{now:()=>admittedAt+i});
+      if(i===0)await exporter.sweep(dir);
+      exporter.start().finish(dir,{runId:'synthetic-test-run',status:'failed',delivery:'not-created',admittedAt});
       await exporter.drain();
     }
-    assert.equal((await receipt(dir)).state,want);
+    assert.equal(stored(dir)[0].state,want);
     assert.equal(sink.packets.length,1);
   }
   assert.equal(redirect.packets.length,0);
+});
+
+test('seven-day receipt aging keeps ambiguous exports until cutoff and blocks replay after purge, restart and clock rollback',async t=>{
+  const dir=await project(t),sink=await collector(t,{body:'invalid JSON'});
+  const started=Date.now();let time=started;
+  const env={...localEnv,ETF_JAEGER_OTLP_PORT:sink.port};
+  const make=()=>prepareOwnerLangfuse(env,{now:()=>time});
+  const emit=async (e,admittedAt,id='original-run')=>{
+    e.start().finish(dir,{runId:id,status:'failed',delivery:'not-created',admittedAt});await e.drain();
+  };
+  await make().sweep(dir);
+  const admittedAt=++time;
+  await emit(make(),admittedAt);
+  assert.equal(sink.packets.length,1);assert.equal(stored(dir)[0].state,'unknown');
+  // Product history and old cloud exporter evidence are not a cleanup scope.
+  await mkdir(join(dir,'history'));await writeFile(join(dir,'history','report.json'),'saved answer');
+  await mkdir(join(dir,'langfuse-export'));await writeFile(join(dir,'langfuse-export','protected.json'),'existing cloud evidence');
+  time=admittedAt+receiptRetentionMs-1;await make().sweep(dir);await emit(make(),admittedAt);
+  assert.equal(stored(dir).length,1);assert.equal(sink.packets.length,1);
+  time++;await make().sweep(dir);assert.deepEqual(stored(dir),[]);
+  await emit(make(),admittedAt);
+  time=admittedAt+1000;await emit(make(),admittedAt);await emit(make(),time,'clock-rollback-run');
+  assert.equal(sink.packets.length,1);assert.deepEqual(stored(dir),[]);
+  time=admittedAt+receiptRetentionMs+1;await emit(make(),time,'fresh-run');
+  assert.equal(sink.packets.length,2);assert.equal(stored(dir).length,1);
+  assert.equal(await readFile(join(dir,'history','report.json'),'utf8'),'saved answer');
+  assert.equal(await readFile(join(dir,'langfuse-export','protected.json'),'utf8'),'existing cloud evidence');
+  await rm(join(dir,'jaeger-export','receipts.sqlite'));
+  await emit(make(),time,'lost-store-run');
+  assert.equal(sink.packets.length,2);
 });

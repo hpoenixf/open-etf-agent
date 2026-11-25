@@ -1,5 +1,6 @@
 import {createHmac} from 'node:crypto';
 import {join} from 'node:path';
+import {jaegerReceipts,receiptRetentionMs} from './gui-jaeger-receipts.mjs';
 import {jaegerTransport} from './gui-jaeger-transport.mjs';
 import {ensureSafeDirectory,publishImmutable} from './storage-files.mjs';
 
@@ -45,6 +46,7 @@ export function prepareOwnerLangfuse(env={}, {send=globalThis.fetch,now=Date.now
       authorization:auth,'content-type':'application/json','x-langfuse-ingestion-version':'4',
     },body});
   }else return null;
+  const receipts=jaeger?jaegerReceipts(now):null;
   const id=(kind,...parts)=>createHmac('sha256',salt).update(JSON.stringify([kind,...parts])).digest('hex');
   let pending=0;
   const work=new Set();
@@ -97,9 +99,16 @@ export function prepareOwnerLangfuse(env={}, {send=globalThis.fetch,now=Date.now
         if(['publication','report'].includes(final.delivery))spans.push(span('Delivery confirmed','event',same('delivery',1),end,end,[metadata('readback',final.delivery)],root,true));
         const payload=JSON.stringify({resourceSpans:[{resource:{attributes:[attr('service.name','open-etf-agent')]},scopeSpans:[{scope:{name:'open-etf-agent.owner-telemetry'},spans}]}]});
         const flight=Promise.resolve().then(async()=>{
-          const directory=await ensureSafeDirectory(join(projectDir,'langfuse-export'));
-          try{await publishImmutable(directory,traceId+'.json',Buffer.from(JSON.stringify({schemaVersion:'telemetry-export-intent@1',traceId})));}
-          catch(error){if(error.code==='EEXIST')return;throw error;}
+          let directory;
+          if(receipts){
+            if(!await receipts.begin(projectDir,traceId,final.admittedAt))return;
+            const dispatchAt=now();
+            if(!Number.isSafeInteger(dispatchAt)||dispatchAt<final.admittedAt||dispatchAt-final.admittedAt>=receiptRetentionMs)return;
+          }else{
+            directory=await ensureSafeDirectory(join(projectDir,'langfuse-export'));
+            try{await publishImmutable(directory,traceId+'.json',Buffer.from(JSON.stringify({schemaVersion:'telemetry-export-intent@1',traceId})));}
+            catch(error){if(error.code==='EEXIST')return;throw error;}
+          }
           // Once a delivery is ambiguous do not retry the OTLP export, and never retry the research.
           let state='unknown';
           try {
@@ -126,11 +135,12 @@ export function prepareOwnerLangfuse(env={}, {send=globalThis.fetch,now=Date.now
               }
             }
           } catch {}
-          await publishImmutable(directory,traceId+'.settled.json',Buffer.from(JSON.stringify({schemaVersion:'telemetry-export-result@1',state})));
+          if(receipts)await receipts.settle(projectDir,traceId,state);
+          else await publishImmutable(directory,traceId+'.settled.json',Buffer.from(JSON.stringify({schemaVersion:'telemetry-export-result@1',state})));
         }).catch(()=>{}).finally(()=>{pending--;work.delete(flight);});
         work.add(flight);
       },
     };
   }
-  return {start,drain:()=>Promise.allSettled([...work])};
+  return {start,...(receipts?{sweep:receipts.sweep}:{}),drain:()=>Promise.allSettled([...work])};
 }

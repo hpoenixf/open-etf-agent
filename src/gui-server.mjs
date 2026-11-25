@@ -131,6 +131,7 @@ export async function createLocalGuiWorkspace({ projectDir, origin: mountOrigin,
   const live = liveConfig === undefined ? null : prepareGuiLiveConfig(liveConfig,env);
   const mode = live?'live-research':'offline-demo';
   const telemetry=live?prepareOwnerLangfuse(env,langfuseOptions):null;
+  let telemetryLoop;
   const expectedConfig=live?.config??validatedConfig;
   const wrongProject=live?'GUI_LIVE_PROJECT_REQUIRED':'GUI_DEMO_PROJECT_REQUIRED';
   const freeform=supportsOwnerFreeform(expectedConfig);
@@ -287,6 +288,7 @@ export async function createLocalGuiWorkspace({ projectDir, origin: mountOrigin,
         if(error?.code==='PROJECT_REPORT_NOT_READY')delivery='not-created';
       }
       trace.finish(projectDir,{runId:run.runId,status:run.status,code:run.snapshot.code,delivery,
+        admittedAt:run.definition?.deadlineAt-run.definition?.limits?.timeoutMs,
         modelUsed:run.rootUsage.model,toolUsed:run.rootUsage.tool,modelLimit:definition.config.limits.model,toolLimit:definition.config.limits.tool});
     }).catch(()=>{});
     working = { key, p };
@@ -582,11 +584,17 @@ export async function createLocalGuiWorkspace({ projectDir, origin: mountOrigin,
       if (!res.headersSent && !res.destroyed) send(status,{ error:code });
     }
   }
+  if(telemetry?.sweep){
+    // Initialize the telemetry horizon before this workspace can admit new runs.
+    await telemetry.sweep(projectDir).catch(()=>{});
+    telemetryLoop=setInterval(()=>{void telemetry.sweep(projectDir).catch(()=>{});},3600000);
+    telemetryLoop.unref();
+  }
   if(dailyAutorun||digestProfile){dailyLoop=setInterval(()=>{void sweepDaily().catch(()=>{});void sweepDigest().catch(()=>{});},15_000);dailyLoop.unref();}
   let closing;
   return {handle,setOrigin,mode,sweepDaily,sweepDigest,async close(){
     if(!closing){
-      clearInterval(dailyLoop);hostSignal.abort();
+      clearInterval(dailyLoop);clearInterval(telemetryLoop);hostSignal.abort();
       closing=Promise.allSettled([working?.p,dailyFlight,digestFlight]).then(()=>daily?.close());
     }
     await closing;

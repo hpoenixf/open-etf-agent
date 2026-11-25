@@ -41,6 +41,20 @@ receipts are not replayed or backfilled. Export is best-effort; it does not
 affect the answer or rerun research. A transport acceptance receipt is not
 proof of storage; confirm by reading the same trace back from Jaeger.
 
+## Local export receipts
+
+Jaeger export receipts are separate from Jaeger storage. The owner workspace
+retains its local pseudonymous receipts for seven days from each attempted
+export. It cleans them on startup and hourly while enabled. Unknown outcomes
+are retained for the same window and never retried. Because the eligibility
+check uses the frozen runtime admission time and a monotonic persistent
+watermark, an old run cannot be replayed after those receipts are purged or
+during a wall-clock rollback. An existing receipt directory with a missing
+database disables export; do not restore an independent old receipt database
+or reset its watermark. Cleanup affects only this profile's receipt database,
+not History, evaluation, answers, or older Cloud exports. Configure trace
+storage and any server-log retention independently on the Jaeger host.
+
 See the official [Jaeger APIs](https://www.jaegertracing.io/docs/2.23/architecture/apis/)
 and [Badger backend](https://www.jaegertracing.io/docs/2.23/storage/badger/)
 documentation for collector and persistence configuration.
