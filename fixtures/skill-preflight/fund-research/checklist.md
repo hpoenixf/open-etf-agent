@@ -1,0 +1,3 @@
+- Confirm exact share class and observation date.
+- Record the original source number for each figure.
+- Explain missing values without turning them into zero.

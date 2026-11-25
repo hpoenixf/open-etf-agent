@@ -1,0 +1,52 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {mkdir,mkdtemp,readFile,writeFile,stat,rm} from 'node:fs/promises';
+import {resolve,join} from 'node:path';
+import {spawnSync} from 'node:child_process';
+
+const root='fixtures/skill-preflight',example='fixtures/fund-research-skill-case.json';
+const cli=(...args)=>spawnSync(process.execPath,['src/skill-preflight-cli.mjs',...args],{encoding:'utf8'});
+test('catalog validation, exact preview and synthetic case use the normal loader',async()=>{
+  const valid=cli('validate','--root',root);
+  assert.equal(valid.status,0,valid.stderr);
+  assert.equal(JSON.parse(valid.stdout).skills[0].id,'fund-research');
+  const preview=cli('preview','--root',root,'--skill','fund-research');
+  assert.equal(preview.status,0,preview.stderr);
+  const p=JSON.parse(preview.stdout);
+  assert.equal(p.method.text,await readFile(join(root,'fund-research/SKILL.md'),'utf8'));
+  assert.deepEqual(p.tools.declared,[]);
+  assert.deepEqual(p.tools.suggested,['read_page','save_report']);
+  const result=cli('test','--root',root,'--case',example);
+  assert.equal(result.status,0,result.stderr);
+  assert.deepEqual(JSON.parse(result.stdout).tools.missingInSampleHost,['save_report']);
+});
+test('unknown selection, invalid metadata, failed resource and scripts remain read-only',async t=>{
+  await mkdir('test-output',{recursive:true});
+  const directory=await mkdtemp(resolve('test-output/skill-preflight-'));
+  t.after(()=>rm(directory,{recursive:true,force:true}));
+  const skill=join(directory,'sample');
+  await mkdir(skill);
+  await writeFile(join(skill,'SKILL.md'),'---\nname: sample\ndescription: Sample.\ntools: [extra]\n---\n');
+  let result=cli('validate','--root',directory);
+  assert.equal(result.status,1);
+  assert.match(result.stderr,/frontmatter/);
+  await writeFile(join(skill,'SKILL.md'),'---\nname: sample\ndescription: Sample.\n---\nRead script.sh.\n');
+  const marker=join(directory,'executed');
+  await writeFile(join(skill,'script.sh'),'#!/bin/sh\ntouch '+marker+'\n');
+  result=cli('preview','--root',directory,'--skill','wrong');
+  assert.equal(result.status,1);
+  assert.match(result.stderr,/Unknown Skill ID/);
+  const fixture=join(directory,'case.json');
+  const data={schemaVersion:'skill-preflight-case@1',skillId:'sample',input:'Synthetic.',expectedSuggestedTools:[],
+    hostTools:[],expectedBodyIncludes:['Read script.sh'],resources:['script.sh']};
+  await writeFile(fixture,JSON.stringify(data));
+  result=cli('test','--root',directory,'--case',fixture);
+  assert.equal(result.status,0,result.stderr);
+  await assert.rejects(stat(marker),{code:'ENOENT'});
+  await writeFile(fixture,JSON.stringify({...data,resources:['missing.txt']}));
+  result=cli('test','--root',directory,'--case',fixture);
+  assert.equal(result.status,1);
+  assert.match(result.stderr,/resource unavailable/);
+  await writeFile(fixture,JSON.stringify({...data,expectedBodyIncludes:['missing phrase']}));
+  assert.match(cli('test','--root',directory,'--case',fixture).stderr,/body assertion failed/);
+});
