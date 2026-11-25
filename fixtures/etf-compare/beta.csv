@@ -1,0 +1,20 @@
+kind,key,value
+meta,fundId,beta
+meta,shareClassId,beta-i
+meta,currency,CNY
+meta,asOf,2026-10-31
+meta,feeBasis,annual-expense-ratio
+meta,feeBps,10
+meta,holdingsClassification,synthetic-security-v1
+meta,holdingsCoverage,complete
+meta,sectorsClassification,synthetic-industry-v1
+meta,sectorsCoverage,complete
+meta,seriesShareClassId,beta-i
+meta,seriesCurrency,CNY
+meta,seriesBasis,total-return-index
+holding,A,4000
+holding,B,6000
+sector,"Technology, Hardware",4000
+sector,Industrials,6000
+observation,2026-10-01,200
+observation,2026-10-31,206
