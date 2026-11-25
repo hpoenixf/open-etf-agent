@@ -283,6 +283,8 @@ node dist/src/session-cli.mjs publication-revisions --session runs/publication-d
 
 <a id="versions"></a>
 
+**[v0.69.0 · Skill 开发与预检](https://github.com/hpoenixf/open-etf-agent/commit/1e9f4d300b6dbef5df5ea2262891020acb4bb193).** 校验、预览 Skill，并运行合成测试样例。 [范围与验证](verification/v069-skill-author-preflight.zh-CN.md)
+
 **[v0.68.0 · ETF 快照对比与复算](https://github.com/hpoenixf/open-etf-agent/commit/0d46ab558e64328cc860319e8bc2b995ae5ea4e8).** 用本地快照复算费率差、持仓与行业重叠以及同口径收益。 [范围与验证](verification/v068-etf-snapshot-comparison.zh-CN.md)
 
 **[v0.67.0 · 离线研究交付包](https://github.com/hpoenixf/open-etf-agent/commit/3e3fa36832f721957c811f111f87d1b50d2918f7).** 导出已发布报告，保留公开引用定位，断网核验全部文件。 [范围与验证](verification/v067-offline-report-bundle.zh-CN.md)

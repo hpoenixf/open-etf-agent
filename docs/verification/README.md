@@ -1,5 +1,6 @@
 **English** | [简体中文](README.zh-CN.md)
 
+- [v0.69.0 · Skill author preflight](v069-skill-author-preflight.md)
 - [v0.68.0 · ETF snapshot comparison](v068-etf-snapshot-comparison.md)
 - [v0.67.0 · Offline research report bundle](v067-offline-report-bundle.md)
 - [v0.51.0 · Offline delivery evaluation](v051-offline-delivery-evaluation.md)
