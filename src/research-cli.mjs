@@ -9,6 +9,7 @@ import {importProjectSources,loadProjectSources} from './project-sources.mjs';
 import {inspectResearchKnowledge} from './research-project.mjs';
 import {queryImportedKnowledge} from './local-knowledge.mjs';
 import {inspectResearchCapacity} from './research-project.mjs';
+import {actionReminder} from './action-reminders.mjs';
 import {openMemoryLibrary} from './memory.mjs';
 import {startReader} from './reader.mjs';
 import {acquireProjectWebSources,inspectWebAcquisition} from './web-acquisition.mjs';
@@ -58,6 +59,10 @@ Usage: node src/research-cli.mjs <group> <command> [options]
   interaction list --project DIR [--run ID] [--limit NUMBER] [--after CURSOR]
   interaction inspect --project DIR --run ID --question-id ID
   run respond --project DIR --run ID --question-id ID --response-id ID --text TEXT_FILE
+  reminder add --store DIR --text TEXT --due ISO_INSTANT [--reference TEXT]
+  reminder list|due --store DIR
+  reminder mark-shown|acknowledge --store DIR --id ID --occurrence NUMBER
+  reminder defer --store DIR --id ID --occurrence NUMBER --due ISO_INSTANT
   run report|serve --project DIR --run ID [--port NUMBER (serve only)]
   report inspect|serve --project DIR --run ID [--port NUMBER (serve only)]
   memory approve-intent --project DIR --operation save|revise|forget --intent ID
@@ -100,6 +105,11 @@ for submit --memory-intents. Memory mutations require an explicit one-time inten
 All options are single-use. Unknown options and positional arguments are rejected.
 `;
 const specifications={
+ 'reminder add':['store','text','due','reference?'],
+ 'reminder list':['store'], 'reminder due':['store'],
+ 'reminder mark-shown':['store','id','occurrence'],
+ 'reminder acknowledge':['store','id','occurrence'],
+ 'reminder defer':['store','id','occurrence','due'],
  'specialist init':['project'], 'specialist list':['project'],
  'specialist create':['project','id','profile'], 'specialist read':['project','id'],
  'specialist update':['project','id','revision','profile'], 'specialist remove':['project','id','revision'],
@@ -162,7 +172,11 @@ export async function runResearchCli(args,{stdout=process.stdout,stderr=process.
  let secret;const emit=v=>stdout.write(redact(JSON.stringify(v),secret)+'\n');
  try{
   const parsed=parseResearchArguments(args);if(parsed.help){stdout.write(RESEARCH_HELP);return 0;}
-  const {command,options:o}=parsed,projectDir=resolve(o.project),runId=o.run;
+  const {command,options:o}=parsed;
+  if(command.startsWith('reminder ')){
+   emit(await actionReminder({store:o.store,command:command.slice(9),options:o}));return 0;
+  }
+  const projectDir=resolve(o.project),runId=o.run;
   if(command.startsWith('specialist ')||command.startsWith('preset ')){
    const [kind,operation]=command.split(' '),store=await openProjectSpecialists({projectDir,create:command==='specialist init'});
    if(operation==='init'||operation==='list'){emit(await store.list());return 0;}
