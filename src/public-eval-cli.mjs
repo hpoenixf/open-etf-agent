@@ -4,6 +4,7 @@ import { constants, mkdtemp, open } from 'node:fs/promises';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { evaluateRuns } from './evaluate.mjs';
+import { buildEvalObservation } from './eval-observation.mjs';
 import { ensureSafeDirectory, publishImmutable, safeDirectory } from './storage-files.mjs';
 
 const ids = ['T1', 'T2', 'T3', 'T4'];
@@ -43,6 +44,12 @@ async function run(args) {
   const report = await evaluateRuns({ cases: fixture.cases });
   await publishImmutable(directory, 'http-evaluation.json', JSON.stringify(report, null, 2) + '\n');
   print(report);
+  try {
+    const observation = await buildEvalObservation(fixture, report);
+    await publishImmutable(directory, 'eval-observations.json', JSON.stringify(observation, null, 2) + '\n');
+  } catch {
+    process.stderr.write('EVAL_OBSERVATION_EXPORT_FAILED: HTTP evaluation is unchanged\n');
+  }
   const selected = report.cases.filter(row => choice === 'all' || row.caseId === choice);
   if (selected.some(row => row.status !== 'passed')) process.exitCode = 1;
 }
