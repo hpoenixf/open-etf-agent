@@ -96,6 +96,8 @@ npm run demo -- --case document-compare
 **Ready to use a real model?** Do not add `--live` to the demo command. Use the [research project entry](docs/research-project.md): first import and submit without model calls, then configure your authorized provider and budget. The [report review entry](docs/report-review.md) also distinguishes fixture lifecycle runs from real model judgment.
 
 
+[Offline evaluation: run delivery checks and compare baselines from the CLI](docs/evaluation-cli.md)
+
 <a id="versions"></a>
 <a id="latest-three-modules"></a>
 ## Releases and development status

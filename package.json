@@ -12,6 +12,7 @@
     "test": "node --test --test-concurrency=1 test/*.test.mjs",
     "demo": "node src/cli.mjs",
     "serve": "node src/reader-cli.mjs",
+    "eval": "node src/public-eval-cli.mjs",
     "evaluate": "node src/evaluate-cli.mjs",
     "session": "node src/session-cli.mjs",
     "temporal": "node src/temporal-cli.mjs",
