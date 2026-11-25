@@ -1,3 +1,4 @@
+import { hasOwnerMeteredTools, OWNER_METERED_TOOL_ACCOUNTING } from './tool-accounting.mjs';
 import {OWNER_CHART_SKILL,OWNER_CHART_AUTO} from './financial-chart-owner.mjs';
 import {readResearchIntent,isAutoResearchProfile,isDeepResearchProfile,readDeepResearchProgress} from './research-intent.mjs';
 import { createServer } from 'node:http';
@@ -230,6 +231,8 @@ export async function createLocalGuiWorkspace({ projectDir, origin: mountOrigin,
         }
       }
       const status = run?.status ?? m.status;
+      const budgetFailure=localBudgetFailure(run);
+      const toolAccounting=hasOwnerMeteredTools(run?.definition?.bindings)&&Number.isSafeInteger(run.rootUsage?.tool)?{mode:OWNER_METERED_TOOL_ACCOUNTING,used:run.rootUsage.tool}:null;
       let chartViews=[];
       if(input.chartSkill&&status==='completed'){
         try{chartViews=await readConversationCharts({projectDir,conversationId,messageId:m.messageId});}
@@ -241,7 +244,7 @@ export async function createLocalGuiWorkspace({ projectDir, origin: mountOrigin,
       messages.push({
         id: m.messageId, runId: m.runId, status, phase: run?.snapshot?.phase ?? null,
         // A worker can finish during these reads. Keep polling an active snapshot.
-        code: run?.snapshot?.code ?? null, working: status === 'active' && (workerWasRunning || working?.key === key),
+        code: run?.snapshot?.code ?? null, ...(budgetFailure?{budgetFailure}:{}), ...(toolAccounting?{toolAccounting}:{}), working: status === 'active' && (workerWasRunning || working?.key === key),
         question: input.text, sourceId: input.sourceManifestSha256, ...(effort?{reasoningEffort:effort}:{}), ...(chartViews.length?{chartViews}:{}), ...(input.researchDepth===undefined?{}:{researchDepth:input.researchDepth}), ...(effectiveResearchIntent?{effectiveResearchIntent}:{}), ...(deepProgress?{deepProgress}:{}), ...(['research','deep'].includes(effectiveResearchIntent)&&output?{evidenceAssessment:'unreviewed'}:{}), ...(freeform&&input.sourceManifestSha256?{attachment:await pdfAttachment(conversationId,input.sourceManifestSha256)}:{}), output, error,
       });
     }
@@ -287,7 +290,7 @@ export async function createLocalGuiWorkspace({ projectDir, origin: mountOrigin,
         if(error?.code==='PROJECT_REPORT_NOT_READY')delivery='not-created';
       }
       trace.finish(projectDir,{runId:run.runId,status:run.status,code:run.snapshot.code,delivery,
-        modelUsed:run.rootUsage.model,toolUsed:run.rootUsage.tool,modelLimit:definition.config.limits.model,toolLimit:definition.config.limits.tool});
+        modelUsed:run.rootUsage.model,toolUsed:run.rootUsage.tool,modelLimit:definition.config.limits.model,toolLimit:hasOwnerMeteredTools(run.definition?.bindings)?null:definition.config.limits.tool});
     }).catch(()=>{});
     working = { key, p };
     p.finally(() => { if (working?.p === p) working = null; });
@@ -419,7 +422,7 @@ export async function createLocalGuiWorkspace({ projectDir, origin: mountOrigin,
         if (asset) return send(200, asset.bytes, asset.type+'; charset=utf-8');
         if (req.url === '/api/workspace') return send(200, {
           schemaVersion: 'local-gui@1', mode, reasoningEffort,
-          ...(live?{liveNotice:{maxModelCallsPerRun:expectedConfig.limits.model,...(freeform?{freeform:true,connectivity:{web:connectivity.web===true,search:!!connectivity.search,...(connectivity.search?{searchProvider:connectivity.search}:{}),...(connectivity.searchAlternates?{searchAlternates:connectivity.searchAlternates}:{}),wind:connectivity.wind===true}}:{})}}:{}),
+          ...(live?{liveNotice:{maxModelCallsPerRun:expectedConfig.limits.model,...(freeform?{freeform:true,...(expectedConfig.ownerToolAccounting===OWNER_METERED_TOOL_ACCOUNTING?{toolAccounting:OWNER_METERED_TOOL_ACCOUNTING}:{}),connectivity:{web:connectivity.web===true,search:!!connectivity.search,...(connectivity.search?{searchProvider:connectivity.search}:{}),...(connectivity.searchAlternates?{searchAlternates:connectivity.searchAlternates}:{}),wind:connectivity.wind===true}}:{})}}:{}),
           capabilities: ['conversations','progress','reports','sources','read-web-sources',...(freeform?['pdf-attachment','daily-watch','deep-research','research-intent']:[]),...(chartAvailable?['financial-chart-skill']:[]),...(chartAuto?['financial-chart-auto']:[])],
           projectId: demo.projectId, conversations: await list({titles:true}), sources: publicSources,
         });
@@ -592,6 +595,20 @@ export async function createLocalGuiWorkspace({ projectDir, origin: mountOrigin,
     await closing;
   }};
 }
+function localBudgetFailure(run) {
+  const code=run?.snapshot?.code;
+  if(!['ROOT_BUDGET_EXHAUSTED','ROUND_LIMIT','TOOL_LIMIT'].includes(code))return null;
+  const limits=run.definition?.rootLimits,usage=run.rootUsage;
+  const local=run.definition?.limits;
+  const count=(used,limit)=>Number.isSafeInteger(used)&&used>=0&&Number.isSafeInteger(limit)&&limit>0?{used,limit}:null;
+  const metered=hasOwnerMeteredTools(run.definition?.bindings);
+  const model=count(usage?.model,limits?.model),tools=metered?null:count(usage?.tool,limits?.tool);
+  const exhausted=metered&&model&&model.used>=model.limit?'model':model&&tools?(model.used>=model.limit?tools.used>=tools.limit?'multiple':'model':tools.used>=tools.limit?'tools':null):null;
+  return {owner:'local-run',model,tools,exhausted:code==='ROOT_BUDGET_EXHAUSTED'?exhausted:null,
+    rounds:code==='ROUND_LIMIT'?count(run.snapshot?.rounds,local?.maxRounds):null,
+    runTools:code==='TOOL_LIMIT'?count(run.snapshot?.toolsDispatched,local?.maxTools):null};
+}
+
 export async function startLocalGui(options = {}) {
   const {port = 0} = options;
   if (!Number.isInteger(port) || port < 0 || port > 65535) reject(400, 'INVALID_GUI_PORT');

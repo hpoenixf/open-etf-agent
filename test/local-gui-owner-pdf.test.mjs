@@ -6,7 +6,7 @@ import { setTimeout as delay } from 'node:timers/promises';
 import { startLocalGui } from '../src/gui-server.mjs';
 
 const liveConfig={gateway:{provider:'opencode-go-owner',endpoint:'https://opencode.ai/inference/go/openai/v1/chat/completions',
- model:'synthetic-go-model',apiKeyEnv:'ETF_GUI_PROVIDER_KEY'},limits:{model:4},connectivity:{web:true}};
+ model:'synthetic-go-model',apiKeyEnv:'ETF_GUI_PROVIDER_KEY'},limits:{model:4},toolAccounting:'metered-only@1',connectivity:{web:true}};
 const env={ETF_GUI_PROVIDER_KEY:'fixture-placeholder'};
 const fixture=JSON.parse(await readFile(new URL('../fixtures/local-pdf.json',import.meta.url)));
 const pdf=name=>Buffer.from(fixture.documents[name].base64,'base64');
@@ -75,13 +75,16 @@ test('owner PDF upload binds one conversation, uses original page evidence and s
  assert.equal(sent.length,0);
  const earlier={messageId:'before-pdf',question:'PLAIN_BEFORE_PDF_SENTINEL'};
  assert.equal((await gui.post(path+'/messages',earlier)).status,202);
- assert.equal((await settled(gui,path,earlier.messageId)).status,'completed');
+ const earlierTurn=await settled(gui,path,earlier.messageId);
+ assert.equal(earlierTurn.status,'completed');
+ assert.deepEqual(earlierTurn.toolAccounting,{mode:'metered-only@1',used:0});
  const input={messageId:'pdf-turn',question:'PDF_TURN_ONLY_SENTINEL 附件里写了什么？',attachmentId:a.id};
  assert.equal((await gui.post(other+'/messages',input)).status,400);
  assert.equal((await gui.post(path+'/messages',input)).status,202);
  const m=await settled(gui,path,input.messageId);
  assert.equal(m.status,'completed',JSON.stringify(m));
  assert.deepEqual(m.attachment,a);
+ assert.equal(Object.hasOwn(m,'toolAccounting'),false);
  assert.equal(m.output.sources.length,1);
  assert.equal(m.output.sources[0].pdfPage,1);
  assert.ok(m.output.report.text.includes(m.output.sources[0].text.trim()));

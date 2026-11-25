@@ -98,3 +98,9 @@ This explicit profile follows [DeepSeek's non-thinking tool-call contract](https
 默认离线模式不变。只有显式传入 `--live-config`，且独立项目、服务端密钥环境变量和既有提供方配置都核验通过，才可启动本机真实模型预览。普通来源模式在提交前确认问题和选中的合成资料；Go 持有人模式可以直接提问，不加载演示资料。发送会使用所配置的模型与账户额度。未配置联网工具时只使用模型知识。可选联网能力见上文；Wind 需单独授权密钥，目前工具用于基金日收盘价，不等于通用实时行情。调用次数上限不是价格上限。刷新、History 和重复提交不会自动续跑，原任务需要另点确认恢复。应用本身仅监听回环地址，不自带公网入口和鉴权，不接入访客。仅显式选中的单轮文字 PDF 可导入；读取到的摘录可能发给配置的模型服务。OpenCode Go 使用明确的账户持有人配置、官方端点及经核对的 Chat Completions 模型。内部使用不代表提供方已确认本用途；先核对用途、地区、账号、额度及 Extra Usage。不得伪装为编程流量绕过拒绝，也不会因 403/429 自动换模型或重试。
 
 直连 DeepSeek 时，使用上面的 `deepseek-direct` / 官方端点 / `deepseek-flash` 组合。本配置按官方工具协议关闭 thinking，不会静默改用其他模型或重试其他提供方。
+
+### Optional owner tool accounting
+
+For source-less owner conversation Runs on the existing official Go owner profile, an operator can explicitly set top-level `"toolAccounting": "metered-only@1"` in the live launch config and `"ownerToolAccounting": "metered-only@1"` in the matching Research Project config. Omit both fields to retain the existing bounded behavior. This removes the aggregate tool count cutoffs for those Runs only. Each actual tool dispatch is still counted and persisted atomically with its in-flight checkpoint. Source-bound/PDF, scheduling, child, interaction and protected modes retain their original scopes and limits. Model, per-Run rounds/deadline, request admission and tool authorization still apply; there is no claim of unlimited provider use or zero cost.
+
+Update an existing Project through its normal expected-config-SHA revision while the service is idle. The setting is frozen per new Run; turning it off with a compatible binary does not rewrite old Runs or unknown receipts. Do not point an older binary at a Project with this config or at already metered Run state; preserve the directory and use a compatible reader. In the local API, the workspace reports its configured mode and the turn returns persisted tool usage; the existing browser UI is unchanged.

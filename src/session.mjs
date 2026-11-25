@@ -1,3 +1,4 @@
+import { hasOwnerMeteredTools, OWNER_TOOL_ACCOUNTING_BINDING } from './tool-accounting.mjs';
 import {isReasoningEffort} from './gateway.mjs';
 import {validResearchProfile} from './research-intent.mjs';
 import {knowledgeQuerySchemas,hasKnowledgeQueryTables,validateKnowledgeQueryConfig,validateKnowledgeQueryDatabase,createSessionKnowledgeQueries} from './knowledge-query-session.mjs';
@@ -121,7 +122,15 @@ function definitionBytes(value, ordinary = false, protectedProfile = false, inte
  for (const n of Object.values(value.rootLimits)) if (!Number.isSafeInteger(n) || n < 1 || n > 1000) fail('INVALID_DEFINITION');
  if(!protectedProfile&&value.bindings?.adapters?.some(x=>x.id==='document-revocation'||x.version===DOCUMENT_REVOCATION_PROFILE))fail('INVALID_PROTECTED_PROFILE');
  if(protectedProfile&&(value.bindings?.gateway?.mode==='live'||value.bindings?.plugins?.length||!value.bindings?.adapters?.some(x=>x.id==='document-revocation'&&x.version===DOCUMENT_REVOCATION_PROFILE)))fail('PROTECTED_EXECUTION_DISABLED');
- validateBindings(value.bindings); validateConfig(value.config, ordinary, protectedProfile, interaction, dynamicKnowledge); if(interaction)validateInteractionDefinition(value);else validateResponseProfile(value, ordinary); return json(value, 65536);
+ validateBindings(value.bindings);
+ const meter=value.bindings.adapters.find(a=>a.id===OWNER_TOOL_ACCOUNTING_BINDING.id);
+ if(meter&&(!hasOwnerMeteredTools(value.bindings)||ordinary||protectedProfile||interaction||dynamicKnowledge||
+   value.bindings.gateway.mode!=='live'||value.bindings.gateway.provider!=='opencode-go-owner'||value.bindings.gateway.protocol!=='chat-completions'||
+   value.bindings.plugins.length||value.config?.requireReport!==false||value.config?.publication!=='publication@1'||
+   value.config?.documentCatalog!==undefined||value.config?.pdfSnapshot!==undefined||value.config?.allowedDocuments!==undefined||
+   value.config?.reportDelivery!==undefined||value.config?.workingInput!==undefined||
+   value.bindings.adapters.some(a=>a.id==='schedule-composition')))fail('INVALID_METERED_TOOL_SCOPE');
+ validateConfig(value.config, ordinary, protectedProfile, interaction, dynamicKnowledge); if(interaction)validateInteractionDefinition(value);else validateResponseProfile(value, ordinary); return json(value, 65536);
 }
 function checkpointBytes(value, terminal = false, ordinary = false, interaction = false) {
  if(interaction)validateInteractionCheckpoint(value);else validateResponseCheckpoint(value, ordinary);validateGatewayOutcomeCheckpoint(value);validateControlObservations(value);
@@ -131,7 +140,9 @@ function checkpointBytes(value, terminal = false, ordinary = false, interaction 
 function validateRunRoot(row, root, definition, snapshot) {
  validateControlObservations(snapshot,row.run_id);
  if(!root) fail('CORRUPT_ROOT');
-  if (!['active', 'completed', 'failed', 'cancelled'].includes(row.status) || !['active', 'completed', 'failed', 'cancelled'].includes(root.status) || (row.status === 'active') === (snapshot.phase === 'terminal') || (snapshot.phase === 'terminal' && snapshot.status !== row.status) || definition.grantId !== root.grant_id || definition.deadlineAt > root.deadline_at || definition.rootLimits.model !== root.model_limit || definition.rootLimits.tool !== root.tool_limit || !Number.isSafeInteger(root.model_used) || !Number.isSafeInteger(root.tool_used) || root.model_used < 0 || root.tool_used < 0 || root.model_used > root.model_limit || root.tool_used > root.tool_limit) fail('CORRUPT_SESSION_STATE');
+ const meteredTools=hasOwnerMeteredTools(definition.bindings);
+ if(meteredTools&&(row.parent_run_id!==null||row.root_id!==row.run_id||snapshot.toolsDispatched!==root.tool_used))fail('INVALID_METERED_TOOL_SCOPE');
+  if (!['active', 'completed', 'failed', 'cancelled'].includes(row.status) || !['active', 'completed', 'failed', 'cancelled'].includes(root.status) || (row.status === 'active') === (snapshot.phase === 'terminal') || (snapshot.phase === 'terminal' && snapshot.status !== row.status) || definition.grantId !== root.grant_id || definition.deadlineAt > root.deadline_at || definition.rootLimits.model !== root.model_limit || definition.rootLimits.tool !== root.tool_limit || !Number.isSafeInteger(root.model_used) || !Number.isSafeInteger(root.tool_used) || root.model_used < 0 || root.tool_used < 0 || root.model_used > root.model_limit || !meteredTools&&root.tool_used > root.tool_limit) fail('CORRUPT_SESSION_STATE');
 }
 function safeExistingDirectory(directory) {
  const path = resolve(directory); const stat = lstatSync(path);
@@ -511,6 +522,7 @@ export async function openSession({ directory, clock = Date.now, leaseMs = 1000,
      if (siblings.length >= 64) fail('CHILD_LIMIT');
      if (parent.parent_run_id !== null) fail('CHILD_DEPTH_LIMIT'); if (rootId !== undefined && rootId !== parent.root_id) fail('ROOT_SCOPE_MISMATCH'); rootId = parent.root_id;
      const previous = parsed(parent.definition, 65536);
+     if(hasOwnerMeteredTools(definition.bindings)||hasOwnerMeteredTools(previous.bindings))fail('INVALID_METERED_TOOL_SCOPE');
      if (definition.grantId !== root.grant_id || definition.deadlineAt > previous.deadlineAt || canonical(definition.bindings.gateway) !== canonical(previous.bindings.gateway) || canonical(definition.rootLimits) !== canonical(previous.rootLimits)) fail('CHILD_SCOPE_MISMATCH');
      if(canonical(previous.config.documentCatalog??null)!==canonical(definition.config.documentCatalog??null))fail('CHILD_SCOPE_MISMATCH');
      if(canonical(previous.config.pdfSnapshot??null)!==canonical(definition.config.pdfSnapshot??null))fail('CHILD_SCOPE_MISMATCH');
@@ -721,7 +733,12 @@ export async function openSession({ directory, clock = Date.now, leaseMs = 1000,
       else if(call.name==='create_csv'){if(!dependencies.length)fail('PROTECTED_DEPENDENCY_REQUIRED');fields(call.arguments,['rows'],[],'PROTECTED_CSV_SCOPE');}
       else if(call.name==='search_pages'){fields(call.arguments,['query'],[],'INVALID_PROTECTED_QUERY');queryHash(call.arguments.query);}
       else if(call.name!=='save_report')fail('PROTECTED_TOOL_UNSUPPORTED');
-     }} const root = getRoot(row.root_id); const preserveMain=kind==='model'&&snapshot?.purpose==='compaction'&&view(row).definition.config.workingInput?.compaction?.version==='gateway-history-compaction@3'; if (root[kind + '_used']+(preserveMain?1:0) >= root[kind + '_limit']) fail('ROOT_BUDGET_EXHAUSTED');
+     }} const root = getRoot(row.root_id);
+     const meteredTool=kind==='tool'&&hasOwnerMeteredTools(parsed(row.definition,65536).bindings);
+     if(meteredTool&&(snapshot?.phase!=='tool-dispatched'||snapshot.toolsDispatched!==root.tool_used+1||!snapshot.inFlight))fail('TOOL_ACCOUNTING_RESERVATION_REQUIRED');
+     const preserveMain=kind==='model'&&snapshot?.purpose==='compaction'&&view(row).definition.config.workingInput?.compaction?.version==='gateway-history-compaction@3';
+     if(!meteredTool&&root[kind+'_used']+(preserveMain?1:0)>=root[kind+'_limit'])fail('ROOT_BUDGET_EXHAUSTED');
+     if(!Number.isSafeInteger(root[kind+'_used']+1))fail('INVALID_TOOL_ACCOUNTING_COUNTER');
      db.prepare(`UPDATE roots SET ${kind}_used=${kind}_used+1 WHERE root_id=?`).run(rootId);
      if (encoded !== undefined) db.prepare('UPDATE runs SET snapshot=? WHERE run_id=?').run(encoded, runId);
      if(kind==='tool'&&dynamicKnowledge){const saved=parsed(getRun(runId).snapshot,MAX_CHECKPOINT_JSON),call=saved.proposal?.calls?.[saved.cursor];if(saved.phase==='tool-dispatched'&&call?.name==='knowledge_query')knowledgeQueries.reserve({runId,owner,fence},call);}
