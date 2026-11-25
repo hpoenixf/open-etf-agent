@@ -45,7 +45,7 @@ const config = {
 const validatedConfig = validateResearchConfig({ ...config, contextBytes: 1048576 });
 const seedFiles = [['etf-fees.md', 'ETF 费率样例'], ['etf-tracking.md', 'ETF 跟踪样例']];
 const uiRoot = new URL('./gui/', import.meta.url);
-const assets = new Map([['/', ['index.html', 'text/html']], ['/gui.mjs', ['gui.mjs', 'text/javascript']], ['/markdown.mjs', ['markdown.mjs', 'text/javascript']], ['/answer-image.mjs', ['answer-image.mjs', 'text/javascript']], ['/vendor/marked-16.4.2.mjs', ['vendor/marked-16.4.2.mjs', 'text/javascript']], ['/gui.css', ['gui.css', 'text/css']], ['/financial-chart-view.mjs',['financial-chart-view.mjs','text/javascript']]]);
+const assets = new Map([['/', ['index.html', 'text/html']], ['/gui.mjs', ['gui.mjs', 'text/javascript']], ['/markdown.mjs', ['markdown.mjs', 'text/javascript']], ['/answer-image.mjs', ['answer-image.mjs', 'text/javascript']], ['/brand-mark.mjs', ['brand-mark.mjs', 'text/javascript']], ['/brand.svg', ['brand.svg', 'image/svg+xml']], ['/vendor/marked-16.4.2.mjs', ['vendor/marked-16.4.2.mjs', 'text/javascript']], ['/gui.css', ['gui.css', 'text/css']], ['/financial-chart-view.mjs',['financial-chart-view.mjs','text/javascript']]]);
 
 class RequestError extends Error {
   constructor(status, code) { super(code); this.status = status; }
@@ -406,7 +406,7 @@ export async function createLocalGuiWorkspace({ projectDir, origin: mountOrigin,
   async function handle(req, res) {
     const headers = {
       'cache-control': 'no-store', 'x-content-type-options': 'nosniff',
-      'content-security-policy': "default-src 'none'; script-src 'self'; style-src 'self'; connect-src 'self'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'",
+      'content-security-policy': "default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self'; connect-src 'self'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'",
       'referrer-policy': 'no-referrer', 'cross-origin-resource-policy': 'same-origin',
     };
     const send = (status, content, type, extraHeaders = {}) => {

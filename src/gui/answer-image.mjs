@@ -1,6 +1,7 @@
+import {drawBrandMark} from './brand-mark.mjs';
 // Browser adapter: export only rendered answer DOM. No HTML execution, network, or model calls.
 const fontFamily='"PingFang SC","Microsoft YaHei","Noto Sans CJK SC",system-ui,sans-serif';
-const width=960, padding=56, maxHeight=14000;
+const width=960, padding=56, maxHeight=14000, footerHeight=76;
 const styles={
  heading:{font:'600 26px '+fontFamily,step:38,after:12,color:'#112337'},
  paragraph:{font:'400 20px '+fontFamily,step:32,after:12,color:'#162b3d'},
@@ -67,11 +68,11 @@ export async function downloadAnswerImage(doc,articles,messageId){
   context.font=style.font;
   for(const line of wrapAnswerImageText(value,width-padding*2,s=>context.measureText(s).width)){
    lines.push({style,line,y}); y+=style.step;
-   if(y+padding>maxHeight)throw Error('ANSWER_IMAGE_TOO_LONG');
+   if(y+style.after+footerHeight>maxHeight)throw Error('ANSWER_IMAGE_TOO_LONG');
   }
   y+=style.after;
  }
- canvas.width=width;canvas.height=y+padding;
+ canvas.width=width;canvas.height=y+footerHeight;
  context.fillStyle='#fbfdff';context.fillRect(0,0,width,canvas.height);
  context.fillStyle='#173249';context.fillRect(0,0,width,8);
  context.font='600 23px '+fontFamily;
@@ -81,6 +82,16 @@ export async function downloadAnswerImage(doc,articles,messageId){
   context.font=style.font;context.fillStyle=style.color;
   context.fillText(line,padding,lineY);
  }
+ context.fillStyle='#dce6ef';context.fillRect(padding,y+13,width-padding*2,1);
+ context.font='500 16px '+fontFamily;
+ context.fillStyle='#536b80';
+ context.textAlign='right';
+ const watermark='来自 open-etf-agent';
+ const right=width-padding;
+ if(doc.defaultView?.Path2D){
+  drawBrandMark(context,doc.defaultView.Path2D,right-context.measureText(watermark).width-30,y+24,23);
+ }
+ context.fillText(watermark,right,y+43);
  const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/png'));
  if(!blob)throw Error('ANSWER_IMAGE_UNAVAILABLE');
  const url=URL.createObjectURL(blob);

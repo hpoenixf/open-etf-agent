@@ -1,4 +1,6 @@
 import test from 'node:test';
+import {readFile} from 'node:fs/promises';
+import {brandPaths,brandViewBox} from '../src/gui/brand-mark.mjs';
 import assert from 'node:assert/strict';
 import {answerImageBlocks,wrapAnswerImageText,downloadAnswerImage} from '../src/gui/answer-image.mjs';
 
@@ -23,17 +25,29 @@ test('wrap preserves graphemes and blank code lines',()=>{
 });
 
 test('image export draws the full supplied answer and downloads locally as PNG',async()=>{
- const drawn=[];
- const ctx={measureText(text){return {width:text.length*12};},fillRect(){},fillText(text){drawn.push(text);}};
+ const drawn=[], paths=[];
+ const ctx={measureText(text){return {width:text.length*12};},fillRect(){},save(){},restore(){},translate(){},scale(){},fill(p){paths.push(p.d);},stroke(p){paths.push(p.d);},fillText(text,x,y){drawn.push({text,x,y});}};
  const canvas={getContext:k=>(assert.equal(k,'2d'),ctx),
   toBlob(cb,type){assert.equal(type,'image/png');cb(new Blob(['synthetic-bytes'],{type}));}};
  let clicked=false;
  const link={click(){clicked=true;assert.match(this.href,/^blob:/);assert.equal(this.download,'etf-answer-turn-1.png');},remove(){}};
- const doc={createElement(tag){return tag==='canvas'?canvas:link;},body:{append(x){assert.equal(x,link);}}};
+ const doc={defaultView:{Path2D:class{constructor(d){this.d=d;}}},createElement(tag){return tag==='canvas'?canvas:link;},body:{append(x){assert.equal(x,link);}}};
  await downloadAnswerImage(doc,[el('DIV',el('P',txt('仅回答正文')))],'turn-1');
  assert.ok(clicked);
- assert.ok(drawn.includes('仅回答正文'));
+ assert.ok(drawn.some(x=>x.text==='仅回答正文'));
+ assert.equal(drawn.at(-1).text,'来自 open-etf-agent');
+ assert.deepEqual(paths,brandPaths.map(x=>x.d));
+ assert.ok(drawn.at(-1).y>drawn.find(x=>x.text==='仅回答正文').y);
+ assert.ok(drawn.at(-1).y<canvas.height);
  assert.equal(canvas.width,960);
  assert.ok(canvas.height>150);
  await assert.rejects(downloadAnswerImage(doc,[el('PRE',txt('字'.repeat(40001)))],'large'),/ANSWER_IMAGE_TOO_LONG/);
+});
+
+
+test('the site artwork exactly matches the local image watermark paths',async()=>{
+ const svg=await readFile(new URL('../src/gui/brand.svg',import.meta.url),'utf8');
+ assert.ok(svg.includes('viewBox="'+brandViewBox+'"'));
+ assert.deepEqual([...svg.matchAll(/<path d="([^"]+)"/g)].map(x=>x[1]),brandPaths.map(x=>x.d));
+ assert.doesNotMatch(svg,/<script|(?:href|src)=/i);
 });

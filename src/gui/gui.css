@@ -22,6 +22,7 @@ button[disabled]{opacity:.65;cursor:wait}
   display:flex;justify-content:space-between;gap:.5rem;align-items:center;padding:0 clamp(.45rem,1.2vw,.9rem);
   background:var(--base);min-height:42px
 }
+.brand-mark{width:28px;height:28px;flex:none}
 .panel-toggle{flex:none;min-width:44px;min-height:40px;display:inline-flex;align-items:center;justify-content:center;gap:.35rem;padding-inline:.55rem;border-color:transparent;background:transparent;color:var(--muted);font-weight:550}
 .panel-toggle svg{width:1.15rem;height:1.15rem;flex:none}
 .panel-toggle:hover,.panel-toggle[aria-expanded="true"]{color:var(--ink);background:#eeefe9}

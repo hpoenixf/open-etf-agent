@@ -41,7 +41,14 @@ test('local GUI persists one original turn and verifies published report and its
   const shell=await g.get('/');
   assert.equal(shell.status,200);
   assert.match(shell.headers.get('content-security-policy'),/frame-ancestors 'none'/);
-  assert.match(await shell.text(),/离线演练/);
+  const page=await shell.text();
+  assert.match(page,/离线演练/);
+  assert.match(page,/rel="icon" href="\/brand\.svg"/);
+  assert.match(shell.headers.get('content-security-policy'),/img-src 'self';/);
+  const mark=await g.get('/brand.svg');
+  assert.equal(mark.status,200);
+  assert.match(mark.headers.get('content-type'),/^image\/svg\+xml/);
+  assert.match(await mark.text(),/Open ETF Agent/);
   const workspace=await g.get('/api/workspace').then(r=>r.json());
   assert.equal(workspace.mode,'offline-demo');
   assert.equal(typeof workspace.projectId,'string');
