@@ -286,6 +286,8 @@ This is a real local SQLite/process flow with synthetic replies and no model cal
 
 <a id="versions"></a>
 
+**[v0.70.0 · Self-host deployment diagnosis](https://github.com/hpoenixf/open-etf-agent/commit/7b7e3a586c8bae962359654247680a2fe3db3e54).** Separate missing dependencies, runtime version, configuration, directory access and the local listener. [Scope and verification](verification/v070-self-host-diagnostics.md)
+
 **[v0.69.0 · Skill author preflight](https://github.com/hpoenixf/open-etf-agent/commit/1e9f4d300b6dbef5df5ea2262891020acb4bb193).** Validate and preview a Skill, then run a synthetic authoring case. [Scope and verification](verification/v069-skill-author-preflight.md)
 
 **[v0.68.0 · ETF snapshot comparison](https://github.com/hpoenixf/open-etf-agent/commit/0d46ab558e64328cc860319e8bc2b995ae5ea4e8).** Recompute fees, holdings and sector overlap, and same-basis returns from local snapshots. [Scope and verification](verification/v068-etf-snapshot-comparison.md)

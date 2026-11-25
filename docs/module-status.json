@@ -1,9 +1,9 @@
 {
   "schemaVersion": 2,
-  "reviewedVersion": "0.69.0",
-  "reviewedSource": "1e9f4d300b6dbef5df5ea2262891020acb4bb193",
+  "reviewedVersion": "0.70.0",
+  "reviewedSource": "7b7e3a586c8bae962359654247680a2fe3db3e54",
   "articleSource": "https://github.com/hpoenixf/eff-agent-article/blob/249f0b866f9446f33b57f186fbc6d35b5d82c119/articles/open-etf-agent-v010-system-design.md",
-  "evidence": "docs/verification/v069-skill-author-preflight.md",
+  "evidence": "docs/verification/v070-self-host-diagnostics.md",
   "layers": [
     {
       "id": "L1",
@@ -1212,7 +1212,7 @@
         "en": "Host authority stays separate",
         "zh": "工具权限归调用方"
       },
-      "status": "enhanced",
+      "status": "bounded",
       "source": "src/skill-preflight-cli.mjs",
       "kind": "call-site",
       "article": {
@@ -1221,6 +1221,31 @@
         "title": {
           "zh": "Skill 与普通 Prompt 有什么不同？从按需加载到脚本执行",
           "en": "How Is a Skill Different from a Prompt? From Loading to Script Execution"
+        }
+      }
+    },
+    {
+      "id": "deploy-doctor",
+      "layer": "L6",
+      "group": "task",
+      "name": "Self-host Diagnostics",
+      "summary": {
+        "en": "Diagnose startup locally",
+        "zh": "在本机排查启动问题"
+      },
+      "boundary": {
+        "en": "Loopback HEAD, no body access",
+        "zh": "仅探测回环端口，不读取正文"
+      },
+      "status": "enhanced",
+      "source": "src/deploy-doctor-cli.mjs",
+      "kind": "call-site",
+      "article": {
+        "slug": "open-etf-agent-v010-system-design",
+        "kind": "open-walkthrough",
+        "title": {
+          "zh": "Agent 深入：从一份报告到持续执行与专家协作",
+          "en": "Agent Deep Dive: From One Report to Durable Execution and Specialist Collaboration"
         }
       }
     }
