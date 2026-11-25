@@ -1,9 +1,9 @@
 {
   "schemaVersion": 2,
-  "reviewedVersion": "0.50.0",
-  "reviewedSource": "a506cf7c74649ce2ba7a167ace65f344de1bdcc8",
+  "reviewedVersion": "0.51.0",
+  "reviewedSource": "599c512e5220a7d474ad1a021faa87897157ff36",
   "articleSource": "https://github.com/hpoenixf/eff-agent-article/blob/249f0b866f9446f33b57f186fbc6d35b5d82c119/articles/open-etf-agent-v010-system-design.md",
-  "evidence": "docs/verification/v049-research-runtime-reliability.md",
+  "evidence": "docs/verification/v051-offline-delivery-evaluation.md",
   "layers": [
     {
       "id": "L1",
@@ -562,7 +562,7 @@
         "zh": "不放宽 URL 或未知派发规则",
         "en": "URL policy and unknown replay unchanged"
       },
-      "status": "enhanced",
+      "status": "bounded",
       "source": "src/runtime.mjs",
       "kind": "module",
       "article": {
@@ -1128,17 +1128,17 @@
       "id": "readcli",
       "layer": "L6",
       "group": "task",
-      "name": "CLI Readback",
+      "name": "CLI Delivery Eval",
       "summary": {
-        "zh": "按身份观察原任务",
-        "en": "Inspect original task by identity"
+        "en": "Check report and source readback",
+        "zh": "核验正文、来源和附件回读"
       },
       "boundary": {
-        "zh": "浏览器交互未宣称验收",
-        "en": "No browser qualification claim"
+        "en": "Offline; not answer-quality scoring",
+        "zh": "离线不判正文语义；本地时间线"
       },
-      "status": "bounded",
-      "source": "src/observe.mjs",
+      "status": "enhanced",
+      "source": "src/public-eval-cli.mjs",
       "kind": "call-site",
       "article": {
         "slug": "open-etf-agent-v01-first-readable-report",

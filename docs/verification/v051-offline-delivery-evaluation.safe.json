@@ -1,0 +1,76 @@
+{
+  "schemaVersion": 1,
+  "kind": "provider-free-delivery-and-local-observation",
+  "sourceCommit": "599c512e5220a7d474ad1a021faa87897157ff36",
+  "sourceTree": "27575a0daf93a18b7dbe8560c10f69e2be4de7bc",
+  "runtime": {
+    "node": "v26.11.1",
+    "packageVersion": "0.51.0",
+    "modelCalls": 0,
+    "remoteTelemetry": false,
+    "semanticStatus": "unreviewed"
+  },
+  "fullHostedRuntimeCI": {
+    "url": "https://github.com/hpoenixf/open-etf-agent/actions/runs/45526404077",
+    "result": "success",
+    "qualifies": "pinned implementation only"
+  },
+  "local": {
+    "build": "passed",
+    "tests": {
+      "passed": 12,
+      "failed": 0,
+      "skipped": 0
+    },
+    "transport": "actual-loopback-http",
+    "denominator": 4,
+    "full": [
+      {
+        "caseId": "T1",
+        "httpReadback": "passed",
+        "sourceWindowsVerified": 2,
+        "attachmentsVerified": 0,
+        "timeline": "available"
+      },
+      {
+        "caseId": "T2",
+        "httpReadback": "passed",
+        "sourceWindowsVerified": 2,
+        "attachmentsVerified": 0,
+        "timeline": "available"
+      },
+      {
+        "caseId": "T3",
+        "httpReadback": "passed",
+        "sourceWindowsVerified": 2,
+        "attachmentsVerified": 0,
+        "timeline": "available"
+      },
+      {
+        "caseId": "T4",
+        "httpReadback": "passed",
+        "sourceWindowsVerified": 2,
+        "attachmentsVerified": 0,
+        "timeline": "available"
+      }
+    ],
+    "selectedT4": [
+      {
+        "caseId": "T1",
+        "status": "not-run"
+      },
+      {
+        "caseId": "T2",
+        "status": "not-run"
+      },
+      {
+        "caseId": "T3",
+        "status": "not-run"
+      },
+      {
+        "caseId": "T4",
+        "status": "passed"
+      }
+    ]
+  }
+}
