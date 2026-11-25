@@ -134,7 +134,7 @@ test('daily brief Skill is selected only at the scheduler boundary and preserves
  let now=at('24','12:58');const prompts=[];
  let manualDispatch;const manualSeen=new Promise(resolve=>{manualDispatch=resolve;});
  const question='跟踪纳指 ETF 和红利低波 ETF 各自重要的新消息。';
- const body='# 纳指 ETF\n\n公告提示了溢价风险。接下来核对 IOPV。\n\n# 红利低波 ETF\n\n暂未核实到足以改变判断的新消息。';
+ const body='# 纳斯达克 100 指数\n\n模拟产业新闻：大型半导体成分股更新需求指引。关注后续订单是否支持需求上修。\n\n# 红利低波指数\n\n暂未核实到足以改变行业判断的新消息。';
  const gui=await startLocalGui({projectDir,liveConfig,env:{...env,ETF_GUI_DAILY_WATCH_SKILL:'daily-watch-brief'},dailyClock:()=>now,
   async fetchImpl(_endpoint,options){const prompt=JSON.parse(options.body).messages[0].content;prompts.push(prompt);
    if(prompt.startsWith('Manual news question'))manualDispatch(prompt);
@@ -158,6 +158,10 @@ test('daily brief Skill is selected only at the scheduler boundary and preserves
  assert.equal(prompts.length,1);
  assert.ok(prompts[0].startsWith(question+'\n'));
  assert.match(prompts[0],/Daily Watch Skill: daily-watch-brief sha256:[a-f0-9]{64}/);
+ assert.match(prompts[0],/tracked index and its underlying industries/);
+ assert.match(prompts[0],/if ambiguous, state the scope/);
+ assert.match(prompts[0],/event → exposed industries\/constituents → plausible index impact/);
+ assert.match(prompts[0],/unless a verified anomaly materially affects tracking or execution/);
  assert.match(prompts[0],/10–20 candidate items/);
  assert.match(prompts[0],/3–5 material developments overall/);
  assert.match(prompts[0],/2–3 material news items per subject/);
@@ -248,13 +252,13 @@ test('evening Skill freezes Shanghai Tuesday and excludes stale or unknown publi
  assert.ok(Date.parse('2026-11-24T00:00:00+08:00')>=start);
  assert.ok(Date.parse('2026-11-25T00:00:00+08:00')>end);
  assert.ok(Date.parse(beforeRead)<=end&&Date.parse(afterRead)>end);
- assert.match(prompt,/Date-only official notices need a known publisher zone and a local day beginning at\/after the window start/);
- assert.match(prompt,/Accept if the whole local day fits, or if a recorded read of that original occurred by the cutoff/);
- assert.match(prompt,/A read only bounds publication; it is not a publication timestamp/);
- assert.match(prompt,/exact zoned timestamp or the bounded publication date \(hour unavailable\)/);
- assert.match(prompt,/An out-of-window original is background only, unless a separate opened source proves a distinct in-window update/);
- assert.match(prompt,/If the first confirmed read is after cutoff and the day does not fit, or date\/zone is unknown, mark unverified and do not select/);
- assert.match(prompt,/Start with the news, not a date\/weekday title/);
+ assert.match(prompt,/For date-only notices, require a known publisher zone and a local day beginning no earlier than the window start/);
+ assert.match(prompt,/Accept if that whole local day fits, or the original was verifiably read by the cutoff/);
+ assert.match(prompt,/the read is a bound, not a publication time/);
+ assert.match(prompt,/zoned time or bounded date \(hour unavailable\)/);
+ assert.match(prompt,/Use an older item only as background unless a separate opened source proves a distinct in-window update/);
+ assert.match(prompt,/If the day exceeds cutoff without that bound, or date\/zone is unknown, exclude it/);
+ assert.match(prompt,/Open with the most material news, not a date or product title/);
  const settled=(await get(api)).items[0].history[0];
  assert.equal(settled.status,'completed');
  const readback=await get('/api/conversations/'+settled.conversationId+'/messages/'+settled.messageId+'/body');
