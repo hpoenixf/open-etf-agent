@@ -1,0 +1,3 @@
+- [x] Verify mixed-source readback, absent locations and publication boundaries through the production reader.
+- [x] Verify portable checksums, edited members and overwrite protection through the CLI.
+- [x] Record compatibility and rollback in the operator guide.

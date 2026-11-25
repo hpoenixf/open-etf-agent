@@ -1,0 +1,9 @@
+{
+  "schemaVersion": "skill-preflight-case@1",
+  "skillId": "fund-research",
+  "input": "Compare synthetic Fund Alpha and Fund Beta on 2026-10-31.",
+  "expectedSuggestedTools": ["read_page", "save_report"],
+  "hostTools": ["read_page"],
+  "expectedBodyIncludes": ["currency, fee basis and share class", "missing value unknown"],
+  "resources": ["checklist.md"]
+}

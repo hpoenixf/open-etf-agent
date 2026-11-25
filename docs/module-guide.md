@@ -286,6 +286,14 @@ This is a real local SQLite/process flow with synthetic replies and no model cal
 
 <a id="versions"></a>
 
+**[v0.69.0 · Skill author preflight](https://github.com/hpoenixf/open-etf-agent/commit/1e9f4d300b6dbef5df5ea2262891020acb4bb193).** Validate and preview a Skill, then run a synthetic authoring case. [Scope and verification](verification/v069-skill-author-preflight.md)
+
+**[v0.68.0 · ETF snapshot comparison](https://github.com/hpoenixf/open-etf-agent/commit/0d46ab558e64328cc860319e8bc2b995ae5ea4e8).** Recompute fees, holdings and sector overlap, and same-basis returns from local snapshots. [Scope and verification](verification/v068-etf-snapshot-comparison.md)
+
+**[v0.67.0 · Offline research report bundle](https://github.com/hpoenixf/open-etf-agent/commit/3e3fa36832f721957c811f111f87d1b50d2918f7).** Copy a published report, keep public locations, and verify every file offline. [Scope and verification](verification/v067-offline-report-bundle.md)
+
+**[v0.51.0 · Offline delivery evaluation](https://github.com/hpoenixf/open-etf-agent/commit/599c512e5220a7d474ad1a021faa87897157ff36).** Four synthetic cases verify report and source readback over HTTP and correlate each case with its local runtime timeline. No model calls or GUI changes. [Scope and verification](../docs/verification/v051-offline-delivery-evaluation.md).
+
 [v0.31 Local Knowledge](local-knowledge.md) · [v0.30 Child lifecycle](child-lifecycle.md) · [v0.29 Conversation](conversations.md)
 
 

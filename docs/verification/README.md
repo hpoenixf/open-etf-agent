@@ -1,5 +1,9 @@
 **English** | [简体中文](README.zh-CN.md)
 
+- [v0.69.0 · Skill author preflight](v069-skill-author-preflight.md)
+- [v0.68.0 · ETF snapshot comparison](v068-etf-snapshot-comparison.md)
+- [v0.67.0 · Offline research report bundle](v067-offline-report-bundle.md)
+- [v0.51.0 · Offline delivery evaluation](v051-offline-delivery-evaluation.md)
 - [v0.50.0 candidate: Daily Brief and complete scheduled email](v050-daily-brief-and-complete-email.md)
 - [v0.49.0: Research runtime reliability](v049-research-runtime-reliability.md)
 - [v0.48.0 candidate: Verified web sources for saved answers](v048-verified-web-sources.md)

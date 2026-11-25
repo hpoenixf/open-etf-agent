@@ -1,9 +1,9 @@
 {
   "schemaVersion": 2,
-  "reviewedVersion": "0.50.0",
-  "reviewedSource": "a506cf7c74649ce2ba7a167ace65f344de1bdcc8",
+  "reviewedVersion": "0.69.0",
+  "reviewedSource": "1e9f4d300b6dbef5df5ea2262891020acb4bb193",
   "articleSource": "https://github.com/hpoenixf/eff-agent-article/blob/249f0b866f9446f33b57f186fbc6d35b5d82c119/articles/open-etf-agent-v010-system-design.md",
-  "evidence": "docs/verification/v049-research-runtime-reliability.md",
+  "evidence": "docs/verification/v069-skill-author-preflight.md",
   "layers": [
     {
       "id": "L1",
@@ -562,7 +562,7 @@
         "zh": "不放宽 URL 或未知派发规则",
         "en": "URL policy and unknown replay unchanged"
       },
-      "status": "enhanced",
+      "status": "bounded",
       "source": "src/runtime.mjs",
       "kind": "module",
       "article": {
@@ -1128,17 +1128,17 @@
       "id": "readcli",
       "layer": "L6",
       "group": "task",
-      "name": "CLI Readback",
+      "name": "CLI Delivery Eval",
       "summary": {
-        "zh": "按身份观察原任务",
-        "en": "Inspect original task by identity"
+        "en": "Check report and source readback",
+        "zh": "核验正文、来源和附件回读"
       },
       "boundary": {
-        "zh": "浏览器交互未宣称验收",
-        "en": "No browser qualification claim"
+        "en": "Offline; not answer-quality scoring",
+        "zh": "离线不判正文语义；本地时间线"
       },
       "status": "bounded",
-      "source": "src/observe.mjs",
+      "source": "src/public-eval-cli.mjs",
       "kind": "call-site",
       "article": {
         "slug": "open-etf-agent-v01-first-readable-report",
@@ -1146,6 +1146,81 @@
         "title": {
           "zh": "从第一份可回读报告开始：Open ETF Agent v0.1",
           "en": "Start with a Report You Can Read Back: Open ETF Agent v0.1"
+        }
+      }
+    },
+    {
+      "id": "report-bundle",
+      "layer": "L6",
+      "group": "task",
+      "name": "Portable Report Bundle",
+      "summary": {
+        "en": "Read the saved body offline",
+        "zh": "离线阅读已保存的正文"
+      },
+      "boundary": {
+        "en": "Public citations and checksums",
+        "zh": "公开引用与内容校验"
+      },
+      "status": "bounded",
+      "source": "src/report-bundle-cli.mjs",
+      "kind": "call-site",
+      "article": {
+        "slug": "open-etf-agent-v01-first-readable-report",
+        "kind": "open-walkthrough",
+        "title": {
+          "zh": "从第一份可回读报告开始：Open ETF Agent v0.1",
+          "en": "Start with a Report You Can Read Back: Open ETF Agent v0.1"
+        }
+      }
+    },
+    {
+      "id": "etf-compare",
+      "layer": "L6",
+      "group": "task",
+      "name": "ETF Snapshot Compare",
+      "summary": {
+        "en": "Compare two share classes",
+        "zh": "对比两个明确份额类别"
+      },
+      "boundary": {
+        "en": "Local inputs and exact dates",
+        "zh": "本地快照与精确日期"
+      },
+      "status": "bounded",
+      "source": "src/etf-compare-cli.mjs",
+      "kind": "call-site",
+      "article": {
+        "slug": "open-etf-agent-v01-first-readable-report",
+        "kind": "open-walkthrough",
+        "title": {
+          "zh": "从第一份可回读报告开始：Open ETF Agent v0.1",
+          "en": "Start with a Report You Can Read Back: Open ETF Agent v0.1"
+        }
+      }
+    },
+    {
+      "id": "skill-preflight",
+      "layer": "L6",
+      "group": "task",
+      "name": "Skill Author Preflight",
+      "summary": {
+        "en": "Preview the exact method text",
+        "zh": "预览实际加载的方法正文"
+      },
+      "boundary": {
+        "en": "Host authority stays separate",
+        "zh": "工具权限归调用方"
+      },
+      "status": "enhanced",
+      "source": "src/skill-preflight-cli.mjs",
+      "kind": "call-site",
+      "article": {
+        "slug": "agent-skill-from-markdown-to-callable-research",
+        "kind": "module-article",
+        "title": {
+          "zh": "Skill 与普通 Prompt 有什么不同？从按需加载到脚本执行",
+          "en": "How Is a Skill Different from a Prompt? From Loading to Script Execution"
         }
       }
     }
