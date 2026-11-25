@@ -133,3 +133,28 @@ test('seven-day receipt aging keeps ambiguous exports until cutoff and blocks re
   await emit(make(),time,'lost-store-run');
   assert.equal(sink.packets.length,2);
 });
+
+test('stage and production share one loopback collector without sharing service identity or trace IDs',async t=>{
+  const sink=await collector(t);
+  const time=Date.now();
+  const config={...localEnv,ETF_JAEGER_OTLP_PORT:sink.port};
+  for(const slot of ['stage','production',undefined]){
+    const dir=await project(t);
+    const e=prepareOwnerLangfuse({...config,ETF_JAEGER_ENVIRONMENT:slot},{now:()=>time});
+    await e.sweep(dir);
+    e.start().finish(dir,{runId:'same-input-id',status:'completed',delivery:'publication',admittedAt:time});
+    await e.drain();
+    assert.equal(stored(dir)[0].state,'transport-accepted');
+    const reloaded=prepareOwnerLangfuse({...config,ETF_JAEGER_ENVIRONMENT:slot},{now:()=>time});
+    reloaded.start().finish(dir,{runId:'same-input-id',status:'completed',delivery:'publication',admittedAt:time});
+    await reloaded.drain();
+  }
+  const records=sink.packets.map(p=>JSON.parse(p.body).resourceSpans[0]);
+  assert.deepEqual(records.map(p=>p.resource.attributes[0].value.stringValue),
+    ['open-etf-agent-stage','open-etf-agent-production','open-etf-agent']);
+  assert.equal(new Set(records.map(p=>p.scopeSpans[0].spans[0].traceId)).size,3);
+  for(const value of ['','staging','prod','private.example',null])
+    assert.equal(prepareOwnerLangfuse({...config,ETF_JAEGER_ENVIRONMENT:value}),null);
+  assert.equal(prepareOwnerLangfuse({ETF_LANGFUSE_ENABLED:'1',ETF_LANGFUSE_TRACE_SALT:config.ETF_LANGFUSE_TRACE_SALT,
+    ETF_LANGFUSE_PROFILE:'cloud',ETF_JAEGER_ENVIRONMENT:'stage',ETF_LANGFUSE_PUBLIC_KEY:'pk-lf-synthetic-public',ETF_LANGFUSE_SECRET_KEY:'sk-lf-synthetic-secret'}),null);
+});

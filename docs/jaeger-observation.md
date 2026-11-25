@@ -58,3 +58,17 @@ storage and any server-log retention independently on the Jaeger host.
 See the official [Jaeger APIs](https://www.jaegertracing.io/docs/2.23/architecture/apis/)
 and [Badger backend](https://www.jaegertracing.io/docs/2.23/storage/badger/)
 documentation for collector and persistence configuration.
+
+### Stage and production on one collector
+
+For independently operated workspaces, set `ETF_JAEGER_ENVIRONMENT=stage` or
+`ETF_JAEGER_ENVIRONMENT=production` on the server, not from a request. This
+opt-in setting tags every emitted span with the corresponding resource service
+name (`open-etf-agent-stage` or `open-etf-agent-production`) and namespaces its
+opaque trace identifier. Keep independent trace salts, project directories
+and receipt databases. Omit the setting for an existing standalone install;
+its service name and IDs are unchanged. Do not expose the collector directly.
+An authenticated reader must verify all spans in a fetched trace belong to its
+requested environment before it returns anything. Historical unscoped traces
+must not be reclassified as production or staging. Logical view separation
+does not promise separate physical retention on a shared collector.
