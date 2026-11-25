@@ -1,0 +1,12 @@
+{
+  "schemaVersion": "etf-snapshot@1",
+  "fundId": "alpha",
+  "shareClassId": "alpha-a",
+  "currency": "CNY",
+  "asOf": "2026-10-31",
+  "feeBasis": "annual-expense-ratio",
+  "feeBps": 20,
+  "holdings": {"classification":"synthetic-security-v1","coverage":"complete","weights":[{"id":"A","bps":6000},{"id":"B","bps":4000}]},
+  "sectors": {"classification":"synthetic-industry-v1","coverage":"complete","weights":[{"id":"Technology, Hardware","bps":5000},{"id":"Industrials","bps":5000}]},
+  "series":{"shareClassId":"alpha-a","currency":"CNY","basis":"total-return-index","values":[{"date":"2026-10-01","value":100},{"date":"2026-10-31","value":108}]}
+}
