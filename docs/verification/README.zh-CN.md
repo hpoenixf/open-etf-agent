@@ -285,3 +285,5 @@
 ## v0.31 本地知识
 
 [9/10 Runtime 批次、查询分数、保留失败与发布等价](v031-release.zh-CN.md) · [Runtime 声明](v031-decision.safe.json) · [执行输入](v031-execution-inputs.safe.json) · [发布包装](v031-packaging.safe.json)。
+
+- [v1.0.0：研究、证据和运维整合](v100-release.zh-CN.md)

@@ -1,9 +1,9 @@
 {
   "schemaVersion": 2,
-  "reviewedVersion": "0.70.0",
-  "reviewedSource": "7b7e3a586c8bae962359654247680a2fe3db3e54",
+  "reviewedVersion": "1.0.0",
+  "reviewedSource": "fdbb45ac6eafc3ff6ad668d15f9d9565ce40b67d",
   "articleSource": "https://github.com/hpoenixf/eff-agent-article/blob/249f0b866f9446f33b57f186fbc6d35b5d82c119/articles/open-etf-agent-v010-system-design.md",
-  "evidence": "docs/verification/v070-self-host-diagnostics.md",
+  "evidence": "docs/verification/v100-release.md",
   "layers": [
     {
       "id": "L1",
@@ -762,7 +762,7 @@
         "en": "Uses retained bytes; no second fetch",
         "zh": "复用原始留存内容，不重新抓取"
       },
-      "status": "bounded",
+      "status": "enhanced",
       "source": "src/web-acquisition.mjs",
       "kind": "module",
       "article": {
@@ -787,7 +787,7 @@
         "zh": "无 OCR / 视觉解析",
         "en": "No OCR / visual parsing"
       },
-      "status": "bounded",
+      "status": "enhanced",
       "source": "src/pdf-input.mjs",
       "kind": "module",
       "article": {
@@ -1037,7 +1037,7 @@
         "zh": "建议性复核，不作认证",
         "en": "Advisory review, not certification"
       },
-      "status": "bounded",
+      "status": "enhanced",
       "source": "src/report-review.mjs",
       "kind": "module",
       "article": {
@@ -1087,7 +1087,7 @@
         "en": "Same owner and turn; not citations",
         "zh": "仅同一项目、本轮；不等于引用"
       },
-      "status": "bounded",
+      "status": "enhanced",
       "source": "src/gui/gui.mjs",
       "kind": "call-site",
       "article": {
@@ -1237,7 +1237,7 @@
         "en": "Loopback HEAD, no body access",
         "zh": "仅探测回环端口，不读取正文"
       },
-      "status": "enhanced",
+      "status": "bounded",
       "source": "src/deploy-doctor-cli.mjs",
       "kind": "call-site",
       "article": {

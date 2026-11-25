@@ -3,6 +3,7 @@ import { promisify } from 'node:util';
 import { constants, mkdtemp, open } from 'node:fs/promises';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { exportLiveCampaign } from './live-evaluation-export.mjs';
 import { evaluateRuns } from './evaluate.mjs';
 import { buildEvalObservation } from './eval-observation.mjs';
 import { ensureSafeDirectory, publishImmutable, safeDirectory } from './storage-files.mjs';
@@ -11,7 +12,8 @@ const ids = ['T1', 'T2', 'T3', 'T4'];
 const help = [
   'npm run -s eval -- run [--case all|T1|T2|T3|T4] [--output <parent-directory>]',
   'npm run -s eval -- compare <baseline/http-evaluation.json> <candidate/http-evaluation.json>',
-  'Fixture delivery checks only; no model calls, keys or GUI.',
+  'npm run -s eval -- export-live <campaign.json> <receipt-directory> <candidate-commit>',
+  'Local fixture checks or read-only receipt export; no model calls, keys or GUI.',
 ].join('\n');
 const invalid = () => { throw new Error('INVALID_ARGUMENT: run with --help'); };
 const print = value => process.stdout.write(JSON.stringify(value, null, 2) + '\n');
@@ -105,9 +107,16 @@ try {
   if ((!command || command === '--help') && !args.length) process.stdout.write(help + '\n');
   else if (command === 'run') await run(args);
   else if (command === 'compare') await compare(args);
+  else if (command === 'export-live') {
+    if(args.length!==3||args.some(x=>!x||x.startsWith('--')))invalid();
+    let result;
+    try {result=await exportLiveCampaign({casesPath:args[0],receiptDir:args[1],sourceCommit:args[2]});}
+    catch (error) {const code=/^[A-Z][A-Z_]{1,63}$/.test(error?.message)?error.message:'INPUT_UNAVAILABLE_OR_MALFORMED';throw Error('LIVE_EVAL_EXPORT_FAILED: '+code);}
+    print(result);
+  }
   else invalid();
 } catch (error) {
-  const message = /^INVALID_ARGUMENT|^INVALID_EVAL_REPORT|^FIXTURE_RUNNER_FAILED/.test(error.message)
+  const message = /^INVALID_ARGUMENT|^INVALID_EVAL_REPORT|^FIXTURE_RUNNER_FAILED|^LIVE_EVAL_EXPORT_FAILED/.test(error.message)
     ? error.message : 'EVAL_CLI_FAILED: check input, directory and fixture runner';
   process.stderr.write(message + '\n');
   process.exitCode = 2;

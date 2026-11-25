@@ -6,6 +6,19 @@ import { workRun } from './worker.mjs';
 import { taskTimeMessage } from './temporal.mjs';
 import { sha256 } from './source.mjs';
 
+const demoQuestion = 'Compare yesterday with the most recent completed venue session.';
+function marketSummary(calendar) {
+ if (!calendar?.source) return 'Market calendar: unknown (no calendar supplied).';
+ return [
+  `Venue: ${calendar.venue} (${calendar.timeZone})`,
+  `Venue date: ${calendar.venueDate}`,
+  `Last completed session: ${calendar.sessionDate ?? 'unknown'}`,
+  `Calendar status: ${calendar.status}; phase: ${calendar.phase}${calendar.reason ? ` (${calendar.reason})` : ''}`,
+  `Calendar revision: ${calendar.source.revision}`,
+  `Calendar SHA-256: ${calendar.source.digest}`
+ ].join('\n');
+}
+
 // Offline consumer of the actual projected request; no live-model qualification.
 export function createTemporalDemoGateway(taskTime) {
  return { mode: 'fixture', async next({ messages }) {
@@ -13,10 +26,10 @@ export function createTemporalDemoGateway(taskTime) {
   const values = messages.filter(m => m.role === 'tool').map(m => m.result.value);
   if (!values.length) return { kind: 'calls', calls: [{ id: 'source', name: 'read_page', arguments: { documentId: 'atlas-a', page: 1 } }] };
   if (values.length === 1) return { kind: 'calls', calls: [{ id: 'report', name: 'save_report', arguments: {
-   text: `# Fixed task date\n\nOriginal question: compare today with yesterday.\n\nTask anchor: ${taskTime.anchorInstant}\nTime zone: ${taskTime.timeZone}\nToday: ${taskTime.taskDate}\nYesterday: ${taskTime.yesterday}\nTomorrow: ${taskTime.tomorrow}\n\nThese dates interpret the original task, not the source's publication/data date. This synthetic source is not current market evidence. Offline fixture; semantic quality unreviewed.`,
+   text: `# Fixed task date\n\n${demoQuestion}\n\nTask anchor: ${taskTime.anchorInstant}\nTime zone: ${taskTime.timeZone}\nToday: ${taskTime.taskDate}\nYesterday: ${taskTime.yesterday}\nTomorrow: ${taskTime.tomorrow}\n\n${marketSummary(taskTime.tradingCalendar)}\n\nThese dates interpret the fixed task. This synthetic source is not current market evidence. Offline fixture; semantic quality unreviewed.`,
    sourceIds: [values[0].sourceId]
   } }] };
-  return { kind: 'final', text: `Saved the original task dates: today ${taskTime.taskDate}; yesterday ${taskTime.yesterday}.` };
+  return { kind: 'final', text: `Saved the original task dates: today ${taskTime.taskDate}; yesterday ${taskTime.yesterday}. Market calendar: ${taskTime.tradingCalendar?.status ?? 'unknown (no calendar supplied)'}.` };
  } };
 }
 export async function temporalDemo({ directory, runId, operation, taskTime, signal } = {}) {
@@ -26,7 +39,7 @@ export async function temporalDemo({ directory, runId, operation, taskTime, sign
   let saved;
   try { saved = store.inspect(runId); } catch (e) { if (e.code !== 'UNKNOWN_RUN') throw e; }
   const gateway = { mode: 'fixture', async next(input) { return createTemporalDemoGateway(store.inspect(runId).definition.config.taskTime).next(input); } };
-  const options = { question: 'Compare today with yesterday; preserve the original task date.', taskTime, gateway, outputRoot: join(directory, 'runs'), limits: { maxRounds: 4, maxTools: 3, timeoutMs: 300000 }, durable: { store, runId, grantId: 'synthetic-temporal-demo', bindings } };
+  const options = { question: 'Compare today with yesterday; preserve the original task date. If asked for a venue session without a supplied calendar, state that it is unknown.', taskTime, gateway, outputRoot: join(directory, 'runs'), limits: { maxRounds: 4, maxTools: 3, timeoutMs: 300000 }, durable: { store, runId, grantId: 'synthetic-temporal-demo', bindings } };
   if (operation === 'submit') return await submitRun({ ...options, signal });
   if (operation === 'work') { if (!saved) throw Object.assign(new Error('UNKNOWN_RUN'), { code: 'UNKNOWN_RUN' }); return await workRun({ ...options, hostSignal: signal }); }
   if (operation === 'read') { if (!saved || saved.status !== 'completed') throw Object.assign(new Error('COMPLETED_RUN_REQUIRED'), { code: 'COMPLETED_RUN_REQUIRED' }); return await run(options); }

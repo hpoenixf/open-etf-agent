@@ -1,13 +1,13 @@
 import {createHash} from 'node:crypto';
 import {isDeepStrictEqual} from 'node:util';
-import {openOwnerWeb,OWNER_WEB_PAGE,OWNER_WEB_CONTINUE,OWNER_WEB_EXCERPTS,OWNER_WEB_EXCERPTS_LOCAL_MISS} from './gui-owner-web.mjs';
+import {openOwnerWeb,OWNER_LINKED_PDF_REVISION,OWNER_WEB_PAGE,OWNER_WEB_CONTINUE,OWNER_WEB_LINKED_PDF,OWNER_WEB_EXCERPTS,OWNER_WEB_EXCERPTS_LOCAL_MISS} from './gui-owner-web.mjs';
 import {normalizeWebUrl} from './web-policy.mjs';
 import {WEB_TEXT_MAX_PAGES,WEB_TEXT_PAGE_BYTES} from './web-text-pages.mjs';
 
 const digest=value=>createHash('sha256').update(value).digest('hex');
 const isHash=value=>typeof value==='string'&&/^[a-f0-9]{64}$/.test(value);
 const isCallId=value=>typeof value==='string'&&value.length>=1&&value.length<=200&&!/[\u0000-\u001f]/.test(value);
-const originalTool=name=>name===OWNER_WEB_PAGE||name===OWNER_WEB_CONTINUE;
+const originalTool=name=>name===OWNER_WEB_PAGE||name===OWNER_WEB_CONTINUE||name===OWNER_WEB_LINKED_PDF;
 const maxMessages=512,maxCalls=512,maxChecks=8,maxRows=4,maxBytes=262144;
 
 function readRow({projectId,runId},value){
@@ -21,6 +21,15 @@ function readRow({projectId,runId},value){
   kind:'web-original-excerpt',url,retrievedAt,page,pages,text,sha256:textSha256};
 }
 
+function readPdfRow(value,markers){
+ const {url,retrievedAt,page,pages,text,sha256,originalSha256,sourceRef}=value;
+ if(normalizeWebUrl(url)!==url||url.includes('?')||new Date(retrievedAt).toISOString()!==retrievedAt||
+    !Number.isSafeInteger(page)||!Number.isSafeInteger(pages)||page<1||page>pages||pages>16||
+    typeof text!=='string'||!text.trim()||!text.isWellFormed()||Buffer.byteLength(text)>65536||
+    ![sha256,originalSha256].every(isHash)||digest(text)!==sha256||
+    !/^web-pdf-page:sha256:[a-f0-9]{64}$/.test(sourceRef))return null;
+ return {id:sourceRef,kind:'web-pdf-original-page',url,retrievedAt,page,pages,text,sha256,originalSha256,cited:markers.has(sourceRef)};
+}
 // Exact owner Root snapshot only. Native consumed tool results are not the
 // model's working context, a search preview, or statements in the answer.
 // verifyResult reopens immutable local receipts/bytes; no execute is called.
@@ -33,6 +42,9 @@ export async function readOwnerWebSources({projectDir,definition,run,publication
  if((phase!=='terminal'&&!(phase==='proposal-sealed'&&proposal?.kind==='final'))||
     !Array.isArray(messages)||messages.length>maxMessages)return output('unavailable');
 
+ const linkedPdf=definition.ownerLinkedPdfRevision===OWNER_LINKED_PDF_REVISION&&definition.config.ownerConnectivity.linkedPdf===true;
+ const canonicalBody=publication.content?.text??'';
+ const markers=new Set(linkedPdf?[...canonicalBody.matchAll(/\[\[PDF:(web-pdf-page:sha256:[a-f0-9]{64})\]\]/g)].map(match=>match[1]):[]);
  const used=new Set(),replyIds=new Set(),duplicates=new Set(),candidates=[];
  let count=0,omitted=false;
  const observe=(set,id)=>{if(set.has(id))duplicates.add(id);set.add(id);};
@@ -50,19 +62,24 @@ export async function readOwnerWebSources({projectDir,definition,run,publication
    if((result.effective&&!isDeepStrictEqual(result.effective,call))||
       (result.original&&!isDeepStrictEqual(result.original,call))){omitted=true;continue;}
    if(result.value?.kind==='public-web-continuation-unavailable@1'||result.value?.kind==='public-web-page-unavailable@1')continue;
-   if(!['public-web-page@1','public-web-page@2'].includes(result.value?.kind)){omitted=true;continue;}
+   if(linkedPdf&&call.name===OWNER_WEB_LINKED_PDF&&result.value?.status==='unavailable')continue;
+   if(!['public-web-page@1','public-web-page@2',...(linkedPdf?['web-pdf-original-page']:[])].includes(result.value?.kind)){omitted=true;continue;}
    candidates.push({call,value:result.value});
   }
  }
  const deny=()=>{throw new Error('OWNER_SOURCE_READ_ONLY');};
- const tools=openOwnerWeb({profile:{web:true},projectDir,projectId:definition.projectId,runId:run.runId,
-  excerptRevision:definition.ownerWebExcerptRevision,readRun:()=>run,transport:{acquire:deny,searchFetch:deny}});
+ const tools=openOwnerWeb({profile:{web:true,...(linkedPdf?{linkedPdf:true}:{})},projectDir,projectId:definition.projectId,runId:run.runId,
+  excerptRevision:definition.ownerWebExcerptRevision,linkedPdfRevision:definition.ownerLinkedPdfRevision,readRun:()=>run,transport:{acquire:deny,searchFetch:deny,fetchPdf:deny}});
+ const verifiedMarkers=new Set();
  const withExcerpts=[OWNER_WEB_EXCERPTS,OWNER_WEB_EXCERPTS_LOCAL_MISS].includes(definition.ownerWebExcerptRevision);
+ // Retained-row limits prioritize explicitly cited pages over uncited reading.
+ if(markers.size)candidates.sort((a,b)=>Number(markers.has(b.value.sourceRef))-Number(markers.has(a.value.sourceRef)));
  const ids=new Set(),readSources=[];let bytes=0,checks=0;
  for(const {call,value} of candidates){
-  if(duplicates.has(call.id)||value.kind!==(withExcerpts?'public-web-page@2':'public-web-page@1')){omitted=true;continue;}
+  const isPdf=call.name===OWNER_WEB_LINKED_PDF&&linkedPdf;
+  if(duplicates.has(call.id)||value.kind!==(isPdf?'web-pdf-original-page':withExcerpts?'public-web-page@2':'public-web-page@1')){omitted=true;continue;}
   let row;
-  try{row=readRow({projectId:definition.projectId,runId:run.runId},value);}catch{omitted=true;continue;}
+  try{row=isPdf?readPdfRow(value,markers):readRow({projectId:definition.projectId,runId:run.runId},value);}catch{omitted=true;continue;}
   if(!row){omitted=true;continue;}
   const {id}=row;
   if(ids.has(id))continue;
@@ -74,7 +91,9 @@ export async function readOwnerWebSources({projectDir,definition,run,publication
    if(!tool){omitted=true;continue;}
    await tool.verifyResult(value,{call});
   }catch{omitted=true;continue;}
+  if(isPdf&&row.cited)verifiedMarkers.add(row.id);
   ids.add(id);readSources.push(row);bytes+=size;
  }
+ if(verifiedMarkers.size!==markers.size)omitted=true;
  return output(omitted?(readSources.length?'partial':'unavailable'):(readSources.length?'available':'none'),readSources);
 }
