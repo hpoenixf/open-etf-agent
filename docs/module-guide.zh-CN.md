@@ -283,6 +283,8 @@ node dist/src/session-cli.mjs publication-revisions --session runs/publication-d
 
 <a id="versions"></a>
 
+**[v0.67.0 · 离线研究交付包](https://github.com/hpoenixf/open-etf-agent/commit/3e3fa36832f721957c811f111f87d1b50d2918f7).** 导出已发布报告，保留公开引用定位，断网核验全部文件。 [范围与验证](verification/v067-offline-report-bundle.zh-CN.md)
+
 **[v0.51.0 · CLI 离线交付测评](https://github.com/hpoenixf/open-etf-agent/commit/599c512e5220a7d474ad1a021faa87897157ff36).** 四个合成用例核对正文和来源 HTTP 回读，并逐题关联本地 Runtime 时间线。不调用模型、不改 GUI。 [范围与验证](../docs/verification/v051-offline-delivery-evaluation.zh-CN.md).
 
 [v0.31 本地知识](local-knowledge.zh-CN.md) · [v0.30 Child 生命周期](child-lifecycle.zh-CN.md) · [v0.29 研究对话](conversations.zh-CN.md)

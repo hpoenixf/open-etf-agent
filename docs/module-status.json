@@ -1,9 +1,9 @@
 {
   "schemaVersion": 2,
-  "reviewedVersion": "0.51.0",
-  "reviewedSource": "599c512e5220a7d474ad1a021faa87897157ff36",
+  "reviewedVersion": "0.67.0",
+  "reviewedSource": "3e3fa36832f721957c811f111f87d1b50d2918f7",
   "articleSource": "https://github.com/hpoenixf/eff-agent-article/blob/249f0b866f9446f33b57f186fbc6d35b5d82c119/articles/open-etf-agent-v010-system-design.md",
-  "evidence": "docs/verification/v051-offline-delivery-evaluation.md",
+  "evidence": "docs/verification/v067-offline-report-bundle.md",
   "layers": [
     {
       "id": "L1",
@@ -1137,8 +1137,33 @@
         "en": "Offline; not answer-quality scoring",
         "zh": "离线不判正文语义；本地时间线"
       },
-      "status": "enhanced",
+      "status": "bounded",
       "source": "src/public-eval-cli.mjs",
+      "kind": "call-site",
+      "article": {
+        "slug": "open-etf-agent-v01-first-readable-report",
+        "kind": "open-walkthrough",
+        "title": {
+          "zh": "从第一份可回读报告开始：Open ETF Agent v0.1",
+          "en": "Start with a Report You Can Read Back: Open ETF Agent v0.1"
+        }
+      }
+    },
+    {
+      "id": "report-bundle",
+      "layer": "L6",
+      "group": "task",
+      "name": "Portable Report Bundle",
+      "summary": {
+        "en": "Read the saved body offline",
+        "zh": "离线阅读已保存的正文"
+      },
+      "boundary": {
+        "en": "Public citations and checksums",
+        "zh": "公开引用与内容校验"
+      },
+      "status": "enhanced",
+      "source": "src/report-bundle-cli.mjs",
       "kind": "call-site",
       "article": {
         "slug": "open-etf-agent-v01-first-readable-report",
