@@ -159,9 +159,10 @@ test('daily brief Skill is selected only at the scheduler boundary and preserves
  assert.ok(prompts[0].startsWith(question+'\n'));
  assert.match(prompts[0],/Daily Watch Skill: daily-watch-brief sha256:[a-f0-9]{64}/);
  assert.match(prompts[0],/tracked index and its underlying industries/);
- assert.match(prompts[0],/if ambiguous, state the scope/);
+ assert.match(prompts[0],/if ambiguous, state what is known/);
  assert.match(prompts[0],/event → exposed industries\/constituents → plausible index impact/);
- assert.match(prompts[0],/unless a verified anomaly materially affects tracking or execution/);
+ assert.match(prompts[0],/Default to a long-term off-exchange lens: omit venue mechanics/);
+ assert.match(prompts[0],/earnings, dividends, valuation, regulation or index methodology could change over coming quarters/);
  assert.match(prompts[0],/10–20 candidate items/);
  assert.match(prompts[0],/3–5 material developments overall/);
  assert.match(prompts[0],/2–3 material news items per subject/);
