@@ -1,7 +1,7 @@
 {
   "schemaVersion": 2,
   "reviewedVersion": "1.0.0",
-  "reviewedSource": "fdbb45ac6eafc3ff6ad668d15f9d9565ce40b67d",
+  "reviewedSource": "d9b44f0508d15c35f9e7f52da27d7bdb8c4eb704",
   "articleSource": "https://github.com/hpoenixf/eff-agent-article/blob/249f0b866f9446f33b57f186fbc6d35b5d82c119/articles/open-etf-agent-v010-system-design.md",
   "evidence": "docs/verification/v100-release.md",
   "layers": [

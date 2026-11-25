@@ -2,7 +2,7 @@
 
 [English](v100-release.md)
 
-1.0 的整合源码基线为 `fdbb45ac6eafc3ff6ad668d15f9d9565ce40b67d`，版本资料和发布标签与源码基线分开。[测评 CLI](../evaluation-cli.md) 支持离线验证和只读实测证据导出。
+公开源码候选为 [`d9b44f0`](https://github.com/hpoenixf/open-etf-agent/commit/d9b44f0508d15c35f9e7f52da27d7bdb8c4eb704)，Git tree 为 `75255e8b3611275d040daf05fa8bb4c7066041f4`。部署与本地构建核验使用另外的提交身份，但完整源码树一致；发布资料可以在不改变可执行源码的情况下单独更新。[测评 CLI](../evaluation-cli.md) 支持离线验证和只读实测证据导出。
 
 - 研究 CLI 支持本地行动提醒和显式准入的交易日历。日历不够时，最近完整交易日可以是未知。
 - Owner 模式支持绑定到某一已发布回答的反馈。公网链接 PDF 和 Jaeger 导出都是可选能力，不是默认承诺；已上传的本地 PDF 是另一条路径。
