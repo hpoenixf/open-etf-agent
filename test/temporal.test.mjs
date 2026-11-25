@@ -20,6 +20,60 @@ test('12.1 explicit zone determines task date; DST uses calendar days, not elaps
  assert.equal(at('2024-03-01T00:00:00.000Z', 'UTC').yesterday, '2024-02-29');
  assert.equal(at('2026-12-31T23:00:00.000Z', 'UTC').tomorrow, '2027-01-01');
 });
+test('A36 explicit venue rows resolve last completed session with coverage and provenance', async () => {
+ const { resolveTradingCalendar } = await import('../src/temporal.mjs');
+ const calendar = { schemaVersion: 'venue-calendar-input@1', venue: 'SYNTH-X', timeZone: 'America/New_York', revision: 'fixture-r3', coverage: { from: '2026-03-06', through: '2026-03-10' }, rows: [
+  { date: '2026-03-06', status: 'open', open: '2026-03-06T09:30:00.000-05:00', close: '2026-03-06T16:00:00.000-05:00' },
+  { date: '2026-03-07', status: 'closed' }, { date: '2026-03-08', status: 'closed' },
+  { date: '2026-03-09', status: 'open', open: '2026-03-09T09:30:00.000-04:00', close: '2026-03-09T13:00:00.000-04:00' },
+  { date: '2026-03-10', status: 'open', open: '2026-03-10T09:30:00.000-04:00', close: '2026-03-10T16:00:00.000-04:00' }
+ ] };
+ const at = (anchorInstant) => resolveTradingCalendar({ anchorInstant, timeZone: 'Asia/Shanghai', marketCalendar: calendar });
+ assert.equal(at('2026-03-09T13:29:59.999Z').tradingCalendar.phase, 'before-open');
+ assert.equal(at('2026-03-09T13:30:00.000Z').tradingCalendar.phase, 'open');
+ assert.equal(at('2026-03-09T13:30:00.000Z').tradingCalendar.sessionDate, '2026-03-06');
+ assert.equal(at('2026-03-09T16:59:59.999Z').tradingCalendar.sessionDate, '2026-03-06');
+ assert.equal(at('2026-03-09T17:00:00.000Z').tradingCalendar.phase, 'after-close');
+ assert.equal(at('2026-03-09T17:00:00.000Z').tradingCalendar.sessionDate, '2026-03-09');
+ assert.equal(at('2026-03-09T17:30:00.000Z').tradingCalendar.sessionDate, '2026-03-09');
+ assert.equal(at('2026-03-09T18:00:00.000Z').tradingCalendar.sessionDate, '2026-03-09');
+ const result = at('2026-03-09T17:00:00.000Z');
+ assert.equal(result.yesterday, '2026-03-09'); // task-local date, independent of venue session
+ assert.equal(result.tradingCalendar.venueDate, '2026-03-09');
+ assert.match(result.tradingCalendar.source.digest, /^[a-f0-9]{64}$/);
+ assert.equal(result.tradingCalendar.source.revision, 'fixture-r3');
+ assert.equal(at('2026-03-09T17:00:00.000Z').tradingCalendar.source.digest, result.tradingCalendar.source.digest);
+ assert.throws(() => validateTaskTime({ ...result, tradingCalendar: { ...result.tradingCalendar, source: { ...result.tradingCalendar.source, revision: 'forged' } } }), /INVALID_TASK_TIME/);
+ const outside = resolveTradingCalendar({ anchorInstant: '2026-03-11T16:00:00.000Z', timeZone: 'Asia/Shanghai', marketCalendar: calendar });
+ assert.equal(outside.tradingCalendar.status, 'unknown');
+ assert.equal(outside.tradingCalendar.sessionDate, null);
+ assert.equal(outside.yesterday, '2026-03-11');
+ const gap = resolveTradingCalendar({ anchorInstant: '2026-03-09T16:00:00.000Z', timeZone: 'UTC', marketCalendar: { ...calendar, rows: calendar.rows.filter(r => r.date !== '2026-03-08') } });
+ assert.equal(gap.tradingCalendar.status, 'unknown'); assert.equal(gap.tradingCalendar.sessionDate, null);
+ const olderGap = resolveTradingCalendar({ anchorInstant: '2026-03-09T17:00:00.000Z', timeZone: 'UTC', marketCalendar: { ...calendar, rows: calendar.rows.filter(r => r.date !== '2026-03-08') } });
+ assert.equal(olderGap.tradingCalendar.status, 'known'); assert.equal(olderGap.tradingCalendar.sessionDate, '2026-03-09');
+ const futureGap = resolveTradingCalendar({ anchorInstant: '2026-03-09T17:00:00.000Z', timeZone: 'UTC', marketCalendar: { ...calendar, rows: calendar.rows.filter(r => r.date !== '2026-03-10') } });
+ assert.equal(futureGap.tradingCalendar.status, 'known'); assert.equal(futureGap.tradingCalendar.sessionDate, '2026-03-09');
+ const holiday = at('2026-03-08T16:00:00.000Z');
+ assert.equal(holiday.tradingCalendar.phase, 'closed'); assert.equal(holiday.tradingCalendar.sessionDate, '2026-03-06');
+});
+test('A36 preserves the byte-identical task-time@1 message and projects only a fixed calendar summary', () => {
+ const legacy = createTaskTime({ anchorInstant: '2026-10-28T23:59:00.000Z', timeZone: 'UTC' });
+ assert.equal(taskTimeMessage(legacy).content, 'Task time (trusted, fixed at admission; not current execution time or evidence freshness): ' + JSON.stringify(legacy) + '\nInterpret today/yesterday/tomorrow against these calendar dates. Do not infer a market session, business day, data cutoff, or scheduled trigger.');
+ const marketCalendar = { schemaVersion: 'venue-calendar-input@1', venue: 'SYNTH', timeZone: 'America/New_York', revision: 'r1', coverage: { from: '2026-03-09', through: '2026-03-09' }, rows: [{ date: '2026-03-09', status: 'open', open: '2026-03-09T09:30:00.000-04:00', close: '2026-03-09T13:00:00.000-04:00' }] };
+ const message = taskTimeMessage(createTaskTime({ anchorInstant: '2026-03-09T17:00:00.000Z', timeZone: 'UTC', marketCalendar }));
+ assert.match(message.content, /"sessionDate":"2026-03-09"/); assert.doesNotMatch(message.content, /"rows"|2026-03-09T09:30/);
+ const summary = JSON.parse(message.content.split('): ')[1].split('\n')[0]);
+ assert.deepEqual(Object.keys(summary), ['taskTime', 'tradingCalendar']);
+ assert.deepEqual(Object.keys(summary.tradingCalendar.source), ['revision', 'digest', 'coverage']);
+ const absent = createTaskTime({ anchorInstant: '2026-03-09T17:00:00.000Z', timeZone: 'UTC', marketCalendar: null });
+ assert.equal(absent.tradingCalendar.status, 'unknown');
+ assert.equal(absent.tradingCalendar.reason, 'calendar-not-supplied');
+ assert.match(taskTimeMessage(absent).content, /"status":"unknown"/);
+ const huge = { ...marketCalendar, coverage: { from: '0001-01-01', through: '9999-12-31' } };
+ assert.throws(() => createTaskTime({ anchorInstant: '2026-03-09T17:00:00.000Z', timeZone: 'UTC', marketCalendar: huge }), /INVALID_MARKET_CALENDAR/);
+ assert.throws(() => createTaskTime({ anchorInstant: '2026-03-09T17:00:00.000Z', timeZone: 'UTC', marketCalendar: { ...marketCalendar, rows: [{ ...marketCalendar.rows[0], open: '2026-03-09T01:00:00.000Z' }] } }), /INVALID_MARKET_CALENDAR/);
+});
 test('12.1 missing/invalid zones, ambiguous local instants and invalid persisted dates fail closed', () => {
  for (const zone of [undefined, '', 'Not/AZone', '+08:00', 8]) assert.throws(() => at('2026-10-28T00:00:00.000Z', zone), /INVALID_TASK_TIME_ZONE/);
  for (const instant of ['2026-11-01T01:30:00', '2026-02-30T00:00:00.000Z', '2026-10-28', '2026-10-28T00:00:00+08:00', 'invalid']) assert.throws(() => at(instant, 'UTC'), /INVALID_TASK_ANCHOR/);
@@ -94,4 +148,27 @@ test('12.2 concurrent first admissions with omitted instants adopt one winning a
   const second = submitRun(options);
   const [a, b] = await Promise.all([first, second]); assert.deepEqual(a, b); assert.equal(a.fence, 0); assert.deepEqual(a.rootUsage, { model: 0, tool: 0 });
  } finally { store.close(); }
+});
+
+test('A36 searches the first covered venue date even when UTC is one day ahead', () => {
+ const rows = Array.from({length: 366}, (_, index) => ({
+  date: new Date(Date.UTC(2025, 2, 10 + index)).toISOString().slice(0, 10), status: 'closed'
+ }));
+ rows[0] = {date: '2025-03-10', status: 'open', open: '2025-03-10T09:00:00.000-11:00', close: '2025-03-10T14:00:00.000-11:00'};
+ const marketCalendar = {
+  schemaVersion: 'venue-calendar-input@1', venue: 'SYNTH', timeZone: 'Pacific/Pago_Pago',
+  revision: 'long-window', coverage: {from: rows[0].date, through: rows.at(-1).date}, rows
+ };
+ const result = createTaskTime({anchorInstant: '2026-03-11T10:59:00.000Z', timeZone: 'UTC', marketCalendar}).tradingCalendar;
+ assert.equal(result.venueDate, '2026-03-10');
+ assert.equal(result.sessionDate, '2025-03-10');
+});
+
+test('A36 rejects impossible timestamp dates that Date.parse would roll into a valid venue day', () => {
+ const marketCalendar = {
+  schemaVersion: 'venue-calendar-input@1', venue: 'SYNTH', timeZone: 'UTC',
+  revision: 'invalid-row', coverage: {from: '2026-03-02', through: '2026-03-02'},
+  rows: [{date: '2026-03-02', status: 'open', open: '2026-02-30T01:00:00.000Z', close: '2026-03-02T02:00:00.000Z'}]
+ };
+ assert.throws(() => createTaskTime({anchorInstant: '2026-03-02T17:00:00.000Z', timeZone: 'UTC', marketCalendar}), /INVALID_MARKET_CALENDAR/);
 });

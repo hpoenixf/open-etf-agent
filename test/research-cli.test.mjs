@@ -12,6 +12,14 @@ test('strict CLI parsing and help reject duplicate, unknown, missing, positional
  for(const args of [['project','inspect','--project','x','--project','y'],['project','inspect','--project','x','--wat','y'],['project','inspect'],['project','inspect','--project','x','extra'],['memory','save','--project','x','--intent','i','--text','x','--approve-intent','true']])assert.throws(()=>parseResearchArguments(args));
  assert.match((await cli(['--help'])).out,/Submit does not call a model/);assert.equal((await cli(['nonsense'])).code,1);
 });
+test('A36 research CLI --task-time JSON preserves calendar opt-in in the project task',async t=>{
+ const f=await fixture(t);await writeFile(f.configPath,JSON.stringify({...config,capabilities:['report','task-time']}));assert.equal((await cli(['project','init','--project',f.project,'--config',f.configPath])).code,0);
+ const source=await cli(['source','import','--project',f.project,'--files',f.files]);assert.equal(source.code,0,source.err);
+ const calendar={schemaVersion:'venue-calendar-input@1',venue:'SYNTH',timeZone:'America/New_York',revision:'cli-r1',coverage:{from:'2026-03-09',through:'2026-03-09'},rows:[{date:'2026-03-09',status:'open',open:'2026-03-09T09:30:00.000-04:00',close:'2026-03-09T13:00:00.000-04:00'}]};
+ const taskTime=join(f.directory,'task-time.json');await writeFile(taskTime,JSON.stringify({anchorInstant:'2026-03-09T17:00:00.000Z',timeZone:'UTC',marketCalendar:calendar}));
+ const result=await cli(['run','submit','--project',f.project,'--run','calendar','--question',f.question,'--manifest',source.json.manifestSha256,'--task-time',taskTime]);assert.equal(result.code,0,result.err);
+ const {inspectResearchTask}=await import('../src/research-project.mjs');const saved=await inspectResearchTask({projectDir:f.project,runId:'calendar'});assert.equal(saved.definition.taskTime.tradingCalendar.sessionDate,'2026-03-09');assert.equal(saved.definition.taskTime.tradingCalendar.source.revision,'cli-r1');
+});
 test('explicit source import and list bind original manifest, submit and inspect do not dispatch',async t=>{
  const f=await setup(t);const listed=await cli(['source','list','--project',f.project,'--manifest',f.manifest]);assert.equal(listed.json.manifestSha256,f.manifest);assert.equal(listed.json.manifest.files.length,1);assert.equal(listed.out.includes('annual fee'),false);
  const args=['run','submit','--project',f.project,'--run','cli-test','--question',f.question,'--manifest',f.manifest];const submitted=await cli(args);assert.equal(submitted.code,0,submitted.err);assert.equal(submitted.json.runId,'cli-test');assert.equal(submitted.json.run.status,'active');assert.equal(submitted.out.includes('Summarize'),false);
