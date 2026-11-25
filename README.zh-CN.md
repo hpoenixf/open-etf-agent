@@ -96,6 +96,8 @@ npm run demo -- --case document-compare
 **准备接入真实模型？** 不要给演示命令加 `--live`。使用[研究项目入口](docs/research-project.zh-CN.md)，先完成零模型资料导入与提交，再配置自己已授权的提供方和预算；[报告复核入口](docs/report-review.zh-CN.md)也区分 fixture 生命周期与真实模型判断。
 
 
+[离线测评：用 CLI 验证正文交付、比较基线](docs/evaluation-cli.md)
+
 <a id="versions"></a>
 <a id="最近三个模块"></a>
 ## 最近版本与开发状态
