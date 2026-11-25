@@ -11,7 +11,10 @@ const url='https://example.com/selected';
 const query='https://example.com/account?key=secret-fixture-token';
 const body='# Synthetic report\n\nPublic observation [1]. Local observation [2]. Restricted link [3].\n\n## Acquired sources\n\nThis heading belongs to the report body.\n';
 const call=(id,name,args)=>({kind:'calls',calls:[{id,name,arguments:args}]});
-const cli=(...args)=>spawnSync(process.execPath,['src/report-bundle-cli.mjs',...args],{encoding:'utf8',timeout:20000});
+const cli=(...args)=>{
+  const offline=args[0]==='verify'?['--permission','--allow-fs-read=*']:[];
+  return spawnSync(process.execPath,[...offline,'src/report-bundle-cli.mjs',...args],{encoding:'utf8',timeout:20000});
+};
 
 async function fixture(t){
   await mkdir('test-output',{recursive:true});

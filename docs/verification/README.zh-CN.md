@@ -1,5 +1,6 @@
 [English](README.md) | **简体中文**
 
+- [v0.67.0 · 离线研究交付包](v067-offline-report-bundle.zh-CN.md)
 - [v0.51.0 · CLI 离线交付测评](v051-offline-delivery-evaluation.zh-CN.md)
 - [v0.48.0 候选：已保存回答的网页原文回看](v048-verified-web-sources.md)
 - [v0.47.0 网页摘录续读与答案正文回读](v047-retained-web-and-answer-delivery.md)
