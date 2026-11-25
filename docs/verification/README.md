@@ -1,5 +1,6 @@
 **English** | [简体中文](README.zh-CN.md)
 
+- [v0.70.0 · Self-host deployment diagnosis](v070-self-host-diagnostics.md)
 - [v0.69.0 · Skill author preflight](v069-skill-author-preflight.md)
 - [v0.68.0 · ETF snapshot comparison](v068-etf-snapshot-comparison.md)
 - [v0.67.0 · Offline research report bundle](v067-offline-report-bundle.md)
