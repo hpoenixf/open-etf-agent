@@ -82,3 +82,16 @@ test('project update preserves identity and old task config; stale expected hash
 test('FIFO question input fails without blocking the CLI',async t=>{
  const f=await setup(t),fifo=join(f.directory,'question.fifo');const created=spawnSync('mkfifo',[fifo],{encoding:'utf8'});assert.equal(created.status,0,created.stderr);const result=spawnSync(process.execPath,[resolve('src/research-cli.mjs'),'run','submit','--project',f.project,'--run','fifo-test','--question',fifo,'--manifest',f.manifest],{encoding:'utf8',timeout:3000});assert.equal(result.error,undefined);assert.equal(result.status,1);assert.match(result.stderr,/CLI_UNSAFE_TEXT_FILE/);
 });
+
+test('CLI --skill pins the explicit method without a depth switch or model dispatch',async t=>{
+ const f=await setup(t),args=['run','submit','--project',f.project,'--run','skill-case','--question',f.question,'--manifest',f.manifest,'--skill'];
+ const selected=await cli([...args,'long-horizon-analysis']);
+ assert.equal(selected.code,0,selected.err);assert.equal(selected.json.skillId,'long-horizon-analysis');
+ assert.equal(selected.json.run.rootUsage.model,0);
+ const {inspectResearchTask}=await import('../src/research-project.mjs');
+ const state=await inspectResearchTask({projectDir:f.project,runId:'skill-case'});
+ assert.equal(state.definition.researchDepth,undefined);
+ assert.equal(state.run.definition.config.allowedTools.includes('read_research_skill'),false);
+ assert.equal((await cli([...args,'market-hotspot-analysis'])).code,1);
+ assert.equal((await cli([...args.slice(0,4),'invalid-skill',...args.slice(5),'unrecognized'])).code,1);
+});

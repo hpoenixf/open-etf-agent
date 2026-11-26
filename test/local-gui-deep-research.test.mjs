@@ -177,13 +177,13 @@ test('automatic intent uses the first normal proposal; durable Research/Deep, ma
  assert.equal(rejected.run.snapshot.messages.some(x=>x.role==='tool'&&x.result?.value?.kind==='auto-intent@1'),false);
 });
 
-test('Deep can read two distinct advisory methods; cold history does not dispatch again',async t=>{
+for(const researchDepth of ['standard','deep','auto'])test(`${researchDepth} can pick an advisory method without changing depth; cold history does not dispatch again`,async t=>{
  await mkdir('test-output',{recursive:true});
  const projectDir=await mkdtemp(resolve('test-output/financial-analysis-method-'));
  const ids=['market-hotspot-analysis','long-horizon-analysis'];
  let gui,calls=0,receipts=[];
  t.after(async()=>{await gui?.close();await rm(projectDir,{recursive:true,force:true});});
- const method='read_financial_analysis_method';
+ const method='read_research_skill';
  const options={projectDir,liveConfig:config,env:{ETF_GUI_PROVIDER_KEY:'synthetic'},fetchImpl:async(_endpoint,{body})=>{
   calls++;
   const request=JSON.parse(body);
@@ -205,7 +205,7 @@ test('Deep can read two distinct advisory methods; cold history does not dispatc
  const {id}=await post('/api/conversations',{}).then(r=>r.json());
  const path='/api/conversations/'+id;
  const get=suffix=>fetch(gui.origin+path+suffix).then(r=>r.json());
- const input={messageId:'analysis',question:'深度分析一个合成市场事件。',researchDepth:'deep'};
+ const input={messageId:'analysis',question:'分析一个合成市场事件。',researchDepth};
  assert.equal((await post(path+'/messages',input)).status,202);
  let entry;
  for(let i=0;i<100;i++){entry=(await get('')).messages[0];if(['completed','failed'].includes(entry?.status)&&!entry.working)break;await sleep(20);}

@@ -1,4 +1,3 @@
-import {FINANCIAL_ANALYSIS_METHOD_TOOL} from './financial-analysis-methods.mjs';
 import {readResearchNeeds,researchNeedsInstruction,RESEARCH_NEEDS_TOOL} from './research-needs.mjs';
 import {validResearchProfile,isDeepResearchNeedsActive,readDeepResearchProgress,deepResearchInstruction} from './research-intent.mjs';
 import {settleAsyncChildExecutions} from './child-execution.mjs';
@@ -447,7 +446,7 @@ async function drive({ question, gateway, outputRoot='runs', requireReport=false
           if(!state.working){
             const lookupMemory=ref=>{if(ref.libraryId!==workingInput.memoryLibrary.libraryId)throw failure('MEMORY_SCOPE_MISMATCH');return workingInput.memoryLibrary.state(ref.id);};
             const memoryMessages=workingInput?.memoryLibrary?await projectMemory({messages:state.messages,lookupState:lookupMemory}):structuredClone(state.messages);
-            const mainTools=host.definitions.filter(tool=>![RESEARCH_NEEDS_TOOL,FINANCIAL_ANALYSIS_METHOD_TOOL].includes(tool.name)||isDeepResearchNeedsActive(researchProfile,state.messages));
+            const mainTools=host.definitions.filter(tool=>tool.name!==RESEARCH_NEEDS_TOOL||isDeepResearchNeedsActive(researchProfile,state.messages));
             const workingMessages=projectControlProofs(projectTaskTime(memoryMessages, temporal));
             const encodedBudget=gateway.inputBudget?{additionalBudget:{maxBytes:gateway.inputBudget.maxBytes,measure:messages=>gateway.inputBudget.measure({messages,tools:mainTools})}}:{};
             let requestMessages=contextBytes===undefined&&!hostProjection&&contextWorkingSetBytes===undefined?workingMessages:await projectContext({olderReadBytes:contextWorkingSetBytes,onFit:fact=>record('context_fit',fact),messages:workingMessages,maxBytes:contextBytes??1048576,lookupSource:host.lookupContextSource,...(hostProjection?{projectOwnedResult:host.projectOwnedResult,projectOwnedCall:host.projectOwnedCall}:{}),...encodedBudget,...(encodedCompaction&&gateway.inputBudget?{allowUnfitted:true}:{})});let noteRef=null;
@@ -505,7 +504,7 @@ async function drive({ question, gateway, outputRoot='runs', requireReport=false
           }
           // Forgetting after adoption but before dispatch removes old typed Memory from the next actual input.
           if(workingInput?.memoryLibrary){state.working.messages=await projectMemory({messages:state.working.messages,lookupState:ref=>workingInput.memoryLibrary.state(ref.id)});state.working.hash=sha256(JSON.stringify(state.working.messages));}
-          const mainTools=host.definitions.filter(tool=>![RESEARCH_NEEDS_TOOL,FINANCIAL_ANALYSIS_METHOD_TOOL].includes(tool.name)||isDeepResearchNeedsActive(researchProfile,state.messages));
+          const mainTools=host.definitions.filter(tool=>tool.name!==RESEARCH_NEEDS_TOOL||isDeepResearchNeedsActive(researchProfile,state.messages));
           assertContextCapacity({messages:state.working.messages,tools:mainTools,maxBytes:contextBytes,inputBudget:gateway.inputBudget});
           state.rounds++;state.gatewayOutcome='unknown';let reservation;if(claim){const reservedView=await checkpoint('model-reserved',{reserve:'model'});if(gateway.admission==='shared-admission@1')reservation=modelReservation(reservedView);}else{rootBudget.claim('model');gatewayUnsettled=true;}
           const start=performance.now();let proposal;
