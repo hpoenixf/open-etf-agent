@@ -2,7 +2,7 @@
 
 页码按 PDF 文件的物理页计算，包含封面与目录。打开 PDF 后也可用卷内的可点击目录和书签。正文页统计另外排除了封面、目录、参考文献和不具备实质文字量的页。
 
-## [从零构建 Agent](01-build-agent.pdf)
+## [从零构建 Agent](https://github.com/hpoenixf/eff-agent-article/blob/d0ce49d838b3b614f28ced8ad0673f404eb2a21e/public/downloads/agent-handbooks/01-build-agent.pdf)
 
 35 章 · 111 页实质正文 · PDF 共 122 页
 
@@ -262,7 +262,7 @@
   - 发布条目要能被回查 · 第 121 页
   - 退役不应带走这段业务 · 第 121 页
 
-## [有证据的 Agent 研究](02-evidence-research.pdf)
+## [有证据的 Agent 研究](https://github.com/hpoenixf/eff-agent-article/blob/d0ce49d838b3b614f28ced8ad0673f404eb2a21e/public/downloads/agent-handbooks/02-evidence-research.pdf)
 
 35 章 · 117 页实质正文 · PDF 共 127 页
 
@@ -505,7 +505,7 @@
   - 最后两份读者可使用的记录 · 第 126 页
   - 全书工作簿索引：不同问题，找不同可以复用的表 · 第 126 页
 
-## [可恢复的 Agent 运行时](03-durable-runtime.pdf)
+## [可恢复的 Agent 运行时](https://github.com/hpoenixf/eff-agent-article/blob/d0ce49d838b3b614f28ced8ad0673f404eb2a21e/public/downloads/agent-handbooks/03-durable-runtime.pdf)
 
 35 章 · 113 页实质正文 · PDF 共 127 页
 
@@ -770,7 +770,7 @@
   - A.5 上线规模渐进图 · 第 126 页
   - A.6 小组练习与参考解 · 第 127 页
 
-## [可信交付、评测与上线](04-evaluation-and-operations.pdf)
+## [可信交付、评测与上线](https://github.com/hpoenixf/eff-agent-article/blob/d0ce49d838b3b614f28ced8ad0673f404eb2a21e/public/downloads/agent-handbooks/04-evaluation-and-operations.pdf)
 
 37 章 · 127 页实质正文 · PDF 共 137 页
 
