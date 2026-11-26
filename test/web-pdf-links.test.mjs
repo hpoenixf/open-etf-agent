@@ -53,3 +53,23 @@ test('inventory cap is explicit and legacy bounds fail closed before projecting 
  assert.equal(new Set(bounded.links.map(x=>x.id)).size,64);
  assert.throws(()=>extractWebPdfLinks(body(many),html,{finalUrl,limits:{bodyBytes:100}}),{code:'WEB_BODY_LIMIT'});
 });
+
+test('only exact recognized public viewer queries are admitted; old inventory remains reconstructable',()=>{
+ const finalUrl='https://www.cnindex.com.cn/zh_information/notices_news/';
+ const path='/zh_information/notices_news/2026/202611/P020261106683336733126.pdf';
+ const exact='https://www.cnindex.com.cn'+path+'?act_menu=2';
+ const bytes=body([path+'?act_menu=2#page=8',path+'?act_menu=2&act_menu=2',
+  path+'?act_menu=2&token=synthetic',path+'?act_menu=%32',path+'?','https://example.org'+path+'?act_menu=2',
+  '/download.pdf?act_menu=2','/query-free.pdf'].map(href=>'<a href="'+href.replaceAll('&','&amp;')+'">PDF</a>').join(''));
+ const inventory=extractWebPdfLinks(bytes,html,{finalUrl});
+ assert.deepEqual(inventory.links.map(x=>x.url),[exact,'https://www.cnindex.com.cn/query-free.pdf']);
+ for(const item of inventory.links)assert.deepEqual(verifyWebPdfLink(bytes,html,{finalUrl,originalSha256:inventory.originalSha256,linkId:item.id}),item);
+ const legacy=extractWebPdfLinks(bytes,html,{finalUrl,allowPublicNavigation:false});
+ assert.deepEqual(legacy.links.map(x=>x.url),['https://www.cnindex.com.cn'+path+'?','https://www.cnindex.com.cn/query-free.pdf']);
+ assert.equal(legacy.links[1].id,inventory.links[1].id);
+ const oldProof={finalUrl,originalSha256:legacy.originalSha256,linkId:legacy.links[0].id};
+ assert.equal(verifyWebPdfLink(bytes,html,oldProof),null);
+ assert.deepEqual(verifyWebPdfLink(bytes,html,{...oldProof,allowPublicNavigation:false}),legacy.links[0]);
+ assert.equal(verifyWebPdfLink(bytes,html,{finalUrl,originalSha256:inventory.originalSha256,linkId:inventory.links[0].id,allowPublicNavigation:false}),null);
+
+});

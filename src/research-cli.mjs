@@ -38,7 +38,7 @@ Usage: node src/research-cli.mjs <group> <command> [options]
   source acquire --project DIR --acquisition ID --urls JSON_FILE --approve-public-fetch
       [--redirects JSON_FILE] [--base-manifest SHA256] [--network-profile platform-doh-pinned@1]
   source acquisition --project DIR --acquisition ID
-  run submit --project DIR --run ID --question TEXT_FILE --manifest SHA256
+  run submit --project DIR --run ID --question TEXT_FILE --manifest SHA256 [--skill ID]
       [--approve-provider --approve-data --approve-cost]
       [--knowledge-vectors JSON_FILE] [--report-delivery artifact-required@1] [--specialists JSON_FILE] [--memory-mode temporary | --memory-mode selected --memory-entries JSON_FILE | --memory-intents JSON_FILE] [--task-time JSON_FILE] [--schedule JSON_FILE]
   schedule confirm --project DIR --run ID --question TEXT_FILE --manifest SHA256 --schedule JSON_FILE --confirm-once
@@ -134,7 +134,7 @@ const specifications={
  'source import':['project','files'], 'source list':['project','manifest'],
  'source acquire':['project','acquisition','urls','approve-public-fetch','redirects?','base-manifest?','network-profile?'],
  'source acquisition':['project','acquisition'],
- 'run submit':['project','run','question','manifest','approve-provider?','approve-data?','approve-cost?','memory-mode?','memory-entries?','memory-intents?','task-time?','schedule?','specialists?','report-delivery?','knowledge-vectors?'],
+ 'run submit':['project','run','question','manifest','approve-provider?','approve-data?','approve-cost?','memory-mode?','memory-entries?','memory-intents?','task-time?','schedule?','specialists?','report-delivery?','knowledge-vectors?','skill?'],
  'run work':['project','run','embedding-runtime?'], 'run inspect':['project','run'], 'run memory':['project','run'], 'run cancel':['project','run'],
  'run respond':['project','run','question-id','response-id','text'],
  'run report':['project','run'], 'run serve':['project','run','port?'],
@@ -158,7 +158,7 @@ export function parseResearchArguments(args){
 async function textFile(path,limit){await safeDirectory(dirname(resolve(path)));const file=await open(path,constants.O_RDONLY|constants.O_NOFOLLOW|constants.O_NONBLOCK);try{const s=await file.stat();if(!s.isFile()||s.size>limit)fail('CLI_UNSAFE_TEXT_FILE');const bytes=Buffer.alloc(limit+1);let count=0;while(count<bytes.length){const{bytesRead}=await file.read(bytes,count,bytes.length-count);if(!bytesRead)break;count+=bytesRead;}if(count>limit)fail('CLI_UNSAFE_TEXT_FILE');let text;try{text=new TextDecoder('utf-8',{fatal:true}).decode(bytes.subarray(0,count));}catch{fail('CLI_INVALID_UTF8');}if(!text.trim()||text.includes('\0'))fail('CLI_EMPTY_OR_BINARY_TEXT');return text;}finally{await file.close();}}
 function integer(value,min,max){if(!/^(0|[1-9][0-9]*)$/.test(value))fail('CLI_INVALID_INTEGER');const n=Number(value);if(!Number.isSafeInteger(n)||n<min||n>max)fail('CLI_INVALID_INTEGER');return n;}
 function sourceResult(value){return{manifestSha256:value.manifestSha256,manifest:value.manifest};}
-function taskResult(value){const d=value.definition,r=value.run;return{...(r?.snapshot?{phase:r.snapshot.phase,...(r.snapshot.code?{code:r.snapshot.code}:{}),...(r.snapshot.phase==='awaiting-response'?{response:{deadlineAt:r.definition.deadlineAt,questionId:r.snapshot.responseQuestion,question:r.snapshot.proposal?.calls?.[r.snapshot.cursor]?.arguments?.question}}:{})}:{}),runId:d.runId,projectId:d.projectId,sourceManifestSha256:d.sourceManifestSha256,grantId:d.grantId,...(d.memoryMode===undefined?{}:{memoryMode:d.memoryMode}),...(d.specialistSelection?{specialistSelection:d.specialistSelection}:{}),...(value.schedule?{schedule:value.schedule}:{}),run:r?Object.fromEntries(['runId','rootId','parentRunId','status','rootStatus','rootUsage','directory','revision','cancelled','createdAt','updatedAt'].filter(k=>r[k]!==undefined).map(k=>[k,r[k]])):null};}
+function taskResult(value){const d=value.definition,r=value.run;return{...(r?.snapshot?{phase:r.snapshot.phase,...(r.snapshot.code?{code:r.snapshot.code}:{}),...(r.snapshot.phase==='awaiting-response'?{response:{deadlineAt:r.definition.deadlineAt,questionId:r.snapshot.responseQuestion,question:r.snapshot.proposal?.calls?.[r.snapshot.cursor]?.arguments?.question}}:{})}:{}),runId:d.runId,projectId:d.projectId,sourceManifestSha256:d.sourceManifestSha256,grantId:d.grantId,...(d.skillId===undefined?{}:{skillId:d.skillId}),...(d.memoryMode===undefined?{}:{memoryMode:d.memoryMode}),...(d.specialistSelection?{specialistSelection:d.specialistSelection}:{}),...(value.schedule?{schedule:value.schedule}:{}),run:r?Object.fromEntries(['runId','rootId','parentRunId','status','rootStatus','rootUsage','directory','revision','cancelled','createdAt','updatedAt'].filter(k=>r[k]!==undefined).map(k=>[k,r[k]])):null};}
 // Never expose arbitrary exception messages, provider response bodies, or stacks.
 async function readableWorkResult(projectDir,runId){
  const task=taskResult(await inspectResearchTask({projectDir,runId}));let output;
@@ -239,7 +239,7 @@ export async function runResearchCli(args,{stdout=process.stdout,stderr=process.
    try{const result=await acquireProjectWebSources({projectDir,acquisitionId:o.acquisition,urls:await readProjectJson(o.urls,32768),allowedRedirectUrls:o.redirects?await readProjectJson(o.redirects,32768):[],baseManifestSha256:o['base-manifest']??null,approvePublicFetch:o['approve-public-fetch']===true,networkProfile:o['network-profile']??'system-direct@1',signal:controller.signal});emit({...sourceResult(result),acquisition:result.acquisition});}finally{signals.off('SIGINT',stop);signals.off('SIGTERM',stop);}return 0;
   }
   if(command==='run submit'){
-   const question=await textFile(o.question,16000),extra={...(o['report-delivery']===undefined?{}:{reportDelivery:o['report-delivery']})};
+   const question=await textFile(o.question,16000),extra={...(o['skill']===undefined?{}:{skillId:o['skill']}),...(o['report-delivery']===undefined?{}:{reportDelivery:o['report-delivery']})};
    if(o['memory-mode']==='temporary'&&o['memory-intents'])fail('PROJECT_TEMPORARY_MEMORY_INTENTS');
    for(const [key,arg]of [['knowledgeVectorEvidence','knowledge-vectors'],['specialistSelection','specialists'],['memoryIntents','memory-intents'],['memoryEntryIds','memory-entries'],['taskTime','task-time'],['schedule','schedule']])if(o[arg])extra[key]=await readProjectJson(o[arg]);
    await submitResearchTask({projectDir,runId,question,sourceManifestSha256:o.manifest,authorization:{providerApproved:o['approve-provider']===true,dataApproved:o['approve-data']===true,costApproved:o['approve-cost']===true},...('memory-mode' in o?{memoryMode:o['memory-mode']}:{}),...extra});emit(taskResult(await inspectResearchTask({projectDir,runId})));return 0;

@@ -13,3 +13,23 @@ test('explicit data approval precedes live submission and unsupported combinatio
 test('public schedule confirmation is zero-dispatch and explicit wake uses original occurrence',async()=>{const f=await setup(['schedule']);let calls=0;try{const schedule={scheduleId:'public-wake',definitionRevision:1,scheduledInstant:new Date(Date.now()+200).toISOString(),timeZone:'UTC',maxLatenessMs:10000};await submitResearchTask({projectDir:f.root,runId:'wake',question:'Describe the source and save a report when due.',sourceManifestSha256:f.bundle.manifestSha256,schedule});const gateway={mode:'fixture',async next({messages}){calls++;const r=messages.filter(m=>m.role==='tool').map(m=>m.result.value);if(!r.length)return call('read','read_page',{documentId:f.doc,page:1});if(!r.some(v=>v.path==='report.md'))return call('save','save_report',{text:'# Scheduled synthetic report',sourceIds:[r[0].sourceId]});return done('done');}};const pre=await workResearchTask({projectDir:f.root,runId:'wake',gateway});assert.equal(pre.state,'not-due');assert.equal(calls,0);await new Promise(r=>setTimeout(r,230));const result=await workResearchTask({projectDir:f.root,runId:'wake',gateway});assert.equal(result.run.status,'completed',JSON.stringify(result));assert.equal(calls,3);}finally{await f.close();}});
 
 test('A36 scheduled research explicitly rejects calendar opt-in',async()=>{const f=await setup(['schedule','task-time']);try{const calendar={schemaVersion:'venue-calendar-input@1',venue:'SYNTH',timeZone:'UTC',revision:'r1',coverage:{from:'2026-03-09',through:'2026-03-09'},rows:[]};await assert.rejects(submitResearchTask({projectDir:f.root,runId:'scheduled-calendar',question:'Check market session.',sourceManifestSha256:f.bundle.manifestSha256,taskTime:{timeZone:'UTC',marketCalendar:calendar},schedule:{scheduleId:'calendar-schedule',definitionRevision:1,scheduledInstant:new Date(Date.now()+60000).toISOString(),timeZone:'UTC',maxLatenessMs:1000}}),e=>e.code==='PROJECT_SCHEDULE_TASK_TIME_UNSUPPORTED');}finally{await f.close();}});
+
+test('selected Skill reaches the model context without menu or depth substitution',async()=>{
+ const f=await setup();
+ try{
+  await submitResearchTask({projectDir:f.root,runId:'manual-skill',question:'What formats does this source offer?',sourceManifestSha256:f.bundle.manifestSha256,skillId:'long-horizon-analysis'});
+  const gateway={mode:'fixture',async next({messages,tools}){
+   const body=messages.filter(x=>x.role==='user').map(x=>x.content).join('\n');
+   assert.match(body,/User-selected research Skill: long-horizon-analysis/);
+   assert.match(body,/Portfolio resilience/);assert.doesNotMatch(body,/Hotspot interpretation/);
+   assert.equal(tools.some(x=>x.name==='read_research_skill'),false);
+   const results=messages.filter(x=>x.role==='tool').map(x=>x.result.value);
+   const source=results.find(x=>x?.sourceId);
+   if(!source)return call('read-skill-source','read_page',{documentId:f.doc,page:1});
+   if(!results.some(x=>x?.path==='report.md'))return call('publish-skill-report','save_report',{text:'# Evidence\nCSV and Markdown.',sourceIds:[source.sourceId]});
+   return done('Report saved.');
+  }};
+  const out=await workResearchTask({projectDir:f.root,runId:'manual-skill',gateway});
+  assert.equal(out.run.status,'completed',JSON.stringify(out.run.snapshot));assert.match((await readResearchReport({projectDir:f.root,runId:'manual-skill'})).report.text,/Markdown/);
+ }finally{await f.close();}
+});

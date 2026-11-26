@@ -136,7 +136,9 @@ test('daily brief Skill is selected only at the scheduler boundary and preserves
  const question='跟踪纳指 ETF 和红利低波 ETF 各自重要的新消息。';
  const body='# 纳指 ETF\n\n公告提示了溢价风险。接下来核对 IOPV。\n\n# 红利低波 ETF\n\n暂未核实到足以改变判断的新消息。';
  const gui=await startLocalGui({projectDir,liveConfig,env:{...env,ETF_GUI_DAILY_WATCH_SKILL:'daily-watch-brief'},dailyClock:()=>now,
-  async fetchImpl(_endpoint,options){const prompt=JSON.parse(options.body).messages[0].content;prompts.push(prompt);
+  async fetchImpl(_endpoint,options){const request=JSON.parse(options.body),prompt=request.messages[0].content;prompts.push(prompt);
+   const hasSkill=request.tools.some(t=>t.function.name==='read_research_skill');
+   assert.equal(hasSkill,!prompt.startsWith('Manual news question'));
    if(prompt.startsWith('Manual news question'))manualDispatch(prompt);
    return Response.json({choices:[{message:{role:'assistant',content:body},finish_reason:'stop'}]});}});
  t.after(()=>gui.close());
@@ -159,6 +161,7 @@ test('daily brief Skill is selected only at the scheduler boundary and preserves
  assert.ok(prompts[0].startsWith(question+'\n'));
  assert.match(prompts[0],/Daily Watch Skill: daily-watch-brief sha256:[a-f0-9]{64}/);
  assert.match(prompts[0],/10–20 candidate items/);
+ assert.match(prompts[0],/try both Skills: market-hotspot-analysis and long-horizon-analysis/);
  assert.match(prompts[0],/3–5 material developments overall/);
  assert.match(prompts[0],/2–3 material news items per subject/);
  assert.match(prompts[0],/Never pad/);
@@ -170,7 +173,7 @@ test('daily brief Skill is selected only at the scheduler boundary and preserves
  assert.equal((await post('/api/conversations/'+manual+'/messages',{question:'Manual news question',messageId:'manual'})).status,202);
  const manualPrompt=await manualSeen;
  assert.equal(prompts.length,2);
- assert.doesNotMatch(manualPrompt,/Daily Watch Skill|Authoritative report calendar/);
+ assert.doesNotMatch(manualPrompt,/Daily Watch Skill|Authoritative report calendar|try both Skills/);
 });
 
 test('labeled morning and evening watches use distinct Shanghai windows; an existing 09:30 Watch stays unmodified',{timeout:5000},async t=>{

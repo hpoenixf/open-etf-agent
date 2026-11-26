@@ -50,3 +50,25 @@ test('Deep sees only matched settled original source entries; old admitted profi
  assert.match(deepResearchInstruction(native,true),/settled without readable content.+last remaining Main round/);
  assert.equal(readDeepResearchProgress(v2,{rounds:1,messages:[user,...pair('unknown','public_web_read',unknown)]}).phase,'collecting');
 });
+
+test('financial analysis system guidance changes only the new deep route',async()=>{
+ const {createChatGateway}=await import('../src/gateway.mjs');
+ const {ANALYSIS_RESEARCH_REVISION,RESEARCH_NEEDS_REVISION}=await import('../src/research-intent.mjs');
+ async function capture(profile,messages) {
+  let wire;
+  const gateway=createChatGateway({endpoint:'https://example.invalid/v1/chat/completions',model:'stub',apiKey:'synthetic',
+   authorization:{providerApproved:true,dataApproved:true,costApproved:true},researchProfile:profile,
+   fetchImpl:async(_url,init)=>{wire=JSON.parse(init.body);return Response.json({choices:[{message:{role:'assistant',content:'stub'},finish_reason:'stop'}]});}});
+  await gateway.next({messages,tools:[]});
+  return wire.messages.filter(m=>m.role==='system').map(m=>m.content);
+ }
+ const old=await capture(researchProfileFor('deep',RESEARCH_NEEDS_REVISION),[user]);
+ assert.match(old[0],/deep-evidence@3/);
+ assert.doesNotMatch(old[0],/counter-scenario/);
+ const auto=researchProfileFor('auto',ANALYSIS_RESEARCH_REVISION);
+ const deep=await capture(auto,[user,response([call]),receipt()]);
+ assert.match(deep[0],/deep-evidence@4.*counter-scenario/);
+ assert.doesNotMatch(deep[0],/Daily Watch|News window/);
+ assert.deepEqual(await capture(auto,[user]),[]);
+ assert.deepEqual(await capture(researchProfileFor('standard'),[user]),[]);
+});

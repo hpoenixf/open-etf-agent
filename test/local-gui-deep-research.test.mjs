@@ -1,3 +1,4 @@
+import {submitConversationMessage,workConversationMessage} from '../src/conversation.mjs';
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {mkdir,mkdtemp,rm} from 'node:fs/promises';
@@ -20,7 +21,11 @@ test('manual depth frozen across exact replay and cold history; default remains 
   const fetchImpl=async(_url,{body})=>{
     const input=JSON.parse(body);requests.push(input);
     if(input.messages.some(m=>m.content?.includes('synthetic-fail-only')))return new Response('not valid JSON',{status:200});
-    if(input.messages.some(m=>m.role==='system'&&m.content?.includes('[Research contract: deep-evidence@3]'))){
+    if(input.messages.some(m=>m.role==='system'&&m.content?.includes('[Research contract: deep-evidence@4]'))){
+     const analysis=input.messages.find(m=>m.role==='system'&&m.content?.includes('[Research contract: deep-evidence@4]')).content;
+     assert.match(analysis,/trailing versus forward/);
+     assert.match(analysis,/competing explanation or counter-scenario/);
+     assert.doesNotMatch(analysis,/News window|Daily Watch/);
       assert.ok(input.messages.find(m=>m.role==='user')?.content.includes(question));
       assert.ok(!input.messages.find(m=>m.role==='user')?.content.includes('deep-evidence@1'));
       if(!input.messages.some(m=>m.role==='tool'))return Response.json({choices:[{message:{role:'assistant',tool_calls:[{type:'function',id:'read-one',function:{name:'public_web_read',arguments:JSON.stringify({url})}}]},finish_reason:'tool_calls'}]});
@@ -56,7 +61,7 @@ test('manual depth frozen across exact replay and cold history; default remains 
   assert.deepEqual(requests[1].tools,requests[2].tools);
   assert.deepEqual(d.m.deepProgress,{schemaVersion:'evidence-milestones@1',phase:'delivered',originalsRead:1,settledSourceChecks:1,unavailableSourceChecks:0});
   const frozen=await inspectResearchTask({projectDir,runId:d.m.runId});
-  assert.equal(frozen.definition.researchDepth,'deep');assert.equal(frozen.run.definition.config.researchProfile,'deep-evidence@3');
+  assert.equal(frozen.definition.researchDepth,'deep');assert.equal(frozen.run.definition.config.researchProfile,'deep-evidence@4');
   assert.doesNotMatch(frozen.definition.question,/deep-evidence@1/);
   assert.equal(d.m.evidenceAssessment,'unreviewed');
   const progress=await get(g,d.path+'/messages/deep-id/progress');
@@ -148,7 +153,7 @@ test('automatic intent uses the first normal proposal; durable Research/Deep, ma
  assert.equal(r.turn.deepProgress,undefined);assert.equal(f.turn.deepProgress,undefined);
  assert.equal(d.turn.deepProgress.phase,'delivered');assert.equal(d.turn.deepProgress.originalsRead,0);
  const frozen=await inspectResearchTask({projectDir,runId:d.turn.runId});
- assert.equal(frozen.definition.researchDepth,'auto');assert.equal(frozen.run.definition.config.researchProfile,'auto-intent@3');
+ assert.equal(frozen.definition.researchDepth,'auto');assert.equal(frozen.run.definition.config.researchProfile,'auto-intent@4');
  await g.close();
  const cold=await launch();
  assert.equal((await get(cold,d.path)).messages[0].effectiveResearchIntent,'deep');
@@ -171,4 +176,47 @@ test('automatic intent uses the first normal proposal; durable Research/Deep, ma
  const rejected=await inspectResearchTask({projectDir,runId:hidden.runId});
  assert.equal(rejected.run.definition.config.allowedTools.includes('select_research_intent'),false);
  assert.equal(rejected.run.snapshot.messages.some(x=>x.role==='tool'&&x.result?.value?.kind==='auto-intent@1'),false);
+});
+
+for(const researchDepth of ['standard','deep','auto'])test(`${researchDepth} can pick an advisory method without changing depth; cold history does not dispatch again`,async t=>{
+ await mkdir('test-output',{recursive:true});
+ const projectDir=await mkdtemp(resolve('test-output/financial-analysis-method-'));
+ const ids=['market-hotspot-analysis','long-horizon-analysis'];
+ let gui,calls=0,receipts=[];
+ t.after(async()=>{await gui?.close();await rm(projectDir,{recursive:true,force:true});});
+ const method='read_research_skill';
+ const options={projectDir,liveConfig:config,env:{ETF_GUI_PROVIDER_KEY:'synthetic'},fetchImpl:async(_endpoint,{body})=>{
+  calls++;
+  const request=JSON.parse(body);
+  const tool=request.tools.find(t=>t.function.name===method);
+  assert.deepEqual(tool.function.parameters.properties.skillId.enum,ids);
+  const results=request.messages.filter(m=>m.role==='tool');
+  if(!results.length)return Response.json({choices:[{message:{role:'assistant',tool_calls:ids.map((skillId,index)=>({
+   type:'function',id:'method-'+index,function:{name:method,arguments:JSON.stringify({skillId})}
+  }))},finish_reason:'tool_calls'}]});
+  receipts=results.map(r=>JSON.parse(r.content).value);
+  assert.deepEqual(receipts.map(r=>r.id),ids);
+  assert.match(receipts[0].text,/competing explanation/);
+  assert.match(receipts[1].text,/not as a mandatory report section/);
+  assert.notEqual(receipts[0].sha256,receipts[1].sha256);
+  return final('这次催化未改变长期判断。');
+ }};
+ gui=await startLocalGui(options);
+ const post=(path,body)=>fetch(gui.origin+path,{method:'POST',headers:{origin:gui.origin,'content-type':'application/json'},body:JSON.stringify(body)});
+ const {id}=await post('/api/conversations',{}).then(r=>r.json());
+ const path='/api/conversations/'+id;
+ const get=suffix=>fetch(gui.origin+path+suffix).then(r=>r.json());
+ const input={messageId:'analysis',question:'分析一个合成市场事件。',researchDepth};
+ const task=await submitConversationMessage({projectDir,conversationId:id,messageId:input.messageId,text:input.question,sourceManifestSha256:null,skillId:'auto',researchDepth,authorization:{providerApproved:true,dataApproved:true,costApproved:true}});
+ assert.equal(task.status,'active');
+ await workConversationMessage({projectDir,conversationId:id,messageId:input.messageId,apiKey:'synthetic',fetchImpl:options.fetchImpl});
+ let entry;
+ for(let i=0;i<100;i++){entry=(await get('')).messages[0];if(['completed','failed'].includes(entry?.status)&&!entry.working)break;await sleep(20);}
+ assert.equal(entry.status,'completed',JSON.stringify(entry));
+ assert.equal(receipts.length,2);
+ const original=await get('/messages/analysis/body');
+ await gui.close();gui=await startLocalGui(options);
+ assert.deepEqual(await get('/messages/analysis/body'),original);
+ const replay=await submitConversationMessage({projectDir,conversationId:id,messageId:input.messageId,text:input.question,sourceManifestSha256:null,skillId:'auto',researchDepth,authorization:{providerApproved:true,dataApproved:true,costApproved:true}});
+ assert.equal(replay.runId,task.runId);assert.equal(calls,2);
 });

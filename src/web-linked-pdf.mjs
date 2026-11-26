@@ -46,7 +46,7 @@ export function openLinkedWebPdfOwner({projectDir,authority,resolveConsumedHtml,
   if(!source||!isDeepStrictEqual(source.scope,scope)||source.status!=='consumed'||source.protected!==false||
      typeof source.acquisitionId!=='string'||!id(source.acquisitionId))fail('WEB_PDF_LINK_UNKNOWN');
   const {body,contentType,finalUrl,originalSha256}=source;
-  const link=verifyWebPdfLink(body,contentType,{finalUrl,originalSha256,linkId});
+  const link=verifyWebPdfLink(body,contentType,{finalUrl,originalSha256,linkId,allowPublicNavigation:source.allowPublicNavigation!==false});
   if(!link)fail('WEB_PDF_LINK_UNKNOWN');
   const route=source.networkProfile??networkProfile??'system-direct@1';
   if(!['system-direct@1','platform-doh-pinned@1'].includes(route))fail('WEB_PDF_SCOPE_DENIED');

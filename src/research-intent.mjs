@@ -5,16 +5,21 @@ export const DEEP_EVIDENCE_REVISION='evidence-milestones@1';
 export const RESEARCH_NEEDS_REVISION='research-needs@1';
 const DEEP_NEEDS_PROFILE='deep-evidence@3';
 const AUTO_NEEDS_PROFILE='auto-intent@3';
-export const usesResearchNeeds=profile=>profile===DEEP_NEEDS_PROFILE||profile===AUTO_NEEDS_PROFILE;
-export const isDeepResearchNeedsActive=(profile,messages)=>profile===DEEP_NEEDS_PROFILE||profile===AUTO_NEEDS_PROFILE&&readResearchIntent(messages)==='deep';
+export const ANALYSIS_RESEARCH_REVISION='research-analysis@1';
+const DEEP_ANALYSIS_PROFILE='deep-evidence@4';
+const AUTO_ANALYSIS_PROFILE='auto-intent@4';
+export const usesResearchAnalysis=profile=>profile===DEEP_ANALYSIS_PROFILE||profile===AUTO_ANALYSIS_PROFILE;
+export const usesResearchNeeds=profile=>profile===DEEP_NEEDS_PROFILE||profile===AUTO_NEEDS_PROFILE||usesResearchAnalysis(profile);
+export const isDeepResearchNeedsActive=(profile,messages)=>(profile===DEEP_NEEDS_PROFILE||profile===DEEP_ANALYSIS_PROFILE)||((profile===AUTO_NEEDS_PROFILE||profile===AUTO_ANALYSIS_PROFILE)&&readResearchIntent(messages)==='deep');
 const DEEP_EVIDENCE_PROFILE='deep-evidence@2';
 const AUTO_EVIDENCE_PROFILE='auto-intent@2';
-export const isAutoResearchProfile=profile=>profile===AUTO_RESEARCH_INTENT||profile===AUTO_EVIDENCE_PROFILE||profile===AUTO_NEEDS_PROFILE;
+export const isAutoResearchProfile=profile=>profile===AUTO_RESEARCH_INTENT||profile===AUTO_EVIDENCE_PROFILE||profile===AUTO_NEEDS_PROFILE||profile===AUTO_ANALYSIS_PROFILE;
 export const usesDeepEvidenceMilestones=profile=>profile===DEEP_EVIDENCE_PROFILE||profile===AUTO_EVIDENCE_PROFILE||usesResearchNeeds(profile);
-export const isDeepResearchProfile=profile=>profile===DEEP_RESEARCH_CONTRACT||profile===DEEP_EVIDENCE_PROFILE||profile===DEEP_NEEDS_PROFILE;
+export const isDeepResearchProfile=profile=>profile===DEEP_RESEARCH_CONTRACT||profile===DEEP_EVIDENCE_PROFILE||profile===DEEP_NEEDS_PROFILE||profile===DEEP_ANALYSIS_PROFILE;
 export const RESEARCH_INTENT_TOOL='select_research_intent';
 export function researchProfileFor(mode,revision){
  if(revision!==undefined){
+  if(revision===ANALYSIS_RESEARCH_REVISION)return mode==='deep'?DEEP_ANALYSIS_PROFILE:mode==='auto'?AUTO_ANALYSIS_PROFILE:undefined;
   if(revision===RESEARCH_NEEDS_REVISION)return mode==='deep'?DEEP_NEEDS_PROFILE:mode==='auto'?AUTO_NEEDS_PROFILE:undefined;
   if(revision!==DEEP_EVIDENCE_REVISION)return undefined;
   return mode==='deep'?DEEP_EVIDENCE_PROFILE:mode==='auto'?AUTO_EVIDENCE_PROFILE:undefined;
