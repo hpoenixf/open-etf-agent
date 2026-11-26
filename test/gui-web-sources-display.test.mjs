@@ -3,6 +3,8 @@ import {readFile} from 'node:fs/promises';
 import test from 'node:test';
 import {createContext,runInContext} from 'node:vm';
 
+import {publicPdfNavigationQuery} from '../src/gui/public-pdf-navigation.mjs';
+
 const source=await readFile(new URL('../src/gui/gui.mjs',import.meta.url),'utf8');
 function setup(){
  const calls=[], requests=[];
@@ -17,7 +19,7 @@ function setup(){
  });
  const state={workspace:{projectId:'owner-a'},conversation:'conv',selection:1,readSources:new Map()};
  const api=path=>{calls.push(path);return new Promise(resolve=>requests.push(resolve));};
- const context=createContext({make,state,api,URL});
+ const context=createContext({make,state,api,URL,publicPdfNavigationQuery});
  const excerpt=source.slice(source.indexOf('function originalWebLink('),source.indexOf('function render() {'));
  const details=runInContext(excerpt+'\nreadSourcesDetails',context);
  return {details,calls,requests,state};
@@ -122,4 +124,33 @@ test('PDF pages are grouped and link to the cited physical page without changing
  assert.equal(uncited.children[0].text,'example.org · PDF 物理页 3/3 · 已读，未引用');
  assert.equal(uncited.children[1].href,'https://example.org/source.pdf#page=3');
  assert.equal(calls.length,1);
+});
+
+test('queried public PDF preserves exact menu selector, and signed or general URLs stay hidden',async()=>{
+ const url='https://www.cnindex.com.cn/zh_information/notices_news/2026/202611/P020261106683336733126.pdf?act_menu=2';
+ const {details,requests}=setup();
+ const view=details({id:'turn'}); view.toggle(true);
+ const row={...web(url),kind:'web-pdf-original-page',page:1,cited:true};
+ requests[0](result([web(url),row,{...row,url:url+'&token=synthetic'},{...row,url:url.replace('www.cnindex.com.cn','example.org')}]));
+ await flush();
+ const [group]=view.children[1].children;
+ assert.equal(view.children[1].children.length,1);
+ assert.equal(group.children.length,2);
+ assert.equal(group.children[1].children[1].href,url+'#page=1');
+});
+
+test('inline references bind only to verified same-message PDF results and preserve exact physical page',async()=>{
+ const {details,requests}=setup();
+ const span=()=>({textContent:'',replaceChildren(node){this.link=node;}});
+ const good=span(),bad=span(),webSpan=span(), ref='web-pdf-page:sha256:'+'a'.repeat(64), webRef='WEB:'+'c'.repeat(64)+':2';
+ const url='https://www.cnindex.com.cn/zh_information/notices_news/2026/202611/P020261106683336733126.pdf?act_menu=2';
+ details({id:'turn'},[[good,'PDF:'+ref,1],[bad,'PDF:wrong',2],[webSpan,webRef,3]]);
+ assert.equal(good.textContent,'［核对中］');
+ requests[0](result([{...web(url),id:ref,kind:'web-pdf-original-page',page:1,cited:true},
+  {...web(url),id:'wrong',kind:'web-pdf-original-page',page:1,cited:false},{...web(),citationRef:webRef,cited:true}]));
+ await flush();
+ assert.equal(good.link.href,url+'#page=1');
+ assert.equal(webSpan.link.href,'https://example.org/a');
+ assert.equal(bad.link,undefined);
+ assert.equal(bad.textContent,'［来源未能核对］');
 });

@@ -92,9 +92,15 @@ test('normal GUI keeps exact saved body available while telemetry hangs; model, 
   const {id}=await post('/api/conversations',{}).then(r=>r.json());const path='/api/conversations/'+id;
   const input={messageId:'unexported-message-id',question:'Synthetic private prompt'};
   assert.equal((await post(path+'/messages',input)).status,202);
-  for(let i=0;i<120&&!sent.length;i++)await delay(25);
-  const exact=await fetch(gui.origin+path+'/messages/'+input.messageId+'/body').then(r=>r.json());
-  assert.equal(exact.body?.text,'Persisted even while export is pending');
+  // A telemetry attempt and the public body may become visible on different
+  // ticks. Wait for both while the exporter is still deliberately blocked.
+  let exact;
+  for(let i=0;i<120;i++){
+    exact=await fetch(gui.origin+path+'/messages/'+input.messageId+'/body').then(r=>r.json());
+    if(sent.length&&exact.body?.text!==undefined)break;
+    await delay(25);
+  }
+  assert.equal(exact?.body?.text,'Persisted even while export is pending');
   assert.equal(requests,2);assert.equal(sent.length,1);
   const spans=captures(sent[0]), byType=type=>spans.filter(s=>value(s,'langfuse.observation.type')===type);
   assert.equal(byType('generation').length,2);

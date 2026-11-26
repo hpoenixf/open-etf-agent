@@ -32,6 +32,9 @@ export function prepareOwnerLangfuse(env={}, {send=globalThis.fetch,now=Date.now
   if(!key(salt,'trace-')||salt.length<38)return null;
   let transmit;
   const jaeger=profile==='jaeger';
+  const environment=env.ETF_JAEGER_ENVIRONMENT;
+  if(environment!==undefined&&(!jaeger||!['stage','production'].includes(environment)))return null;
+  const serviceName=environment?'open-etf-agent-'+environment:'open-etf-agent';
   if(jaeger){
     if([env.ETF_LANGFUSE_REGION,env.ETF_LANGFUSE_PUBLIC_KEY,env.ETF_LANGFUSE_SECRET_KEY].some(v=>v!==undefined))return null;
     transmit=jaegerTransport(env.ETF_JAEGER_OTLP_PORT);
@@ -47,7 +50,7 @@ export function prepareOwnerLangfuse(env={}, {send=globalThis.fetch,now=Date.now
     },body});
   }else return null;
   const receipts=jaeger?jaegerReceipts(now):null;
-  const id=(kind,...parts)=>createHmac('sha256',salt).update(JSON.stringify([kind,...parts])).digest('hex');
+  const id=(kind,...parts)=>createHmac('sha256',salt).update(JSON.stringify(environment?['trace-environment@1',environment,kind,...parts]:[kind,...parts])).digest('hex');
   let pending=0;
   const work=new Set();
   function start(){
@@ -97,7 +100,7 @@ export function prepareOwnerLangfuse(env={}, {send=globalThis.fetch,now=Date.now
           ...(t.name?[metadata('tool_name',t.name)]:[]),metadata('tool_status',t.status),metadata('tool_dispatched',t.dispatched),
         ],root,t.status==='succeeded'));
         if(['publication','report'].includes(final.delivery))spans.push(span('Delivery confirmed','event',same('delivery',1),end,end,[metadata('readback',final.delivery)],root,true));
-        const payload=JSON.stringify({resourceSpans:[{resource:{attributes:[attr('service.name','open-etf-agent')]},scopeSpans:[{scope:{name:'open-etf-agent.owner-telemetry'},spans}]}]});
+        const payload=JSON.stringify({resourceSpans:[{resource:{attributes:[attr('service.name',serviceName)]},scopeSpans:[{scope:{name:'open-etf-agent.owner-telemetry'},spans}]}]});
         const flight=Promise.resolve().then(async()=>{
           let directory;
           if(receipts){
