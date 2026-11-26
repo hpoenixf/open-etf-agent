@@ -39,6 +39,8 @@ function boundedTreeAdapter(limits){
  adapter.adoptAttributes=(recipient,attrs)=>{charge(recipient.attrs.length+attrs.length);base.adoptAttributes(recipient,attrs);};
  return adapter;
 }
+import {publicPdfNavigationQuery} from './public-pdf-navigation.mjs';
+
 export function extractWebText(body,contentType,options={}){
  return extract(body,contentType,options.limits);
 }
@@ -76,7 +78,7 @@ function extract(body,contentType,input,pdfInventory){
 const inventoryLimit=64;
 const sha256=value=>createHash('sha256').update(value).digest('hex');
 const blocked=new Set(['iframe','object','embed','form','input','textarea','select','button','dialog','template','script','style','noscript','svg','math','head']);
-function anchorsIn(body,contentType,finalUrl,limits){
+function anchorsIn(body,contentType,finalUrl,limits,allowPublicNavigation=true){
  const parent=normalizeWebUrl(finalUrl);
  if(!Buffer.isBuffer(body)||body.length>webLimits(limits).bodyBytes)throw webFailure('WEB_BODY_LIMIT');
  const originalSha256=sha256(body);
@@ -95,8 +97,8 @@ function anchorsIn(body,contentType,finalUrl,limits){
   let url;
   try{
    const resolved=new URL(raw,parent);
-   if(resolved.search)return;
    resolved.hash='';
+   if(allowPublicNavigation?resolved.href.includes('?')&&!publicPdfNavigationQuery(resolved):resolved.search)return;
    url=normalizeWebUrl(resolved.href);
    if(/(?:^|\.)(?:localhost|local|internal|home\.arpa)$/i.test(resolved.hostname))return;
    if(!/\.pdf$/i.test(resolved.pathname)&&attrs.type?.trim().toLowerCase()!=='application/pdf')return;
@@ -113,14 +115,14 @@ function anchorsIn(body,contentType,finalUrl,limits){
  * Ignore HTML base, resources/scripts and explicitly hidden structural branches.
  * This is not a browser and cannot claim whether arbitrary external CSS shows an anchor.
  */
-export function extractWebPdfLinks(body,contentType,{finalUrl,limits}={}){
- return anchorsIn(body,contentType,finalUrl,limits);
+export function extractWebPdfLinks(body,contentType,{finalUrl,limits,allowPublicNavigation}={}){
+ return anchorsIn(body,contentType,finalUrl,limits,allowPublicNavigation);
 }
 
-export function verifyWebPdfLink(body,contentType,{finalUrl,originalSha256,linkId,limits}={}){
+export function verifyWebPdfLink(body,contentType,{finalUrl,originalSha256,linkId,limits,allowPublicNavigation}={}){
  if(typeof originalSha256!=='string'||!/^[a-f0-9]{64}$/.test(originalSha256)||
     typeof linkId!=='string'||!/^web-pdf-link:sha256:[a-f0-9]{64}$/.test(linkId))return null;
  if(!Buffer.isBuffer(body)||body.length>webLimits(limits).bodyBytes||sha256(body)!==originalSha256)return null;
- const inventory=anchorsIn(body,contentType,finalUrl,limits);
+ const inventory=anchorsIn(body,contentType,finalUrl,limits,allowPublicNavigation);
  return inventory.links.find(link=>link.id===linkId)??null;
 }

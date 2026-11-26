@@ -1,6 +1,7 @@
 import {createHash} from 'node:crypto';
 import {isDeepStrictEqual} from 'node:util';
 import {openOwnerWeb,OWNER_LINKED_PDF_REVISION,OWNER_WEB_PAGE,OWNER_WEB_CONTINUE,OWNER_WEB_LINKED_PDF,OWNER_WEB_EXCERPTS,OWNER_WEB_EXCERPTS_LOCAL_MISS} from './gui-owner-web.mjs';
+import {publicPdfNavigationQuery} from './public-pdf-navigation.mjs';
 import {normalizeWebUrl} from './web-policy.mjs';
 import {WEB_TEXT_MAX_PAGES,WEB_TEXT_PAGE_BYTES} from './web-text-pages.mjs';
 
@@ -10,7 +11,8 @@ const isCallId=value=>typeof value==='string'&&value.length>=1&&value.length<=20
 const originalTool=name=>name===OWNER_WEB_PAGE||name===OWNER_WEB_CONTINUE||name===OWNER_WEB_LINKED_PDF;
 const maxMessages=512,maxCalls=512,maxChecks=8,maxRows=4,maxBytes=262144;
 
-function readRow({projectId,runId},value){
+const webRef=value=>`WEB:${value.manifestSha256}:${value.page}`;
+function readRow({projectId,runId},value,markers){
  const {url,retrievedAt,page,pages,text,textSha256,manifestSha256,originalSha256}=value;
  if(normalizeWebUrl(url)!==url||url.includes('?')||typeof retrievedAt!=='string'||
     new Date(retrievedAt).toISOString()!==retrievedAt||
@@ -18,12 +20,13 @@ function readRow({projectId,runId},value){
     typeof text!=='string'||!text||!text.isWellFormed()||Buffer.byteLength(text)>WEB_TEXT_PAGE_BYTES||
     ![textSha256,manifestSha256,originalSha256].every(isHash)||digest(text)!==textSha256)return null;
  return {id:'source-'+digest(JSON.stringify([projectId,runId,manifestSha256,originalSha256,page,textSha256])),
-  kind:'web-original-excerpt',url,retrievedAt,page,pages,text,sha256:textSha256};
+  kind:'web-original-excerpt',url,retrievedAt,page,pages,text,sha256:textSha256,
+  ...(markers.has(webRef(value))?{citationRef:webRef(value),cited:true}:{})};
 }
 
 function readPdfRow(value,markers){
  const {url,retrievedAt,page,pages,text,sha256,originalSha256,sourceRef}=value;
- if(normalizeWebUrl(url)!==url||url.includes('?')||new Date(retrievedAt).toISOString()!==retrievedAt||
+ if(normalizeWebUrl(url)!==url||(url.includes('?')&&!publicPdfNavigationQuery(new URL(url)))||new Date(retrievedAt).toISOString()!==retrievedAt||
     !Number.isSafeInteger(page)||!Number.isSafeInteger(pages)||page<1||page>pages||pages>16||
     typeof text!=='string'||!text.trim()||!text.isWellFormed()||Buffer.byteLength(text)>65536||
     ![sha256,originalSha256].every(isHash)||digest(text)!==sha256||
@@ -45,6 +48,7 @@ export async function readOwnerWebSources({projectDir,definition,run,publication
  const linkedPdf=definition.ownerLinkedPdfRevision===OWNER_LINKED_PDF_REVISION&&definition.config.ownerConnectivity.linkedPdf===true;
  const canonicalBody=publication.content?.text??'';
  const markers=new Set(linkedPdf?[...canonicalBody.matchAll(/\[\[PDF:(web-pdf-page:sha256:[a-f0-9]{64})\]\]/g)].map(match=>match[1]):[]);
+ const webMarkers=new Set([...canonicalBody.matchAll(/\[\[(WEB:[a-f0-9]{64}:[1-9][0-9]{0,3})\]\]/g)].map(match=>match[1]));
  const used=new Set(),replyIds=new Set(),duplicates=new Set(),candidates=[];
  let count=0,omitted=false;
  const observe=(set,id)=>{if(set.has(id))duplicates.add(id);set.add(id);};
@@ -70,16 +74,17 @@ export async function readOwnerWebSources({projectDir,definition,run,publication
  const deny=()=>{throw new Error('OWNER_SOURCE_READ_ONLY');};
  const tools=openOwnerWeb({profile:{web:true,...(linkedPdf?{linkedPdf:true}:{})},projectDir,projectId:definition.projectId,runId:run.runId,
   excerptRevision:definition.ownerWebExcerptRevision,linkedPdfRevision:definition.ownerLinkedPdfRevision,readRun:()=>run,transport:{acquire:deny,searchFetch:deny,fetchPdf:deny}});
- const verifiedMarkers=new Set();
+ const verifiedMarkers=new Set(),verifiedWebMarkers=new Set();
  const withExcerpts=[OWNER_WEB_EXCERPTS,OWNER_WEB_EXCERPTS_LOCAL_MISS].includes(definition.ownerWebExcerptRevision);
  // Retained-row limits prioritize explicitly cited pages over uncited reading.
- if(markers.size)candidates.sort((a,b)=>Number(markers.has(b.value.sourceRef))-Number(markers.has(a.value.sourceRef)));
+ const cited=value=>markers.has(value.sourceRef)||webMarkers.has(webRef(value));
+ if(markers.size||webMarkers.size)candidates.sort((a,b)=>Number(cited(b.value))-Number(cited(a.value)));
  const ids=new Set(),readSources=[];let bytes=0,checks=0;
  for(const {call,value} of candidates){
   const isPdf=call.name===OWNER_WEB_LINKED_PDF&&linkedPdf;
   if(duplicates.has(call.id)||value.kind!==(isPdf?'web-pdf-original-page':withExcerpts?'public-web-page@2':'public-web-page@1')){omitted=true;continue;}
   let row;
-  try{row=isPdf?readPdfRow(value,markers):readRow({projectId:definition.projectId,runId:run.runId},value);}catch{omitted=true;continue;}
+  try{row=isPdf?readPdfRow(value,markers):readRow({projectId:definition.projectId,runId:run.runId},value,webMarkers);}catch{omitted=true;continue;}
   if(!row){omitted=true;continue;}
   const {id}=row;
   if(ids.has(id))continue;
@@ -92,8 +97,9 @@ export async function readOwnerWebSources({projectDir,definition,run,publication
    await tool.verifyResult(value,{call});
   }catch{omitted=true;continue;}
   if(isPdf&&row.cited)verifiedMarkers.add(row.id);
+  if(!isPdf&&row.cited)verifiedWebMarkers.add(row.citationRef);
   ids.add(id);readSources.push(row);bytes+=size;
  }
- if(verifiedMarkers.size!==markers.size)omitted=true;
+ if(verifiedMarkers.size!==markers.size||verifiedWebMarkers.size!==webMarkers.size)omitted=true;
  return output(omitted?(readSources.length?'partial':'unavailable'):(readSources.length?'available':'none'),readSources);
 }

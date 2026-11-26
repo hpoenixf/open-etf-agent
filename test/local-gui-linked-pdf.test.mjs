@@ -10,11 +10,11 @@ import {inspectResearchTask} from '../src/research-project.mjs';
 import {startLocalGui} from '../src/gui-server.mjs';
 import {mockWebNetwork} from './fixtures/web-network.mjs';
 
-const url='https://issuer.example/reports/index';
-const pdfUrl='https://issuer.example/reports/data.pdf';
+const url='https://www.cnindex.com.cn/zh_information/notices_news/';
+const pdfUrl='https://www.cnindex.com.cn/zh_information/notices_news/2026/202611/P020261106683336733126.pdf?act_menu=2';
 const stock=JSON.parse(await readFile(new URL('../fixtures/local-pdf.json',import.meta.url),'utf8')).documents;
 const pdf=Buffer.from(stock.text.base64,'base64');
-const html='<main><h1>Release</h1><a href="./data.pdf">Public disclosure</a><div hidden><a href="other.pdf">hidden</a></div></main>';
+const html='<main><h1>Release</h1><a href="./2026/202611/P020261106683336733126.pdf?act_menu=2">Public disclosure</a><div hidden><a href="other.pdf">hidden</a></div></main>';
 const call=(id,name,args)=>({type:'function',id,function:{name,arguments:JSON.stringify(args)}});
 const proposal=(...calls)=>Response.json({choices:[{message:{role:'assistant',tool_calls:calls},finish_reason:'tool_calls'}]});
 
@@ -23,7 +23,7 @@ test('owner run consumes HTML link, opens PDF once, cites exact physical page an
  const projectDir=await mkdtemp(resolve('test-output/linked-pdf-live-owner-'));
  t.after(()=>rm(projectDir,{recursive:true,force:true}));
  const network=mockWebNetwork(t,{passthroughLoopback:true,routes:{
-  'https://issuer.example/robots.txt':{body:'User-agent: *\nAllow: /\n'},
+  'https://www.cnindex.com.cn/robots.txt':{body:'User-agent: *\nAllow: /\n'},
   [url]:{body:html,headers:{'content-type':'text/html'}},
   [pdfUrl]:{body:pdf,headers:{'content-type':'application/pdf'}},
  }});
@@ -59,7 +59,7 @@ test('owner run consumes HTML link, opens PDF once, cites exact physical page an
    assert.equal(other.kind,'web-pdf-original-page');
    assert.equal(other.page,3);
    assert.notEqual(other.sha256,page.sha256);
-   answer='合成文档第 1 页 [[PDF:'+page.sourceRef+']]';
+   answer='合成文档第 1 页 [[PDF:'+page.sourceRef+']]；公告 [[WEB:'+first.manifestSha256+':1]]；未知 [[WEB:'+'0'.repeat(64)+':1]]';
    return Response.json({choices:[{message:{role:'assistant',content:answer},finish_reason:'stop'}]});
  }};
  gui=await startLocalGui(options);
@@ -82,10 +82,11 @@ test('owner run consumes HTML link, opens PDF once, cites exact physical page an
  assert.equal(modelCalls,5);
  const sourcePath=path+'/messages/reading/sources', bodyPath=path+'/messages/reading/body';
  const before=await get(sourcePath), bodyBefore=await get(bodyPath);
- assert.equal(before.availability,'available');
+ assert.equal(before.availability,'partial','unresolved inline WEB ref must not be presented as fully verified');
  const evidenced=before.readSources.filter(row=>row.kind==='web-pdf-original-page');
  assert.deepEqual(evidenced.map(x=>[x.page,x.cited]),[[1,true],[3,false]]);
  assert.equal(evidenced[0].url,pdfUrl);
+ assert.equal(before.readSources.find(row=>row.cited&&row.kind==='web-original-excerpt')?.citationRef,'WEB:'+first.manifestSha256+':1');
  assert.equal(evidenced[0].originalSha256,createHash('sha256').update(pdf).digest('hex'));
  assert.equal(evidenced[0].text,page.text);
  assert.equal(evidenced[0].sha256,createHash('sha256').update(page.text).digest('hex'));
@@ -175,7 +176,7 @@ test('settled ordinary PDF refusal preserves HTML answer, is not auto-replayed, 
  let gui;
  t.after(async()=>{await gui?.close();await rm(projectDir,{recursive:true,force:true});});
  const network=mockWebNetwork(t,{passthroughLoopback:true,routes:{
-  'https://issuer.example/robots.txt':{body:'User-agent: *\nAllow: /\n'},
+  'https://www.cnindex.com.cn/robots.txt':{body:'User-agent: *\nAllow: /\n'},
   [url]:{body:html,headers:{'content-type':'text/html'}},
   [pdfUrl]:{body:pdf,headers:{'content-type':'application/pdf','content-encoding':'unknown-synthetic'}},
  }});
@@ -240,4 +241,31 @@ test('changing only interactive linked PDF must not pause an existing Daily Watc
  await open(undefined);
  assert.equal((await watch()).requiresReview,true,'changing the actual scheduled tool profile still requires review');
  now=Date.parse('2026-11-27T09:30:00+08:00');await gui.sweepDaily();assert.equal(runs,1);
+});
+
+test('cold receipt verification accepts an exact pre-upgrade inventory but not an edited source',async t=>{
+ await mkdir('test-output',{recursive:true});
+ const projectDir=await mkdtemp(resolve('test-output/linked-pdf-legacy-inventory-'));
+ t.after(()=>rm(projectDir,{recursive:true,force:true}));
+ const bytes=Buffer.from(html+'<a href="legacy.pdf">Other public PDF</a>');
+ const originalSha256=createHash('sha256').update(bytes).digest('hex');
+ const receipt={status:'succeeded',plan:{urls:[url]},manifestSha256:'a'.repeat(64)};
+ const acquired={manifestSha256:receipt.manifestSha256,catalog:{documents:[{
+  originalBase64:bytes.toString('base64'),pages:['Verified public market notice'],web:{
+   requestedUrl:url,finalUrl:url,retrievedAt:'2026-11-25T00:00:00.000Z',originalSha256,originalMediaType:'text/html',
+  },
+ }]}};
+ const opts={projectDir,projectId:'project-legacy',runId:'run-legacy',profile:{web:true,linkedPdf:true},
+  linkedPdfRevision:OWNER_LINKED_PDF_REVISION,excerptRevision:OWNER_WEB_EXCERPTS_LOCAL_MISS,
+  readRun:()=>({runId:'run-legacy',snapshot:{messages:[]}}),
+  transport:{inspect:async()=>receipt,load:async()=>acquired,acquire:()=>assert.fail('no fetch on cold read')},
+ };
+ const tool=()=>openOwnerWeb(opts).find(x=>x.name==='public_web_read');
+ const call={id:'legacy',name:'public_web_read',arguments:{url}};
+ const fresh=await tool().reconcile(call.arguments,{callId:call.id});
+ assert.deepEqual(fresh.pdfLinks.links.map(x=>x.url),[pdfUrl,new URL('legacy.pdf',url).href]);
+ const old={...fresh,pdfLinks:extractWebPdfLinks(bytes,'text/html',{finalUrl:url,allowPublicNavigation:false})};
+ await tool().verifyResult(old,{call});
+ await tool().verifyResult(fresh,{call});
+ await assert.rejects(tool().verifyResult({...old,pdfLinks:{...old.pdfLinks,links:[]}},{call}),{code:'WEB_PAGE_EVIDENCE_CHANGED'});
 });
