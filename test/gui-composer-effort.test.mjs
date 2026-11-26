@@ -182,7 +182,8 @@ test('transcript separates user question, rendered answer, and neutral optional 
  assert.match(context.children[1].textContent,/已写入请求 高/);
  assert.equal(answer.children.find(x=>x.className==='markdown-body').textContent,'原样 Markdown');
  assert.equal(answer.children.find(x=>x.className==='citation-actions').children[0].textContent,'核对来源 [1]');
- assert.equal(answer.children.find(x=>x.className==='turn-actions').children.length,3);
+ assert.deepEqual(Array.from(answer.children.find(x=>x.className==='turn-actions').children,element=>element.textContent),
+  ['复制 Markdown','下载 Markdown','导出图片','复用这个问题']);
 });
 
 test('transcript keeps active progress and provider rejection visible without burying them in settings',()=>{

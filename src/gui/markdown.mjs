@@ -15,10 +15,10 @@ function linkTarget(raw) {
     return url.href;
   } catch { return null; }
 }
-function renderTokens(parent, tokens, depth = 0) {
+function renderTokens(parent, tokens, depth = 0, citation) {
   for (const token of tokens ?? []) {
     if (depth > 32) { add(parent, token.raw ?? token.text); continue; }
-    const inside = node => token.tokens?.length ? renderTokens(node, token.tokens, depth + 1) : add(node, token.text);
+    const inside = node => token.tokens?.length ? renderTokens(node, token.tokens, depth + 1,citation) : add(node, token.text);
     switch (token.type) {
       case 'space': break;
       case 'heading': inside(el(parent, 'h' + Math.max(2, Math.min(6, token.depth)))); break;
@@ -35,7 +35,8 @@ function renderTokens(parent, tokens, depth = 0) {
         const href = linkTarget(token.href);
         if (!href) { inside(parent); break; }
         const node = el(parent, 'a'); node.href = href; node.target = '_blank'; node.rel = 'noopener noreferrer';
-        inside(node); break;
+        if(token.tokens?.length)renderTokens(node,token.tokens,depth+1);else add(node,token.text);
+        break;
       }
       case 'image': add(parent, token.text); break; // Do not load remote tracking pixels.
       case 'list': {
@@ -44,7 +45,7 @@ function renderTokens(parent, tokens, depth = 0) {
         for (const item of token.items) {
           const row = el(node, 'li');
           if (item.task) add(row, item.checked ? '☑ ' : '☐ ');
-          renderTokens(row, item.tokens, depth + 1);
+          renderTokens(row, item.tokens, depth + 1,citation);
         }
         break;
       }
@@ -58,7 +59,7 @@ function renderTokens(parent, tokens, depth = 0) {
           for (const cell of cells) {
             const item = el(line, tag);
             if (tag === 'th') item.scope = 'col';
-            renderTokens(item, cell.tokens, depth + 1);
+            renderTokens(item, cell.tokens, depth + 1,citation);
           }
         };
         row(el(table, 'thead'), token.header, 'th');
@@ -66,18 +67,26 @@ function renderTokens(parent, tokens, depth = 0) {
         for (const cells of token.rows) row(body, cells, 'td');
         break;
       }
-      case 'text': case 'escape': inside(parent); break;
+      case 'text': {
+        if(!citation||token.tokens?.length){inside(parent);break;}
+        const text=token.text??'';let cursor=0;
+        for(const match of text.matchAll(/\[\[((?:WEB:[a-f0-9]{64}:[1-9][0-9]{0,3})|(?:PDF:web-pdf-page:sha256:[a-f0-9]{64}))\]\]/g)){
+          add(parent,text.slice(cursor,match.index)); citation(el(parent,'span'),match[1]); cursor=match.index+match[0].length;
+        }
+        add(parent,text.slice(cursor));break;
+      }
+      case 'escape': inside(parent); break;
       default: add(parent, token.raw ?? token.text);
     }
   }
 }
-export function renderMarkdown(doc, value) {
+export function renderMarkdown(doc, value, citation) {
   const node = doc.createElement('div');
   node.className = 'markdown-body';
   const text = String(value ?? '');
   // Workbench's plain-text fallback is lossless for oversized or invalid input.
   if (text.length > 160_000) { el(node, 'pre', text); return node; }
-  try { renderTokens(node, lexer(text, { gfm: true })); }
+  try { renderTokens(node, lexer(text, { gfm: true }),0,citation); }
   catch { node.replaceChildren(); el(node, 'pre', text); }
   return node;
 }

@@ -1,4 +1,6 @@
+import {downloadAnswerImage} from './answer-image.mjs';
 import {createFinancialChartView} from './financial-chart-view.mjs';
+import {publicPdfNavigationQuery} from './public-pdf-navigation.mjs';
 import { renderMarkdown } from './markdown.mjs';
 const byId = id => document.getElementById(id);
 const state = { workspace: null, conversation: null, detail: null, poll: null, submitting: false, pending: null, failures: 0, selection:0, refreshSequence:0, appliedRefresh:0, progress:new Map(), readSources:new Map(), stopping:new Map() };
@@ -316,11 +318,11 @@ function progressDetails(message, context) {
   if(details.open)void loadProgress(conversation,entry,message);
   return details;
 }
-function originalWebLink(href) {
+function originalWebLink(href,pdf=false) {
   if(typeof href!=='string')return null;
   try {
     const url=new URL(href);
-    return url.protocol==='https:'&&!url.username&&!url.password&&!url.search&&!url.hash?url:null;
+    return url.protocol==='https:'&&!url.username&&!url.password&&!href.includes('#')&&(!href.includes('?')||(pdf&&publicPdfNavigationQuery(url)))?url:null;
   } catch {return null;}
 }
 function readSourcesContent(target, value) {
@@ -336,7 +338,7 @@ function readSourcesContent(target, value) {
     const pdf=source?.kind==='web-pdf-original-page';
     if((!pdf&&source?.kind!=='web-original-excerpt')||typeof source.text!=='string'||
        !Number.isSafeInteger(source.page)||source.page<1||!Number.isSafeInteger(source.pages)||source.pages<source.page)continue;
-    const url=originalWebLink(source.url);
+    const url=originalWebLink(source.url,pdf);
     if(!url)continue;
     let parent=target;
     if(pdf){
@@ -368,9 +370,24 @@ async function loadReadSources(entry) {
   finally {
     entry.loading=false;
     if(identity()&&entry.open&&entry.content?.isConnected)readSourcesContent(entry.content,entry.value);
+    if(identity()&&entry.inline?.length)hydrateInlineCitations(entry);
   }
 }
-function readSourcesDetails(message) {
+function hydrateInlineCitations(entry) {
+  for(const [span,ref,number] of entry.inline){
+    const row=(Array.isArray(entry.value?.readSources)?entry.value.readSources:[]).find(source=>source?.cited===true&&typeof source.text==='string'&&
+      (source.citationRef===ref||source.kind==='web-pdf-original-page'&&'PDF:'+source.id===ref));
+    const pdf=row?.kind==='web-pdf-original-page';
+    const url=row&&(!pdf||Number.isSafeInteger(row.page)&&row.page>0)&&originalWebLink(row.url,pdf);
+    if(!url){span.textContent=entry.value?'［来源未能核对］':'［核对中］';continue;}
+    if(pdf)url.hash='page='+row.page;
+    const link=make('a','['+number+']','inline-source');
+    link.href=url.href;link.target='_blank';link.rel='noopener noreferrer';link.referrerPolicy='no-referrer';
+    link.title=pdf?'原 PDF 第 '+row.page+' 页':row.text.slice(0,140);
+    span.replaceChildren(link);
+  }
+}
+function readSourcesDetails(message,inline=[]) {
   const details=make('details',undefined,'research-progress read-web-sources');
   const content=make('div',undefined,'research-progress-body');
   let entry=state.readSources.get(message.id);
@@ -379,6 +396,8 @@ function readSourcesDetails(message) {
     state.readSources.set(message.id,entry);
   }
   entry.content=content;
+  entry.inline=inline;
+  if(inline.length){hydrateInlineCitations(entry);if(!entry.value)void loadReadSources(entry);}
   details.append(make('summary',state.workspace?.liveNotice?.connectivity?.linkedPdf?'已读网页与 PDF（不等于已引用）':'已读网页（不等于已引用）'),content);
   details.open=entry.open;
   if(entry.open)readSourcesContent(content,entry.value);
@@ -430,10 +449,23 @@ function render() {
         response.append(disclosure);
       } else response.append(make('p',m.output.warning,'warning'));
     }
+    const inline=[], numbers=new Map(), imageBlocks=[];
+    const canVerifyCitation=state.workspace.capabilities.includes('read-web-sources')&&m.output?.publicationStatus==='published';
+    const registerCitation=(span,ref)=>{
+      if(!canVerifyCitation){span.textContent='［来源未能核对］';return;}
+      span.textContent='［核对中］';
+      if(!numbers.has(ref))numbers.set(ref,numbers.size+1);
+      inline.push([span,ref,numbers.get(ref)]);
+    };
+    const renderAnswer=value=>{
+      const block=renderMarkdown(document,value,registerCitation);
+      imageBlocks.push(block);
+      return block;
+    };
     const hasSeparateAnswer=m.output?.answer && m.output.answer !== m.output?.report?.text;
-    if (hasSeparateAnswer) response.append(renderMarkdown(document,m.output.answer));
+    if (hasSeparateAnswer) response.append(renderAnswer(m.output.answer));
     if (m.output?.report) {
-      response.append(make('h3','已保存的报告',hasSeparateAnswer?'report-heading':'visually-hidden'),renderMarkdown(document,m.output.report.text));
+      response.append(make('h3','已保存的报告',hasSeparateAnswer?'report-heading':'visually-hidden'),renderAnswer(m.output.report.text));
     } else if (m.error || m.status==='completed' && !m.output?.answer) {
       response.append(make('p','没有读到已保存报告。','muted'));
     }
@@ -445,7 +477,7 @@ function render() {
     }
     if(sources.childElementCount)response.append(sources);
     if(state.workspace.capabilities.includes('read-web-sources')&&m.output?.publicationStatus==='published')
-      response.append(readSourcesDetails(m));
+      response.append(readSourcesDetails(m,inline));
     for(const chart of m.chartViews??[]){
       try{response.append(createFinancialChartView(document,chart));}
       catch{/* A rejected chart view must not hide the durable answer. */}
@@ -465,6 +497,18 @@ function render() {
       download.href='/api/conversations/'+encodeURIComponent(state.conversation)+'/messages/'+encodeURIComponent(m.id)+'/report.md';
       download.download='etf-report-'+m.id+'.md';
       actions.append(copy,download);
+    }
+    if (!m.working && m.status==='completed' && imageBlocks.some(block=>block.textContent.trim())) {
+      const save=make('button','导出图片','secondary');
+      save.type='button';
+      save.addEventListener('click',async()=>{
+        if(save.disabled)return;
+        save.disabled=true;
+        try{await downloadAnswerImage(document,imageBlocks,m.id);message('已导出回答图片。');}
+        catch(error){message(error.message==='ANSWER_IMAGE_TOO_LONG'?'回答太长，无法导出为单张图片。可下载 Markdown。':'未能生成图片，请重试。');}
+        finally{save.disabled=false;}
+      });
+      actions.append(save);
     }
     if (m.question) {
       const reuse = make('button','复用这个问题','secondary');

@@ -32,3 +32,12 @@ test('oversized answer stays fully readable, not silently truncated',()=>{
   const value='# '+ '字'.repeat(165000);
   const node=renderMarkdown(doc,value);assert.equal(node.children[0].tag,'pre');assert.equal(text(node),value);
 });
+
+test('inline evidence tokens reach only the citation projection, not code or link titles',()=>{
+ const ref='WEB:'+'a'.repeat(64)+':1', pdf='PDF:web-pdf-page:sha256:'+'b'.repeat(64);
+ const seen=[];const node=renderMarkdown(doc,'主张 [['+ref+']] **结论 [['+pdf+']]** `[['+ref+']]` [来源](https://example.org "[['+ref+']]")',(span,key)=>{
+  span.append(doc.createTextNode('［引用］'));seen.push(key);
+ });
+ assert.deepEqual(seen,[ref,pdf]);
+ assert.match(text(node),/主张 ［引用］ 结论 ［引用］/);
+});
