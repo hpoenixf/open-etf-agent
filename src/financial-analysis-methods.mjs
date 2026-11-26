@@ -6,6 +6,7 @@ export const FINANCIAL_ANALYSIS_METHOD_TOOL='read_research_skill';
 export const FINANCIAL_METHODS_REVISION='financial-methods@1';
 const ids=Object.freeze(['market-hotspot-analysis','long-horizon-analysis']);
 export const isFinancialSkill=id=>ids.includes(id);
+export const isResearchSkillChoice=id=>id==='auto'||isFinancialSkill(id);
 export async function openFinancialAnalysisMethods(){
  const catalog=await createSkillCatalog({root:fileURLToPath(new URL('./owner-skills/',import.meta.url)),maxBytes:3000});
  const methods=new Map(await Promise.all(ids.map(async id=>[id,Object.freeze(await catalog.read(id))])));

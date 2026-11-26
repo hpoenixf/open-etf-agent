@@ -93,5 +93,11 @@ test('CLI --skill pins the explicit method without a depth switch or model dispa
  assert.equal(state.definition.researchDepth,undefined);
  assert.equal(state.run.definition.config.allowedTools.includes('read_research_skill'),false);
  assert.equal((await cli([...args,'market-hotspot-analysis'])).code,1);
- assert.equal((await cli([...args.slice(0,4),'invalid-skill',...args.slice(5),'unrecognized'])).code,1);
+ const auto=await cli([...args.slice(0,5),'skill-auto',...args.slice(6),'auto']);
+ assert.equal(auto.code,0,auto.err);
+ const inferred=await inspectResearchTask({projectDir:f.project,runId:'skill-auto'});
+ assert.equal(inferred.definition.researchDepth,undefined);
+ assert.ok(inferred.run.definition.config.allowedTools.includes('read_research_skill'));
+ assert.equal(inferred.run.rootUsage.model,0);
+ assert.equal((await cli([...args.slice(0,5),'invalid-skill',...args.slice(6),'unrecognized'])).code,1);
 });

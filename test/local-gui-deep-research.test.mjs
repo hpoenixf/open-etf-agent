@@ -1,3 +1,4 @@
+import {submitConversationMessage,workConversationMessage} from '../src/conversation.mjs';
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {mkdir,mkdtemp,rm} from 'node:fs/promises';
@@ -206,7 +207,9 @@ for(const researchDepth of ['standard','deep','auto'])test(`${researchDepth} can
  const path='/api/conversations/'+id;
  const get=suffix=>fetch(gui.origin+path+suffix).then(r=>r.json());
  const input={messageId:'analysis',question:'分析一个合成市场事件。',researchDepth};
- assert.equal((await post(path+'/messages',input)).status,202);
+ const task=await submitConversationMessage({projectDir,conversationId:id,messageId:input.messageId,text:input.question,sourceManifestSha256:null,skillId:'auto',researchDepth,authorization:{providerApproved:true,dataApproved:true,costApproved:true}});
+ assert.equal(task.status,'active');
+ await workConversationMessage({projectDir,conversationId:id,messageId:input.messageId,apiKey:'synthetic',fetchImpl:options.fetchImpl});
  let entry;
  for(let i=0;i<100;i++){entry=(await get('')).messages[0];if(['completed','failed'].includes(entry?.status)&&!entry.working)break;await sleep(20);}
  assert.equal(entry.status,'completed',JSON.stringify(entry));
@@ -214,6 +217,6 @@ for(const researchDepth of ['standard','deep','auto'])test(`${researchDepth} can
  const original=await get('/messages/analysis/body');
  await gui.close();gui=await startLocalGui(options);
  assert.deepEqual(await get('/messages/analysis/body'),original);
- assert.equal((await post(path+'/messages',input)).status,202);
- assert.equal(calls,2);
+ const replay=await submitConversationMessage({projectDir,conversationId:id,messageId:input.messageId,text:input.question,sourceManifestSha256:null,skillId:'auto',researchDepth,authorization:{providerApproved:true,dataApproved:true,costApproved:true}});
+ assert.equal(replay.runId,task.runId);assert.equal(calls,2);
 });

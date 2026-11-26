@@ -151,7 +151,7 @@ test('linked PDF opt-in is frozen on interactive admission, never inherited by D
  await gui.sweepDaily();
  const member=(await get('/api/daily-watch')).items.find(item=>item.id===watch.id).history[0];
  assert.equal(member.status,'completed');
- assert.deepEqual(seen,[['public_web_read','public_web_continue','read_research_skill']]);
+ assert.deepEqual(seen,[['public_web_read','public_web_continue']]);
  assert.equal((await inspectResearchTask({projectDir,runId:member.runId})).definition.ownerLinkedPdfRevision,undefined);
  const {id}=await post('/api/conversations',{}).then(r=>r.json());
  const path='/api/conversations/'+id;

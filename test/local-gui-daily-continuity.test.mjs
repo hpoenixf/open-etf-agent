@@ -136,7 +136,9 @@ test('daily brief Skill is selected only at the scheduler boundary and preserves
  const question='跟踪纳指 ETF 和红利低波 ETF 各自重要的新消息。';
  const body='# 纳指 ETF\n\n公告提示了溢价风险。接下来核对 IOPV。\n\n# 红利低波 ETF\n\n暂未核实到足以改变判断的新消息。';
  const gui=await startLocalGui({projectDir,liveConfig,env:{...env,ETF_GUI_DAILY_WATCH_SKILL:'daily-watch-brief'},dailyClock:()=>now,
-  async fetchImpl(_endpoint,options){const prompt=JSON.parse(options.body).messages[0].content;prompts.push(prompt);
+  async fetchImpl(_endpoint,options){const request=JSON.parse(options.body),prompt=request.messages[0].content;prompts.push(prompt);
+   const hasSkill=request.tools.some(t=>t.function.name==='read_research_skill');
+   assert.equal(hasSkill,!prompt.startsWith('Manual news question'));
    if(prompt.startsWith('Manual news question'))manualDispatch(prompt);
    return Response.json({choices:[{message:{role:'assistant',content:body},finish_reason:'stop'}]});}});
  t.after(()=>gui.close());
