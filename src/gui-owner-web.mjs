@@ -274,7 +274,8 @@ export function openOwnerWeb({profile,projectDir,projectId,runId,transport={},se
    if(!resolved?.acquired)fail('WEB_PAGE_EVIDENCE_MISSING');
    const {acquired,url}=resolved;
    if(!matchesPageProjection(resolved,first.call.id,first.value)||
-      !isDeepStrictEqual(previousValue,pageProjection(acquired,url,first.call.id,previousValue.page)))fail('WEB_PAGE_EVIDENCE_CHANGED');
+      !(previousValue.page===1?matchesPageProjection(resolved,first.call.id,previousValue):
+        isDeepStrictEqual(previousValue,pageProjection(acquired,url,first.call.id,previousValue.page))))fail('WEB_PAGE_EVIDENCE_CHANGED');
    signal?.throwIfAborted();
    return pageProjection(acquired,url,first.call.id,previousValue.page+1);
   }

@@ -251,13 +251,14 @@ test('cold receipt verification accepts an exact pre-upgrade inventory but not a
  const originalSha256=createHash('sha256').update(bytes).digest('hex');
  const receipt={status:'succeeded',plan:{urls:[url]},manifestSha256:'a'.repeat(64)};
  const acquired={manifestSha256:receipt.manifestSha256,catalog:{documents:[{
-  originalBase64:bytes.toString('base64'),pages:['Verified public market notice'],web:{
+  originalBase64:bytes.toString('base64'),pages:['Verified public market notice','Retained second excerpt'],web:{
    requestedUrl:url,finalUrl:url,retrievedAt:'2026-11-25T00:00:00.000Z',originalSha256,originalMediaType:'text/html',
   },
  }]}};
+ const messages=[];
  const opts={projectDir,projectId:'project-legacy',runId:'run-legacy',profile:{web:true,linkedPdf:true},
   linkedPdfRevision:OWNER_LINKED_PDF_REVISION,excerptRevision:OWNER_WEB_EXCERPTS_LOCAL_MISS,
-  readRun:()=>({runId:'run-legacy',snapshot:{messages:[]}}),
+  readRun:()=>({runId:'run-legacy',snapshot:{messages}}),
   transport:{inspect:async()=>receipt,load:async()=>acquired,acquire:()=>assert.fail('no fetch on cold read')},
  };
  const tool=()=>openOwnerWeb(opts).find(x=>x.name==='public_web_read');
@@ -267,5 +268,18 @@ test('cold receipt verification accepts an exact pre-upgrade inventory but not a
  const old={...fresh,pdfLinks:extractWebPdfLinks(bytes,'text/html',{finalUrl:url,allowPublicNavigation:false})};
  await tool().verifyResult(old,{call});
  await tool().verifyResult(fresh,{call});
+ const continued={id:'old-next',name:'public_web_continue',arguments:{cursor:old.nextCursor}};
+ const remember=value=>{messages.splice(0,messages.length,{role:'assistant',calls:[call]},
+  {role:'tool',callId:call.id,result:{callId:call.id,status:'succeeded',dispatched:true,value}},
+  {role:'assistant',calls:[continued]});};
+ const next=()=>openOwnerWeb(opts).find(x=>x.name===continued.name);
+ remember(fresh);
+ const pageTwo=await next().reconcile(continued.arguments,{callId:continued.id});
+ assert.equal(pageTwo.page,2);assert.equal(pageTwo.text,'Retained second excerpt');
+ remember(old);
+ assert.deepEqual(await next().reconcile(continued.arguments,{callId:continued.id}),pageTwo);
+ await next().verifyResult(pageTwo,{call:continued});
+ remember({...old,pdfLinks:{...old.pdfLinks,links:[]}});
+ await assert.rejects(next().verifyResult(pageTwo,{call:continued}),{code:'WEB_PAGE_EVIDENCE_CHANGED'});
  await assert.rejects(tool().verifyResult({...old,pdfLinks:{...old.pdfLinks,links:[]}},{call}),{code:'WEB_PAGE_EVIDENCE_CHANGED'});
 });
