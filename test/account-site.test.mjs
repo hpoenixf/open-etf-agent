@@ -132,6 +132,49 @@ test('two accounts have distinct durable Projects and old cookies cannot replay 
  t.after(()=>reopen.close());
  assert.equal(sha256((await send(reopen,report.reportPath,{cookie:again})).text),report.sha256);
 });
+test('file-backed conversation catalog keeps identity and title across reopen in its own Project',async t=>{
+ const root=await workspace(t),auth=fixtureAuth();
+ const app=await startAccountSite({projectRoot:root,origin,auth});t.after(()=>app.close());
+ const a=await signIn(app,creds[0]),b=await signIn(app,creds[1]);
+ const create=async cookie=>{
+   const r=await mutation(app,'/api/conversations',{},cookie);
+   assert.equal(r.status,201,r.text);
+   return r.value.id;
+ };
+ const id=await create(a),otherId=await create(b),path='/api/conversations/'+id;
+ const catalog=async (site,cookie)=>{
+   const r=await send(site,'/api/workspace',{cookie});
+   assert.equal(r.status,200,r.text);
+   return r.value;
+ };
+ const detail=async site=>{
+   const r=await send(site,path,{cookie:a});
+   assert.equal(r.status,200,r.text);
+   return r.value;
+ };
+ const initial=await catalog(app,a);
+ assert.deepEqual(initial.conversations,[{id,title:null}]);
+ assert.deepEqual(await detail(app),{id,title:null,messages:[]});
+ const question='Catalog  fixture   title';
+ const turn=await mutation(app,path+'/messages',{messageId:'catalog-fixture',question,sourceId:initial.sources[0].id},a);
+ assert.equal(turn.status,202,turn.text);
+ const title='Catalog fixture title';
+ const verify=async site=>{
+   const own=await catalog(site,a),other=await catalog(site,b),entry=await detail(site);
+   assert.equal(own.projectId,initial.projectId);
+   assert.notEqual(other.projectId,own.projectId);
+   assert.deepEqual(own.conversations,[{id,title}]);
+   assert.deepEqual(other.conversations,[{id:otherId,title:null}]);
+   assert.equal(entry.id,id);
+   assert.equal(entry.title,title);
+   assert.deepEqual(entry.messages.map(row=>row.id),['catalog-fixture']);
+   assert.equal((await send(site,path,{cookie:b})).status,404);
+ };
+ await verify(app);
+ await app.close();
+ const reopened=await startAccountSite({projectRoot:root,origin,auth});t.after(()=>reopened.close());
+ await verify(reopened);
+});
 test('operator cookie policy fails closed and unsafe subject cannot become a filesystem path',async t=>{
  const root=await workspace(t);
  const auth={getSession:async()=>({user:{id:'../escape'}}),

@@ -4,11 +4,11 @@ import {readResearchIntent,isAutoResearchProfile,isDeepResearchProfile,readDeepR
 import { createServer } from 'node:http';
 import { isDeepStrictEqual } from 'node:util';
 import { randomUUID } from 'node:crypto';
-import { readFile, readdir } from 'node:fs/promises';
+import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
-  createConversation, inspectConversation, inspectConversationMessage, readDailyConversationBaseline, readConversationMessage, readConversationCharts, readConversationInput, readConversationTitle, titleForConversationInput, submitConversationMessage,
+  createConversation, inspectConversation, inspectConversationMessage, readDailyConversationBaseline, readConversationMessage, readConversationCharts, readConversationInput, listConversationCatalog, MAX_CONVERSATION_CATALOG_ENTRIES, titleForConversationInput, submitConversationMessage,
   workConversationMessage, cancelConversationMessage,
   readConversationBody, readConversationSources,
 } from './conversation.mjs';
@@ -198,23 +198,6 @@ export async function createLocalGuiWorkspace({ projectDir, origin: mountOrigin,
   const workKey = (conversationId, messageId) => conversationId + '/' + messageId;
   const sourceFor = id => demo.sources.find(s => s.id === id);
 
-  async function list({ titles = false } = {}) {
-    let entries;
-    try { entries = await readdir(join(projectDir, 'conversations'), { withFileTypes: true }); }
-    catch (e) { if (e.code === 'ENOENT') return []; throw e; }
-    if (entries.length > 128) reject(409, 'GUI_HISTORY_LIMIT');
-    const rows = entries.filter(e => e.isDirectory() && idPattern.test(e.name))
-      .map(e => ({ id: e.name }))
-      .sort((a,b) => b.id.localeCompare(a.id));
-    if (titles) {
-      // Keep the number of concurrent filesystem reads bounded.
-      for (let i=0;i<rows.length;i+=8) await Promise.all(rows.slice(i,i+8).map(async row=>{
-        try { row.title=await readConversationTitle({projectDir,conversationId:row.id}); }
-        catch { row.title=null; } // One unreadable entry must not hide all other conversations.
-      }));
-    }
-    return rows;
-  }
   async function detail(conversationId) {
     const c = await inspectConversation({ projectDir, conversationId });
     const messages = [];
@@ -425,7 +408,7 @@ export async function createLocalGuiWorkspace({ projectDir, origin: mountOrigin,
           schemaVersion: 'local-gui@1', mode, reasoningEffort,
           ...(live?{liveNotice:{maxModelCallsPerRun:expectedConfig.limits.model,...(freeform?{freeform:true,connectivity:{web:connectivity.web===true,...(connectivity.linkedPdf===true?{linkedPdf:true}:{}),search:!!connectivity.search,...(connectivity.search?{searchProvider:connectivity.search}:{}),...(connectivity.searchAlternates?{searchAlternates:connectivity.searchAlternates}:{}),wind:connectivity.wind===true}}:{})}}:{}),
           capabilities: ['conversations','progress','reports','sources','read-web-sources',...(freeform?['pdf-attachment','daily-watch','deep-research','research-intent']:[]),...(chartAvailable?['financial-chart-skill']:[]),...(chartAuto?['financial-chart-auto']:[])],
-          projectId: demo.projectId, conversations: await list({titles:true}), sources: publicSources,
+          projectId: demo.projectId, conversations: await listConversationCatalog({projectDir,titles:true}), sources: publicSources,
         });
         if(req.url==='/api/daily-watch'&&daily)return send(200,{timeZone:DAILY_TIME_ZONE,autorun:dailyAutorun,
           emailAvailable:!digestProfile&&!!deliveryHook,...(!digestProfile&&emailConsentToken?{emailConsentToken}:{}),...(!digestProfile&&emailPreview?{emailPreview}:{}),...(fullWatch?{emailContentMode:'full-report'}:{}),
@@ -504,7 +487,7 @@ export async function createLocalGuiWorkspace({ projectDir, origin: mountOrigin,
       }
       if (req.url === '/api/conversations') {
         if (!exact(await inputFor(req), [])) reject(400,'INVALID_CONVERSATION');
-        if ((await list()).length >= 128) reject(409,'GUI_HISTORY_LIMIT');
+        if ((await listConversationCatalog({projectDir})).length >= MAX_CONVERSATION_CATALOG_ENTRIES) reject(409,'GUI_HISTORY_LIMIT');
         // IDs are minted on the server and monotonically group creation times for the list.
         const conversationId = 'c' + Date.now() + '-' + randomUUID().replaceAll('-','').slice(0,24);
         await createConversation({ projectDir, conversationId });
@@ -582,8 +565,8 @@ export async function createLocalGuiWorkspace({ projectDir, origin: mountOrigin,
       begin(conversationId,messageId,definition.sourceManifestSha256);
       return send(202, { id: messageId });
     } catch (e) {
-      const code = e.status ? e.message : typeof e.code === 'string' && /^[A-Z0-9_]+$/.test(e.code) ? e.code : 'GUI_REQUEST_FAILED';
-      const status = e.status ?? (code==='ENOENT'||code==='UNKNOWN_RUN'?404:code.includes('ID_CONFLICT')?409:code==='PDF_LIMIT_BYTES'||code==='PDF_LIMIT_PAGES'||code==='PDF_LIMIT_TEXT'?413:code==='PROJECT_SOURCE_INVALID_INPUT'||code==='PDF_ENCRYPTED'||code==='PDF_PARSE_FAILED'||code==='PDF_INVALID_FORMAT'||code==='PDF_NO_TEXT_LAYER'||code==='PDF_TIMEOUT'?422:500);
+      const code = e.code==='CONVERSATION_CATALOG_LIMIT'?'GUI_HISTORY_LIMIT':e.status ? e.message : typeof e.code === 'string' && /^[A-Z0-9_]+$/.test(e.code) ? e.code : 'GUI_REQUEST_FAILED';
+      const status = e.status ?? (code==='ENOENT'||code==='UNKNOWN_RUN'?404:(code==='GUI_HISTORY_LIMIT'||code.includes('ID_CONFLICT'))?409:code==='PDF_LIMIT_BYTES'||code==='PDF_LIMIT_PAGES'||code==='PDF_LIMIT_TEXT'?413:code==='PROJECT_SOURCE_INVALID_INPUT'||code==='PDF_ENCRYPTED'||code==='PDF_PARSE_FAILED'||code==='PDF_INVALID_FORMAT'||code==='PDF_NO_TEXT_LAYER'||code==='PDF_TIMEOUT'?422:500);
       if (!res.headersSent && !res.destroyed) send(status,{ error:code });
     }
   }

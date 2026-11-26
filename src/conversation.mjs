@@ -143,6 +143,25 @@ export async function submitConversationMessage({projectDir,conversationId,messa
 }
 export async function workConversationMessage({projectDir,conversationId,messageId,...controls}){const loc=await location(projectDir,conversationId),record=await intent(loc,messageId);const task=await checkedTask(loc,record);if(task.run.status==='active'&&(await inspectResearchProject({projectDir:loc.projectDir})).configSha256!==record.configSha256)fail('CONVERSATION_EXECUTION_AUTHORITY_CHANGED');return workResearchTask({...controls,projectDir:loc.projectDir,runId:record.runId});}
 export async function cancelConversationMessage({projectDir,conversationId,messageId}){const loc=await location(projectDir,conversationId),record=await intent(loc,messageId);await checkedTask(loc,record);return cancelResearchTask({projectDir:loc.projectDir,runId:record.runId});}
+export const MAX_CONVERSATION_CATALOG_ENTRIES=128;
+
+export async function listConversationCatalog({projectDir,titles=false}){
+ let entries;
+ try{entries=await readdir(join(projectDir,'conversations'),{withFileTypes:true});}
+ catch(e){if(e.code==='ENOENT')return [];throw e;}
+ if(entries.length>MAX_CONVERSATION_CATALOG_ENTRIES)fail('CONVERSATION_CATALOG_LIMIT');
+ const rows=entries.filter(e=>e.isDirectory()&&/^[A-Za-z0-9_-]{1,48}$/.test(e.name))
+  .map(e=>({id:e.name})).sort((a,b)=>b.id.localeCompare(a.id));
+ if(titles){
+  // Bound reads; an unreadable title must not hide other conversations.
+  for(let i=0;i<rows.length;i+=8)await Promise.all(rows.slice(i,i+8).map(async row=>{
+   try{row.title=await readConversationTitle({projectDir,conversationId:row.id});}
+   catch{row.title=null;}
+  }));
+ }
+ return rows;
+}
+
 // Lightweight History metadata: read only the first immutable intent, never task output.
 export async function readConversationTitle({projectDir,conversationId}){
  const loc=await location(projectDir,conversationId),names=await readdir(await safeDirectory(join(loc.directory,'messages')));
