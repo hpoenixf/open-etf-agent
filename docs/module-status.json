@@ -1,9 +1,9 @@
 {
   "schemaVersion": 2,
-  "reviewedVersion": "1.0.0",
-  "reviewedSource": "d9b44f0508d15c35f9e7f52da27d7bdb8c4eb704",
+  "reviewedVersion": "1.0.1",
+  "reviewedSource": "5c042b7930cf03871ac7000ebb91c6cc98916795",
   "articleSource": "https://github.com/hpoenixf/eff-agent-article/blob/249f0b866f9446f33b57f186fbc6d35b5d82c119/articles/open-etf-agent-v010-system-design.md",
-  "evidence": "docs/verification/v100-release.md",
+  "evidence": "docs/verification/v101-release.md",
   "layers": [
     {
       "id": "L1",
@@ -155,14 +155,14 @@
       "group": "task",
       "name": "Research Project",
       "summary": {
-        "zh": "导入并提交研究",
-        "en": "Import and submit research"
+        "en": "Frozen research and deeper guidance",
+        "zh": "冻结研究输入与深度指引"
       },
       "boundary": {
         "zh": "自有资料与固定任务",
         "en": "Owned sources, frozen task"
       },
-      "status": "bounded",
+      "status": "enhanced",
       "source": "src/research-project.mjs",
       "kind": "module",
       "article": {
@@ -455,14 +455,14 @@
       "group": "tools",
       "name": "Skill",
       "summary": {
-        "zh": "按任务加载方法",
-        "en": "Load task methods"
+        "en": "Explicit or optional auto Skill",
+        "zh": "明确选择或按意图调用 Skill"
       },
       "boundary": {
         "zh": "方法说明不扩大工具权",
         "en": "Instructions add no authority"
       },
-      "status": "bounded",
+      "status": "enhanced",
       "source": "src/skills.mjs",
       "kind": "module",
       "article": {
@@ -755,8 +755,8 @@
       "group": "tools",
       "name": "Web Acquisition",
       "summary": {
-        "en": "Continue reading one public page",
-        "zh": "继续读取同一公开网页的摘录"
+        "en": "Retain exact eligible source locator",
+        "zh": "保留合规来源的精确位置"
       },
       "boundary": {
         "en": "Uses retained bytes; no second fetch",
@@ -780,8 +780,8 @@
       "group": "tools",
       "name": "PDF",
       "summary": {
-        "zh": "文字 PDF 附件和原页回读",
-        "en": "Text PDF and original page readback"
+        "en": "Text PDF with original page citation",
+        "zh": "文本 PDF 引用定位原始页"
       },
       "boundary": {
         "zh": "无 OCR / 视觉解析",
@@ -1037,7 +1037,7 @@
         "zh": "建议性复核，不作认证",
         "en": "Advisory review, not certification"
       },
-      "status": "enhanced",
+      "status": "bounded",
       "source": "src/report-review.mjs",
       "kind": "module",
       "article": {
@@ -1087,7 +1087,7 @@
         "en": "Same owner and turn; not citations",
         "zh": "仅同一项目、本轮；不等于引用"
       },
-      "status": "enhanced",
+      "status": "bounded",
       "source": "src/gui/gui.mjs",
       "kind": "call-site",
       "article": {
