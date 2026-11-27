@@ -1,3 +1,4 @@
+import {inputChartChoice,hasSuppliedChartData} from './financial-chart-input.mjs';
 import {isResearchSkillChoice} from './financial-analysis-methods.mjs';
 import {offerReasoningEffort} from './gateway.mjs';
 import {ownerChartChoice, readOwnerChartViews} from './financial-chart-owner.mjs';
@@ -69,7 +70,7 @@ export async function submitConversationMessage({projectDir,conversationId,messa
  if(dailyBrief!==undefined&&dailyResearch===undefined)fail('CONVERSATION_DAILY_CONTEXT_INVALID');
  if(dailyResearch!==undefined){if(!freeform)fail('CONVERSATION_DAILY_CONTEXT_INVALID');validateDailyContext(dailyResearch,{conversationId,messageId});}
  if(chartSkill!==undefined&&(!freeform||dailyResearch!==undefined||!ownerChartChoice(chartSkill)||
-   (await inspectResearchProject({projectDir:loc.projectDir})).config.ownerConnectivity?.wind!==true))fail('CONVERSATION_CHART_UNAVAILABLE');
+   (inputChartChoice(chartSkill)?!hasSuppliedChartData(text):(await inspectResearchProject({projectDir:loc.projectDir})).config.ownerConnectivity?.wind!==true)))fail('CONVERSATION_CHART_UNAVAILABLE');
  if(researchDepth!==undefined&&(!['auto','standard','deep'].includes(researchDepth)||dailyResearch!==undefined||parent!==null||review!==null||continuationOfMessageId!==null||
    !authorization?.providerApproved||!authorization?.dataApproved||!authorization?.costApproved||
    !supportsOwnerFreeform((await inspectResearchProject({projectDir:loc.projectDir})).config)))fail('CONVERSATION_RESEARCH_DEPTH_UNAVAILABLE');
@@ -197,7 +198,7 @@ export async function inspectConversationMessage({projectDir,conversationId,mess
 export async function readConversationCharts({projectDir,conversationId,messageId}){
  const loc=await location(projectDir,conversationId),record=await intent(loc,messageId);
  const {run}=await checkedTask(loc,record);
- return ownerChartChoice(record.input.chartSkill)?readOwnerChartViews(run):[];
+ return ownerChartChoice(record.input.chartSkill)?readOwnerChartViews(run,{operatorText:record.input.text,chartSkill:record.input.chartSkill}):[];
 }
 export async function readConversationInput({projectDir,conversationId,messageId}){const loc=await location(projectDir,conversationId),record=await intent(loc,messageId);return {text:record.input.text,...(record.input.skillId===undefined?{}:{skillId:record.input.skillId}),...(record.input.ownerLinkedPdfRevision===undefined?{}:{ownerLinkedPdfRevision:record.input.ownerLinkedPdfRevision}),sourceManifestSha256:record.input.sourceManifestSha256,...(record.input.chartSkill?{chartSkill:record.input.chartSkill}:{}),...(record.input.researchDepth===undefined?{}:{researchDepth:record.input.researchDepth}),...(record.input.reasoningEffort===undefined?{}:{reasoningEffort:record.input.reasoningEffort})};}
 export async function readConversationMessage({projectDir,conversationId,messageId}){const loc=await location(projectDir,conversationId),record=await intent(loc,messageId);await checkedTask(loc,record);const output=await readResearchOutput({projectDir:loc.projectDir,runId:record.runId});return {conversationId,messageId,input:record.input,digest:record.digest,output};}

@@ -3,7 +3,7 @@ import {join} from 'node:path';
 import {inspectResearchProject,readProjectJson} from './research-project.mjs';
 import {loadProjectSources,persistWebAcquisition} from './project-sources.mjs';
 import {safeDirectory,ensureSafeDirectory,publishImmutable} from './storage-files.mjs';
-import {acquireWebPage,prepareWebNetworkProfile} from './web-transport.mjs';
+import {acquireWebPage,prepareWebNetworkProfile,originalDirectGetTimeoutProof} from './web-transport.mjs';
 import {normalizeWebUrl,webAcquisitionDeadline} from './web-policy.mjs';
 import {normalizeWebAcquisitionPlan,validateWebAcquisitionTerminal,acquisitionBytes,acquisitionHash,ACQUISITION_LIMITS,ACQUISITION_PLATFORM_LIMITS} from './web-acquisition-records.mjs';
 
@@ -13,7 +13,7 @@ async function syncDirectory(path){const handle=await open(path,constants.O_RDON
 async function publish(path,name,value){await publishImmutable(path,name,acquisitionBytes(value));await syncDirectory(path);}
 
 /** A finite explicit acquisition. An existing operation ID is never dispatched again. */
-export async function acquireProjectWebSources({projectDir,acquisitionId,urls,allowedRedirectUrls=[],baseManifestSha256=null,approvePublicFetch=false,networkProfile='system-direct@1',signal}={}){
+export async function acquireProjectWebSources({projectDir,acquisitionId,urls,allowedRedirectUrls=[],baseManifestSha256=null,approvePublicFetch=false,networkProfile='system-direct@1',recordLocalTimeoutClose=false,signal}={}){
  if(approvePublicFetch!==true)fail('WEB_ACQUISITION_APPROVAL_REQUIRED');
  signal?.throwIfAborted();id(acquisitionId);
  if(!Array.isArray(urls)||urls.length<1||urls.length>4||!Array.isArray(allowedRedirectUrls)||allowedRedirectUrls.length>12)fail('WEB_ACQUISITION_SELECTION_INVALID');
@@ -34,7 +34,7 @@ export async function acquireProjectWebSources({projectDir,acquisitionId,urls,al
  try{
   for(const url of selected){
    controller.signal.throwIfAborted();if(requests>=plan.limits.requests)fail('WEB_REQUEST_LIMIT');if(bytes>=plan.limits.originalBytes||(platform&&receivedBytes>=plan.limits.networkBytes))fail('WEB_ACQUISITION_TOTAL_LIMIT');active=true;
-   const observation=await acquireWebPage({url,allowedUrls:plan.allowedUrls,signal:controller.signal,networkProfile,preparedNetworkProfile,limits:{requests:plan.limits.requests-requests,bodyBytes:Math.min(262144,plan.limits.originalBytes-bytes),totalBytes:platform?Math.min(524288,plan.limits.networkBytes-receivedBytes):plan.limits.originalBytes-bytes}});
+   const observation=await acquireWebPage({url,allowedUrls:plan.allowedUrls,signal:controller.signal,networkProfile,preparedNetworkProfile,recordLocalTimeoutClose:recordLocalTimeoutClose===true&&!platform&&plan.urls.length===1&&plan.allowedUrls.length===1,limits:{requests:plan.limits.requests-requests,bodyBytes:Math.min(262144,plan.limits.originalBytes-bytes),totalBytes:platform?Math.min(524288,plan.limits.networkBytes-receivedBytes):plan.limits.originalBytes-bytes}});
    active=false;requests+=observation.requestCount;receivedBytes+=observation.receivedBytes;bytes+=observation.body.length;textBytes+=Buffer.byteLength(observation.pages.join(''));
    if(bytes>ACQUISITION_LIMITS.originalBytes||textBytes>ACQUISITION_LIMITS.textBytes)fail('WEB_ACQUISITION_TOTAL_LIMIT');
    observations.push(observation);
@@ -49,7 +49,13 @@ export async function acquireProjectWebSources({projectDir,acquisitionId,urls,al
   const dispatchOutcomeKnown=!active||['not-dispatched','outcome-unknown','response-observed'].includes(error?.dispatchState);
   const unknown=!dispatchOutcomeKnown?null:active?(error?.dispatchState==='not-dispatched'?0:Math.max(0,partial-(Number.isSafeInteger(error?.responseCount)?error.responseCount:0))):0;
   const code=typeof error?.code==='string'&&/^[A-Z][A-Z0-9_]{1,80}$/.test(error.code)?error.code:'WEB_ACQUISITION_FAILED';
-  const terminal={schemaVersion:platform?'web-acquisition-terminal@2':'web-acquisition-terminal@1',projectId:project.projectId,acquisitionId,admissionSha256:acquisitionHash(plan),status:'failed',manifestSha256:null,completedPages:observations.length,requestCount:requests+partial,unknownRequests:unknown,dispatchOutcomeKnown,code,automaticReplayAllowed:false,...(platform?{networkProfile,receivedBytes:receivedBytes+(active&&Number.isSafeInteger(error?.receivedBytes)?error.receivedBytes:0)}:{})};
+  const closeProof=originalDirectGetTimeoutProof(error);
+  const localTimeoutClose=recordLocalTimeoutClose===true&&!platform&&active&&!signal?.aborted&&
+   code==='WEB_TIMEOUT'&&unknown===1&&
+   (closeProof==='direct-original-get-close@1'&&partial===2||
+    closeProof==='direct-original-robots-close@1'&&partial===1)&&
+   plan.urls.length===1&&plan.allowedUrls.length===1&&observations.length===0;
+  const terminal={schemaVersion:platform?'web-acquisition-terminal@2':'web-acquisition-terminal@1',projectId:project.projectId,acquisitionId,admissionSha256:acquisitionHash(plan),status:'failed',manifestSha256:null,completedPages:observations.length,requestCount:requests+partial,unknownRequests:unknown,dispatchOutcomeKnown,code,automaticReplayAllowed:false,...(localTimeoutClose?{localTimeoutClose:closeProof}:{}),...(platform?{networkProfile,receivedBytes:receivedBytes+(active&&Number.isSafeInteger(error?.receivedBytes)?error.receivedBytes:0)}:{})};
   try{validateWebAcquisitionTerminal(terminal,plan);await publish(directory,'terminal.json',terminal);}catch{ /* original held plan remains authoritative on persistence uncertainty */ }
   throw Object.assign(new Error(code),{code,acquisition:terminal});
  }finally{clearTimeout(timer);signal?.removeEventListener('abort',forward);}

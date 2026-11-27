@@ -629,7 +629,7 @@ async function load() {
     updateSettingsLabel();
     byId('chart-skill-picker').hidden=!state.workspace.capabilities.includes('financial-chart-skill');
     byId('chart-skill-slot').hidden=byId('chart-skill-picker').hidden;
-    byId('chart-skill').options[0].textContent=state.workspace.capabilities.includes('financial-chart-auto')?'自动（适用时使用图表）':'自动（图表需点选）';
+    byId('chart-skill').options[0].textContent=state.workspace.capabilities.includes('financial-chart-auto')?'自动（适用时使用图表）':'自动（支持你提供的明确数据）';
     byId('source').required=false;
     byId('question').placeholder='输入你的问题';
   } else if (liveMode()) {

@@ -8,6 +8,9 @@ import {extractWebText} from './web-extraction.mjs';
 export {prepareWebNetworkProfile} from './web-platform-profile.mjs';
 export {WEB_LIMITS,WEB_USER_AGENT,normalizeWebUrl} from './web-policy.mjs';
 const digest=bytes=>createHash('sha256').update(bytes).digest('hex');
+const locallyClosedOriginalTimeouts=new WeakMap();
+export const originalDirectGetTimeoutProof=error=>locallyClosedOriginalTimeouts.get(error);
+const CLOSE_GRACE_MS=250;
 const redirectCodes=new Set([301,302,303,307,308]);
 const aborted=signal=>{if(signal.aborted)throw signal.reason;};
 function resolveAddress(hostname,signal,timeoutMs){
@@ -20,15 +23,33 @@ function resolveAddress(hostname,signal,timeoutMs){
   dns.lookup(hostname,{all:true,verbatim:true},(error,records)=>{if(error){done(webFailure('WEB_DNS_UNAVAILABLE'));return;}try{done(null,publicAddresses(records)[0]);}catch(error){done(error);}});
  });
 }
-function requestBytes(url,address,signal,maximum,state,platformConfig,extraHeaders={}){
+function requestBytes(url,address,signal,maximum,state,platformConfig,extraHeaders={},proveClose=false){
  return new Promise((resolve,reject)=>{
-  let request,response,transport,settled=false,ended=false;const chunks=[];let bytes=0;
-  const done=(error,value)=>{if(settled)return;settled=true;signal.removeEventListener('abort',abort);state.proxyConnectionAttempts+=transport?.connectionAttempts??0;transport?.dispose();if(error){response?.destroy();request?.destroy();reject(error);}else resolve(value);};
-  const abort=()=>done(signal.reason);signal.addEventListener('abort',abort,{once:true});if(signal.aborted){abort();return;}
+  let request,response,transport,settled=false,closing=false,ended=false;const chunks=[];let bytes=0;
+  const done=(error,value)=>{if(settled||closing)return;settled=true;signal.removeEventListener('abort',abort);state.proxyConnectionAttempts+=transport?.connectionAttempts??0;transport?.dispose();if(error){response?.destroy();if(!request?.destroyed)request?.destroy();reject(error);}else resolve(value);};
+  const abort=()=>{
+   const reason=signal.reason;
+   // One original direct GET had no response. Closing the locally owned
+   // transport is provable; whether the remote ever received it is not.
+   if(!proveClose||reason?.code!=='WEB_TIMEOUT'||!request||response)return done(reason);
+   closing=true;
+   const finishClose=observed=>{
+    clearTimeout(grace);
+    request.removeListener('close',onClose);
+    if(observed&&request.destroyed&&(!request.socket||request.socket.destroyed))locallyClosedOriginalTimeouts.set(reason,proveClose);
+    closing=false;done(reason);
+   };
+   const onClose=()=>finishClose(true);
+   const grace=setTimeout(()=>finishClose(false),CLOSE_GRACE_MS);
+   request.once('close',onClose);
+   request.destroy();
+  };
+  signal.addEventListener('abort',abort,{once:true});if(signal.aborted){abort();return;}
   try{
    transport=platformConfig?platformPinnedTransport(url,address,signal,platformConfig):null;
    state.requests++;
    request=https.request(transport?.url??url,{method:'GET',agent:false,maxHeaderSize:8192,rejectUnauthorized:true,servername:url.hostname,lookup:(_host,options,callback)=>options?.all?callback(null,[address]):callback(null,address.address,address.family),headers:{'User-Agent':WEB_USER_AGENT,'Accept':'text/html, text/plain;q=0.9','Accept-Encoding':'identity',...extraHeaders,...transport?.options.headers},...(transport?{agent:transport.options.agent,servername:transport.options.servername,rejectUnauthorized:true}: {})},res=>{
+    if(closing||settled){res.destroy();return;}
     response=res;const status=res.statusCode,headers=res.headers;
     if(!Number.isSafeInteger(status)){done(webFailure('WEB_HTTP_INVALID'));return;}
     const result={url:url.href,status,contentType:headers['content-type']??null,location:headers.location??null,body:Buffer.alloc(0)};
@@ -56,7 +77,7 @@ export async function acquireWebPage(options){
 export async function acquireApprovedWebPdf({url,signal,networkProfile,preparedNetworkProfile}={}){
  return acquirePublicDocument({url,allowedUrls:[url],signal,networkProfile,preparedNetworkProfile},true);
 }
-async function acquirePublicDocument({url,allowedUrls,signal,limits:input,networkProfile='system-direct@1',preparedNetworkProfile}={},pdf=false){
+async function acquirePublicDocument({url,allowedUrls,signal,limits:input,networkProfile='system-direct@1',preparedNetworkProfile,recordLocalTimeoutClose=false}={},pdf=false){
  if(!['system-direct@1',PLATFORM_PROFILE].includes(networkProfile))throw webFailure('WEB_NETWORK_PROFILE_INVALID');
  const platformConfig=readPreparedWebNetworkProfile(preparedNetworkProfile??prepareWebNetworkProfile(networkProfile),networkProfile);
  const limits=webLimits(input),requestedUrl=normalizeWebUrl(url);
@@ -67,13 +88,16 @@ async function acquirePublicDocument({url,allowedUrls,signal,limits:input,networ
  signal?.addEventListener('abort',forward,{once:true});if(signal?.aborted)forward();
  const state={requests:0,responses:0,receivedBytes:0,proxyConnectionAttempts:0,remainingBytes:limits.totalBytes},redirects=[],robots=[],cache=new Map(),dnsObservations=[];
  function checkDeadline(){if(Date.now()>=deadlineAt&&!controller.signal.aborted)controller.abort(webFailure('WEB_TIMEOUT'));aborted(controller.signal);}
- async function fetchPinned(u,address,maximum,headers={}){checkDeadline();if(state.requests>=limits.requests)throw webFailure('WEB_REQUEST_LIMIT');return requestBytes(u,address,controller.signal,maximum,state,platformConfig,headers);}
+ async function fetchPinned(u,address,maximum,headers={},proveClose=false){checkDeadline();if(state.requests>=limits.requests)throw webFailure('WEB_REQUEST_LIMIT');return requestBytes(u,address,controller.signal,maximum,state,platformConfig,headers,proveClose);}
  const platformResolve=platformConfig?createPlatformResolver(fetchPinned,dnsObservations):null;
- async function fetchOne(href,maximum,headers){checkDeadline();const u=new URL(normalizeWebUrl(href)),address=platformResolve?await platformResolve(u.hostname):await resolveAddress(u.hostname,controller.signal,Math.min(limits.dnsMs,limits.timeoutMs));aborted(controller.signal);return fetchPinned(u,address,maximum,headers);}
+ async function fetchOne(href,maximum,headers,proveClose=false){checkDeadline();const u=new URL(normalizeWebUrl(href)),address=platformResolve?await platformResolve(u.hostname):await resolveAddress(u.hostname,controller.signal,Math.min(limits.dnsMs,limits.timeoutMs));aborted(controller.signal);return fetchPinned(u,address,maximum,headers,proveClose);}
  async function rulesFor(page){
   const origin=new URL(page).origin;if(cache.has(origin))return cache.get(origin);
   let href=origin+'/robots.txt',redirectCount=0;const hops=[];
-  while(true){const response=await fetchOne(href,limits.robotsBytes);hops.push({url:href,status:response.status});
+  while(true){
+   const proof=recordLocalTimeoutClose===true&&!pdf&&!platformConfig&&page===requestedUrl&&redirectCount===0&&
+    state.requests===0?'direct-original-robots-close@1':false;
+   const response=await fetchOne(href,limits.robotsBytes,undefined,proof);hops.push({url:href,status:response.status});
    if(redirectCodes.has(response.status)){
     if(++redirectCount>limits.redirects||typeof response.location!=='string')throw webFailure('WEB_ROBOTS_REDIRECT');
     const next=normalizeWebUrl(new URL(response.location,href).href),u=new URL(next);
@@ -91,7 +115,9 @@ async function acquirePublicDocument({url,allowedUrls,signal,limits:input,networ
   for(let i=0;;i++){
    const rules=await rulesFor(href);aborted(controller.signal);
    if(rules&&rules.isAllowed(normalizeRobotsOctets(href),WEB_USER_AGENT)!==true)throw webFailure('WEB_ROBOTS_DISALLOWED');
-   const response=await fetchOne(href,limits.bodyBytes,pdf?{'Accept':'application/pdf'}:undefined);
+   const proveClose=recordLocalTimeoutClose===true&&!pdf&&!platformConfig&&i===0&&href===requestedUrl&&
+    state.requests===1&&state.responses===1?'direct-original-get-close@1':false;
+   const response=await fetchOne(href,limits.bodyBytes,pdf?{'Accept':'application/pdf'}:undefined,proveClose);
    if(redirectCodes.has(response.status)){
     if(i>=limits.redirects||typeof response.location!=='string')throw webFailure('WEB_REDIRECT_LIMIT');
     const next=normalizeWebUrl(new URL(response.location,href).href);if(!allowed.has(next))throw webFailure('WEB_REDIRECT_NOT_ADMITTED');redirects.push({url:href,status:response.status,location:next});href=next;continue;

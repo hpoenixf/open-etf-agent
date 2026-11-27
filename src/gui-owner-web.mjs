@@ -138,6 +138,13 @@ async function searchByKey(provider,backend,query,signal,fetchImpl,settings){
 export function openOwnerWeb({profile,projectDir,projectId,runId,transport={},searchSettings,excerptRevision,linkedPdfRevision,readRun}){
  if(!profile?.web)return [];
  const acquire=transport.acquire??acquireProjectWebSources, inspect=transport.inspect??inspectWebAcquisition, load=transport.load??loadProjectSources;
+ const nativePageAcquisition=acquire===acquireProjectWebSources&&inspect===inspectWebAcquisition;
+ const locallyStoppedPage=(receipt,url)=>nativePageAcquisition&&receipt.status==='failed'&&receipt.code==='WEB_TIMEOUT'&&
+  receipt.plan?.urls?.length===1&&receipt.plan.urls[0]===url&&receipt.plan.allowedUrls?.length===1&&
+  (receipt.localTimeoutClose==='direct-original-get-close@1'&&receipt.requestCount===2||
+   receipt.localTimeoutClose==='direct-original-robots-close@1'&&receipt.requestCount===1)&&
+  receipt.automaticReplayAllowed===false&&receipt.dispatchOutcomeKnown===true&&receipt.unknownRequests===1&&
+  receipt.completedPages===0&&receipt.manifestSha256===null;
  const fetchImpl=transport.searchFetch??globalThis.fetch;
  const operation=(name,callId)=>name+'-'+hash(JSON.stringify([runId,callId])).slice(0,40);
  const localInvalidCursor=excerptRevision===OWNER_WEB_EXCERPTS_LOCAL_MISS;
@@ -169,6 +176,12 @@ export function openOwnerWeb({profile,projectDir,projectId,runId,transport={},se
  const readPageFailure=async(url,callId)=>{
   let saved;try{saved=await readProjectJson(join(pageFailureDirectory(callId),'result.json'),8192);}catch(error){if(error.code==='ENOENT')return null;throw error;}
   if(saved.urlSha256!==hash(url)||saved.value?.kind!=='public-web-page-unavailable@1')fail('WEB_PAGE_EVIDENCE_CHANGED');
+  if(Object.hasOwn(saved.value,'localRequestClosed')||
+     saved.value.reason==='WEB_TIMEOUT'&&saved.value.requestOutcome==='unknown'){
+   if(saved.value.reason!=='WEB_TIMEOUT'||saved.value.requestOutcome!=='unknown'||saved.value.localRequestClosed!==true||
+      saved.value.automaticReplayAllowed!==false||
+      !locallyStoppedPage(await inspect({projectDir,acquisitionId:operation('page',callId)}),url))fail('WEB_PAGE_EVIDENCE_CHANGED');
+  }
   return saved.value;
  };
  const storedPage=async(args,{callId,signal})=>{
@@ -194,15 +207,18 @@ export function openOwnerWeb({profile,projectDir,projectId,runId,transport={},se
    const url=ownerDocumentUrl(args.url);
    const acquisitionId=operation('page',callId);
    let acquired;
-   try{acquired=await acquire({projectDir,acquisitionId,urls:[url],approvePublicFetch:true,signal});}
+   try{acquired=await acquire({projectDir,acquisitionId,urls:[url],approvePublicFetch:true,signal,...(nativePageAcquisition?{recordLocalTimeoutClose:true}:{})});}
    catch(error){
     if(signal?.aborted||!PAGE_UNAVAILABLE.has(error?.code))throw error;
     const native=await inspect({projectDir,acquisitionId});
     if(native.status!=='failed'||native.code!==error.code||native.plan?.urls?.length!==1||native.plan.urls[0]!==url)throw error;
     const requestOutcome=native.dispatchOutcomeKnown&&native.unknownRequests===0?'no-unobserved-dispatch':'unknown';
-    // A timeout may become a model-visible missing source only after original settlement is proved.
-    if(error.code==='WEB_TIMEOUT'&&(requestOutcome==='unknown'||native.automaticReplayAllowed!==false))throw error;
-    const value=unavailable('page','public-static-web',error.code,requestOutcome);
+    // An official direct original page/robots GET may report a missing source
+    // after its local close, without treating robots as allowed or settling the remote.
+    const locallyStopped=error.code==='WEB_TIMEOUT'&&requestOutcome==='unknown'&&locallyStoppedPage(native,url);
+    if(signal?.aborted||error.code==='WEB_TIMEOUT'&&(native.automaticReplayAllowed!==false||
+       requestOutcome==='unknown'&&!locallyStopped))throw error;
+    const value={...unavailable('page','public-static-web',error.code,requestOutcome),...(locallyStopped?{localRequestClosed:true}:{})};
     await ensureSafeDirectory(join(projectDir,'owner-web-page-refusals'));
     const directory=pageFailureDirectory(callId);await mkdir(directory,{mode:0o700});
     await publishImmutable(directory,'result.json',Buffer.from(JSON.stringify({urlSha256:hash(url),value})),signal);

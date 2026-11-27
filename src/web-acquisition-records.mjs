@@ -58,13 +58,17 @@ export function validateWebTransportRecord(value,plan){
 export function validateWebAcquisitionTerminal(value,plan){
  const platform=plan.schemaVersion==='web-acquisition-plan@2';
  const common='schemaVersion,projectId,acquisitionId,admissionSha256,status,manifestSha256,completedPages,requestCount,unknownRequests,automaticReplayAllowed'+(platform?',networkProfile,receivedBytes':'');
- const success=value?.status==='succeeded',failure=value?.status==='failed';
- if((!success&&!failure)||!exact(value,common+(success?',originalBytes,textBytes':',dispatchOutcomeKnown,code'))||value.schemaVersion!==(platform?'web-acquisition-terminal@2':'web-acquisition-terminal@1')||value.projectId!==plan.projectId||value.acquisitionId!==plan.acquisitionId||value.admissionSha256!==acquisitionHash(plan)||value.automaticReplayAllowed!==false)fail();
+ const success=value?.status==='succeeded',failure=value?.status==='failed',localClose=failure&&Object.hasOwn(value,'localTimeoutClose');
+ if((!success&&!failure)||!exact(value,common+(success?',originalBytes,textBytes':',dispatchOutcomeKnown,code')+(localClose?',localTimeoutClose':''))||value.schemaVersion!==(platform?'web-acquisition-terminal@2':'web-acquisition-terminal@1')||value.projectId!==plan.projectId||value.acquisitionId!==plan.acquisitionId||value.admissionSha256!==acquisitionHash(plan)||value.automaticReplayAllowed!==false)fail();
  const bounded=(n,max)=>Number.isSafeInteger(n)&&n>=0&&n<=max;
  if(!bounded(value.completedPages,plan.urls.length)||!bounded(value.requestCount,plan.limits.requests)||value.requestCount<value.completedPages)fail();
  if(platform&&(value.networkProfile!==plan.networkProfile||!bounded(value.receivedBytes,success?plan.limits.networkBytes:Number.MAX_SAFE_INTEGER)))fail();
  if(success){
   if(!hex(value.manifestSha256)||value.completedPages!==plan.urls.length||value.unknownRequests!==0||!bounded(value.originalBytes,plan.limits.originalBytes)||value.originalBytes<value.completedPages||!bounded(value.textBytes,plan.limits.textBytes)||value.textBytes<value.completedPages)fail();
  }else if(value.manifestSha256!==null||typeof value.dispatchOutcomeKnown!=='boolean'||typeof value.code!=='string'||!/^[A-Z][A-Z0-9_]{1,80}$/.test(value.code)||(value.dispatchOutcomeKnown?!bounded(value.unknownRequests,value.requestCount):value.unknownRequests!==null))fail();
+ if(localClose&&(platform||value.code!=='WEB_TIMEOUT'||value.dispatchOutcomeKnown!==true||
+    value.unknownRequests!==1||value.completedPages!==0||plan.urls.length!==1||plan.allowedUrls.length!==1||
+    !(value.localTimeoutClose==='direct-original-get-close@1'&&value.requestCount===2||
+      value.localTimeoutClose==='direct-original-robots-close@1'&&value.requestCount===1)))fail();
  return structuredClone(value);
 }

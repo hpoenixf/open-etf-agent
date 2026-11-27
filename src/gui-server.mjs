@@ -1,3 +1,4 @@
+import {INPUT_CHART_SKILL,INPUT_CHART_AUTO,hasSuppliedChartData} from './financial-chart-input.mjs';
 import {dailyBriefLabel} from './conversation-daily-context.mjs';
 import {OWNER_CHART_SKILL,OWNER_CHART_AUTO} from './financial-chart-owner.mjs';
 import {readResearchIntent,isAutoResearchProfile,isDeepResearchProfile,readDeepResearchProgress} from './research-intent.mjs';
@@ -139,8 +140,8 @@ export async function createLocalGuiWorkspace({ projectDir, origin: mountOrigin,
   const needsConsent=live&&!freeform;
   const reasoningEffort=offerReasoningEffort(expectedConfig);
   const connectivity=expectedConfig.ownerConnectivity??{};
-  const chartAvailable=freeform&&connectivity.wind===true;
-  const chartAuto=chartAvailable&&env.ETF_GUI_FINANCIAL_CHART_AUTO==='1';
+  const chartAvailable=freeform;
+  const chartAuto=chartAvailable&&connectivity.wind===true&&env.ETF_GUI_FINANCIAL_CHART_AUTO==='1';
   const ownerSearchSettings=Object.fromEntries([connectivity.search,...(connectivity.searchAlternates??[])].filter(Boolean).map(provider=>[provider,prepareOwnerSearch(provider,env)]));
   const ownerWindSettings=connectivity.wind?((await import('./gui-owner-wind.mjs')).prepareOwnerWind(true,env)):undefined;
   const demo = await guiProject(projectDir, expectedConfig, live, freeform);
@@ -538,8 +539,13 @@ export async function createLocalGuiWorkspace({ projectDir, origin: mountOrigin,
           const sourceId=freeform?(attachment?.id??null):input.sourceId;
           // Auto follows the launch policy only at initial admission. An exact
           // old replay cannot retroactively acquire the changed auto policy.
-          const chartSkill=input.chartSkill??(freeform&&!attachment&&input.researchDepth!=='standard'&&
-            (retry?priorInput?.chartSkill===OWNER_CHART_AUTO:chartAuto)?OWNER_CHART_AUTO:undefined);
+          const supplied=!attachment&&freeform&&hasSuppliedChartData(input.question);
+          const explicit=input.chartSkill===OWNER_CHART_SKILL;
+          const priorExplicit=[OWNER_CHART_SKILL,INPUT_CHART_SKILL].includes(priorInput?.chartSkill);
+          const chartSkill=retry&&explicit===priorExplicit?priorInput?.chartSkill:
+           supplied?(explicit?INPUT_CHART_SKILL:INPUT_CHART_AUTO):
+           explicit?(connectivity.wind?OWNER_CHART_SKILL:undefined):
+           freeform&&!attachment&&input.researchDepth!=='standard'&&chartAuto?OWNER_CHART_AUTO:undefined;
           const m = await submitConversationMessage({ projectDir, conversationId, messageId: input.messageId,
             text: input.question, sourceManifestSha256: sourceId,
             ownerLinkedPdfRevision:retry?priorInput?.ownerLinkedPdfRevision:live&&freeform&&!attachment&&connectivity.linkedPdf===true?OWNER_LINKED_PDF_REVISION:undefined,...(chartSkill?{chartSkill}:{}),...(input.researchDepth===undefined?{}:{researchDepth:input.researchDepth}),...(input.reasoningEffort===undefined?{}:{reasoningEffort:input.reasoningEffort}),
