@@ -457,7 +457,8 @@ async function drive({ question, gateway, outputRoot='runs', requireReport=false
             const mainTools=host.definitions.filter(tool=>tool.name!==RESEARCH_NEEDS_TOOL||isDeepResearchNeedsActive(researchProfile,state.messages));
             const chartFraming=chartPromptRevision&&['read_supplied_chart_data','build_financial_chart'].every(name=>mainTools.some(tool=>tool.name===name));
             const workingMessages=projectControlProofs(projectTaskTime(chartFraming?[memoryMessages[0],{role:'system',content:INPUT_CHART_GUIDANCE},...memoryMessages.slice(1)]:memoryMessages, temporal));
-            const encodedBudget=gateway.inputBudget?{additionalBudget:{maxBytes:gateway.inputBudget.maxBytes,measure:messages=>gateway.inputBudget.measure({messages,tools:mainTools})}}:{};
+            const routeBudget=state.openAISelected?gateway.directResponsesGateway?.inputBudget:gateway.inputBudget;
+            const encodedBudget=routeBudget?{additionalBudget:{maxBytes:routeBudget.maxBytes,measure:messages=>routeBudget.measure({messages,tools:mainTools})}}:{};
             let requestMessages=contextBytes===undefined&&!hostProjection&&contextWorkingSetBytes===undefined?workingMessages:await projectContext({olderReadBytes:contextWorkingSetBytes,onFit:fact=>record('context_fit',fact),messages:workingMessages,maxBytes:contextBytes??1048576,lookupSource:host.lookupContextSource,...(hostProjection?{projectOwnedResult:host.projectOwnedResult,projectOwnedCall:host.projectOwnedCall}:{}),...encodedBudget,...(encodedCompaction&&gateway.inputBudget?{allowUnfitted:true}:{})});let noteRef=null;
             const measured=encodedCompaction&&gateway.inputBudget?gateway.inputBudget.measure({messages:structuredClone(requestMessages),tools:structuredClone(mainTools)}):null;
             if(measured!==null&&(!Number.isSafeInteger(measured)||measured<0))throw failure('INVALID_COMPACTION_PRESSURE_MEASUREMENT');
@@ -524,7 +525,17 @@ async function drive({ question, gateway, outputRoot='runs', requireReport=false
           }
           if(!selected)throw failure('OPENAI_RESPONSES_ROUTE_UNAVAILABLE');
           for(;;){
-            if(selected!==gateway&&selected.inputBudget)assertContextCapacity({messages:state.working.messages,tools:mainTools,maxBytes:contextBytes,inputBudget:selected.inputBudget});
+            if(selected!==gateway&&selected.inputBudget){
+              const {inputBudget}=selected;
+              if(inputBudget.measure({messages:state.working.messages,tools:mainTools})>inputBudget.maxBytes){
+                const messages=await projectContext({olderReadBytes:contextWorkingSetBytes,onFit:fact=>record('context_fit',fact),
+                  messages:state.working.messages,maxBytes:contextBytes??1048576,lookupSource:host.lookupContextSource,
+                  ...(hostProjection?{projectOwnedResult:host.projectOwnedResult,projectOwnedCall:host.projectOwnedCall}:{}),
+                  additionalBudget:{maxBytes:inputBudget.maxBytes,measure:messages=>inputBudget.measure({messages,tools:mainTools})}});
+                state.working={...state.working,messages,hash:sha256(JSON.stringify(messages))};
+              }
+              assertContextCapacity({messages:state.working.messages,tools:mainTools,maxBytes:contextBytes,inputBudget});
+            }
             if(selected.directResponses===true)state.openAISelected=true;
             state.rounds++;state.gatewayOutcome='unknown';reservation=undefined;if(claim){const reservedView=await checkpoint('model-reserved',{reserve:'model'});if(gateway.admission==='shared-admission@1')reservation=modelReservation(reservedView);}else{rootBudget.claim('model');gatewayUnsettled=true;}
             start=performance.now();

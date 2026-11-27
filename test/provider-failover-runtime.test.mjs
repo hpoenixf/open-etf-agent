@@ -168,3 +168,30 @@ test('OpenAI requires explicit per-run consent, shares no Go key, and honors dur
  assert.equal(exhausted.run.snapshot.gatewayOutcome,'settled');
  assert.equal(directCalls,1);
 });
+
+test('an unfit Responses continuation does not strip opaque reasoning or reserve a second model',async t=>{
+ const {OPENAI_RESPONSES_MODEL,OPENAI_RESPONSES_ENDPOINT}=await import('../src/openai-responses-gateway.mjs');
+ const directory=await mkdtemp(resolve('test-output/failover-openai-context-'));
+ t.after(()=>rm(directory,{recursive:true,force:true}));
+ const openAIKey='synthetic-context-alternate';
+ const {config}=prepareGuiLiveConfig({gateway:{provider:OPENCODE_GO_OWNER_PROVIDER,endpoint:OPENCODE_GO_CURRENT_ENDPOINT,
+   model:'glm-5.3-flash',apiKeyEnv:'ETF_GUI_PROVIDER_KEY'},limits:{model:4},connectivity:{web:true},
+   openAIBackup:{profile:'owner-gpt-6-1-terra@1',maxOutputTokens:4096,maxAttempts:5}},
+   {ETF_GUI_PROVIDER_KEY:fakeKey,ETF_OPENAI_API_KEY:openAIKey});
+ const {configSha256}=await createResearchProject({directory,config});
+ const runId='large-reasoning-context';
+ await submitResearchTask({projectDir:directory,runId,question:'Synthetic context budget check.',sourceManifestSha256:null,expectedConfigSha256:configSha256,
+   authorization:{providerApproved:true,dataApproved:true,costApproved:true,openAIApproved:true}});
+ let calls=0;
+ const result=await workResearchTask({projectDir:directory,runId,apiKey:fakeKey,openAIKey,goHealth:{async outage(){return true;},observe(){}},
+   fetchImpl:async url=>{
+     assert.equal(url.href,OPENAI_RESPONSES_ENDPOINT);calls++;
+     return Response.json({object:'response',model:OPENAI_RESPONSES_MODEL,status:'completed',output:[
+       {type:'reasoning',id:'rs_pressure',summary:[],encrypted_content:'A'.repeat(71000)},
+       {type:'function_call',status:'completed',call_id:'call_pressure',name:'public_web_read',arguments:'{"url":"https://127.0.0.1/synthetic"}'}]});
+   }});
+ assert.equal(result.run.status,'failed');assert.equal(result.run.snapshot.code,'CONTEXT_CAPACITY_EXCEEDED');
+ assert.equal(result.run.rootUsage.model,1);assert.equal(calls,1);
+ const tool=result.run.snapshot.messages.find(m=>m.role==='assistant'&&m.openAIReasoning);
+ assert.equal(tool.openAIReasoning[0].encrypted_content.length,71000);
+});

@@ -1,4 +1,4 @@
-import {CHAT_REQUEST_MAX_BYTES, DEFAULT_PROVIDER_RESPONSE_BYTES, normalizeChatCompletion} from './gateway.mjs';
+import {CHAT_REQUEST_MAX_BYTES, DEFAULT_PROVIDER_RESPONSE_BYTES, normalizeChatCompletion, isProviderIdleTransport, runProviderIdleTransport} from './gateway.mjs';
 
 export const OPENAI_RESPONSES_MODEL='gpt-6.1-terra';
 export const OPENAI_RESPONSES_ENDPOINT='https://api.openai.com/v1/responses';
@@ -83,7 +83,7 @@ function project(reply,key){
   return proposal;
 }
 
-export function createOpenAIResponsesGateway({apiKey, authorization, maxOutputTokens, maxInputBytes=CHAT_REQUEST_MAX_BYTES, fetchImpl=globalThis.fetch, observeTransport}={}){
+export function createOpenAIResponsesGateway({apiKey, authorization, maxOutputTokens, maxInputBytes=CHAT_REQUEST_MAX_BYTES, ownerIdleTimeout=false, fetchImpl=globalThis.fetch, observeTransport}={}){
   if(authorization?.providerApproved!==true||!(authorization?.syntheticDataApproved===true||authorization?.dataApproved===true)||authorization?.costApproved!==true)
     fail('OPENAI_RESPONSES_BLOCKED');
   if(typeof apiKey!=='string'||!apiKey||/[\r\n]/.test(apiKey)||!Number.isSafeInteger(maxOutputTokens)||maxOutputTokens<256||maxOutputTokens>32768||
@@ -91,25 +91,28 @@ export function createOpenAIResponsesGateway({apiKey, authorization, maxOutputTo
   const gateway={
     mode:'live',
     inputBudget:Object.freeze({maxBytes:maxInputBytes,measure:input=>Buffer.byteLength(encode(input,maxOutputTokens))}),
-    async next({messages,tools,signal,reservation,reasoningByCall}){
+    async next({messages,tools,signal:callerSignal,reservation,reasoningByCall}){
       const at=Date.now();let response;
-      try{
+      try{return await runProviderIdleTransport(async(signal,progress)=>{
         signal?.throwIfAborted();
         const body=encode({messages,tools,reasoningByCall},maxOutputTokens);
         if(body.includes(apiKey))fail('OPENAI_RESPONSES_CREDENTIAL_ECHO');
         if(Buffer.byteLength(body)>maxInputBytes)fail('PROVIDER_INPUT_BYTE_LIMIT');
         response=await fetchImpl(new URL(OPENAI_RESPONSES_ENDPOINT),{method:'POST',redirect:'error',signal,headers:{authorization:'Bearer '+apiKey,'content-type':'application/json'},body},reservation);
+        signal?.throwIfAborted();progress();
         if(!response.ok)fail('OPENAI_RESPONSES_HTTP_'+response.status);
         if(!/^application\/json(?:\s*;|\s*$)/i.test(response.headers.get('content-type')??''))fail('OPENAI_RESPONSES_CONTENT_TYPE');
         const reader=response.body?.getReader();if(!reader)fail('OPENAI_RESPONSES_OUTPUT_INVALID');
         const chunks=[];let size=0;
-        try{for(;;){const {done,value}=await reader.read();if(done)break;if((size+=value.byteLength)>DEFAULT_PROVIDER_RESPONSE_BYTES){await reader.cancel();fail('PROVIDER_RESPONSE_TOO_LARGE');}chunks.push(value);}}finally{reader.releaseLock();}
+        try{for(;;){const {done,value}=await reader.read();if(done)break;signal?.throwIfAborted();if(value.some(b=>![9,10,13,32].includes(b)))progress();if((size+=value.byteLength)>DEFAULT_PROVIDER_RESPONSE_BYTES){await reader.cancel();fail('PROVIDER_RESPONSE_TOO_LARGE');}chunks.push(value);}}finally{reader.releaseLock();}
         signal?.throwIfAborted();
         let reply;try{reply=JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(Buffer.concat(chunks)));}catch{fail('OPENAI_RESPONSES_OUTPUT_INVALID');}
         const proposal=project(reply,apiKey);
         try{observeTransport?.({type:'model-transport',model:OPENAI_RESPONSES_MODEL,ordinal:reservation?.modelOrdinal,at,end:Date.now(),status:'responded',usage:proposal.usage});}catch{}
         return proposal;
+        },callerSignal,ownerIdleTimeout);
       }catch(error){
+        if(isProviderIdleTransport(error))throw error;
         const code=typeof error?.code==='string'&&/^(OPENAI_RESPONSES_[A-Z0-9_]+|PROVIDER_(INPUT_BYTE_LIMIT|RESPONSE_TOO_LARGE|PROTOCOL_INVALID))$/.test(error.code)?error.code:'OPENAI_RESPONSES_OUTCOME_UNKNOWN';
         try{observeTransport?.({type:'model-transport',model:OPENAI_RESPONSES_MODEL,ordinal:reservation?.modelOrdinal,at,end:Date.now(),status:response?'response-error':'unknown',code});}catch{}
         fail(code);

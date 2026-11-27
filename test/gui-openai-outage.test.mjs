@@ -6,7 +6,7 @@ import {setTimeout as delay} from 'node:timers/promises';
 import {createGoHealth} from '../src/go-health.mjs';
 import {startLocalGui} from '../src/gui-server.mjs';
 import {prepareGuiLiveConfig} from '../src/gui-live-config.mjs';
-import {inspectResearchRequests,inspectResearchTask} from '../src/research-project.mjs';
+import {inspectResearchRequests,inspectResearchTask,maintainOwnerGuiAdmission,releaseResearchUnknownCapacity} from '../src/research-project.mjs';
 import {OPENCODE_GO_CURRENT_ENDPOINT,OPENCODE_GO_OWNER_PROVIDER} from '../src/gateway.mjs';
 import {OPENAI_RESPONSES_MODEL,OPENAI_RESPONSES_ENDPOINT} from '../src/openai-responses-gateway.mjs';
 
@@ -88,4 +88,36 @@ test('a dispatched Go 503 remains unknown and does not replay; only the next own
 test('backup is opt-in on exact Go route, with its own mandatory key',()=>{
  assert.throws(()=>prepareGuiLiveConfig(liveConfig,{ETF_GUI_PROVIDER_KEY:primary}),{code:'OPENAI_RESPONSES_KEY_MISSING'});
  assert.throws(()=>prepareGuiLiveConfig({...liveConfig,gateway:{...liveConfig.gateway,provider:'other',endpoint:'https://other.invalid/v1/chat/completions'}},env),{code:'PROJECT_OPENAI_RESPONSES_CONFIG'});
+});
+
+test('unknown Terra does not deadlock its only slot; the three-minute sweep preserves the original ticket',async t=>{
+ let attempts=0;
+ const fx=await launch(t,(url,opts)=>opts.method==='HEAD'?new Response(null,{status:503}):
+   ++attempts===1?new Response(null,{status:503}):direct(url,opts));
+ const initial=await fx.turn(1);assert.equal(initial.state,'failed');
+ const [unknown]=await ticket(fx,initial);assert.equal(unknown.state,'unknown');assert.equal(unknown.localRelease,undefined);
+ t.mock.timers.enable({apis:['Date'],now:unknown.updatedAt+179_999});
+ await maintainOwnerGuiAdmission({projectDir:fx.directory});
+ assert.equal((await ticket(fx,initial))[0].localRelease,undefined);
+ t.mock.timers.tick(1);
+ await maintainOwnerGuiAdmission({projectDir:fx.directory});
+ const [released]=await ticket(fx,initial);
+ assert.equal(released.ticketId,unknown.ticketId);assert.equal(released.state,'unknown');assert.ok(released.localRelease);
+ t.mock.timers.reset();
+ const next=await fx.turn(2);assert.equal(next.state,'completed',JSON.stringify(next));
+ assert.equal(attempts,2);assert.equal((await ticket(fx,initial))[0].state,'unknown');
+});
+
+test('manual repeatable release uses the frozen Terra ledger, not the Go ledger',async t=>{
+ const fx=await launch(t,(_url,opts)=>new Response(null,{status:503}));
+ const original=await fx.turn(1),[unknown]=await ticket(fx,original);
+ const identity={routeId:'owner-openai-gpt-6-1-terra-1',...Object.fromEntries(
+   ['ticketId','reservationId','rootId','runId','modelOrdinal','inputHash','owner','fence'].map(k=>[k,unknown[k]]))};
+ const args={projectDir:fx.directory,runId:original.runId,operationId:'operator-backup-release',identity,
+   expectedTicketSha256:unknown.ticketSha256,reason:'Synthetic authorized local slot release.',
+   acknowledgements:{preserveUnknown:true,noReplay:true,noRefund:true}};
+ const release=await releaseResearchUnknownCapacity(args);
+ assert.deepEqual(await releaseResearchUnknownCapacity(args),release);
+ assert.equal((await ticket(fx,original))[0].state,'unknown');
+ await assert.rejects(releaseResearchUnknownCapacity({...args,identity:{...identity,routeId:'other-project'}}),{code:'PROJECT_REQUEST_ROOT'});
 });

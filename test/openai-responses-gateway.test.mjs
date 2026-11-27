@@ -46,3 +46,16 @@ test('incomplete, canceled, mixed or unverifiable output cannot become a tool pr
    await assert.rejects(g.next({messages,tools:[tool]}),{code:/OPENAI_RESPONSES_/});
  }
 });
+
+test('native Responses watchdog preserves branded three-minute idle failure and does not resend',async t=>{
+ const {isProviderIdleTransport,PROVIDER_IDLE_CODE}=await import('../src/gateway.mjs');
+ t.mock.timers.enable({apis:['setTimeout']});let calls=0,notified;
+ const ready=new Promise(resolve=>{notified=resolve;});
+ const g=createOpenAIResponsesGateway({...options,ownerIdleTimeout:true,fetchImpl:async(_u,{signal})=>{
+   calls++;notified(signal);return new Promise(()=>{});
+ }});
+ const running=g.next({messages,tools:[]});
+ const first=await ready;t.mock.timers.tick(179_999);assert.equal(first.aborted,false);
+ const rejected=assert.rejects(running,e=>e.code===PROVIDER_IDLE_CODE&&isProviderIdleTransport(e));
+ t.mock.timers.tick(1);await rejected;assert.equal(first.aborted,true);assert.equal(calls,1);
+});

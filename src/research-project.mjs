@@ -44,6 +44,12 @@ import {openArtifactStore} from './artifacts.mjs';
 import {inspectTrustedPlugins} from './plugins.mjs';
 import {loadProjectPlugins} from './project-plugins.mjs';
 const openAIGroup='owner-openai-gpt-6-1-terra-1';
+const frozenDirectAuthority=d=>d.config.ownerOpenAIResponses!==undefined&&d.authorization?.openAIApproved===true&&
+ d.sourceManifestSha256===null&&!d.schedule&&d.memoryMode===undefined;
+async function openExistingDirectAdmission(projectDir,readOnly=false){
+ try{return await createSharedAdmission({directory:join(projectDir,'admission',openAIGroup),routeId:openAIGroup,readOnly,existingOnly:true});}
+ catch(e){if(!['ENOENT','ADMISSION_OWNER_MISSING'].includes(e.code))throw e;return null;}
+}
 const fail=code=>{throw Object.assign(new Error(code),{code});};
 const object=v=>v!==null&&typeof v==='object'&&!Array.isArray(v);
 const canonical=v=>JSON.stringify(v,(_,x)=>object(x)?Object.fromEntries(Object.keys(x).sort().map(k=>[k,x[k]])):x);
@@ -293,13 +299,12 @@ async function assemble(projectDir,definition,{gateway,apiKey,openAIKey,goHealth
       authorization:definition.authorization,researchProfile:researchProfileFor(definition.researchDepth,definition.researchProfileRevision),stream:config.gateway.stream??false,
       fetchImpl:fetchImpl?((url,options,r)=>fetchImpl(url,options,r?Object.freeze({role:'main',rootId:r.rootId,runId:r.runId,
         modelOrdinal:r.modelOrdinal,purpose:'main',inputHash:r.inputHash}):null)):undefined}) : undefined;
-  const directResponses=config.ownerOpenAIResponses!==undefined&&definition.authorization?.openAIApproved===true&&
-    definition.sourceManifestSha256===null&&!definition.schedule&&definition.memoryMode===undefined;
+  const directResponses=frozenDirectAuthority(definition);
   let independentFallback;
   if(directResponses&&dispatch&&typeof openAIKey==='string'&&openAIKey){
     const spec=config.ownerOpenAIResponses;
     const direct=createOpenAIResponsesGateway({apiKey:openAIKey,authorization:definition.authorization,
-      maxOutputTokens:spec.maxOutputTokens,maxInputBytes:65536,observeTransport:observeGuiRun,fetchImpl});
+      maxOutputTokens:spec.maxOutputTokens,maxInputBytes:65536,ownerIdleTimeout:ownerAdmission,observeTransport:observeGuiRun,fetchImpl});
     const owner=await createSharedAdmission({directory:join(projectDir,'admission',openAIGroup),routeId:openAIGroup,queueTimeoutMs:30000,maxAttempts:spec.maxAttempts});
     closers.push(()=>owner.close());
     independentFallback=owner.wrap(direct,{session:store,runId,modelRoute:OPENAI_RESPONSES_MODEL});
@@ -506,10 +511,7 @@ export async function inspectResearchRequests({projectDir,runId,reservations}){
  try{
   const root=session.inspect(actual);if(root.rootId!==actual||root.parentRunId!==null)fail('PROJECT_REQUEST_ROOT');
   admission=await createSharedAdmission({directory:join(projectDir,'admission',group.groupId),routeId:group.groupId,readOnly:true});
-  if(definition.config.ownerOpenAIResponses&&definition.authorization?.openAIApproved===true){
-    try{directAdmission=await createSharedAdmission({directory:join(projectDir,'admission',openAIGroup),routeId:openAIGroup,readOnly:true,existingOnly:true});}
-    catch(error){if(!['ENOENT','ADMISSION_OWNER_MISSING'].includes(error.code))throw error;}
-  }
+  if(frozenDirectAuthority(definition))directAdmission=await openExistingDirectAdmission(projectDir,true);
   const seen=new Set();return reservations.map(identity=>{
     if(identity.rootId!==actual||seen.has(identity.modelOrdinal))fail('PROJECT_REQUEST_ROOT');seen.add(identity.modelOrdinal);
     const primary=admission.inspectReservation(identity),alternate=directAdmission?.inspectReservation(identity);
@@ -601,10 +603,11 @@ export async function readResearchOutput({projectDir,runId}){
 export async function releaseResearchUnknownCapacity({projectDir,runId,...intent}){
  projectDir=await safeDirectory(projectDir);const definition=await readTask(projectDir,runId),project=await inspectResearchProject({projectDir});const group=taskCapacity(definition,project);await requireCapacityRegistration(projectDir,group);
  const actual=definition.schedule?scheduleRunId(definition.schedule):runId;
- if(intent.identity?.routeId!==group.groupId||intent.identity?.rootId!==actual)fail('PROJECT_REQUEST_ROOT');
+ const direct=intent.identity?.routeId===openAIGroup&&frozenDirectAuthority(definition);
+ if(!(direct||intent.identity?.routeId===group.groupId)||intent.identity?.rootId!==actual)fail('PROJECT_REQUEST_ROOT');
  const directory=await safeDirectory(paths(projectDir,runId).session),stat=await lstat(join(directory,'session.sqlite'));if(!stat.isFile()||stat.isSymbolicLink()||stat.nlink!==1)fail('PROJECT_UNSAFE_FILE');
  const session=await openSession({directory,...(profile(definition.config)?{profile:profile(definition.config)}:{})});let admission;
- try{const root=session.inspect(actual);if(root.parentRunId!==null||root.rootId!==actual)fail('PROJECT_REQUEST_ROOT');admission=await createSharedAdmission({directory:join(projectDir,'admission',group.groupId),routeId:group.groupId,existingOnly:true});return admission.releaseUnknown({...intent,session});}
+ try{const root=session.inspect(actual);if(root.parentRunId!==null||root.rootId!==actual)fail('PROJECT_REQUEST_ROOT');admission=direct?await openExistingDirectAdmission(projectDir):await createSharedAdmission({directory:join(projectDir,'admission',group.groupId),routeId:group.groupId,existingOnly:true});if(!admission)fail('PROJECT_REQUEST_ROOT');return admission.releaseUnknown({...intent,session});}
  finally{admission?.close();session.close();}
 }
 
@@ -612,9 +615,15 @@ export async function releaseResearchUnknownCapacity({projectDir,runId,...intent
 export async function maintainResearchUnknownCapacity({projectDir,runId,shortUnknown=false}){
  projectDir=await safeDirectory(projectDir);const definition=await readTask(projectDir,runId),project=await inspectResearchProject({projectDir}),group=taskCapacity(definition,project);await requireCapacityRegistration(projectDir,group);const actual=definition.schedule?scheduleRunId(definition.schedule):runId;
  const directory=await safeDirectory(paths(projectDir,runId).session),stat=await lstat(join(directory,'session.sqlite'));if(!stat.isFile()||stat.isSymbolicLink()||stat.nlink!==1)fail('PROJECT_UNSAFE_FILE');
- const session=await openSession({directory,...(profile(definition.config)?{profile:profile(definition.config)}:{})});let admission;
- try{const root=session.inspect(actual);if(root.parentRunId!==null||root.rootId!==actual)fail('PROJECT_REQUEST_ROOT');admission=await createSharedAdmission({directory:join(projectDir,'admission',group.groupId),routeId:group.groupId,existingOnly:true});if(shortUnknown&&!supportsOwnerFreeform(definition.config))fail('PROJECT_OWNER_ADMISSION_UNSUPPORTED');return admission.maintainUnknown({session,rootId:actual,shortUnknown});}
- finally{admission?.close();session.close();}
+ const session=await openSession({directory,...(profile(definition.config)?{profile:profile(definition.config)}:{})});let admission,directAdmission;
+ try{const root=session.inspect(actual);if(root.parentRunId!==null||root.rootId!==actual)fail('PROJECT_REQUEST_ROOT');
+  if(shortUnknown&&!supportsOwnerFreeform(definition.config))fail('PROJECT_OWNER_ADMISSION_UNSUPPORTED');
+  admission=await createSharedAdmission({directory:join(projectDir,'admission',group.groupId),routeId:group.groupId,existingOnly:true});
+  const primary=admission.maintainUnknown({session,rootId:actual,shortUnknown});
+  if(frozenDirectAuthority(definition))directAdmission=await openExistingDirectAdmission(projectDir);
+  const direct=directAdmission?.maintainUnknown({session,rootId:actual,shortUnknown});
+  return direct?{...primary,items:[...primary.items,...direct.items]}:primary;
+ }finally{directAdmission?.close();admission?.close();session.close();}
 }
 
 // Lazy, bounded to this Project's registered route and original task records.
@@ -632,8 +641,10 @@ export async function maintainOwnerGuiAdmission({projectDir}){
 
 async function maintainProjectAdmissionGroup(projectDir,project,group,shortUnknown,unknownOnly=false){
  await requireCapacityRegistration(projectDir,group);
- const admission=await createSharedAdmission({directory:join(projectDir,'admission',group.groupId),routeId:group.groupId,readOnly:true});let tickets;
- try{tickets=admission.snapshot().requests.filter(t=>(t.state==='unknown'||!unknownOnly&&t.state==='dispatched')&&!t.localRelease&&t.runId===t.rootId);}finally{admission.close();}
+ const admission=await createSharedAdmission({directory:join(projectDir,'admission',group.groupId),routeId:group.groupId,readOnly:true});let tickets,direct;
+ try{direct=await openExistingDirectAdmission(projectDir,true);
+  tickets=[...admission.snapshot().requests,...(direct?.snapshot().requests??[])].filter(t=>(t.state==='unknown'||!unknownOnly&&t.state==='dispatched')&&!t.localRelease&&t.runId===t.rootId);
+ }finally{direct?.close();admission.close();}
  const ids=[...new Set(tickets.map(t=>t.rootId))];if(ids.length>1024)fail('PROJECT_CAPACITY_MAINTENANCE_LIMIT');
  let scheduled;
  for(const runId of ids){let original,taskId=runId;try{original=await readTask(projectDir,runId);}catch(error){if(!['ENOENT','PROJECT_INVALID_ID'].includes(error.code))throw error;}

@@ -28,6 +28,21 @@ async function exactModelNotFound(response, signal) {
 const silentTransports = new WeakSet();
 export const PROVIDER_IDLE_CODE = 'PROVIDER_IDLE_LOCAL';
 export function isProviderIdleTransport(error) { return silentTransports.has(error); }
+// Provider adapters use the same transport-idle proof; neither caller errors
+// nor Runtime wall deadlines can mint a local idle release.
+export async function runProviderIdleTransport(run, callerSignal, enabled){
+  if(!enabled)return run(callerSignal,()=>{});
+  const local=new AbortController(), signal=callerSignal?AbortSignal.any([callerSignal,local.signal]):local.signal;
+  let timer,rejectIdle;
+  const idle=new Promise((_,reject)=>{rejectIdle=reject;});
+  const progress=()=>{if(signal.aborted)return;clearTimeout(timer);timer=setTimeout(()=>{
+    if(signal.aborted)return;
+    const error=Object.assign(new Error(PROVIDER_IDLE_CODE),{code:PROVIDER_IDLE_CODE});
+    silentTransports.add(error);rejectIdle(error);local.abort(error);
+  },180000);};
+  try{return await Promise.race([Promise.resolve().then(()=>{signal.throwIfAborted();progress();return run(signal,progress);}),idle]);}
+  finally{clearTimeout(timer);}
+}
 export function projectProviderProtocolDiagnostic(error) {
   const value = error && typeof error === 'object' ? diagnostics.get(error) : null;
   return value ? { ...value } : null;

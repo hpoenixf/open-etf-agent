@@ -16,3 +16,9 @@ A later Run can use the backup independently. A Run that starts using Responses
 keeps its model route for its remaining inference, including tool continuation;
 answers publish through the same durable readback path. An explicit OpenCode
 reasoning setting is not a promise of the same effective setting in Responses.
+
+The same three-minute no-progress detection and terminal unknown capacity
+maintenance apply to the separate OpenAI ledger. A local release leaves the
+original unknown state and its accounting untouched. Continued research fits
+its working context against the selected Responses request envelope before
+reserving or sending its next inference.
