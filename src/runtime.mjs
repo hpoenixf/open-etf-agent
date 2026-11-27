@@ -20,7 +20,7 @@ import { projectContext, projectControlProofs, assertContextCapacity } from './c
 import { activateTrustedPlugins, inspectTrustedPlugins } from './plugins.mjs';
 import { sha256, DOCUMENT_REVOCATION_PROFILE, normalizeDocumentCatalog, documentCatalogBinding } from './source.mjs';
 import { PUBLICATION_BINDING, PUBLICATION_TEXT_MAX_BYTES, preparePublication } from './publication.mjs';
-import { isReasoningEffort, projectProviderProtocolDiagnostic } from './gateway.mjs';
+import { isReasoningEffort, projectProviderProtocolDiagnostic, isProviderIdleTransport, PROVIDER_IDLE_CODE } from './gateway.mjs';
 import { isKnownAdmissionNonDispatch } from './admission.mjs';
 
 const failure = code => Object.assign(new Error(code), { code });
@@ -599,6 +599,7 @@ async function drive({ question, gateway, outputRoot='runs', requireReport=false
       }
     }catch(error){
       let code=controlErrorCode(error);
+      if(code===PROVIDER_IDLE_CODE&&!isProviderIdleTransport(error))code='EXECUTION_FAILED';
       let cancelled=controller.signal.aborted&&['CANCELLED','RUN_CANCELLED'].includes(controlErrorCode(controller.signal.reason));
       if(!cancelled&&claim){try{const original=durable.store.inspect(runId);cancelled=original.status==='cancelled'||original.rootStatus==='cancelled';}catch{}}
       if(cancelled)code='CANCELLED';else if(['CANCELLED','RUN_CANCELLED'].includes(code))code='EXECUTION_FAILED';

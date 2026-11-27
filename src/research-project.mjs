@@ -244,8 +244,9 @@ function frozenTaskQuestion(definition,sources){if(definition.sourceManifestSha2
    +(c?.wind?' Use the available Wind tool for its supported fund data only; cite its returned date and scope.':' No Wind data access is authorized.')
    +' If current facts or pricing cannot be verified, explain the limitation rather than inventing citations, quotes or events.';
  };const knowledge=definition.config.capabilities.includes('knowledge');let question=questionFor(definition.question,sources,knowledge,knowledge&&['source-faithful-report@6',LOCAL_QUERY_GUIDANCE_PROFILE].includes(definition.reportGuidance),sources.pdfSnapshot?.schemaVersion==='pdf-input-snapshot@2'&&(definition.config.allowedTools?.includes('read_pdf_cell')??true))+reportGuidanceFor(definition)+reportDeliveryFor(definition);if(knowledge&&['source-faithful-report@5','source-faithful-report@6',LOCAL_QUERY_GUIDANCE_PROFILE].includes(definition.reportGuidance))question+='\n\nOriginal user request (literal query and requested format):\n'+definition.question;if(definition.hostProjection===undefined&&Buffer.byteLength(question)>16000)fail('PROJECT_TASK_INPUT');return question;}
-async function assemble(projectDir,definition,{gateway,apiKey,fetchImpl,hostSignal,onCheckpoint,signal,dispatch=false,embeddingBackend,localEmbedding,ownerWebTransport,ownerWindSettings,ownerSearchSettings,ownerWindFetch,observeGuiRun}={}){
+async function assemble(projectDir,definition,{gateway,apiKey,fetchImpl,hostSignal,onCheckpoint,signal,dispatch=false,embeddingBackend,localEmbedding,ownerWebTransport,ownerWindSettings,ownerSearchSettings,ownerWindFetch,observeGuiRun,ownerAdmission=false}={}){
  const group=taskCapacity(definition,await inspectResearchProject({projectDir}));await requireCapacityRegistration(projectDir,group);
+ if(typeof ownerAdmission!=='boolean'||ownerAdmission&&(!dispatch||!supportsOwnerFreeform(definition.config)||group.policy!=='project-endpoint-capacity@1'))fail('PROJECT_OWNER_ADMISSION_UNSUPPORTED');
  const config=definition.config,caps=config.capabilities,p=paths(projectDir,definition.runId);
  const freeform=definition.sourceManifestSha256===null;
  if(freeform&&(!supportsOwnerFreeform(config)||definition.reportDelivery!==undefined||definition.schedule))fail('PROJECT_NO_SOURCES');
@@ -261,9 +262,9 @@ async function assemble(projectDir,definition,{gateway,apiKey,fetchImpl,hostSign
   if(selectedGateway&&config.gateway.mode==='live')fail('PROJECT_LIVE_GATEWAY_OVERRIDE');
   if(selectedGateway?.inputBudget&&config.gateway.mode==='fixture'&&config.compaction?.pressureMode==='encoded-request@1')fail('PROJECT_FIXTURE_COMPACTION_METER_UNBOUND');
   const requestContext=new AsyncLocalStorage();
-  if(!selectedGateway){if(!dispatch)selectedGateway={mode:config.gateway.mode,next(){fail('PROJECT_SUBMIT_MUST_NOT_DISPATCH');}};else{if(config.gateway.mode!=='live')fail('PROJECT_FIXTURE_GATEWAY_REQUIRED');selectedGateway=createChatGateway({observeTransport:observeGuiRun,provider:config.gateway.provider,endpoint:config.gateway.endpoint,model:config.gateway.model,apiKey,authorization:definition.authorization,researchProfile:researchProfileFor(definition.researchDepth,definition.researchProfileRevision),reasoningEffort:definition.reasoningEffort,reasoningEffortProfile:config.ownerReasoningEffort,stream:config.gateway.stream??false,fetchImpl:fetchImpl?((url,options)=>fetchImpl(url,options,requestContext.getStore())):undefined});}}
+  if(!selectedGateway){if(!dispatch)selectedGateway={mode:config.gateway.mode,next(){fail('PROJECT_SUBMIT_MUST_NOT_DISPATCH');}};else{if(config.gateway.mode!=='live')fail('PROJECT_FIXTURE_GATEWAY_REQUIRED');selectedGateway=createChatGateway({observeTransport:observeGuiRun,ownerIdleTimeout:ownerAdmission,provider:config.gateway.provider,endpoint:config.gateway.endpoint,model:config.gateway.model,apiKey,authorization:definition.authorization,researchProfile:researchProfileFor(definition.researchDepth,definition.researchProfileRevision),reasoningEffort:definition.reasoningEffort,reasoningEffortProfile:config.ownerReasoningEffort,stream:config.gateway.stream??false,fetchImpl:fetchImpl?((url,options)=>fetchImpl(url,options,requestContext.getStore())):undefined});}}
   const originalGateway=selectedGateway;selectedGateway={mode:originalGateway.mode,...(originalGateway.inputBudget?{inputBudget:originalGateway.inputBudget}:{}),next(input){const r=input.reservation;const context=r?Object.freeze({role:r.purpose==='compaction'?'summary':r.runId===r.rootId?'main':'child',rootId:r.rootId,runId:r.runId,modelOrdinal:r.modelOrdinal,purpose:r.purpose??'main',inputHash:r.inputHash}):null;return requestContext.run(context,async()=>{try{const result=await originalGateway.next(input);if(config.gateway.mode==='live'&&typeof apiKey==='string'&&apiKey&&containsSecret(result,apiKey))fail('PROJECT_CREDENTIAL_ECHO');return result;}catch(error){if(config.gateway.mode==='live'&&typeof apiKey==='string'&&apiKey&&(String(error?.message).includes(apiKey)||String(error?.code).includes(apiKey)))fail('PROJECT_CREDENTIAL_ECHO');throw error;}});}};
-  admission=await createSharedAdmission({directory:join(projectDir,'admission',group.groupId),routeId:group.groupId,existingOnly:group.policy==='project-endpoint-capacity@1',queueTimeoutMs:Math.min(config.limits.timeoutMs,config.childExecution?.schemaVersion==='child-execution@2'?300000:30000),pollMs:10});
+  admission=await createSharedAdmission({directory:join(projectDir,'admission',group.groupId),routeId:group.groupId,existingOnly:group.policy==='project-endpoint-capacity@1',queueTimeoutMs:Math.min(config.limits.timeoutMs,config.childExecution?.schemaVersion==='child-execution@2'?300000:30000),pollMs:10,capacity:ownerAdmission?5:1});
   const runId=definition.schedule?scheduleRunId(definition.schedule):definition.runId;const memoryUseDirectory=join(projectDir,'memory-uses',definition.runId);
   const memoryGate=async(input,ticket)=>{
    const entries=memoryEntryIdentities(input.messages);
@@ -433,7 +434,7 @@ export async function materializeResearchScheduledTask({projectDir,runId}){
  const opened=await assemble(projectDir,definition);
  try{return await materializeScheduledRun(opened.options,await readProjectJson(join(projectDir,'tasks',runId+'.schedule.json')));}finally{await opened.close();}
 }
-export async function workResearchTask({projectDir,runId,requireFreshSchedule=false,...controls}){if(typeof requireFreshSchedule!=='boolean')fail('INVALID_SCHEDULE_OBSERVATION');projectDir=await safeDirectory(projectDir);const definition=await readTask(projectDir,runId);await maintainProjectRouteBeforeWork(projectDir,definition);const opened=await assemble(projectDir,definition,{...controls,dispatch:true});try{if(definition.schedule){const reference=await readProjectJson(join(projectDir,'tasks',runId+'.schedule.json'));const occurrence=await materializeScheduledRun(opened.options,reference,{reportFresh:requireFreshSchedule});if(!occurrence.runId||requireFreshSchedule&&occurrence.materializedNow!==true)return occurrence;}return await workRun(opened.options);}finally{try{await opened.close();}finally{await maintainProjectRouteBeforeWork(projectDir,definition);}}}
+export async function workResearchTask({projectDir,runId,requireFreshSchedule=false,...controls}){if(typeof requireFreshSchedule!=='boolean')fail('INVALID_SCHEDULE_OBSERVATION');projectDir=await safeDirectory(projectDir);const definition=await readTask(projectDir,runId);await maintainProjectRouteBeforeWork(projectDir,definition,controls.ownerAdmission===true);const opened=await assemble(projectDir,definition,{...controls,dispatch:true});try{if(definition.schedule){const reference=await readProjectJson(join(projectDir,'tasks',runId+'.schedule.json'));const occurrence=await materializeScheduledRun(opened.options,reference,{reportFresh:requireFreshSchedule});if(!occurrence.runId||requireFreshSchedule&&occurrence.materializedNow!==true)return occurrence;}return await workRun(opened.options);}finally{try{await opened.close();}finally{await maintainProjectRouteBeforeWork(projectDir,definition,controls.ownerAdmission===true);}}}
 export async function inspectResearchTask({projectDir,runId}){const d=await readTask(projectDir,runId),p=paths(projectDir,runId);const store=await openSession({directory:p.session,...(profile(d.config)?{profile:profile(d.config)}:{}),readOnly:true});try{const actual=d.schedule?scheduleRunId(d.schedule):runId;if(d.schedule){const scheduled=store.inspectSchedule(await readProjectJson(join(projectDir,'tasks',runId+'.schedule.json')));if(!scheduled.runId)return {definition:d,schedule:scheduled,run:null};}const state=store.inspect(actual);return{definition:d,run:state};}finally{store.close();}}
 export async function inspectResearchMemory({projectDir,runId}){
  const {definition,run}=await inspectResearchTask({projectDir,runId}),uses=[];
@@ -570,20 +571,31 @@ export async function releaseResearchUnknownCapacity({projectDir,runId,...intent
 }
 
 // Explicit/lazy maintenance for one frozen original task; no model dispatch.
-export async function maintainResearchUnknownCapacity({projectDir,runId}){
+export async function maintainResearchUnknownCapacity({projectDir,runId,shortUnknown=false}){
  projectDir=await safeDirectory(projectDir);const definition=await readTask(projectDir,runId),project=await inspectResearchProject({projectDir}),group=taskCapacity(definition,project);await requireCapacityRegistration(projectDir,group);const actual=definition.schedule?scheduleRunId(definition.schedule):runId;
  const directory=await safeDirectory(paths(projectDir,runId).session),stat=await lstat(join(directory,'session.sqlite'));if(!stat.isFile()||stat.isSymbolicLink()||stat.nlink!==1)fail('PROJECT_UNSAFE_FILE');
  const session=await openSession({directory,...(profile(definition.config)?{profile:profile(definition.config)}:{})});let admission;
- try{const root=session.inspect(actual);if(root.parentRunId!==null||root.rootId!==actual)fail('PROJECT_REQUEST_ROOT');admission=await createSharedAdmission({directory:join(projectDir,'admission',group.groupId),routeId:group.groupId,existingOnly:true});return admission.maintainUnknown({session,rootId:actual});}
+ try{const root=session.inspect(actual);if(root.parentRunId!==null||root.rootId!==actual)fail('PROJECT_REQUEST_ROOT');admission=await createSharedAdmission({directory:join(projectDir,'admission',group.groupId),routeId:group.groupId,existingOnly:true});if(shortUnknown&&!supportsOwnerFreeform(definition.config))fail('PROJECT_OWNER_ADMISSION_UNSUPPORTED');return admission.maintainUnknown({session,rootId:actual,shortUnknown});}
  finally{admission?.close();session.close();}
 }
 
 // Lazy, bounded to this Project's registered route and original task records.
 // No resident service is implied; elapsed idle time is processed on work entry/exit.
-async function maintainProjectRouteBeforeWork(projectDir,definition){
- const project=await inspectResearchProject({projectDir}),group=taskCapacity(definition,project);await requireCapacityRegistration(projectDir,group);
+async function maintainProjectRouteBeforeWork(projectDir,definition,shortUnknown=false){
+ const project=await inspectResearchProject({projectDir}),group=taskCapacity(definition,project);
+ return maintainProjectAdmissionGroup(projectDir,project,group,shortUnknown);
+}
+
+export async function maintainOwnerGuiAdmission({projectDir}){
+ const project=await inspectResearchProject({projectDir});
+ if(project.schemaVersion!==PROJECT_V2||!supportsOwnerFreeform(project.config))fail('PROJECT_OWNER_ADMISSION_UNSUPPORTED');
+ return maintainProjectAdmissionGroup(projectDir,project,capacityBinding(project.config,project.schemaVersion),true,true);
+}
+
+async function maintainProjectAdmissionGroup(projectDir,project,group,shortUnknown,unknownOnly=false){
+ await requireCapacityRegistration(projectDir,group);
  const admission=await createSharedAdmission({directory:join(projectDir,'admission',group.groupId),routeId:group.groupId,readOnly:true});let tickets;
- try{tickets=admission.snapshot().requests.filter(t=>['unknown','dispatched'].includes(t.state)&&!t.localRelease&&t.runId===t.rootId);}finally{admission.close();}
+ try{tickets=admission.snapshot().requests.filter(t=>(t.state==='unknown'||!unknownOnly&&t.state==='dispatched')&&!t.localRelease&&t.runId===t.rootId);}finally{admission.close();}
  const ids=[...new Set(tickets.map(t=>t.rootId))];if(ids.length>1024)fail('PROJECT_CAPACITY_MAINTENANCE_LIMIT');
  let scheduled;
  for(const runId of ids){let original,taskId=runId;try{original=await readTask(projectDir,runId);}catch(error){if(!['ENOENT','PROJECT_INVALID_ID'].includes(error.code))throw error;}
@@ -597,7 +609,7 @@ async function maintainProjectRouteBeforeWork(projectDir,definition){
   }
   if(taskCapacity(original,project).groupId!==group.groupId)continue;
   if(original.schedule&&scheduleRunId(original.schedule)!==runId)continue;
-  await maintainResearchUnknownCapacity({projectDir,runId:taskId});
+  await maintainResearchUnknownCapacity({projectDir,runId:taskId,shortUnknown:shortUnknown&&supportsOwnerFreeform(original.config)});
  }
 }
 

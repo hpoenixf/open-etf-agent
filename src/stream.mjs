@@ -6,7 +6,7 @@ export function projectStreamProtocolDiagnostic(error) {
   return value ? { ...value } : null;
 }
 
-export async function readChatStream(body, { signal, maxBytes = DEFAULT_PROVIDER_RESPONSE_BYTES } = {}) {
+export async function readChatStream(body, { signal, onProgress, maxBytes = DEFAULT_PROVIDER_RESPONSE_BYTES } = {}) {
   if (!Number.isSafeInteger(maxBytes) || maxBytes < 1 || maxBytes > DEFAULT_PROVIDER_RESPONSE_BYTES) throw new Error('Invalid stream size limit');
   signal?.throwIfAborted();
   const reader = body.getReader(); const decoder = new TextDecoder('utf-8', { fatal: true });
@@ -26,12 +26,12 @@ export async function readChatStream(body, { signal, maxBytes = DEFAULT_PROVIDER
     if (!data) return;
     frames++;
     if (done) invalid('EVENT_AFTER_DONE');
-    if (data === '[DONE]') { if (!finish) invalid('DONE_WITHOUT_FINISH'); done = true; return; }
+    if (data === '[DONE]') { if (!finish) invalid('DONE_WITHOUT_FINISH'); done = true; onProgress?.(); return; }
     let chunk; try { chunk = JSON.parse(data); } catch (error) { if (error instanceof SyntaxError) invalid('EVENT_JSON'); throw error; }
     if (!chunk || typeof chunk !== 'object') invalid('EVENT_SHAPE');
     if (chunk.usage !== undefined && chunk.usage !== null) usage = chunk.usage;
     if (!Array.isArray(chunk.choices)) invalid('CHOICES_SHAPE');
-    if (chunk.choices.length === 0 && chunk.usage != null) return;
+    if (chunk.choices.length === 0 && chunk.usage != null) { onProgress?.(); return; }
     if (chunk.choices.length !== 1) invalid('CHOICE_COUNT');
     if (!chunk.choices[0] || typeof chunk.choices[0] !== 'object') invalid('CHOICE_SHAPE');
     if (chunk.choices[0].index !== 0) invalid('CHOICE_INDEX');
@@ -76,6 +76,9 @@ export async function readChatStream(body, { signal, maxBytes = DEFAULT_PROVIDER
       if (!['stop', 'tool_calls'].includes(choice.finish_reason)) invalid('FINISH_REASON');
       finish = choice.finish_reason;
     }
+    // Comments, role-only/empty deltas and framing do not prove ongoing work.
+    if (choice.finish_reason != null || chunk.usage != null || [delta.content,delta.reasoning_content,delta.reasoning].some(value=>typeof value==='string'&&value.trim())
+      || delta.tool_calls?.some(part=>part.id || part.function?.name || part.function?.arguments)) onProgress?.();
   }
   function consume() {
     buffer = buffer.replace(/\r\n/g, '\n');
