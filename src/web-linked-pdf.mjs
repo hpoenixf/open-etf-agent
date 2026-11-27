@@ -12,6 +12,9 @@ import {acquireApprovedWebPdf} from './web-transport.mjs';
 import {WEB_LIMITS} from './web-policy.mjs';
 import {WEB_TEXT_PAGE_BYTES,webTextPageSizes} from './web-text-pages.mjs';
 import {pdfSnapshotBinding,prepareUploadedPdfSnapshot} from './pdf-input.mjs';
+import {pdfCellLimits,validPdfTables} from './pdf-table-evidence.mjs';
+
+export const LINKED_PDF_NATIVE_TABLES='linked-pdf-native-tables@1';
 
 const digest=x=>createHash('sha256').update(x).digest('hex');
 const id=x=>typeof x==='string'&&/^[A-Za-z0-9][A-Za-z0-9_-]{0,127}$/.test(x);
@@ -28,16 +31,23 @@ function verifyPageSnapshot(value){
   Array.isArray(value.pages)&&value.pages.length>=1&&value.pages.length<=16&&
   value.pages.every(t=>typeof t==='string'&&t.isWellFormed()&&Buffer.byteLength(t)<=65536);
 }
+const validTablePages=(pages,count)=>Array.isArray(pages)&&pages.length===count&&
+ pages.every(t=>validPdfTables(t)&&Buffer.byteLength(JSON.stringify(t))<=24000)&&
+ pages.some(t=>t.length)&&Buffer.byteLength(JSON.stringify(pages))<=131072;
+// Keep the old page receipt byte-for-byte independent of optional table data.
+const tableDigest=(binding,snapshotBinding,tables)=>digest(JSON.stringify([binding,snapshotBinding,tables]));
 const successful=(r,url)=>r?.requestedUrl===url&&r?.finalUrl===url&&Array.isArray(r.redirects)&&r.redirects.length===0;
 const unavailableCodes=new Set(['WEB_ACCESS_DENIED','WEB_ROBOTS_DISALLOWED','WEB_REDIRECT_NOT_ADMITTED','WEB_HTTP_STATUS',
  'WEB_DNS_UNAVAILABLE','WEB_ROBOTS_INVALID','WEB_CONTENT_ENCODING','WEB_REDIRECT_LIMIT',
  'WEB_BODY_LIMIT','WEB_PDF_CONTENT_TYPE','WEB_PDF_INVALID_MAGIC','WEB_TIMEOUT','WEB_RATE_LIMITED','WEB_ADDRESS_NOT_PUBLIC',
  'PDF_LIMIT_PAGES','PDF_LIMIT_TEXT','PDF_ENCRYPTED','PDF_INVALID_FORMAT','PDF_PARSE_FAILED','PDF_TIMEOUT']);
 
-export function openLinkedWebPdfOwner({projectDir,authority,resolveConsumedHtml,fetchPdf=acquireApprovedWebPdf,networkProfile}={}){
+export function openLinkedWebPdfOwner({projectDir,authority,resolveConsumedHtml,fetchPdf=acquireApprovedWebPdf,networkProfile,tableRevision}={}){
  if(!authority||authority.kind!=='authenticated-owner-public-web'||authority.protected!==false||
     !id(authority.projectId)||!id(authority.runId)||!id(authority.accountId)||typeof resolveConsumedHtml!=='function')
   fail('WEB_PDF_SCOPE_DENIED');
+ if(tableRevision!==undefined&&tableRevision!==LINKED_PDF_NATIVE_TABLES)fail('WEB_PDF_SCOPE_DENIED');
+ const withTables=tableRevision===LINKED_PDF_NATIVE_TABLES;
  const scope=Object.freeze({projectId:authority.projectId,runId:authority.runId,accountId:authority.accountId});
  // Resolvers and transport are constructor-only capabilities owned by the host.
  async function context(linkId){
@@ -57,7 +67,8 @@ export function openLinkedWebPdfOwner({projectDir,authority,resolveConsumedHtml,
  async function readRecord(directory,binding){
   let record;
   try{record=await readProjectJson(join(directory,'final.json'));}catch(e){if(e.code==='ENOENT')return null;throw e;}
-  if(record?.schemaVersion!=='web-linked-pdf-record@1'||!isDeepStrictEqual(record.binding,binding))
+  const tableRecord=record?.schemaVersion==='web-linked-pdf-record@2';
+  if((!tableRecord&&record?.schemaVersion!=='web-linked-pdf-record@1')||!isDeepStrictEqual(record.binding,binding))
    fail('WEB_PDF_RECORD_CHANGED');
   if(record.status==='unavailable'&&unavailableCodes.has(record.code))return record;
   if(record.status!=='saved'||typeof record.retrievedAt!=='string'||!Number.isFinite(Date.parse(record.retrievedAt)))
@@ -80,6 +91,27 @@ export function openLinkedWebPdfOwner({projectDir,authority,resolveConsumedHtml,
   try{await safeDirectory(directory);}catch(e){if(e.code==='ENOENT')return null;throw e;}
   return readRecord(directory,context.binding);
  }
+ async function retainedPage(linkId,page){
+  if(!Number.isSafeInteger(page)||page<1)fail('WEB_PDF_PAGE_INVALID');
+  const proven=await context(linkId),record=await existing(proven);
+  if(record?.status==='saved'&&page>record.snapshot.pages.length)fail('WEB_PDF_PAGE_INVALID');
+  return {proven,record};
+ }
+ const tableMiss=(page,code)=>({kind:'web-pdf-tables-unavailable@1',status:'unavailable',code,page});
+ const tableData=(record,page)=>{
+  if(record?.status!=='saved')return {unavailable:safeSummary(record)};
+  if(record.schemaVersion==='web-linked-pdf-record@1')return {unavailable:tableMiss(page,'WEB_PDF_TABLES_NOT_RETAINED')};
+  const {tableSnapshot,snapshotBinding,binding,tableSnapshotSha256}=record;
+  const empty=Array.isArray(tableSnapshot)&&!tableSnapshot.length;
+  if(snapshotBinding.schemaVersion!==(empty?'pdf-input-snapshot@1':'pdf-input-snapshot@2')||
+     (!empty&&tableSnapshot!==null&&!validTablePages(tableSnapshot,record.snapshot.pages.length))||
+     tableDigest(binding,snapshotBinding,tableSnapshot)!==tableSnapshotSha256)fail('WEB_PDF_RECORD_CHANGED');
+  if(tableSnapshot===null)return {unavailable:tableMiss(page,'WEB_PDF_TABLE_EVIDENCE_LIMIT')};
+  const tables=tableSnapshot[page-1]??[];
+  if(!tables.length)return {unavailable:tableMiss(page,'WEB_PDF_NO_STRUCTURED_TABLE')};
+  return {tables,common:{url:record.binding.downloadUrl,retrievedAt:record.retrievedAt,
+   originalSha256:record.snapshot.originalSha256,page,pages:record.snapshot.pages.length}};
+ };
  return Object.freeze({
   async acquire(linkId,{signal}={}){
    signal?.throwIfAborted();
@@ -87,7 +119,7 @@ export function openLinkedWebPdfOwner({projectDir,authority,resolveConsumedHtml,
    const root=await ensureSafeDirectory(join(await safeDirectory(projectDir),'web-linked-pdf')),directory=join(root,proven.key);
    try{await mkdir(directory,{mode:0o700});}catch(e){if(e.code==='EEXIST')return safeSummary(await readRecord(directory,proven.binding));throw e;}
    await syncDir(root);
-   const base={schemaVersion:'web-linked-pdf-record@1',binding:proven.binding};
+   const base={schemaVersion:withTables?'web-linked-pdf-record@2':'web-linked-pdf-record@1',binding:proven.binding};
    let result;
    try{
     let response;
@@ -108,6 +140,13 @@ export function openLinkedWebPdfOwner({projectDir,authority,resolveConsumedHtml,
     if(!verifyPageSnapshot(pages))fail('WEB_PDF_RECORD_CHANGED');
     result={...base,status:'saved',retrievedAt:response.fetchedAt,snapshotBinding:binding,snapshot:pages,
      pageSnapshotSha256:digest(JSON.stringify([binding,pages]))};
+    if(withTables){
+     // The parser strips unsupported/oversized grids before returning a
+     // normalized snapshot. Even a future tighter local cap must not drop
+     // valid page text or retroactively label those tables as verified.
+     const tableSnapshot=snapshot.tables===undefined?[]:validTablePages(snapshot.tables,pages.pages.length)?snapshot.tables:null;
+     result={...result,tableSnapshot,tableSnapshotSha256:tableDigest(proven.binding,binding,tableSnapshot)};
+    }
    }catch(e){
     // Only explicit, settled facts may become unavailable. Unobserved transport
     // outcomes or host failure leave the reservation held and non-replayed.
@@ -120,16 +159,38 @@ export function openLinkedWebPdfOwner({projectDir,authority,resolveConsumedHtml,
    return safeSummary(result);
   },
   async readPage(linkId,page){
-   if(!Number.isSafeInteger(page)||page<1)fail('WEB_PDF_PAGE_INVALID');
-   const proven=await context(linkId),record=await existing(proven);
+   const {proven,record}=await retainedPage(linkId,page);
    if(record?.status!=='saved')return safeSummary(record);
-   if(page>record.snapshot.pages.length)fail('WEB_PDF_PAGE_INVALID');
    const text=record.snapshot.pages[page-1];
    if(webTextPageSizes(text).some(n=>n>WEB_TEXT_PAGE_BYTES))return {kind:'web-pdf-page-unavailable@1',status:'unavailable',code:'WEB_PDF_PAGE_TEXT_LIMIT',page};
    if(!text.trim())return {kind:'web-pdf-page-unavailable@1',status:'unavailable',code:'WEB_PDF_NO_EXTRACTABLE_TEXT',page};
    return {kind:'web-pdf-original-page',url:record.binding.downloadUrl,retrievedAt:record.retrievedAt,
     originalSha256:record.snapshot.originalSha256,page,pages:record.snapshot.pages.length,text,sha256:digest(text),
     sourceRef:'web-pdf-page:sha256:'+digest(JSON.stringify([proven.key,record.snapshotBinding.snapshotSha256,page,digest(text)]))};
-  }
+  },
+  ...(withTables?{
+   async readTables(linkId,page){
+    const {record}=await retainedPage(linkId,page);
+    const {tables,common,unavailable}=tableData(record,page);
+    return unavailable??{kind:'web-pdf-original-tables@1',...common,tables};
+   },
+   async readCell(linkId,selection){
+    if(!selection||typeof selection!=='object'||Array.isArray(selection)||
+       Object.keys(selection).sort().join(',')!=='column,page,row,table')fail('WEB_PDF_CELL_INVALID');
+    const {page,table,row,column}=selection;
+    if(![[table,pdfCellLimits.table],[row,pdfCellLimits.row],[column,pdfCellLimits.column]]
+     .every(([n,limit])=>Number.isSafeInteger(n)&&n>=1&&n<=limit))fail('WEB_PDF_CELL_INVALID');
+    const {proven,record}=await retainedPage(linkId,page);
+    const {tables,common,unavailable}=tableData(record,page);
+    if(unavailable)return unavailable;
+    const chosen=tables[table-1],dataRow=chosen?.rows[row-1],point=dataRow?.cells[column-1];
+    if(!point)return tableMiss(page,'WEB_PDF_CELL_UNAVAILABLE');
+    const cell={schemaVersion:'pdf-table-cell@1',table,row,column,caption:chosen.caption,rowLabel:dataRow.label,
+     header:chosen.headers[column-1],unit:chosen.unit,at:point.at};
+    const text=point.text,sha256=digest(text);
+    return {kind:'web-pdf-original-cell@1',...common,text,sha256,cell,
+     sourceRef:'web-pdf-cell:sha256:'+digest(JSON.stringify([proven.key,record.snapshotBinding.snapshotSha256,page,cell,sha256]))};
+   }
+  }:{})
  });
 }
