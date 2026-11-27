@@ -1,6 +1,7 @@
 import {inputChartChoice,hasSuppliedChartData} from './financial-chart-input.mjs';
 import {isResearchSkillChoice} from './financial-analysis-methods.mjs';
 import {offerReasoningEffort} from './gateway.mjs';
+import {AGENT_CHART_SKILL} from './financial-chart-agent.mjs';
 import {ownerChartChoice, readOwnerChartViews} from './financial-chart-owner.mjs';
 import { validateDailyContext, buildDailyQuestion } from './conversation-daily-context.mjs';
 import {readConversationCalculations} from './conversation-history.mjs';
@@ -12,7 +13,7 @@ import {safeDirectory,ensureSafeDirectory,publishImmutable} from './storage-file
 import {readProjectJson,inspectResearchProject,submitResearchTask,inspectResearchTask,workResearchTask,cancelResearchTask,readResearchReport,readResearchOutput,resumeResearchTaskAdmission,supportsOwnerFreeform,respondResearchTask,inspectResearchInteraction,listResearchInteractions,controlResearchTask,inspectResearchControl} from './research-project.mjs';
 import {readReportReview} from './report-review.mjs';
 import {readResearchPublication} from './research-project.mjs';
-import {OWNER_LINKED_PDF_REVISION} from './gui-owner-web.mjs';
+import {OWNER_LINKED_PDF_REVISION,OWNER_LINKED_PDF_LOCAL_MISS} from './gui-owner-web.mjs';
 import {readOwnerWebSources} from './conversation-owner-read-sources.mjs';
 const fail=code=>{throw Object.assign(new Error(code),{code});};
 const id=v=>{if(typeof v!=='string'||!/^[A-Za-z0-9_-]{1,48}$/.test(v))fail('CONVERSATION_INVALID_ID');return v;};
@@ -70,14 +71,15 @@ export async function submitConversationMessage({projectDir,conversationId,messa
  if(dailyBrief!==undefined&&dailyResearch===undefined)fail('CONVERSATION_DAILY_CONTEXT_INVALID');
  if(dailyResearch!==undefined){if(!freeform)fail('CONVERSATION_DAILY_CONTEXT_INVALID');validateDailyContext(dailyResearch,{conversationId,messageId});}
  if(chartSkill!==undefined&&(!freeform||dailyResearch!==undefined||!ownerChartChoice(chartSkill)||
-   (inputChartChoice(chartSkill)?!hasSuppliedChartData(text):(await inspectResearchProject({projectDir:loc.projectDir})).config.ownerConnectivity?.wind!==true)))fail('CONVERSATION_CHART_UNAVAILABLE');
+   (chartSkill===AGENT_CHART_SKILL?false:inputChartChoice(chartSkill)?!hasSuppliedChartData(text):(await inspectResearchProject({projectDir:loc.projectDir})).config.ownerConnectivity?.wind!==true)))fail('CONVERSATION_CHART_UNAVAILABLE');
  if(researchDepth!==undefined&&(!['auto','standard','deep'].includes(researchDepth)||dailyResearch!==undefined||parent!==null||review!==null||continuationOfMessageId!==null||
    !authorization?.providerApproved||!authorization?.dataApproved||!authorization?.costApproved||
    !supportsOwnerFreeform((await inspectResearchProject({projectDir:loc.projectDir})).config)))fail('CONVERSATION_RESEARCH_DEPTH_UNAVAILABLE');
  if(reasoningEffort!==undefined&&(dailyResearch!==undefined||parent!==null||review!==null||continuationOfMessageId!==null||
    !authorization?.providerApproved||!authorization?.dataApproved||!authorization?.costApproved||
    !offerReasoningEffort((await inspectResearchProject({projectDir:loc.projectDir})).config).options.includes(reasoningEffort)))fail('CONVERSATION_REASONING_EFFORT_UNAVAILABLE');
- if(ownerLinkedPdfRevision!==undefined&&(ownerLinkedPdfRevision!==OWNER_LINKED_PDF_REVISION||!freeform||dailyResearch!==undefined||
+ if(ownerLinkedPdfRevision!==undefined&&(![OWNER_LINKED_PDF_REVISION,OWNER_LINKED_PDF_LOCAL_MISS].includes(ownerLinkedPdfRevision)||
+   (ownerLinkedPdfRevision===OWNER_LINKED_PDF_LOCAL_MISS&&chartSkill!==AGENT_CHART_SKILL)||!freeform||dailyResearch!==undefined||
    !authorization?.providerApproved||!authorization?.dataApproved||!authorization?.costApproved||
    (await inspectResearchProject({projectDir:loc.projectDir})).config.ownerConnectivity?.linkedPdf!==true))fail('CONVERSATION_LINKED_PDF_UNAVAILABLE');
  const geminiPublicSha256=approveGeminiPublic===true?sha256(text):undefined;

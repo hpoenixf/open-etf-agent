@@ -45,6 +45,8 @@ const safe=s=>typeof s==='string'&&s.length<=200&&!/[\p{C}]/u.test(s);
 const candle=v=>v&&Object.keys(v).sort().join(',')==='close,high,low,open'&&[v.open,v.high,v.low,v.close].every(number)
  &&v.low>0&&v.low<=Math.min(v.open,v.close)&&v.high>=Math.max(v.open,v.close);
 const timeCharts=['line','candlestick','multi-line','area'];
+const suppliedBases={'user-supplied':'user-supplied','agent-supplied':'agent-supplied','source-checked':'document-reported'};
+const supplied=view=>Object.hasOwn(suppliedBases,view.basis)&&suppliedBases[view.basis]===view.provenance;
 const newCharts=['heatmap','combo','multi-line','area'];
 const seriesBounds=chart=>chart==='heatmap'?[2,12]:chart==='combo'?[2,2]:chart==='multi-line'?[2,4]:
  ['line','bar','stacked'].includes(chart)?[1,4]:[1,1];
@@ -53,18 +55,18 @@ function valid(view){
  if(view?.schemaVersion!=='financial-chart-view@1'||typeof view.integrity!=='string'||!/^[a-f0-9]{64}$/.test(view.integrity)
   ||!['line','bar','pie','candlestick','stacked',...newCharts].includes(view.chart)||![view.title,view.unit,view.basis].every(safe)
   ||!(safe(view.asOf)||view.asOf===null&&view.provenance==='user-supplied'&&['bar','stacked','pie'].includes(view.chart))||(view.periodStart!==null&&!safe(view.periodStart))
-  ||!['synthetic','provider-reported','document-reported','user-supplied'].includes(view.provenance)
+  ||!['synthetic','provider-reported','document-reported','user-supplied','agent-supplied'].includes(view.provenance)
   ||!Array.isArray(view.keys)||view.keys.length<(newCharts.includes(view.chart)?2:1)||view.keys.length>(timeCharts.includes(view.chart)?180:view.chart==='heatmap'?12:24)||!view.keys.every(safe)
   ||!Array.isArray(view.series)||view.series.length<min||view.series.length>max)return false;
  if(timeCharts.includes(view.chart)&&!view.keys.every((x,i)=>/^\d{4}-\d{2}-\d{2}$/.test(x)&&Number.isFinite(Date.parse(x))&&(i===0||x>view.keys[i-1])))return false;
  if(!view.series.every(s=>safe(s?.label)&&Array.isArray(s.values)&&s.values.length===view.keys.length&&
    s.values.every(v=>v===null||(view.chart==='candlestick'?candle(v):number(v)))))return false;
- if(newCharts.includes(view.chart)&&(view.provenance!=='user-supplied'||view.basis!=='user-supplied'||
+ if(newCharts.includes(view.chart)&&(!supplied(view)||
   new Set(view.keys).size!==view.keys.length||new Set(view.series.map(s=>s.label)).size!==view.series.length||
   view.series.some(s=>!s.values.some(number))))return false;
  if(view.chart==='combo'&&(view.series[0].mark!=='bar'||view.series[1].mark!=='line'))return false;
- if(view.chart==='candlestick'&&view.provenance==='user-supplied'&&view.kind!=='financial-ohlc')return false;
- if(view.kind==='financial-ohlc'&&(view.chart!=='candlestick'||view.basis!=='user-supplied'||view.provenance!=='user-supplied'||
+ if(view.chart==='candlestick'&&supplied(view)&&view.kind!=='financial-ohlc')return false;
+ if(view.kind==='financial-ohlc'&&(view.chart!=='candlestick'||!supplied(view)||
     !['CNY/share','USD/share','HKD/share'].includes(view.unit)||!view.series[0].values.some(candle)))return false;
  if(view.chart==='pie'){
   const c=view.coverage;
@@ -87,7 +89,7 @@ export function createFinancialChartView(doc,view){
  const figure=html('figure'), caption=html('figcaption',view.title+' · '+view.unit+(view.asOf===null?' · 未提供日期':' · 截至 '+view.asOf));
  figure.setAttribute('class','financial-chart-figure');
  figure.append(caption,html('p',view.provenance==='synthetic'?'合成样例，不是实时数据。':
-  view.provenance==='user-supplied'?'用户提供的数据，未独立核验。':'按来源报告的数据，不代表独立验证或实时行情。'));
+  view.provenance==='user-supplied'?'用户提供的数据，未独立核验。':view.provenance==='agent-supplied'?'由模型整理或计算，图中数值未逐项核验。':'按来源报告的数据，不代表独立验证或实时行情。'));
  const svg=svgEl('svg',{viewBox:'0 0 640 320',role:'group','aria-label':view.title});
  svg.append(svgEl('title',{},view.title),svgEl('desc',{},'下方表格列出原始数值、缺失项和口径。'));
  figure.append(svg);
@@ -290,7 +292,7 @@ export function createFinancialChartView(doc,view){
    interactive(hit,heading,rows,cx,markerY);
   });
  }
- if(view.provenance==='user-supplied'&&view.chart!=='heatmap'){ const legend=html('p'); legend.setAttribute('aria-label','图例');legend.setAttribute('class','financial-chart-legend');
+ if(supplied(view)&&view.chart!=='heatmap'){ const legend=html('p'); legend.setAttribute('aria-label','图例');legend.setAttribute('class','financial-chart-legend');
  const legendItems=view.chart==='pie'?[...view.keys,view.coverage.remainderLabel]:view.series.map(s=>s.label+(s.mark==='bar'?'（柱）':s.mark==='line'?'（线）':''));
  legendItems.forEach((label,i)=>{
   const swatch=svgEl('svg',{viewBox:'0 0 10 10',width:10,height:10,'aria-hidden':'true'});
@@ -325,6 +327,14 @@ export function createFinancialChartView(doc,view){
  const sourceIds=[...new Set(view.series.flatMap(s=>Array.isArray(s.originReceiptIds)?s.originReceiptIds.slice(0,8):[]))]
   .filter(x=>typeof x==='string'&&/^(?:result|calculation|artifact|typed-source):sha256:[a-f0-9]{64}$/.test(x));
  details.append(html('p','上游来源回执：'+(sourceIds.join('、')||'不可用')));
+ for(const source of Array.isArray(view.sources)?view.sources.slice(0,7):[]){
+  let u;try{u=new URL(source.url);}catch{continue;}
+  if(u.protocol!=='https:'||u.username||u.password)continue;
+  const link=html('a',source.pdf?'原始 PDF 第 '+source.page+' 页':'打开原始网页');
+  link.setAttribute('href',u.href);link.setAttribute('target','_blank');link.setAttribute('rel','noopener noreferrer');
+  const line=html('p');line.append(link);details.append(line);
+ }
+
  figure.append(details);
  return figure;
 }
