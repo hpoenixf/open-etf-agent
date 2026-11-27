@@ -26,7 +26,7 @@ import {OWNER_LINKED_PDF_REVISION,openOwnerWeb,OWNER_SEARCH_PROVIDERS,OWNER_WEB_
 import {openSession} from './session.mjs';
 import {submitRun,confirmScheduledRun,materializeScheduledRun} from './runtime.mjs';
 import {workRun} from './worker.mjs';
-import {CHAT_REQUEST_MAX_BYTES,createChatGateway,OPENCODE_GO_CURRENT_ENDPOINT,OPENCODE_GO_OWNER_PROVIDER,GO_GLM_EFFORT_PREVIEW,matchesGoGlmEffortRoute,offerReasoningEffort} from './gateway.mjs';
+import {CHAT_REQUEST_MAX_BYTES,createChatGateway,OPENCODE_GO_CURRENT_ENDPOINT,OPENCODE_GO_OWNER_PROVIDER,GO_DEEPSEEK_MODEL,GO_MIMO_MODEL,GO_GLM_EFFORT_PREVIEW,matchesGoGlmEffortRoute,offerReasoningEffort} from './gateway.mjs';
 import {createSharedAdmission} from './admission.mjs';
 import {openMemoryLibrary} from './memory.mjs';
 import {openDurableMemory} from './durable-memory.mjs';
@@ -115,7 +115,7 @@ async function initializeProjectCapacity(projectDir,config,{newProject=false}={}
  const owner=await createSharedAdmission({directory,routeId:group.groupId});owner.close();const parent=await open(join(projectDir,'admission'),'r');try{await parent.sync();}finally{await parent.close();}
 }
 export function validateResearchConfig(input){
- keys(input,['schemaVersion','gateway','capabilities','allowedTools','childMethod','compaction','limits','timeZone','trustedPackages','interaction','childExecution','knowledge','knowledgeQuery','contextBytes','contextWorkingSetBytes','ownerConnectivity','ownerReasoningEffort']);
+ keys(input,['schemaVersion','gateway','capabilities','allowedTools','childMethod','compaction','limits','timeZone','trustedPackages','interaction','childExecution','knowledge','knowledgeQuery','contextBytes','contextWorkingSetBytes','ownerConnectivity','ownerReasoningEffort','ownerGoMimoFallback']);
  if(input.contextWorkingSetBytes!==undefined&&!integer(input.contextWorkingSetBytes,1,1048576))fail('PROJECT_CONTEXT_WORKING_SET_BYTES');
  if(input.contextBytes!==undefined&&!integer(input.contextBytes,1,1048576))fail('PROJECT_CONTEXT_BYTES');
  if(input.schemaVersion!=='research-project@1')fail('PROJECT_CONFIG_VERSION');
@@ -125,6 +125,7 @@ export function validateResearchConfig(input){
  if(input.ownerReasoningEffort!==undefined&&(input.ownerReasoningEffort!==GO_GLM_EFFORT_PREVIEW||!matchesGoGlmEffortRoute(g)))fail('PROJECT_REASONING_EFFORT_UNSUPPORTED');
  if(g.stream!==undefined&&typeof g.stream!=='boolean')fail('PROJECT_GATEWAY_CONFIG');
  if(!Array.isArray(input.capabilities)||!input.capabilities.includes('report')||new Set(input.capabilities).size!==input.capabilities.length||input.capabilities.some(v=>!CAPABILITIES.includes(v)))fail('PROJECT_CAPABILITIES');
+ if(input.ownerGoMimoFallback!==undefined&&(input.ownerGoMimoFallback!=='exact-go-model-not-found@1'||g.mode!=='live'||g.provider!==OPENCODE_GO_OWNER_PROVIDER||g.endpoint!==OPENCODE_GO_CURRENT_ENDPOINT||g.model!==GO_DEEPSEEK_MODEL||!supportsOwnerFreeform(input)))fail('PROJECT_GO_MIMO_FALLBACK_UNSUPPORTED');
  if(input.ownerReasoningEffort!==undefined&&!supportsOwnerFreeform(input))fail('PROJECT_REASONING_EFFORT_UNSUPPORTED');
  if(input.interaction!==undefined){if(!input.capabilities.includes('response'))fail('PROJECT_RESPONSE_NOT_ENABLED');validateInteractionConfig(input.interaction);}
  if(input.knowledge!==undefined){if(!input.capabilities.includes('knowledge'))fail('PROJECT_KNOWLEDGE_NOT_ENABLED');normalizeKnowledgeConfig(input.knowledge);}
@@ -279,7 +280,12 @@ async function assemble(projectDir,definition,{gateway,apiKey,fetchImpl,hostSign
    const current=await projectMemory({messages:input.messages,lookupState});
    if(hash(current)!==hash(input.messages))fail(selectedMemory?'PROJECT_SELECTED_MEMORY_CHANGED_BEFORE_SEND':'PROJECT_MEMORY_CHANGED_BEFORE_SEND');
   };
-  const wrapped=admission.wrap(selectedGateway,{session:store,runId,...(definition.memoryMode===SELECTED_MEMORY_MODE||projectMemoryEnabled(definition)?{beforeDispatch:memoryGate}:{})});
+  const sameGroupFallback=dispatch&&!definition.schedule&&!definition.reasoningEffort&&config.ownerGoMimoFallback==='exact-go-model-not-found@1'
+    ? createChatGateway({observeTransport:observeGuiRun,provider:config.gateway.provider,endpoint:config.gateway.endpoint,model:GO_MIMO_MODEL,apiKey,
+      authorization:definition.authorization,researchProfile:researchProfileFor(definition.researchDepth,definition.researchProfileRevision),stream:config.gateway.stream??false,
+      fetchImpl:fetchImpl?((url,options,r)=>fetchImpl(url,options,r?Object.freeze({role:'main',rootId:r.rootId,runId:r.runId,
+        modelOrdinal:r.modelOrdinal,purpose:'main',inputHash:r.inputHash}):null)):undefined}) : undefined;
+  const wrapped=admission.wrap(selectedGateway,{session:store,runId,sameGroupFallback,...(definition.memoryMode===SELECTED_MEMORY_MODE||projectMemoryEnabled(definition)?{beforeDispatch:memoryGate}:{})});
   const adapters=[PUBLICATION_BINDING],extensions=[];let workingInput,knowledgeQueryEffects;const plugins=await loadProjectPlugins({projectDir,config});
   if(localEmbedding!==undefined&&!config.knowledgeQuery)fail('PROJECT_KNOWLEDGE_QUERY_NOT_ENABLED');
   if(embeddingBackend!==undefined&&(!config.knowledgeQuery||config.gateway.mode!=='fixture'))fail('PROJECT_KNOWLEDGE_QUERY_BACKEND_OVERRIDE');

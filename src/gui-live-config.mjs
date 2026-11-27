@@ -8,7 +8,7 @@ function fail(code) { throw Object.assign(new Error(code), { code }); }
 export function prepareGuiLiveConfig(input, env) {
   // The file selects only the existing Chat Completions adapter and native per-Run limits.
   // The trusted launcher passes an environment reference, not a credential in this file.
-  if (!shape(input, ['gateway','limits','connectivity','reasoningEffortProfile']) ||
+  if (!shape(input, ['gateway','limits','connectivity','reasoningEffortProfile','goMimoFallback']) ||
       !shape(input.gateway, ['provider','endpoint','model','apiKeyEnv','stream']) ||
       !shape(input.limits, ['model','tool','maxRounds','maxTools','timeoutMs']) ||
       !Object.hasOwn(input.limits, 'model')) fail('GUI_LIVE_CONFIG_INVALID');
@@ -19,6 +19,7 @@ export function prepareGuiLiveConfig(input, env) {
     contextBytes:1048576,
     limits:input.limits,
     ...(input.reasoningEffortProfile===undefined?{}:{ownerReasoningEffort:input.reasoningEffortProfile}),
+    ...(input.goMimoFallback===undefined?{}:{ownerGoMimoFallback:input.goMimoFallback}),
     ...(input.connectivity===undefined?{}:{ownerConnectivity:input.connectivity}),
   });
   const { endpoint, provider, model, apiKeyEnv } = config.gateway;

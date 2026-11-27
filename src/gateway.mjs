@@ -5,6 +5,26 @@ export const MAX_TOOL_ARGUMENT_BYTES = 2 * 1048576;
 export const DEFAULT_PROVIDER_RESPONSE_BYTES = 16 * 1048576;
 // Only rejection sites in this module can mint this diagnostic; provider objects cannot.
 const diagnostics = new WeakMap();
+const modelDenials = new WeakMap();
+const goMimoGateways=new WeakSet();
+export const isExactGoMimoGateway=gateway=>goMimoGateways.has(gateway);
+export const projectExactGoModelDenial = error => modelDenials.get(error) ?? null;
+export const GO_DEEPSEEK_MODEL='deepseek-v4.1-flash';
+export const GO_MIMO_MODEL='mimo-v2.6-flash';
+async function exactModelNotFound(response, signal) {
+  if(response.status!==404||!/^application\/json(?:\s*;|\s*$)/i.test(response.headers.get('content-type')??''))return false;
+  const reader=response.body?.getReader();if(!reader)return false;
+  try {
+    const chunks=[];let bytes=0;
+    for(;;){signal?.throwIfAborted();const {done,value}=await reader.read();if(done)break;
+      bytes+=value.byteLength;if(bytes>8192){await reader.cancel();return false;}chunks.push(value);}
+    signal?.throwIfAborted();
+    const payload=JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(Buffer.concat(chunks)));
+    return payload&&Object.keys(payload).join(',')==='error'&&payload.error?.code==='model_not_found'&&
+      typeof payload.error?.message==='string'&&Object.keys(payload.error).every(key=>['code','type','message','param'].includes(key));
+  }catch{return false;}finally{reader.releaseLock();}
+}
+
 export function projectProviderProtocolDiagnostic(error) {
   const value = error && typeof error === 'object' ? diagnostics.get(error) : null;
   return value ? { ...value } : null;
@@ -123,7 +143,7 @@ export function createChatGateway({ provider, endpoint, model, apiKey, authoriza
       messages: [...(policy?[{role:'system',content:policy}]:[]),...encodeMessages(messages)],
       tools: exposed.map(t => ({ type: 'function', function: t })) });
   };
-  return {
+  const gateway = {
     mode: 'live',
     inputBudget: Object.freeze({maxBytes:maxInputBytes,measure:input=>Buffer.byteLength(encodeInput({...input,wireEffort:reasoningEffort}))}),
     async next({ messages, tools, signal, reservation }) {
@@ -132,13 +152,14 @@ export function createChatGateway({ provider, endpoint, model, apiKey, authoriza
       if (Buffer.byteLength(body) > maxInputBytes) throw new Error('PROVIDER_INPUT_BYTE_LIMIT');
       const headers = requestHeaders(reservation);
       let response;
-      if (!observeTransport) return dispatch();
+      async function checked(){const result=await dispatch();if(go&&model===GO_MIMO_MODEL&&JSON.stringify(result).includes(apiKey))throw new Error('PROJECT_CREDENTIAL_ECHO');return result;}
+      if (!observeTransport) return checked();
       const at = Date.now();
       const observe = fact => {
         try { observeTransport({type:'model-transport',ordinal:reservation?.modelOrdinal,model,at,end:Date.now(),...fact}); } catch {}
       };
       try {
-        const result=await dispatch();
+        const result=await checked();
         observe({status:'responded',usage:result.usage});
         return result;
       } catch(error) {
@@ -150,11 +171,16 @@ export function createChatGateway({ provider, endpoint, model, apiKey, authoriza
           method: 'POST', redirect: 'error', signal,
           headers,
           body
-        });
+        }, reservation);
         response = received;
         if (!response.ok) {
           const code = `PROVIDER_HTTP_${response.status}`;
-          throw Object.assign(new Error(code), {code});
+          const error=Object.assign(new Error(code), {code});
+          if(provider===OPENCODE_GO_OWNER_PROVIDER&&url.href===OPENCODE_GO_CURRENT_ENDPOINT&&model===GO_DEEPSEEK_MODEL&&
+             reservation?.runId===reservation?.rootId&&reservation?.rootId&&reservation.purpose===undefined&&
+             await exactModelNotFound(response,signal)&&!signal?.aborted)
+            modelDenials.set(error,Object.freeze({model,rootId:reservation.rootId,modelOrdinal:reservation.modelOrdinal,inputHash:reservation.inputHash}));
+          throw error;
         }
         if (stream) {
           if (!response.headers.get('content-type')?.startsWith('text/event-stream')) throw new Error('PROVIDER_STREAM_CONTENT_TYPE');
@@ -186,4 +212,6 @@ export function createChatGateway({ provider, endpoint, model, apiKey, authoriza
       }
     }
   };
+  if(provider===OPENCODE_GO_OWNER_PROVIDER&&url.href===OPENCODE_GO_CURRENT_ENDPOINT&&model===GO_MIMO_MODEL)goMimoGateways.add(gateway);
+  return Object.freeze(gateway);
 }

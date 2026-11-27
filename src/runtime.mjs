@@ -509,18 +509,32 @@ async function drive({ question, gateway, outputRoot='runs', requireReport=false
           if(workingInput?.memoryLibrary){state.working.messages=await projectMemory({messages:state.working.messages,lookupState:ref=>workingInput.memoryLibrary.state(ref.id)});state.working.hash=sha256(JSON.stringify(state.working.messages));}
           const mainTools=host.definitions.filter(tool=>tool.name!==RESEARCH_NEEDS_TOOL||isDeepResearchNeedsActive(researchProfile,state.messages));
           assertContextCapacity({messages:state.working.messages,tools:mainTools,maxBytes:contextBytes,inputBudget:gateway.inputBudget});
-          state.rounds++;state.gatewayOutcome='unknown';let reservation;if(claim){const reservedView=await checkpoint('model-reserved',{reserve:'model'});if(gateway.admission==='shared-admission@1')reservation=modelReservation(reservedView);}else{rootBudget.claim('model');gatewayUnsettled=true;}
-          const start=performance.now();let proposal;
-          try{
-            proposal=await effect(Promise.resolve().then(()=>{controller.signal.throwIfAborted();gatewayUnsettled=true;return gateway.next({messages:structuredClone(state.working.messages),tools:structuredClone(mainTools),signal:controller.signal,...(reservation?{reservation}:{})});}));
-            controller.signal.throwIfAborted();gatewayUnsettled=false;
-          }catch(error){
-            // Only the original Gateway can brand a recognized terminal finish.
-            // An arbitrary code, incomplete stream/body or cancelled late reply is not settlement.
-            const diagnostic=projectProviderProtocolDiagnostic(error);
-            if(isKnownAdmissionNonDispatch(error)||!controller.signal.aborted&&diagnostic?.reason==='NON_SUCCESS_FINISH'&&diagnostic.hashScope==='complete-body')gatewayUnsettled=false;
-            if(reservation&&diagnostic)await record('model_protocol_rejected',{modelOrdinal:reservation.modelOrdinal,inputHash:reservation.inputHash,diagnostic}).catch(()=>{});
-            throw error;
+          let proposal,selected=gateway,start,reservation;
+          for(;;){
+            state.rounds++;state.gatewayOutcome='unknown';reservation=undefined;if(claim){const reservedView=await checkpoint('model-reserved',{reserve:'model'});if(gateway.admission==='shared-admission@1')reservation=modelReservation(reservedView);}else{rootBudget.claim('model');gatewayUnsettled=true;}
+            start=performance.now();
+            try{
+              proposal=await effect(Promise.resolve().then(()=>{controller.signal.throwIfAborted();gatewayUnsettled=true;return selected.next({messages:structuredClone(state.working.messages),tools:structuredClone(mainTools),signal:controller.signal,...(reservation?{reservation}:{})});}));
+              controller.signal.throwIfAborted();gatewayUnsettled=false;
+            }catch(error){
+              // Only the original Gateway and Admission can prove a terminal outcome.
+              // An arbitrary code, incomplete stream/body or cancelled late reply is not settlement.
+              const diagnostic=projectProviderProtocolDiagnostic(error);
+              if(isKnownAdmissionNonDispatch(error)||!controller.signal.aborted&&diagnostic?.reason==='NON_SUCCESS_FINISH'&&diagnostic.hashScope==='complete-body')gatewayUnsettled=false;
+              if(reservation&&diagnostic)await record('model_protocol_rejected',{modelOrdinal:reservation.modelOrdinal,inputHash:reservation.inputHash,diagnostic}).catch(()=>{});
+              const fallback=selected===gateway&&reservation&&!controller.signal.aborted&&!scheduleOperation&&
+                !state.answer&&!state.publication&&!state.inFlight&&!state.partialEffects.length&&!state.unknownEffects.length&&
+                !durable?.parentRunId&&gateway.admission==='shared-admission@1'
+                ? gateway.takeModelFallback?.(error,reservation) : null;
+              if(fallback){
+                gatewayUnsettled=false;state.gatewayOutcome='settled';
+                if(state.rounds>=budget.maxRounds)throw failure('ROUND_LIMIT');
+                await record('model_failover',{originalModelOrdinal:reservation.modelOrdinal,inputHash:reservation.inputHash,reason:'exact-model-not-found',target:'mimo-v2.6-flash'});
+                selected=fallback;continue;
+              }
+              throw error;
+            }
+            break;
           }
           state.gatewayOutcome='settled';validateProposal(proposal);
           const lastValidation=state.messages.at(-1)?.result?.validation;
