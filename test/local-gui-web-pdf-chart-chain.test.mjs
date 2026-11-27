@@ -88,7 +88,9 @@ test('HTML to linked native cells to controlled chart, with exact original-sourc
  assert.deepEqual(m.chartViews[0].sources.map(x=>[x.ref,x.url]),refs.map(ref=>[ref,filing+'#page=1']));
  const before=[modelCalls,network.calls.length];
  assert.equal(network.calls.filter(x=>x.url===filing).length,1);
- await gui.close();gui=await startLocalGui(options);
+ // Disable the opt-in admissions on the same runtime binary. History must use
+ // the Run's pinned adapters, not current discovery/activation flags.
+ await gui.close();gui=await startLocalGui({...options,env:{ETF_GUI_PROVIDER_KEY:'test-only'}});
  assert.deepEqual(await get(base+'/sources'),sources);
  assert.deepEqual(await get(base+'/body'),body);
  assert.deepEqual((await get(conv)).messages[0].chartViews,m.chartViews);
