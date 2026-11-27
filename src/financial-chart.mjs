@@ -27,7 +27,7 @@ const digest=v=>string(v,/^[a-f0-9]{64}$/);
 const rcp=v=>string(v,/^chart-evidence:sha256:[a-f0-9]{64}$/);
 const originReceipt=v=>string(v,/^(?:result|calculation|artifact|typed-source):sha256:[a-f0-9]{64}$/);
 
-const financialMoneyUnits=['CNY','CNY million','CNY billion','HKD','HKD million','HKD billion','USD','USD million','USD billion'];
+const financialMoneyUnits=['CNY','CNY million','CNY 100 million','CNY billion','HKD','HKD million','HKD billion','USD','USD million','USD billion'];
 const comparableUnits=[...financialMoneyUnits,'%','x','count'];
 const profiles={
  'exchange-close-line':{chart:'line',title:'场内基金未复权日收盘价',units:['exchange-price-unit'],bases:['exchange-daily-close-unadjusted'],dim:'date'},

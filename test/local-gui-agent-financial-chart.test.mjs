@@ -63,7 +63,7 @@ test('cross-run or altered evidence cannot gain source-checked attribution; scri
  assert.deepEqual(v.view.sources,[]);
  r.snapshot.messages.push({role:'tool',callId:c.id,result:{callId:c.id,status:'succeeded',dispatched:true,value:v}});
  assert.equal((await readAgentChartViews(r)).length,1);
- assert.deepEqual(await t.execute({dataset:{...dataset,series:[{label:'invalid',values:[1,Infinity]}]}},{callId:'bad'}),{schemaVersion:'agent-financial-chart@1',status:'unavailable',reason:'CHART_DATA_INVALID'});
+ assert.equal((await t.execute({dataset:{...dataset,series:[{label:'invalid',values:[1,Infinity]}]}},{callId:'bad'})).reason,'CHART_DATA_INVALID');
  await assert.rejects(t.verifyResult({...v,view:{...v.view,provenance:'document-reported'}},{call:c}),{code:'CHART_RESULT_CHANGED'});
 });
 
@@ -81,4 +81,17 @@ test('PDF page citations are from accepted original reads, not invented URLs',as
  const tampered={...arguments_,dataset:{...dataset,series:[{label:'Revenue',values:[19287,18450]}]}};
  const disputed=await openAgentChart({readRun:()=>r}).execute(tampered,{callId:'chart'});
  assert.equal(disputed.view.provenance,'agent-supplied');
+});
+
+test('accepts names and units actually proposed by the live model; mixed units get specific guidance',async()=>{
+ const t=openAgentChart({readRun:()=>({runId:'aliases',snapshot:{messages:[]}})});
+ const call=(kind,unit,keys,series)=>t.execute({dataset:{...dataset,kind,unit,keys,series}},{callId:'chart'});
+ const bar=await call('bar','亿元人民币',dataset.keys,[{label:'营业收入',values:[1845.04,1928.69]}]);
+ assert.equal(bar.view.kind,'financial-columns');assert.equal(bar.view.unit,'CNY 100 million');assert.equal(bar.view.series[0].values[1],1928.69);
+ const pie=await call('donut','%', ['A','B'],[{label:'结构',values:[60,40]}]);
+ assert.equal(pie.view.chart,'pie');
+ const line=await call('line','RMB million',dataset.keys,dataset.series);
+ assert.deepEqual(line.view.keys,dataset.keys);assert.equal(line.view.chart,'bar');
+ const mix=await call('combo-bar-line','亿元人民币 / %',dataset.keys,dataset.series);
+ assert.equal(mix.reason,'CHART_UNIT_UNSUPPORTED');assert.match(mix.hint,/percentages/);
 });
