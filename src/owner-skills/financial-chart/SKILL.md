@@ -6,8 +6,7 @@ description: Prepare a typed numeric chart from comparable data and retained sou
 
 Use this method when the user asks to visualize data or when a chart materially
 helps explain a comparison, change over time, or composition. Read and check
-data before charting. Prefer two to four distinct visualizations for a full
-report; do not create a graphic for every number.
+data before charting. Prefer two to four distinct graphics. If no period is specified, look for the latest available issuer report and check its date against the task date. If you can only confirm older results, say that plainly before plotting.
 
 Pass one fixed numeric dataset per chart to the internal rendering script:
 
@@ -36,15 +35,13 @@ unit; never send preformatted strings as plotted values. Use a real reporting
 as-of date, not today's date by default. The script accepts common chart
 names and unit aliases; prefer the canonical schema above.
 
-Where available, attach exact retained source passages as optional evidence:
+Where available, pass exact retained references in `evidence`, such as
+`["WEB:<manifestSha256>:<page>"]` or a PDF reference. For per-point proof:
 
     {"series":0,"key":0,"ref":"WEB:<manifestSha256>:<page>","quote":"<exact original passage>"}
 
-Use a returned PDF source reference for an original PDF page. The indexes are
-zero-based. A source page link does not prove every plotted value. Label values
-without enough evidence as unverified; preserve traceable links without
-inventing citations. Python may prepare the same data contract; the script
-does not make computed or source data independently verified.
+Indexes are zero-based. A source link does not prove each value. Keep unverified
+values marked, never invent citations, and use the same format for Python output.
 
 Call the internal script before publishing; do not output Mermaid or generic
 code fences in place of graphics. If the script reports a specific data error,

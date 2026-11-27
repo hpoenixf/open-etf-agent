@@ -78,6 +78,9 @@ test('PDF page citations are from accepted original reads, not invented URLs',as
  const v=await openAgentChart({readRun:()=>r}).execute(arguments_,{callId:'chart'});
  assert.equal(v.view.provenance,'document-reported');
  assert.equal(v.view.sources[0].url,'https://example.com/quarter.pdf#page=2');
+ const simple=await openAgentChart({readRun:()=>r}).execute({dataset,evidence:['PDF:'+sourceRef]},{callId:'chart'});
+ assert.equal(simple.view.sources[0].url,v.view.sources[0].url);
+ assert.equal(simple.view.provenance,'agent-supplied','a source link is not point-level proof');
  const tampered={...arguments_,dataset:{...dataset,series:[{label:'Revenue',values:[19287,18450]}]}};
  const disputed=await openAgentChart({readRun:()=>r}).execute(tampered,{callId:'chart'});
  assert.equal(disputed.view.provenance,'agent-supplied');

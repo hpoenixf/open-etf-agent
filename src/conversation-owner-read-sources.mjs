@@ -1,6 +1,6 @@
 import {createHash} from 'node:crypto';
 import {isDeepStrictEqual} from 'node:util';
-import {openOwnerWeb,OWNER_LINKED_PDF_REVISION,OWNER_LINKED_PDF_LOCAL_MISS,OWNER_WEB_PAGE,OWNER_WEB_CONTINUE,OWNER_WEB_LINKED_PDF,OWNER_WEB_EXCERPTS,OWNER_WEB_EXCERPTS_LOCAL_MISS} from './gui-owner-web.mjs';
+import {openOwnerWeb,OWNER_LINKED_PDF_REVISION,OWNER_LINKED_PDF_LOCAL_MISS,OWNER_WEB_PAGE,OWNER_WEB_CONTINUE,OWNER_WEB_LINKED_PDF,OWNER_WEB_EXCERPTS,OWNER_WEB_EXCERPTS_LOCAL_MISS,OWNER_WEB_EXCERPTS_URL_MISS} from './gui-owner-web.mjs';
 import {publicPdfNavigationQuery} from './public-pdf-navigation.mjs';
 import {normalizeWebUrl} from './web-policy.mjs';
 import {WEB_TEXT_MAX_PAGES,WEB_TEXT_PAGE_BYTES} from './web-text-pages.mjs';
@@ -75,7 +75,7 @@ export async function readOwnerWebSources({projectDir,definition,run,publication
  const tools=openOwnerWeb({profile:{web:true,...(linkedPdf?{linkedPdf:true}:{})},projectDir,projectId:definition.projectId,runId:run.runId,
   excerptRevision:definition.ownerWebExcerptRevision,linkedPdfRevision:definition.ownerLinkedPdfRevision,readRun:()=>run,transport:{acquire:deny,searchFetch:deny,fetchPdf:deny}});
  const verifiedMarkers=new Set(),verifiedWebMarkers=new Set();
- const withExcerpts=[OWNER_WEB_EXCERPTS,OWNER_WEB_EXCERPTS_LOCAL_MISS].includes(definition.ownerWebExcerptRevision);
+ const withExcerpts=[OWNER_WEB_EXCERPTS,OWNER_WEB_EXCERPTS_LOCAL_MISS,OWNER_WEB_EXCERPTS_URL_MISS].includes(definition.ownerWebExcerptRevision);
  // Retained-row limits prioritize explicitly cited pages over uncited reading.
  const cited=value=>markers.has(value.sourceRef)||webMarkers.has(webRef(value));
  if(markers.size||webMarkers.size)candidates.sort((a,b)=>Number(cited(b.value))-Number(cited(a.value)));
