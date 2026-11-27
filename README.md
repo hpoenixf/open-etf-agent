@@ -102,22 +102,22 @@ npm run demo -- --case document-compare
 <a id="latest-three-modules"></a>
 ## Releases and development status
 
-**[v0.70.0 · Self-host deployment diagnosis](https://github.com/hpoenixf/open-etf-agent/commit/7b7e3a586c8bae962359654247680a2fe3db3e54).** Separate missing dependencies, runtime version, configuration, directory access and the local listener. [Scope and verification](docs/verification/v070-self-host-diagnostics.md)
-
-**[v0.69.0 · Skill author preflight](https://github.com/hpoenixf/open-etf-agent/commit/1e9f4d300b6dbef5df5ea2262891020acb4bb193).** Validate and preview a Skill, then run a synthetic authoring case. [Scope and verification](docs/verification/v069-skill-author-preflight.md)
-
-**[v0.68.0 · ETF snapshot comparison](https://github.com/hpoenixf/open-etf-agent/commit/0d46ab558e64328cc860319e8bc2b995ae5ea4e8).** Recompute fees, holdings and sector overlap, and same-basis returns from local snapshots. [Scope and verification](docs/verification/v068-etf-snapshot-comparison.md)
-
-| Recent version / status | What it enables | Usage and boundaries |
+| Recent formal release | What it enables | Verification scope |
 | --- | --- | --- |
-| [v0.70.0 · Self-host deployment diagnosis](https://github.com/hpoenixf/open-etf-agent/commit/7b7e3a586c8bae962359654247680a2fe3db3e54) | Separate missing dependencies, runtime version, configuration, directory access and the local listener | [Scope and verification](docs/verification/v070-self-host-diagnostics.md) |
-| [v0.69.0 · Skill author preflight](https://github.com/hpoenixf/open-etf-agent/commit/1e9f4d300b6dbef5df5ea2262891020acb4bb193) | Validate and preview a Skill, then run a synthetic authoring case | [Scope and verification](docs/verification/v069-skill-author-preflight.md) |
-| [v0.68.0 · ETF snapshot comparison](https://github.com/hpoenixf/open-etf-agent/commit/0d46ab558e64328cc860319e8bc2b995ae5ea4e8) | Recompute fees, holdings and sector overlap, and same-basis returns from local snapshots | [Scope and verification](docs/verification/v068-etf-snapshot-comparison.md) |
+| [v1.0.4 · Interactive research workspace](https://github.com/hpoenixf/open-etf-agent/releases/tag/v1.0.4) | Adds chart hover details, per-turn Skill selection and bounded concurrency. | [Verification notes](https://github.com/hpoenixf/open-etf-agent/blob/v1.0.4/docs/verification/v104-release.md) |
+| [v1.0.3 · Grounded bar and pie charts](https://github.com/hpoenixf/open-etf-agent/releases/tag/v1.0.3) | Renders charts from supported numeric inputs without making answer delivery depend on chart rendering. | [Verification notes](https://github.com/hpoenixf/open-etf-agent/blob/v1.0.3/docs/verification/v103-release.md) |
+| [v1.0.2 · Scoped evidence and observability](https://github.com/hpoenixf/open-etf-agent/releases/tag/v1.0.2) | Adds scoped tracing, clickable citations and answer-image support. | [Verification notes](https://github.com/hpoenixf/open-etf-agent/blob/v1.0.2/docs/verification/v102-release.md) |
 
 [All fixed versions and commands](docs/module-guide.md#versions) · [Version lineage](versions.json) · [All releases](https://github.com/hpoenixf/open-etf-agent/releases) · [Verification records](docs/verification/README.md)
 
 <details>
 <summary>Earlier versions</summary>
+
+**[v0.70.0 · Self-host deployment diagnosis](https://github.com/hpoenixf/open-etf-agent/commit/7b7e3a586c8bae962359654247680a2fe3db3e54).** Separate missing dependencies, runtime version, configuration, directory access and the local listener. [Scope and verification](docs/verification/v070-self-host-diagnostics.md)
+
+**[v0.69.0 · Skill author preflight](https://github.com/hpoenixf/open-etf-agent/commit/1e9f4d300b6dbef5df5ea2262891020acb4bb193).** Validate and preview a Skill, then run a synthetic authoring case. [Scope and verification](docs/verification/v069-skill-author-preflight.md)
+
+**[v0.68.0 · ETF snapshot comparison](https://github.com/hpoenixf/open-etf-agent/commit/0d46ab558e64328cc860319e8bc2b995ae5ea4e8).** Recompute fees, holdings and sector overlap, and same-basis returns from local snapshots. [Scope and verification](docs/verification/v068-etf-snapshot-comparison.md)
 
 **[v0.67.0 · Offline research report bundle](https://github.com/hpoenixf/open-etf-agent/commit/3e3fa36832f721957c811f111f87d1b50d2918f7).** Copy a published report, keep public locations, and verify every file offline. [Scope and verification](docs/verification/v067-offline-report-bundle.md)
 
