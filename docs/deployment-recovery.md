@@ -60,6 +60,12 @@ state stay outside the release directory.
   only once ownership and idempotency have been verified. Record recovered
   artifact/config/backup IDs, elapsed time and the backup's age. A file-free
   synthetic build smoke does not demonstrate data restoration or delivery.
+- Using the exact approved app and configuration revisions, first verify in
+  isolation that old saved bodies can be read back and that representative jobs
+  retain their owner, scheduled occurrence and send/deduplication state after
+  restart. Disable outbound delivery or redirect it to a test sink; the test
+  must not send to real recipients. Verify no duplicate scheduled delivery and
+  audit the same file/code digest before and after the exercise.
 
 ## Check environment parity before adopting this release procedure
 
@@ -84,6 +90,14 @@ variable, use a reviewed adapter to read that individual credential file and
 supply only the expected variable to the process, without logging it. Confirm
 the public CLI's actual config and authentication contract before enabling live
 operations; the example is not a complete provider or scheduler configuration.
+Restore optional keys only for configured profiles. The launcher maps
+`openai-backup.key`, `gemini-free.key`, and `yuanbao-search.key` to their
+respective environment variables. A Gemini-enabled live configuration requires
+both the mounted Gemini key and `ETF_GUI_GEMINI_FREE_PROJECT_VERIFIED=1`. Set
+the latter only after an operator verifies the key belongs to the intended free
+tier project; do not infer it from the presence of a key. Include a negative
+startup check with the attestation missing and a positive credential contract
+check on an isolated service without dispatching a live request.
 
 Before promotion save the old resolved `current` symlink, expected digest,
 config revision and health command. Flip the symlink with a rename on the same
