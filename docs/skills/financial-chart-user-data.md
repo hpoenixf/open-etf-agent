@@ -28,6 +28,10 @@ still supported for richer units and chart types.
 | `financial-trend` | ISO-date observations, with gaps kept as gaps | How did revenue or margin evolve across quarters? |
 | `financial-columns` | Grouped same-unit categories or periods | Compare this quarter vs. the prior-year quarter by business. |
 | `financial-stacked` | Additive contributions on a shared scale, signed values diverge around zero | Which businesses explain a change in consolidated earnings? |
+| `financial-multi-line` | Two to four aligned, comparable ISO-date series | How did two strategies' cumulative returns compare over the same dates? |
+| `financial-area` | One dated series with a meaningful zero; fill stops at missing data | Which weeks recorded net inflows vs. outflows? |
+| `financial-combo` | Exactly two comparable series; first is bar, second is line, with one shared unit and axis | How did actual same-currency revenue compare to its target? |
+| `financial-heatmap` | A 2–12 row by 2–12 column matrix of comparable values; rows are `series`, columns are `keys` | Which market and month combinations had high or low returns? |
 
 The data block is a single JSON object. `asOf` is an ISO date, and `unit` is
 one of the allowed labels (CNY, HKD, USD, explicit currency million/billion, %, x or count, as appropriate).
@@ -53,6 +57,22 @@ for segment views, and
 for diligence on segment measurement: gross segment subtotals and
 inter-segment elimination are not interchangeable with consolidated revenue.
 Do not stack a subtotal and its constituent segments on the same axis.
+
+## Advanced chart inputs
+
+Use the explicit headed data block for advanced types. Set `kind` to the desired
+profile. A combination chart does not accept arbitrary marks or dual axes.
+Use one consistent unit and one meaningful definition across its two series.
+For a heatmap, compare like with like (for example monthly total returns);
+for mixed metrics, first provide legitimately normalized scores and their
+meaning. Neutral/missing cells remain missing, not zero. Heatmap color uses a
+symmetric scale around zero when values cross zero; otherwise it uses a
+single sequential scale. The table and cell titles preserve the exact values.
+Multi-line curves and area fills stop at gaps and never extrapolate.
+
+```financial-chart-data
+{"kind":"financial-heatmap","asOf":"2026-09-30","unit":"%","keys":["7 月","8 月","9 月"],"series":[{"label":"市场甲","values":[-2,0.5,null]},{"label":"市场乙","values":[1.2,-0.8,2]}]}
+```
 
 ## Sourcing boundary
 
