@@ -97,7 +97,7 @@ test('HTML to linked native cells to controlled chart, with exact original-sourc
  assert.deepEqual([modelCalls,network.calls.length],before);
 });
 
-test('PDF without a structured table still publishes cited text and cold History',{skip:!chartComputeAvailable()},async t=>{
+test('PDF without a table rejects the failed formula as chart input but still publishes cited text and cold History',{skip:!chartComputeAvailable()},async t=>{
  await mkdir('test-output',{recursive:true});
  const projectDir=await mkdtemp(resolve('test-output/web-pdf-no-table-'));
  const prose='The fund changed its benchmark in July.';
@@ -121,6 +121,17 @@ test('PDF without a structured table still publishes cited text and cold History
    if(p.length===2)return proposal(call('text','public_web_linked_pdf_page',{linkId,page:1}));
    assert.equal(p[2].kind,'web-pdf-original-page');
    assert.ok(p[2].text.includes(prose));
+   if(p.length===3)return proposal(call('calc-missing','compute_chart_formula',{
+    script:'sum(nav)',cells:{nav:['PDF:web-pdf-cell:sha256:'+'0'.repeat(64)]},
+   }));
+   assert.equal(p[3].reason,'FORMULA_SOURCE_UNAVAILABLE');
+   if(p.length===4)return proposal(call('chart-missing','render_financial_chart',{
+    dataset:{kind:'financial-columns',asOf:null,unit:'%',keys:['NAV'],series:[{label:'NAV',formulaCallId:'calc-missing'}]},
+   }));
+   assert.equal(p.length,5);
+   assert.equal(p[4].status,'unavailable');
+   assert.equal(p[4].reason,'CHART_DATA_INVALID');
+   assert.equal(p[4].view,undefined);
    answer=prose+' [[PDF:'+p[2].sourceRef+']] No table was available for a computed chart.';
    return result({content:answer});
   }};
@@ -143,9 +154,10 @@ test('PDF without a structured table still publishes cited text and cold History
  assert.equal(sources.readSources.some(x=>x.kind==='web-pdf-original-cell@1'),false);
  assert.equal(network.calls.filter(x=>x.url===filing).length,1);
  const before=[modelCalls,network.calls.length];
- assert.equal(modelCalls,4);
+ assert.equal(modelCalls,6);
  await gui.close();gui=await startLocalGui(options);
  assert.deepEqual(await get(base+'/sources'),sources);
  assert.deepEqual(await get(base+'/body'),body);
+ assert.deepEqual((await get(conv)).messages[0].chartViews??[],[]);
  assert.deepEqual([modelCalls,network.calls.length],before);
 });
