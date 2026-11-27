@@ -9,6 +9,37 @@ const scientificTick=new Intl.NumberFormat('zh-CN',{notation:'scientific',maximu
 const tick=v=>Math.abs(v)>=1e4?compactTick.format(v):v!==0&&Math.abs(v)<.01?scientificTick.format(v):tickFmt.format(v);
 const keyTick=(key,max)=>/^-?(?:0|[1-9]\d*)(?:\.\d+)?$/.test(key)&&Number.isFinite(Number(key))
  ?tick(Number(key)):key.slice(0,max);
+// Choose readable 1/2/2.5/5 × 10ⁿ steps. Work relative to an exact baseline
+// on narrow ranges at a large magnitude, so reduced-precision ticks stay distinct.
+function verticalScale(min,max,zeroBased){
+ if(zeroBased){min=Math.min(min,0);max=Math.max(max,0);}
+ const magnitude=Math.max(Math.abs(min),Math.abs(max));
+ const useOffset=!zeroBased&&min!==0&&Math.sign(min)===Math.sign(max)&&
+  (max===min?magnitude<1:(max-min)<Math.max(magnitude*.002,magnitude>=.01?.04:0));
+ const offset=useOffset?min:0;
+ let lo=min-offset,hi=max-offset;
+ if(lo===hi){
+  if(zeroBased&&lo===0)hi=1;
+  else {const pad=magnitude===0?.01:Math.max(magnitude*.01,Number.MIN_VALUE);
+   lo-=pad;hi+=pad;}
+ }else if(!zeroBased){
+  const pad=(hi-lo)*.06;
+  lo-=pad;hi+=pad;
+ }
+ const width=hi-lo,estimate=width/4;
+ const power=10**Math.floor(Math.log10(estimate));
+ if(!Number.isFinite(power)||power<=0)return {offset,lo,hi,ticks:[lo,hi]};
+ const ratio=estimate/power;
+ const step=[1,2,2.5,5,10].find(v=>v>=ratio)*power;
+ if(!Number.isFinite(step)||step<=0)return {offset,lo,hi,ticks:[lo,hi]};
+ const start=Math.floor(lo/step),end=Math.ceil(hi/step);
+ if(!Number.isSafeInteger(start)||!Number.isSafeInteger(end)||end-start>8||start>=end)
+  return {offset,lo,hi,ticks:[lo,hi]};
+ const roundedLo=start*step,roundedHi=end*step;
+ // Roundoff on the bounds must never put the actual mark outside the plot.
+ lo=Math.min(lo,roundedLo);hi=Math.max(hi,roundedHi);
+ return {offset,lo,hi,ticks:Array.from({length:end-start+1},(_,i)=>(start+i)*step)};
+}
 const number=v=>typeof v==='number'&&Number.isFinite(v)&&Math.abs(v)<=1e9;
 const safe=s=>typeof s==='string'&&s.length<=200&&!/[\p{C}]/u.test(s);
 const candle=v=>v&&Object.keys(v).sort().join(',')==='close,high,low,open'&&[v.open,v.high,v.low,v.close].every(number)
@@ -169,17 +200,23 @@ export function createFinancialChartView(doc,view){
    const v=s.values[j];if(v!==null)pair[v<0?0:1]+=v;return pair;
   },[0,0]));
   if(view.chart==='stacked')flattened.push(...stacks.flat());
-  if(['bar','stacked','combo','area'].includes(view.chart))flattened.push(0);
-  let lo=Math.min(...flattened),hi=Math.max(...flattened);
-  if(lo===hi){const pad=Math.max(Math.abs(lo)*.08,.01);lo-=pad;hi+=pad;}
+  const zeroBased=['bar','stacked','combo','area'].includes(view.chart);
+  const {offset,lo,hi,ticks}=verticalScale(Math.min(...flattened),Math.max(...flattened),zeroBased);
+  if(offset!==0)figure.append(html('p','纵轴基准：'+String(offset)+' '+view.unit+'（刻度为相对值）'));
   const x0=66,x1=616,y0=18,y1=278,W=x1-x0;
-  const y=v=>y1-(v-lo)/(hi-lo)*(y1-y0);
+  const axisY=v=>y1-(v-lo)/(hi-lo)*(y1-y0);
+  const y=v=>axisY(v-offset);
   const dateAxis=timeCharts.includes(view.chart);
   const xValues=dateAxis?view.keys.map(k=>Date.parse(k)):null;
   const x=i=>dateAxis?(xValues.length===1?(x0+x1)/2:x0+W*(xValues[i]-xValues[0])/(xValues.at(-1)-xValues[0])):x0+W*(i+.5)/view.keys.length;
   marks('line',{x1:x0,y1:y0,x2:x0,y2:y1,stroke:'#68737b'});
-  marks('line',{x1:x0,y1:0>=lo&&0<=hi?y(0):y1,x2:x1,y2:0>=lo&&0<=hi?y(0):y1,stroke:'#68737b'});
-  for(const value of [lo,hi])svg.append(svgEl('text',{x:x0-6,y:y(value)+4,'text-anchor':'end',fill:'#293542','font-size':11},tick(value)));
+  const zeroVisible=-offset>=lo&&-offset<=hi;
+  marks('line',{x1:x0,y1:zeroVisible?y(0):y1,x2:x1,y2:zeroVisible?y(0):y1,stroke:'#68737b'});
+  for(const value of ticks){
+   const cy=axisY(value);
+   if(!(zeroVisible&&value===-offset))marks('path',{d:'M '+coordinate(x0,cy)+' H '+x1,fill:'none',stroke:'#e2e8f0','aria-hidden':'true'});
+   svg.append(svgEl('text',{x:x0-6,y:cy+4,'text-anchor':'end',fill:'#293542','font-size':11},tick(value)));
+  }
   const bases=view.keys.map(()=>[0,0]);
   view.series.forEach((s,i)=>{
    const color=COLORS[i];

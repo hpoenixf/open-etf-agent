@@ -78,9 +78,55 @@ test('keyboard traverses uneven time buckets, Escape dismisses, and touch tap to
 test('numeric axis labels use at most two fractional digits; table and tooltip retain source labels',()=>{
  const {nodes,targets,tip}=draw('bar',[{label:'数字',values:[.00123456,12345.6789]}],['1.234567','22222.987654']);
  const ticks=nodes.filter(n=>n.tag==='text').map(n=>n.textContent);
- assert.deepEqual(ticks,['0','1.23万','1.23','2.22万']);
+ assert.deepEqual(ticks,['0','5000','1万','1.5万','1.23','2.22万']);
  targets[1].events.focus();
  assert.equal(tip.children[0].textContent,'22222.987654');
  assert.equal(tip.children[1].textContent,'数字 12345.6789 %');
  assert.ok(nodes.some(n=>n.tag==='td'&&n.textContent==='12,345.6789'));
+});
+
+
+const axisLabels=nodes=>nodes.filter(n=>n.tag==='text'&&n.attrs.x==='60').map(n=>n.textContent);
+const geometryFits=nodes=>{
+ const points=nodes.filter(n=>n.tag==='circle'&&n.attrs.cy!==undefined).map(n=>Number(n.attrs.cy));
+ assert.ok(points.every(y=>Number.isFinite(y)&&y>=18&&y<=278));
+ return points;
+};
+test('vertical range fits lines and complete OHLC; zero-based charts retain sign, zero and stack sums',()=>{
+ const series=values=>[{label:'合成',values}];
+ let v=draw('line',series([97.2,99.5,100.1]));
+ assert.deepEqual(axisLabels(v.nodes),['97','98','99','100','101']);
+ assert.equal(geometryFits(v.nodes).length,3);
+ v=draw('candlestick',series([{open:99,high:104,low:95,close:101},null,{open:103,high:105,low:97,close:102}]),
+  undefined,{kind:'financial-ohlc',unit:'CNY/share'});
+ assert.deepEqual(axisLabels(v.nodes),['90','95','100','105','110']);
+ v=draw('bar',series([-3,-9,-7]));
+ assert.deepEqual(axisLabels(v.nodes),['-10','-7.5','-5','-2.5','0']);
+ v=draw('area',series([-5,5,10]));
+ assert.deepEqual(axisLabels(v.nodes),['-5','0','5','10']);
+ v=draw('stacked',[{label:'一',values:[-3,6,2]},{label:'二',values:[-7,4,-5]}]);
+ assert.deepEqual(axisLabels(v.nodes),['-10','-5','0','5','10']);
+ v=draw('bar',series([0,0,0]));
+ assert.equal(axisLabels(v.nodes)[0],'0');
+ assert.ok(axisLabels(v.nodes).length>=3);
+});
+
+test('constant and tight large series have distinct scale labels and precise original tooltip values',()=>{
+ const make=values=>draw('line',[{label:'合成',values}]);
+ let v=make([12.34,12.34,12.34]);
+ assert.deepEqual(axisLabels(v.nodes),['12.2','12.3','12.4','12.5']);
+ assert.equal(new Set(geometryFits(v.nodes)).size,1);
+ assert.ok(axisLabels(v.nodes).length>=3);
+ v=make([999999999.100001,999999999.100002,999999999.100004]);
+ const ticks=axisLabels(v.nodes);
+ assert.ok(v.nodes.some(n=>n.textContent.startsWith('纵轴基准：999999999.100001')));
+ assert.equal(new Set(ticks).size,ticks.length);
+ assert.equal(new Set(geometryFits(v.nodes)).size,3);
+ assert.ok(ticks.every(label=>!/\.\d{3}/.test(label)));
+ v.targets[2].events.focus();
+ assert.equal(v.tip.children[1].textContent,'合成 999999999.100004 %');
+ v=make([Number.MIN_VALUE,Number.MIN_VALUE*2,Number.MIN_VALUE*3]);
+ const micro=axisLabels(v.nodes);
+ assert.equal(new Set(micro).size,micro.length);
+ assert.equal(geometryFits(v.nodes).length,3);
 });
