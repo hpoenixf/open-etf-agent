@@ -94,3 +94,56 @@ test('HTML to linked native cells to controlled chart, with exact original-sourc
  assert.deepEqual((await get(conv)).messages[0].chartViews,m.chartViews);
  assert.deepEqual([modelCalls,network.calls.length],before);
 });
+
+test('PDF without a structured table still publishes cited text and cold History',{skip:!chartComputeAvailable()},async t=>{
+ await mkdir('test-output',{recursive:true});
+ const projectDir=await mkdtemp(resolve('test-output/web-pdf-no-table-'));
+ const prose='The fund changed its benchmark in July.';
+ let gui, modelCalls=0, answer;
+ t.after(async()=>{await gui?.close();await rm(projectDir,{recursive:true,force:true});});
+ const network=mockWebNetwork(t,{passthroughLoopback:true,routes:{
+  'https://issuer.example/robots.txt':{body:'User-agent: *\nAllow: /\n'},
+  [page]:{body:'<main><a href="./data.pdf">Original filing PDF</a></main>',headers:{'content-type':'text/html'}},
+  [filing]:{body:pdf([[740,[26,prose]]]),headers:{'content-type':'application/pdf'}},
+ }});
+ const options={projectDir,env:{ETF_GUI_PROVIDER_KEY:'test-only',ETF_GUI_AGENT_FINANCIAL_CHART:'1',ETF_GUI_CHART_COMPUTE:'1',ETF_GUI_PDF_CHART_CHAIN:'1'},
+  liveConfig:{gateway:{provider:'opencode-go-owner',endpoint:'https://opencode.ai/inference/go/openai/v1/chat/completions',model:'synthetic',apiKeyEnv:'ETF_GUI_PROVIDER_KEY'},limits:{model:8},connectivity:{web:true,linkedPdf:true}},
+  async fetchImpl(_url,{body}){
+   modelCalls++;
+   const p=JSON.parse(body).messages.filter(m=>m.role==='tool').map(m=>JSON.parse(m.content).value);
+   if(p.length===0)return proposal(call('html','public_web_read',{url:page}));
+   const linkId=p[0].pdfLinks.links[0].id;
+   if(p.length===1)return proposal(call('tables','public_web_linked_pdf_page',{linkId,page:1,tables:true}));
+   assert.equal(p[1].kind,'web-pdf-tables-unavailable@1');
+   assert.equal(p[1].code,'WEB_PDF_NO_STRUCTURED_TABLE');
+   if(p.length===2)return proposal(call('text','public_web_linked_pdf_page',{linkId,page:1}));
+   assert.equal(p[2].kind,'web-pdf-original-page');
+   assert.ok(p[2].text.includes(prose));
+   answer=prose+' [[PDF:'+p[2].sourceRef+']] No table was available for a computed chart.';
+   return result({content:answer});
+  }};
+ gui=await startLocalGui(options);
+ const get=p=>fetch(gui.origin+p).then(r=>r.json());
+ const post=(p,v)=>fetch(gui.origin+p,{method:'POST',headers:{origin:gui.origin,'content-type':'application/json'},body:JSON.stringify(v)});
+ const conv='/api/conversations/'+(await post('/api/conversations',{}).then(r=>r.json())).id;
+ const response=await post(conv+'/messages',{messageId:'report',question:'Read the original filing and chart it only if a numeric table is available.'});
+ assert.equal(response.status,202,await response.text());
+ let m;
+ for(let i=0;i<150;i++){
+  m=(await get(conv)).messages[0];if(m&&!m.working&&['completed','failed'].includes(m.status))break;await delay(35);
+ }
+ assert.equal(m?.status,'completed',JSON.stringify(m));
+ assert.equal(m.output.answer,answer);
+ assert.deepEqual(m.chartViews??[],[]);
+ const base=conv+'/messages/report',body=await get(base+'/body'),sources=await get(base+'/sources');
+ const pages=sources.readSources.filter(x=>x.kind==='web-pdf-original-page');
+ assert.deepEqual(pages.map(x=>[x.cited,x.page]),[[true,1]]);
+ assert.equal(sources.readSources.some(x=>x.kind==='web-pdf-original-cell@1'),false);
+ assert.equal(network.calls.filter(x=>x.url===filing).length,1);
+ const before=[modelCalls,network.calls.length];
+ assert.equal(modelCalls,4);
+ await gui.close();gui=await startLocalGui(options);
+ assert.deepEqual(await get(base+'/sources'),sources);
+ assert.deepEqual(await get(base+'/body'),body);
+ assert.deepEqual([modelCalls,network.calls.length],before);
+});
