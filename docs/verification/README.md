@@ -1,5 +1,6 @@
 **English** | [简体中文](README.zh-CN.md)
 
+- [v1.0.4 · Advanced chart profiles](v104-release.md)
 - [v1.0.3 · Grounded bar and pie charts](v103-release.md)
 
 - [v1.0.2 candidate · Scoped observation, citations and answer image](v102-release.md)
