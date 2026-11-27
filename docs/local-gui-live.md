@@ -53,6 +53,8 @@ turns in this conversation. Start a new conversation to leave prior context behi
 unsettled turn, or profile change stops the history chain; other conversations are not read.
 Historical answers do not grant authority or restart old Runs.
 
+In the Go owner composer, **选工具** lists the available per-turn Skills and the public-facing tools enabled by the current launch configuration. **Automatic** can choose a bundled method; **热点解读** and **长期视角分析** apply the chosen method to this turn without changing research depth or tool permissions. The chart choice remains subject to the existing data and Wind rules. Search, webpage/PDF reading and Wind are listed for discovery, not invoked by clicking the menu. The Worker still checks the Run's permissions and data; a PDF attachment does not enable external tools. A configured Daily Watch brief is scheduled-only and cannot be selected for ordinary chat.
+
 A selected PDF belongs to one question. It needs a text layer, is capped at 1 MiB and 16 pages,
 and cannot be encrypted. Upload parses locally. On send, excerpts actually read may go to the
 configured model service. Attached turns do not include ordinary history or external search, web

@@ -1,3 +1,5 @@
+import {ownerToolCatalog} from './gui-tool-catalog.mjs';
+import {isResearchSkillChoice} from './financial-analysis-methods.mjs';
 import {INPUT_CHART_SKILL,INPUT_CHART_AUTO,hasSuppliedChartData} from './financial-chart-input.mjs';
 import {dailyBriefLabel} from './conversation-daily-context.mjs';
 import {OWNER_CHART_SKILL,OWNER_CHART_AUTO} from './financial-chart-owner.mjs';
@@ -424,6 +426,7 @@ export async function createLocalGuiWorkspace({ projectDir, origin: mountOrigin,
         if (asset) return send(200, asset.bytes, asset.type+'; charset=utf-8');
         if (req.url === '/api/workspace') return send(200, {
           schemaVersion: 'local-gui@1', mode, reasoningEffort,
+          ...(freeform?{toolCatalog:ownerToolCatalog({connectivity,chartAvailable,chartAuto,dailyBrief:Boolean(dailyBriefSkill)})}:{}),
           ...(live?{liveNotice:{maxModelCallsPerRun:expectedConfig.limits.model,...(freeform?{freeform:true,connectivity:{web:connectivity.web===true,...(connectivity.linkedPdf===true?{linkedPdf:true}:{}),search:!!connectivity.search,...(connectivity.search?{searchProvider:connectivity.search}:{}),...(connectivity.searchAlternates?{searchAlternates:connectivity.searchAlternates}:{}),wind:connectivity.wind===true}}:{})}}:{}),
           capabilities: ['conversations','progress','reports','sources','read-web-sources',...(freeform?['pdf-attachment','daily-watch','deep-research','research-intent']:[]),...(chartAvailable?['financial-chart-skill']:[]),...(chartAuto?['financial-chart-auto']:[])],
           projectId: demo.projectId, conversations: await list({titles:true}), sources: publicSources,
@@ -536,11 +539,12 @@ export async function createLocalGuiWorkspace({ projectDir, origin: mountOrigin,
       if (!action) {
         const input = await inputFor(req);
         if (needsConsent && input?.approveLive!==true) reject(400,'GUI_LIVE_APPROVAL_REQUIRED');
-        if (!exact(input, freeform?['messageId','question',...(Object.hasOwn(input??{},'attachmentId')?['attachmentId']:Object.hasOwn(input??{},'chartSkill')?['chartSkill']:[]),...(Object.hasOwn(input??{},'researchDepth')?['researchDepth']:[]),...(Object.hasOwn(input??{},'reasoningEffort')?['reasoningEffort']:[])]:needsConsent?['messageId','question','sourceId','approveLive']:['messageId','question','sourceId']) || typeof input.messageId !== 'string'
+        if (!exact(input, freeform?['messageId','question',...(Object.hasOwn(input??{},'attachmentId')?['attachmentId']:Object.hasOwn(input??{},'chartSkill')?['chartSkill']:[]),...(Object.hasOwn(input??{},'researchDepth')?['researchDepth']:[]),...(Object.hasOwn(input??{},'reasoningEffort')?['reasoningEffort']:[]),...(Object.hasOwn(input??{},'skillId')?['skillId']:[])]:needsConsent?['messageId','question','sourceId','approveLive']:['messageId','question','sourceId']) || typeof input.messageId !== 'string'
           || !idPattern.test(input.messageId) || typeof input.question !== 'string' || !input.question.trim()
           || (Object.hasOwn(input,'researchDepth')&&!['auto','standard','deep'].includes(input.researchDepth)) || Buffer.byteLength(input.question)>12000 || !freeform&&!sourceFor(input.sourceId)) reject(400,'INVALID_MESSAGE');
         if (Object.hasOwn(input,'reasoningEffort')&&!reasoningEffort.options.includes(input.reasoningEffort))reject(400,'GUI_REASONING_EFFORT_UNSUPPORTED');
         if (Object.hasOwn(input,'chartSkill')&&(!chartAvailable||input.chartSkill!==OWNER_CHART_SKILL))reject(400,'GUI_CHART_SKILL_UNAVAILABLE');
+        if (Object.hasOwn(input,'skillId')&&(!freeform||!isResearchSkillChoice(input.skillId)))reject(400,'GUI_RESEARCH_SKILL_UNAVAILABLE');
         if (submitting || (working && working.key !== workKey(conversationId,input.messageId))) reject(409,'GUI_WORKER_BUSY');
         submitting = workKey(conversationId,input.messageId);
         try {
@@ -564,7 +568,7 @@ export async function createLocalGuiWorkspace({ projectDir, origin: mountOrigin,
            explicit?(connectivity.wind?OWNER_CHART_SKILL:undefined):
            freeform&&!attachment&&input.researchDepth!=='standard'&&chartAuto?OWNER_CHART_AUTO:undefined;
           const m = await submitConversationMessage({ projectDir, conversationId, messageId: input.messageId,
-            text: input.question, sourceManifestSha256: sourceId,
+            text: input.question, sourceManifestSha256: sourceId, skillId:input.skillId,
             ownerLinkedPdfRevision:retry?priorInput?.ownerLinkedPdfRevision:live&&freeform&&!attachment&&connectivity.linkedPdf===true?OWNER_LINKED_PDF_REVISION:undefined,...(chartSkill?{chartSkill}:{}),...(input.researchDepth===undefined?{}:{researchDepth:input.researchDepth}),...(input.reasoningEffort===undefined?{}:{reasoningEffort:input.reasoningEffort}),
             ...(live?{authorization:{providerApproved:true,dataApproved:true,costApproved:true}}:{}) });
           if (m.status === 'active' && !retry) begin(conversationId,input.messageId,sourceId);

@@ -277,3 +277,9 @@ dialog::backdrop{background:#14282480}
 .financial-chart-legend svg { flex: none; }
 .financial-chart-table { overflow-x: auto; }
 .financial-chart-figure details p { overflow-wrap: anywhere; }
+
+.tool-catalog > label, .tool-catalog h3 { display:block; font-size:.83rem; font-weight:650; margin:0 0 .35rem; }
+.tool-catalog section { margin-top:.85rem; border-top:1px solid var(--line); padding-top:.65rem; }
+.tool-catalog ul { list-style:none; padding:0; margin:.1rem 0 0; }
+.tool-catalog li { padding:.3rem 0; overflow-wrap:anywhere; font-size:.83rem; }
+.tool-catalog :is(section,li) > small { display:block; color:var(--muted); font-size:.76rem; }

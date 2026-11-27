@@ -395,3 +395,19 @@ test('the masthead contains only panel navigation, with model mode inside the pe
  assert.doesNotMatch(masthead[1],/mode-badge|brand-symbol|subbrand/);
  assert.match(html,/<details id="mode-disclosure"[\s\S]*?<p id="mode-badge"/);
 });
+
+test('tool picker renders only server catalog entries and carries a selected method through retry',async()=>{
+ const {get,run,calls}=boot();
+ run(`state.workspace.toolCatalog={skills:[{id:'auto',label:'自动'},{id:'market-hotspot-analysis',label:'热点解读'},{id:'long-horizon-analysis',label:'长期视角分析'},{id:'financial-chart@1',label:'金融图表（用户数据）'}],
+   tools:[{label:'PDF 附件阅读',note:'上传后可用'},{label:'Exa',note:'公开搜索'}]};configureToolCatalog();`);
+ assert.deepEqual(get('chart-skill').children.map(o=>o.value),['','market-hotspot-analysis','long-horizon-analysis','financial-chart@1']);
+ assert.deepEqual(get('owner-tool-list').children.map(li=>li.children[0].textContent),['PDF 附件阅读','Exa']);
+ get('chart-skill').value='market-hotspot-analysis';
+ get('question').value='Interpret a public event.';
+ const submit=get('composer').listeners.submit;
+ await submit({preventDefault(){}});
+ await submit({preventDefault(){}});
+ assert.equal(calls[0].body.skillId,'market-hotspot-analysis');
+ assert.deepEqual(calls[0].body,calls[1].body);
+ assert.equal(get('chart-skill').value,'');
+});
