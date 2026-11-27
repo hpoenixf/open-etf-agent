@@ -1,3 +1,4 @@
+import { openAIResponsesCredential } from './openai-responses-gateway.mjs';
 import { validateResearchConfig } from './research-project.mjs';
 import { directDeepSeekProfile, OPENCODE_GO_CURRENT_ENDPOINT, OPENCODE_GO_OWNER_PROVIDER } from './gateway.mjs';
 
@@ -8,7 +9,7 @@ function fail(code) { throw Object.assign(new Error(code), { code }); }
 export function prepareGuiLiveConfig(input, env) {
   // The file selects only the existing Chat Completions adapter and native per-Run limits.
   // The trusted launcher passes an environment reference, not a credential in this file.
-  if (!shape(input, ['gateway','limits','connectivity','reasoningEffortProfile']) ||
+  if (!shape(input, ['gateway','limits','connectivity','reasoningEffortProfile','goMimoFallback','openAIBackup','geminiFreeBackup']) ||
       !shape(input.gateway, ['provider','endpoint','model','apiKeyEnv','stream']) ||
       !shape(input.limits, ['model','tool','maxRounds','maxTools','timeoutMs']) ||
       !Object.hasOwn(input.limits, 'model')) fail('GUI_LIVE_CONFIG_INVALID');
@@ -19,6 +20,9 @@ export function prepareGuiLiveConfig(input, env) {
     contextBytes:1048576,
     limits:input.limits,
     ...(input.reasoningEffortProfile===undefined?{}:{ownerReasoningEffort:input.reasoningEffortProfile}),
+    ...(input.geminiFreeBackup===undefined?{}:{ownerGeminiFree:input.geminiFreeBackup}),
+    ...(input.openAIBackup===undefined?{}:{ownerOpenAIResponses:input.openAIBackup}),
+    ...(input.goMimoFallback===undefined?{}:{ownerGoMimoFallback:input.goMimoFallback}),
     ...(input.connectivity===undefined?{}:{ownerConnectivity:input.connectivity}),
   });
   const { endpoint, provider, model, apiKeyEnv } = config.gateway;
@@ -37,5 +41,15 @@ export function prepareGuiLiveConfig(input, env) {
   directDeepSeekProfile(config.gateway);
   const apiKey=Object.hasOwn(env,apiKeyEnv)?env[apiKeyEnv]:null;
   if (typeof apiKey!=='string'||!apiKey.trim()||/[\r\n]/.test(apiKey)) fail('GUI_LIVE_API_KEY_ENV_REQUIRED');
-  return {config,apiKey};
+  let openAIKey;
+  if(config.ownerOpenAIResponses){try{openAIKey=openAIResponsesCredential(env);}catch(error){
+   if(!config.ownerGeminiFree||error.code!=='OPENAI_RESPONSES_KEY_MISSING')throw error;
+  }}
+  let geminiFreeKey;
+  if(config.ownerGeminiFree){
+   if(env.ETF_GUI_GEMINI_FREE_PROJECT_VERIFIED!=='1'||typeof env.ETF_GUI_GEMINI_FREE_API_KEY!=='string'||
+       !/^(?:AIza[A-Za-z0-9_-]{20,120}|AQ\.[A-Za-z0-9_-]{26,175})$/.test(env.ETF_GUI_GEMINI_FREE_API_KEY))fail('GUI_GEMINI_FREE_CONFIG_INVALID');
+   geminiFreeKey=env.ETF_GUI_GEMINI_FREE_API_KEY;
+  }
+  return {config,apiKey,...(openAIKey?{openAIKey}:{}),...(geminiFreeKey?{geminiFreeKey}:{})};
 }

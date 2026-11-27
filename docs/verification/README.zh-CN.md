@@ -1,5 +1,6 @@
 [English](README.md) | **简体中文**
 
+- [v1.0.4 · 扩展金融图表类型](v104-release.zh-CN.md)
 - [v1.0.3 · 有据柱状图与饼图](v103-release.zh-CN.md)
 
 - [v0.70.0 · 自部署故障诊断](v070-self-host-diagnostics.zh-CN.md)

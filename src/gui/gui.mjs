@@ -59,15 +59,38 @@ function effortHistory(value) {
   if(!serialized)return '模型思考强度：请求 '+requested+'；未记录发送值。';
   return '模型思考强度：请求 '+requested+' · 已写入请求 '+serialized+'；提供方实际采用情况未确认。';
 }
+function selectedTurnSkill(){
+  const field=byId('chart-skill'), value=field.value;
+  if(byId('chart-skill-picker').hidden)return {};
+  if(value==='financial-chart@1')return {chartSkill:value,...(state.workspace.toolCatalog?{skillId:'auto'}:{})};
+  return state.workspace.toolCatalog?{skillId:value||'auto'}:{};
+}
+function configureToolCatalog(){
+  const catalog=state.workspace.toolCatalog;
+  const field=byId('chart-skill');
+  const supportsChart=state.workspace.capabilities.includes('financial-chart-skill');
+  const rows=catalog?.skills??[{id:'auto',label:'自动'},...(supportsChart?[{id:'financial-chart@1',label:'金融图表'}]:[])];
+  field.replaceChildren(...rows.map(({id,label})=>{
+    const option=document.createElement('option');option.value=id==='auto'?'':id;option.textContent=label;return option;
+  }));
+  const tools=catalog?.tools??[];
+  byId('owner-tool-inventory').hidden=tools.length===0;
+  byId('owner-tool-list').replaceChildren(...tools.map(({label,note})=>{
+    const row=document.createElement('li'), name=document.createElement('strong'), hint=document.createElement('small');
+    name.textContent=label;hint.textContent=note;row.append(name,hint);return row;
+  }));
+  byId('chart-skill-picker').hidden=!catalog&&!supportsChart;
+  byId('chart-skill-slot').hidden=byId('chart-skill-picker').hidden;
+}
 function formDraft() {
   return { question:byId('question').value, sourceId:byId('source').value, researchDepth:byId('research-depth').value,
     ...effortField(byId('reasoning-effort').value),
-    ...(!byId('chart-skill-picker').hidden&&byId('chart-skill').value?{chartSkill:byId('chart-skill').value}:{}) };
+    ...selectedTurnSkill() };
 }
 function saveDraft(draft=formDraft(), id=state.conversation) {
   if (!state.workspace) return;
   try {
-    if (draft.question || ['standard','deep'].includes(draft.researchDepth) || draft.reasoningEffort || draft.chartSkill || draft.sourceId !== state.workspace.sources[0]?.id) {
+    if (draft.question || ['standard','deep'].includes(draft.researchDepth) || draft.reasoningEffort || draft.chartSkill || (draft.skillId&&draft.skillId!=='auto') || draft.sourceId !== state.workspace.sources[0]?.id) {
       window.localStorage.setItem(draftKey(id),JSON.stringify(draft));
     } else window.localStorage.removeItem(draftKey(id));
   } catch { /* Browser storage is optional; don't block a normal submission. */ }
@@ -83,13 +106,14 @@ function restoreDraft() {
   byId('source').value = state.workspace.sources.find(s=>s.id===draft?.sourceId)?.id ?? state.workspace.sources[0]?.id ?? '';
   byId('research-depth').value=!byId('research-depth-picker').hidden&&['standard','deep'].includes(draft?.researchDepth)?draft.researchDepth:'auto';
   byId('reasoning-effort').value=requestedEffort(draft?.reasoningEffort)??'';
-  byId('chart-skill').value=!byId('chart-skill-picker').hidden&&draft?.chartSkill==='financial-chart@1'?draft.chartSkill:'';
+  const skill=draft?.chartSkill??draft?.skillId??'';
+  byId('chart-skill').value=!byId('chart-skill-picker').hidden&&Array.from(byId('chart-skill').options??[]).some(option=>option.value===skill)?skill:'';
   updateChartSkillLabel();
   updateSettingsLabel();
 }
 function clearMatchingDraft({conversationId,input}) {
   const saved = readDraft(conversationId);
-  if (saved?.question !== input.question || saved?.chartSkill !== input.chartSkill || saved?.reasoningEffort !== input.reasoningEffort || ownerMode() && (saved?.researchDepth??'auto')!==(input?.researchDepth??'auto') || !ownerMode() && saved?.sourceId !== input.sourceId) return;
+  if (saved?.question !== input.question || saved?.chartSkill !== input.chartSkill || (saved?.skillId??'auto')!==(input.skillId??'auto') || saved?.reasoningEffort !== input.reasoningEffort || ownerMode() && (saved?.researchDepth??'auto')!==(input?.researchDepth??'auto') || !ownerMode() && saved?.sourceId !== input.sourceId) return;
   try { window.localStorage.removeItem(draftKey(conversationId)); }
   catch { /* Browser storage is optional. */ }
 }
@@ -134,6 +158,10 @@ async function stopCurrentRun() {
   catch { scheduleRefresh(); } // Keep the pending state until a fresh Run view, not the POST alone.
 }
 function controls() {
+  const publicReady=state.workspace?.geminiFreePublicFallback===true&&!state.pending&&
+    (!state.conversation||state.detail?.messages.length===0);
+  byId('gemini-public-label').hidden=!publicReady;
+  if(!publicReady)byId('gemini-public').checked=false;
   const working = state.detail?.messages.some(m => m.working);
   const target=activeStopTarget(), stopping=target&&state.stopping.has(target.key);
   const stop=byId('stop'), send=byId('send');
@@ -335,7 +363,7 @@ function readSourcesContent(target, value) {
   }[value.availability];
   if(note)target.append(make('p',note,'muted'));
   for(const source of Array.isArray(value.readSources)?value.readSources:[]){
-    const pdf=source?.kind==='web-pdf-original-page';
+    const pdf=source?.kind==='web-pdf-original-page'||source?.kind==='web-pdf-original-cell@1';
     if((!pdf&&source?.kind!=='web-original-excerpt')||typeof source.text!=='string'||
        !Number.isSafeInteger(source.page)||source.page<1||!Number.isSafeInteger(source.pages)||source.pages<source.page)continue;
     const url=originalWebLink(source.url,pdf);
@@ -350,7 +378,10 @@ function readSourcesContent(target, value) {
     const link=make('a',pdf?'打开来源 PDF（可能更新）':'打开原网页');
     if(pdf)url.hash='page='+source.page;
     link.href=url.href;link.target='_blank';link.rel='noopener noreferrer';link.referrerPolicy='no-referrer';
-    excerpt.append(link,make('pre',source.text,'web-source-text'));
+    excerpt.append(link);
+    if(source.kind==='web-pdf-original-cell@1'&&source.cell)
+      excerpt.append(make('p',[source.cell.caption,source.cell.rowLabel,source.cell.header,source.cell.unit].join(' · ')));
+    excerpt.append(make('pre',source.text,'web-source-text'));
     parent.append(excerpt);
   }
   if(!target.childElementCount)target.append(make('p','暂时无法核对已读取的网页摘录。','muted'));
@@ -376,14 +407,14 @@ async function loadReadSources(entry) {
 function hydrateInlineCitations(entry) {
   for(const [span,ref,number] of entry.inline){
     const row=(Array.isArray(entry.value?.readSources)?entry.value.readSources:[]).find(source=>source?.cited===true&&typeof source.text==='string'&&
-      (source.citationRef===ref||source.kind==='web-pdf-original-page'&&'PDF:'+source.id===ref));
-    const pdf=row?.kind==='web-pdf-original-page';
+      (source.citationRef===ref||['web-pdf-original-page','web-pdf-original-cell@1'].includes(source.kind)&&'PDF:'+source.id===ref));
+    const pdf=['web-pdf-original-page','web-pdf-original-cell@1'].includes(row?.kind);
     const url=row&&(!pdf||Number.isSafeInteger(row.page)&&row.page>0)&&originalWebLink(row.url,pdf);
     if(!url){span.textContent=entry.value?'［来源未能核对］':'［核对中］';continue;}
     if(pdf)url.hash='page='+row.page;
     const link=make('a','['+number+']','inline-source');
     link.href=url.href;link.target='_blank';link.rel='noopener noreferrer';link.referrerPolicy='no-referrer';
-    link.title=pdf?'原 PDF 第 '+row.page+' 页':row.text.slice(0,140);
+    link.title=pdf?'原 PDF 第 '+row.page+' 页'+(row.cell?' · '+[row.cell.rowLabel,row.cell.header,row.cell.unit].join(' · '):''):row.text.slice(0,140);
     span.replaceChildren(link);
   }
 }
@@ -590,7 +621,7 @@ async function select(id,messageId) {
     state.readSources.clear();
     message();
     if(state.conversation)byId('pdf-file').value='';byId('pdf-file').dispatchEvent(new Event('change'));
-    byId('research-depth').value='auto'; byId('reasoning-effort').value=''; byId('chart-skill').value=''; updateChartSkillLabel(); updateSettingsLabel(); closeComposerOptions();
+    byId('gemini-public').checked=false; byId('research-depth').value='auto'; byId('reasoning-effort').value=''; byId('chart-skill').value=''; updateChartSkillLabel(); updateSettingsLabel(); closeComposerOptions();
     resetEvidence();
     byId('reading-pane').scrollTop=0;
     state.detail=null;
@@ -618,18 +649,16 @@ async function load() {
     byId('mode-heading').textContent='今天想了解什么？';
     byId('mode-intro').textContent='直接输入问题。回复保存在会话历史里。';
     const c=state.workspace.liveNotice.connectivity??{};
-    const paidLabels={'deepseek-search':'DeepSeek','yuanbao-search':'腾讯元宝'};
+    const paidLabels={'deepseek-search':'DeepSeek','yuanbao-search':'腾讯元宝','yuanbao-mcp':'腾讯元宝 MCP'};
     const alternates=(c.searchAlternates??[]).map(id=>paidLabels[id]).filter(Boolean);
-    const capabilities=[c.search?(c.searchProvider==='deepseek-search'?'公开网页搜索（DeepSeek，可能计费）':c.searchProvider==='yuanbao-search'?'公开网页搜索（腾讯元宝，可能计费）':'公开网页搜索（Exa 预览）'):null,alternates.length?'补充搜索：'+alternates.join('、')+'（可能计费）':null,c.web?'公开网页读取':null,c.wind?'Wind 基金日收盘价':null].filter(Boolean);
+    const capabilities=[c.search?(paidLabels[c.searchProvider]?'公开网页搜索（'+paidLabels[c.searchProvider]+'，可能计费）':'公开网页搜索（Exa 预览）'):null,alternates.length?'补充搜索：'+alternates.join('、')+'（可能计费）':null,c.web?'公开网页读取':null,c.wind?'Wind 基金日收盘价':null].filter(Boolean);
     byId('mode-note').textContent=(capabilities.length?'已启用：'+capabilities.join('、')+'。当前事实以实际来源为准。':'不联网检索新闻或行情。')
       +' 普通问题可能连同本会话近期问答的摘录发给配置的模型；跨越 PDF 附件轮次不沿用历史。新建会话可从空白开始。';
     byId('source-picker').hidden=true;
     byId('pdf-picker').hidden=!state.workspace.capabilities.includes('pdf-attachment');
     byId('research-depth-picker').hidden=!state.workspace.capabilities.includes('deep-research');
     updateSettingsLabel();
-    byId('chart-skill-picker').hidden=!state.workspace.capabilities.includes('financial-chart-skill');
-    byId('chart-skill-slot').hidden=byId('chart-skill-picker').hidden;
-    byId('chart-skill').options[0].textContent=state.workspace.capabilities.includes('financial-chart-auto')?'自动（适用时使用图表）':'自动（支持你提供的明确数据）';
+    configureToolCatalog();
     byId('source').required=false;
     byId('question').placeholder='输入你的问题';
   } else if (liveMode()) {
@@ -656,7 +685,7 @@ async function create(initialDraft) {
   return c.id;
 }
 function failed(e) {
-  message(({GUI_WORKER_BUSY:'已有任务执行，待完成后再提交。',GUI_ORIGIN_REQUIRED:'请从启动命令显示的本机地址打开。',CONVERSATION_ID_CONFLICT:'原提交内容已不同，请先确认原会话状态。',PDF_UPLOAD_LIMIT:'PDF 不能超过 1 MiB 或 16 页。',PDF_LIMIT_PAGES:'PDF 不能超过 16 页。',PDF_LIMIT_TEXT:'PDF 提取内容超出支持范围，请缩小文件范围。',PDF_ENCRYPTED:'该 PDF 已加密，请上传未加密副本。',PDF_NO_TEXT_LAYER:'没有可用的文字层。请先用本地 OCR 或上传带文字层的版本。',PDF_INVALID_FORMAT:'未识别为 PDF 文件。',PDF_PARSE_FAILED:'无法读取这个 PDF。',PDF_TIMEOUT:'PDF 解析超时，请尝试较小的文件。',PROJECT_SOURCE_INVALID_INPUT:'请选择文件名有效的 PDF。',GUI_PDF_UPLOAD_BUSY:'另一个 PDF 正在处理，请稍后重试。'})[e.message] ?? '未确认操作结果，请刷新并查看会话；重试会沿用原提交。');
+  message(({GUI_WORKER_BUSY:'已有任务执行，待完成后再提交。',GUI_RESEARCH_SKILL_UNAVAILABLE:'此 Skill 当前不可用。',GUI_ORIGIN_REQUIRED:'请从启动命令显示的本机地址打开。',CONVERSATION_ID_CONFLICT:'原提交内容已不同，请先确认原会话状态。',PDF_UPLOAD_LIMIT:'PDF 不能超过 1 MiB 或 16 页。',PDF_LIMIT_PAGES:'PDF 不能超过 16 页。',PDF_LIMIT_TEXT:'PDF 提取内容超出支持范围，请缩小文件范围。',PDF_ENCRYPTED:'该 PDF 已加密，请上传未加密副本。',PDF_NO_TEXT_LAYER:'没有可用的文字层。请先用本地 OCR 或上传带文字层的版本。',PDF_INVALID_FORMAT:'未识别为 PDF 文件。',PDF_PARSE_FAILED:'无法读取这个 PDF。',PDF_TIMEOUT:'PDF 解析超时，请尝试较小的文件。',PROJECT_SOURCE_INVALID_INPUT:'请选择文件名有效的 PDF。',GUI_PDF_UPLOAD_BUSY:'另一个 PDF 正在处理，请稍后重试。'})[e.message] ?? '未确认操作结果，请刷新并查看会话；重试会沿用原提交。');
 }
 let editingDaily=null,dailyRequestId=null,dailyEmailToken=null,dailyDigestToken=null;
 const dailyStatuses={unknown:'结果未知，不会自动重跑',submitted:'已提交',completed:'已完成',failed:'未完成',cancelled:'已取消'};
@@ -793,9 +822,9 @@ byId('pdf-file').addEventListener('change',()=>{
   if(file)toggle.title=file.name;else toggle.removeAttribute('title');
 });
 function updateChartSkillLabel(){
-  const hasSkill=byId('chart-skill').value==='financial-chart@1';
+  const field=byId('chart-skill'), hasSkill=Boolean(field.value);
   const trigger=byId('chart-skill-toggle');
-  trigger.textContent=hasSkill?'金融图表':'选工具';
+  trigger.textContent=hasSkill?(field.selectedOptions?.[0]?.textContent??(field.value==='financial-chart@1'?'金融图表':'已选 Skill')).split('（')[0]:'选工具';
   trigger.dataset.active=String(hasSkill);
   byId('chart-skill-clear').hidden=!hasSkill;
 }
@@ -870,7 +899,10 @@ byId('composer').addEventListener('submit',async e=>{
     closeComposerOptions();
     const original = formDraft();
     const file=!state.pending&&!byId('pdf-picker').hidden?byId('pdf-file').files[0]:null;
-    const chartSkill=!state.pending&&!byId('chart-skill-picker').hidden?byId('chart-skill').value:'';
+    const chartSkill=!state.pending?original.chartSkill:undefined;
+    const publicConsent=!state.pending&&state.workspace.geminiFreePublicFallback===true&&
+      (!state.conversation||state.detail?.messages.length===0)&&!file&&!chartSkill&&(!original.skillId||original.skillId==='auto')&&
+      byId('gemini-public').checked;
     if(file&&chartSkill){message('请在图表 Skill 和 PDF 附件之间选择一种。');return;}
     if (!state.conversation) await create(original);
     else if (!state.pending) saveDraft(original);
@@ -884,17 +916,19 @@ byId('composer').addEventListener('submit',async e=>{
       attachment=payload.id;
     }
     state.pending ??= { conversationId:state.conversation,
-      input:{messageId:'m'+Date.now()+'-'+crypto.randomUUID().replaceAll('-','').slice(0,24),question:original.question,...(ownerMode()?{...(attachment?{attachmentId:attachment}:chartSkill?{chartSkill}:{}),researchDepth:original.researchDepth,...effortField(original.reasoningEffort)}:{sourceId:original.sourceId})} };
+      input:{messageId:'m'+Date.now()+'-'+crypto.randomUUID().replaceAll('-','').slice(0,24),question:original.question,...(publicConsent?{approveGeminiPublic:true}:{}),...(ownerMode()?{...(attachment?{attachmentId:attachment}:chartSkill?{chartSkill}:{}),researchDepth:original.researchDepth,...(!publicConsent&&original.skillId?{skillId:original.skillId}:{}),...effortField(original.reasoningEffort)}:{sourceId:original.sourceId})} };
     sessionStorage.setItem(pendingKey(),JSON.stringify(state.pending));
     const {conversationId,input}=state.pending;
     await api('/api/conversations/'+conversationId+'/messages',liveMode()&&!ownerMode()?{...input,approveLive:true}:input);
     clearMatchingDraft(state.pending);
+    byId('gemini-public').checked=false;
     state.pending=null; sessionStorage.removeItem(pendingKey()); q.value=''; byId('pdf-file').value='';byId('pdf-file').dispatchEvent(new Event('change'));
     byId('research-depth').value='auto'; byId('reasoning-effort').value=''; byId('chart-skill').value=''; updateChartSkillLabel(); updateSettingsLabel(); closeComposerOptions();
     await select(conversationId);
   } catch(error){ failed(error); }
   finally { state.submitting=false; controls(); }
 });
+byId('question').addEventListener('input',()=>{byId('gemini-public').checked=false;});
 try {
   initWorkbench();
   await load();

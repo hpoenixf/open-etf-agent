@@ -70,7 +70,7 @@ function renderTokens(parent, tokens, depth = 0, citation) {
       case 'text': {
         if(!citation||token.tokens?.length){inside(parent);break;}
         const text=token.text??'';let cursor=0;
-        for(const match of text.matchAll(/\[\[((?:WEB:[a-f0-9]{64}:[1-9][0-9]{0,3})|(?:PDF:web-pdf-page:sha256:[a-f0-9]{64}))\]\]/g)){
+        for(const match of text.matchAll(/\[\[((?:WEB:[a-f0-9]{64}:[1-9][0-9]{0,3})|(?:PDF:web-pdf-(?:page|cell):sha256:[a-f0-9]{64}))\]\]/g)){
           add(parent,text.slice(cursor,match.index)); citation(el(parent,'span'),match[1]); cursor=match.index+match[0].length;
         }
         add(parent,text.slice(cursor));break;

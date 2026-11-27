@@ -7,6 +7,7 @@ import {extractWebPdfLinks} from '../src/web-extraction.mjs';
 import {LINKED_PDF_NATIVE_TABLES,openLinkedWebPdfOwner} from '../src/web-linked-pdf.mjs';
 import {acquireApprovedWebPdf} from '../src/web-transport.mjs';
 import {mockWebNetwork} from './fixtures/web-network.mjs';
+import {pdf} from './fixtures/native-table-pdf.mjs';
 
 const originals=JSON.parse(await readFile(new URL('../fixtures/local-pdf.json',import.meta.url),'utf8')).documents;
 const fixtureRoot=resolve('test-output');
@@ -91,16 +92,7 @@ test('a held operation remains unknown after an unobserved dispatch and never re
  assert.equal((await f.open().readPage(link.id,1)).status,'unknown');
  assert.equal(f.responses(),1);
 });
-function pdf(rows) {
- const s=rows.flatMap(([y,...items])=>items.map(([x,value])=>`BT /F1 10 Tf 1 0 0 1 ${x} ${y} Tm (${value.replace(/[()]/g,'\\$&')}) Tj ET\n`)).join('');
- const objects=['<< /Type /Catalog /Pages 2 0 R >>','<< /Type /Pages /Count 1 /Kids [3 0 R] >>',
- '<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R >>',
- '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>',`<< /Length ${Buffer.byteLength(s)} >>\nstream\n${s}endstream`];
- let out='%PDF-1.4\n',offsets=[];
- objects.forEach((v,i)=>{offsets.push(out.length);out+=`${i+1} 0 obj\n${v}\nendobj\n`;});
- const xref=out.length;
- return Buffer.from(out+'xref\n0 6\n0000000000 65535 f \n'+offsets.map(o=>String(o).padStart(10,'0')+' 00000 n \n').join('')+'trailer\n<< /Size 6 /Root 1 0 R >>\nstartxref\n'+xref+'\n%%EOF\n');
-}
+
 const rows=[[740,[26,'PERFORMANCE (%)']],[722,[142,'2025'],[232,'2026']],[706,[28,'NAV'],[142,'0.32'],[232,'0.32']],[690,[28,'Benchmark'],[142,'1.10'],[232,'1.20']]];
 
 test('text page does not expose structured table claims or retained binary',async()=>{

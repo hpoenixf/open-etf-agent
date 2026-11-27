@@ -71,14 +71,23 @@
           <div id="source-picker" class="source-picker"><label for="source">演练资料</label><select id="source" required></select></div>
           <label for="question" class="visually-hidden">研究问题</label>
           <textarea id="question" rows="3" maxlength="3000" required placeholder="例如：对比 Alpha 与 Beta 的费率，并注明来源。"></textarea>
+          <label id="gemini-public-label" hidden><input id="gemini-public" type="checkbox" autocomplete="off"> 此条不含私密信息；前两路不可用时，允许 Google 免费 API 处理并可能留存</label>
           <div id="composer-actions" class="composer-actions">
             <div id="chart-skill-slot" hidden>
             <details id="chart-skill-picker" class="composer-option" hidden>
               <summary id="chart-skill-toggle">选工具</summary>
-              <label for="chart-skill" class="visually-hidden">选择 Skill</label>
-              <div class="composer-panel"><select id="chart-skill"><option value="">自动</option><option value="financial-chart@1">金融图表（用户数据或获授权的场内日收盘价）</option></select></div>
+              
+              <div class="composer-panel tool-catalog">
+                <label for="chart-skill">本轮分析 Skill</label>
+                <select id="chart-skill"><option value="">自动</option></select>
+                <section id="owner-tool-inventory" aria-label="可用工具" hidden>
+                  <h3>可用工具（Agent 按需调用）</h3>
+                  <small>以本轮可用权限和资料为准；附 PDF 时不使用外部网页或行情工具。</small>
+                  <ul id="owner-tool-list"></ul>
+                </section>
+              </div>
             </details>
-            <button id="chart-skill-clear" class="secondary" type="button" aria-label="移除金融图表 Skill" title="移除金融图表 Skill" hidden>×</button>
+            <button id="chart-skill-clear" class="secondary" type="button" aria-label="清除本轮 Skill" title="清除本轮 Skill" hidden>×</button>
             </div>
             <details id="pdf-picker" class="composer-option" hidden>
               <summary id="pdf-toggle"><span aria-hidden="true">＋ </span>PDF</summary>

@@ -1,6 +1,7 @@
 import {inputChartChoice,hasSuppliedChartData} from './financial-chart-input.mjs';
 import {isResearchSkillChoice} from './financial-analysis-methods.mjs';
 import {offerReasoningEffort} from './gateway.mjs';
+import {agentChartChoice} from './financial-chart-agent.mjs';
 import {ownerChartChoice, readOwnerChartViews} from './financial-chart-owner.mjs';
 import { validateDailyContext, buildDailyQuestion } from './conversation-daily-context.mjs';
 import {readConversationCalculations} from './conversation-history.mjs';
@@ -12,7 +13,7 @@ import {safeDirectory,ensureSafeDirectory,publishImmutable} from './storage-file
 import {readProjectJson,inspectResearchProject,submitResearchTask,inspectResearchTask,workResearchTask,cancelResearchTask,readResearchReport,readResearchOutput,resumeResearchTaskAdmission,supportsOwnerFreeform,respondResearchTask,inspectResearchInteraction,listResearchInteractions,controlResearchTask,inspectResearchControl} from './research-project.mjs';
 import {readReportReview} from './report-review.mjs';
 import {readResearchPublication} from './research-project.mjs';
-import {OWNER_LINKED_PDF_REVISION} from './gui-owner-web.mjs';
+import {OWNER_LINKED_PDF_REVISION,OWNER_LINKED_PDF_LOCAL_MISS,OWNER_LINKED_PDF_CELLS,OWNER_LINKED_PDF_INDEXED_CELLS} from './gui-owner-web.mjs';
 import {readOwnerWebSources} from './conversation-owner-read-sources.mjs';
 const fail=code=>{throw Object.assign(new Error(code),{code});};
 const id=v=>{if(typeof v!=='string'||!/^[A-Za-z0-9_-]{1,48}$/.test(v))fail('CONVERSATION_INVALID_ID');return v;};
@@ -57,7 +58,7 @@ async function ownerPreviousTurns(loc,messageId,configSha256){
  }
  return turns;
 }
-export async function submitConversationMessage({projectDir,conversationId,messageId,text,sourceManifestSha256,parent=null,review=null,continuationOfMessageId=null,authorization,dailyResearch,dailyBrief,chartSkill,researchDepth,reasoningEffort,ownerLinkedPdfRevision,skillId}){
+export async function submitConversationMessage({projectDir,conversationId,messageId,text,sourceManifestSha256,parent=null,review=null,continuationOfMessageId=null,authorization,dailyResearch,dailyBrief,chartSkill,researchDepth,reasoningEffort,ownerLinkedPdfRevision,skillId,approveGeminiPublic}){
  const loc=await location(projectDir,conversationId);id(messageId);
  if(typeof text!=='string'||!text.trim()||text.includes('\0')||Buffer.byteLength(text)>12000||Buffer.from(text).toString('utf8')!==text)fail('CONVERSATION_INVALID_TEXT');
  const freeform=sourceManifestSha256===null;
@@ -70,17 +71,21 @@ export async function submitConversationMessage({projectDir,conversationId,messa
  if(dailyBrief!==undefined&&dailyResearch===undefined)fail('CONVERSATION_DAILY_CONTEXT_INVALID');
  if(dailyResearch!==undefined){if(!freeform)fail('CONVERSATION_DAILY_CONTEXT_INVALID');validateDailyContext(dailyResearch,{conversationId,messageId});}
  if(chartSkill!==undefined&&(!freeform||dailyResearch!==undefined||!ownerChartChoice(chartSkill)||
-   (inputChartChoice(chartSkill)?!hasSuppliedChartData(text):(await inspectResearchProject({projectDir:loc.projectDir})).config.ownerConnectivity?.wind!==true)))fail('CONVERSATION_CHART_UNAVAILABLE');
+   (agentChartChoice(chartSkill)?false:inputChartChoice(chartSkill)?!hasSuppliedChartData(text):(await inspectResearchProject({projectDir:loc.projectDir})).config.ownerConnectivity?.wind!==true)))fail('CONVERSATION_CHART_UNAVAILABLE');
  if(researchDepth!==undefined&&(!['auto','standard','deep'].includes(researchDepth)||dailyResearch!==undefined||parent!==null||review!==null||continuationOfMessageId!==null||
    !authorization?.providerApproved||!authorization?.dataApproved||!authorization?.costApproved||
    !supportsOwnerFreeform((await inspectResearchProject({projectDir:loc.projectDir})).config)))fail('CONVERSATION_RESEARCH_DEPTH_UNAVAILABLE');
  if(reasoningEffort!==undefined&&(dailyResearch!==undefined||parent!==null||review!==null||continuationOfMessageId!==null||
    !authorization?.providerApproved||!authorization?.dataApproved||!authorization?.costApproved||
    !offerReasoningEffort((await inspectResearchProject({projectDir:loc.projectDir})).config).options.includes(reasoningEffort)))fail('CONVERSATION_REASONING_EFFORT_UNAVAILABLE');
- if(ownerLinkedPdfRevision!==undefined&&(ownerLinkedPdfRevision!==OWNER_LINKED_PDF_REVISION||!freeform||dailyResearch!==undefined||
+ if(ownerLinkedPdfRevision!==undefined&&(![OWNER_LINKED_PDF_REVISION,OWNER_LINKED_PDF_LOCAL_MISS,OWNER_LINKED_PDF_CELLS,OWNER_LINKED_PDF_INDEXED_CELLS].includes(ownerLinkedPdfRevision)||
+   ([OWNER_LINKED_PDF_LOCAL_MISS,OWNER_LINKED_PDF_CELLS,OWNER_LINKED_PDF_INDEXED_CELLS].includes(ownerLinkedPdfRevision)&&!agentChartChoice(chartSkill))||!freeform||dailyResearch!==undefined||
    !authorization?.providerApproved||!authorization?.dataApproved||!authorization?.costApproved||
    (await inspectResearchProject({projectDir:loc.projectDir})).config.ownerConnectivity?.linkedPdf!==true))fail('CONVERSATION_LINKED_PDF_UNAVAILABLE');
- const input={...(skillId===undefined?{}:{skillId}),...(ownerLinkedPdfRevision===undefined?{}:{ownerLinkedPdfRevision}),text,sourceManifestSha256,parent,review,...(reasoningEffort===undefined?{}:{reasoningEffort}),...(researchDepth===undefined?{}:{researchDepth}),...(chartSkill===undefined?{}:{chartSkill}),...(dailyResearch===undefined?{}:{dailyResearch}),...(continuationOfMessageId===null?{}:{continuationOfMessageId})};await immutable(loc.directory,messageId+'.request.json',{schemaVersion:'conversation-request@1',projectId:loc.meta.projectId,conversationId,messageId,input});const admittedProject=await inspectResearchProject({projectDir:loc.projectDir});let record;
+ const geminiPublicSha256=approveGeminiPublic===true?sha256(text):undefined;
+ if(approveGeminiPublic!==undefined&&(!geminiPublicSha256||!freeform||dailyResearch!==undefined||skillId!==undefined||chartSkill!==undefined||
+   ownerLinkedPdfRevision!==undefined||!(await inspectResearchProject({projectDir:loc.projectDir})).config.ownerGeminiFree))fail('CONVERSATION_GEMINI_PUBLIC_SCOPE');
+ const input={...(geminiPublicSha256===undefined?{}:{geminiPublicSha256}),...(skillId===undefined?{}:{skillId}),...(ownerLinkedPdfRevision===undefined?{}:{ownerLinkedPdfRevision}),text,sourceManifestSha256,parent,review,...(reasoningEffort===undefined?{}:{reasoningEffort}),...(researchDepth===undefined?{}:{researchDepth}),...(chartSkill===undefined?{}:{chartSkill}),...(dailyResearch===undefined?{}:{dailyResearch}),...(continuationOfMessageId===null?{}:{continuationOfMessageId})};await immutable(loc.directory,messageId+'.request.json',{schemaVersion:'conversation-request@1',projectId:loc.meta.projectId,conversationId,messageId,input});const admittedProject=await inspectResearchProject({projectDir:loc.projectDir});let record;
  try{record=await intent(loc,messageId);if(!same(record.input,input))fail('CONVERSATION_ID_CONFLICT');}catch(e){if(e.code!=='ENOENT')throw e;}
  if(!record){
   if(admittedProject.config.capabilities.includes('schedule'))fail('CONVERSATION_SCHEDULE_UNSUPPORTED');
@@ -132,15 +137,17 @@ export async function submitConversationMessage({projectDir,conversationId,messa
    if(previous.runId!==b.runId||previous.sha256!==b.sha256||previous.intentSha256!==b.intentSha256)fail('CONVERSATION_DAILY_BASELINE_MISMATCH');
    priorText=previous.text;
   }
-  const question=dailyResearch?buildDailyQuestion(text,dailyResearch,priorText,dailyBrief):freeform?buildOwnerFollowupQuestion(text,await ownerPreviousTurns(loc,messageId,admittedProject.configSha256)):PREFIX+JSON.stringify({request:text,previousReport:context,advisoryReview:advice,...(continuation?{continuation}: {})});if(Buffer.byteLength(question)>16000)fail('CONVERSATION_CONTEXT_TOO_LARGE');
+  const previous=geminiPublicSha256?await readdir(join(loc.directory,'messages')):null;
+  if(previous?.some(name=>/^[A-Za-z0-9_-]{1,48}\.json$/.test(name)&&name!==messageId+'.json'))fail('CONVERSATION_GEMINI_PUBLIC_SCOPE');
+  const question=geminiPublicSha256?text:dailyResearch?buildDailyQuestion(text,dailyResearch,priorText,dailyBrief):freeform?buildOwnerFollowupQuestion(text,await ownerPreviousTurns(loc,messageId,admittedProject.configSha256)):PREFIX+JSON.stringify({request:text,previousReport:context,advisoryReview:advice,...(continuation?{continuation}: {})});if(Buffer.byteLength(question)>16000)fail('CONVERSATION_CONTEXT_TOO_LARGE');
   const body={schemaVersion:'conversation-message@1',projectId:loc.meta.projectId,configSha256:admittedProject.configSha256,conversationId,messageId,runId:'conversation-'+hash([loc.meta.projectId,conversationId,messageId]).slice(0,40),input,question,...(dailyBrief?{appliedSkillId:'auto'}:{}),...(continuationRoot?{continuationRoot}:{})};record={...body,digest:hash(body)};await immutable(join(loc.directory,'messages'),messageId+'.json',record);
  }
  let admission;try{admission=await readProjectJson(join(loc.directory,messageId+'.admitted.json'));}catch(e){if(e.code!=='ENOENT')throw e;}
  if(admission){const admitted=await checkedTask(loc,record);return {conversationId,messageId,runId:record.runId,digest:record.digest,status:admitted.run.status};}
  let taskFile;try{taskFile=await readProjectJson(join(loc.projectDir,'tasks',record.runId+'.json'));}catch(e){if(e.code!=='ENOENT')throw e;}
- if(taskFile){const existing=await resumeResearchTaskAdmission({projectDir:loc.projectDir,runId:record.runId,question:record.question,sourceManifestSha256:record.input.sourceManifestSha256,expectedConfigSha256:record.configSha256,chartSkill:record.input.chartSkill,researchDepth:record.input.researchDepth,reasoningEffort:record.input.reasoningEffort,ownerLinkedPdfRevision:record.input.ownerLinkedPdfRevision,skillId:record.appliedSkillId??record.input.skillId});await saveAdmission(loc,record);return {conversationId,messageId,runId:record.runId,digest:record.digest,status:existing.status};}
+ if(taskFile){const existing=await resumeResearchTaskAdmission({projectDir:loc.projectDir,runId:record.runId,question:record.question,sourceManifestSha256:record.input.sourceManifestSha256,expectedConfigSha256:record.configSha256,chartSkill:record.input.chartSkill,researchDepth:record.input.researchDepth,reasoningEffort:record.input.reasoningEffort,ownerLinkedPdfRevision:record.input.ownerLinkedPdfRevision,skillId:record.appliedSkillId??record.input.skillId,geminiPublicSha256:record.input.geminiPublicSha256});await saveAdmission(loc,record);return {conversationId,messageId,runId:record.runId,digest:record.digest,status:existing.status};}
  if(admittedProject.configSha256!==record.configSha256)fail('CONVERSATION_CONFIG_CHANGED_BEFORE_ADMISSION');
- const task=await submitResearchTask({projectDir:loc.projectDir,runId:record.runId,question:record.question,sourceManifestSha256:record.input.sourceManifestSha256,authorization,expectedConfigSha256:record.configSha256,chartSkill:record.input.chartSkill,researchDepth:record.input.researchDepth,reasoningEffort:record.input.reasoningEffort,ownerLinkedPdfRevision:record.input.ownerLinkedPdfRevision,skillId:record.appliedSkillId??record.input.skillId});await saveAdmission(loc,record);return {conversationId,messageId,runId:record.runId,digest:record.digest,status:task.status};
+ const task=await submitResearchTask({projectDir:loc.projectDir,runId:record.runId,question:record.question,sourceManifestSha256:record.input.sourceManifestSha256,authorization,expectedConfigSha256:record.configSha256,chartSkill:record.input.chartSkill,researchDepth:record.input.researchDepth,reasoningEffort:record.input.reasoningEffort,ownerLinkedPdfRevision:record.input.ownerLinkedPdfRevision,skillId:record.appliedSkillId??record.input.skillId,geminiPublicSha256:record.input.geminiPublicSha256});await saveAdmission(loc,record);return {conversationId,messageId,runId:record.runId,digest:record.digest,status:task.status};
 }
 export async function workConversationMessage({projectDir,conversationId,messageId,...controls}){const loc=await location(projectDir,conversationId),record=await intent(loc,messageId);const task=await checkedTask(loc,record);if(task.run.status==='active'&&(await inspectResearchProject({projectDir:loc.projectDir})).configSha256!==record.configSha256)fail('CONVERSATION_EXECUTION_AUTHORITY_CHANGED');return workResearchTask({...controls,projectDir:loc.projectDir,runId:record.runId});}
 export async function cancelConversationMessage({projectDir,conversationId,messageId}){const loc=await location(projectDir,conversationId),record=await intent(loc,messageId);await checkedTask(loc,record);return cancelResearchTask({projectDir:loc.projectDir,runId:record.runId});}
@@ -232,7 +239,7 @@ export async function readConversationSources({projectDir,conversationId,message
 
 function admissionFact(record,task){return {schemaVersion:'conversation-admission@1',intentDigest:record.digest,taskDefinitionHash:hash(canonical(task.definition)),sessionDefinitionHash:hash(canonical(task.run.definition))};}
 async function saveAdmission(loc,record){const task=await inspectResearchTask({projectDir:loc.projectDir,runId:record.runId});await immutable(loc.directory,record.messageId+'.admitted.json',admissionFact(record,task));}
-async function checkedTask(loc,record){const admission=await readProjectJson(join(loc.directory,record.messageId+'.admitted.json'));let task;try{task=await inspectResearchTask({projectDir:loc.projectDir,runId:record.runId});}catch(e){if(['ENOENT','SESSION_NOT_FOUND','UNKNOWN_RUN'].includes(e.code))fail('CONVERSATION_ADMITTED_SESSION_UNAVAILABLE');throw e;}if(!same(admission,admissionFact(record,task))||hash(canonical(task.definition.config))!==record.configSha256||task.definition.projectId!==loc.meta.projectId||task.definition.question!==record.question||task.definition.sourceManifestSha256!==record.input.sourceManifestSha256||task.definition.ownerLinkedPdfRevision!==record.input.ownerLinkedPdfRevision||task.definition.skillId!==(record.appliedSkillId??record.input.skillId)||task.definition.chartSkill!==record.input.chartSkill||task.definition.researchDepth!==record.input.researchDepth||task.definition.reasoningEffort!==record.input.reasoningEffort)fail('CONVERSATION_TASK_MISMATCH');return task;}
+async function checkedTask(loc,record){const admission=await readProjectJson(join(loc.directory,record.messageId+'.admitted.json'));let task;try{task=await inspectResearchTask({projectDir:loc.projectDir,runId:record.runId});}catch(e){if(['ENOENT','SESSION_NOT_FOUND','UNKNOWN_RUN'].includes(e.code))fail('CONVERSATION_ADMITTED_SESSION_UNAVAILABLE');throw e;}if(!same(admission,admissionFact(record,task))||hash(canonical(task.definition.config))!==record.configSha256||task.definition.projectId!==loc.meta.projectId||task.definition.question!==record.question||task.definition.geminiPublicSha256!==record.input.geminiPublicSha256||task.definition.sourceManifestSha256!==record.input.sourceManifestSha256||task.definition.ownerLinkedPdfRevision!==record.input.ownerLinkedPdfRevision||task.definition.skillId!==(record.appliedSkillId??record.input.skillId)||task.definition.chartSkill!==record.input.chartSkill||task.definition.researchDepth!==record.input.researchDepth||task.definition.reasoningEffort!==record.input.reasoningEffort)fail('CONVERSATION_TASK_MISMATCH');return task;}
 
 
 // Clarification is routed to the original persisted question, never inferred

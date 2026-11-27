@@ -8,7 +8,7 @@ import { openSession } from '../../src/session.mjs';
 const [directory,mode,stop,rawRunId,rawClock,rawStall]=process.argv.slice(2);
 const runId=rawRunId||undefined;
 const leaseClock=rawClock?Number(rawClock):undefined,stallMs=rawStall?Number(rawStall):0;
-if((leaseClock!==undefined&&(!['basic','report','child','compaction','memory','duplicate','rejected','unknown','modelunknown','deadline'].includes(mode)||!Number.isSafeInteger(leaseClock)))||!Number.isSafeInteger(stallMs)||stallMs<0||stallMs>1000)throw new Error('Invalid recovery fixture clock');
+if((leaseClock!==undefined&&(!['basic','report','child','compaction','memory','duplicate','rejected','unknown','modelunknown','deadline','late'].includes(mode)||!Number.isSafeInteger(leaseClock)))||!Number.isSafeInteger(stallMs)||stallMs<0||stallMs>1000)throw new Error('Invalid recovery fixture clock');
 const store=await openSession({directory,leaseMs:150,...(leaseClock===undefined?{}:{clock:()=>leaseClock})});
 const trace=event=>appendFile(join(directory,'attempts.jsonl'),JSON.stringify({pid:process.pid,...event})+'\n');
 const bindings={gateway:{mode:'fixture',provider:'synthetic',protocol:'fixture@1',model:'scripted',version:'1'},plugins:[],adapters:[]};
@@ -17,7 +17,7 @@ if(mode==='memory'){memory=await openDurableMemory({directory:join(directory,'me
 if(mode==='compaction')workingInput={compaction:{thresholdBytes:1500,summarize:async()=>{await trace({kind:'summary'});return'Derived synthetic note: reread original pages for exact comparisons.';}}};
 const gateway={mode:'fixture',async next({messages}){
  await trace({kind:'model',inputHash:sha256(JSON.stringify(messages)),noteRef:messages.find(m=>m.result?.value?.kind==='derived-working-note')?.result.value.resultRef??null});
- if(mode==='late'){process.send?.({phase:'model-pending'});await new Promise(resolve=>setTimeout(resolve,500));return{kind:'calls',calls:[{id:'late',name:'read_page',arguments:{documentId:'atlas-a',page:1}}]};}
+ if(mode==='late'){const released=new Promise(resolve=>process.once('message',value=>resolve(value)));process.send?.({phase:'model-pending'});if(await released!=='release-late-proposal')throw new Error('Invalid late proposal release');return{kind:'calls',calls:[{id:'late',name:'read_page',arguments:{documentId:'atlas-a',page:1}}]};}
  if(mode==='modelunknown'){process.send?.({phase:'model-pending',runId:store.list?.()[0]?.runId});await new Promise(()=>{});}
  const results=messages.filter(m=>m.role==='tool');
  if(mode==='memory')return results.length?{kind:'final',text:'Original Memory receipt consumed.'}:{kind:'calls',calls:[{id:'memory-save',name:'memory_save',arguments:{text:'SYNTHETIC preference: verify immutable receipts.'}}]};

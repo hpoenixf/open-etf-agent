@@ -35,25 +35,25 @@ function proseDatasets(text){
  });
  return new Set(ds.map(d=>d.kind)).size===ds.length?ds:null;
 }
-function sealDataset(d,runId,{prose=false,sourceText=null,position=0}={}){
+export function sealDataset(d,runId,{prose=false,sourceText=null,position=0,modelCallId,sourceRefs=[],sourceChecked=false,allowUndatedModelCategory=false}={}){
  if(!exact(d,'asOf,keys,kind,series,unit')||typeof d.kind!=='string')throw new Error('invalid dataset');
  const limits=financialChartInputLimits(d.kind);
  if(!limits||!Array.isArray(d.keys)||!Array.isArray(d.series)||d.series.length<limits.minSeries||
     d.series.length>limits.maxSeries||d.keys.length<limits.minPoints||d.keys.length>limits.maxPoints||
-    (!prose&&d.asOf===null))throw new Error('invalid dataset');
+    (!prose&&d.asOf===null&&!(modelCallId&&allowUndatedModelCategory&&limits.dimension==='category')))throw new Error('invalid dataset');
  if(d.kind==='financial-share'){
    const total=d.series[0]?.values?.reduce((a,v)=>a+(v??0),0);
    if(prose&&(!(total>0)||total>100+1e-9))throw new Error('invalid share');
  }
  if(new Set(d.series.map(s=>s?.label)).size!==d.series.length)throw new Error('duplicate series label');
  const origin=hash(prose?{d,sourceText,position}:d);
- const toolCallId='operator-chart-'+origin;
+ const toolCallId=modelCallId??('operator-chart-'+origin);
  const receipts=d.series.map(s=>{
   if(!exact(s,'label,values')||!Array.isArray(s.values)||s.values.length!==d.keys.length)throw new Error('invalid series');
   return {...sealFinancialChartEvidence({
-   schemaVersion:'chart-typed-evidence@1',runId,toolCallId,metric:d.kind,unit:d.unit,basis:'user-supplied',
+   schemaVersion:'chart-typed-evidence@1',runId,toolCallId,metric:d.kind,unit:d.unit,basis:modelCallId?(sourceChecked?'source-checked':'agent-supplied'):'user-supplied',
    dimension:limits.dimension,asOf:d.asOf,periodStart:null,label:s.label,
-   provenance:'user-supplied',originReceiptIds:['typed-source:sha256:'+origin],rows:d.keys.map((key,i)=>({key,value:s.values[i]})),
+   provenance:modelCallId?(sourceChecked?'document-reported':'agent-supplied'):'user-supplied',originReceiptIds:[...sourceRefs.map(ref=>'typed-source:sha256:'+hash(ref)), 'typed-source:sha256:'+origin],rows:d.keys.map((key,i)=>({key,value:s.values[i]})),
   }),status:'succeeded',toolCallId};
  });
  return {kind:d.kind,receipts};

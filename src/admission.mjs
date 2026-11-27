@@ -5,14 +5,15 @@ import { lstatSync, openSync, closeSync } from 'node:fs';
 import { join } from 'node:path';
 import { setTimeout as delay } from 'node:timers/promises';
 import { ensureSafeDirectory, safeDirectory } from './storage-files.mjs';
-import { projectProviderProtocolDiagnostic } from './gateway.mjs';
+import { projectExactGoModelDenial, isExactGoMimoGateway, GO_DEEPSEEK_MODEL, GO_MIMO_MODEL, projectProviderProtocolDiagnostic, PROVIDER_IDLE_CODE } from './gateway.mjs';
+import { isOpenAIResponsesGateway, OPENAI_RESPONSES_MODEL } from './openai-responses-gateway.mjs';
 import { projectModelReservation } from './runtime.mjs';
 
 const APP_ID = 0x4f454144;
 const fail = code => { throw Object.assign(new Error(code), { code }); };
 const canonical=v=>JSON.stringify(v,(_,x)=>x&&typeof x==='object'&&!Array.isArray(x)?Object.fromEntries(Object.keys(x).sort().map(k=>[k,x[k]])):x);
 const digest=v=>createHash('sha256').update(canonical(v)).digest('hex');
-const knownPredispatch=new WeakSet();
+const knownPredispatch=new WeakSet(), directOwners=new WeakSet();
 export const isKnownAdmissionNonDispatch=error=>knownPredispatch.has(error);
 const active = "('admitted','dispatched','unknown')";
 const reservationId = ({ rootId, modelOrdinal }) => createHash('sha256').update(JSON.stringify([rootId, 'model', modelOrdinal])).digest('hex');
@@ -33,8 +34,10 @@ function reserved(session, runId, initial = false) {
 
 // One local capacity group, not a provider registry or a billing owner.
 // A dispatched request stays occupied until its original Gateway returns.
-export async function createSharedAdmission({ directory, routeId, maxQueue = 8, pollMs = 20, queueTimeoutMs = 30000, readOnly = false, existingOnly = false }) {
+export async function createSharedAdmission({ directory, routeId, maxQueue = 8, pollMs = 20, queueTimeoutMs = 30000, readOnly = false, existingOnly = false, capacity = 1, maxAttempts }) {
   if (typeof readOnly !== 'boolean' || typeof existingOnly !== 'boolean' || typeof routeId !== 'string' || !/^[A-Za-z0-9][A-Za-z0-9_.:/-]{0,199}$/.test(routeId)
+    || ![1,5].includes(capacity)
+    || maxAttempts!==undefined&&(!Number.isSafeInteger(maxAttempts)||maxAttempts<1||maxAttempts>100)
     || !Number.isSafeInteger(maxQueue) || maxQueue < 1 || maxQueue > 64
     || !Number.isSafeInteger(pollMs) || pollMs < 1 || pollMs > 1000
     || !Number.isSafeInteger(queueTimeoutMs) || queueTimeoutMs < 1 || queueTimeoutMs > 300000) fail('INVALID_ADMISSION_CONFIG');
@@ -114,27 +117,37 @@ export async function createSharedAdmission({ directory, routeId, maxQueue = 8, 
   });
   // Only work proven not dispatched expires. Unknown remote work has no TTL.
   const expireWaiting = () => db.prepare("UPDATE requests SET state='cancelled',updated_at=? WHERE state IN ('queued','admitted') AND deadline_at<=?").run(Date.now(), Date.now());
-  const enqueue = reservation => transaction(() => {
+  const enqueue = (reservation, modelRoute) => transaction(() => {
     expireWaiting();
     const identity = reservationId(reservation);
     const existing = db.prepare('SELECT request_id FROM requests WHERE reservation_id=?').get(identity);
     if (existing) throw Object.assign(new Error('ADMISSION_ALREADY_RECORDED'), { code: 'ADMISSION_ALREADY_RECORDED', ticketId: existing.request_id });
+    if (maxAttempts!==undefined&&db.prepare("SELECT count(*) AS n FROM requests").get().n>=maxAttempts){
+      const error=Object.assign(new Error('ADMISSION_PROVIDER_ATTEMPT_LIMIT'),{code:'ADMISSION_PROVIDER_ATTEMPT_LIMIT'});
+      knownPredispatch.add(error);throw error;
+    }
     if (db.prepare("SELECT count(*) AS n FROM requests WHERE state='queued'").get().n >= maxQueue) fail('ADMISSION_QUEUE_FULL');
     const requestId = randomUUID(); const now = Date.now();
     db.prepare("INSERT INTO requests(request_id,reservation_id,root_id,run_id,model_ordinal,round,input_hash,owner,fence,deadline_at,state,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,'queued',?,?)")
       .run(requestId, identity, reservation.rootId, reservation.runId, reservation.modelOrdinal, reservation.round, reservation.inputHash, reservation.owner, reservation.fence, now + queueTimeoutMs, now, now);
+    if(modelRoute){
+      db.exec("CREATE TABLE IF NOT EXISTS fallback_routes (request_id TEXT PRIMARY KEY REFERENCES requests(request_id), model TEXT NOT NULL CHECK(model IN ('mimo-v2.6-flash','gpt-6.1-terra'))) STRICT");
+      db.prepare('INSERT INTO fallback_routes VALUES (?,?)').run(requestId,modelRoute);
+    }
     return { requestId, deadline: now + queueTimeoutMs };
   });
   const acquire = requestId => transaction(() => {
     expireWaiting();
-    if (activeCount() !== 0) return false;
+    if (activeCount() >= capacity) return false;
     const first = db.prepare("SELECT request_id FROM requests WHERE state='queued' ORDER BY sequence LIMIT 1").get();
     if (first?.request_id !== requestId) return false;
     db.prepare("UPDATE requests SET state='admitted',updated_at=? WHERE request_id=? AND state='queued'").run(Date.now(), requestId);
     return true;
   });
   const row = ticketId => db.prepare('SELECT sequence,request_id AS ticketId,reservation_id AS reservationId,root_id AS rootId,run_id AS runId,model_ordinal AS modelOrdinal,round,input_hash AS inputHash,owner,fence,deadline_at AS deadlineAt,state,created_at AS createdAt,updated_at AS updatedAt FROM requests WHERE request_id=?').get(ticketId) ?? null;
-  const projectRow=ticketId=>{const ticket=row(ticketId);if(!ticket)return null;const release=releaseFor(ticketId),expiryStop=stopFor(ticket);return {...ticket,...(expiryStop?{expiryStop}:{}),ticketSha256:digest({routeId,...ticket}),...(release?{localRelease:validateRelease(ticket,release)}:{})};};
+  const fallbackRoute=ticketId=>db.prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name='fallback_routes'").get()
+    ? db.prepare('SELECT model FROM fallback_routes WHERE request_id=?').get(ticketId)?.model : undefined;
+  const projectRow=ticketId=>{const ticket=row(ticketId);if(!ticket)return null;const release=releaseFor(ticketId),expiryStop=stopFor(ticket),fallbackModel=fallbackRoute(ticketId);return {...ticket,...(fallbackModel?{fallbackModel}:{}),...(expiryStop?{expiryStop}:{}),ticketSha256:digest({routeId,...ticket}),...(release?{localRelease:validateRelease(ticket,release)}:{})};};
   const appendRelease=({session,operationId,identity,expectedTicketSha256,reason,acknowledgements,policy='manual-local-release',expiry})=>{
       if(readOnly)fail('ADMISSION_READ_ONLY');
       if(typeof operationId!=='string'||!/^[A-Za-z0-9][A-Za-z0-9_-]{0,99}$/.test(operationId)||typeof reason!=='string'||!reason.trim()||Buffer.byteLength(reason)>1000||typeof expectedTicketSha256!=='string'||!/^[a-f0-9]{64}$/.test(expectedTicketSha256)||canonical(acknowledgements)!==canonical({preserveUnknown:true,noReplay:true,noRefund:true}))fail('ADMISSION_RELEASE_CONFIRMATION_REQUIRED');
@@ -189,8 +202,8 @@ export async function createSharedAdmission({ directory, routeId, maxQueue = 8, 
   return {
     recoverExpiredOwner,
     releaseUnknown({session,operationId,identity,expectedTicketSha256,reason,acknowledgements}={}){return appendRelease({session,operationId,identity,expectedTicketSha256,reason,acknowledgements});},
-    maintainUnknown({session,rootId}={}){
-      if(readOnly)fail('ADMISSION_READ_ONLY');if(typeof rootId!=='string'||!rootId)fail('ADMISSION_MAINTENANCE_ROOT_REQUIRED');
+    maintainUnknown({session,rootId,shortUnknown=false}={}){
+      if(readOnly)fail('ADMISSION_READ_ONLY');if(typeof rootId!=='string'||!rootId||typeof shortUnknown!=='boolean')fail('ADMISSION_MAINTENANCE_ROOT_REQUIRED');
       const observedAt=Date.now();if(!Number.isSafeInteger(observedAt)||observedAt<1)fail('ADMISSION_POLICY_CLOCK_INVALID');
       const items=[];
       for(const record of db.prepare("SELECT request_id FROM requests WHERE root_id=? AND state IN ('unknown','dispatched') ORDER BY sequence").all(rootId)){
@@ -204,23 +217,37 @@ export async function createSharedAdmission({ directory, routeId, maxQueue = 8, 
         const ticket=original,stop=originalStop,effectiveAt=Math.max(observedAt,stop?.observedAt??0),prior=validateRelease(ticket,releaseFor(ticket.ticketId));
         if(prior){items.push({ticketId:ticket.ticketId,state:'already-released',event:prior});continue;}
         if(!Number.isSafeInteger(ticket.createdAt)||ticket.createdAt<1||ticket.createdAt>effectiveAt){items.push({ticketId:ticket.ticketId,state:'blocked',code:'ADMISSION_POLICY_CLOCK_INVALID'});continue;}
-        const dueAt=ticket.createdAt+7200000;if(!Number.isSafeInteger(dueAt)){items.push({ticketId:ticket.ticketId,state:'blocked',code:'ADMISSION_POLICY_CLOCK_INVALID'});continue;}if(effectiveAt<=dueAt){items.push({ticketId:ticket.ticketId,state:'not-due',dueAt,observedAt});continue;}
+        // Start the short deadline at transition to unknown, not queueing.
+        // A still dispatched request is handled only by its live provider watchdog.
+        // Its branded error is persisted by Runtime, and the normal terminal
+        // owner proof below still must attest this exact Model reservation.
+        const silent=shortUnknown&&session.inspect(ticket.runId).snapshot?.outcome?.code===PROVIDER_IDLE_CODE;
+        const since=shortUnknown?ticket.updatedAt:ticket.createdAt,dueAt=since+(shortUnknown?180000:7200000);
+        if(!Number.isSafeInteger(since)||since<ticket.createdAt||since>effectiveAt||!Number.isSafeInteger(dueAt)){items.push({ticketId:ticket.ticketId,state:'blocked',code:'ADMISSION_POLICY_CLOCK_INVALID'});continue;}
+        if(shortUnknown?!silent&&effectiveAt<dueAt:effectiveAt<=dueAt){items.push({ticketId:ticket.ticketId,state:'not-due',dueAt,observedAt});continue;}
         try{
-          const event=appendRelease({session,operationId:'two-hour-'+digest({routeId,ticketId:ticket.ticketId,createdAt:ticket.createdAt}),identity:identityFor(ticket),expectedTicketSha256:digest({routeId,...ticket}),reason:'Standing two-hour local capacity policy; no remote settlement, replay or refund.',acknowledgements:{preserveUnknown:true,noReplay:true,noRefund:true},policy:'two-hour-local-release@1',expiry:{origin:'createdAt-includes-queue',createdAt:ticket.createdAt,dueAt,observedAt:effectiveAt}});
+          const event=appendRelease({session,operationId:(shortUnknown?'three-minute-':'two-hour-')+digest({routeId,ticketId:ticket.ticketId,createdAt:ticket.createdAt}),identity:identityFor(ticket),expectedTicketSha256:digest({routeId,...ticket}),reason:shortUnknown?(silent?'Owner GUI provider transport idle for three minutes; no remote settlement, replay or refund.':'Owner GUI three-minute terminal unknown policy; no remote settlement, replay or refund.'):'Standing two-hour local capacity policy; no remote settlement, replay or refund.',acknowledgements:{preserveUnknown:true,noReplay:true,noRefund:true},...(shortUnknown?{}:{policy:'two-hour-local-release@1',expiry:{origin:'createdAt-includes-queue',createdAt:ticket.createdAt,dueAt,observedAt:effectiveAt}})});
           items.push({ticketId:ticket.ticketId,state:'released',event});
         }catch(error){if(!['ADMISSION_RUN_NOT_TERMINAL','ADMISSION_RELEASE_SCOPE_UNSUPPORTED','ADMISSION_TERMINAL_RESERVATION_MISMATCH','ADMISSION_RELEASE_CAS','ADMISSION_RELEASE_CONFLICT'].includes(error.code))throw error;items.push({ticketId:ticket.ticketId,state:'blocked',code:error.code,dueAt,observedAt});}
       }
-      return {policy:'two-hour-local-release@1',origin:'createdAt-includes-queue',observedAt,items};
+      return {policy:shortUnknown?'three-minute-local-release@1':'two-hour-local-release@1',origin:shortUnknown?'entered-unknown':'createdAt-includes-queue',observedAt,items};
     },
-    snapshot() { return { routeId, capacity: 1, maxQueue, occupied:activeCount(),requests: db.prepare('SELECT request_id FROM requests ORDER BY sequence').all().map(x => projectRow(x.request_id)) }; },
+    attemptLimitReached() { return maxAttempts!==undefined&&db.prepare("SELECT count(*) AS n FROM requests").get().n>=maxAttempts; },
+    snapshot() { return { routeId, capacity, maxQueue, occupied:activeCount(),requests: db.prepare('SELECT request_id FROM requests ORDER BY sequence').all().map(x => projectRow(x.request_id)) }; },
     inspect(ticketId) { return projectRow(ticketId); },
     inspectReservation(identity) { const value = db.prepare('SELECT request_id FROM requests WHERE reservation_id=?').get(reservationId(identity)); return value ? projectRow(value.request_id) : null; },
     close() { db.close(); },
-    wrap(gateway, { session, runId, beforeDispatch }) {
+    wrap(gateway, { session, runId, beforeDispatch, sameGroupFallback, independentFallback, shouldUseDirect, modelRoute }) {
       if (readOnly) fail('ADMISSION_READ_ONLY');
       if (typeof gateway?.next !== 'function' || typeof session?.inspect !== 'function' || beforeDispatch!==undefined&&typeof beforeDispatch!=='function') fail('INVALID_ADMISSION_GATEWAY');
-      const bind = selectedRunId => ({
+      if(sameGroupFallback!==undefined&&!isExactGoMimoGateway(sameGroupFallback))fail('INVALID_ADMISSION_FALLBACK');
+      if(independentFallback!==undefined&&!directOwners.has(independentFallback)||shouldUseDirect!==undefined&&(!independentFallback||typeof shouldUseDirect!=='function'))fail('INVALID_ADMISSION_FALLBACK');
+      if(modelRoute!==undefined&&(modelRoute!==OPENAI_RESPONSES_MODEL||!isOpenAIResponsesGateway(gateway)||maxAttempts===undefined))fail('INVALID_ADMISSION_FALLBACK');
+      const bind = selectedRunId => {
+        const settledDenials=new WeakMap();
+        const result={
         mode: gateway.mode,
+        ...(modelRoute===OPENAI_RESPONSES_MODEL?{directResponses:true}:{}),
         ...(gateway.inputBudget?{inputBudget:gateway.inputBudget}:{}),
         admission: 'shared-admission@1',
         // Rebind the same route/capacity owner only after Session created the Run.
@@ -234,7 +261,27 @@ export async function createSharedAdmission({ directory, routeId, maxQueue = 8, 
             || (childRunId !== selectedRunId && (parent.parentRunId !== null || child.parentRunId !== selectedRunId))) fail('ADMISSION_BINDING_MISMATCH');
           return childRunId === selectedRunId ? bind(selectedRunId) : bind(childRunId);
         },
-        async next(input) {
+        async next(input) {return dispatch(input,null);},
+        ...(independentFallback&&selectedRunId===runId?{directResponsesGateway:independentFallback,...(shouldUseDirect?{shouldUseDirect}:{})}:{}),
+        takeModelFallback(error,priorReceipt){
+          if(!sameGroupFallback||selectedRunId!==runId)return null;
+          const proof=settledDenials.get(error), prior=projectModelReservation(priorReceipt);
+          if(!proof||!prior||proof.rootId!==prior.rootId||proof.modelOrdinal!==prior.modelOrdinal||
+             proof.inputHash!==prior.inputHash||prior.runId!==runId)return null;
+          settledDenials.delete(error);
+          const toMiMo=proof.model===GO_DEEPSEEK_MODEL;
+          if(!toMiMo&&!(proof.model===GO_MIMO_MODEL&&independentFallback))return null;
+          return Object.freeze({...(toMiMo?{takeModelFallback:(e,r)=>result.takeModelFallback(e,r)}:{directResponses:true,inputBudget:independentFallback.inputBudget}),
+            async next(input){
+            const current=projectModelReservation(input?.reservation);
+            if(!current||current.runId!==runId||current.owner!==prior.owner||current.fence!==prior.fence||
+               current.purpose!==undefined||current.inputHash!==prior.inputHash||
+               current.modelOrdinal!==prior.modelOrdinal+1||current.round!==prior.round+1)fail('ADMISSION_FALLBACK_RESERVATION_MISMATCH');
+            return toMiMo?dispatch(input,sameGroupFallback):independentFallback.next(input);
+          }});
+        }
+      };
+        async function dispatch(input,alternate) {
           const runId = selectedRunId;
           const signal = input?.signal;
           signal?.throwIfAborted();
@@ -246,7 +293,7 @@ export async function createSharedAdmission({ directory, routeId, maxQueue = 8, 
             || original.purpose !== reservation.purpose || original.inputHash !== reservation.inputHash
             || createHash('sha256').update(JSON.stringify(input.messages)).digest('hex') !== reservation.inputHash) fail('ADMISSION_RESERVATION_MISMATCH');
           if (reservation.purpose === 'compaction' && (!Array.isArray(input.tools) || input.tools.length !== 0)) fail('ADMISSION_RESERVATION_MISMATCH');
-          const { requestId, deadline } = enqueue(reservation);
+          const { requestId, deadline } = enqueue(reservation,alternate?GO_MIMO_MODEL:modelRoute);
           const currentFence = (dispatch = false) => {
             const current = reserved(session, runId, dispatch);
             if (current.owner !== reservation.owner || current.fence !== reservation.fence
@@ -297,7 +344,7 @@ export async function createSharedAdmission({ directory, routeId, maxQueue = 8, 
             const pending=Promise.resolve().then(()=>{
               armExpiry();
               if(stopFor(row(requestId)))throw expiryError();
-              return gateway.next({...input,signal:signal?AbortSignal.any([signal,localAbort.signal]):localAbort.signal});
+              return (alternate??gateway).next({...input,signal:signal?AbortSignal.any([signal,localAbort.signal]):localAbort.signal});
             });
             const result = await Promise.race([pending,stopped]);
             if(stopFor(row(requestId)))throw expiryError();
@@ -306,16 +353,21 @@ export async function createSharedAdmission({ directory, routeId, maxQueue = 8, 
             return result;
           } catch (error) {
             if(stopFor(row(requestId)))throw error;
-            // Only the original Gateway's branded complete finish is termination evidence.
+            // Only the original Gateway's branded complete finish or exact model denial is termination evidence.
             // A caller-invented error.code or local AbortSignal is never such evidence.
             const diagnostic = projectProviderProtocolDiagnostic(error);
-            let terminal = diagnostic?.reason === 'NON_SUCCESS_FINISH' && diagnostic.hashScope === 'complete-body';
+            const denial=sameGroupFallback&&(!alternate||independentFallback)&&!signal?.aborted?projectExactGoModelDenial(error):null;
+            const recognizedDenial=denial&&denial.model===(alternate?GO_MIMO_MODEL:GO_DEEPSEEK_MODEL)&&denial.rootId===reservation.rootId&&denial.modelOrdinal===reservation.modelOrdinal&&denial.inputHash===reservation.inputHash;
+            let terminal = recognizedDenial || diagnostic?.reason === 'NON_SUCCESS_FINISH' && diagnostic.hashScope === 'complete-body';
             try { currentFence(); } catch { terminal = false; }
-            transition(requestId, reservation, 'dispatched', terminal ? (diagnostic.finishKind === 'aborted' ? 'cancelled' : 'completed') : 'unknown');
+            transition(requestId, reservation, 'dispatched', terminal ? (diagnostic?.finishKind === 'aborted' ? 'cancelled' : 'completed') : 'unknown');
+            if(terminal&&recognizedDenial)settledDenials.set(error,denial);
             throw error;
           }finally{clearTimeout(expiryTimer);}
         }
-      });
+        if(modelRoute===OPENAI_RESPONSES_MODEL)directOwners.add(result);
+        return Object.freeze(result);
+      };
       return bind(runId);
     }
   };

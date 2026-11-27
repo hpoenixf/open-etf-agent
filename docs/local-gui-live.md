@@ -53,6 +53,8 @@ turns in this conversation. Start a new conversation to leave prior context behi
 unsettled turn, or profile change stops the history chain; other conversations are not read.
 Historical answers do not grant authority or restart old Runs.
 
+In the Go owner composer, **选工具** lists the available per-turn Skills and the public-facing tools enabled by the current launch configuration. **Automatic** can choose a bundled method; **热点解读** and **长期视角分析** apply the chosen method to this turn without changing research depth or tool permissions. The chart choice remains subject to the existing data and Wind rules. Search, webpage/PDF reading and Wind are listed for discovery, not invoked by clicking the menu. The Worker still checks the Run's permissions and data; a PDF attachment does not enable external tools. A configured Daily Watch brief is scheduled-only and cannot be selected for ordinary chat.
+
 A selected PDF belongs to one question. It needs a text layer, is capped at 1 MiB and 16 pages,
 and cannot be encrypted. Upload parses locally. On send, excerpts actually read may go to the
 configured model service. Attached turns do not include ordinary history or external search, web
@@ -75,6 +77,8 @@ and matching server-side environment reference are required (`WEB_RESEARCH_DEEPS
 or `WEB_RESEARCH_YUANBAO_API_KEY`). You can opt into these as `searchAlternates` with Exa as the
 primary search provider. A paid alternate requires a successful Exa lookup in the same Run;
 it is not an automatic paid fallback after Exa failure. Send only public search terms.
+
+For the official [Tencent Yuanbao Search MCP](https://developer.cloud.tencent.com/mcp/server/11764), select `yuanbao-mcp` as `search` or an explicit alternate. It uses the same WSA service key as the direct `yuanbao-search` adapter, but is a different, explicitly selected transport. Only the fixed `SearchPro` tool and public search keywords are sent. Search summaries are discovery, not citations; open the original public HTTPS source before citing a claim. The MCP handshake and search share one 90-second maximum and accept at most 2 MiB per response; only the first three bounded discovery hits are retained. The Run’s own cancellation or deadline can stop it earlier. Nothing is enabled by default; do not configure both Yuanbao adapters unless intentionally comparing them.
 
 To additionally enable the typed Wind fund daily close tool, set `"wind": true` in the same object and inject `WIND_API_KEY` into the server process via an authorized secret store. Never store it in the launch JSON. The Wind tool is not a raw MCP passthrough, does not expose arbitrary service calls, and is not a universal live market feed. Restart the host with the same Project to preserve history. Old tasks keep their original configuration.
 
@@ -100,3 +104,25 @@ This explicit profile follows [DeepSeek's non-thinking tool-call contract](https
 直连 DeepSeek 时，使用上面的 `deepseek-direct` / 官方端点 / `deepseek-flash` 组合。本配置按官方工具协议关闭 thinking，不会静默改用其他模型或重试其他提供方。
 
 For plots based on values you provide, see [financial chart input examples](skills/financial-chart-user-data.md). Earlier conversation numbers are not picked up automatically.
+
+### Optional owner-only concurrent admission
+
+Set the trusted server process environment variable `ETF_GUI_CONCURRENT_ADMISSION=1` only for the
+current OpenCode Go owner profile and after confirming the upstream account can support the load.
+It admits up to five independent conversations and at most five local model requests on the
+existing Project/endpoint ledger. One conversation remains sequential and duplicate submissions
+do not dispatch again. A sixth simultaneous conversation receives `GUI_WORKER_BUSY` while all five
+workers are used. Unset the flag to return to the previous one-worker and one-request behavior.
+
+The enabled GUI periodically checks its original Project ledger. After three minutes in the
+**unknown** state, it can free the local slot only with the existing proof of terminal local
+ownership. On the opted-in OpenCode Go route, a dispatched provider request also has a
+three-minute **inactivity** watchdog, not a three-minute total task deadline. Response headers
+and actual body progress restart it; SSE comments and empty/role-only events do not. If it fires,
+only the local provider transport stops. Its slot is released when the exact reservation has a
+durable terminal Session proof, without another three-minute wait. This does not impose an
+idle deadline on tools or shorten the ordinary run timeout. The original unknown request,
+usage/billing uncertainty and run record stay intact; there is no re-send, refund, or
+assertion that remote execution stopped. Existing release receipts and ledger identity are
+unchanged; rollbacks can read newly recorded local-only releases. The extra slots are a host
+capacity bound, not an upstream allowance, and do not retry provider refusals.
