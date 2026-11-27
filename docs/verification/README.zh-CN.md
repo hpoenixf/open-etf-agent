@@ -1,5 +1,6 @@
 [English](README.md) | **简体中文**
 
+- [v1.0.5 · 网页链接 PDF、单元格引用和受控图表计算](v105-release.zh-CN.md)
 - [v1.0.4 · 扩展金融图表类型](v104-release.zh-CN.md)
 - [v1.0.3 · 有据柱状图与饼图](v103-release.zh-CN.md)
 
