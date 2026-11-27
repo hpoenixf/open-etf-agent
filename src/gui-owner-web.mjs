@@ -5,7 +5,7 @@ import { WEB_TEXT_MAX_PAGES, WEB_TEXT_PAGE_BYTES, webTextPageSizes } from './web
 import { createHash } from 'node:crypto';
 import { acquireProjectWebSources, inspectWebAcquisition } from './web-acquisition.mjs';
 import { extractWebPdfLinks } from './web-extraction.mjs';
-import { openLinkedWebPdfOwner } from './web-linked-pdf.mjs';
+import { LINKED_PDF_NATIVE_TABLES, openLinkedWebPdfOwner } from './web-linked-pdf.mjs';
 import { loadProjectSources } from './project-sources.mjs';
 import { readProjectJson } from './research-project.mjs';
 import { normalizeWebUrl, ownerDocumentUrl, validateOwnerWebPageInput } from './web-policy.mjs';
@@ -22,6 +22,7 @@ export const OWNER_WEB_EXCERPTS_LOCAL_MISS='owner-web-excerpts@2';
 export const OWNER_WEB_EXCERPTS_URL_MISS='owner-web-excerpts@3';
 export const OWNER_LINKED_PDF_REVISION='owner-public-linked-pdf@1';
 export const OWNER_LINKED_PDF_LOCAL_MISS='owner-public-linked-pdf@2';
+export const OWNER_LINKED_PDF_CELLS='owner-public-linked-pdf@3';
 export const OWNER_WEB_LINKED_PDF='public_web_linked_pdf_page';
 export const OWNER_WEB_SEARCH='public_web_search';
 const paidSearch=Object.freeze({
@@ -153,7 +154,8 @@ export function openOwnerWeb({profile,projectDir,projectId,runId,transport={},se
   receipt.completedPages===0&&receipt.manifestSha256===null;
  const fetchImpl=transport.searchFetch??globalThis.fetch;
  const operation=(name,callId)=>name+'-'+hash(JSON.stringify([runId,callId])).slice(0,40);
- const localInvalidPdfLink=linkedPdfRevision===OWNER_LINKED_PDF_LOCAL_MISS;
+ const withCells=linkedPdfRevision===OWNER_LINKED_PDF_CELLS;
+ const localInvalidPdfLink=linkedPdfRevision===OWNER_LINKED_PDF_LOCAL_MISS||withCells;
  const localInvalidPageUrl=localInvalidPdfLink&&excerptRevision===OWNER_WEB_EXCERPTS_URL_MISS;
  const localInvalidCursor=localInvalidPageUrl||excerptRevision===OWNER_WEB_EXCERPTS_LOCAL_MISS;
  const withExcerpts=localInvalidCursor||excerptRevision===OWNER_WEB_EXCERPTS;
@@ -275,7 +277,7 @@ export function openOwnerWeb({profile,projectDir,projectId,runId,transport={},se
    if(!shape(args,'cursor')||typeof args.cursor!=='string'||
       (localInvalidCursor?(args.cursor.length>128||/[\u0000-\u001f\u007f]/.test(args.cursor)):!validCursor(args.cursor)))fail('WEB_CONTINUATION_CURSOR_INVALID');
   };
-  function earlierReceipts(callId,requireCurrent=false){
+  function earlierReceipts(callId,requireCurrent=false,cellOnly=false){
    const run=readRun();
    if(run?.runId!==runId||!Array.isArray(run.snapshot?.messages))fail('WEB_PAGE_RUN_REQUIRED');
    const receipts=new Map(),seen=new Set(),replied=new Set(),duplicates=new Set();
@@ -293,8 +295,8 @@ export function openOwnerWeb({profile,projectDir,projectId,runId,transport={},se
      if(reply?.role!=='tool'||reply.callId!==call.id||result?.callId!==call.id)continue;
      if(replied.has(call.id))duplicates.add(call.id);
      replied.add(call.id);
-     if(![OWNER_WEB_PAGE,OWNER_WEB_CONTINUE].includes(call.name)||result.status!=='succeeded'||result.dispatched!==true||
-        (result.effective&&!isDeepStrictEqual(result.effective,call))||(result.original&&!isDeepStrictEqual(result.original,call))||result.value?.kind!=='public-web-page@2')continue;
+     if((cellOnly?call.name!==OWNER_WEB_LINKED_PDF:![OWNER_WEB_PAGE,OWNER_WEB_CONTINUE].includes(call.name))||result.status!=='succeeded'||result.dispatched!==true||
+        (result.effective&&!isDeepStrictEqual(result.effective,call))||(result.original&&!isDeepStrictEqual(result.original,call))||result.value?.kind!==(cellOnly?'web-pdf-original-cell@1':'public-web-page@2'))continue;
      receipts.set(call.id,{call,value:result.value});
     }
    }
@@ -336,13 +338,17 @@ export function openOwnerWeb({profile,projectDir,projectId,runId,transport={},se
    const scope={projectId,runId,accountId:projectId};
    const validLinkId=id=>typeof id==='string'&&/^web-pdf-link:sha256:[a-f0-9]{64}$/.test(id);
    const validatePdf=args=>{
-    if(!args||typeof args!=='object'||Array.isArray(args)||Object.keys(args).length!==2||
+    const keys=args&&typeof args==='object'&&!Array.isArray(args)?Object.keys(args).sort().join(','):'';
+    const selector=withCells&&keys==='column,linkId,page,row,table';
+    const inventory=withCells&&keys==='linkId,page,tables'&&args.tables===true;
+    if((keys!=='linkId,page'&&!selector&&!inventory)||
+       (selector&&![args.table,args.row,args.column].every(n=>Number.isSafeInteger(n)&&n>=1&&n<=100))||
        typeof args.linkId!=='string'||(localInvalidPdfLink?(args.linkId.length>2048||/[\u0000-\u001f\u007f]/.test(args.linkId)):!validLinkId(args.linkId))||!Number.isSafeInteger(args.page)||args.page<1)
      fail('WEB_PDF_ARGUMENTS_INVALID');
    };
    const preparePdf=(callId,signal)=>openLinkedWebPdfOwner({
     projectDir,authority:{kind:'authenticated-owner-public-web',protected:false,...scope},
-    fetchPdf:transport.fetchPdf,
+    fetchPdf:transport.fetchPdf,tableRevision:withCells?LINKED_PDF_NATIVE_TABLES:undefined,
     async resolveConsumedHtml(linkId){
      const matches=[...earlierReceipts(callId,true).values()].filter(({call,value})=>
       call.name===OWNER_WEB_PAGE&&value.pdfLinks?.schemaVersion==='web-pdf-link-inventory@1'&&
@@ -385,19 +391,30 @@ export function openOwnerWeb({profile,projectDir,projectId,runId,transport={},se
     const owner=preparePdf(callId,signal);
     try{
      if(dispatch)await owner.acquire(linkId,{signal});
-     const page=await owner.readPage(linkId,args.page);
+     const page=withCells&&args.tables===true?await owner.readTables(linkId,args.page):
+      withCells&&Object.hasOwn(args,'table')?await owner.readCell(linkId,{page:args.page,table:args.table,row:args.row,column:args.column}):await owner.readPage(linkId,args.page);
+     if(withCells&&page.kind==='web-pdf-original-tables@1')return {...page,tables:page.tables.map(({caption,headers,rows,unit})=>({caption,headers,rowLabels:rows.map(row=>row.label),unit}))};
      if(page.status==='unknown')return null;
      return page;
     }catch(error){
-     if(error?.code==='WEB_PDF_LINK_UNKNOWN'||error?.code==='WEB_PDF_PAGE_INVALID')
+     if(error?.code==='WEB_PDF_LINK_UNKNOWN'||error?.code==='WEB_PDF_PAGE_INVALID'||withCells&&error?.code==='WEB_PDF_CELL_INVALID')
       return {kind:'web-pdf-unavailable@1',status:'unavailable',code:error.code};
      throw error;
     }
    };
-   webTools.push({name:OWNER_WEB_LINKED_PDF,recoveryVersion:localInvalidPdfLink?OWNER_LINKED_PDF_LOCAL_MISS:OWNER_LINKED_PDF_REVISION,
-    description:'Read an exact physical PDF page from a link available on an earlier consumed original webpage in this run. Copy linkId exactly. Start with page 1 if unspecific. To cite a returned page in your final answer, copy [[PDF:<sourceRef>]] using the entire returned sourceRef, not the linkId. Never infer facts from unavailable pages.'+(localInvalidPdfLink?' Search results and direct URLs not previously listed in this run’s HTML PDF inventory cannot open a PDF. Use a publisher HTML release page to obtain the receipt, or continue from other verified evidence.':''),
-    parameters:{type:'object',properties:{linkId:{type:'string'},page:{type:'integer',minimum:1}},required:['linkId','page'],additionalProperties:false},
+   webTools.push({name:OWNER_WEB_LINKED_PDF,recoveryVersion:withCells?OWNER_LINKED_PDF_CELLS:localInvalidPdfLink?OWNER_LINKED_PDF_LOCAL_MISS:OWNER_LINKED_PDF_REVISION,
+    description:'Read an exact physical PDF page from a link available on an earlier consumed original webpage in this run. Copy linkId exactly. Start with page 1 if unspecific. To cite a returned page in your final answer, copy [[PDF:<sourceRef>]] using the entire returned sourceRef, not the linkId. Never infer facts from unavailable pages.'+(localInvalidPdfLink?' Search results and direct URLs not previously listed in this run’s HTML PDF inventory cannot open a PDF. Use a publisher HTML release page to obtain the receipt, or continue from other verified evidence.':'')+(withCells?' For exact values, set tables:true first to discover the layout, then pass table,row,column (all 1-based) instead of tables. Cite the returned cell as [[PDF:<sourceRef>]]. Pass that exact PDF reference to the chart formula; do not retype observed numbers. If no structured table is available, read the page and disclose that limitation.':''),
+    parameters:{type:'object',properties:{linkId:{type:'string'},page:{type:'integer',minimum:1},...(withCells?{
+     tables:{type:'boolean',description:'Set true to discover table captions, units, columns and row labels on this page.'},
+     table:{type:'integer',minimum:1},row:{type:'integer',minimum:1},column:{type:'integer',minimum:1},
+    }:{})},required:['linkId','page'],additionalProperties:false},
     validate:validatePdf,
+    ...(withCells?{async resolveCell(ref,callId){
+     const matching=[...earlierReceipts(callId,true,true).values()].filter(({value})=>'PDF:'+value.sourceRef===ref);
+     if(matching.length!==1)return null;
+     const {call,value}=matching[0];
+     try{return isDeepStrictEqual(await usePdf(call.arguments,{callId:call.id},false),value)?value:null;}catch{return null;}
+    }}:{}),
     async execute(args,context){const value=await usePdf(args,context,true);if(!value)fail('WEB_PDF_OUTCOME_UNKNOWN');return value;},
     reconcile:(args,context)=>usePdf(args,context,false),
     async verifyResult(value,{call}){if(!isDeepStrictEqual(await usePdf(call.arguments,{callId:call.id},false),value))fail('WEB_PDF_EVIDENCE_CHANGED');},

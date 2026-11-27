@@ -1,6 +1,6 @@
 import {createHash} from 'node:crypto';
 import {isDeepStrictEqual} from 'node:util';
-import {openOwnerWeb,OWNER_LINKED_PDF_REVISION,OWNER_LINKED_PDF_LOCAL_MISS,OWNER_WEB_PAGE,OWNER_WEB_CONTINUE,OWNER_WEB_LINKED_PDF,OWNER_WEB_EXCERPTS,OWNER_WEB_EXCERPTS_LOCAL_MISS,OWNER_WEB_EXCERPTS_URL_MISS} from './gui-owner-web.mjs';
+import {openOwnerWeb,OWNER_LINKED_PDF_REVISION,OWNER_LINKED_PDF_LOCAL_MISS,OWNER_LINKED_PDF_CELLS,OWNER_WEB_PAGE,OWNER_WEB_CONTINUE,OWNER_WEB_LINKED_PDF,OWNER_WEB_EXCERPTS,OWNER_WEB_EXCERPTS_LOCAL_MISS,OWNER_WEB_EXCERPTS_URL_MISS} from './gui-owner-web.mjs';
 import {publicPdfNavigationQuery} from './public-pdf-navigation.mjs';
 import {normalizeWebUrl} from './web-policy.mjs';
 import {WEB_TEXT_MAX_PAGES,WEB_TEXT_PAGE_BYTES} from './web-text-pages.mjs';
@@ -24,14 +24,17 @@ function readRow({projectId,runId},value,markers){
   ...(markers.has(webRef(value))?{citationRef:webRef(value),cited:true}:{})};
 }
 
-function readPdfRow(value,markers){
+function readPdfRow(value,markers,{cell=false}={}){
  const {url,retrievedAt,page,pages,text,sha256,originalSha256,sourceRef}=value;
  if(normalizeWebUrl(url)!==url||(url.includes('?')&&!publicPdfNavigationQuery(new URL(url)))||new Date(retrievedAt).toISOString()!==retrievedAt||
     !Number.isSafeInteger(page)||!Number.isSafeInteger(pages)||page<1||page>pages||pages>16||
     typeof text!=='string'||!text.trim()||!text.isWellFormed()||Buffer.byteLength(text)>65536||
     ![sha256,originalSha256].every(isHash)||digest(text)!==sha256||
-    !/^web-pdf-page:sha256:[a-f0-9]{64}$/.test(sourceRef))return null;
- return {id:sourceRef,kind:'web-pdf-original-page',url,retrievedAt,page,pages,text,sha256,originalSha256,cited:markers.has(sourceRef)};
+    !(cell?/^web-pdf-cell:sha256:[a-f0-9]{64}$/:/^web-pdf-page:sha256:[a-f0-9]{64}$/).test(sourceRef))return null;
+ if(cell&&(!value.cell||value.cell.schemaVersion!=='pdf-table-cell@1'||
+   !['table','row','column'].every(k=>Number.isSafeInteger(value.cell[k])&&value.cell[k]>0)||
+   !['caption','rowLabel','header','unit'].every(k=>typeof value.cell[k]==='string'&&value.cell[k].length<=150)))return null;
+ return {id:sourceRef,kind:cell?'web-pdf-original-cell@1':'web-pdf-original-page',url,retrievedAt,page,pages,text,sha256,originalSha256,cited:markers.has(sourceRef),...(cell?{cell:value.cell}:{})};
 }
 // Exact owner Root snapshot only. Native consumed tool results are not the
 // model's working context, a search preview, or statements in the answer.
@@ -45,9 +48,11 @@ export async function readOwnerWebSources({projectDir,definition,run,publication
  if((phase!=='terminal'&&!(phase==='proposal-sealed'&&proposal?.kind==='final'))||
     !Array.isArray(messages)||messages.length>maxMessages)return output('unavailable');
 
- const linkedPdf=[OWNER_LINKED_PDF_REVISION,OWNER_LINKED_PDF_LOCAL_MISS].includes(definition.ownerLinkedPdfRevision)&&definition.config.ownerConnectivity.linkedPdf===true;
+ const linkedPdf=[OWNER_LINKED_PDF_REVISION,OWNER_LINKED_PDF_LOCAL_MISS,OWNER_LINKED_PDF_CELLS].includes(definition.ownerLinkedPdfRevision)&&definition.config.ownerConnectivity.linkedPdf===true;
+ const withCells=linkedPdf&&definition.ownerLinkedPdfRevision===OWNER_LINKED_PDF_CELLS;
  const canonicalBody=publication.content?.text??'';
- const markers=new Set(linkedPdf?[...canonicalBody.matchAll(/\[\[PDF:(web-pdf-page:sha256:[a-f0-9]{64})\]\]/g)].map(match=>match[1]):[]);
+ const markers=new Set(linkedPdf?[...canonicalBody.matchAll(/\[\[PDF:(web-pdf-(?:page|cell):sha256:[a-f0-9]{64})\]\]/g)]
+  .map(match=>match[1]).filter(ref=>withCells||ref.startsWith('web-pdf-page:')):[]);
  const webMarkers=new Set([...canonicalBody.matchAll(/\[\[(WEB:[a-f0-9]{64}:[1-9][0-9]{0,3})\]\]/g)].map(match=>match[1]));
  const used=new Set(),replyIds=new Set(),duplicates=new Set(),candidates=[];
  let count=0,omitted=false;
@@ -66,8 +71,8 @@ export async function readOwnerWebSources({projectDir,definition,run,publication
    if((result.effective&&!isDeepStrictEqual(result.effective,call))||
       (result.original&&!isDeepStrictEqual(result.original,call))){omitted=true;continue;}
    if(result.value?.kind==='public-web-continuation-unavailable@1'||result.value?.kind==='public-web-page-unavailable@1')continue;
-   if(linkedPdf&&call.name===OWNER_WEB_LINKED_PDF&&result.value?.status==='unavailable')continue;
-   if(!['public-web-page@1','public-web-page@2',...(linkedPdf?['web-pdf-original-page']:[])].includes(result.value?.kind)){omitted=true;continue;}
+   if(linkedPdf&&call.name===OWNER_WEB_LINKED_PDF&&(result.value?.status==='unavailable'||withCells&&result.value?.kind==='web-pdf-original-tables@1'))continue;
+   if(!['public-web-page@1','public-web-page@2',...(linkedPdf?['web-pdf-original-page']:[]),...(withCells?['web-pdf-original-cell@1']:[])].includes(result.value?.kind)){omitted=true;continue;}
    candidates.push({call,value:result.value});
   }
  }
@@ -82,9 +87,10 @@ export async function readOwnerWebSources({projectDir,definition,run,publication
  const ids=new Set(),readSources=[];let bytes=0,checks=0;
  for(const {call,value} of candidates){
   const isPdf=call.name===OWNER_WEB_LINKED_PDF&&linkedPdf;
-  if(duplicates.has(call.id)||value.kind!==(isPdf?'web-pdf-original-page':withExcerpts?'public-web-page@2':'public-web-page@1')){omitted=true;continue;}
+  const cell=isPdf&&withCells&&value.kind==='web-pdf-original-cell@1';
+  if(duplicates.has(call.id)||!cell&&value.kind!==(isPdf?'web-pdf-original-page':withExcerpts?'public-web-page@2':'public-web-page@1')){omitted=true;continue;}
   let row;
-  try{row=isPdf?readPdfRow(value,markers):readRow({projectId:definition.projectId,runId:run.runId},value,webMarkers);}catch{omitted=true;continue;}
+  try{row=isPdf?readPdfRow(value,markers,{cell}):readRow({projectId:definition.projectId,runId:run.runId},value,webMarkers);}catch{omitted=true;continue;}
   if(!row){omitted=true;continue;}
   const {id}=row;
   if(ids.has(id))continue;

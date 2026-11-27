@@ -2,9 +2,11 @@ import {accessSync,constants} from 'node:fs';
 import {spawn} from 'node:child_process';
 import {createHash} from 'node:crypto';
 import {fileURLToPath} from 'node:url';
+import {validPdfCellText} from './pdf-table-evidence.mjs';
 export const CHART_COMPUTE_MODE='financial-chart-agent-compute@1';
 export const CHART_COMPUTE_DATE_MODE='financial-chart-agent-compute@2';
-export const chartComputeMode=x=>x===CHART_COMPUTE_MODE||x===CHART_COMPUTE_DATE_MODE;
+export const CHART_PDF_COMPUTE_MODE='financial-chart-agent-compute@3';
+export const chartComputeMode=x=>x===CHART_COMPUTE_MODE||x===CHART_COMPUTE_DATE_MODE||x===CHART_PDF_COMPUTE_MODE;
 const interpreter='/usr/bin/python3';
 const script=fileURLToPath(new URL('./owner-skills/financial-chart/controlled-chart-compute.py',import.meta.url));
 const hash=x=>createHash('sha256').update(JSON.stringify(x)).digest('hex');
@@ -55,24 +57,59 @@ async function compute(v,signal){
   child.stdin.end(JSON.stringify(v)+'\n');
  });}finally{workers--;}
 }
-export const openChartCompute=()=>({
- name:'compute_chart_formula',recoveryVersion:'chart-formula@1',
- description:'Optional step of the Financial Chart Skill. Evaluate basic numeric formula syntax on explicit arrays already available in this turn. Supports + - * / sum avg pct growth coalesce; no files, commands, imports, network, or long programs. Use the returned number or array in the normal chart dataset. The result is computed, not independently verified.',
- parameters:{type:'object',required:['script','inputs'],additionalProperties:false,properties:{
-  script:{type:'string',description:'e.g. growth(revenue)'},
-  inputs:{type:'object',description:'Named numeric scalars or arrays; explicit nulls for missing points.'},
- }},
+const cellRef=/^PDF:web-pdf-cell:sha256:[a-f0-9]{64}$/;
+async function resolveFormula(args,resolveCell,callId){
+ if(!resolveCell||!Object.hasOwn(args,'cells'))return {input:args,refs:[]};
+ if(Object.keys(args).sort().join(',')!=='cells,script'||!args.cells||typeof args.cells!=='object'||Array.isArray(args.cells))return null;
+ const entries=Object.entries(args.cells);
+ if(!entries.length||entries.length>12||entries.some(([name,refs])=>!/^[A-Za-z][A-Za-z0-9_]{0,31}$/.test(name)||
+     !Array.isArray(refs)||!refs.length||!refs.every(r=>r===null||typeof r==='string'&&cellRef.test(r)))||
+     entries.reduce((n,[,refs])=>n+refs.length,0)>16)return null;
+ const observed=new Map(), refs=new Set(), inputs=Object.create(null);
+ for(const [name,list] of entries){
+  const values=[];let unit;
+  for(const ref of list){
+   if(ref===null){values.push(null);continue;}
+   if(!observed.has(ref))observed.set(ref,await resolveCell(ref,callId));
+   const record=observed.get(ref);
+   if(!record?.cell?.unit||!validPdfCellText(record.text)||unit&&unit!==record.cell.unit)return null;
+   const value=Number(record.text.replaceAll(',','').replace(/^\((.*)\)$/,'-$1'));
+   if(!scalar(value))return null;
+   unit=record.cell.unit;values.push(value);refs.add(ref);
+  }
+  inputs[name]=values;
+ }
+ return {input:{script:args.script,inputs},refs:[...refs]};
+}
+const formulaShape={type:'object',required:['script','inputs'],additionalProperties:false,properties:{
+ script:{type:'string',description:'e.g. growth(revenue)'},
+ inputs:{type:'object',description:'Named numeric scalars or arrays; explicit nulls for missing points.'},
+}};
+export const openChartCompute=({resolveCell}={})=>({
+ name:'compute_chart_formula',recoveryVersion:resolveCell?'chart-formula@2':'chart-formula@1',
+ description:'Optional step of the Financial Chart Skill. Evaluate basic numeric formula syntax on explicit arrays already available in this turn. Supports + - * / sum avg pct growth coalesce; no files, commands, imports, network, or long programs. Use the returned number or array in the normal chart dataset. The result is computed, not independently verified.'+(resolveCell?' For retained PDF values, send cells instead of inputs; for each variable give an array of exact PDF:<cell sourceRef> references (or null). Use the formula tool call ID as formulaCallId in a chart series, not copied values.':''),
+ parameters:resolveCell?{...formulaShape,required:['script'],properties:{...formulaShape.properties,cells:{type:'object',description:'Named ordered arrays of exact previously read PDF cell references or null. Do not send inputs with cells.'}}}:formulaShape,
  validate(args){if(!args||Buffer.byteLength(JSON.stringify(args))>64000)throw Object.assign(new Error('FORMULA_INVALID'),{code:'FORMULA_INVALID'});},
- execute:(args,{signal})=>compute(args,signal),
+ async execute(args,{signal,callId}){
+  const resolved=await resolveFormula(args,resolveCell,callId);
+  if(!resolved)return {schemaVersion:resultSchema,status:'unavailable',reason:'FORMULA_SOURCE_UNAVAILABLE'};
+  const result=await compute(resolved.input,signal);
+  return result.status==='computed'&&resolved.refs.length?{...result,sourceRefs:resolved.refs}:result;
+ },
  // A history read reconstructs stored chart output; it never invokes Python.
  // If the process disappeared before the result committed, keep that outcome unknown.
  reconcile:async()=>null,
  verifyResult(result,{call}){
-  if(result?.schemaVersion!==resultSchema||result.status==='computed'&&
-   (!validate(call.arguments)||!numeric(result.value)||result.formulaSha256!==hash(call.arguments.script)||
-    result.inputSha256!==hash(call.arguments.inputs)||result.provenance!=='computed-unverified')||
-    result.status==='unavailable'&&!/^FORMULA_[A-Z_]{1,40}$/.test(result.reason)||
-    !['computed','unavailable'].includes(result.status))
-   throw Object.assign(new Error('FORMULA_RESULT_INVALID'),{code:'FORMULA_RESULT_INVALID'});
+  const check=resolved=>{
+   if(result?.schemaVersion!==resultSchema||result.status==='computed'&&
+    (!resolved||!validate(resolved.input)||!numeric(result.value)||result.formulaSha256!==hash(resolved.input.script)||
+     result.inputSha256!==hash(resolved.input.inputs)||result.provenance!=='computed-unverified'||
+     JSON.stringify(result.sourceRefs??[])!==JSON.stringify(resolved.refs))||
+     result.status==='unavailable'&&!/^FORMULA_[A-Z_]{1,40}$/.test(result.reason)||
+     !['computed','unavailable'].includes(result.status))
+    throw Object.assign(new Error('FORMULA_RESULT_INVALID'),{code:'FORMULA_RESULT_INVALID'});
+  };
+  if(resolveCell&&result?.status==='computed')return resolveFormula(call.arguments,resolveCell,call.id).then(check);
+  return check({input:call.arguments,refs:[]});
  },
 });

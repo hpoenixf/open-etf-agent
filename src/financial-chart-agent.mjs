@@ -1,7 +1,8 @@
 import {readFileSync} from 'node:fs';
 import {createHash} from 'node:crypto';
 import {isDeepStrictEqual} from 'node:util';
-import {CHART_COMPUTE_DATE_MODE,chartComputeMode} from './financial-chart-compute.mjs';
+import {CHART_COMPUTE_DATE_MODE,CHART_PDF_COMPUTE_MODE,chartComputeMode} from './financial-chart-compute.mjs';
+import {publicPdfNavigationQuery} from './public-pdf-navigation.mjs';
 import {sealDataset} from './financial-chart-input.mjs';
 import {compileFinancialChart} from './financial-chart.mjs';
 
@@ -10,12 +11,16 @@ export const agentChartChoice=x=>x===AGENT_CHART_SKILL||chartComputeMode(x);
 export const AGENT_CHART_TOOL='render_financial_chart';
 export const AGENT_CHART_GUIDANCE=readFileSync(new URL('./owner-skills/financial-chart/SKILL.md',import.meta.url),'utf8').trim();
 const dateGuidance=readFileSync(new URL('./owner-skills/financial-chart/reporting-date.md',import.meta.url),'utf8').trim();
-export const agentChartGuidance=mode=>mode===CHART_COMPUTE_DATE_MODE?AGENT_CHART_GUIDANCE+'\n\n'+dateGuidance:AGENT_CHART_GUIDANCE;
+const linkedGuidance=readFileSync(new URL('./owner-skills/financial-chart/linked-evidence.md',import.meta.url),'utf8').trim();
+export const agentChartGuidance=mode=>AGENT_CHART_GUIDANCE+
+ (mode===CHART_COMPUTE_DATE_MODE||mode===CHART_PDF_COMPUTE_MODE?'\n\n'+dateGuidance:'')+
+ (mode===CHART_PDF_COMPUTE_MODE?'\n\n'+linkedGuidance:'');
 const renderDescription='Render one validated numeric dataset using the Financial Chart Skill. Send the dataset; attach original same-run source quotations where available. View options are not arguments.';
 const ha=s=>createHash('sha256').update(s).digest('hex');
 const exact=(o,fields)=>o&&typeof o==='object'&&!Array.isArray(o)&&Object.keys(o).sort().join(',')===fields;
 const fail=code=>{throw Object.assign(new Error(code),{code});};
 const refPattern=/^(?:WEB:[a-f0-9]{64}:[1-9][0-9]{0,2}|PDF:web-pdf-page:sha256:[a-f0-9]{64})$/;
+const cellRefPattern=/^PDF:web-pdf-cell:sha256:[a-f0-9]{64}$/;
 const clean=s=>s.normalize('NFC').replace(/\s+/gu,' ').trim();
 const boundedQuote=s=>typeof s==='string'&&s.isWellFormed()&&Buffer.byteLength(s)>=4&&Buffer.byteLength(s)<=460;
 const names={
@@ -52,20 +57,20 @@ const sourceKinds={
  public_web_continue:['public-web-page@2'],
  public_web_linked_pdf_page:['web-pdf-original-page'],
 };
-function originalSources(run,messages){
+function originalSources(run,messages,linkedCells){
  const calls=new Map(),sources=new Map(),seen=new Set(),duplicates=new Set();
  for(const m of messages){
   if(m.role==='assistant')for(const c of m.calls??[]){if(calls.has(c.id))duplicates.add(c.id);else calls.set(c.id,c);}
   if(m.role!=='tool')continue;
   if(seen.has(m.callId)){duplicates.add(m.callId);continue;} seen.add(m.callId);
   const c=calls.get(m.callId),r=m.result,v=r?.value;
-  if(!Object.hasOwn(sourceKinds,c?.name)||!sourceKinds[c.name].includes(v?.kind)||r.callId!==c.id||r.status!=='succeeded'||r.dispatched!==true||
+  if(!Object.hasOwn(sourceKinds,c?.name)||!(sourceKinds[c.name].includes(v?.kind)||linkedCells&&c.name==='public_web_linked_pdf_page'&&v?.kind==='web-pdf-original-cell@1')||r.callId!==c.id||r.status!=='succeeded'||r.dispatched!==true||
    (r.effective&&!isDeepStrictEqual(r.effective,c))||typeof v.text!=='string'||!Number.isSafeInteger(v.page)||v.page<1)continue;
   const pdf=c.name==='public_web_linked_pdf_page';
   const ref=pdf?'PDF:'+v.sourceRef:'WEB:'+v.manifestSha256+':'+v.page;
-  if(!refPattern.test(ref)||ha(v.text)!==(pdf?v.sha256:v.textSha256))continue;
+  if(!(refPattern.test(ref)||linkedCells&&cellRefPattern.test(ref))||ha(v.text)!==(pdf?v.sha256:v.textSha256))continue;
   let url;try{url=new URL(v.url);}catch{continue;}
-  if(url.protocol!=='https:'||url.username||url.password||url.search||url.hash)continue;
+  if(url.protocol!=='https:'||url.username||url.password||url.hash||url.search&&!(linkedCells&&pdf&&publicPdfNavigationQuery(url)))continue;
   if(pdf)url.hash='page='+v.page;
   if(!sources.has(ref))sources.set(ref,{callId:c.id,ref,url:url.href,page:v.page,pdf,text:clean(v.text)});
  }
@@ -101,7 +106,17 @@ function observedDate(date,body){
   offset=text.indexOf(x,offset+1);
  }return false;});
 }
-async function makeProjection(args,run,callId,messages,{dateSafe=false,operatorText}={}){
+function computedSeries(messages,id){
+ const groups=messages.filter(m=>m.role==='assistant').flatMap(m=>m.calls??[]).filter(c=>c.id===id);
+ const replies=messages.filter(m=>m.role==='tool'&&m.callId===id);
+ if(groups.length!==1||replies.length!==1||groups[0].name!=='compute_chart_formula')return null;
+ const r=replies[0].result,v=r?.value;
+ return r?.status==='succeeded'&&r.dispatched===true&&r.callId===id&&
+  (!r.effective||isDeepStrictEqual(r.effective,groups[0]))&&(!r.original||isDeepStrictEqual(r.original,groups[0]))&&
+  v?.schemaVersion==='chart-formula@1'&&v.status==='computed'&&v.provenance==='computed-unverified'&&
+  (Array.isArray(v.value)||typeof v.value==='number')?v:null;
+}
+async function makeProjection(args,run,callId,messages,{dateSafe=false,linkedCells=false,operatorText}={}){
  const absent=unavailable();
  if(!exact(args,'dataset')&&!exact(args,'dataset,evidence'))return absent;
  if(args.evidence!==undefined&&(!Array.isArray(args.evidence)||args.evidence.length>64))return absent;
@@ -116,18 +131,29 @@ async function makeProjection(args,run,callId,messages,{dateSafe=false,operatorT
   if(kind==='financial-trend'&&norm(args.dataset.kind)!==kind&&Array.isArray(args.dataset.keys)&&
      args.dataset.keys.some(k=>typeof k==='string'&&!/^\d{4}-\d{2}-\d{2}$/.test(k)))kind='financial-columns';
   const d={...args.dataset,kind,unit};
-  const candidates=originalSources(run,messages);
-  const refs=new Set(), verified=new Set();
+  const candidates=originalSources(run,messages,linkedCells);
+  const refs=new Set(), verified=new Set(), derived=new Set();
+  if(linkedCells){
+   d.series=d.series.map((series,i)=>{
+    if(!Object.hasOwn(series,'formulaCallId'))return series;
+    if(!exact(series,'formulaCallId,label')||typeof series.formulaCallId!=='string')fail('CHART_DATA_INVALID');
+    const result=computedSeries(messages,series.formulaCallId);
+    if(!result)fail('CHART_DATA_INVALID');
+    for(const ref of result.sourceRefs??[])if(cellRefPattern.test(ref)&&candidates.has(ref)&&refs.size<7)refs.add(ref);
+    derived.add(i);
+    return {label:series.label,values:Array.isArray(result.value)?result.value:[result.value]};
+   });
+  }
   for(const e of args.evidence??[]){
    if(typeof e==='string'){
-    if(refPattern.test(e)&&candidates.has(e)&&refs.size<7)refs.add(e);
+    if((refPattern.test(e)||linkedCells&&cellRefPattern.test(e))&&candidates.has(e)&&refs.size<7)refs.add(e);
     continue;
    }
    if(!exact(e,'key,quote,ref,series')||!refPattern.test(e.ref)||!boundedQuote(e.quote)||
       !Number.isInteger(e.key)||!Number.isInteger(e.series)||e.key<0||e.key>=d.keys.length||e.series<0||e.series>=d.series.length)continue;
    const doc=candidates.get(e.ref);
    if(doc?.text.includes(clean(e.quote))&&(refs.has(e.ref)||refs.size<7)){refs.add(e.ref);
-    if(provePoint(doc,e.quote,d,d.series[e.series].label,d.keys[e.key],d.series[e.series].values[e.key]))verified.add(e.series+':'+e.key);}
+    if(!derived.has(e.series)&&provePoint(doc,e.quote,d,d.series[e.series].label,d.keys[e.key],d.series[e.series].values[e.key]))verified.add(e.series+':'+e.key);}
   }
   if(dateSafe&&d.asOf!==null&&!observedDate(d.asOf,operatorText)&&
      ![...refs].some(ref=>observedDate(d.asOf,candidates.get(ref).text)))d.asOf=null;
@@ -154,11 +180,15 @@ const shape={
 };
 const dateSafeShape=structuredClone(shape);
 dateSafeShape.properties.dataset.properties.asOf={anyOf:[{type:'string'},{type:'null'}],description:'Use the exact source-backed YYYY-MM-DD cutoff. Use null when a category chart has no known cutoff. Do not guess.'};
-export function openAgentChart({readRun,dateSafe=false,operatorText}){
+const linkedShape=structuredClone(dateSafeShape);
+const item=linkedShape.properties.dataset.properties.series.items;
+linkedShape.properties.dataset.properties.series.items={anyOf:[item,{type:'object',additionalProperties:false,required:['formulaCallId','label'],
+ properties:{formulaCallId:{type:'string',description:'Call ID of a previously completed compute_chart_formula in this Run.'},label:{type:'string'}}}]};
+export function openAgentChart({readRun,dateSafe=false,linkedCells=false,operatorText}){
  const project=(args,callId)=>{const r=readRun(),ms=r.snapshot.messages;
   const at=ms.findIndex(m=>m.role==='assistant'&&m.calls?.some(c=>c.id===callId));
-  return makeProjection(args,r,callId,at<0?[]:ms.slice(0,at),{dateSafe,operatorText});};
- return {name:AGENT_CHART_TOOL,recoveryVersion:dateSafe?'owner-agent-financial-chart@2':'owner-agent-financial-chart@1',description:renderDescription,parameters:dateSafe?dateSafeShape:shape,
+  return makeProjection(args,r,callId,at<0?[]:ms.slice(0,at),{dateSafe,linkedCells,operatorText});};
+ return {name:AGENT_CHART_TOOL,recoveryVersion:linkedCells?'owner-agent-financial-chart@3':dateSafe?'owner-agent-financial-chart@2':'owner-agent-financial-chart@1',description:renderDescription,parameters:linkedCells?linkedShape:dateSafe?dateSafeShape:shape,
   validate(args){if(!args||Buffer.byteLength(JSON.stringify(args))>28000)fail('CHART_DATA_INVALID');},
   execute:(args,{callId})=>project(args,callId),reconcile:(args,{callId})=>project(args,callId),
   async verifyResult(value,{call}){if(!isDeepStrictEqual(value,await project(call.arguments,call.id)))fail('CHART_RESULT_CHANGED');},

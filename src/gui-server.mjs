@@ -2,7 +2,7 @@ import {ownerToolCatalog} from './gui-tool-catalog.mjs';
 import {isResearchSkillChoice} from './financial-analysis-methods.mjs';
 import {INPUT_CHART_SKILL,INPUT_CHART_AUTO,hasSuppliedChartData} from './financial-chart-input.mjs';
 import {dailyBriefLabel} from './conversation-daily-context.mjs';
-import {CHART_COMPUTE_DATE_MODE,chartComputeAvailable} from './financial-chart-compute.mjs';
+import {CHART_COMPUTE_DATE_MODE,CHART_PDF_COMPUTE_MODE,chartComputeAvailable} from './financial-chart-compute.mjs';
 import {AGENT_CHART_SKILL,agentChartChoice} from './financial-chart-agent.mjs';
 import {OWNER_CHART_SKILL,OWNER_CHART_AUTO} from './financial-chart-owner.mjs';
 import {readResearchIntent,isAutoResearchProfile,isDeepResearchProfile,readDeepResearchProgress} from './research-intent.mjs';
@@ -20,7 +20,7 @@ import {
 import { createResearchProject, dailyWatchConfigVersion, inspectResearchProject, inspectResearchTask, maintainOwnerGuiAdmission, readProjectJson, supportsOwnerFreeform, updateResearchProject, validateResearchConfig } from './research-project.mjs';
 import { importProjectSources, importUploadedPdf, PROJECT_SOURCE_LIMITS } from './project-sources.mjs';
 import { ensureSafeDirectory, publishImmutable, safeDirectory } from './storage-files.mjs';
-import { OWNER_LINKED_PDF_REVISION, OWNER_LINKED_PDF_LOCAL_MISS, prepareOwnerSearch } from './gui-owner-web.mjs';
+import { OWNER_LINKED_PDF_REVISION, OWNER_LINKED_PDF_LOCAL_MISS, OWNER_LINKED_PDF_CELLS, prepareOwnerSearch } from './gui-owner-web.mjs';
 import { prepareOwnerDailyDigest } from './gui-daily-digest-delivery.mjs';
 import { prepareScheduledSmtp } from './scheduled-smtp.mjs';
 import { createScheduledReportEmailHook, inspectScheduledEmailDelivery, prepareFullWatchEmail } from './scheduled-report-email.mjs';
@@ -594,12 +594,12 @@ export async function createLocalGuiWorkspace({ projectDir, origin: mountOrigin,
           const priorExplicit=agentChartChoice(priorInput?.chartSkill)?explicit:[OWNER_CHART_SKILL,INPUT_CHART_SKILL].includes(priorInput?.chartSkill);
           const chartSkill=input.approveGeminiPublic?undefined:retry&&explicit===priorExplicit?priorInput?.chartSkill:
            supplied?(explicit?INPUT_CHART_SKILL:INPUT_CHART_AUTO):
-           freeform&&!attachment&&agentChart?(chartCompute?CHART_COMPUTE_DATE_MODE:AGENT_CHART_SKILL):
+           freeform&&!attachment&&agentChart?(chartCompute?(env.ETF_GUI_PDF_CHART_CHAIN==='1'&&connectivity.linkedPdf===true?CHART_PDF_COMPUTE_MODE:CHART_COMPUTE_DATE_MODE):AGENT_CHART_SKILL):
            explicit?(connectivity.wind?OWNER_CHART_SKILL:undefined):
            freeform&&!attachment&&input.researchDepth!=='standard'&&chartAuto?OWNER_CHART_AUTO:undefined;
           const m = await submitConversationMessage({ projectDir, conversationId, messageId: input.messageId,
             text: input.question, sourceManifestSha256: sourceId, skillId:input.skillId,approveGeminiPublic:input.approveGeminiPublic,
-            ownerLinkedPdfRevision:retry?priorInput?.ownerLinkedPdfRevision:live&&freeform&&!attachment&&!input.approveGeminiPublic&&connectivity.linkedPdf===true?(agentChartChoice(chartSkill)?OWNER_LINKED_PDF_LOCAL_MISS:OWNER_LINKED_PDF_REVISION):undefined,...(chartSkill?{chartSkill}:{}),...(input.researchDepth===undefined?{}:{researchDepth:input.researchDepth}),...(input.reasoningEffort===undefined?{}:{reasoningEffort:input.reasoningEffort}),
+            ownerLinkedPdfRevision:retry?priorInput?.ownerLinkedPdfRevision:live&&freeform&&!attachment&&!input.approveGeminiPublic&&connectivity.linkedPdf===true?(chartSkill===CHART_PDF_COMPUTE_MODE?OWNER_LINKED_PDF_CELLS:agentChartChoice(chartSkill)?OWNER_LINKED_PDF_LOCAL_MISS:OWNER_LINKED_PDF_REVISION):undefined,...(chartSkill?{chartSkill}:{}),...(input.researchDepth===undefined?{}:{researchDepth:input.researchDepth}),...(input.reasoningEffort===undefined?{}:{reasoningEffort:input.reasoningEffort}),
             ...(live?{authorization:{providerApproved:true,dataApproved:true,costApproved:true,...(goHealth&&!attachment?{openAIApproved:true}:{})}}:{}) });
           if (m.status === 'active' && !retry) begin(conversationId,input.messageId,sourceId);
           return send(202,{ id:m.messageId,runId:m.runId,status:m.status });

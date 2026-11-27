@@ -154,3 +154,16 @@ test('inline references bind only to verified same-message PDF results and prese
  assert.equal(bad.link,undefined);
  assert.equal(bad.textContent,'［来源未能核对］');
 });
+
+test('inline PDF cell includes its original physical page plus row, column and unit',async()=>{
+ const {details,requests}=setup();
+ const cell={caption:'Performance (%)',rowLabel:'NAV',header:'2026',unit:'%'};
+ const ref='web-pdf-cell:sha256:'+'e'.repeat(64);
+ const span={textContent:'',replaceChildren(node){this.link=node;}};
+ const view=details({id:'turn'},[[span,'PDF:'+ref,1]]);view.toggle(true);
+ requests[0](result([{...web('https://issuer.example/report.pdf'),kind:'web-pdf-original-cell@1',id:ref,cited:true,page:2,cell,text:'0.40'}]));
+ await flush();
+ assert.equal(span.link.href,'https://issuer.example/report.pdf#page=2');
+ assert.equal(span.link.title,'原 PDF 第 2 页 · NAV · 2026 · %');
+ assert.equal(view.children[1].children[0].children[1].children[2].text,'Performance (%) · NAV · 2026 · %');
+});

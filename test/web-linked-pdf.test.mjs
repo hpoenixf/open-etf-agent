@@ -1,11 +1,13 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import {createHash} from 'node:crypto';
 import {mkdtemp,mkdir,readFile,readdir,writeFile} from 'node:fs/promises';
 import {join,resolve} from 'node:path';
 import {extractWebPdfLinks} from '../src/web-extraction.mjs';
-import {openLinkedWebPdfOwner} from '../src/web-linked-pdf.mjs';
+import {LINKED_PDF_NATIVE_TABLES,openLinkedWebPdfOwner} from '../src/web-linked-pdf.mjs';
 import {acquireApprovedWebPdf} from '../src/web-transport.mjs';
 import {mockWebNetwork} from './fixtures/web-network.mjs';
+import {pdf} from './fixtures/native-table-pdf.mjs';
 
 const originals=JSON.parse(await readFile(new URL('../fixtures/local-pdf.json',import.meta.url),'utf8')).documents;
 const fixtureRoot=resolve('test-output');
@@ -90,16 +92,7 @@ test('a held operation remains unknown after an unobserved dispatch and never re
  assert.equal((await f.open().readPage(link.id,1)).status,'unknown');
  assert.equal(f.responses(),1);
 });
-function pdf(rows) {
- const s=rows.flatMap(([y,...items])=>items.map(([x,value])=>`BT /F1 10 Tf 1 0 0 1 ${x} ${y} Tm (${value.replace(/[()]/g,'\\$&')}) Tj ET\n`)).join('');
- const objects=['<< /Type /Catalog /Pages 2 0 R >>','<< /Type /Pages /Count 1 /Kids [3 0 R] >>',
- '<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R >>',
- '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>',`<< /Length ${Buffer.byteLength(s)} >>\nstream\n${s}endstream`];
- let out='%PDF-1.4\n',offsets=[];
- objects.forEach((v,i)=>{offsets.push(out.length);out+=`${i+1} 0 obj\n${v}\nendobj\n`;});
- const xref=out.length;
- return Buffer.from(out+'xref\n0 6\n0000000000 65535 f \n'+offsets.map(o=>String(o).padStart(10,'0')+' 00000 n \n').join('')+'trailer\n<< /Size 6 /Root 1 0 R >>\nstartxref\n'+xref+'\n%%EOF\n');
-}
+
 const rows=[[740,[26,'PERFORMANCE (%)']],[722,[142,'2025'],[232,'2026']],[706,[28,'NAV'],[142,'0.32'],[232,'0.32']],[690,[28,'Benchmark'],[142,'1.10'],[232,'1.20']]];
 
 test('text page does not expose structured table claims or retained binary',async()=>{
@@ -111,6 +104,93 @@ test('text page does not expose structured table claims or retained binary',asyn
  const dirs=await readdir(join(f.projectDir,'web-linked-pdf'));
  const record=JSON.parse(await readFile(join(f.projectDir,'web-linked-pdf',dirs[0],'final.json')));
  assert.equal(Object.hasOwn(record.snapshot,'originalBase64'),false);
+ assert.equal(f.responses(),1);
+});
+const tableOptions={tableRevision:LINKED_PDF_NATIVE_TABLES};
+const pdfCell=(page=1,column=1)=>({page,table:1,row:1,column});
+test('linked native table and exact cell identity survive cold reopen without any extra acquisition',async()=>{
+ const f=await fixture({pdfBytes:pdf(rows)});
+ const opts={...tableOptions,fetchPdf:()=>assert.fail('must not fetch or reparse on cold read')};
+ assert.equal((await f.open(tableOptions).readTables(link.id,1)).status,'unknown');
+ const got=await f.open(tableOptions).acquire(link.id);
+ assert.equal(got.status,'saved');
+ const cold=f.open(opts), page=await cold.readPage(link.id,1);
+ assert.equal(Object.hasOwn(page,'tables'),false);
+ assert.deepEqual(await f.open().readPage(link.id,1),page);
+ assert.equal(typeof f.open().readCell,'undefined');
+ const table=await cold.readTables(link.id,1);
+ assert.equal(table.kind,'web-pdf-original-tables@1');
+ assert.equal(table.page,1);
+ assert.equal(table.url,link.url);
+ assert.equal(table.originalSha256,page.originalSha256);
+ assert.deepEqual(table.tables.map(t=>[t.caption,t.unit,t.headers,t.rows.map(r=>r.label)]),
+  [['PERFORMANCE (%)','%',['2025','2026'],['NAV','Benchmark']]]);
+ const first=await cold.readCell(link.id,pdfCell()), second=await cold.readCell(link.id,pdfCell(1,2));
+ assert.equal(first.kind,'web-pdf-original-cell@1');
+ assert.equal(first.text,'0.32');
+ assert.equal(second.text,first.text);
+ assert.equal(second.sha256,first.sha256);
+ assert.equal(first.cell.header,'2025');
+ assert.equal(second.cell.header,'2026');
+ assert.equal(second.cell.rowLabel,'NAV');
+ assert.equal(second.cell.unit,'%');
+ assert.deepEqual(second.cell.at,table.tables[0].rows[0].cells[1].at);
+ assert.notEqual(second.sourceRef,first.sourceRef);
+ assert.notEqual(first.sourceRef,page.sourceRef);
+ assert.deepEqual(await f.open(opts).readCell(link.id,pdfCell(1,2)),second);
+ assert.deepEqual(await cold.acquire(link.id),got);
+ assert.equal(f.responses(),1);
+ const [dir]=await readdir(join(f.projectDir,'web-linked-pdf'));
+ const receiptPath=join(f.projectDir,'web-linked-pdf',dir,'final.json');
+ const receipt=JSON.parse(await readFile(receiptPath));
+ assert.equal(receipt.schemaVersion,'web-linked-pdf-record@2');
+ assert.equal(Object.hasOwn(receipt.snapshot,'originalBase64'),false);
+ const tableHash=()=>createHash('sha256').update(JSON.stringify([receipt.binding,receipt.snapshotBinding,receipt.tableSnapshot])).digest('hex');
+ assert.equal(Object.hasOwn(receipt.snapshot,'tables'),false);
+ receipt.tableSnapshot[0][0].rows[0].cells[1].text='9.99';
+ await writeFile(receiptPath,JSON.stringify(receipt));
+ await assert.rejects(cold.readCell(link.id,pdfCell(1,2)),{code:'WEB_PDF_RECORD_CHANGED'});
+ assert.deepEqual(await cold.readPage(link.id,1),page);
+ receipt.tableSnapshot[0][0].headers[1]='2026 (USD)';
+ receipt.tableSnapshotSha256=tableHash();
+ await writeFile(receiptPath,JSON.stringify(receipt));
+ await assert.rejects(cold.readTables(link.id,1),{code:'WEB_PDF_RECORD_CHANGED'});
+ assert.deepEqual(await cold.readPage(link.id,1),page);
+ receipt.tableSnapshot=null;
+ receipt.tableSnapshotSha256=tableHash();
+ await writeFile(receiptPath,JSON.stringify(receipt));
+ assert.equal((await cold.readCell(link.id,pdfCell())).code,'WEB_PDF_TABLE_EVIDENCE_LIMIT');
+ assert.deepEqual(await cold.readPage(link.id,1),page);
+ assert.equal(f.responses(),1);
+});
+test('no-table and legacy receipts are distinguishable, never upgraded by another fetch',async()=>{
+ const fixtureV1=await fixture({pdfBytes:pdf(rows)});
+ const first=await fixtureV1.open().acquire(link.id);
+ const now=fixtureV1.open(tableOptions);
+ assert.equal((await now.readTables(link.id,1)).code,'WEB_PDF_TABLES_NOT_RETAINED');
+ assert.deepEqual(await now.acquire(link.id),first);
+ assert.equal(fixtureV1.responses(),1);
+ const incompleteRows=rows.map((r,i)=>i===3?r.slice(0,-1):r);
+ const noTable=await fixture({pdfBytes:pdf(incompleteRows)});
+ const modern=noTable.open(tableOptions);
+ assert.equal((await modern.acquire(link.id)).status,'saved');
+ assert.equal((await modern.readCell(link.id,pdfCell())).code,'WEB_PDF_NO_STRUCTURED_TABLE');
+ assert.match((await modern.readPage(link.id,1)).text,/Benchmark/);
+ assert.equal(noTable.responses(),1);
+});
+test('table access uses the same run, link and page authority plus bounded cell indices',async()=>{
+ const f=await fixture({pdfBytes:pdf(rows)});
+ const o=f.open(tableOptions);
+ await o.acquire(link.id);
+ await assert.rejects(o.readTables(link.id,2),{code:'WEB_PDF_PAGE_INVALID'});
+ await assert.rejects(o.readCell(link.id,pdfCell(1,9)),{code:'WEB_PDF_CELL_INVALID'});
+ await assert.rejects(o.readCell(link.id,null),{code:'WEB_PDF_CELL_INVALID'});
+ await assert.rejects(o.readCell(link.id,{...pdfCell(),url:link.url}),{code:'WEB_PDF_CELL_INVALID'});
+ assert.equal((await o.readCell(link.id,pdfCell(1,3))).code,'WEB_PDF_CELL_UNAVAILABLE');
+ await assert.rejects(f.open({...tableOptions,authority:{...authority,runId:'unrelated-run'}})
+  .readCell(link.id,pdfCell()),{code:'WEB_PDF_LINK_UNKNOWN'});
+ await assert.rejects(o.readCell('https://issuer.example/reports/holdings.pdf',pdfCell()),{code:'WEB_PDF_LINK_UNKNOWN'});
+ assert.throws(()=>f.open({tableRevision:'arbitrary-override'}),{code:'WEB_PDF_SCOPE_DENIED'});
  assert.equal(f.responses(),1);
 });
 test('PDF path with the actual shared broker respects same security and distinct MIME handling',async t=>{
