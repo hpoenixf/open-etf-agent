@@ -34,10 +34,12 @@ test('owner chart Skill can use controlled formula output and restore the chart 
    requests++;
    const r=JSON.parse(body),prior=r.messages.filter(x=>x.role==='tool');
    assert.ok(r.tools.some(t=>t.function.name==='compute_chart_formula'));
+   assert.deepEqual(r.tools.find(t=>t.function.name==='render_financial_chart').function.parameters.properties.dataset.properties.asOf.anyOf,[{type:'string'},{type:'null'}]);
    if(!prior.length)return proposal('formula','compute_chart_formula',formula);
    if(prior.length===1){
     const output=JSON.parse(prior[0].content).value;
     assert.equal(output.provenance,'computed-unverified');
+    // This fabricated cutoff reproduces the previous real-model Stage result.
     return proposal('chart','render_financial_chart',{dataset:{kind:'financial-columns',asOf:'2025-09-30',unit:'%',keys:['Q1','Q2','Q3'],series:[{label:'Growth',values:output.value}]}});
    }
    return result({content:'The computed chart is saved. Inputs are synthetic.'});
@@ -53,7 +55,7 @@ test('owner chart Skill can use controlled formula output and restore the chart 
   m=(await get(conv)).messages[0];if(m&&!m.working&&['completed','failed'].includes(m.status))break;await delay(30);
  }
  assert.equal(m?.status,'completed',JSON.stringify(m));
- assert.deepEqual(m.chartViews[0].series[0].values,[null,10,10]);assert.equal(m.chartViews[0].provenance,'agent-supplied');
+ assert.deepEqual(m.chartViews[0].series[0].values,[null,10,10]);assert.equal(m.chartViews[0].provenance,'agent-supplied');assert.equal(m.chartViews[0].asOf,null);
  await gui.close();gui=await startLocalGui(opts);
  const cold=(await get(conv)).messages[0];
  assert.deepEqual(cold.chartViews,m.chartViews);assert.equal(requests,3);

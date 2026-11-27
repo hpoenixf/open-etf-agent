@@ -3,6 +3,8 @@ import {spawn} from 'node:child_process';
 import {createHash} from 'node:crypto';
 import {fileURLToPath} from 'node:url';
 export const CHART_COMPUTE_MODE='financial-chart-agent-compute@1';
+export const CHART_COMPUTE_DATE_MODE='financial-chart-agent-compute@2';
+export const chartComputeMode=x=>x===CHART_COMPUTE_MODE||x===CHART_COMPUTE_DATE_MODE;
 const interpreter='/usr/bin/python3';
 const script=fileURLToPath(new URL('./owner-skills/financial-chart/controlled-chart-compute.py',import.meta.url));
 const hash=x=>createHash('sha256').update(JSON.stringify(x)).digest('hex');

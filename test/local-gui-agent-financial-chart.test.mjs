@@ -69,7 +69,7 @@ test('cross-run or altered evidence cannot gain source-checked attribution; scri
 
 test('PDF page citations are from accepted original reads, not invented URLs',async()=>{
  const r={runId:'pdf-proof',snapshot:{messages:[]}};
- const sourceRef='web-pdf-page:sha256:'+'d'.repeat(64), body=quotes.join('\n');
+ const sourceRef='web-pdf-page:sha256:'+'d'.repeat(64), body=['Reporting cutoff: September 30, 2025.',...quotes].join('\n');
  const pdf={id:'pdf1',name:'public_web_linked_pdf_page',arguments:{page:2}};
  const result={kind:'web-pdf-original-page',url:'https://example.com/quarter.pdf',page:2,sourceRef,text:body,sha256:createHash('sha256').update(body).digest('hex')};
  r.snapshot.messages.push({role:'assistant',calls:[pdf]},{role:'tool',callId:pdf.id,result:{callId:pdf.id,status:'succeeded',dispatched:true,value:result}});
@@ -81,6 +81,9 @@ test('PDF page citations are from accepted original reads, not invented URLs',as
  const simple=await openAgentChart({readRun:()=>r}).execute({dataset,evidence:['PDF:'+sourceRef]},{callId:'chart'});
  assert.equal(simple.view.sources[0].url,v.view.sources[0].url);
  assert.equal(simple.view.provenance,'agent-supplied','a source link is not point-level proof');
+ const dateSafe=openAgentChart({readRun:()=>r,dateSafe:true});
+ assert.equal((await dateSafe.execute(arguments_,{callId:'chart'})).view.asOf,'2025-09-30');
+ assert.equal((await dateSafe.execute({dataset},{callId:'chart'})).view.asOf,null);
  const tampered={...arguments_,dataset:{...dataset,series:[{label:'Revenue',values:[19287,18450]}]}};
  const disputed=await openAgentChart({readRun:()=>r}).execute(tampered,{callId:'chart'});
  assert.equal(disputed.view.provenance,'agent-supplied');
@@ -97,4 +100,20 @@ test('accepts names and units actually proposed by the live model; mixed units g
  assert.deepEqual(line.view.keys,dataset.keys);assert.equal(line.view.chart,'bar');
  const mix=await call('combo-bar-line','亿元人民币 / %',dataset.keys,dataset.series);
  assert.equal(mix.reason,'CHART_UNIT_UNSUPPORTED');assert.match(mix.hint,/percentages/);
+});
+
+test('date-safe agent chart accepts null and drops a cutoff absent from the current question and retained sources',async()=>{
+ const dataset={kind:'financial-columns',asOf:null,unit:'%',keys:['Q1','Q2','Q3'],series:[{label:'Growth',values:[null,10,10]}]};
+ const readRun=()=>({runId:'date-safe',snapshot:{messages:[]}});
+ const render=(d,operatorText)=>openAgentChart({readRun,dateSafe:true,operatorText}).execute({dataset:d},{callId:'chart'});
+ for(const asOf of [null,'2025-09-30']){
+  const v=await render({...dataset,asOf},'Synthetic Q1 Q2 Q3 only');
+  assert.equal(v.status,'saved'); assert.equal(v.view.asOf,null); assert.deepEqual(v.view.series[0].values,[null,10,10]);
+ }
+ const known=await render({...dataset,asOf:'2026-09-30'},'Cutoff: September 30, 2026.');
+ assert.equal(known.view.asOf,'2026-09-30');
+ const bad=await render({...dataset,kind:'financial-trend',keys:['2026-07-31','2026-08-31','2026-09-30']},'Synthetic Q1 Q2 Q3 only');
+ assert.equal(bad.status,'unavailable');
+ const legacy=await openAgentChart({readRun}).execute({dataset:{...dataset,asOf:'2025-09-30'}},{callId:'chart'});
+ assert.equal(legacy.view.asOf,'2025-09-30');
 });

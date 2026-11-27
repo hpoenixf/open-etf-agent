@@ -54,7 +54,7 @@ function valid(view){
  const [min,max]=seriesBounds(view?.chart);
  if(view?.schemaVersion!=='financial-chart-view@1'||typeof view.integrity!=='string'||!/^[a-f0-9]{64}$/.test(view.integrity)
   ||!['line','bar','pie','candlestick','stacked',...newCharts].includes(view.chart)||![view.title,view.unit,view.basis].every(safe)
-  ||!(safe(view.asOf)||view.asOf===null&&view.provenance==='user-supplied'&&['bar','stacked','pie'].includes(view.chart))||(view.periodStart!==null&&!safe(view.periodStart))
+  ||!(safe(view.asOf)||view.asOf===null&&supplied(view)&&['bar','stacked','pie','heatmap','combo'].includes(view.chart))||(view.periodStart!==null&&!safe(view.periodStart))
   ||!['synthetic','provider-reported','document-reported','user-supplied','agent-supplied'].includes(view.provenance)
   ||!Array.isArray(view.keys)||view.keys.length<(newCharts.includes(view.chart)?2:1)||view.keys.length>(timeCharts.includes(view.chart)?180:view.chart==='heatmap'?12:24)||!view.keys.every(safe)
   ||!Array.isArray(view.series)||view.series.length<min||view.series.length>max)return false;

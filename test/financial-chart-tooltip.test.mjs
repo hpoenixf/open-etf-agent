@@ -130,3 +130,10 @@ test('constant and tight large series have distinct scale labels and precise ori
  assert.equal(new Set(micro).size,micro.length);
  assert.equal(geometryFits(v.nodes).length,3);
 });
+
+test('undated agent category data still renders without a fabricated date caption',()=>{
+ const v=draw('bar',[{label:'Growth',values:[null,10,10]}],['Q1','Q2','Q3'],
+  {basis:'agent-supplied',provenance:'agent-supplied',asOf:null});
+ assert.equal(v.nodes.find(n=>n.tag==='figcaption').textContent,'测试图 · % · 未提供日期');
+ assert.equal(v.targets.length,3);
+});

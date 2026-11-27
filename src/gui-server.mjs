@@ -2,7 +2,7 @@ import {ownerToolCatalog} from './gui-tool-catalog.mjs';
 import {isResearchSkillChoice} from './financial-analysis-methods.mjs';
 import {INPUT_CHART_SKILL,INPUT_CHART_AUTO,hasSuppliedChartData} from './financial-chart-input.mjs';
 import {dailyBriefLabel} from './conversation-daily-context.mjs';
-import {CHART_COMPUTE_MODE,chartComputeAvailable} from './financial-chart-compute.mjs';
+import {CHART_COMPUTE_DATE_MODE,chartComputeAvailable} from './financial-chart-compute.mjs';
 import {AGENT_CHART_SKILL,agentChartChoice} from './financial-chart-agent.mjs';
 import {OWNER_CHART_SKILL,OWNER_CHART_AUTO} from './financial-chart-owner.mjs';
 import {readResearchIntent,isAutoResearchProfile,isDeepResearchProfile,readDeepResearchProgress} from './research-intent.mjs';
@@ -594,7 +594,7 @@ export async function createLocalGuiWorkspace({ projectDir, origin: mountOrigin,
           const priorExplicit=agentChartChoice(priorInput?.chartSkill)?explicit:[OWNER_CHART_SKILL,INPUT_CHART_SKILL].includes(priorInput?.chartSkill);
           const chartSkill=input.approveGeminiPublic?undefined:retry&&explicit===priorExplicit?priorInput?.chartSkill:
            supplied?(explicit?INPUT_CHART_SKILL:INPUT_CHART_AUTO):
-           freeform&&!attachment&&agentChart?(chartCompute?CHART_COMPUTE_MODE:AGENT_CHART_SKILL):
+           freeform&&!attachment&&agentChart?(chartCompute?CHART_COMPUTE_DATE_MODE:AGENT_CHART_SKILL):
            explicit?(connectivity.wind?OWNER_CHART_SKILL:undefined):
            freeform&&!attachment&&input.researchDepth!=='standard'&&chartAuto?OWNER_CHART_AUTO:undefined;
           const m = await submitConversationMessage({ projectDir, conversationId, messageId: input.messageId,
