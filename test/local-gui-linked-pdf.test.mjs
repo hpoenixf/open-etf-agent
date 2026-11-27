@@ -378,3 +378,62 @@ test('raw URL alias cannot use a sibling proposal, a different URL, duplicate re
  runId='different-run';messages=[group(read),result(read,idA),group(requested)];
  await assert.rejects(tool.execute(requested.arguments,{callId:requested.id}),{code:'WEB_PAGE_RUN_REQUIRED'});
 });
+
+test('chart linked-PDF runs persist body after a malformed public URL and a settled ineligible redirect, without trying either target',async t=>{
+ await mkdir('test-output',{recursive:true});
+ const projectDir=await mkdtemp(resolve('test-output/linked-pdf-web-url-local-miss-'));
+ const host='https://www.tencent.com';
+ const stale=host+'/zh-cn/investors/financial-news.html', forbidden=stale.replace('https:','http:');
+ const network=mockWebNetwork(t,{passthroughLoopback:true,routes:{
+  [host+'/robots.txt']:{body:'User-agent: *\nAllow: /\n'},
+  [stale]:{status:302,headers:{location:forbidden}},
+ }});
+ let gui,requests=0;
+ t.after(async()=>{await gui?.close();await rm(projectDir,{recursive:true,force:true});});
+ const answer='没有读到正式公告，不把未经核实的数值当作原文。';
+ const opts={projectDir,env:{ETF_GUI_PROVIDER_KEY:'synthetic-placeholder',ETF_GUI_AGENT_FINANCIAL_CHART:'1'},liveConfig:{
+  gateway:{provider:'opencode-go-owner',endpoint:'https://opencode.ai/inference/go/openai/v1/chat/completions',model:'synthetic',apiKeyEnv:'ETF_GUI_PROVIDER_KEY'},
+  limits:{model:6},connectivity:{web:true,linkedPdf:true},
+ },async fetchImpl(_url,{body}){
+  requests++;
+  const prior=JSON.parse(body).messages.filter(m=>m.role==='tool').map(m=>JSON.parse(m.content).value);
+  if(!prior.length)return proposal(call('invalid-input','public_web_read',{url:' '+stale}));
+  if(prior.length===1){
+   assert.equal(network.calls.length,0);
+   assert.equal(prior[0].kind,'public-web-page-unavailable@1');
+   assert.equal(prior[0].reason,'WEB_URL_INVALID');
+   assert.equal(prior[0].networkAttempted,false);
+   assert.equal(prior[0].requestOutcome,'not-dispatched');
+   return proposal(call('settled-invalid-redirect','public_web_read',{url:stale}));
+  }
+  assert.equal(prior[1].reason,'WEB_URL_INVALID');
+  assert.equal(prior[1].requestOutcome,'no-unobserved-dispatch');
+  assert.equal(prior[1].automaticReplayAllowed,false);
+  assert.match(prior[1].hint,/do not fetch the rejected redirect/);
+  return Response.json({choices:[{message:{role:'assistant',content:answer},finish_reason:'stop'}]});
+ }};
+ gui=await startLocalGui(opts);
+ const post=(p,v)=>fetch(gui.origin+p,{method:'POST',headers:{origin:gui.origin,'content-type':'application/json'},body:JSON.stringify(v)});
+ const get=p=>fetch(gui.origin+p).then(r=>r.json());
+ const path='/api/conversations/'+(await post('/api/conversations',{}).then(r=>r.json())).id;
+ const response=await post(path+'/messages',{messageId:'invalid-page',question:'Read the original publisher report.',skillId:'auto'});
+ assert.equal(response.status,202,await response.text());
+ let message;
+ for(let i=0;i<100;i++){
+  message=(await get(path)).messages[0];
+  if(message&&!message.working&&['completed','failed'].includes(message.status))break;
+  await delay(35);
+ }
+ assert.equal(message.status,'completed',JSON.stringify(message));
+ assert.equal(message.output.answer,answer);
+ const {definition}=await inspectResearchTask({projectDir,runId:message.runId});
+ assert.equal(definition.ownerWebExcerptRevision,'owner-web-excerpts@3');
+ const bodyPath=path+'/messages/invalid-page/body',sourcePath=path+'/messages/invalid-page/sources';
+ const savedBody=await get(bodyPath),savedSources=await get(sourcePath);
+ assert.equal(savedSources.availability,'none');
+ await gui.close();gui=await startLocalGui(opts);
+ assert.deepEqual(await get(bodyPath),savedBody);
+ assert.deepEqual(await get(sourcePath),savedSources);
+ assert.deepEqual(network.calls.map(x=>x.url),[host+'/robots.txt',stale]);
+ assert.equal(requests,3);
+});
