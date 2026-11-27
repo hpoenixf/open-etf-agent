@@ -1,5 +1,7 @@
 [English](README.md) | **简体中文**
 
+- [v1.0.3 · 有据柱状图与饼图](v103-release.zh-CN.md)
+
 - [v0.70.0 · 自部署故障诊断](v070-self-host-diagnostics.zh-CN.md)
 - [v0.69.0 · Skill 开发与预检](v069-skill-author-preflight.zh-CN.md)
 - [v0.68.0 · ETF 快照对比与复算](v068-etf-snapshot-comparison.zh-CN.md)

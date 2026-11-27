@@ -1,5 +1,7 @@
 **English** | [简体中文](README.zh-CN.md)
 
+- [v1.0.3 · Grounded bar and pie charts](v103-release.md)
+
 - [v1.0.2 candidate · Scoped observation, citations and answer image](v102-release.md)
 
 - [v0.70.0 · Self-host deployment diagnosis](v070-self-host-diagnostics.md)
