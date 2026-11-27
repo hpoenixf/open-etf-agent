@@ -371,7 +371,7 @@ test('Yuanbao MCP fails closed on session/auth and reports tool quota without le
    if(scenario==='permission')return new Response('do not disclose auth failure detail',{status:401});
    if(req.method==='initialize')return Response.json({jsonrpc:'2.0',id:req.id,result:{protocolVersion:'2025-06-18',capabilities:{tools:{}}}});
    if(req.method==='notifications/initialized')return new Response(null,{status:202});
-   if(scenario==='oversize')return new Response('X'.repeat(65537),{headers:{'content-type':'application/json'}});
+   if(scenario==='oversize')return new Response('X'.repeat(512*1024+1),{headers:{'content-type':'application/json'}});
    if(scenario==='wrong-id')return Response.json({jsonrpc:'2.0',id:'not-the-request',result:{structuredContent:{Pages:[]}}});
    return Response.json({jsonrpc:'2.0',id:req.id,result:{isError:true,structuredContent:{Error:{Code:'RequestLimitExceeded',Message:'private provider detail'}}}});
   }}});

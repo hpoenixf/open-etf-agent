@@ -133,7 +133,7 @@ async function searchByKey(provider,backend,query,signal,fetchImpl,settings,id){
   if(typeof row?.url!=='string'||typeof row?.title!=='string'||!row.title.trim())continue;
   let url;try{url=normalizeWebUrl(row.url);}catch{continue;}
   const summary=(deepSeek?[row.summary,row.snippet]:[row.passage,row.content]).find(v=>typeof v==='string'&&v.trim())??'';
-  hits.push({url,title:row.title,summary,...(typeof row.date==='string'&&row.date?{publishedDate:row.date}:{})});
+  hits.push({url,title:backend.mcp?row.title.slice(0,320):row.title,summary:backend.mcp?summary.slice(0,1600):summary,...(typeof row.date==='string'&&row.date?{publishedDate:backend.mcp?row.date.slice(0,64):row.date}:{})});
   if(hits.length===3)break;
  }
  return {kind:'public-web-search@1',provider,hits};

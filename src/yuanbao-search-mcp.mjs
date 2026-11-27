@@ -2,7 +2,7 @@
 // stay with the existing owner; no third-party tool names or endpoints are accepted.
 export const YUANBAO_MCP_ENDPOINT='https://api.wsa.cloud.tencent.com/Mcp';
 const version='2025-06-18';
-const limit=65536;
+const limit=512*1024;
 const fail=code=>{throw Object.assign(new Error(code),{code});};
 const invalid=()=>fail('WEB_SEARCH_RESPONSE_INVALID');
 const parse=text=>{try{return JSON.parse(text);}catch{invalid();}};
@@ -43,7 +43,7 @@ async function readMessage(r,id){
  }finally{void reader.cancel().catch(()=>{});reader.releaseLock();}
 }
 export async function callYuanbaoSearchMcp({query,id,signal,fetchImpl,authorization}){
- const bound=AbortSignal.any([signal??new AbortController().signal,AbortSignal.timeout(30000)]);
+ const bound=AbortSignal.any([signal??new AbortController().signal,AbortSignal.timeout(90000)]);
  let session;
  const post=async(method,params,requestId,initialized=false)=>{
   const r=await fetchImpl(YUANBAO_MCP_ENDPOINT,{
