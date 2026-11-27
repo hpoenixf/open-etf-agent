@@ -517,7 +517,13 @@ async function drive({ question, gateway, outputRoot='runs', requireReport=false
           const mainTools=host.definitions.filter(tool=>tool.name!==RESEARCH_NEEDS_TOOL||isDeepResearchNeedsActive(researchProfile,state.messages));
           assertContextCapacity({messages:state.working.messages,tools:mainTools,maxBytes:contextBytes,inputBudget:gateway.inputBudget});
           let proposal,selected=state.openAISelected?gateway.directResponsesGateway:gateway,start,reservation;
-          if(claim&&!state.openAISelected&&state.rounds===0&&!scheduleOperation&&!durable?.parentRunId&&gateway.shouldUseDirect&&
+          const gemini=claim&&!state.openAISelected&&state.rounds===0&&!scheduleOperation&&!durable?.parentRunId&&gateway.selectGeminiBeforeDispatch
+            ? await bounded(Promise.resolve().then(()=>gateway.selectGeminiBeforeDispatch(controller.signal)),controller.signal):null;
+          if(gemini){
+            controller.signal.throwIfAborted();
+            selected=gemini.gateway;
+            await record('model_failover',{reason:'first-two-routes-unavailable-before-dispatch',target:gemini.model});
+          }else if(claim&&!state.openAISelected&&state.rounds===0&&!scheduleOperation&&!durable?.parentRunId&&gateway.shouldUseDirect&&
              await bounded(Promise.resolve().then(()=>gateway.shouldUseDirect(controller.signal)),controller.signal)){
             controller.signal.throwIfAborted();
             selected=gateway.directResponsesGateway;

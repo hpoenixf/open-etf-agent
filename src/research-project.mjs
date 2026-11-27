@@ -28,6 +28,8 @@ import {submitRun,confirmScheduledRun,materializeScheduledRun} from './runtime.m
 import {workRun} from './worker.mjs';
 import {CHAT_REQUEST_MAX_BYTES,createChatGateway,OPENCODE_GO_CURRENT_ENDPOINT,OPENCODE_GO_OWNER_PROVIDER,GO_DEEPSEEK_MODEL,GO_MIMO_MODEL,GO_GLM_EFFORT_PREVIEW,matchesGoGlmEffortRoute,offerReasoningEffort} from './gateway.mjs';
 import {createSharedAdmission} from './admission.mjs';
+import {terraRouteUnavailable} from './terra-route-health.mjs';
+import {createGeminiFreeGateway,GEMINI_FREE_MODEL,GEMINI_FREE_MODEL_ALTERNATE} from './gemini-free-gateway.mjs';
 import {createOpenAIResponsesGateway,OPENAI_RESPONSES_MODEL} from './openai-responses-gateway.mjs';
 import {openMemoryLibrary} from './memory.mjs';
 import {openDurableMemory} from './durable-memory.mjs';
@@ -43,13 +45,21 @@ import {createTaskTime,taskTimeInput} from './temporal.mjs';
 import {openArtifactStore} from './artifacts.mjs';
 import {inspectTrustedPlugins} from './plugins.mjs';
 import {loadProjectPlugins} from './project-plugins.mjs';
+const geminiGroup=model=>'owner-google-free-'+model+'-1';
+function validateGeminiConsent({geminiPublicSha256,question,config,sourceManifestSha256,schedule,memoryMode,skillId,chartSkill,ownerLinkedPdfRevision,reportDelivery,authorization}){
+ if(geminiPublicSha256!==undefined&&(!config.ownerGeminiFree||!hex(geminiPublicSha256)||sha256(question)!==geminiPublicSha256||
+   sourceManifestSha256!==null||schedule||memoryMode!==undefined||skillId!==undefined||chartSkill!==undefined||
+   ownerLinkedPdfRevision!==undefined||reportDelivery!==undefined||authorization?.openAIApproved!==true))fail('PROJECT_GEMINI_PUBLIC_SCOPE');
+}
 const openAIGroup='owner-openai-gpt-6-1-terra-1';
 const frozenDirectAuthority=d=>d.config.ownerOpenAIResponses!==undefined&&d.authorization?.openAIApproved===true&&
  d.sourceManifestSha256===null&&!d.schedule&&d.memoryMode===undefined;
-async function openExistingDirectAdmission(projectDir,readOnly=false){
- try{return await createSharedAdmission({directory:join(projectDir,'admission',openAIGroup),routeId:openAIGroup,readOnly,existingOnly:true});}
+async function openExistingBackupAdmission(projectDir,routeId,readOnly=false){
+ try{return await createSharedAdmission({directory:join(projectDir,'admission',routeId),routeId,readOnly,existingOnly:true});}
  catch(e){if(!['ENOENT','ADMISSION_OWNER_MISSING'].includes(e.code))throw e;return null;}
 }
+const openExistingDirectAdmission=(projectDir,readOnly)=>openExistingBackupAdmission(projectDir,openAIGroup,readOnly);
+const frozenGeminiRoute=d=>d.geminiPublicSha256&&d.config.ownerGeminiFree?geminiGroup(d.config.ownerGeminiFree.model):null;
 const fail=code=>{throw Object.assign(new Error(code),{code});};
 const object=v=>v!==null&&typeof v==='object'&&!Array.isArray(v);
 const canonical=v=>JSON.stringify(v,(_,x)=>object(x)?Object.fromEntries(Object.keys(x).sort().map(k=>[k,x[k]])):x);
@@ -123,7 +133,7 @@ async function initializeProjectCapacity(projectDir,config,{newProject=false}={}
  const owner=await createSharedAdmission({directory,routeId:group.groupId});owner.close();const parent=await open(join(projectDir,'admission'),'r');try{await parent.sync();}finally{await parent.close();}
 }
 export function validateResearchConfig(input){
- keys(input,['schemaVersion','gateway','capabilities','allowedTools','childMethod','compaction','limits','timeZone','trustedPackages','interaction','childExecution','knowledge','knowledgeQuery','contextBytes','contextWorkingSetBytes','ownerConnectivity','ownerReasoningEffort','ownerGoMimoFallback','ownerOpenAIResponses']);
+ keys(input,['schemaVersion','gateway','capabilities','allowedTools','childMethod','compaction','limits','timeZone','trustedPackages','interaction','childExecution','knowledge','knowledgeQuery','contextBytes','contextWorkingSetBytes','ownerConnectivity','ownerReasoningEffort','ownerGoMimoFallback','ownerOpenAIResponses','ownerGeminiFree']);
  if(input.contextWorkingSetBytes!==undefined&&!integer(input.contextWorkingSetBytes,1,1048576))fail('PROJECT_CONTEXT_WORKING_SET_BYTES');
  if(input.contextBytes!==undefined&&!integer(input.contextBytes,1,1048576))fail('PROJECT_CONTEXT_BYTES');
  if(input.schemaVersion!=='research-project@1')fail('PROJECT_CONFIG_VERSION');
@@ -138,6 +148,11 @@ export function validateResearchConfig(input){
   const route=input.ownerOpenAIResponses;keys(route,['profile','maxOutputTokens','maxAttempts']);
   if(g.mode!=='live'||g.provider!==OPENCODE_GO_OWNER_PROVIDER||g.endpoint!==OPENCODE_GO_CURRENT_ENDPOINT||!supportsOwnerFreeform(input)||route.profile!=='owner-gpt-6-1-terra@1'||
      !integer(route.maxOutputTokens,256,32768)||!integer(route.maxAttempts,1,100))fail('PROJECT_OPENAI_RESPONSES_CONFIG');
+ }
+ if(input.ownerGeminiFree!==undefined){
+  const route=input.ownerGeminiFree;keys(route,['model','maxOutputTokens','maxAttempts']);
+  if(!input.ownerOpenAIResponses||!supportsOwnerFreeform(input)||![GEMINI_FREE_MODEL,GEMINI_FREE_MODEL_ALTERNATE].includes(route.model)||
+     !integer(route.maxOutputTokens,256,4096)||!integer(route.maxAttempts,1,100))fail('PROJECT_GEMINI_FREE_CONFIG');
  }
  if(input.ownerReasoningEffort!==undefined&&!supportsOwnerFreeform(input))fail('PROJECT_REASONING_EFFORT_UNSUPPORTED');
  if(input.interaction!==undefined){if(!input.capabilities.includes('response'))fail('PROJECT_RESPONSE_NOT_ENABLED');validateInteractionConfig(input.interaction);}
@@ -211,7 +226,7 @@ function validateFrozenMemory(definition){
  if(definition.memoryMode===SELECTED_MEMORY_MODE){if(validateSelectedMemory(definition.memorySelection).libraryId!==definition.memoryLibraryId)fail('PROJECT_MEMORY_CHANGED');}
  else if(definition.memorySelection!==undefined||definition.memoryMode===TEMPORARY_MEMORY_MODE&&definition.memoryLibraryId!==null)fail('PROJECT_MEMORY_CHANGED');
 }
-async function readTask(projectDir,runId){id(runId);await safeDirectory(projectDir);const record=await readProjectJson(join(projectDir,'tasks',runId+'.json'));keys(record,['definition','definitionSha256']);if(!object(record.definition)||hash(record.definition)!==record.definitionSha256||record.definition.runId!==runId)fail('PROJECT_TASK_CHANGED');taskKnowledgeVersion(record.definition);reportGuidanceFor(record.definition);reportDeliveryFor(record.definition);validateResearchConfig(record.definition.config);validateChartSkill(record.definition);validateFinancialMethods(record.definition);validateResearchDepth(record.definition);validateOwnerWebExcerpts(record.definition);validateReasoningEffort(record.definition);validateFrozenMemory(record.definition);const project=await inspectResearchProject({projectDir});if(record.definition.projectId!==project.projectId)fail('PROJECT_IDENTITY_CHANGED');taskCapacity(record.definition,project);if(record.definition.specialistSelection!==undefined)verifySpecialistSelection(record.definition.specialistSelection,record.definition.config.childExecution,project.projectId);return record.definition;}
+async function readTask(projectDir,runId){id(runId);await safeDirectory(projectDir);const record=await readProjectJson(join(projectDir,'tasks',runId+'.json'));keys(record,['definition','definitionSha256']);if(!object(record.definition)||hash(record.definition)!==record.definitionSha256||record.definition.runId!==runId)fail('PROJECT_TASK_CHANGED');taskKnowledgeVersion(record.definition);reportGuidanceFor(record.definition);reportDeliveryFor(record.definition);validateResearchConfig(record.definition.config);validateChartSkill(record.definition);validateFinancialMethods(record.definition);validateResearchDepth(record.definition);validateOwnerWebExcerpts(record.definition);validateReasoningEffort(record.definition);validateFrozenMemory(record.definition);validateGeminiConsent(record.definition);const project=await inspectResearchProject({projectDir});if(record.definition.projectId!==project.projectId)fail('PROJECT_IDENTITY_CHANGED');taskCapacity(record.definition,project);if(record.definition.specialistSelection!==undefined)verifySpecialistSelection(record.definition.specialistSelection,record.definition.config.childExecution,project.projectId);return record.definition;}
 
 // Source-less final answers are an explicit owner mode, not a weakening
 // of ordinary Project source/report requirements.
@@ -258,7 +273,7 @@ function frozenTaskQuestion(definition,sources){if(definition.sourceManifestSha2
    +(c?.wind?' Use the available Wind tool for its supported fund data only; cite its returned date and scope.':' No Wind data access is authorized.')
    +' If current facts or pricing cannot be verified, explain the limitation rather than inventing citations, quotes or events.';
  };const knowledge=definition.config.capabilities.includes('knowledge');let question=questionFor(definition.question,sources,knowledge,knowledge&&['source-faithful-report@6',LOCAL_QUERY_GUIDANCE_PROFILE].includes(definition.reportGuidance),sources.pdfSnapshot?.schemaVersion==='pdf-input-snapshot@2'&&(definition.config.allowedTools?.includes('read_pdf_cell')??true))+reportGuidanceFor(definition)+reportDeliveryFor(definition);if(knowledge&&['source-faithful-report@5','source-faithful-report@6',LOCAL_QUERY_GUIDANCE_PROFILE].includes(definition.reportGuidance))question+='\n\nOriginal user request (literal query and requested format):\n'+definition.question;if(definition.hostProjection===undefined&&Buffer.byteLength(question)>16000)fail('PROJECT_TASK_INPUT');return question;}
-async function assemble(projectDir,definition,{gateway,apiKey,openAIKey,goHealth,fetchImpl,hostSignal,onCheckpoint,signal,dispatch=false,embeddingBackend,localEmbedding,ownerWebTransport,ownerWindSettings,ownerSearchSettings,ownerWindFetch,observeGuiRun,ownerAdmission=false}={}){
+async function assemble(projectDir,definition,{gateway,apiKey,openAIKey,geminiFreeKey,goHealth,fetchImpl,hostSignal,onCheckpoint,signal,dispatch=false,embeddingBackend,localEmbedding,ownerWebTransport,ownerWindSettings,ownerSearchSettings,ownerWindFetch,observeGuiRun,ownerAdmission=false}={}){
  const group=taskCapacity(definition,await inspectResearchProject({projectDir}));await requireCapacityRegistration(projectDir,group);
  if(typeof ownerAdmission!=='boolean'||ownerAdmission&&(!dispatch||!supportsOwnerFreeform(definition.config)||group.policy!=='project-endpoint-capacity@1'))fail('PROJECT_OWNER_ADMISSION_UNSUPPORTED');
  const config=definition.config,caps=config.capabilities,p=paths(projectDir,definition.runId);
@@ -300,16 +315,37 @@ async function assemble(projectDir,definition,{gateway,apiKey,openAIKey,goHealth
       fetchImpl:fetchImpl?((url,options,r)=>fetchImpl(url,options,r?Object.freeze({role:'main',rootId:r.rootId,runId:r.runId,
         modelOrdinal:r.modelOrdinal,purpose:'main',inputHash:r.inputHash}):null)):undefined}) : undefined;
   const directResponses=frozenDirectAuthority(definition);
-  let independentFallback;
+  let independentFallback,terraOwner;
   if(directResponses&&dispatch&&typeof openAIKey==='string'&&openAIKey){
     const spec=config.ownerOpenAIResponses;
     const direct=createOpenAIResponsesGateway({apiKey:openAIKey,authorization:definition.authorization,
       maxOutputTokens:spec.maxOutputTokens,maxInputBytes:65536,ownerIdleTimeout:ownerAdmission,observeTransport:observeGuiRun,fetchImpl});
     const owner=await createSharedAdmission({directory:join(projectDir,'admission',openAIGroup),routeId:openAIGroup,queueTimeoutMs:30000,maxAttempts:spec.maxAttempts});
-    closers.push(()=>owner.close());
+    terraOwner=owner;closers.push(()=>owner.close());
     independentFallback=owner.wrap(direct,{session:store,runId,modelRoute:OPENAI_RESPONSES_MODEL});
   }
-  const wrapped=admission.wrap(selectedGateway,{session:store,runId,sameGroupFallback,independentFallback,...(independentFallback&&goHealth?{shouldUseDirect:signal=>goHealth.outage(signal)}:{}),...(definition.memoryMode===SELECTED_MEMORY_MODE||projectMemoryEnabled(definition)?{beforeDispatch:memoryGate}:{})});
+  let wrapped=admission.wrap(selectedGateway,{session:store,runId,sameGroupFallback,independentFallback,...(independentFallback&&goHealth?{shouldUseDirect:signal=>goHealth.outage(signal)}:{}),...(definition.memoryMode===SELECTED_MEMORY_MODE||projectMemoryEnabled(definition)?{beforeDispatch:memoryGate}:{})});
+  if(dispatch&&definition.geminiPublicSha256&&geminiFreeKey&&goHealth){
+   const spec=config.ownerGeminiFree,routeId=geminiGroup(spec.model),owner=await createSharedAdmission({
+    directory:join(projectDir,'admission',routeId),routeId,queueTimeoutMs:30000,maxAttempts:spec.maxAttempts});
+   closers.push(()=>owner.close());
+   const native=createGeminiFreeGateway({apiKey:geminiFreeKey,model:spec.model,publicPrompt:definition.question,
+     authorization:{approvedPublicOnly:true,freeProjectVerified:true},maxOutputTokens:spec.maxOutputTokens,ownerIdleTimeout:ownerAdmission,observeTransport:observeGuiRun,fetchImpl});
+   const localProjection={mode:'live',next:({signal,reservation})=>native.next({
+    signal,reservation,tools:[],messages:[{role:'user',content:definition.question}]} )};
+   const gemini=owner.wrap(localProjection,{session:store,runId});
+   const selectGeminiBeforeDispatch=async signal=>{
+    if(!owner.attemptLimitReached()&&await goHealth.outage(signal)&&
+       (!terraOwner||terraOwner.attemptLimitReached()||await terraRouteUnavailable({apiKey:openAIKey,signal,fetchImpl}))){
+     signal?.throwIfAborted();return {gateway:gemini,model:spec.model};
+    }
+    return null;
+   };
+   const wrapRoot=base=>Object.freeze({...base,selectGeminiBeforeDispatch,bindRun(binding){
+    const bound=base.bindRun(binding);return binding?.runId===runId?wrapRoot(bound):bound;
+   }});
+   wrapped=wrapRoot(wrapped);
+  }
   const adapters=[PUBLICATION_BINDING],extensions=[];let workingInput,knowledgeQueryEffects;const plugins=await loadProjectPlugins({projectDir,config});
   if(localEmbedding!==undefined&&!config.knowledgeQuery)fail('PROJECT_KNOWLEDGE_QUERY_NOT_ENABLED');
   if(embeddingBackend!==undefined&&(!config.knowledgeQuery||config.gateway.mode!=='fixture'))fail('PROJECT_KNOWLEDGE_QUERY_BACKEND_OVERRIDE');
@@ -386,7 +422,7 @@ async function assemble(projectDir,definition,{gateway,apiKey,openAIKey,goHealth
   return{options,store,sources,runId,close:async()=>{try{for(const close of closers.reverse())await close();}finally{try{admission.close();}finally{store.close();}}}};
  }catch(error){try{for(const close of closers.reverse())await close();}catch{}finally{try{admission?.close();}finally{store.close();}}throw error;}
 }
-export async function submitResearchTask({projectDir,runId,question,sourceManifestSha256,authorization,memoryMode,memoryEntryIds,memoryIntents=[],taskTime,schedule,specialistSelection,reportDelivery,expectedConfigSha256,knowledgeVectorEvidence,chartSkill,researchDepth,reasoningEffort,ownerLinkedPdfRevision,skillId}){
+export async function submitResearchTask({projectDir,runId,question,sourceManifestSha256,authorization,memoryMode,memoryEntryIds,memoryIntents=[],taskTime,schedule,specialistSelection,reportDelivery,expectedConfigSha256,knowledgeVectorEvidence,chartSkill,researchDepth,reasoningEffort,ownerLinkedPdfRevision,skillId,geminiPublicSha256}){
  projectDir=await safeDirectory(projectDir);id(runId);if(typeof question!=='string'||!question.trim()||!(hex(sourceManifestSha256)||sourceManifestSha256===null))fail('PROJECT_TASK_INPUT');
  if(reportDelivery!==undefined&&reportDelivery!=='artifact-required@1')fail('PROJECT_REPORT_DELIVERY');
  if(reportDelivery!==undefined&&schedule)fail('PROJECT_REPORT_DELIVERY_SCHEDULE_UNSUPPORTED');
@@ -437,7 +473,8 @@ export async function submitResearchTask({projectDir,runId,question,sourceManife
  const ownerWebExcerptRevision=prior?prior.ownerWebExcerptRevision:sourceManifestSha256===null&&config.ownerConnectivity?.web===true?OWNER_WEB_EXCERPTS_LOCAL_MISS:undefined;
  validateOwnerWebExcerpts({config,sourceManifestSha256,schedule,ownerWebExcerptRevision,ownerLinkedPdfRevision});
  const chartPromptRevision=prior?prior.chartPromptRevision:inputChartChoice(chartSkill)?INPUT_CHART_PROMPT_REVISION:undefined;
- const definition={...(chartPromptRevision===undefined?{}:{chartPromptRevision}),...(financialMethodsRevision===undefined?{}:{financialMethodsRevision}),...(skillId===undefined?{}:{skillId}),...(ownerLinkedPdfRevision===undefined?{}:{ownerLinkedPdfRevision}),...(ownerWebExcerptRevision===undefined?{}:{ownerWebExcerptRevision}),...(researchProfileRevision===undefined?{}:{researchProfileRevision}),...(reasoningEffort===undefined?{}:{reasoningEffort}),...(researchDepth===undefined?{}:{researchDepth}),...(chartSkill===undefined?{}:{chartSkill}),...(knowledgeVectorEvidence===undefined?{}:{knowledgeVectorEvidence}),...(prior?(Object.hasOwn(prior,'knowledgeVersion')?{knowledgeVersion:prior.knowledgeVersion}:{}):config.capabilities.includes('knowledge')?{knowledgeVersion:config.knowledge?.algorithm==='hybrid'?HYBRID_KNOWLEDGE_VERSION:config.knowledge?.algorithm==='bm25'?BM25_HEALTH_KNOWLEDGE_VERSION:KNOWLEDGE_VERSION}:{}),...(reportDelivery===undefined?{}:{reportDelivery}),...(prior?(Object.hasOwn(prior,'hostProjection')?{hostProjection:prior.hostProjection}:{}):{hostProjection:'host-results@3'}),...(prior?(Object.hasOwn(prior,'childInputProjection')?{childInputProjection:prior.childInputProjection}:{}):config.childExecution?{childInputProjection:'host-context@1'}:{}),...(prior?(Object.hasOwn(prior,'reportGuidance')?{reportGuidance:prior.reportGuidance}:{}):{reportGuidance:config.knowledgeQuery?LOCAL_QUERY_GUIDANCE_PROFILE:REPORT_GUIDANCE_PROFILE}),schemaVersion:projectTaskSchema(project.schemaVersion,memoryMode),...(project.schemaVersion===PROJECT_V2?{admission:capacityBinding(config,project.schemaVersion)}:{}),runId,projectId:project.projectId,config,question,sourceManifestSha256,...(selectionMetadata?{specialistSelection:selectionMetadata}:{}),grantId:prior?.grantId??('project-'+randomUUID()),authorization:config.gateway.mode==='live'?{providerApproved:true,dataApproved:true,costApproved:true,...(config.ownerOpenAIResponses&&authorization.openAIApproved===true?{openAIApproved:true}:{})}:null,...(memoryMode===undefined?{}:{memoryMode}),...(memorySelection===undefined?{}:{memorySelection}),memoryLibraryId,memoryIntents:structuredClone(memoryIntents),...(config.capabilities.includes('task-time')?{taskTime:schedule?createTaskTime({anchorInstant:schedule.scheduledInstant,timeZone:schedule.timeZone}):taskTime?createTaskTime({...taskTime,...(prior?.taskTime&&taskTime.anchorInstant===undefined?{anchorInstant:prior.taskTime.anchorInstant}:{})}):(prior?.taskTime??createTaskTime({timeZone:config.timeZone??'UTC'}))}:{}),...(schedule?{schedule:structuredClone(schedule)}:{})};
+ validateGeminiConsent({geminiPublicSha256,question,config,sourceManifestSha256,schedule,memoryMode,skillId,chartSkill,ownerLinkedPdfRevision,reportDelivery,authorization});
+ const definition={...(geminiPublicSha256===undefined?{}:{geminiPublicSha256}),...(chartPromptRevision===undefined?{}:{chartPromptRevision}),...(financialMethodsRevision===undefined?{}:{financialMethodsRevision}),...(skillId===undefined?{}:{skillId}),...(ownerLinkedPdfRevision===undefined?{}:{ownerLinkedPdfRevision}),...(ownerWebExcerptRevision===undefined?{}:{ownerWebExcerptRevision}),...(researchProfileRevision===undefined?{}:{researchProfileRevision}),...(reasoningEffort===undefined?{}:{reasoningEffort}),...(researchDepth===undefined?{}:{researchDepth}),...(chartSkill===undefined?{}:{chartSkill}),...(knowledgeVectorEvidence===undefined?{}:{knowledgeVectorEvidence}),...(prior?(Object.hasOwn(prior,'knowledgeVersion')?{knowledgeVersion:prior.knowledgeVersion}:{}):config.capabilities.includes('knowledge')?{knowledgeVersion:config.knowledge?.algorithm==='hybrid'?HYBRID_KNOWLEDGE_VERSION:config.knowledge?.algorithm==='bm25'?BM25_HEALTH_KNOWLEDGE_VERSION:KNOWLEDGE_VERSION}:{}),...(reportDelivery===undefined?{}:{reportDelivery}),...(prior?(Object.hasOwn(prior,'hostProjection')?{hostProjection:prior.hostProjection}:{}):{hostProjection:'host-results@3'}),...(prior?(Object.hasOwn(prior,'childInputProjection')?{childInputProjection:prior.childInputProjection}:{}):config.childExecution?{childInputProjection:'host-context@1'}:{}),...(prior?(Object.hasOwn(prior,'reportGuidance')?{reportGuidance:prior.reportGuidance}:{}):{reportGuidance:config.knowledgeQuery?LOCAL_QUERY_GUIDANCE_PROFILE:REPORT_GUIDANCE_PROFILE}),schemaVersion:projectTaskSchema(project.schemaVersion,memoryMode),...(project.schemaVersion===PROJECT_V2?{admission:capacityBinding(config,project.schemaVersion)}:{}),runId,projectId:project.projectId,config,question,sourceManifestSha256,...(selectionMetadata?{specialistSelection:selectionMetadata}:{}),grantId:prior?.grantId??('project-'+randomUUID()),authorization:config.gateway.mode==='live'?{providerApproved:true,dataApproved:true,costApproved:true,...(config.ownerOpenAIResponses&&authorization.openAIApproved===true?{openAIApproved:true}:{})}:null,...(memoryMode===undefined?{}:{memoryMode}),...(memorySelection===undefined?{}:{memorySelection}),memoryLibraryId,memoryIntents:structuredClone(memoryIntents),...(config.capabilities.includes('task-time')?{taskTime:schedule?createTaskTime({anchorInstant:schedule.scheduledInstant,timeZone:schedule.timeZone}):taskTime?createTaskTime({...taskTime,...(prior?.taskTime&&taskTime.anchorInstant===undefined?{anchorInstant:prior.taskTime.anchorInstant}:{})}):(prior?.taskTime??createTaskTime({timeZone:config.timeZone??'UTC'}))}:{}),...(schedule?{schedule:structuredClone(schedule)}:{})};
  if(prior&&hash(prior)!==hash(definition))fail('PROJECT_TASK_ALREADY_DEFINED');
  const opened=await assemble(projectDir,definition);try{if(!prior){try{await immutableJson(join(projectDir,'tasks'),runId+'.json',{definition,definitionSha256:hash(definition)});}catch(error){if(error.code!=='EEXIST')throw error;return submitResearchTask({projectDir,runId,question,sourceManifestSha256,authorization,memoryMode,memoryEntryIds,memoryIntents,taskTime,schedule,specialistSelection,reportDelivery,expectedConfigSha256,knowledgeVectorEvidence,chartSkill,researchDepth,reasoningEffort,ownerLinkedPdfRevision,skillId});}}if(schedule){const confirmed=await confirmScheduledRun(opened.options,schedule);try{await immutableJson(join(projectDir,'tasks'),runId+'.schedule.json',confirmed.reference);}catch(error){if(error.code!=='EEXIST')throw error;const saved=await readProjectJson(join(projectDir,'tasks',runId+'.schedule.json'));if(hash(saved)!==hash(confirmed.reference))fail('PROJECT_SCHEDULE_CHANGED');}return confirmed;}return await submitRun(opened.options);}finally{await opened.close();}
 }
@@ -507,19 +544,24 @@ export async function approveProjectMemoryIntent({projectDir,operation,text,entr
 // Read original owner records; context supplied by callers is never a reservation proof.
 export async function inspectResearchRequests({projectDir,runId,reservations}){
  const definition=await readTask(projectDir,runId),group=taskCapacity(definition,await inspectResearchProject({projectDir}));await requireCapacityRegistration(projectDir,group);if(!Array.isArray(reservations)||reservations.length>100||reservations.some(r=>!object(r)||Object.keys(r).some(k=>!['rootId','modelOrdinal'].includes(k))||typeof r.rootId!=='string'||!integer(r.modelOrdinal,1,100)))fail('PROJECT_REQUEST_IDENTITIES');
- const actual=definition.schedule?scheduleRunId(definition.schedule):runId;const session=await openSession({directory:paths(projectDir,runId).session,...(profile(definition.config)?{profile:profile(definition.config)}:{}),readOnly:true});let admission,directAdmission;
+ const actual=definition.schedule?scheduleRunId(definition.schedule):runId;const session=await openSession({directory:paths(projectDir,runId).session,...(profile(definition.config)?{profile:profile(definition.config)}:{}),readOnly:true});let admission,directAdmission,geminiAdmission;
  try{
   const root=session.inspect(actual);if(root.rootId!==actual||root.parentRunId!==null)fail('PROJECT_REQUEST_ROOT');
   admission=await createSharedAdmission({directory:join(projectDir,'admission',group.groupId),routeId:group.groupId,readOnly:true});
   if(frozenDirectAuthority(definition))directAdmission=await openExistingDirectAdmission(projectDir,true);
+  if(definition.geminiPublicSha256){
+    const routeId=geminiGroup(definition.config.ownerGeminiFree.model);
+    try{geminiAdmission=await createSharedAdmission({directory:join(projectDir,'admission',routeId),routeId,readOnly:true,existingOnly:true});}
+    catch(error){if(!['ENOENT','ADMISSION_OWNER_MISSING'].includes(error.code))throw error;}
+  }
   const seen=new Set();return reservations.map(identity=>{
     if(identity.rootId!==actual||seen.has(identity.modelOrdinal))fail('PROJECT_REQUEST_ROOT');seen.add(identity.modelOrdinal);
     const primary=admission.inspectReservation(identity),alternate=directAdmission?.inspectReservation(identity);
-    if(primary&&alternate)fail('PROJECT_REQUEST_OWNER');const ticket=primary??alternate;if(!ticket)return null;
+    const google=geminiAdmission?.inspectReservation(identity);if([primary,alternate,google].filter(Boolean).length>1)fail('PROJECT_REQUEST_OWNER');const ticket=primary??alternate??(google?{...google,fallbackModel:definition.config.ownerGeminiFree.model}:null);if(!ticket)return null;
     const owner=session.inspect(ticket.runId);if(owner.rootId!==actual||(owner.runId!==actual&&owner.parentRunId!==actual)||ticket.modelOrdinal>owner.rootUsage.model)fail('PROJECT_REQUEST_OWNER');
     return ticket;
   });
- }finally{directAdmission?.close();admission?.close();session.close();}
+ }finally{geminiAdmission?.close();directAdmission?.close();admission?.close();session.close();}
 }
 
 // Selected original Run only; inspection cannot create a group or settle a ticket.
@@ -603,11 +645,11 @@ export async function readResearchOutput({projectDir,runId}){
 export async function releaseResearchUnknownCapacity({projectDir,runId,...intent}){
  projectDir=await safeDirectory(projectDir);const definition=await readTask(projectDir,runId),project=await inspectResearchProject({projectDir});const group=taskCapacity(definition,project);await requireCapacityRegistration(projectDir,group);
  const actual=definition.schedule?scheduleRunId(definition.schedule):runId;
- const direct=intent.identity?.routeId===openAIGroup&&frozenDirectAuthority(definition);
- if(!(direct||intent.identity?.routeId===group.groupId)||intent.identity?.rootId!==actual)fail('PROJECT_REQUEST_ROOT');
+ const requested=intent.identity?.routeId, google=frozenGeminiRoute(definition),backup=(requested===openAIGroup&&frozenDirectAuthority(definition))||(google!==null&&google===requested);
+ if(!(backup||intent.identity?.routeId===group.groupId)||intent.identity?.rootId!==actual)fail('PROJECT_REQUEST_ROOT');
  const directory=await safeDirectory(paths(projectDir,runId).session),stat=await lstat(join(directory,'session.sqlite'));if(!stat.isFile()||stat.isSymbolicLink()||stat.nlink!==1)fail('PROJECT_UNSAFE_FILE');
  const session=await openSession({directory,...(profile(definition.config)?{profile:profile(definition.config)}:{})});let admission;
- try{const root=session.inspect(actual);if(root.parentRunId!==null||root.rootId!==actual)fail('PROJECT_REQUEST_ROOT');admission=direct?await openExistingDirectAdmission(projectDir):await createSharedAdmission({directory:join(projectDir,'admission',group.groupId),routeId:group.groupId,existingOnly:true});if(!admission)fail('PROJECT_REQUEST_ROOT');return admission.releaseUnknown({...intent,session});}
+ try{const root=session.inspect(actual);if(root.parentRunId!==null||root.rootId!==actual)fail('PROJECT_REQUEST_ROOT');admission=backup?await openExistingBackupAdmission(projectDir,requested):await createSharedAdmission({directory:join(projectDir,'admission',group.groupId),routeId:group.groupId,existingOnly:true});if(!admission)fail('PROJECT_REQUEST_ROOT');return admission.releaseUnknown({...intent,session});}
  finally{admission?.close();session.close();}
 }
 
@@ -615,15 +657,18 @@ export async function releaseResearchUnknownCapacity({projectDir,runId,...intent
 export async function maintainResearchUnknownCapacity({projectDir,runId,shortUnknown=false}){
  projectDir=await safeDirectory(projectDir);const definition=await readTask(projectDir,runId),project=await inspectResearchProject({projectDir}),group=taskCapacity(definition,project);await requireCapacityRegistration(projectDir,group);const actual=definition.schedule?scheduleRunId(definition.schedule):runId;
  const directory=await safeDirectory(paths(projectDir,runId).session),stat=await lstat(join(directory,'session.sqlite'));if(!stat.isFile()||stat.isSymbolicLink()||stat.nlink!==1)fail('PROJECT_UNSAFE_FILE');
- const session=await openSession({directory,...(profile(definition.config)?{profile:profile(definition.config)}:{})});let admission,directAdmission;
+ const session=await openSession({directory,...(profile(definition.config)?{profile:profile(definition.config)}:{})});let admission,directAdmission,geminiAdmission;
  try{const root=session.inspect(actual);if(root.parentRunId!==null||root.rootId!==actual)fail('PROJECT_REQUEST_ROOT');
   if(shortUnknown&&!supportsOwnerFreeform(definition.config))fail('PROJECT_OWNER_ADMISSION_UNSUPPORTED');
   admission=await createSharedAdmission({directory:join(projectDir,'admission',group.groupId),routeId:group.groupId,existingOnly:true});
   const primary=admission.maintainUnknown({session,rootId:actual,shortUnknown});
   if(frozenDirectAuthority(definition))directAdmission=await openExistingDirectAdmission(projectDir);
   const direct=directAdmission?.maintainUnknown({session,rootId:actual,shortUnknown});
-  return direct?{...primary,items:[...primary.items,...direct.items]}:primary;
- }finally{directAdmission?.close();admission?.close();session.close();}
+  const google=frozenGeminiRoute(definition);
+  if(google)geminiAdmission=await openExistingBackupAdmission(projectDir,google);
+  const gemini=geminiAdmission?.maintainUnknown({session,rootId:actual,shortUnknown});
+  return direct||gemini?{...primary,items:[...primary.items,...(direct?.items??[]),...(gemini?.items??[])]}:primary;
+ }finally{geminiAdmission?.close();directAdmission?.close();admission?.close();session.close();}
 }
 
 // Lazy, bounded to this Project's registered route and original task records.
@@ -641,10 +686,13 @@ export async function maintainOwnerGuiAdmission({projectDir}){
 
 async function maintainProjectAdmissionGroup(projectDir,project,group,shortUnknown,unknownOnly=false){
  await requireCapacityRegistration(projectDir,group);
- const admission=await createSharedAdmission({directory:join(projectDir,'admission',group.groupId),routeId:group.groupId,readOnly:true});let tickets,direct;
- try{direct=await openExistingDirectAdmission(projectDir,true);
-  tickets=[...admission.snapshot().requests,...(direct?.snapshot().requests??[])].filter(t=>(t.state==='unknown'||!unknownOnly&&t.state==='dispatched')&&!t.localRelease&&t.runId===t.rootId);
- }finally{direct?.close();admission.close();}
+ const admission=await createSharedAdmission({directory:join(projectDir,'admission',group.groupId),routeId:group.groupId,readOnly:true});let tickets;const backups=[];
+ try{
+  for(const routeId of [openAIGroup,geminiGroup(GEMINI_FREE_MODEL),geminiGroup(GEMINI_FREE_MODEL_ALTERNATE)]){
+   const backup=await openExistingBackupAdmission(projectDir,routeId,true);if(backup)backups.push(backup);
+  }
+  tickets=[...admission.snapshot().requests,...backups.flatMap(owner=>owner.snapshot().requests)].filter(t=>(t.state==='unknown'||!unknownOnly&&t.state==='dispatched')&&!t.localRelease&&t.runId===t.rootId);
+ }finally{for(const backup of backups)backup.close();admission.close();}
  const ids=[...new Set(tickets.map(t=>t.rootId))];if(ids.length>1024)fail('PROJECT_CAPACITY_MAINTENANCE_LIMIT');
  let scheduled;
  for(const runId of ids){let original,taskId=runId;try{original=await readTask(projectDir,runId);}catch(error){if(!['ENOENT','PROJECT_INVALID_ID'].includes(error.code))throw error;}
@@ -663,9 +711,9 @@ async function maintainProjectAdmissionGroup(projectDir,project,group,shortUnkno
 }
 
 // Finish admission of an already frozen ordinary task; never dispatch or rebind it.
-export async function resumeResearchTaskAdmission({projectDir,runId,question,sourceManifestSha256,expectedConfigSha256,chartSkill,researchDepth,reasoningEffort,ownerLinkedPdfRevision,skillId}){
+export async function resumeResearchTaskAdmission({projectDir,runId,question,sourceManifestSha256,expectedConfigSha256,chartSkill,researchDepth,reasoningEffort,ownerLinkedPdfRevision,skillId,geminiPublicSha256}){
  projectDir=await safeDirectory(projectDir);const definition=await readTask(projectDir,runId);
- if(definition.schedule||definition.skillId!==skillId||definition.ownerLinkedPdfRevision!==ownerLinkedPdfRevision||definition.chartSkill!==chartSkill||definition.researchDepth!==researchDepth||definition.reasoningEffort!==reasoningEffort||definition.memoryMode!==undefined||definition.question!==question||definition.sourceManifestSha256!==sourceManifestSha256||hash(definition.config)!==expectedConfigSha256)fail('PROJECT_TASK_ALREADY_DEFINED');
+ if(definition.geminiPublicSha256!==geminiPublicSha256||definition.schedule||definition.skillId!==skillId||definition.ownerLinkedPdfRevision!==ownerLinkedPdfRevision||definition.chartSkill!==chartSkill||definition.researchDepth!==researchDepth||definition.reasoningEffort!==reasoningEffort||definition.memoryMode!==undefined||definition.question!==question||definition.sourceManifestSha256!==sourceManifestSha256||hash(definition.config)!==expectedConfigSha256)fail('PROJECT_TASK_ALREADY_DEFINED');
  const opened=await assemble(projectDir,definition);try{return await submitRun(opened.options);}finally{await opened.close();}
 }
 

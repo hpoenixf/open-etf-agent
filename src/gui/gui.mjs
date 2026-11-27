@@ -158,6 +158,10 @@ async function stopCurrentRun() {
   catch { scheduleRefresh(); } // Keep the pending state until a fresh Run view, not the POST alone.
 }
 function controls() {
+  const publicReady=state.workspace?.geminiFreePublicFallback===true&&!state.pending&&
+    (!state.conversation||state.detail?.messages.length===0);
+  byId('gemini-public-label').hidden=!publicReady;
+  if(!publicReady)byId('gemini-public').checked=false;
   const working = state.detail?.messages.some(m => m.working);
   const target=activeStopTarget(), stopping=target&&state.stopping.has(target.key);
   const stop=byId('stop'), send=byId('send');
@@ -614,7 +618,7 @@ async function select(id,messageId) {
     state.readSources.clear();
     message();
     if(state.conversation)byId('pdf-file').value='';byId('pdf-file').dispatchEvent(new Event('change'));
-    byId('research-depth').value='auto'; byId('reasoning-effort').value=''; byId('chart-skill').value=''; updateChartSkillLabel(); updateSettingsLabel(); closeComposerOptions();
+    byId('gemini-public').checked=false; byId('research-depth').value='auto'; byId('reasoning-effort').value=''; byId('chart-skill').value=''; updateChartSkillLabel(); updateSettingsLabel(); closeComposerOptions();
     resetEvidence();
     byId('reading-pane').scrollTop=0;
     state.detail=null;
@@ -893,6 +897,9 @@ byId('composer').addEventListener('submit',async e=>{
     const original = formDraft();
     const file=!state.pending&&!byId('pdf-picker').hidden?byId('pdf-file').files[0]:null;
     const chartSkill=!state.pending?original.chartSkill:undefined;
+    const publicConsent=!state.pending&&state.workspace.geminiFreePublicFallback===true&&
+      (!state.conversation||state.detail?.messages.length===0)&&!file&&!chartSkill&&(!original.skillId||original.skillId==='auto')&&
+      byId('gemini-public').checked;
     if(file&&chartSkill){message('请在图表 Skill 和 PDF 附件之间选择一种。');return;}
     if (!state.conversation) await create(original);
     else if (!state.pending) saveDraft(original);
@@ -906,17 +913,19 @@ byId('composer').addEventListener('submit',async e=>{
       attachment=payload.id;
     }
     state.pending ??= { conversationId:state.conversation,
-      input:{messageId:'m'+Date.now()+'-'+crypto.randomUUID().replaceAll('-','').slice(0,24),question:original.question,...(ownerMode()?{...(attachment?{attachmentId:attachment}:chartSkill?{chartSkill}:{}),researchDepth:original.researchDepth,...(original.skillId?{skillId:original.skillId}:{}),...effortField(original.reasoningEffort)}:{sourceId:original.sourceId})} };
+      input:{messageId:'m'+Date.now()+'-'+crypto.randomUUID().replaceAll('-','').slice(0,24),question:original.question,...(publicConsent?{approveGeminiPublic:true}:{}),...(ownerMode()?{...(attachment?{attachmentId:attachment}:chartSkill?{chartSkill}:{}),researchDepth:original.researchDepth,...(!publicConsent&&original.skillId?{skillId:original.skillId}:{}),...effortField(original.reasoningEffort)}:{sourceId:original.sourceId})} };
     sessionStorage.setItem(pendingKey(),JSON.stringify(state.pending));
     const {conversationId,input}=state.pending;
     await api('/api/conversations/'+conversationId+'/messages',liveMode()&&!ownerMode()?{...input,approveLive:true}:input);
     clearMatchingDraft(state.pending);
+    byId('gemini-public').checked=false;
     state.pending=null; sessionStorage.removeItem(pendingKey()); q.value=''; byId('pdf-file').value='';byId('pdf-file').dispatchEvent(new Event('change'));
     byId('research-depth').value='auto'; byId('reasoning-effort').value=''; byId('chart-skill').value=''; updateChartSkillLabel(); updateSettingsLabel(); closeComposerOptions();
     await select(conversationId);
   } catch(error){ failed(error); }
   finally { state.submitting=false; controls(); }
 });
+byId('question').addEventListener('input',()=>{byId('gemini-public').checked=false;});
 try {
   initWorkbench();
   await load();
