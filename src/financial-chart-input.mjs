@@ -1,11 +1,12 @@
 import {createHash} from 'node:crypto';
-import {sealFinancialChartEvidence} from './financial-chart.mjs';
+import {financialChartInputLimits,sealFinancialChartEvidence} from './financial-chart.mjs';
 export const INPUT_CHART_SKILL='financial-chart-input@1';
 export const INPUT_CHART_AUTO='financial-chart-input-auto@1';
 export const inputChartChoice=v=>[INPUT_CHART_SKILL,INPUT_CHART_AUTO].includes(v);
-export const INPUT_CHART_GUIDANCE='When a chart materially helps, call read_supplied_chart_data then build_financial_chart with the exact returned kind and receipt IDs. If the reader returns datasets, build each selection separately, at most once. Choose line for trends, grouped columns for comparable values, stacked for additive contributions, pie for one documented percentage denominator. Do not create a chart from estimates, unparsed prose, or URLs. Explain comparisons and limitations in the answer even without a chart. The user-provided chart data is not independently verified.';
+export const LEGACY_INPUT_CHART_GUIDANCE='When a chart materially helps, call read_supplied_chart_data then build_financial_chart with the exact returned kind and receipt IDs. If the reader returns datasets, build each selection separately, at most once. Choose line for trends, grouped columns for comparable values, stacked for additive contributions, pie for one documented percentage denominator. Do not create a chart from estimates, unparsed prose, or URLs. Explain comparisons and limitations in the answer even without a chart. The user-provided chart data is not independently verified.';
+export const INPUT_CHART_PROMPT_REVISION='supplied-chart-system@1';
+export const INPUT_CHART_GUIDANCE='When a chart materially helps, call read_supplied_chart_data then build_financial_chart with the exact returned kind and receipt IDs. If the reader returns datasets, build each selection separately, at most once. Choose line or area for one dated trend, multi-line for comparable dated series, grouped columns for categorical comparison, stacked for additive contributions, pie for one documented percentage denominator, heatmap for a same-unit row by column matrix, or combo for two same-unit series (first bar, second line, one axis); candlesticks require explicitly supplied dated open/high/low/close bars, not closing prices alone. Use only offered selections, not a chart kind inferred from missing data. Do not invent values, missing periods or points, cite this data as verified, or emit renderer markers, raw charts, or protocol blocks in the answer. Do not create a chart from estimates, unparsed prose, or URLs. Explain comparisons and limitations in the answer even without a chart. The user-provided chart data is not independently verified.';
 const source=/^\x60\x60\x60financial-chart-data[ \t]*\r?\n([\s\S]*?)\r?\n\x60\x60\x60[ \t]*(?=\r?$)/gm;
-const allowed=new Set(['financial-trend','financial-columns','financial-stacked','financial-share']);
 const exact=(o,k)=>o&&typeof o==='object'&&!Array.isArray(o)&&Object.keys(o).sort().join(',')===k;
 const hash=x=>createHash('sha256').update(JSON.stringify(x)).digest('hex');
 // Explicit Chinese category/percentage pairs, not general natural-language extraction.
@@ -35,20 +36,23 @@ function proseDatasets(text){
  return new Set(ds.map(d=>d.kind)).size===ds.length?ds:null;
 }
 function sealDataset(d,runId,{prose=false,sourceText=null,position=0}={}){
- if(!exact(d,'asOf,keys,kind,series,unit')||!allowed.has(d.kind)||!Array.isArray(d.keys)||!Array.isArray(d.series)||
-    d.series.length<1||d.series.length>4||d.kind==='financial-share'&&d.series.length!==1||
-    d.keys.length>(d.kind==='financial-trend'?180:24)||(!prose&&d.asOf===null))throw new Error('invalid dataset');
+ if(!exact(d,'asOf,keys,kind,series,unit')||typeof d.kind!=='string')throw new Error('invalid dataset');
+ const limits=financialChartInputLimits(d.kind);
+ if(!limits||!Array.isArray(d.keys)||!Array.isArray(d.series)||d.series.length<limits.minSeries||
+    d.series.length>limits.maxSeries||d.keys.length<limits.minPoints||d.keys.length>limits.maxPoints||
+    (!prose&&d.asOf===null))throw new Error('invalid dataset');
  if(d.kind==='financial-share'){
    const total=d.series[0]?.values?.reduce((a,v)=>a+(v??0),0);
    if(prose&&(!(total>0)||total>100+1e-9))throw new Error('invalid share');
  }
+ if(new Set(d.series.map(s=>s?.label)).size!==d.series.length)throw new Error('duplicate series label');
  const origin=hash(prose?{d,sourceText,position}:d);
  const toolCallId='operator-chart-'+origin;
  const receipts=d.series.map(s=>{
   if(!exact(s,'label,values')||!Array.isArray(s.values)||s.values.length!==d.keys.length)throw new Error('invalid series');
   return {...sealFinancialChartEvidence({
    schemaVersion:'chart-typed-evidence@1',runId,toolCallId,metric:d.kind,unit:d.unit,basis:'user-supplied',
-   dimension:d.kind==='financial-trend'?'date':'category',asOf:d.asOf,periodStart:null,label:s.label,
+   dimension:limits.dimension,asOf:d.asOf,periodStart:null,label:s.label,
    provenance:'user-supplied',originReceiptIds:['typed-source:sha256:'+origin],rows:d.keys.map((key,i)=>({key,value:s.values[i]})),
   }),status:'succeeded',toolCallId};
  });

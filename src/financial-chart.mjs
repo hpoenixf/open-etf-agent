@@ -7,7 +7,13 @@ const WIRE_SCHEMA='financial-chart-view@1';
 const canonical=v=>Array.isArray(v)?v.map(canonical):v&&typeof v==='object'?Object.fromEntries(Object.keys(v).sort().map(k=>[k,canonical(v[k])])):v;
 const hash=s=>createHash('sha256').update(s).digest('hex');
 const fail=code=>{throw Object.assign(new Error(code),{code});};
-const maxPoints=180,maxSeries=4,maxBars=24;
+const maxPoints=180,maxSeries=4,maxBars=24,maxHeatmap=12;
+const bounds=p=>p.chart==='heatmap'?{minSeries:2,maxSeries:maxHeatmap,minPoints:2,maxPoints:maxHeatmap}:
+ p.chart==='combo'?{minSeries:2,maxSeries:2,minPoints:2,maxPoints:maxBars}:
+ p.chart==='area'?{minSeries:1,maxSeries:1,minPoints:2,maxPoints}:
+ p.chart==='multi-line'?{minSeries:2,maxSeries,minPoints:2,maxPoints}:
+ {minSeries:1,maxSeries:['line','stacked'].includes(p.chart)||p===profiles['financial-columns']?maxSeries:1,
+  minPoints:1,maxPoints:p.dim==='date'?maxPoints:maxBars};
 const string=(v,r)=>typeof v==='string'&&r.test(v);
 const id=v=>string(v,/^[A-Za-z0-9][A-Za-z0-9_.:-]{0,199}$/);
 const day=v=>string(v,/^\d{4}-\d{2}-\d{2}$/)&&Number.isFinite(Date.parse(v))&&new Date(v).toISOString().slice(0,10)===v;
@@ -22,6 +28,7 @@ const rcp=v=>string(v,/^chart-evidence:sha256:[a-f0-9]{64}$/);
 const originReceipt=v=>string(v,/^(?:result|calculation|artifact|typed-source):sha256:[a-f0-9]{64}$/);
 
 const financialMoneyUnits=['CNY','CNY million','CNY billion','HKD','HKD million','HKD billion','USD','USD million','USD billion'];
+const comparableUnits=[...financialMoneyUnits,'%','x','count'];
 const profiles={
  'exchange-close-line':{chart:'line',title:'场内基金未复权日收盘价',units:['exchange-price-unit'],bases:['exchange-daily-close-unadjusted'],dim:'date'},
  'nav-series':{chart:'line',title:'单位净值走势',units:['CNY/unit','USD/unit','HKD/unit'],bases:['fund-nav-per-unit'],dim:'date'},
@@ -33,12 +40,22 @@ const profiles={
  'financial-columns':{chart:'bar',title:'财务指标对比',units:[...financialMoneyUnits,'%','x','count'],bases:['user-supplied'],dim:'category'},
  'financial-stacked':{chart:'stacked',title:'财务指标分项贡献',units:[...financialMoneyUnits,'%','count'],bases:['user-supplied'],dim:'category'},
  'financial-share':{chart:'pie',title:'财务构成占比',units:['%'],bases:['user-supplied'],dim:'category'},
+ 'financial-heatmap':{chart:'heatmap',title:'二维指标热力图',units:comparableUnits,bases:['user-supplied'],dim:'category'},
+ 'financial-combo':{chart:'combo',title:'同口径柱线组合',units:comparableUnits,bases:['user-supplied'],dim:'category'},
+ 'financial-multi-line':{chart:'multi-line',title:'多指标走势对比',units:comparableUnits,bases:['user-supplied'],dim:'date'},
+ 'financial-area':{chart:'area',title:'指标面积走势',units:comparableUnits,bases:['user-supplied'],dim:'date'},
+ 'financial-ohlc':{chart:'candlestick',title:'用户提供的开盘、最高、最低、收盘',units:['CNY/share','USD/share','HKD/share'],bases:['user-supplied'],dim:'date'},
  'ohlc-candlestick':{chart:'candlestick',title:'日开盘、最高、最低、收盘',units:['CNY/share','USD/share','HKD/share'],bases:['exchange-daily-ohlc-unadjusted','exchange-daily-ohlc-adjusted'],dim:'date'},
 };
+export function financialChartInputLimits(kind){
+ const p=Object.hasOwn(profiles,kind)?profiles[kind]:null;
+ return p?.bases.includes('user-supplied')?{...bounds(p),dimension:p.dim}:null;
+}
 function request(v){
- if(!exact(v,['kind','receiptIds'])||typeof v.kind!=='string'||!Object.hasOwn(profiles,v.kind)||!list(v.receiptIds,maxSeries)
+ if(!exact(v,['kind','receiptIds'])||typeof v.kind!=='string'||!Object.hasOwn(profiles,v.kind)||!list(v.receiptIds,maxHeatmap)
    ||!v.receiptIds.every(rcp)||new Set(v.receiptIds).size!==v.receiptIds.length)fail('CHART_REQUEST_INVALID');
- if(!['line','stacked'].includes(profiles[v.kind].chart)&&v.kind!=='financial-columns'&&v.receiptIds.length!==1)fail('CHART_REQUEST_INVALID');
+ const {minSeries,maxSeries}=bounds(profiles[v.kind]);
+ if(v.receiptIds.length<minSeries||v.receiptIds.length>maxSeries)fail('CHART_REQUEST_INVALID');
  return {kind:v.kind,receiptIds:[...v.receiptIds]};
 }
 
@@ -48,7 +65,7 @@ function ohlc(value){
   &&value.low<=Math.min(value.open,value.close)&&value.high>=Math.max(value.open,value.close);
 }
 function range(metric,n){
- if(metric==='ohlc-candlestick') return ohlc(n);
+ if(profiles[metric].chart==='candlestick') return ohlc(n);
  return typeof n==='number'&&Number.isFinite(n)&&
   (metric.startsWith('financial-')&&metric!=='financial-share'?Math.abs(n)<=1e9:['nav-series','exchange-close-line'].includes(metric)?n>0&&n<=1e9:metric==='return-comparison'?n>=-100&&n<=1e6:n>=0&&n<=100);
 }
@@ -64,7 +81,7 @@ function normalizeEvidence(data){
    ||(data.metric==='return-comparison'?(!day(data.periodStart)||data.periodStart>=data.asOf):data.periodStart!==null)
    ||!(p.bases.includes('user-supplied')?data.provenance==='user-supplied':['synthetic','provider-reported','document-reported'].includes(data.provenance))
    ||!list(data.originReceiptIds,8)||!data.originReceiptIds.every(originReceipt)||new Set(data.originReceiptIds).size!==data.originReceiptIds.length
-   ||!list(data.rows,p.dim==='date'?maxPoints:maxBars))fail('CHART_EVIDENCE_INVALID');
+   ||!list(data.rows,bounds(p).maxPoints))fail('CHART_EVIDENCE_INVALID');
  const rows=data.rows.map(item=>{
   if(!exact(item,['key','value'])||!(p.dim==='date'?day(item.key)&&item.key<=data.asOf:label(item.key))
    ||!(item.value===null||range(data.metric,item.value)))fail('CHART_EVIDENCE_INVALID');
@@ -93,11 +110,13 @@ export async function compileFinancialChart({runId,selection,readCommittedEviden
  if(records.some(({data})=>['unit','basis','dimension','asOf','periodStart','provenance'].some(k=>data[k]!==first[k])))fail('CHART_NONCOMPARABLE');
  if(new Set(records.map(x=>x.data.label)).size!==records.length)fail('CHART_NONCOMPARABLE');
  const axis=profiles[wanted.kind], keys=axis.dim==='date'?[...new Set(records.flatMap(({data})=>data.rows.map(r=>r.key)))].sort():first.rows.map(r=>r.key);
- if(keys.length>(axis.dim==='date'?maxPoints:maxBars))fail('CHART_POINT_LIMIT');
+ const {minPoints,maxPoints:pointLimit}=bounds(axis);
+ if(keys.length<minPoints||keys.length>pointLimit)fail('CHART_POINT_LIMIT');
  if(wanted.kind.startsWith('financial-')&&axis.dim!=='date'&&records.some(({data})=>JSON.stringify(data.rows.map(r=>r.key))!==JSON.stringify(keys)))fail('CHART_NONCOMPARABLE');
- const series=records.map(({receiptId,data})=>{
+ const series=records.map(({receiptId,data},i)=>{
   const index=new Map(data.rows.map(({key,value})=>[key,value]));
-  return {label:data.label,receiptId,originReceiptIds:[...data.originReceiptIds],values:keys.map(k=>index.get(k)??null)};
+  return {label:data.label,receiptId,originReceiptIds:[...data.originReceiptIds],values:keys.map(k=>index.get(k)??null),
+   ...(axis.chart==='combo'?{mark:i===0?'bar':'line'}:{})};
  });
  let coverage;
  if(axis.chart==='pie'){
@@ -121,7 +140,7 @@ export function createFinancialChartSkill({runId,readCommittedEvidence}){
   description:'Produce a financial chart only from original verified typed receipt IDs previously obtained in this Run. Do not pass values, labels, dates, or citations. ETF exchange close is not fund NAV.',
   parameters:{type:'object',additionalProperties:false,required:['kind','receiptIds'],properties:{
    kind:{type:'string',enum:Object.keys(profiles)},
-   receiptIds:{type:'array',minItems:1,maxItems:maxSeries,uniqueItems:true,items:{type:'string',pattern:'^chart-evidence:sha256:[a-f0-9]{64}$'}},
+   receiptIds:{type:'array',minItems:1,maxItems:maxHeatmap,uniqueItems:true,items:{type:'string',pattern:'^chart-evidence:sha256:[a-f0-9]{64}$'}},
   }},
   validate:request,
   execute:selection=>compileFinancialChart({runId,selection,readCommittedEvidence}),
@@ -138,7 +157,7 @@ export async function projectFinancialChart({
  const result=await readCommittedChartResult({runId,callId});
  const spec=result?.value;
  if(result?.runId!==runId||result.callId!==callId||result.name!==CHART_TOOL_NAME||result.status!=='succeeded'
-   ||result.dispatched!==true||!safeObject(spec)||spec.schemaVersion!==CHART_SCHEMA||spec.runId!==runId||!digest(spec.sha256)||!list(spec.series,maxSeries))fail('CHART_RESULT_NOT_ACCEPTED');
+   ||result.dispatched!==true||!safeObject(spec)||spec.schemaVersion!==CHART_SCHEMA||spec.runId!==runId||!digest(spec.sha256)||!list(spec.series,maxHeatmap))fail('CHART_RESULT_NOT_ACCEPTED');
  // Selection comes from the checked native effective ToolCall intent, not
  // from values found in an answer or interpreted from source text.
  const expected=await compileFinancialChart({runId,selection:result.arguments,readCommittedEvidence});
