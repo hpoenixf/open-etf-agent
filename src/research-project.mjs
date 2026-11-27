@@ -3,7 +3,7 @@ import {inputChartChoice,hasSuppliedChartData,LEGACY_INPUT_CHART_GUIDANCE,INPUT_
 import {selectedResearchSkillContext} from './research-skill-context.mjs';
 import {openFinancialAnalysisMethods,isFinancialSkill,isResearchSkillChoice,FINANCIAL_METHODS_REVISION} from './financial-analysis-methods.mjs';
 import {researchNeedsTool,RESEARCH_NEEDS_RECEIPT} from './research-needs.mjs';
-import {CHART_COMPUTE_DATE_MODE,chartComputeMode,openChartCompute} from './financial-chart-compute.mjs';
+import {CHART_COMPUTE_DATE_MODE,CHART_PDF_COMPUTE_CANONICAL,linkedChartComputeMode,chartComputeMode,openChartCompute} from './financial-chart-compute.mjs';
 import {agentChartChoice,agentChartGuidance,openAgentChart} from './financial-chart-agent.mjs';
 import {OWNER_CHART_AUTO, OWNER_CHART_GUIDANCE, OWNER_CHART_AUTO_GUIDANCE, ownerChartChoice, windChartExtension, openOwnerChartSkill, openSuppliedChartTools} from './financial-chart-owner.mjs';
 import {AUTO_RESEARCH_INTENT,hasResearchEvidence,researchIntentTool,researchProfileFor,ANALYSIS_RESEARCH_REVISION,usesResearchNeeds} from './research-intent.mjs';
@@ -24,7 +24,7 @@ import {AsyncLocalStorage} from 'node:async_hooks';
 import {safeDirectory,ensureSafeDirectory,publishImmutable} from './storage-files.mjs';
 import {sha256} from './source.mjs';
 import {loadProjectSources} from './project-sources.mjs';
-import {OWNER_LINKED_PDF_REVISION,OWNER_LINKED_PDF_LOCAL_MISS,openOwnerWeb,OWNER_SEARCH_PROVIDERS,OWNER_WEB_EXCERPTS,OWNER_WEB_EXCERPTS_LOCAL_MISS,OWNER_WEB_EXCERPTS_URL_MISS} from './gui-owner-web.mjs';
+import {OWNER_LINKED_PDF_REVISION,OWNER_LINKED_PDF_LOCAL_MISS,OWNER_LINKED_PDF_CELLS,OWNER_LINKED_PDF_INDEXED_CELLS,openOwnerWeb,OWNER_SEARCH_PROVIDERS,OWNER_WEB_EXCERPTS,OWNER_WEB_EXCERPTS_LOCAL_MISS,OWNER_WEB_EXCERPTS_URL_MISS} from './gui-owner-web.mjs';
 import {openSession} from './session.mjs';
 import {submitRun,confirmScheduledRun,materializeScheduledRun} from './runtime.mjs';
 import {workRun} from './worker.mjs';
@@ -245,10 +245,11 @@ function questionFor(question,sources,knowledge=false,focusedKnowledge=false,ena
 function reportDeliveryFor(definition){if(!Object.hasOwn(definition,'reportDelivery'))return '';if(definition.reportDelivery!=='artifact-required@1')fail('PROJECT_REPORT_DELIVERY');return '\nDelivery contract artifact-required@1: a persisted report artifact is required for task completion. Save a source-backed report before the final answer. A durable Publication answer alone does not satisfy this contract; do not invent sources or bypass citation checks.';}
 function validateOwnerWebExcerpts({config,sourceManifestSha256,schedule,ownerWebExcerptRevision,ownerLinkedPdfRevision,chartSkill}){
  if(ownerWebExcerptRevision!==undefined&&(![OWNER_WEB_EXCERPTS,OWNER_WEB_EXCERPTS_LOCAL_MISS,OWNER_WEB_EXCERPTS_URL_MISS].includes(ownerWebExcerptRevision)||
-    (ownerWebExcerptRevision===OWNER_WEB_EXCERPTS_URL_MISS&&(ownerLinkedPdfRevision!==OWNER_LINKED_PDF_LOCAL_MISS||!agentChartChoice(chartSkill)))||sourceManifestSha256!==null||
+    (ownerWebExcerptRevision===OWNER_WEB_EXCERPTS_URL_MISS&&(![OWNER_LINKED_PDF_LOCAL_MISS,OWNER_LINKED_PDF_CELLS,OWNER_LINKED_PDF_INDEXED_CELLS].includes(ownerLinkedPdfRevision)||!agentChartChoice(chartSkill)))||sourceManifestSha256!==null||
     schedule!==undefined||config.ownerConnectivity?.web!==true||!supportsOwnerFreeform(config)))fail('PROJECT_WEB_EXCERPT_VERSION');
- if(ownerLinkedPdfRevision!==undefined&&(![OWNER_LINKED_PDF_REVISION,OWNER_LINKED_PDF_LOCAL_MISS].includes(ownerLinkedPdfRevision)||
-    (ownerLinkedPdfRevision===OWNER_LINKED_PDF_LOCAL_MISS&&!agentChartChoice(chartSkill))||!ownerWebExcerptRevision||
+ if(linkedChartComputeMode(chartSkill)!==([OWNER_LINKED_PDF_CELLS,OWNER_LINKED_PDF_INDEXED_CELLS].includes(ownerLinkedPdfRevision)))fail('PROJECT_LINKED_PDF_REVISION');
+ if(ownerLinkedPdfRevision!==undefined&&(![OWNER_LINKED_PDF_REVISION,OWNER_LINKED_PDF_LOCAL_MISS,OWNER_LINKED_PDF_CELLS,OWNER_LINKED_PDF_INDEXED_CELLS].includes(ownerLinkedPdfRevision)||
+    ([OWNER_LINKED_PDF_LOCAL_MISS,OWNER_LINKED_PDF_CELLS,OWNER_LINKED_PDF_INDEXED_CELLS].includes(ownerLinkedPdfRevision)&&!agentChartChoice(chartSkill))||!ownerWebExcerptRevision||
     sourceManifestSha256!==null||schedule!==undefined||config.ownerConnectivity?.linkedPdf!==true))fail('PROJECT_LINKED_PDF_REVISION');
 }
 function validateResearchDepth({researchDepth,config,schedule,researchProfileRevision}){
@@ -386,9 +387,11 @@ async function assemble(projectDir,definition,{gateway,apiKey,openAIKey,geminiFr
    else extensions.push((config.childExecution?createChildExecutionBinding:createSpecialistChildBinding)(childOptions));
   }
   const connectivity=freeform?config.ownerConnectivity:null;
+  let pdfCellResolver;
   if(connectivity){
    const web=openOwnerWeb({profile:connectivity,linkedPdfRevision:definition.ownerLinkedPdfRevision,projectDir,projectId:definition.projectId,runId,transport:ownerWebTransport,searchSettings:dispatch?ownerSearchSettings:undefined,excerptRevision:definition.ownerWebExcerptRevision,readRun:()=>store.inspect(runId)});
-   if(web.length){extensions.push(...web);adapters.push({id:'owner-public-web',version:definition.ownerWebExcerptRevision===OWNER_WEB_EXCERPTS_URL_MISS?'6':definition.ownerLinkedPdfRevision===OWNER_LINKED_PDF_LOCAL_MISS?'5':definition.ownerLinkedPdfRevision===OWNER_LINKED_PDF_REVISION?'4':definition.ownerWebExcerptRevision===OWNER_WEB_EXCERPTS_LOCAL_MISS?'3':definition.ownerWebExcerptRevision?'2':'1'});}
+   if([OWNER_LINKED_PDF_CELLS,OWNER_LINKED_PDF_INDEXED_CELLS].includes(definition.ownerLinkedPdfRevision))pdfCellResolver=web.find(tool=>typeof tool.resolveCell==='function')?.resolveCell;
+   if(web.length){extensions.push(...web);adapters.push({id:'owner-public-web',version:definition.ownerLinkedPdfRevision===OWNER_LINKED_PDF_INDEXED_CELLS?'8':definition.ownerLinkedPdfRevision===OWNER_LINKED_PDF_CELLS?'7':definition.ownerWebExcerptRevision===OWNER_WEB_EXCERPTS_URL_MISS?'6':definition.ownerLinkedPdfRevision===OWNER_LINKED_PDF_LOCAL_MISS?'5':definition.ownerLinkedPdfRevision===OWNER_LINKED_PDF_REVISION?'4':definition.ownerWebExcerptRevision===OWNER_WEB_EXCERPTS_LOCAL_MISS?'3':definition.ownerWebExcerptRevision?'2':'1'});}
    if(connectivity.wind){
     const {openOwnerWind}=await import('./gui-owner-wind.mjs');
     const wind=await openOwnerWind({settings:dispatch?ownerWindSettings:undefined,projectDir,runId,signal:hostSignal,...(ownerWindFetch?{fetchFn:ownerWindFetch}:{})});
@@ -400,10 +403,12 @@ async function assemble(projectDir,definition,{gateway,apiKey,openAIKey,geminiFr
    }
   }
   if(agentChartChoice(definition.chartSkill)){
-   const dateSafe=definition.chartSkill===CHART_COMPUTE_DATE_MODE;
-   extensions.push(openAgentChart({readRun:()=>store.inspect(runId),dateSafe,operatorText:currentOwnerRequest(definition.question)}));
-   adapters.push({id:'owner-agent-financial-chart',version:dateSafe?'2':'1'});
-   if(chartComputeMode(definition.chartSkill)){extensions.push(openChartCompute());adapters.push({id:'owner-chart-formula',version:'1'});}
+   const linkedCells=linkedChartComputeMode(definition.chartSkill);
+   const canonical=definition.chartSkill===CHART_PDF_COMPUTE_CANONICAL;
+   const dateSafe=linkedCells||definition.chartSkill===CHART_COMPUTE_DATE_MODE;
+   extensions.push(openAgentChart({readRun:()=>store.inspect(runId),dateSafe,linkedCells,operatorText:currentOwnerRequest(definition.question)}));
+   adapters.push({id:'owner-agent-financial-chart',version:linkedCells?'3':dateSafe?'2':'1'});
+   if(chartComputeMode(definition.chartSkill)){if(linkedCells&&!pdfCellResolver)fail('PROJECT_LINKED_PDF_REVISION');extensions.push(openChartCompute(linkedCells?{resolveCell:pdfCellResolver,canonical}:undefined));adapters.push({id:'owner-chart-formula',version:canonical?'3':linkedCells?'2':'1'});}
  }
  if(inputChartChoice(definition.chartSkill)){
    extensions.push(...openSuppliedChartTools({runId,readRun:()=>store.inspect(runId),operatorText:currentOwnerRequest(definition.question)}));
@@ -480,7 +485,7 @@ export async function submitResearchTask({projectDir,runId,question,sourceManife
  const researchProfileRevision=prior?prior.researchProfileRevision:['auto','deep'].includes(researchDepth)?ANALYSIS_RESEARCH_REVISION:undefined;
  const financialMethodsRevision=prior?prior.financialMethodsRevision:skillId===undefined?undefined:FINANCIAL_METHODS_REVISION;
  validateFinancialMethods({skillId,financialMethodsRevision,schedule,config});
- const ownerWebExcerptRevision=prior?prior.ownerWebExcerptRevision:sourceManifestSha256===null&&config.ownerConnectivity?.web===true?(ownerLinkedPdfRevision===OWNER_LINKED_PDF_LOCAL_MISS&&agentChartChoice(chartSkill)?OWNER_WEB_EXCERPTS_URL_MISS:OWNER_WEB_EXCERPTS_LOCAL_MISS):undefined;
+ const ownerWebExcerptRevision=prior?prior.ownerWebExcerptRevision:sourceManifestSha256===null&&config.ownerConnectivity?.web===true?([OWNER_LINKED_PDF_LOCAL_MISS,OWNER_LINKED_PDF_CELLS,OWNER_LINKED_PDF_INDEXED_CELLS].includes(ownerLinkedPdfRevision)&&agentChartChoice(chartSkill)?OWNER_WEB_EXCERPTS_URL_MISS:OWNER_WEB_EXCERPTS_LOCAL_MISS):undefined;
  validateOwnerWebExcerpts({config,sourceManifestSha256,schedule,ownerWebExcerptRevision,ownerLinkedPdfRevision,chartSkill});
  const chartPromptRevision=prior?prior.chartPromptRevision:inputChartChoice(chartSkill)?INPUT_CHART_PROMPT_REVISION:undefined;
  validateGeminiConsent({geminiPublicSha256,question,config,sourceManifestSha256,schedule,memoryMode,skillId,chartSkill,ownerLinkedPdfRevision,reportDelivery,authorization});

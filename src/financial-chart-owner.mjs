@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto';
 import { CHART_TOOL_NAME, createFinancialChartSkill, projectFinancialChart, sealFinancialChartEvidence } from './financial-chart.mjs';
 
-import {CHART_COMPUTE_DATE_MODE} from './financial-chart-compute.mjs';
+import {CHART_COMPUTE_DATE_MODE,linkedChartComputeMode} from './financial-chart-compute.mjs';
 import {agentChartChoice,readAgentChartViews} from './financial-chart-agent.mjs';
 import {inputChartChoice,suppliedChartDatasets} from './financial-chart-input.mjs';
 
@@ -141,7 +141,7 @@ export async function readOwnerChartViews(run,{operatorText,chartSkill}={}){
  if(run?.status!=='completed'||run.rootStatus!=='completed'||run.snapshot.gatewayOutcome==='unknown'||run.snapshot.inFlight||
     run.snapshot.unknownEffects?.length||run.snapshot.partialEffects?.length)return [];
  if(agentChartChoice(chartSkill)){
-  const agent=await readAgentChartViews(run,{dateSafe:chartSkill===CHART_COMPUTE_DATE_MODE,operatorText});
+  const agent=await readAgentChartViews(run,{dateSafe:chartSkill===CHART_COMPUTE_DATE_MODE||linkedChartComputeMode(chartSkill),linkedCells:linkedChartComputeMode(chartSkill),operatorText});
   let wind=[];try{wind=await readOwnerChartViews(run,{operatorText,chartSkill:OWNER_CHART_AUTO});}catch{/* Separately verified view. */}
   return [...agent,...wind];
  }

@@ -363,7 +363,7 @@ function readSourcesContent(target, value) {
   }[value.availability];
   if(note)target.append(make('p',note,'muted'));
   for(const source of Array.isArray(value.readSources)?value.readSources:[]){
-    const pdf=source?.kind==='web-pdf-original-page';
+    const pdf=source?.kind==='web-pdf-original-page'||source?.kind==='web-pdf-original-cell@1';
     if((!pdf&&source?.kind!=='web-original-excerpt')||typeof source.text!=='string'||
        !Number.isSafeInteger(source.page)||source.page<1||!Number.isSafeInteger(source.pages)||source.pages<source.page)continue;
     const url=originalWebLink(source.url,pdf);
@@ -378,7 +378,10 @@ function readSourcesContent(target, value) {
     const link=make('a',pdf?'打开来源 PDF（可能更新）':'打开原网页');
     if(pdf)url.hash='page='+source.page;
     link.href=url.href;link.target='_blank';link.rel='noopener noreferrer';link.referrerPolicy='no-referrer';
-    excerpt.append(link,make('pre',source.text,'web-source-text'));
+    excerpt.append(link);
+    if(source.kind==='web-pdf-original-cell@1'&&source.cell)
+      excerpt.append(make('p',[source.cell.caption,source.cell.rowLabel,source.cell.header,source.cell.unit].join(' · ')));
+    excerpt.append(make('pre',source.text,'web-source-text'));
     parent.append(excerpt);
   }
   if(!target.childElementCount)target.append(make('p','暂时无法核对已读取的网页摘录。','muted'));
@@ -404,14 +407,14 @@ async function loadReadSources(entry) {
 function hydrateInlineCitations(entry) {
   for(const [span,ref,number] of entry.inline){
     const row=(Array.isArray(entry.value?.readSources)?entry.value.readSources:[]).find(source=>source?.cited===true&&typeof source.text==='string'&&
-      (source.citationRef===ref||source.kind==='web-pdf-original-page'&&'PDF:'+source.id===ref));
-    const pdf=row?.kind==='web-pdf-original-page';
+      (source.citationRef===ref||['web-pdf-original-page','web-pdf-original-cell@1'].includes(source.kind)&&'PDF:'+source.id===ref));
+    const pdf=['web-pdf-original-page','web-pdf-original-cell@1'].includes(row?.kind);
     const url=row&&(!pdf||Number.isSafeInteger(row.page)&&row.page>0)&&originalWebLink(row.url,pdf);
     if(!url){span.textContent=entry.value?'［来源未能核对］':'［核对中］';continue;}
     if(pdf)url.hash='page='+row.page;
     const link=make('a','['+number+']','inline-source');
     link.href=url.href;link.target='_blank';link.rel='noopener noreferrer';link.referrerPolicy='no-referrer';
-    link.title=pdf?'原 PDF 第 '+row.page+' 页':row.text.slice(0,140);
+    link.title=pdf?'原 PDF 第 '+row.page+' 页'+(row.cell?' · '+[row.cell.rowLabel,row.cell.header,row.cell.unit].join(' · '):''):row.text.slice(0,140);
     span.replaceChildren(link);
   }
 }
