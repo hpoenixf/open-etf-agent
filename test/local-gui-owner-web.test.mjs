@@ -371,7 +371,7 @@ test('Yuanbao MCP fails closed on session/auth and reports tool quota without le
    if(scenario==='permission')return new Response('do not disclose auth failure detail',{status:401});
    if(req.method==='initialize')return Response.json({jsonrpc:'2.0',id:req.id,result:{protocolVersion:'2025-06-18',capabilities:{tools:{}}}});
    if(req.method==='notifications/initialized')return new Response(null,{status:202});
-   if(scenario==='oversize')return new Response('X'.repeat(512*1024+1),{headers:{'content-type':'application/json'}});
+   if(scenario==='oversize')return new Response('X'.repeat(2*1024*1024+1),{headers:{'content-type':'application/json'}});
    if(scenario==='wrong-id')return Response.json({jsonrpc:'2.0',id:'not-the-request',result:{structuredContent:{Pages:[]}}});
    return Response.json({jsonrpc:'2.0',id:req.id,result:{isError:true,structuredContent:{Error:{Code:'RequestLimitExceeded',Message:'private provider detail'}}}});
   }}});
@@ -419,7 +419,7 @@ test('Yuanbao MCP owner GUI sends public keywords only and reads original eviden
     if(req.method==='initialize')return Response.json({jsonrpc:'2.0',id:req.id,result:{protocolVersion:'2025-06-18',capabilities:{tools:{}}}});
     if(req.method==='notifications/initialized')return new Response(null,{status:202});
     assert.deepEqual(req.params.arguments,{Query:'public gold index methodology',Mode:0,Cnt:10});
-    return Response.json({jsonrpc:'2.0',id:req.id,result:{structuredContent:{Pages:[{title:'Gold index',url,passage:'Unverified search summary'}]}}});
+    return Response.json({jsonrpc:'2.0',id:req.id,result:{structuredContent:{Pages:[{title:'Gold index',url,passage:'Unverified search summary',content:'X'.repeat(700*1024)}]}}});
    },
    async acquire(input){pages++;assert.deepEqual(input.urls,[url]);acquisitionId=input.acquisitionId;return safeSource;},
    async inspect(input){assert.equal(input.acquisitionId,acquisitionId);return {status:'succeeded',manifestSha256,plan:{urls:[url]}};},

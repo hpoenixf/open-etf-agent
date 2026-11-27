@@ -2,7 +2,7 @@
 // stay with the existing owner; no third-party tool names or endpoints are accepted.
 export const YUANBAO_MCP_ENDPOINT='https://api.wsa.cloud.tencent.com/Mcp';
 const version='2025-06-18';
-const limit=512*1024;
+const limit=2*1024*1024;
 const fail=code=>{throw Object.assign(new Error(code),{code});};
 const invalid=()=>fail('WEB_SEARCH_RESPONSE_INVALID');
 const parse=text=>{try{return JSON.parse(text);}catch{invalid();}};
