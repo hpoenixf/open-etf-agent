@@ -6,7 +6,9 @@ import {validPdfCellText} from './pdf-table-evidence.mjs';
 export const CHART_COMPUTE_MODE='financial-chart-agent-compute@1';
 export const CHART_COMPUTE_DATE_MODE='financial-chart-agent-compute@2';
 export const CHART_PDF_COMPUTE_MODE='financial-chart-agent-compute@3';
-export const chartComputeMode=x=>x===CHART_COMPUTE_MODE||x===CHART_COMPUTE_DATE_MODE||x===CHART_PDF_COMPUTE_MODE;
+export const CHART_PDF_COMPUTE_CANONICAL='financial-chart-agent-compute@4';
+export const linkedChartComputeMode=x=>x===CHART_PDF_COMPUTE_MODE||x===CHART_PDF_COMPUTE_CANONICAL;
+export const chartComputeMode=x=>x===CHART_COMPUTE_MODE||x===CHART_COMPUTE_DATE_MODE||linkedChartComputeMode(x);
 const interpreter='/usr/bin/python3';
 const script=fileURLToPath(new URL('./owner-skills/financial-chart/controlled-chart-compute.py',import.meta.url));
 const hash=x=>createHash('sha256').update(JSON.stringify(x)).digest('hex');
@@ -58,18 +60,27 @@ async function compute(v,signal){
  });}finally{workers--;}
 }
 const cellRef=/^PDF:web-pdf-cell:sha256:[a-f0-9]{64}$/;
-async function resolveFormula(args,resolveCell,callId){
+function normalizedCellRef(ref,canonical){
+ if(typeof ref!=='string')return null;
+ if(cellRef.test(ref))return ref;
+ if(!canonical)return null;
+ const raw=ref.startsWith('[[PDF:')&&ref.endsWith(']]')?ref.slice(2,-2):
+  ref.startsWith('web-pdf-cell:')?'PDF:'+ref:ref;
+ return cellRef.test(raw)?raw:null;
+}
+async function resolveFormula(args,resolveCell,callId,canonical){
  if(!resolveCell||!Object.hasOwn(args,'cells'))return {input:args,refs:[]};
  if(Object.keys(args).sort().join(',')!=='cells,script'||!args.cells||typeof args.cells!=='object'||Array.isArray(args.cells))return null;
  const entries=Object.entries(args.cells);
  if(!entries.length||entries.length>12||entries.some(([name,refs])=>!/^[A-Za-z][A-Za-z0-9_]{0,31}$/.test(name)||
-     !Array.isArray(refs)||!refs.length||!refs.every(r=>r===null||typeof r==='string'&&cellRef.test(r)))||
+     !Array.isArray(refs)||!refs.length||!refs.every(r=>r===null||normalizedCellRef(r,canonical)!==null))||
      entries.reduce((n,[,refs])=>n+refs.length,0)>16)return null;
  const observed=new Map(), refs=new Set(), inputs=Object.create(null);
  for(const [name,list] of entries){
   const values=[];let unit;
-  for(const ref of list){
-   if(ref===null){values.push(null);continue;}
+  for(const raw of list){
+   if(raw===null){values.push(null);continue;}
+   const ref=normalizedCellRef(raw,canonical);
    if(!observed.has(ref))observed.set(ref,await resolveCell(ref,callId));
    const record=observed.get(ref);
    if(!record?.cell?.unit||!validPdfCellText(record.text)||unit&&unit!==record.cell.unit)return null;
@@ -85,16 +96,16 @@ const formulaShape={type:'object',required:['script','inputs'],additionalPropert
  script:{type:'string',description:'e.g. growth(revenue)'},
  inputs:{type:'object',description:'Named numeric scalars or arrays; explicit nulls for missing points.'},
 }};
-export const openChartCompute=({resolveCell}={})=>({
- name:'compute_chart_formula',recoveryVersion:resolveCell?'chart-formula@2':'chart-formula@1',
- description:'Optional step of the Financial Chart Skill. Evaluate basic numeric formula syntax on explicit arrays already available in this turn. Supports + - * / sum avg pct growth coalesce; no files, commands, imports, network, or long programs. Use the returned number or array in the normal chart dataset. The result is computed, not independently verified.'+(resolveCell?' For retained PDF values, send cells instead of inputs; for each variable give an array of exact PDF:<cell sourceRef> references (or null). Use the formula tool call ID as formulaCallId in a chart series, not copied values.':''),
- parameters:resolveCell?{...formulaShape,required:['script'],properties:{...formulaShape.properties,cells:{type:'object',description:'Named ordered arrays of exact previously read PDF cell references or null. Do not send inputs with cells.'}}}:formulaShape,
+export const openChartCompute=({resolveCell,canonical=false}={})=>({
+ name:'compute_chart_formula',recoveryVersion:canonical?'chart-formula@3':resolveCell?'chart-formula@2':'chart-formula@1',
+ description:'Optional step of the Financial Chart Skill. Evaluate basic numeric formula syntax on explicit arrays already available in this turn. Supports + - * / sum avg pct growth coalesce; no files, commands, imports, network, or long programs. Use the returned number or array in the normal chart dataset. The result is computed, not independently verified.'+(resolveCell?' For retained PDF values, send cells instead of inputs; for each variable give an array of exact PDF:<cell sourceRef> references (or null). Use the formula tool call ID as formulaCallId in a chart series, not copied values.':'')+(canonical?' You may copy each cell sourceRef directly, without adding a prefix. Copy the returned formulaCallId for the chart.':''),
+ parameters:resolveCell?{...formulaShape,required:['script'],properties:{...formulaShape.properties,cells:{type:'object',description:canonical?'Named ordered arrays of previously read exact sourceRef values or null. Copy the cell sourceRef verbatim; no prefix needed. Do not send inputs with cells.':'Named ordered arrays of exact previously read PDF cell references or null. Do not send inputs with cells.'}}}:formulaShape,
  validate(args){if(!args||Buffer.byteLength(JSON.stringify(args))>64000)throw Object.assign(new Error('FORMULA_INVALID'),{code:'FORMULA_INVALID'});},
  async execute(args,{signal,callId}){
-  const resolved=await resolveFormula(args,resolveCell,callId);
+  const resolved=await resolveFormula(args,resolveCell,callId,canonical);
   if(!resolved)return {schemaVersion:resultSchema,status:'unavailable',reason:'FORMULA_SOURCE_UNAVAILABLE'};
   const result=await compute(resolved.input,signal);
-  return result.status==='computed'&&resolved.refs.length?{...result,sourceRefs:resolved.refs}:result;
+  return result.status==='computed'?{...result,...(resolved.refs.length?{sourceRefs:resolved.refs}:{}),...(canonical?{formulaCallId:callId}:{})}:result;
  },
  // A history read reconstructs stored chart output; it never invokes Python.
  // If the process disappeared before the result committed, keep that outcome unknown.
@@ -104,12 +115,12 @@ export const openChartCompute=({resolveCell}={})=>({
    if(result?.schemaVersion!==resultSchema||result.status==='computed'&&
     (!resolved||!validate(resolved.input)||!numeric(result.value)||result.formulaSha256!==hash(resolved.input.script)||
      result.inputSha256!==hash(resolved.input.inputs)||result.provenance!=='computed-unverified'||
-     JSON.stringify(result.sourceRefs??[])!==JSON.stringify(resolved.refs))||
+     JSON.stringify(result.sourceRefs??[])!==JSON.stringify(resolved.refs)||canonical&&result.formulaCallId!==call.id)||
      result.status==='unavailable'&&!/^FORMULA_[A-Z_]{1,40}$/.test(result.reason)||
      !['computed','unavailable'].includes(result.status))
     throw Object.assign(new Error('FORMULA_RESULT_INVALID'),{code:'FORMULA_RESULT_INVALID'});
   };
-  if(resolveCell&&result?.status==='computed')return resolveFormula(call.arguments,resolveCell,call.id).then(check);
+  if(resolveCell&&result?.status==='computed')return resolveFormula(call.arguments,resolveCell,call.id,canonical).then(check);
   return check({input:call.arguments,refs:[]});
  },
 });

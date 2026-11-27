@@ -31,7 +31,7 @@ justify rendering a chart as verified.
 ## Interactive chain (opt-in)
 When the owner enables `ETF_GUI_PDF_CHART_CHAIN=1` alongside authorized
 linked public PDF and controlled chart compute, a new interactive Run
-pins linked-PDF adapter 4 and chart compute profile 3. Older Runs keep
+pins linked-PDF adapter 4 and chart compute profile 4. Older Runs keep
 their pinned tool contracts. A model can discover a grid using
 `{linkId,page,tables:true}`, which gives explicit table/row/column indices, then select one cell with
 `{linkId,page,table,row,column}` in the same existing PDF tool. The
@@ -41,7 +41,8 @@ protected pages, unsupported table layouts and missing units remain
 outside the verified source path.
 
 Formula `cells` inputs accept earlier reverified PDF cell references
-from the same Run, not network URLs or copied values. Arrays must have one
+from the same Run, not network URLs or copied values. Raw cell IDs and correctly
+wrapped citation IDs resolve to the same verified receipt. Arrays must have one
 observed unit per variable. A chart series can reference a completed
 formula by `formulaCallId` instead of copying its numeric output; the
 source links come from the original cells but the chart is still marked

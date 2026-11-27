@@ -1,7 +1,7 @@
 import {readFileSync} from 'node:fs';
 import {createHash} from 'node:crypto';
 import {isDeepStrictEqual} from 'node:util';
-import {CHART_COMPUTE_DATE_MODE,CHART_PDF_COMPUTE_MODE,chartComputeMode} from './financial-chart-compute.mjs';
+import {CHART_COMPUTE_DATE_MODE,linkedChartComputeMode,chartComputeMode} from './financial-chart-compute.mjs';
 import {publicPdfNavigationQuery} from './public-pdf-navigation.mjs';
 import {sealDataset} from './financial-chart-input.mjs';
 import {compileFinancialChart} from './financial-chart.mjs';
@@ -13,8 +13,8 @@ export const AGENT_CHART_GUIDANCE=readFileSync(new URL('./owner-skills/financial
 const dateGuidance=readFileSync(new URL('./owner-skills/financial-chart/reporting-date.md',import.meta.url),'utf8').trim();
 const linkedGuidance=readFileSync(new URL('./owner-skills/financial-chart/linked-evidence.md',import.meta.url),'utf8').trim();
 export const agentChartGuidance=mode=>AGENT_CHART_GUIDANCE+
- (mode===CHART_COMPUTE_DATE_MODE||mode===CHART_PDF_COMPUTE_MODE?'\n\n'+dateGuidance:'')+
- (mode===CHART_PDF_COMPUTE_MODE?'\n\n'+linkedGuidance:'');
+ (mode===CHART_COMPUTE_DATE_MODE||linkedChartComputeMode(mode)?'\n\n'+dateGuidance:'')+
+ (linkedChartComputeMode(mode)?'\n\n'+linkedGuidance:'');
 const renderDescription='Render one validated numeric dataset using the Financial Chart Skill. Send the dataset; attach original same-run source quotations where available. View options are not arguments.';
 const ha=s=>createHash('sha256').update(s).digest('hex');
 const exact=(o,fields)=>o&&typeof o==='object'&&!Array.isArray(o)&&Object.keys(o).sort().join(',')===fields;

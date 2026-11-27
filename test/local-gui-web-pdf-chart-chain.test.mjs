@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {mkdir,mkdtemp,rm} from 'node:fs/promises';
 import {resolve} from 'node:path';
 import {setTimeout as delay} from 'node:timers/promises';
-import {chartComputeAvailable,CHART_PDF_COMPUTE_MODE} from '../src/financial-chart-compute.mjs';
+import {chartComputeAvailable,CHART_PDF_COMPUTE_CANONICAL} from '../src/financial-chart-compute.mjs';
 import {OWNER_LINKED_PDF_INDEXED_CELLS} from '../src/gui-owner-web.mjs';
 import {inspectResearchTask} from '../src/research-project.mjs';
 import {startLocalGui} from '../src/gui-server.mjs';
@@ -55,10 +55,10 @@ test('HTML to linked native cells to controlled chart, with exact original-sourc
    }
    if(p.length===6){
     assert.equal(p[5].reason,'FORMULA_SOURCE_UNAVAILABLE');
-    return proposal(call('calc','compute_chart_formula',{script:'growth(nav)',cells:{nav:refs}}));
+    return proposal(call('calc','compute_chart_formula',{script:'growth(nav)',cells:{nav:[refs[0].slice(4),'[['+refs[1]+']]']}}));
    }
    if(p.length===7){
-    assert.equal(p[6].value[0],null);assert.ok(Math.abs(p[6].value[1]-25)<1e-12);assert.deepEqual(p[6].sourceRefs,refs);
+    assert.equal(p[6].value[0],null);assert.ok(Math.abs(p[6].value[1]-25)<1e-12);assert.deepEqual(p[6].sourceRefs,refs);assert.equal(p[6].formulaCallId,'calc');
     return proposal(call('chart','render_financial_chart',{dataset:{kind:'financial-columns',asOf:null,unit:'%',keys:['2025','2026'],series:[{label:'NAV growth',formulaCallId:'calc'}]}}));
    }
    assert.equal(p[7].view.series[0].values[0],null);assert.ok(Math.abs(p[7].view.series[0].values[1]-25)<1e-12);
@@ -81,7 +81,7 @@ test('HTML to linked native cells to controlled chart, with exact original-sourc
  assert.equal(m.output.answer,answer);
  const task=await inspectResearchTask({projectDir,runId:m.runId});
  assert.equal(task.definition.ownerLinkedPdfRevision,OWNER_LINKED_PDF_INDEXED_CELLS);
- assert.equal(task.definition.chartSkill,CHART_PDF_COMPUTE_MODE);
+ assert.equal(task.definition.chartSkill,CHART_PDF_COMPUTE_CANONICAL);
  const base=conv+'/messages/report',sources=await get(base+'/sources'),body=await get(base+'/body');
  const cells=sources.readSources.filter(x=>x.kind==='web-pdf-original-cell@1');
  assert.deepEqual(cells.map(x=>[x.cited,x.page,x.cell.header,x.cell.unit]),[[true,1,'2025','%'],[true,1,'2026','%']]);

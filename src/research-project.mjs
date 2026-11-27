@@ -3,7 +3,7 @@ import {inputChartChoice,hasSuppliedChartData,LEGACY_INPUT_CHART_GUIDANCE,INPUT_
 import {selectedResearchSkillContext} from './research-skill-context.mjs';
 import {openFinancialAnalysisMethods,isFinancialSkill,isResearchSkillChoice,FINANCIAL_METHODS_REVISION} from './financial-analysis-methods.mjs';
 import {researchNeedsTool,RESEARCH_NEEDS_RECEIPT} from './research-needs.mjs';
-import {CHART_COMPUTE_DATE_MODE,CHART_PDF_COMPUTE_MODE,chartComputeMode,openChartCompute} from './financial-chart-compute.mjs';
+import {CHART_COMPUTE_DATE_MODE,CHART_PDF_COMPUTE_CANONICAL,linkedChartComputeMode,chartComputeMode,openChartCompute} from './financial-chart-compute.mjs';
 import {agentChartChoice,agentChartGuidance,openAgentChart} from './financial-chart-agent.mjs';
 import {OWNER_CHART_AUTO, OWNER_CHART_GUIDANCE, OWNER_CHART_AUTO_GUIDANCE, ownerChartChoice, windChartExtension, openOwnerChartSkill, openSuppliedChartTools} from './financial-chart-owner.mjs';
 import {AUTO_RESEARCH_INTENT,hasResearchEvidence,researchIntentTool,researchProfileFor,ANALYSIS_RESEARCH_REVISION,usesResearchNeeds} from './research-intent.mjs';
@@ -247,7 +247,7 @@ function validateOwnerWebExcerpts({config,sourceManifestSha256,schedule,ownerWeb
  if(ownerWebExcerptRevision!==undefined&&(![OWNER_WEB_EXCERPTS,OWNER_WEB_EXCERPTS_LOCAL_MISS,OWNER_WEB_EXCERPTS_URL_MISS].includes(ownerWebExcerptRevision)||
     (ownerWebExcerptRevision===OWNER_WEB_EXCERPTS_URL_MISS&&(![OWNER_LINKED_PDF_LOCAL_MISS,OWNER_LINKED_PDF_CELLS,OWNER_LINKED_PDF_INDEXED_CELLS].includes(ownerLinkedPdfRevision)||!agentChartChoice(chartSkill)))||sourceManifestSha256!==null||
     schedule!==undefined||config.ownerConnectivity?.web!==true||!supportsOwnerFreeform(config)))fail('PROJECT_WEB_EXCERPT_VERSION');
- if((chartSkill===CHART_PDF_COMPUTE_MODE)!==([OWNER_LINKED_PDF_CELLS,OWNER_LINKED_PDF_INDEXED_CELLS].includes(ownerLinkedPdfRevision)))fail('PROJECT_LINKED_PDF_REVISION');
+ if(linkedChartComputeMode(chartSkill)!==([OWNER_LINKED_PDF_CELLS,OWNER_LINKED_PDF_INDEXED_CELLS].includes(ownerLinkedPdfRevision)))fail('PROJECT_LINKED_PDF_REVISION');
  if(ownerLinkedPdfRevision!==undefined&&(![OWNER_LINKED_PDF_REVISION,OWNER_LINKED_PDF_LOCAL_MISS,OWNER_LINKED_PDF_CELLS,OWNER_LINKED_PDF_INDEXED_CELLS].includes(ownerLinkedPdfRevision)||
     ([OWNER_LINKED_PDF_LOCAL_MISS,OWNER_LINKED_PDF_CELLS,OWNER_LINKED_PDF_INDEXED_CELLS].includes(ownerLinkedPdfRevision)&&!agentChartChoice(chartSkill))||!ownerWebExcerptRevision||
     sourceManifestSha256!==null||schedule!==undefined||config.ownerConnectivity?.linkedPdf!==true))fail('PROJECT_LINKED_PDF_REVISION');
@@ -403,11 +403,12 @@ async function assemble(projectDir,definition,{gateway,apiKey,openAIKey,geminiFr
    }
   }
   if(agentChartChoice(definition.chartSkill)){
-   const linkedCells=definition.chartSkill===CHART_PDF_COMPUTE_MODE;
+   const linkedCells=linkedChartComputeMode(definition.chartSkill);
+   const canonical=definition.chartSkill===CHART_PDF_COMPUTE_CANONICAL;
    const dateSafe=linkedCells||definition.chartSkill===CHART_COMPUTE_DATE_MODE;
    extensions.push(openAgentChart({readRun:()=>store.inspect(runId),dateSafe,linkedCells,operatorText:currentOwnerRequest(definition.question)}));
    adapters.push({id:'owner-agent-financial-chart',version:linkedCells?'3':dateSafe?'2':'1'});
-   if(chartComputeMode(definition.chartSkill)){if(linkedCells&&!pdfCellResolver)fail('PROJECT_LINKED_PDF_REVISION');extensions.push(openChartCompute(linkedCells?{resolveCell:pdfCellResolver}:undefined));adapters.push({id:'owner-chart-formula',version:linkedCells?'2':'1'});}
+   if(chartComputeMode(definition.chartSkill)){if(linkedCells&&!pdfCellResolver)fail('PROJECT_LINKED_PDF_REVISION');extensions.push(openChartCompute(linkedCells?{resolveCell:pdfCellResolver,canonical}:undefined));adapters.push({id:'owner-chart-formula',version:canonical?'3':linkedCells?'2':'1'});}
  }
  if(inputChartChoice(definition.chartSkill)){
    extensions.push(...openSuppliedChartTools({runId,readRun:()=>store.inspect(runId),operatorText:currentOwnerRequest(definition.question)}));
