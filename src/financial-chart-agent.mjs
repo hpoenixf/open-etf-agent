@@ -1,10 +1,12 @@
 import {readFileSync} from 'node:fs';
 import {createHash} from 'node:crypto';
 import {isDeepStrictEqual} from 'node:util';
+import {CHART_COMPUTE_MODE} from './financial-chart-compute.mjs';
 import {sealDataset} from './financial-chart-input.mjs';
 import {compileFinancialChart} from './financial-chart.mjs';
 
 export const AGENT_CHART_SKILL='financial-chart-agent@1';
+export const agentChartChoice=x=>x===AGENT_CHART_SKILL||x===CHART_COMPUTE_MODE;
 export const AGENT_CHART_TOOL='render_financial_chart';
 export const AGENT_CHART_GUIDANCE=readFileSync(new URL('./owner-skills/financial-chart/SKILL.md',import.meta.url),'utf8').trim();
 const renderDescription='Render one validated numeric dataset using the Financial Chart Skill. Send the dataset; attach original same-run source quotations where available. View options are not arguments.';

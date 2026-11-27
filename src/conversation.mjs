@@ -1,7 +1,7 @@
 import {inputChartChoice,hasSuppliedChartData} from './financial-chart-input.mjs';
 import {isResearchSkillChoice} from './financial-analysis-methods.mjs';
 import {offerReasoningEffort} from './gateway.mjs';
-import {AGENT_CHART_SKILL} from './financial-chart-agent.mjs';
+import {agentChartChoice} from './financial-chart-agent.mjs';
 import {ownerChartChoice, readOwnerChartViews} from './financial-chart-owner.mjs';
 import { validateDailyContext, buildDailyQuestion } from './conversation-daily-context.mjs';
 import {readConversationCalculations} from './conversation-history.mjs';
@@ -71,7 +71,7 @@ export async function submitConversationMessage({projectDir,conversationId,messa
  if(dailyBrief!==undefined&&dailyResearch===undefined)fail('CONVERSATION_DAILY_CONTEXT_INVALID');
  if(dailyResearch!==undefined){if(!freeform)fail('CONVERSATION_DAILY_CONTEXT_INVALID');validateDailyContext(dailyResearch,{conversationId,messageId});}
  if(chartSkill!==undefined&&(!freeform||dailyResearch!==undefined||!ownerChartChoice(chartSkill)||
-   (chartSkill===AGENT_CHART_SKILL?false:inputChartChoice(chartSkill)?!hasSuppliedChartData(text):(await inspectResearchProject({projectDir:loc.projectDir})).config.ownerConnectivity?.wind!==true)))fail('CONVERSATION_CHART_UNAVAILABLE');
+   (agentChartChoice(chartSkill)?false:inputChartChoice(chartSkill)?!hasSuppliedChartData(text):(await inspectResearchProject({projectDir:loc.projectDir})).config.ownerConnectivity?.wind!==true)))fail('CONVERSATION_CHART_UNAVAILABLE');
  if(researchDepth!==undefined&&(!['auto','standard','deep'].includes(researchDepth)||dailyResearch!==undefined||parent!==null||review!==null||continuationOfMessageId!==null||
    !authorization?.providerApproved||!authorization?.dataApproved||!authorization?.costApproved||
    !supportsOwnerFreeform((await inspectResearchProject({projectDir:loc.projectDir})).config)))fail('CONVERSATION_RESEARCH_DEPTH_UNAVAILABLE');
@@ -79,7 +79,7 @@ export async function submitConversationMessage({projectDir,conversationId,messa
    !authorization?.providerApproved||!authorization?.dataApproved||!authorization?.costApproved||
    !offerReasoningEffort((await inspectResearchProject({projectDir:loc.projectDir})).config).options.includes(reasoningEffort)))fail('CONVERSATION_REASONING_EFFORT_UNAVAILABLE');
  if(ownerLinkedPdfRevision!==undefined&&(![OWNER_LINKED_PDF_REVISION,OWNER_LINKED_PDF_LOCAL_MISS].includes(ownerLinkedPdfRevision)||
-   (ownerLinkedPdfRevision===OWNER_LINKED_PDF_LOCAL_MISS&&chartSkill!==AGENT_CHART_SKILL)||!freeform||dailyResearch!==undefined||
+   (ownerLinkedPdfRevision===OWNER_LINKED_PDF_LOCAL_MISS&&!agentChartChoice(chartSkill))||!freeform||dailyResearch!==undefined||
    !authorization?.providerApproved||!authorization?.dataApproved||!authorization?.costApproved||
    (await inspectResearchProject({projectDir:loc.projectDir})).config.ownerConnectivity?.linkedPdf!==true))fail('CONVERSATION_LINKED_PDF_UNAVAILABLE');
  const geminiPublicSha256=approveGeminiPublic===true?sha256(text):undefined;
