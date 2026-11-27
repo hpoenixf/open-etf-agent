@@ -1,3 +1,4 @@
+import {INPUT_CHART_PROMPT_REVISION} from './financial-chart-input.mjs';
 import {isReasoningEffort} from './gateway.mjs';
 import {validResearchProfile} from './research-intent.mjs';
 import {knowledgeQuerySchemas,hasKnowledgeQueryTables,validateKnowledgeQueryConfig,validateKnowledgeQueryDatabase,createSessionKnowledgeQueries} from './knowledge-query-session.mjs';
@@ -85,9 +86,10 @@ function validateBindings(value) {
  }
 }
 function validateConfig(value, ordinary = false, protectedProfile = false, interaction = false, dynamicKnowledge = false) {
- fields(value, [], ['knowledgeQueryEffects', 'researchProfile', 'reasoningEffort', 'requireReport', 'reportDelivery', 'hostProjection', 'allowedTools', 'allowedDocuments', 'documentCatalog', 'pdfSnapshot', 'contextBytes', 'contextWorkingSetBytes', 'taskId', 'workingInput', 'publication', 'taskTime', ...(ordinary ? ['ordinaryResponse'] : []), ...(interaction ? ['interaction'] : []), ...(protectedProfile ? ['documentProtection'] : [])]);
+ fields(value, [], ['chartPromptRevision', 'knowledgeQueryEffects', 'researchProfile', 'reasoningEffort', 'requireReport', 'reportDelivery', 'hostProjection', 'allowedTools', 'allowedDocuments', 'documentCatalog', 'pdfSnapshot', 'contextBytes', 'contextWorkingSetBytes', 'taskId', 'workingInput', 'publication', 'taskTime', ...(ordinary ? ['ordinaryResponse'] : []), ...(interaction ? ['interaction'] : []), ...(protectedProfile ? ['documentProtection'] : [])]);
  if(dynamicKnowledge!==(value.knowledgeQueryEffects!==undefined))fail('KNOWLEDGE_QUERY_SCOPE');
  if(value.knowledgeQueryEffects!==undefined){validateKnowledgeQueryConfig(value.knowledgeQueryEffects);if(ordinary||protectedProfile)fail('KNOWLEDGE_QUERY_SCOPE');}
+ if(value.chartPromptRevision!==undefined&&(value.chartPromptRevision!==INPUT_CHART_PROMPT_REVISION||protectedProfile||value.publication!=='publication@1'||!Array.isArray(value.allowedTools)||!['read_supplied_chart_data','build_financial_chart'].every(name=>value.allowedTools.includes(name))))fail('INVALID_DEFINITION');
  if(value.reasoningEffort!==undefined&&(!isReasoningEffort(value.reasoningEffort)||protectedProfile||value.publication!=='publication@1'))fail('INVALID_DEFINITION');
  if(value.researchProfile!==undefined&&(!validResearchProfile(value.researchProfile)||protectedProfile||value.publication!=='publication@1'))fail('INVALID_DEFINITION');
  if(protectedProfile){if(value.documentCatalog!==undefined||value.pdfSnapshot!==undefined)fail('INVALID_PROTECTED_PROFILE');fields(value.documentProtection,['authorityId','libraryId']);if(!identifier(value.documentProtection.authorityId)||!identifier(value.documentProtection.libraryId)||!Array.isArray(value.allowedDocuments)||!value.allowedDocuments.length||value.workingInput!==undefined||value.ordinaryResponse!==undefined)fail('INVALID_PROTECTED_PROFILE');}
