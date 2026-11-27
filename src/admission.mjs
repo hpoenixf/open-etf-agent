@@ -5,14 +5,15 @@ import { lstatSync, openSync, closeSync } from 'node:fs';
 import { join } from 'node:path';
 import { setTimeout as delay } from 'node:timers/promises';
 import { ensureSafeDirectory, safeDirectory } from './storage-files.mjs';
-import { projectProviderProtocolDiagnostic, projectExactGoModelDenial, isExactGoMimoGateway } from './gateway.mjs';
+import { projectProviderProtocolDiagnostic, projectExactGoModelDenial, isExactGoMimoGateway, GO_DEEPSEEK_MODEL, GO_MIMO_MODEL } from './gateway.mjs';
+import {isOpenAIResponsesGateway,OPENAI_RESPONSES_MODEL} from './openai-responses-gateway.mjs';
 import { projectModelReservation } from './runtime.mjs';
 
 const APP_ID = 0x4f454144;
 const fail = code => { throw Object.assign(new Error(code), { code }); };
 const canonical=v=>JSON.stringify(v,(_,x)=>x&&typeof x==='object'&&!Array.isArray(x)?Object.fromEntries(Object.keys(x).sort().map(k=>[k,x[k]])):x);
 const digest=v=>createHash('sha256').update(canonical(v)).digest('hex');
-const knownPredispatch=new WeakSet();
+const knownPredispatch=new WeakSet(), directOwners=new WeakSet();
 export const isKnownAdmissionNonDispatch=error=>knownPredispatch.has(error);
 const active = "('admitted','dispatched','unknown')";
 const reservationId = ({ rootId, modelOrdinal }) => createHash('sha256').update(JSON.stringify([rootId, 'model', modelOrdinal])).digest('hex');
@@ -33,9 +34,10 @@ function reserved(session, runId, initial = false) {
 
 // One local capacity group, not a provider registry or a billing owner.
 // A dispatched request stays occupied until its original Gateway returns.
-export async function createSharedAdmission({ directory, routeId, maxQueue = 8, pollMs = 20, queueTimeoutMs = 30000, readOnly = false, existingOnly = false }) {
+export async function createSharedAdmission({ directory, routeId, maxQueue = 8, pollMs = 20, queueTimeoutMs = 30000, maxAttempts, readOnly = false, existingOnly = false }) {
   if (typeof readOnly !== 'boolean' || typeof existingOnly !== 'boolean' || typeof routeId !== 'string' || !/^[A-Za-z0-9][A-Za-z0-9_.:/-]{0,199}$/.test(routeId)
     || !Number.isSafeInteger(maxQueue) || maxQueue < 1 || maxQueue > 64
+    || maxAttempts!==undefined&&(!Number.isSafeInteger(maxAttempts)||maxAttempts<1||maxAttempts>100)
     || !Number.isSafeInteger(pollMs) || pollMs < 1 || pollMs > 1000
     || !Number.isSafeInteger(queueTimeoutMs) || queueTimeoutMs < 1 || queueTimeoutMs > 300000) fail('INVALID_ADMISSION_CONFIG');
   const root = await (readOnly || existingOnly ? safeDirectory(directory) : ensureSafeDirectory(directory));
@@ -114,18 +116,22 @@ export async function createSharedAdmission({ directory, routeId, maxQueue = 8, 
   });
   // Only work proven not dispatched expires. Unknown remote work has no TTL.
   const expireWaiting = () => db.prepare("UPDATE requests SET state='cancelled',updated_at=? WHERE state IN ('queued','admitted') AND deadline_at<=?").run(Date.now(), Date.now());
-  const enqueue = (reservation, alternate) => transaction(() => {
+  const enqueue = (reservation, modelRoute) => transaction(() => {
     expireWaiting();
     const identity = reservationId(reservation);
     const existing = db.prepare('SELECT request_id FROM requests WHERE reservation_id=?').get(identity);
     if (existing) throw Object.assign(new Error('ADMISSION_ALREADY_RECORDED'), { code: 'ADMISSION_ALREADY_RECORDED', ticketId: existing.request_id });
+    if (maxAttempts!==undefined&&db.prepare("SELECT count(*) AS n FROM requests").get().n>=maxAttempts){
+      const error=Object.assign(new Error('ADMISSION_PROVIDER_ATTEMPT_LIMIT'),{code:'ADMISSION_PROVIDER_ATTEMPT_LIMIT'});
+      knownPredispatch.add(error);throw error;
+    }
     if (db.prepare("SELECT count(*) AS n FROM requests WHERE state='queued'").get().n >= maxQueue) fail('ADMISSION_QUEUE_FULL');
     const requestId = randomUUID(); const now = Date.now();
     db.prepare("INSERT INTO requests(request_id,reservation_id,root_id,run_id,model_ordinal,round,input_hash,owner,fence,deadline_at,state,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,'queued',?,?)")
       .run(requestId, identity, reservation.rootId, reservation.runId, reservation.modelOrdinal, reservation.round, reservation.inputHash, reservation.owner, reservation.fence, now + queueTimeoutMs, now, now);
-    if(alternate){
-      db.exec("CREATE TABLE IF NOT EXISTS fallback_routes (request_id TEXT PRIMARY KEY REFERENCES requests(request_id), model TEXT NOT NULL CHECK(model='mimo-v2.6-flash')) STRICT");
-      db.prepare('INSERT INTO fallback_routes VALUES (?,?)').run(requestId,'mimo-v2.6-flash');
+    if(modelRoute){
+      db.exec("CREATE TABLE IF NOT EXISTS fallback_routes (request_id TEXT PRIMARY KEY REFERENCES requests(request_id), model TEXT NOT NULL CHECK(model IN ('mimo-v2.6-flash','gpt-6.1-terra'))) STRICT");
+      db.prepare('INSERT INTO fallback_routes VALUES (?,?)').run(requestId,modelRoute);
     }
     return { requestId, deadline: now + queueTimeoutMs };
   });
@@ -222,10 +228,12 @@ export async function createSharedAdmission({ directory, routeId, maxQueue = 8, 
     inspect(ticketId) { return projectRow(ticketId); },
     inspectReservation(identity) { const value = db.prepare('SELECT request_id FROM requests WHERE reservation_id=?').get(reservationId(identity)); return value ? projectRow(value.request_id) : null; },
     close() { db.close(); },
-    wrap(gateway, { session, runId, beforeDispatch, sameGroupFallback }) {
+    wrap(gateway, { session, runId, beforeDispatch, sameGroupFallback, independentFallback, modelRoute }) {
       if (readOnly) fail('ADMISSION_READ_ONLY');
       if (typeof gateway?.next !== 'function' || typeof session?.inspect !== 'function' || beforeDispatch!==undefined&&typeof beforeDispatch!=='function') fail('INVALID_ADMISSION_GATEWAY');
       if(sameGroupFallback!==undefined&&!isExactGoMimoGateway(sameGroupFallback))fail('INVALID_ADMISSION_FALLBACK');
+      if(independentFallback!==undefined&&!directOwners.has(independentFallback))fail('INVALID_ADMISSION_FALLBACK');
+      if(modelRoute!==undefined&&(modelRoute!==OPENAI_RESPONSES_MODEL||!isOpenAIResponsesGateway(gateway)||maxAttempts===undefined))fail('INVALID_ADMISSION_FALLBACK');
       const bind = selectedRunId => {
         const settledDenials=new WeakMap();
         const result={
@@ -244,18 +252,22 @@ export async function createSharedAdmission({ directory, routeId, maxQueue = 8, 
           return childRunId === selectedRunId ? bind(selectedRunId) : bind(childRunId);
         },
         async next(input) {return dispatch(input,null);},
+        ...(independentFallback?{directResponsesGateway:independentFallback}:{}),
         takeModelFallback(error,priorReceipt){
           if(!sameGroupFallback||selectedRunId!==runId)return null;
           const proof=settledDenials.get(error), prior=projectModelReservation(priorReceipt);
           if(!proof||!prior||proof.rootId!==prior.rootId||proof.modelOrdinal!==prior.modelOrdinal||
              proof.inputHash!==prior.inputHash||prior.runId!==runId)return null;
           settledDenials.delete(error);
-          return Object.freeze({async next(input){
+          const toMiMo=proof.model===GO_DEEPSEEK_MODEL;
+          if(!toMiMo&&!(proof.model===GO_MIMO_MODEL&&independentFallback))return null;
+          return Object.freeze({...(toMiMo?{takeModelFallback:(e,r)=>result.takeModelFallback(e,r)}:{directResponses:true,inputBudget:independentFallback.inputBudget}),
+            async next(input){
             const current=projectModelReservation(input?.reservation);
             if(!current||current.runId!==runId||current.owner!==prior.owner||current.fence!==prior.fence||
                current.purpose!==undefined||current.inputHash!==prior.inputHash||
                current.modelOrdinal!==prior.modelOrdinal+1||current.round!==prior.round+1)fail('ADMISSION_FALLBACK_RESERVATION_MISMATCH');
-            return dispatch(input,sameGroupFallback);
+            return toMiMo?dispatch(input,sameGroupFallback):independentFallback.next(input);
           }});
         }
       };
@@ -271,7 +283,7 @@ export async function createSharedAdmission({ directory, routeId, maxQueue = 8, 
             || original.purpose !== reservation.purpose || original.inputHash !== reservation.inputHash
             || createHash('sha256').update(JSON.stringify(input.messages)).digest('hex') !== reservation.inputHash) fail('ADMISSION_RESERVATION_MISMATCH');
           if (reservation.purpose === 'compaction' && (!Array.isArray(input.tools) || input.tools.length !== 0)) fail('ADMISSION_RESERVATION_MISMATCH');
-          const { requestId, deadline } = enqueue(reservation,alternate);
+          const { requestId, deadline } = enqueue(reservation,alternate?GO_MIMO_MODEL:modelRoute);
           const currentFence = (dispatch = false) => {
             const current = reserved(session, runId, dispatch);
             if (current.owner !== reservation.owner || current.fence !== reservation.fence
@@ -334,8 +346,8 @@ export async function createSharedAdmission({ directory, routeId, maxQueue = 8, 
             // Only the original Gateway's branded complete finish or exact model denial is termination evidence.
             // A caller-invented error.code or local AbortSignal is never such evidence.
             const diagnostic = projectProviderProtocolDiagnostic(error);
-            const denial=!alternate&&sameGroupFallback&&!signal?.aborted?projectExactGoModelDenial(error):null;
-            const recognizedDenial=denial&&denial.rootId===reservation.rootId&&denial.modelOrdinal===reservation.modelOrdinal&&denial.inputHash===reservation.inputHash;
+            const denial=sameGroupFallback&&(!alternate||independentFallback)&&!signal?.aborted?projectExactGoModelDenial(error):null;
+            const recognizedDenial=denial&&denial.model===(alternate?GO_MIMO_MODEL:GO_DEEPSEEK_MODEL)&&denial.rootId===reservation.rootId&&denial.modelOrdinal===reservation.modelOrdinal&&denial.inputHash===reservation.inputHash;
             let terminal = recognizedDenial || diagnostic?.reason === 'NON_SUCCESS_FINISH' && diagnostic.hashScope === 'complete-body';
             try { currentFence(); } catch { terminal = false; }
             transition(requestId, reservation, 'dispatched', terminal ? (diagnostic?.finishKind === 'aborted' ? 'cancelled' : 'completed') : 'unknown');
@@ -343,6 +355,7 @@ export async function createSharedAdmission({ directory, routeId, maxQueue = 8, 
             throw error;
           }finally{clearTimeout(expiryTimer);}
         }
+        if(modelRoute===OPENAI_RESPONSES_MODEL)directOwners.add(result);
         return Object.freeze(result);
       };
       return bind(runId);

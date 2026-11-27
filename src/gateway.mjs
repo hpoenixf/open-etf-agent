@@ -176,7 +176,7 @@ export function createChatGateway({ provider, endpoint, model, apiKey, authoriza
         if (!response.ok) {
           const code = `PROVIDER_HTTP_${response.status}`;
           const error=Object.assign(new Error(code), {code});
-          if(provider===OPENCODE_GO_OWNER_PROVIDER&&url.href===OPENCODE_GO_CURRENT_ENDPOINT&&model===GO_DEEPSEEK_MODEL&&
+          if(provider===OPENCODE_GO_OWNER_PROVIDER&&url.href===OPENCODE_GO_CURRENT_ENDPOINT&&[GO_DEEPSEEK_MODEL,GO_MIMO_MODEL].includes(model)&&
              reservation?.runId===reservation?.rootId&&reservation?.rootId&&reservation.purpose===undefined&&
              await exactModelNotFound(response,signal)&&!signal?.aborted)
             modelDenials.set(error,Object.freeze({model,rootId:reservation.rootId,modelOrdinal:reservation.modelOrdinal,inputHash:reservation.inputHash}));
