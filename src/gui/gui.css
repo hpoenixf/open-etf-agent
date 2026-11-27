@@ -268,3 +268,12 @@ dialog::backdrop{background:#14282480}
   .composer-actions summary { padding-inline:.28rem; }
   #chart-skill-slot:not([hidden]) { gap:0; }
 }
+
+.financial-chart-figure { margin: 1rem 0; min-width: 0; padding: .75rem; border: 1px solid #dce3e8; border-radius: .6rem; }
+.financial-chart-figure figcaption { font-weight: 650; }
+.financial-chart-figure > svg { display: block; width: 100%; height: auto; }
+.financial-chart-figure .financial-chart-legend { display: flex; flex-wrap: wrap; gap: .45rem 1rem; }
+.financial-chart-legend > span { display: inline-flex; align-items: center; gap: .35rem; }
+.financial-chart-legend svg { flex: none; }
+.financial-chart-table { overflow-x: auto; }
+.financial-chart-figure details p { overflow-wrap: anywhere; }

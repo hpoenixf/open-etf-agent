@@ -1,9 +1,11 @@
 import { createHash } from 'node:crypto';
 import { CHART_TOOL_NAME, createFinancialChartSkill, projectFinancialChart, sealFinancialChartEvidence } from './financial-chart.mjs';
 
+import {inputChartChoice,suppliedChartDatasets} from './financial-chart-input.mjs';
+
 export const OWNER_CHART_SKILL='financial-chart@1';
 export const OWNER_CHART_AUTO='financial-chart-auto@1';
-export const ownerChartChoice=value=>value===OWNER_CHART_SKILL||value===OWNER_CHART_AUTO;
+export const ownerChartChoice=value=>value===OWNER_CHART_SKILL||value===OWNER_CHART_AUTO||inputChartChoice(value);
 export const OWNER_CHART_AUTO_GUIDANCE='If a supported daily exchange-close chart materially assists this question, you may invoke the Financial Chart Skill. Use only the evidence receipt returned by prior Wind tool work in this Run. Do not force a chart or claim NAV or OHLC from a close-only source.';
 export const OWNER_CHART_GUIDANCE='The operator selected the Financial Chart Skill for this turn. When appropriate, first acquire Wind exchange closes, then call build_financial_chart using the chartEvidenceReceiptId on the accepted result, not values in text. This adapter supports only unadjusted exchange close, not NAV or candlesticks. If no usable evidence, say so; never emit chart markup in your answer.';
 const id=x=>typeof x==='string'&&/^[A-Za-z0-9][A-Za-z0-9_.:-]{0,199}$/.test(x);
@@ -99,18 +101,65 @@ export function openOwnerChartSkill({runId,readRun}){
   },
  };
 }
-export async function readOwnerChartViews(run){
+const suppliedSelections=ds=>ds.map(d=>({kind:d.kind,receiptIds:d.receipts.map(x=>x.receiptId)}));
+const suppliedResult=selections=>selections.length===1?selections[0]:{datasets:selections};
+export function openSuppliedChartTools({runId,readRun,operatorText}){
+ const datasets=suppliedChartDatasets(operatorText,runId);
+ if(!datasets.length)fail('CHART_INPUT_INVALID');
+ const selections=suppliedSelections(datasets), readerResult=suppliedResult(selections);
+ const receipts=datasets.flatMap(d=>d.receipts);
+ const readCommittedEvidence=({runId:id,receiptId},run=readRun())=>{
+  if(id!==runId||run?.runId!==runId||!committed(run,'read_supplied_chart_data').some(c=>digest(c.value)===digest(readerResult)))return null;
+  return receipts.find(x=>x.receiptId===receiptId)??null;
+ };
+ const chart=createFinancialChartSkill({runId,readCommittedEvidence});
+ return [{
+  name:'read_supplied_chart_data',
+  description:'Resolve the explicitly supplied chart evidence for this turn. For multiple datasets, each entry is a separate chart selection. Does not read outside this Run.',
+  parameters:{type:'object',additionalProperties:false,properties:{}},
+  validate(args){if(!args||typeof args!=='object'||Array.isArray(args)||Object.keys(args).length)fail('CHART_REQUEST_INVALID');},
+  async execute(){return structuredClone(readerResult);},
+  async verifyResult(result){if(digest(result)!==digest(readerResult))fail('CHART_RESULT_CHANGED');},
+ },{
+  ...chart,
+  description:'Compile one operator-provided dataset. Pass the exact kind and ordered receiptIds from one selection returned by read_supplied_chart_data.',
+  parameters:{...chart.parameters,properties:{...chart.parameters.properties,kind:{type:'string',enum:selections.map(s=>s.kind)}}},
+  validate(selection){
+   chart.validate(selection);
+   const selected=digest(selection);
+   if(!selections.some(s=>digest(s)===selected)||!readCommittedEvidence({runId,receiptId:selection.receiptIds[0]}))fail('CHART_UNVERIFIED_SOURCE');
+   if(committed(readRun(),CHART_TOOL_NAME).some(c=>digest(c.arguments)===selected))fail('CHART_ALREADY_BUILT');
+  },
+  async verifyResult(value,{call}){
+   if(digest(value)!==digest(await chart.execute(call.arguments)))fail('CHART_RESULT_CHANGED');
+  },
+ }];
+}
+export async function readOwnerChartViews(run,{operatorText,chartSkill}={}){
  if(run?.status!=='completed'||run.rootStatus!=='completed'||run.snapshot.gatewayOutcome==='unknown'||run.snapshot.inFlight||
     run.snapshot.unknownEffects?.length||run.snapshot.partialEffects?.length)return [];
+ const supplied=inputChartChoice(chartSkill);
+ const datasets=supplied?suppliedChartDatasets(operatorText,run.runId):[];
+ const selections=suppliedSelections(datasets), readerResult=suppliedResult(selections);
  const accepted=committed(run,CHART_TOOL_NAME);
- if(accepted.length!==1)return [];
- const [chart]=accepted;
- // A chart can only use data preceding that chart call, not data acquired
- // afterward. The native result-consumed ordering defines this cutoff.
+ if(!supplied&&accepted.length!==1)return [];
+ const views=[],seen=new Set();
  const {messages}=run.snapshot;
- const at=messages.findIndex(m=>m.role==='tool'&&m.callId===chart.callId);
- if(at<0)return [];
- const prefix={...run,snapshot:{...run.snapshot,messages:messages.slice(0,at)}};
- return [await projectFinancialChart({runId:run.runId,callId:chart.callId,
-  readCommittedChartResult:()=>chart,readCommittedEvidence:({runId,receiptId})=>runId===prefix.runId?readWindEvidence(prefix,receiptId):null})];
+ for(const chart of accepted){
+  const selection=supplied?selections.find(s=>digest(s)===digest(chart.arguments)):null;
+  if(supplied&&(!selection||seen.has(selection.kind)))continue;
+  // A prior, accepted current-Run read must precede each accepted chart call.
+  const at=messages.findIndex(m=>m.role==='tool'&&m.callId===chart.callId);
+  if(at<0)continue;
+  const prefix={...run,snapshot:{...run.snapshot,messages:messages.slice(0,at)}};
+  const source=selection&&committed(prefix,'read_supplied_chart_data').some(c=>digest(c.value)===digest(readerResult))
+   ?datasets.find(d=>d.kind===selection.kind):null;
+  if(supplied&&!source)continue;
+  try{
+   views.push(await projectFinancialChart({runId:run.runId,callId:chart.callId,
+    readCommittedChartResult:()=>chart,readCommittedEvidence:({runId,receiptId})=>runId!==prefix.runId?null:supplied?source.receipts.find(x=>x.receiptId===receiptId)??null:readWindEvidence(prefix,receiptId)}));
+   if(selection)seen.add(selection.kind);
+  }catch(error){if(!supplied)throw error;}
+ }
+ return views;
 }

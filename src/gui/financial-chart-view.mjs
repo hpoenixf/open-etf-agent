@@ -9,10 +9,11 @@ const candle=v=>v&&Object.keys(v).sort().join(',')==='close,high,low,open'&&[v.o
  &&v.low>0&&v.low<=Math.min(v.open,v.close)&&v.high>=Math.max(v.open,v.close);
 function valid(view){
  if(view?.schemaVersion!=='financial-chart-view@1'||typeof view.integrity!=='string'||!/^[a-f0-9]{64}$/.test(view.integrity)
-  ||!['line','bar','pie','candlestick'].includes(view.chart)||![view.title,view.unit,view.asOf,view.basis].every(safe)||(view.periodStart!==null&&!safe(view.periodStart))
-  ||!['synthetic','provider-reported','document-reported'].includes(view.provenance)
+  ||!['line','bar','pie','candlestick','stacked'].includes(view.chart)||![view.title,view.unit,view.basis].every(safe)
+  ||!(safe(view.asOf)||view.asOf===null&&view.provenance==='user-supplied'&&['bar','stacked','pie'].includes(view.chart))||(view.periodStart!==null&&!safe(view.periodStart))
+  ||!['synthetic','provider-reported','document-reported','user-supplied'].includes(view.provenance)
   ||!Array.isArray(view.keys)||view.keys.length<1||view.keys.length>(['line','candlestick'].includes(view.chart)?180:24)||!view.keys.every(safe)
-  ||!Array.isArray(view.series)||!view.series.length||view.series.length>(view.chart==='line'?4:1))return false;
+  ||!Array.isArray(view.series)||!view.series.length||view.series.length>(['line','bar','stacked'].includes(view.chart)?4:1))return false;
  if(['line','candlestick'].includes(view.chart)&&!view.keys.every((x,i)=>/^\d{4}-\d{2}-\d{2}$/.test(x)&&Number.isFinite(Date.parse(x))&&(i===0||x>view.keys[i-1])))return false;
  if(!view.series.every(s=>safe(s?.label)&&Array.isArray(s.values)&&s.values.length===view.keys.length&&
    s.values.every(v=>v===null||(view.chart==='candlestick'?candle(v):number(v)))))return false;
@@ -34,9 +35,10 @@ export function createFinancialChartView(doc,view){
   if(text!==undefined)el.textContent=text;
   return el;
  };
- const figure=html('figure'), caption=html('figcaption',view.title+' · '+view.unit+' · 截至 '+view.asOf);
+ const figure=html('figure'), caption=html('figcaption',view.title+' · '+view.unit+(view.asOf===null?' · 未提供日期':' · 截至 '+view.asOf));
+ figure.setAttribute('class','financial-chart-figure');
  figure.append(caption,html('p',view.provenance==='synthetic'?'合成样例，不是实时数据。':
-  '按来源报告的数据，不代表独立验证或实时行情。'));
+  view.provenance==='user-supplied'?'用户提供的数据，未独立核验。':'按来源报告的数据，不代表独立验证或实时行情。'));
  const svg=svgEl('svg',{viewBox:'0 0 640 320',role:'img','aria-label':view.title});
  svg.append(svgEl('title',{},view.title),svgEl('desc',{},'下方表格列出原始数值、缺失项和口径。'));
  figure.append(svg);
@@ -57,17 +59,22 @@ export function createFinancialChartView(doc,view){
  }else{
   const flattened=view.series.flatMap(s=>s.values.filter(v=>v!==null).flatMap(v=>typeof v==='number'?[v]:[v.low,v.high]));
   if(!flattened.length)throw new Error('Empty approved chart projection');
-  if(view.chart==='bar')flattened.push(0);
+  const stacks=view.keys.map((_,j)=>view.series.reduce((pair,s)=>{
+   const v=s.values[j];if(v!==null)pair[v<0?0:1]+=v;return pair;
+  },[0,0]));
+  if(view.chart==='stacked')flattened.push(...stacks.flat());
+  if(['bar','stacked'].includes(view.chart))flattened.push(0);
   let lo=Math.min(...flattened),hi=Math.max(...flattened);
   if(lo===hi){const pad=Math.max(Math.abs(lo)*.08,.01);lo-=pad;hi+=pad;}
   const x0=66,x1=616,y0=18,y1=278,W=x1-x0;
   const y=v=>y1-(v-lo)/(hi-lo)*(y1-y0);
-  const dateAxis=view.chart!=='bar';
+  const dateAxis=['line','candlestick'].includes(view.chart);
   const xValues=dateAxis?view.keys.map(k=>Date.parse(k)):null;
   const x=i=>dateAxis?(xValues.length===1?(x0+x1)/2:x0+W*(xValues[i]-xValues[0])/(xValues.at(-1)-xValues[0])):x0+W*(i+.5)/view.keys.length;
   marks('line',{x1:x0,y1:y0,x2:x0,y2:y1,stroke:'#68737b'});
   marks('line',{x1:x0,y1:0>=lo&&0<=hi?y(0):y1,x2:x1,y2:0>=lo&&0<=hi?y(0):y1,stroke:'#68737b'});
   for(const value of [lo,hi])svg.append(svgEl('text',{x:x0-6,y:y(value)+4,'text-anchor':'end',fill:'#293542','font-size':11},fmt.format(value)));
+  const bases=view.keys.map(()=>[0,0]);
   view.series.forEach((s,i)=>{
    const color=COLORS[i];
    if(view.chart==='line'){
@@ -78,9 +85,16 @@ export function createFinancialChartView(doc,view){
      if(prior)marks('line',{x1:prior.x,x2:point.x,y1:prior.y,y2:point.y,stroke:color,'stroke-width':2});
      marks('circle',{cx:point.x,cy:point.y,r:2,fill:color});prior=point;
     });
-   }else if(view.chart==='bar'){
-    const width=Math.min(25, W/view.keys.length*.7);
-    s.values.forEach((v,j)=>{if(v!==null)marks('rect',{x:x(j)-width/2,y:Math.min(y(v),y(0)),width,height:Math.max(1,Math.abs(y(0)-y(v))),fill:color});});
+   }else if(['bar','stacked'].includes(view.chart)){
+    const stacked=view.chart==='stacked', slots=stacked?1:view.series.length;
+    const width=Math.min(25,W/view.keys.length*.75/slots);
+    s.values.forEach((v,j)=>{
+     if(v===null||v===0)return;
+     const b=stacked?bases[j][v<0?0:1]:0;
+     if(stacked)bases[j][v<0?0:1]+=v;
+     marks('rect',{x:x(j)+(stacked?-width/2:(i-slots/2)*width),y:Math.min(y(b),y(b+v)),width,
+      height:Math.abs(y(b)-y(b+v)),fill:color});
+    });
    }else{
     const width=Math.max(1,Math.min(10,W/view.keys.length*.6));
     s.values.forEach((v,j)=>{
@@ -95,6 +109,14 @@ export function createFinancialChartView(doc,view){
   [0,view.keys.length-1].filter((x,i,a)=>a.indexOf(x)===i).forEach(i=>svg.append(svgEl('text',
    {x:x(i),y:307,'text-anchor':i===0?'start':'end',fill:'#293542','font-size':11},view.keys[i].slice(0,18))));
  }
+ if(view.provenance==='user-supplied'){ const legend=html('p'); legend.setAttribute('aria-label','图例');legend.setAttribute('class','financial-chart-legend');
+ const legendItems=view.chart==='pie'?[...view.keys,view.coverage.remainderLabel]:view.series.map(s=>s.label);
+ legendItems.forEach((label,i)=>{
+  const swatch=svgEl('svg',{viewBox:'0 0 10 10',width:10,height:10,'aria-hidden':'true'});
+  swatch.append(svgEl('rect',{width:10,height:10,fill:view.chart==='pie'&&i===legendItems.length-1?'#8a9099':COLORS[i%COLORS.length]}));
+  const item=html('span');item.append(swatch,html('span',label));legend.append(item);
+ });
+ figure.append(legend); }
  const details=html('details');details.append(html('summary','查看数字、口径和证据'));
  details.append(html('p','统计口径：'+view.basis+(view.periodStart?' · 开始 '+view.periodStart:'')));
  const table=html('table'), header=html('tr'), body=html('tbody'), rows=[...view.keys];
@@ -111,7 +133,7 @@ export function createFinancialChartView(doc,view){
   });
   body.append(row);
  });
- details.append(table);
+ const tableWrap=html('div');tableWrap.setAttribute('class','financial-chart-table');tableWrap.append(table);details.append(tableWrap);
  details.append(html('p','证据回执：'+view.series.map(s=>typeof s.receiptId==='string'&&/^chart-evidence:sha256:[a-f0-9]{64}$/.test(s.receiptId)?s.receiptId:'不可用').join('、')));
  const sourceIds=[...new Set(view.series.flatMap(s=>Array.isArray(s.originReceiptIds)?s.originReceiptIds.slice(0,8):[]))]
   .filter(x=>typeof x==='string'&&/^(?:result|calculation|artifact|typed-source):sha256:[a-f0-9]{64}$/.test(x));

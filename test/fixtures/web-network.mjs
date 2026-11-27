@@ -14,11 +14,15 @@ export function mockWebNetwork(t,{routes={},addresses=[{address:'93.184.216.34',
   lookups.push(hostname);queueMicrotask(()=>callback(lookupError,typeof addresses==='function'?addresses(hostname):addresses));
  });
  t.mock.method(https,'request',(url,options,callback)=>{
-  const request=new EventEmitter();request.destroyed=false;request.destroy=()=>{request.destroyed=true;request.response?.destroy();return request;};
+  const request=new EventEmitter();request.destroyed=false;
+  let closeOnDestroy=false;
+  request.destroy=()=>{if(request.destroyed)return request;request.destroyed=true;request.response?.destroy();
+   if(closeOnDestroy)queueMicrotask(()=>request.emit('close'));return request;};
   request.end=()=>{calls.push({url:url.href,options});queueMicrotask(()=>{
    if(request.destroyed)return;
    const fixture=routes[url.href];if(!fixture){request.emit('error',new Error('UNEXPECTED_TEST_URL'));return;}
    const f=typeof fixture==='function'?fixture({url,options,calls}):fixture;
+   closeOnDestroy=f.closeOnDestroy===true;
    if(f.hang)return;if(f.error){request.emit('error',new Error('SYNTHETIC_NETWORK'));return;}
    const res=new PassThrough();request.response=res;res.statusCode=f.status??200;res.headers=f.headers??{'content-type':'text/plain; charset=utf-8'};
    callback(res);if(res.destroyed)return;
