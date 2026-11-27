@@ -5,7 +5,7 @@ import { lstatSync, openSync, closeSync } from 'node:fs';
 import { join } from 'node:path';
 import { setTimeout as delay } from 'node:timers/promises';
 import { ensureSafeDirectory, safeDirectory } from './storage-files.mjs';
-import { projectProviderProtocolDiagnostic } from './gateway.mjs';
+import { projectProviderProtocolDiagnostic, PROVIDER_IDLE_CODE } from './gateway.mjs';
 import { projectModelReservation } from './runtime.mjs';
 
 const APP_ID = 0x4f454144;
@@ -33,8 +33,9 @@ function reserved(session, runId, initial = false) {
 
 // One local capacity group, not a provider registry or a billing owner.
 // A dispatched request stays occupied until its original Gateway returns.
-export async function createSharedAdmission({ directory, routeId, maxQueue = 8, pollMs = 20, queueTimeoutMs = 30000, readOnly = false, existingOnly = false }) {
+export async function createSharedAdmission({ directory, routeId, maxQueue = 8, pollMs = 20, queueTimeoutMs = 30000, readOnly = false, existingOnly = false, capacity = 1 }) {
   if (typeof readOnly !== 'boolean' || typeof existingOnly !== 'boolean' || typeof routeId !== 'string' || !/^[A-Za-z0-9][A-Za-z0-9_.:/-]{0,199}$/.test(routeId)
+    || ![1,5].includes(capacity)
     || !Number.isSafeInteger(maxQueue) || maxQueue < 1 || maxQueue > 64
     || !Number.isSafeInteger(pollMs) || pollMs < 1 || pollMs > 1000
     || !Number.isSafeInteger(queueTimeoutMs) || queueTimeoutMs < 1 || queueTimeoutMs > 300000) fail('INVALID_ADMISSION_CONFIG');
@@ -127,7 +128,7 @@ export async function createSharedAdmission({ directory, routeId, maxQueue = 8, 
   });
   const acquire = requestId => transaction(() => {
     expireWaiting();
-    if (activeCount() !== 0) return false;
+    if (activeCount() >= capacity) return false;
     const first = db.prepare("SELECT request_id FROM requests WHERE state='queued' ORDER BY sequence LIMIT 1").get();
     if (first?.request_id !== requestId) return false;
     db.prepare("UPDATE requests SET state='admitted',updated_at=? WHERE request_id=? AND state='queued'").run(Date.now(), requestId);
@@ -189,8 +190,8 @@ export async function createSharedAdmission({ directory, routeId, maxQueue = 8, 
   return {
     recoverExpiredOwner,
     releaseUnknown({session,operationId,identity,expectedTicketSha256,reason,acknowledgements}={}){return appendRelease({session,operationId,identity,expectedTicketSha256,reason,acknowledgements});},
-    maintainUnknown({session,rootId}={}){
-      if(readOnly)fail('ADMISSION_READ_ONLY');if(typeof rootId!=='string'||!rootId)fail('ADMISSION_MAINTENANCE_ROOT_REQUIRED');
+    maintainUnknown({session,rootId,shortUnknown=false}={}){
+      if(readOnly)fail('ADMISSION_READ_ONLY');if(typeof rootId!=='string'||!rootId||typeof shortUnknown!=='boolean')fail('ADMISSION_MAINTENANCE_ROOT_REQUIRED');
       const observedAt=Date.now();if(!Number.isSafeInteger(observedAt)||observedAt<1)fail('ADMISSION_POLICY_CLOCK_INVALID');
       const items=[];
       for(const record of db.prepare("SELECT request_id FROM requests WHERE root_id=? AND state IN ('unknown','dispatched') ORDER BY sequence").all(rootId)){
@@ -204,15 +205,22 @@ export async function createSharedAdmission({ directory, routeId, maxQueue = 8, 
         const ticket=original,stop=originalStop,effectiveAt=Math.max(observedAt,stop?.observedAt??0),prior=validateRelease(ticket,releaseFor(ticket.ticketId));
         if(prior){items.push({ticketId:ticket.ticketId,state:'already-released',event:prior});continue;}
         if(!Number.isSafeInteger(ticket.createdAt)||ticket.createdAt<1||ticket.createdAt>effectiveAt){items.push({ticketId:ticket.ticketId,state:'blocked',code:'ADMISSION_POLICY_CLOCK_INVALID'});continue;}
-        const dueAt=ticket.createdAt+7200000;if(!Number.isSafeInteger(dueAt)){items.push({ticketId:ticket.ticketId,state:'blocked',code:'ADMISSION_POLICY_CLOCK_INVALID'});continue;}if(effectiveAt<=dueAt){items.push({ticketId:ticket.ticketId,state:'not-due',dueAt,observedAt});continue;}
+        // Start the short deadline at transition to unknown, not queueing.
+        // A still dispatched request is handled only by its live provider watchdog.
+        // Its branded error is persisted by Runtime, and the normal terminal
+        // owner proof below still must attest this exact Model reservation.
+        const silent=shortUnknown&&session.inspect(ticket.runId).snapshot?.outcome?.code===PROVIDER_IDLE_CODE;
+        const since=shortUnknown?ticket.updatedAt:ticket.createdAt,dueAt=since+(shortUnknown?180000:7200000);
+        if(!Number.isSafeInteger(since)||since<ticket.createdAt||since>effectiveAt||!Number.isSafeInteger(dueAt)){items.push({ticketId:ticket.ticketId,state:'blocked',code:'ADMISSION_POLICY_CLOCK_INVALID'});continue;}
+        if(shortUnknown?!silent&&effectiveAt<dueAt:effectiveAt<=dueAt){items.push({ticketId:ticket.ticketId,state:'not-due',dueAt,observedAt});continue;}
         try{
-          const event=appendRelease({session,operationId:'two-hour-'+digest({routeId,ticketId:ticket.ticketId,createdAt:ticket.createdAt}),identity:identityFor(ticket),expectedTicketSha256:digest({routeId,...ticket}),reason:'Standing two-hour local capacity policy; no remote settlement, replay or refund.',acknowledgements:{preserveUnknown:true,noReplay:true,noRefund:true},policy:'two-hour-local-release@1',expiry:{origin:'createdAt-includes-queue',createdAt:ticket.createdAt,dueAt,observedAt:effectiveAt}});
+          const event=appendRelease({session,operationId:(shortUnknown?'three-minute-':'two-hour-')+digest({routeId,ticketId:ticket.ticketId,createdAt:ticket.createdAt}),identity:identityFor(ticket),expectedTicketSha256:digest({routeId,...ticket}),reason:shortUnknown?(silent?'Owner GUI provider transport idle for three minutes; no remote settlement, replay or refund.':'Owner GUI three-minute terminal unknown policy; no remote settlement, replay or refund.'):'Standing two-hour local capacity policy; no remote settlement, replay or refund.',acknowledgements:{preserveUnknown:true,noReplay:true,noRefund:true},...(shortUnknown?{}:{policy:'two-hour-local-release@1',expiry:{origin:'createdAt-includes-queue',createdAt:ticket.createdAt,dueAt,observedAt:effectiveAt}})});
           items.push({ticketId:ticket.ticketId,state:'released',event});
         }catch(error){if(!['ADMISSION_RUN_NOT_TERMINAL','ADMISSION_RELEASE_SCOPE_UNSUPPORTED','ADMISSION_TERMINAL_RESERVATION_MISMATCH','ADMISSION_RELEASE_CAS','ADMISSION_RELEASE_CONFLICT'].includes(error.code))throw error;items.push({ticketId:ticket.ticketId,state:'blocked',code:error.code,dueAt,observedAt});}
       }
-      return {policy:'two-hour-local-release@1',origin:'createdAt-includes-queue',observedAt,items};
+      return {policy:shortUnknown?'three-minute-local-release@1':'two-hour-local-release@1',origin:shortUnknown?'entered-unknown':'createdAt-includes-queue',observedAt,items};
     },
-    snapshot() { return { routeId, capacity: 1, maxQueue, occupied:activeCount(),requests: db.prepare('SELECT request_id FROM requests ORDER BY sequence').all().map(x => projectRow(x.request_id)) }; },
+    snapshot() { return { routeId, capacity, maxQueue, occupied:activeCount(),requests: db.prepare('SELECT request_id FROM requests ORDER BY sequence').all().map(x => projectRow(x.request_id)) }; },
     inspect(ticketId) { return projectRow(ticketId); },
     inspectReservation(identity) { const value = db.prepare('SELECT request_id FROM requests WHERE reservation_id=?').get(reservationId(identity)); return value ? projectRow(value.request_id) : null; },
     close() { db.close(); },

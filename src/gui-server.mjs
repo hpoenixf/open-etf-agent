@@ -1,3 +1,5 @@
+import {ownerToolCatalog} from './gui-tool-catalog.mjs';
+import {isResearchSkillChoice} from './financial-analysis-methods.mjs';
 import {INPUT_CHART_SKILL,INPUT_CHART_AUTO,hasSuppliedChartData} from './financial-chart-input.mjs';
 import {dailyBriefLabel} from './conversation-daily-context.mjs';
 import {OWNER_CHART_SKILL,OWNER_CHART_AUTO} from './financial-chart-owner.mjs';
@@ -13,7 +15,7 @@ import {
   workConversationMessage, cancelConversationMessage,
   readConversationBody, readConversationSources,
 } from './conversation.mjs';
-import { createResearchProject, dailyWatchConfigVersion, inspectResearchProject, inspectResearchTask, readProjectJson, supportsOwnerFreeform, updateResearchProject, validateResearchConfig } from './research-project.mjs';
+import { createResearchProject, dailyWatchConfigVersion, inspectResearchProject, inspectResearchTask, maintainOwnerGuiAdmission, readProjectJson, supportsOwnerFreeform, updateResearchProject, validateResearchConfig } from './research-project.mjs';
 import { importProjectSources, importUploadedPdf, PROJECT_SOURCE_LIMITS } from './project-sources.mjs';
 import { ensureSafeDirectory, publishImmutable, safeDirectory } from './storage-files.mjs';
 import { OWNER_LINKED_PDF_REVISION, prepareOwnerSearch } from './gui-owner-web.mjs';
@@ -137,6 +139,10 @@ export async function createLocalGuiWorkspace({ projectDir, origin: mountOrigin,
   const expectedConfig=live?.config??validatedConfig;
   const wrongProject=live?'GUI_LIVE_PROJECT_REQUIRED':'GUI_DEMO_PROJECT_REQUIRED';
   const freeform=supportsOwnerFreeform(expectedConfig);
+  const admissionMode=env.ETF_GUI_CONCURRENT_ADMISSION;
+  if(admissionMode!==undefined&&!['0','1'].includes(admissionMode))reject(500,'GUI_ADMISSION_MODE_INVALID');
+  if(admissionMode==='1'&&!freeform)reject(500,'GUI_ADMISSION_MODE_UNSUPPORTED');
+  const ownerAdmission=admissionMode==='1',workerCapacity=ownerAdmission?5:1;
   const needsConsent=live&&!freeform;
   const reasoningEffort=offerReasoningEffort(expectedConfig);
   const connectivity=expectedConfig.ownerConnectivity??{};
@@ -181,7 +187,22 @@ export async function createLocalGuiWorkspace({ projectDir, origin: mountOrigin,
   const dailyAutorun=!!daily&&env.ETF_GUI_DAILY_AUTORUN==='1';
   let dailyLoop=null,dailyFlight=null,digestFlight=null;
   const publicSources = demo.sources.map(({ id, title }) => ({ id, title }));
-  let origin=mountOrigin, working = null, submitting = null;
+  let origin=mountOrigin;
+  // Explicit owner-only launch opt-in. A conversation remains single-worker so
+  // admission does not capture a racing/incomplete predecessor as history.
+  const working=new Map(),submitting=new Set();
+  let admissionLoop,admissionFlight;
+  const sweepAdmission=()=>{
+    if(!ownerAdmission||hostSignal.signal.aborted)return;
+    if(!admissionFlight)admissionFlight=maintainOwnerGuiAdmission({projectDir}).catch(()=>{/* Keep unavailable evidence held. */}).finally(()=>{admissionFlight=null;});
+    return admissionFlight;
+  };
+  const used=()=>new Set([...working.keys(),...submitting]).size;
+  const reserve=key=>{
+    if(submitting.has(key)||[...working.keys(),...submitting].some(other=>other!==key&&other.split('/')[0]===key.split('/')[0])
+       ||(!working.has(key)&&used()>=workerCapacity))reject(409,'GUI_WORKER_BUSY');
+    submitting.add(key);
+  };
   function observedResearchRoute(input,run) {
     if(!run)return null;
     if(input.researchDepth==='auto'&&isAutoResearchProfile(run.definition?.config?.researchProfile)){
@@ -221,7 +242,7 @@ export async function createLocalGuiWorkspace({ projectDir, origin: mountOrigin,
     const messages = [];
     for (const m of c.messages) {
       const key = workKey(conversationId, m.messageId);
-      const workerWasRunning = working?.key === key;
+      const workerWasRunning = working.has(key);
       let run, output = null, error = null;
       const input = await readConversationInput({ projectDir, conversationId, messageId: m.messageId });
       if (m.status !== 'admission-pending') {
@@ -245,7 +266,7 @@ export async function createLocalGuiWorkspace({ projectDir, origin: mountOrigin,
       messages.push({
         id: m.messageId, runId: m.runId, status, phase: run?.snapshot?.phase ?? null,
         // A worker can finish during these reads. Keep polling an active snapshot.
-        code: run?.snapshot?.code ?? null, working: status === 'active' && (workerWasRunning || working?.key === key),
+        code: run?.snapshot?.code ?? null, working: status === 'active' && (workerWasRunning || working.has(key)),
         question: input.text, sourceId: input.sourceManifestSha256, ...(effort?{reasoningEffort:effort}:{}), ...(chartViews.length?{chartViews}:{}), ...(input.researchDepth===undefined?{}:{researchDepth:input.researchDepth}), ...(effectiveResearchIntent?{effectiveResearchIntent}:{}), ...(deepProgress?{deepProgress}:{}), ...(['research','deep'].includes(effectiveResearchIntent)&&output?{evidenceAssessment:'unreviewed'}:{}), ...(freeform&&input.sourceManifestSha256?{attachment:await pdfAttachment(conversationId,input.sourceManifestSha256)}:{}), output, error,
       });
     }
@@ -263,14 +284,14 @@ export async function createLocalGuiWorkspace({ projectDir, origin: mountOrigin,
   }
   function begin(conversationId, messageId, sourceId) {
     const key = workKey(conversationId, messageId);
-    if (working?.key === key) return;
-    if (working) reject(409, 'GUI_WORKER_BUSY');
+    if (working.has(key)) return;
+    if (hostSignal.signal.aborted||working.size>=workerCapacity||[...working.keys()].some(other=>other.split('/')[0]===conversationId))reject(409,'GUI_WORKER_BUSY');
     const source = sourceFor(sourceId);
     if (!freeform&&!source) reject(409, 'GUI_SOURCE_UNKNOWN');
     const trace=telemetry?.start();
     const p = Promise.resolve().then(() =>
       workConversationMessage({ projectDir, conversationId, messageId,
-        ...(live?{apiKey:live.apiKey,fetchImpl,ownerWebTransport,ownerWindSettings,ownerSearchSettings,ownerWindFetch,observeGuiRun:trace?.observe}:{gateway:demoGateway(source)}), hostSignal: hostSignal.signal })
+        ...(live?{apiKey:live.apiKey,fetchImpl,ownerWebTransport,ownerWindSettings,ownerSearchSettings,ownerWindFetch,ownerAdmission,observeGuiRun:trace?.observe}:{gateway:demoGateway(source)}), hostSignal: hostSignal.signal })
     ).catch(() => { /* Lifecycle and original execution evidence remain in Project. */ });
     if(trace)void p.then(async()=>{
       const turn=await inspectConversationMessage({projectDir,conversationId,messageId});
@@ -294,8 +315,8 @@ export async function createLocalGuiWorkspace({ projectDir, origin: mountOrigin,
         admittedAt:run.definition?.deadlineAt-run.definition?.limits?.timeoutMs,
         modelUsed:run.rootUsage.model,toolUsed:run.rootUsage.tool,modelLimit:definition.config.limits.model,toolLimit:definition.config.limits.tool});
     }).catch(()=>{});
-    working = { key, p };
-    p.finally(() => { if (working?.p === p) working = null; });
+    working.set(key,p);
+    p.finally(() => { if (working.get(key)===p) working.delete(key); });
     return p;
   }
   async function sweepDailyEmail(){
@@ -365,11 +386,12 @@ export async function createLocalGuiWorkspace({ projectDir, origin: mountOrigin,
         }catch{ /* Missing or unreadable original evidence remains held/unknown. */ }
       }
       await sweepDailyEmail();
-      if(working||submitting||hostSignal.signal.aborted||!isDeepStrictEqual((await inspectResearchProject({projectDir})).config,expectedConfig)||working||submitting||hostSignal.signal.aborted)return;
+      if(used()||hostSignal.signal.aborted||!isDeepStrictEqual((await inspectResearchProject({projectDir})).config,expectedConfig)||used()||hostSignal.signal.aborted)return;
       const occurrence=daily.claim(dailyConfigVersion,{perWatchEmail:!digestProfile,fullWatchEmail:!!fullWatch,emailVersion});
       if(!occurrence)return;
       const {conversationId,messageId,question}=occurrence;
-      submitting=workKey(conversationId,messageId);
+      const dailyKey=workKey(conversationId,messageId);
+      reserve(dailyKey);
       let runId, runWork;
       try{
         await createConversation({projectDir,conversationId});
@@ -394,7 +416,7 @@ export async function createLocalGuiWorkspace({ projectDir, origin: mountOrigin,
         runId=turn.runId;
         daily.settlement(occurrence,'submitted',runId);
         if(turn.status==='active'&&!hostSignal.signal.aborted)runWork=begin(conversationId,messageId,null);
-      }catch{daily.settlement(occurrence,'unknown',runId);return;}finally{submitting=null;}
+      }catch{daily.settlement(occurrence,'unknown',runId);return;}finally{submitting.delete(dailyKey);}
       await runWork;
       const {run}=await inspectResearchTask({projectDir,runId});
       if(!['completed','failed','cancelled'].includes(run.status)){daily.settlement(occurrence,'unknown',runId);return;}
@@ -424,7 +446,8 @@ export async function createLocalGuiWorkspace({ projectDir, origin: mountOrigin,
         if (asset) return send(200, asset.bytes, asset.type+'; charset=utf-8');
         if (req.url === '/api/workspace') return send(200, {
           schemaVersion: 'local-gui@1', mode, reasoningEffort,
-          ...(live?{liveNotice:{maxModelCallsPerRun:expectedConfig.limits.model,...(freeform?{freeform:true,connectivity:{web:connectivity.web===true,...(connectivity.linkedPdf===true?{linkedPdf:true}:{}),search:!!connectivity.search,...(connectivity.search?{searchProvider:connectivity.search}:{}),...(connectivity.searchAlternates?{searchAlternates:connectivity.searchAlternates}:{}),wind:connectivity.wind===true}}:{})}}:{}),
+          ...(freeform?{toolCatalog:ownerToolCatalog({connectivity,chartAvailable,chartAuto,dailyBrief:Boolean(dailyBriefSkill)})}:{}),
+          ...(live?{liveNotice:{...(ownerAdmission?{maxConcurrentRuns:workerCapacity}:{}),maxModelCallsPerRun:expectedConfig.limits.model,...(freeform?{freeform:true,connectivity:{web:connectivity.web===true,...(connectivity.linkedPdf===true?{linkedPdf:true}:{}),search:!!connectivity.search,...(connectivity.search?{searchProvider:connectivity.search}:{}),...(connectivity.searchAlternates?{searchAlternates:connectivity.searchAlternates}:{}),wind:connectivity.wind===true}}:{})}}:{}),
           capabilities: ['conversations','progress','reports','sources','read-web-sources',...(freeform?['pdf-attachment','daily-watch','deep-research','research-intent']:[]),...(chartAvailable?['financial-chart-skill']:[]),...(chartAuto?['financial-chart-auto']:[])],
           projectId: demo.projectId, conversations: await list({titles:true}), sources: publicSources,
         });
@@ -536,13 +559,14 @@ export async function createLocalGuiWorkspace({ projectDir, origin: mountOrigin,
       if (!action) {
         const input = await inputFor(req);
         if (needsConsent && input?.approveLive!==true) reject(400,'GUI_LIVE_APPROVAL_REQUIRED');
-        if (!exact(input, freeform?['messageId','question',...(Object.hasOwn(input??{},'attachmentId')?['attachmentId']:Object.hasOwn(input??{},'chartSkill')?['chartSkill']:[]),...(Object.hasOwn(input??{},'researchDepth')?['researchDepth']:[]),...(Object.hasOwn(input??{},'reasoningEffort')?['reasoningEffort']:[])]:needsConsent?['messageId','question','sourceId','approveLive']:['messageId','question','sourceId']) || typeof input.messageId !== 'string'
+        if (!exact(input, freeform?['messageId','question',...(Object.hasOwn(input??{},'attachmentId')?['attachmentId']:Object.hasOwn(input??{},'chartSkill')?['chartSkill']:[]),...(Object.hasOwn(input??{},'researchDepth')?['researchDepth']:[]),...(Object.hasOwn(input??{},'reasoningEffort')?['reasoningEffort']:[]),...(Object.hasOwn(input??{},'skillId')?['skillId']:[])]:needsConsent?['messageId','question','sourceId','approveLive']:['messageId','question','sourceId']) || typeof input.messageId !== 'string'
           || !idPattern.test(input.messageId) || typeof input.question !== 'string' || !input.question.trim()
           || (Object.hasOwn(input,'researchDepth')&&!['auto','standard','deep'].includes(input.researchDepth)) || Buffer.byteLength(input.question)>12000 || !freeform&&!sourceFor(input.sourceId)) reject(400,'INVALID_MESSAGE');
         if (Object.hasOwn(input,'reasoningEffort')&&!reasoningEffort.options.includes(input.reasoningEffort))reject(400,'GUI_REASONING_EFFORT_UNSUPPORTED');
         if (Object.hasOwn(input,'chartSkill')&&(!chartAvailable||input.chartSkill!==OWNER_CHART_SKILL))reject(400,'GUI_CHART_SKILL_UNAVAILABLE');
-        if (submitting || (working && working.key !== workKey(conversationId,input.messageId))) reject(409,'GUI_WORKER_BUSY');
-        submitting = workKey(conversationId,input.messageId);
+        if (Object.hasOwn(input,'skillId')&&(!freeform||!isResearchSkillChoice(input.skillId)))reject(400,'GUI_RESEARCH_SKILL_UNAVAILABLE');
+        const inputKey=workKey(conversationId,input.messageId);
+        reserve(inputKey);
         try {
           if (!isDeepStrictEqual((await inspectResearchProject({projectDir})).config,expectedConfig)) reject(409,wrongProject);
           // A live replay acknowledges the same accepted intent. It does not restart work.
@@ -564,12 +588,12 @@ export async function createLocalGuiWorkspace({ projectDir, origin: mountOrigin,
            explicit?(connectivity.wind?OWNER_CHART_SKILL:undefined):
            freeform&&!attachment&&input.researchDepth!=='standard'&&chartAuto?OWNER_CHART_AUTO:undefined;
           const m = await submitConversationMessage({ projectDir, conversationId, messageId: input.messageId,
-            text: input.question, sourceManifestSha256: sourceId,
+            text: input.question, sourceManifestSha256: sourceId, skillId:input.skillId,
             ownerLinkedPdfRevision:retry?priorInput?.ownerLinkedPdfRevision:live&&freeform&&!attachment&&connectivity.linkedPdf===true?OWNER_LINKED_PDF_REVISION:undefined,...(chartSkill?{chartSkill}:{}),...(input.researchDepth===undefined?{}:{researchDepth:input.researchDepth}),...(input.reasoningEffort===undefined?{}:{reasoningEffort:input.reasoningEffort}),
             ...(live?{authorization:{providerApproved:true,dataApproved:true,costApproved:true}}:{}) });
           if (m.status === 'active' && !retry) begin(conversationId,input.messageId,sourceId);
           return send(202,{ id:m.messageId,runId:m.runId,status:m.status });
-        } finally { submitting = null; }
+        } finally { submitting.delete(inputKey); }
       }
       const actionInput=await inputFor(req);
       if (needsConsent && action==='work' && actionInput?.approveLive!==true) reject(400,'GUI_LIVE_APPROVAL_REQUIRED');
@@ -581,18 +605,23 @@ export async function createLocalGuiWorkspace({ projectDir, origin: mountOrigin,
         const result = await cancelConversationMessage({ projectDir, conversationId, messageId });
         return send(200, { status: result.status ?? 'cancel-requested' });
       }
-      if (submitting || found.status !== 'active') reject(409,'RUN_NOT_ACTIVE');
+      if (found.status !== 'active') reject(409,'RUN_NOT_ACTIVE');
+      const retryKey=workKey(conversationId,messageId);
+      reserve(retryKey);
+      try {
       const { definition } = await inspectResearchTask({ projectDir,runId:found.runId });
       if (!isDeepStrictEqual(definition.config,expectedConfig)) reject(409,wrongProject);
       if (freeform&&definition.sourceManifestSha256!==null&&!(await pdfAttachment(conversationId,definition.sourceManifestSha256))) reject(409,'GUI_LIVE_LEGACY_RETRY_DISABLED');
       begin(conversationId,messageId,definition.sourceManifestSha256);
       return send(202, { id: messageId });
+      } finally { submitting.delete(retryKey); }
     } catch (e) {
       const code = e.status ? e.message : typeof e.code === 'string' && /^[A-Z0-9_]+$/.test(e.code) ? e.code : 'GUI_REQUEST_FAILED';
       const status = e.status ?? (code==='ENOENT'||code==='UNKNOWN_RUN'?404:code.includes('ID_CONFLICT')?409:code==='PDF_LIMIT_BYTES'||code==='PDF_LIMIT_PAGES'||code==='PDF_LIMIT_TEXT'?413:code==='PROJECT_SOURCE_INVALID_INPUT'||code==='PDF_ENCRYPTED'||code==='PDF_PARSE_FAILED'||code==='PDF_INVALID_FORMAT'||code==='PDF_NO_TEXT_LAYER'||code==='PDF_TIMEOUT'?422:500);
       if (!res.headersSent && !res.destroyed) send(status,{ error:code });
     }
   }
+  if(ownerAdmission){await sweepAdmission();admissionLoop=setInterval(sweepAdmission,5000);admissionLoop.unref?.();}
   if(telemetry?.sweep){
     // Initialize the telemetry horizon before this workspace can admit new runs.
     await telemetry.sweep(projectDir).catch(()=>{});
@@ -603,8 +632,8 @@ export async function createLocalGuiWorkspace({ projectDir, origin: mountOrigin,
   let closing;
   return {handle,setOrigin,mode,sweepDaily,sweepDigest,async close(){
     if(!closing){
-      clearInterval(dailyLoop);clearInterval(telemetryLoop);hostSignal.abort();
-      closing=Promise.allSettled([working?.p,dailyFlight,digestFlight]).then(()=>daily?.close());
+      clearInterval(dailyLoop);clearInterval(telemetryLoop);clearInterval(admissionLoop);hostSignal.abort();
+      closing=Promise.allSettled([...working.values(),dailyFlight,digestFlight,admissionFlight]).then(()=>daily?.close());
     }
     await closing;
   }};

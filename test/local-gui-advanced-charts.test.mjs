@@ -23,7 +23,7 @@ const fenced=d=>'请只用我给出的合成数据作图。\n'+String.fromCharCo
 
 function dom(){
  const nodes=[];
- const create=tag=>{const n={tag,textContent:'',attrs:{},children:[],events:{},addEventListener(type,handler){this.events[type]=handler;},append(...items){this.children.push(...items);},setAttribute(k,v){this.attrs[k]=v;}};nodes.push(n);return n;};
+ const create=tag=>{const n={tag,textContent:'',attrs:{},children:[],events:{},addEventListener(type,handler){this.events[type]=handler;},append(...items){this.children.push(...items);},replaceChildren(...items){this.children=items;},setAttribute(k,v){this.attrs[k]=v;}};nodes.push(n);return n;};
  return {nodes,createElement:create,createElementNS:(_,tag)=>create(tag)};
 }
 test('advanced charts reject malformed or unproved input, inconsistent data and unsupported chart inference',async()=>{

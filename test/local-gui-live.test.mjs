@@ -345,3 +345,74 @@ for (const status of [403,429]) test('owner Go HTTP '+status+' is visible and re
   assert.equal(attempts,1);
   assert.deepEqual(await readUsage(),original);
 });
+
+test('explicit owner five-lane mode dispatches independent conversations and preserves exact replay',async t=>{
+  const f=await fixture(t,goConfig),pending=[];
+  let peak=0,active=0,calls=0;
+  const options={env:{...env,ETF_GUI_CONCURRENT_ADMISSION:'1'},fetchImpl:async(_,o)=>{
+    calls++;active++;peak=Math.max(peak,active);
+    return new Promise((resolve,reject)=>{
+      const abort=()=>{active--;reject(o.signal.reason);};
+      o.signal.addEventListener('abort',abort,{once:true});
+      pending.push(()=>{o.signal.removeEventListener('abort',abort);active--;resolve(choice({content:'synthetic answer'},'stop'));});
+    });
+  }};
+  const gui=await f.launch(options),secondHost=await f.launch(options);
+  const ids=[];
+  for(let i=0;i<6;i++)ids.push((await gui.post('/api/conversations',{}).then(r=>r.json())).id);
+  const path=i=>'/api/conversations/'+ids[i];
+  const send=(i,messageId='one')=>gui.post(path(i)+'/messages',{messageId,question:'Synthetic query.'});
+  const first=await Promise.all(ids.slice(0,5).map((_,i)=>send(i)));
+  assert.deepEqual(first.map(r=>r.status),[202,202,202,202,202]);
+  for(let i=0;i<120&&pending.length!==5;i++)await delay(20);
+  assert.equal(pending.length,5);
+  assert.equal(peak,5);
+  const over=await send(5);assert.equal(over.status,409);assert.equal((await over.json()).error,'GUI_WORKER_BUSY');
+  const same=await send(0,'another');assert.equal(same.status,409);
+  assert.equal((await send(0)).status,202);
+  assert.equal(calls,5);
+  // A second GUI instance has no process-local knowledge of the first five.
+  // The original SQLite admission ledger must independently queue its dispatch.
+  const sixth=await secondHost.post(path(5)+'/messages',{messageId:'one',question:'Synthetic query.'});
+  assert.equal(sixth.status,202);
+  const {runId}=await sixth.json();
+  let sixthQueued=false;
+  for(let i=0;i<120&&!sixthQueued;i++){
+    sixthQueued=(await inspectResearchCapacity({projectDir:f.dir,runId})).requests.some(r=>r?.state==='queued');
+    if(!sixthQueued)await delay(20);
+  }
+  assert.equal(sixthQueued,true);assert.equal(calls,5);
+  pending.shift()();
+  for(let i=0;i<120&&calls!==6;i++)await delay(20);
+  assert.equal(calls,6);assert.equal(peak,5);assert.equal(pending.length,5);
+  pending.splice(0).forEach(release=>release());
+  await Promise.all(ids.map((_,i)=>settled(gui,path(i))));
+});
+
+test('owner five-lane startup releases a mature legacy unknown without dispatch or changing the original run',async t=>{
+  const f=await fixture(t,goConfig);let calls=0;
+  const base=await f.launch({fetchImpl:async()=>{calls++;throw new Error('Synthetic connection loss');}});
+  const id=(await base.post('/api/conversations',{}).then(r=>r.json())).id,path='/api/conversations/'+id;
+  const input={messageId:'one',question:'Synthetic old question.'};
+  const response=await base.post(path+'/messages',input);
+  assert.equal(response.status,202);
+  const {runId}=await response.json();
+  let before;
+  for(let i=0;i<120;i++){
+    before=(await base.get(path).then(r=>r.json())).messages[0];
+    if(before.status==='failed')break;
+    await delay(20);
+  }
+  assert.equal(before.status,'failed');
+  await base.close();
+  const original=(await inspectResearchCapacity({projectDir:f.dir,runId})).requests[0];
+  assert.equal(original.state,'unknown');assert.equal(original.localRelease,undefined);
+  t.mock.timers.enable({apis:['Date'],now:original.updatedAt+180000});
+  const reopened=await f.launch({env:{...env,ETF_GUI_CONCURRENT_ADMISSION:'1'},fetchImpl:async()=>{calls++;return choice({content:'not used'},'stop');}});
+  const projected=(await inspectResearchCapacity({projectDir:f.dir,runId})).requests[0];
+  assert.equal(projected.state,'unknown');
+  assert.equal(projected.localRelease.remoteOutcome,'unknown');assert.equal(projected.localRelease.billingOutcome,'unknown');
+  assert.equal(projected.ticketSha256,original.ticketSha256);
+  assert.deepEqual((await reopened.get(path).then(r=>r.json())).messages[0],before);
+  assert.equal((await reopened.post(path+'/messages',input)).status,202);assert.equal(calls,1);
+});
