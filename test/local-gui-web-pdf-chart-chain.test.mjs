@@ -7,6 +7,7 @@ import {chartComputeAvailable,CHART_PDF_COMPUTE_CANONICAL} from '../src/financia
 import {OWNER_LINKED_PDF_INDEXED_CELLS} from '../src/gui-owner-web.mjs';
 import {inspectResearchTask} from '../src/research-project.mjs';
 import {startLocalGui} from '../src/gui-server.mjs';
+import {createFinancialChartView} from '../src/gui/financial-chart-view.mjs';
 import {mockWebNetwork} from './fixtures/web-network.mjs';
 import {pdf} from './fixtures/native-table-pdf.mjs';
 
@@ -59,7 +60,9 @@ test('HTML to linked native cells to controlled chart, with exact original-sourc
    }
    if(p.length===7){
     assert.equal(p[6].value[0],null);assert.ok(Math.abs(p[6].value[1]-25)<1e-12);assert.deepEqual(p[6].sourceRefs,refs);assert.equal(p[6].formulaCallId,'calc');
-    return proposal(call('chart','render_financial_chart',{dataset:{kind:'financial-columns',asOf:null,unit:'%',keys:['2025','2026'],series:[{label:'NAV growth',formulaCallId:'calc'}]}}));
+    return proposal(
+     call('chart','render_financial_chart',{dataset:{kind:'financial-columns',asOf:null,unit:'%',keys:['2025','2026'],series:[{label:'NAV growth',formulaCallId:'calc'}]}}),
+     call('raw-chart','render_financial_chart',{evidence:[refs[0]],dataset:{kind:'financial-columns',asOf:null,unit:'%',keys:['2025'],series:[{label:'NAV',values:[99]}]}}));
    }
    assert.equal(p[7].view.series[0].values[0],null);assert.ok(Math.abs(p[7].view.series[0].values[1]-25)<1e-12);
    assert.equal(p[7].view.provenance,'agent-supplied');
@@ -86,6 +89,19 @@ test('HTML to linked native cells to controlled chart, with exact original-sourc
  const cells=sources.readSources.filter(x=>x.kind==='web-pdf-original-cell@1');
  assert.deepEqual(cells.map(x=>[x.cited,x.page,x.cell.header,x.cell.unit]),[[true,1,'2025','%'],[true,1,'2026','%']]);
  assert.deepEqual(m.chartViews[0].sources.map(x=>[x.ref,x.url]),refs.map(ref=>[ref,filing+'#page=1']));
+ assert.equal(m.chartViews.length,2);
+ function assertRawChart(view){
+  assert.equal(view.provenance,'agent-supplied');
+  assert.deepEqual(view.series[0].values,[99]);
+  assert.deepEqual(view.sources.map(x=>[x.ref,x.url]),[[refs[0],filing+'#page=1']]);
+  const nodes=[];
+  const create=tag=>{const node={tag,textContent:'',attrs:{},append(){},setAttribute(k,v){this.attrs[k]=v;}};nodes.push(node);return node;};
+  createFinancialChartView({createElement:create,createElementNS:(_,tag)=>create(tag)},view);
+  assert.ok(nodes.some(n=>n.textContent.includes('图中数值未逐项核验')));
+  assert.ok(!nodes.some(n=>n.textContent.includes('按来源报告的数据')));
+  assert.ok(nodes.some(n=>n.tag==='a'&&n.attrs.href===filing+'#page=1'));
+ }
+ assertRawChart(m.chartViews[1]);
  const before=[modelCalls,network.calls.length];
  assert.equal(network.calls.filter(x=>x.url===filing).length,1);
  // Disable the opt-in admissions on the same runtime binary. History must use
@@ -93,7 +109,9 @@ test('HTML to linked native cells to controlled chart, with exact original-sourc
  await gui.close();gui=await startLocalGui({...options,env:{ETF_GUI_PROVIDER_KEY:'test-only'}});
  assert.deepEqual(await get(base+'/sources'),sources);
  assert.deepEqual(await get(base+'/body'),body);
- assert.deepEqual((await get(conv)).messages[0].chartViews,m.chartViews);
+ const coldCharts=(await get(conv)).messages[0].chartViews;
+ assert.deepEqual(coldCharts,m.chartViews);
+ assertRawChart(coldCharts[1]);
  assert.deepEqual([modelCalls,network.calls.length],before);
 });
 

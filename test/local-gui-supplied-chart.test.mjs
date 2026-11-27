@@ -24,7 +24,9 @@ test('Owner gets four typed user-supplied charts via GUI tool calls, with cold r
   assert.equal(replies[1].provenance,'user-supplied');
   return result({content:answer});
  };
- const start=async()=>{gui=await startLocalGui({projectDir,liveConfig,env:{ETF_GUI_PROVIDER_KEY:'test-only'},fetchImpl});};
+ const start=async()=>{gui=await startLocalGui({projectDir,
+  liveConfig:{...liveConfig,connectivity:{...liveConfig.connectivity,linkedPdf:true}},
+  env:{ETF_GUI_PROVIDER_KEY:'test-only',ETF_GUI_AGENT_FINANCIAL_CHART:'1',ETF_GUI_CHART_COMPUTE:'1',ETF_GUI_PDF_CHART_CHAIN:'1'},fetchImpl});};
  t.after(async()=>{await gui?.close();await rm(projectDir,{recursive:true,force:true});});
  const post=(path,body)=>fetch(gui.origin+path,{method:'POST',headers:{origin:gui.origin,'content-type':'application/json'},body:JSON.stringify(body)});
  const get=path=>fetch(gui.origin+path).then(r=>r.json());
