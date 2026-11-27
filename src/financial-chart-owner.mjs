@@ -1,12 +1,13 @@
 import { createHash } from 'node:crypto';
 import { CHART_TOOL_NAME, createFinancialChartSkill, projectFinancialChart, sealFinancialChartEvidence } from './financial-chart.mjs';
 
-import {AGENT_CHART_SKILL,readAgentChartViews} from './financial-chart-agent.mjs';
+import {CHART_COMPUTE_DATE_MODE} from './financial-chart-compute.mjs';
+import {agentChartChoice,readAgentChartViews} from './financial-chart-agent.mjs';
 import {inputChartChoice,suppliedChartDatasets} from './financial-chart-input.mjs';
 
 export const OWNER_CHART_SKILL='financial-chart@1';
 export const OWNER_CHART_AUTO='financial-chart-auto@1';
-export const ownerChartChoice=value=>value===AGENT_CHART_SKILL||value===OWNER_CHART_SKILL||value===OWNER_CHART_AUTO||inputChartChoice(value);
+export const ownerChartChoice=value=>agentChartChoice(value)||value===OWNER_CHART_SKILL||value===OWNER_CHART_AUTO||inputChartChoice(value);
 export const OWNER_CHART_AUTO_GUIDANCE='If a supported daily exchange-close chart materially assists this question, you may invoke the Financial Chart Skill. Use only the evidence receipt returned by prior Wind tool work in this Run. Do not force a chart or claim NAV or OHLC from a close-only source.';
 export const OWNER_CHART_GUIDANCE='The operator selected the Financial Chart Skill for this turn. When appropriate, first acquire Wind exchange closes, then call build_financial_chart using the chartEvidenceReceiptId on the accepted result, not values in text. This adapter supports only unadjusted exchange close, not NAV or candlesticks. If no usable evidence, say so; never emit chart markup in your answer.';
 const id=x=>typeof x==='string'&&/^[A-Za-z0-9][A-Za-z0-9_.:-]{0,199}$/.test(x);
@@ -139,8 +140,8 @@ export function openSuppliedChartTools({runId,readRun,operatorText}){
 export async function readOwnerChartViews(run,{operatorText,chartSkill}={}){
  if(run?.status!=='completed'||run.rootStatus!=='completed'||run.snapshot.gatewayOutcome==='unknown'||run.snapshot.inFlight||
     run.snapshot.unknownEffects?.length||run.snapshot.partialEffects?.length)return [];
- if(chartSkill===AGENT_CHART_SKILL){
-  const agent=await readAgentChartViews(run);
+ if(agentChartChoice(chartSkill)){
+  const agent=await readAgentChartViews(run,{dateSafe:chartSkill===CHART_COMPUTE_DATE_MODE,operatorText});
   let wind=[];try{wind=await readOwnerChartViews(run,{operatorText,chartSkill:OWNER_CHART_AUTO});}catch{/* Separately verified view. */}
   return [...agent,...wind];
  }

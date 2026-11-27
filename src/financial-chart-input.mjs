@@ -35,12 +35,12 @@ function proseDatasets(text){
  });
  return new Set(ds.map(d=>d.kind)).size===ds.length?ds:null;
 }
-export function sealDataset(d,runId,{prose=false,sourceText=null,position=0,modelCallId,sourceRefs=[],sourceChecked=false}={}){
+export function sealDataset(d,runId,{prose=false,sourceText=null,position=0,modelCallId,sourceRefs=[],sourceChecked=false,allowUndatedModelCategory=false}={}){
  if(!exact(d,'asOf,keys,kind,series,unit')||typeof d.kind!=='string')throw new Error('invalid dataset');
  const limits=financialChartInputLimits(d.kind);
  if(!limits||!Array.isArray(d.keys)||!Array.isArray(d.series)||d.series.length<limits.minSeries||
     d.series.length>limits.maxSeries||d.keys.length<limits.minPoints||d.keys.length>limits.maxPoints||
-    (!prose&&d.asOf===null))throw new Error('invalid dataset');
+    (!prose&&d.asOf===null&&!(modelCallId&&allowUndatedModelCategory&&limits.dimension==='category')))throw new Error('invalid dataset');
  if(d.kind==='financial-share'){
    const total=d.series[0]?.values?.reduce((a,v)=>a+(v??0),0);
    if(prose&&(!(total>0)||total>100+1e-9))throw new Error('invalid share');

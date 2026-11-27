@@ -1,12 +1,16 @@
 import {readFileSync} from 'node:fs';
 import {createHash} from 'node:crypto';
 import {isDeepStrictEqual} from 'node:util';
+import {CHART_COMPUTE_DATE_MODE,chartComputeMode} from './financial-chart-compute.mjs';
 import {sealDataset} from './financial-chart-input.mjs';
 import {compileFinancialChart} from './financial-chart.mjs';
 
 export const AGENT_CHART_SKILL='financial-chart-agent@1';
+export const agentChartChoice=x=>x===AGENT_CHART_SKILL||chartComputeMode(x);
 export const AGENT_CHART_TOOL='render_financial_chart';
 export const AGENT_CHART_GUIDANCE=readFileSync(new URL('./owner-skills/financial-chart/SKILL.md',import.meta.url),'utf8').trim();
+const dateGuidance=readFileSync(new URL('./owner-skills/financial-chart/reporting-date.md',import.meta.url),'utf8').trim();
+export const agentChartGuidance=mode=>mode===CHART_COMPUTE_DATE_MODE?AGENT_CHART_GUIDANCE+'\n\n'+dateGuidance:AGENT_CHART_GUIDANCE;
 const renderDescription='Render one validated numeric dataset using the Financial Chart Skill. Send the dataset; attach original same-run source quotations where available. View options are not arguments.';
 const ha=s=>createHash('sha256').update(s).digest('hex');
 const exact=(o,fields)=>o&&typeof o==='object'&&!Array.isArray(o)&&Object.keys(o).sort().join(',')===fields;
@@ -83,7 +87,21 @@ function provePoint(source,q,d,series,key,value){
  const tokens=quote.replace(clean(key),'').match(/(?<![\p{L}\p{N}.,])(?:\([0-9][0-9,.]*\)|[+\-]?[0-9][0-9,.]*)(?![\p{L}\p{N}.,])/gu)??[];
  return source.text.includes(quote)&&has(series)&&has(key)&&unitFound&&tokens.length===1&&containsNumeric(tokens[0],value);
 }
-async function makeProjection(args,run,callId,messages){
+const shortMonths=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const fullMonths=['January','February','March','April','May','June','July','August','September','October','November','December'];
+function observedDate(date,body){
+ if(typeof body!=='string'||!/^\d{4}-\d{2}-\d{2}$/.test(date??''))return false;
+ const [y,m,d]=date.split('-'), day=String(Number(d)), month=String(Number(m));
+ const i=Number(m)-1;
+ const forms=[date,y+'年'+month+'月'+day+'日',y+'年'+m+'月'+d+'日',
+  ...[shortMonths[i],fullMonths[i]].filter(Boolean).flatMap(n=>[n+' '+day+', '+y,day+' '+n+' '+y])];
+ const text=clean(body).toLowerCase();
+ return forms.some(f=>{const x=f.toLowerCase();let offset=text.indexOf(x);while(offset>=0){
+  if(!/[0-9]/.test(text[offset-1]??'')&&!/[0-9]/.test(text[offset+x.length]??''))return true;
+  offset=text.indexOf(x,offset+1);
+ }return false;});
+}
+async function makeProjection(args,run,callId,messages,{dateSafe=false,operatorText}={}){
  const absent=unavailable();
  if(!exact(args,'dataset')&&!exact(args,'dataset,evidence'))return absent;
  if(args.evidence!==undefined&&(!Array.isArray(args.evidence)||args.evidence.length>64))return absent;
@@ -98,7 +116,6 @@ async function makeProjection(args,run,callId,messages){
   if(kind==='financial-trend'&&norm(args.dataset.kind)!==kind&&Array.isArray(args.dataset.keys)&&
      args.dataset.keys.some(k=>typeof k==='string'&&!/^\d{4}-\d{2}-\d{2}$/.test(k)))kind='financial-columns';
   const d={...args.dataset,kind,unit};
-  const sealed=sealDataset(d,run.runId,{modelCallId:callId});
   const candidates=originalSources(run,messages);
   const refs=new Set(), verified=new Set();
   for(const e of args.evidence??[]){
@@ -112,8 +129,10 @@ async function makeProjection(args,run,callId,messages){
    if(doc?.text.includes(clean(e.quote))&&(refs.has(e.ref)||refs.size<7)){refs.add(e.ref);
     if(provePoint(doc,e.quote,d,d.series[e.series].label,d.keys[e.key],d.series[e.series].values[e.key]))verified.add(e.series+':'+e.key);}
   }
+  if(dateSafe&&d.asOf!==null&&!observedDate(d.asOf,operatorText)&&
+     ![...refs].some(ref=>observedDate(d.asOf,candidates.get(ref).text)))d.asOf=null;
   const present=d.series.reduce((n,s)=>n+s.values.filter(x=>x!==null).length,0);
-  const x=refs.size?sealDataset(d,run.runId,{modelCallId:callId,sourceRefs:[...refs],sourceChecked:present===verified.size}):sealed;
+  const x=sealDataset(d,run.runId,{modelCallId:callId,sourceRefs:[...refs],sourceChecked:refs.size>0&&present===verified.size,allowUndatedModelCategory:dateSafe});
   const lookup=({receiptId})=>x.receipts.find(r=>r.receiptId===receiptId)??null;
   const spec=await compileFinancialChart({runId:run.runId,selection:{kind:x.kind,receiptIds:x.receipts.map(r=>r.receiptId)},readCommittedEvidence:lookup});
   const {schemaVersion,runId,sha256,...view}=spec;
@@ -133,17 +152,19 @@ const shape={
   }}]}},
  },
 };
-export function openAgentChart({readRun}){
+const dateSafeShape=structuredClone(shape);
+dateSafeShape.properties.dataset.properties.asOf={anyOf:[{type:'string'},{type:'null'}],description:'Use the exact source-backed YYYY-MM-DD cutoff. Use null when a category chart has no known cutoff. Do not guess.'};
+export function openAgentChart({readRun,dateSafe=false,operatorText}){
  const project=(args,callId)=>{const r=readRun(),ms=r.snapshot.messages;
   const at=ms.findIndex(m=>m.role==='assistant'&&m.calls?.some(c=>c.id===callId));
-  return makeProjection(args,r,callId,at<0?[]:ms.slice(0,at));};
- return {name:AGENT_CHART_TOOL,recoveryVersion:'owner-agent-financial-chart@1',description:renderDescription,parameters:shape,
+  return makeProjection(args,r,callId,at<0?[]:ms.slice(0,at),{dateSafe,operatorText});};
+ return {name:AGENT_CHART_TOOL,recoveryVersion:dateSafe?'owner-agent-financial-chart@2':'owner-agent-financial-chart@1',description:renderDescription,parameters:dateSafe?dateSafeShape:shape,
   validate(args){if(!args||Buffer.byteLength(JSON.stringify(args))>28000)fail('CHART_DATA_INVALID');},
   execute:(args,{callId})=>project(args,callId),reconcile:(args,{callId})=>project(args,callId),
   async verifyResult(value,{call}){if(!isDeepStrictEqual(value,await project(call.arguments,call.id)))fail('CHART_RESULT_CHANGED');},
  };
 }
-export async function readAgentChartViews(run){
+export async function readAgentChartViews(run,options){
  const calls=new Map(),seen=new Set(),verified=new Map(),dup=new Set(),messages=run.snapshot.messages;
  for(let i=0;i<messages.length;i++){
   const m=messages[i];
@@ -153,7 +174,7 @@ export async function readAgentChartViews(run){
   const selected=calls.get(m.callId),c=selected?.c,r=m.result;
   if(c?.name!==AGENT_CHART_TOOL||r?.callId!==c.id||r.status!=='succeeded'||r.dispatched!==true||r.value?.status!=='saved'||
    (r.effective&&!isDeepStrictEqual(r.effective,c)))continue;
-  const v=await makeProjection(c.arguments,run,c.id,messages.slice(0,selected.at));
+  const v=await makeProjection(c.arguments,run,c.id,messages.slice(0,selected.at),options);
   if(v.status==='saved'&&isDeepStrictEqual(v,r.value))verified.set(c.id,v.view);
  }
  return [...verified].filter(([id])=>!dup.has(id)).map(([,v])=>v).slice(0,8);

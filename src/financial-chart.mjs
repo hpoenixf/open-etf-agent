@@ -78,7 +78,7 @@ function normalizeEvidence(data){
  if(!exact(data,keys)||data.schemaVersion!=='chart-typed-evidence@1'||!id(data.runId)||!id(data.toolCallId)||typeof data.metric!=='string'||!Object.hasOwn(profiles,data.metric))fail('CHART_EVIDENCE_INVALID');
  const p=profiles[data.metric];
  const modelBasis=p.bases.includes('user-supplied')&&['agent-supplied','source-checked'].includes(data.basis);
- if(!p.units.includes(data.unit)||(!p.bases.includes(data.basis)&&!modelBasis)||data.dimension!==p.dim||!(day(data.asOf)||data.asOf===null&&p.dim==='category'&&data.provenance==='user-supplied')||!label(data.label)
+ if(!p.units.includes(data.unit)||(!p.bases.includes(data.basis)&&!modelBasis)||data.dimension!==p.dim||!(day(data.asOf)||data.asOf===null&&p.dim==='category'&&(data.provenance==='user-supplied'||modelBasis))||!label(data.label)
    ||(data.metric==='return-comparison'?(!day(data.periodStart)||data.periodStart>=data.asOf):data.periodStart!==null)
    ||!(modelBasis?data.provenance===(data.basis==='source-checked'?'document-reported':'agent-supplied'):p.bases.includes('user-supplied')?data.provenance==='user-supplied':['synthetic','provider-reported','document-reported'].includes(data.provenance))
    ||!list(data.originReceiptIds,8)||!data.originReceiptIds.every(originReceipt)||new Set(data.originReceiptIds).size!==data.originReceiptIds.length
