@@ -26,6 +26,7 @@ import { openGuiDailyWatch, DAILY_TIME_ZONE } from './gui-daily-watch.mjs';
 import { createSkillCatalog } from './skills.mjs';
 import {offerReasoningEffort} from './gateway.mjs';
 import { readGuiResearchProgress, readGuiReasoningEffort } from './gui-progress.mjs';
+import { createGoHealth } from './go-health.mjs';
 import { prepareGuiLiveConfig } from './gui-live-config.mjs';
 import { prepareOwnerLangfuse } from './gui-langfuse.mjs';
 
@@ -111,12 +112,12 @@ async function guiProject(projectDir, expectedConfig, live, freeform) {
     project = await createResearchProject({ directory: projectDir, config:expectedConfig });
   }
   if (!isDeepStrictEqual(project.config, expectedConfig)) {
-    const {ownerConnectivity:oldConnectivity,...oldBase}=project.config;
-    const {ownerConnectivity:nextConnectivity,...nextBase}=expectedConfig;
+    const {ownerConnectivity:oldConnectivity,ownerOpenAIResponses:oldOpenAI,...oldBase}=project.config;
+    const {ownerConnectivity:nextConnectivity,ownerOpenAIResponses:nextOpenAI,...nextBase}=expectedConfig;
     // Only the trusted launch config can change connectivity on this existing
     // owner project. Other changes still fail closed. Old Run definitions
     // retain their original profile and historical readback.
-    if(!freeform||!isDeepStrictEqual(oldBase,nextBase)||!nextConnectivity&&!oldConnectivity) {
+    if(!freeform||!isDeepStrictEqual(oldBase,nextBase)||!nextConnectivity&&!oldConnectivity&&!oldOpenAI&&!nextOpenAI) {
       reject(400, live?'GUI_LIVE_PROJECT_REQUIRED':'GUI_DEMO_PROJECT_REQUIRED');
     }
     project=await updateResearchProject({projectDir,config:expectedConfig,expectedConfigSha256:project.configSha256});
@@ -134,6 +135,7 @@ async function guiProject(projectDir, expectedConfig, live, freeform) {
 export async function createLocalGuiWorkspace({ projectDir, origin: mountOrigin, liveConfig, env = process.env, fetchImpl, ownerWebTransport, ownerWindFetch, dailyClock, onDailyCompleted, smtpOptions, ownerDailyDigest, langfuseOptions } = {}) {
   const live = liveConfig === undefined ? null : prepareGuiLiveConfig(liveConfig,env);
   const mode = live?'live-research':'offline-demo';
+  const goHealth=live?.openAIKey?createGoHealth({fetchImpl}):undefined;
   const telemetry=live?prepareOwnerLangfuse(env,langfuseOptions):null;
   let telemetryLoop;
   const expectedConfig=live?.config??validatedConfig;
@@ -291,7 +293,7 @@ export async function createLocalGuiWorkspace({ projectDir, origin: mountOrigin,
     const trace=telemetry?.start();
     const p = Promise.resolve().then(() =>
       workConversationMessage({ projectDir, conversationId, messageId,
-        ...(live?{apiKey:live.apiKey,fetchImpl,ownerWebTransport,ownerWindSettings,ownerSearchSettings,ownerWindFetch,ownerAdmission,observeGuiRun:trace?.observe}:{gateway:demoGateway(source)}), hostSignal: hostSignal.signal })
+        ...(live?{apiKey:live.apiKey,openAIKey:live.openAIKey,goHealth,fetchImpl,ownerWebTransport,ownerWindSettings,ownerSearchSettings,ownerWindFetch,ownerAdmission,observeGuiRun:trace?.observe}:{gateway:demoGateway(source)}), hostSignal: hostSignal.signal })
     ).catch(() => { /* Lifecycle and original execution evidence remain in Project. */ });
     if(trace)void p.then(async()=>{
       const turn=await inspectConversationMessage({projectDir,conversationId,messageId});
@@ -590,7 +592,7 @@ export async function createLocalGuiWorkspace({ projectDir, origin: mountOrigin,
           const m = await submitConversationMessage({ projectDir, conversationId, messageId: input.messageId,
             text: input.question, sourceManifestSha256: sourceId, skillId:input.skillId,
             ownerLinkedPdfRevision:retry?priorInput?.ownerLinkedPdfRevision:live&&freeform&&!attachment&&connectivity.linkedPdf===true?OWNER_LINKED_PDF_REVISION:undefined,...(chartSkill?{chartSkill}:{}),...(input.researchDepth===undefined?{}:{researchDepth:input.researchDepth}),...(input.reasoningEffort===undefined?{}:{reasoningEffort:input.reasoningEffort}),
-            ...(live?{authorization:{providerApproved:true,dataApproved:true,costApproved:true}}:{}) });
+            ...(live?{authorization:{providerApproved:true,dataApproved:true,costApproved:true,...(goHealth&&!attachment?{openAIApproved:true}:{})}}:{}) });
           if (m.status === 'active' && !retry) begin(conversationId,input.messageId,sourceId);
           return send(202,{ id:m.messageId,runId:m.runId,status:m.status });
         } finally { submitting.delete(inputKey); }

@@ -21,6 +21,7 @@ import { activateTrustedPlugins, inspectTrustedPlugins } from './plugins.mjs';
 import { sha256, DOCUMENT_REVOCATION_PROFILE, normalizeDocumentCatalog, documentCatalogBinding } from './source.mjs';
 import { PUBLICATION_BINDING, PUBLICATION_TEXT_MAX_BYTES, preparePublication } from './publication.mjs';
 import { isReasoningEffort, projectProviderProtocolDiagnostic, isProviderIdleTransport, PROVIDER_IDLE_CODE } from './gateway.mjs';
+import { validateOpenAIReasoning } from './openai-responses-gateway.mjs';
 import { isKnownAdmissionNonDispatch } from './admission.mjs';
 
 const failure = code => Object.assign(new Error(code), { code });
@@ -80,6 +81,11 @@ export function validateRuntimeCheckpoint(state, definition) {
   if(state?.schemaVersion!=='runtime-checkpoint@1'||!Array.isArray(state.messages)||state.messages[0]?.role!=='user'||state.messages[0]?.content!==definition.question||!Array.isArray(state.usedIds)||new Set(state.usedIds).size!==state.usedIds.length||state.usedIds.some(id=>typeof id!=='string')||!Number.isSafeInteger(state.rounds)||state.rounds<0||state.rounds>definition.limits.maxRounds||!Number.isSafeInteger(state.toolsDispatched)||state.toolsDispatched<0||state.toolsDispatched>definition.limits.maxTools||!Number.isSafeInteger(state.cursor)||state.cursor<0||!Array.isArray(state.partialEffects)||!Array.isArray(state.unknownEffects)||!Array.isArray(state.hookErrors))throw failure('INVALID_RUNTIME_CHECKPOINT');
   if(['proposal-sealed','awaiting-response','tool-dispatched','result-committed','result-consumed'].includes(state.phase)){validateProposal(state.proposal);if(state.proposal.kind==='calls'&&state.cursor>state.proposal.calls.length)throw failure('INVALID_RUNTIME_CHECKPOINT');}
   if(state.phase==='result-committed'&&state.result?.callId!==state.proposal.calls[state.cursor]?.id)throw failure('INVALID_RUNTIME_CHECKPOINT');
+  if(state.openAISelected!==undefined&&(state.openAISelected!==true||definition.config?.directResponses!==true))throw failure('INVALID_DIRECT_RESPONSES_CHECKPOINT');
+  for(const m of [...state.messages,...(state.working?.messages??[])])if(m.openAIReasoning!==undefined){
+    if(!state.openAISelected||m.role!=='assistant'||!Array.isArray(m.calls)||!m.calls.length)throw failure('INVALID_DIRECT_RESPONSES_CHECKPOINT');
+    validateOpenAIReasoning(m.openAIReasoning);
+  }
   if(state.working&&state.working.hash!==sha256(JSON.stringify(state.working.messages)))throw failure('INVALID_WORKING_CHECKPOINT');
   if(state.summaryRequest!==undefined){const summary=state.summaryRequest;if(!['gateway-history-compaction@1','gateway-history-compaction@2','gateway-history-compaction@3'].includes(definition.config?.workingInput?.compaction?.version)||summary?.schemaVersion!=='summary-request@1'||Object.keys(summary).sort().join(',')!=='hash,messages,schemaVersion'||!Array.isArray(summary.messages)||summary.hash!==sha256(JSON.stringify(summary.messages)))throw failure('INVALID_SUMMARY_CHECKPOINT');}
   if(state.purpose==='compaction'&&['gateway-history-compaction@1','gateway-history-compaction@2','gateway-history-compaction@3'].includes(definition.config?.workingInput?.compaction?.version)&&!state.summaryRequest)throw failure('INVALID_SUMMARY_CHECKPOINT');
@@ -118,7 +124,7 @@ export function materializeScheduledRun(options, reference, observation = {}) {
  const prior=options.durable.store.inspectSchedule(reference);
  return drive(options, true, {kind:'materialize',schedule:prior.envelope.schedule,reference,reportFresh:observation.reportFresh===true});
 }
-async function drive({ question, gateway, outputRoot='runs', requireReport=false, reportDelivery, signal, hostSignal, limits={}, extensions=[], hooks, plugins, rootBudget, allowedTools, allowedDocuments, taskId=null, contextBytes, contextWorkingSetBytes, workingInput, durable, publication = false, pdfInput, taskTime, ordinaryResponse = false, documentProtection = false, documentCatalog, interaction, hostProjection, knowledgeQueryEffects, researchProfile, reasoningEffort, observeToolResult, chartPromptRevision }, submitting, scheduleOperation) {
+async function drive({ question, gateway, outputRoot='runs', requireReport=false, reportDelivery, signal, hostSignal, limits={}, extensions=[], hooks, plugins, rootBudget, allowedTools, allowedDocuments, taskId=null, contextBytes, contextWorkingSetBytes, workingInput, durable, publication = false, pdfInput, taskTime, ordinaryResponse = false, documentProtection = false, documentCatalog, interaction, hostProjection, knowledgeQueryEffects, researchProfile, reasoningEffort, observeToolResult, chartPromptRevision, directResponses }, submitting, scheduleOperation) {
   if(pdfInput?.snapshot!==undefined){if(Object.keys(pdfInput).length!==1)throw failure('PDF_INVALID_INPUT');pdfInput=Object.freeze({snapshot:normalizePdfSnapshot(pdfInput.snapshot)});}
   documentCatalog=documentCatalog===undefined?undefined:normalizeDocumentCatalog(documentCatalog);
   if(documentCatalog&&documentProtection)throw failure('CUSTOM_PROTECTED_CATALOG_UNSUPPORTED');
@@ -218,7 +224,7 @@ async function drive({ question, gateway, outputRoot='runs', requireReport=false
       } catch (error) { if (error.code !== 'UNKNOWN_RUN') throw error; }
     }
     if (!temporal && taskTime !== undefined) temporal = createTaskTime(taskTime);
-    const config={requireReport,...(chartPromptRevision?{chartPromptRevision}:{}),...(reasoningEffort===undefined?{}:{reasoningEffort}),...(researchProfile?{researchProfile}:{}),...(knowledgeQueryEffects?{knowledgeQueryEffects}:{}),...(reportDelivery===undefined?{}:{reportDelivery}),...(hostProjection?{hostProjection}:{}),...(pdfInput?.snapshot?{pdfSnapshot:pdfSnapshotBinding(pdfInput.snapshot)}:{}),...(documentCatalog?{documentCatalog:documentCatalogBinding(documentCatalog)}:{}),...(protectedMode?{documentProtection:{authorityId:authority.authorityId,libraryId:authority.libraryId}}:{}),...(ordinaryResponse?{ordinaryResponse:multiResponse?INTERACTION_PROFILE:RESPONSE_PROFILE,...(multiResponse?{interaction}:{})}:{}),...(temporal?{taskTime:temporal}:{}),...(publication?{publication:PUBLICATION_BINDING.version}:{}),...(allowedTools?{allowedTools}:{}),...(allowedDocuments?{allowedDocuments}:{}),...(contextBytes===undefined?{}:{contextBytes}),...(contextWorkingSetBytes===undefined?{}:{contextWorkingSetBytes}),taskId,...(workingInput?{workingInput:{...(workingInput.memoryLibrary?{memoryLibraryId:workingInput.memoryLibrary.libraryId}:{}),...(workingInput.compaction?{compaction:{thresholdBytes:workingInput.compaction.thresholdBytes,summaryTimeoutMs:workingInput.compaction.summaryTimeoutMs??2000,version:encodedCompaction?'gateway-history-compaction@3':workingInput.compaction.mode==='gateway'?'gateway-history-compaction@2':'history-compaction@1',...(encodedCompaction?{encodedMaxBytes:workingInput.compaction.encodedMaxBytes??gateway.inputBudget?.maxBytes??null}:{}),...(workingInput.compaction.mode==='gateway'?{maxSummaryRounds:workingInput.compaction.maxSummaryRounds??6}:{})}}:{})}}:{})};
+    const config={requireReport,...(directResponses===true?{directResponses:true}:{}),...(chartPromptRevision?{chartPromptRevision}:{}),...(reasoningEffort===undefined?{}:{reasoningEffort}),...(researchProfile?{researchProfile}:{}),...(knowledgeQueryEffects?{knowledgeQueryEffects}:{}),...(reportDelivery===undefined?{}:{reportDelivery}),...(hostProjection?{hostProjection}:{}),...(pdfInput?.snapshot?{pdfSnapshot:pdfSnapshotBinding(pdfInput.snapshot)}:{}),...(documentCatalog?{documentCatalog:documentCatalogBinding(documentCatalog)}:{}),...(protectedMode?{documentProtection:{authorityId:authority.authorityId,libraryId:authority.libraryId}}:{}),...(ordinaryResponse?{ordinaryResponse:multiResponse?INTERACTION_PROFILE:RESPONSE_PROFILE,...(multiResponse?{interaction}:{})}:{}),...(temporal?{taskTime:temporal}:{}),...(publication?{publication:PUBLICATION_BINDING.version}:{}),...(allowedTools?{allowedTools}:{}),...(allowedDocuments?{allowedDocuments}:{}),...(contextBytes===undefined?{}:{contextBytes}),...(contextWorkingSetBytes===undefined?{}:{contextWorkingSetBytes}),taskId,...(workingInput?{workingInput:{...(workingInput.memoryLibrary?{memoryLibraryId:workingInput.memoryLibrary.libraryId}:{}),...(workingInput.compaction?{compaction:{thresholdBytes:workingInput.compaction.thresholdBytes,summaryTimeoutMs:workingInput.compaction.summaryTimeoutMs??2000,version:encodedCompaction?'gateway-history-compaction@3':workingInput.compaction.mode==='gateway'?'gateway-history-compaction@2':'history-compaction@1',...(encodedCompaction?{encodedMaxBytes:workingInput.compaction.encodedMaxBytes??gateway.inputBudget?.maxBytes??null}:{}),...(workingInput.compaction.mode==='gateway'?{maxSummaryRounds:workingInput.compaction.maxSummaryRounds??6}:{})}}:{})}}:{})};
     let stored,claim,directory,runId,boundChild=false,deadlineAt=Date.now()+budget.timeoutMs;
     let state={schemaVersion:'runtime-checkpoint@1',phase:'ready',messages:[{role:'user',content:question}],usedIds:[],rounds:0,toolsDispatched:0,proposal:null,cursor:0,result:null,host:null,working:null,gatewayOutcome:'settled',answer:'',status:'failed',code:null,unknownEffects:[],partialEffects:[],hookErrors:[]};
     function verifyCorrectionHistory(host){
@@ -451,7 +457,8 @@ async function drive({ question, gateway, outputRoot='runs', requireReport=false
             const mainTools=host.definitions.filter(tool=>tool.name!==RESEARCH_NEEDS_TOOL||isDeepResearchNeedsActive(researchProfile,state.messages));
             const chartFraming=chartPromptRevision&&['read_supplied_chart_data','build_financial_chart'].every(name=>mainTools.some(tool=>tool.name===name));
             const workingMessages=projectControlProofs(projectTaskTime(chartFraming?[memoryMessages[0],{role:'system',content:INPUT_CHART_GUIDANCE},...memoryMessages.slice(1)]:memoryMessages, temporal));
-            const encodedBudget=gateway.inputBudget?{additionalBudget:{maxBytes:gateway.inputBudget.maxBytes,measure:messages=>gateway.inputBudget.measure({messages,tools:mainTools})}}:{};
+            const routeBudget=state.openAISelected?gateway.directResponsesGateway?.inputBudget:gateway.inputBudget;
+            const encodedBudget=routeBudget?{additionalBudget:{maxBytes:routeBudget.maxBytes,measure:messages=>routeBudget.measure({messages,tools:mainTools})}}:{};
             let requestMessages=contextBytes===undefined&&!hostProjection&&contextWorkingSetBytes===undefined?workingMessages:await projectContext({olderReadBytes:contextWorkingSetBytes,onFit:fact=>record('context_fit',fact),messages:workingMessages,maxBytes:contextBytes??1048576,lookupSource:host.lookupContextSource,...(hostProjection?{projectOwnedResult:host.projectOwnedResult,projectOwnedCall:host.projectOwnedCall}:{}),...encodedBudget,...(encodedCompaction&&gateway.inputBudget?{allowUnfitted:true}:{})});let noteRef=null;
             const measured=encodedCompaction&&gateway.inputBudget?gateway.inputBudget.measure({messages:structuredClone(requestMessages),tools:structuredClone(mainTools)}):null;
             if(measured!==null&&(!Number.isSafeInteger(measured)||measured<0))throw failure('INVALID_COMPACTION_PRESSURE_MEASUREMENT');
@@ -509,29 +516,69 @@ async function drive({ question, gateway, outputRoot='runs', requireReport=false
           if(workingInput?.memoryLibrary){state.working.messages=await projectMemory({messages:state.working.messages,lookupState:ref=>workingInput.memoryLibrary.state(ref.id)});state.working.hash=sha256(JSON.stringify(state.working.messages));}
           const mainTools=host.definitions.filter(tool=>tool.name!==RESEARCH_NEEDS_TOOL||isDeepResearchNeedsActive(researchProfile,state.messages));
           assertContextCapacity({messages:state.working.messages,tools:mainTools,maxBytes:contextBytes,inputBudget:gateway.inputBudget});
-          state.rounds++;state.gatewayOutcome='unknown';let reservation;if(claim){const reservedView=await checkpoint('model-reserved',{reserve:'model'});if(gateway.admission==='shared-admission@1')reservation=modelReservation(reservedView);}else{rootBudget.claim('model');gatewayUnsettled=true;}
-          const start=performance.now();let proposal;
-          try{
-            proposal=await effect(Promise.resolve().then(()=>{controller.signal.throwIfAborted();gatewayUnsettled=true;return gateway.next({messages:structuredClone(state.working.messages),tools:structuredClone(mainTools),signal:controller.signal,...(reservation?{reservation}:{})});}));
-            controller.signal.throwIfAborted();gatewayUnsettled=false;
-          }catch(error){
-            // Only the original Gateway can brand a recognized terminal finish.
-            // An arbitrary code, incomplete stream/body or cancelled late reply is not settlement.
-            const diagnostic=projectProviderProtocolDiagnostic(error);
-            if(isKnownAdmissionNonDispatch(error)||!controller.signal.aborted&&diagnostic?.reason==='NON_SUCCESS_FINISH'&&diagnostic.hashScope==='complete-body')gatewayUnsettled=false;
-            if(reservation&&diagnostic)await record('model_protocol_rejected',{modelOrdinal:reservation.modelOrdinal,inputHash:reservation.inputHash,diagnostic}).catch(()=>{});
-            throw error;
+          let proposal,selected=state.openAISelected?gateway.directResponsesGateway:gateway,start,reservation;
+          if(claim&&!state.openAISelected&&state.rounds===0&&!scheduleOperation&&!durable?.parentRunId&&gateway.shouldUseDirect&&
+             await bounded(Promise.resolve().then(()=>gateway.shouldUseDirect(controller.signal)),controller.signal)){
+            controller.signal.throwIfAborted();
+            selected=gateway.directResponsesGateway;
+            await record('model_failover',{reason:'primary-unavailable-before-dispatch',target:'gpt-6.1-terra'});
+          }
+          if(!selected)throw failure('OPENAI_RESPONSES_ROUTE_UNAVAILABLE');
+          for(;;){
+            if(selected!==gateway&&selected.inputBudget){
+              const {inputBudget}=selected;
+              if(inputBudget.measure({messages:state.working.messages,tools:mainTools})>inputBudget.maxBytes){
+                const messages=await projectContext({olderReadBytes:contextWorkingSetBytes,onFit:fact=>record('context_fit',fact),
+                  messages:state.working.messages,maxBytes:contextBytes??1048576,lookupSource:host.lookupContextSource,
+                  ...(hostProjection?{projectOwnedResult:host.projectOwnedResult,projectOwnedCall:host.projectOwnedCall}:{}),
+                  additionalBudget:{maxBytes:inputBudget.maxBytes,measure:messages=>inputBudget.measure({messages,tools:mainTools})}});
+                state.working={...state.working,messages,hash:sha256(JSON.stringify(messages))};
+              }
+              assertContextCapacity({messages:state.working.messages,tools:mainTools,maxBytes:contextBytes,inputBudget});
+            }
+            if(selected.directResponses===true)state.openAISelected=true;
+            state.rounds++;state.gatewayOutcome='unknown';reservation=undefined;if(claim){const reservedView=await checkpoint('model-reserved',{reserve:'model'});if(gateway.admission==='shared-admission@1')reservation=modelReservation(reservedView);}else{rootBudget.claim('model');gatewayUnsettled=true;}
+            start=performance.now();
+            try{
+              proposal=await effect(Promise.resolve().then(()=>{controller.signal.throwIfAborted();gatewayUnsettled=true;return selected.next({messages:structuredClone(state.working.messages),tools:structuredClone(mainTools),signal:controller.signal,...(reservation?{reservation}:{})});}));
+              controller.signal.throwIfAborted();gatewayUnsettled=false;
+            }catch(error){
+              // Only the original Gateway and Admission can prove a terminal outcome.
+              // An arbitrary code, incomplete stream/body or cancelled late reply is not settlement.
+              const diagnostic=projectProviderProtocolDiagnostic(error);
+              if(isKnownAdmissionNonDispatch(error)||!controller.signal.aborted&&diagnostic?.reason==='NON_SUCCESS_FINISH'&&diagnostic.hashScope==='complete-body')gatewayUnsettled=false;
+              if(reservation&&diagnostic)await record('model_protocol_rejected',{modelOrdinal:reservation.modelOrdinal,inputHash:reservation.inputHash,diagnostic}).catch(()=>{});
+              const fallback=reservation&&!controller.signal.aborted&&!scheduleOperation&&
+                !state.answer&&!state.publication&&!state.inFlight&&!state.partialEffects.length&&!state.unknownEffects.length&&
+                !durable?.parentRunId&&gateway.admission==='shared-admission@1'
+                ? selected.takeModelFallback?.(error,reservation) : null;
+              if(fallback){
+                gatewayUnsettled=false;state.gatewayOutcome='settled';
+                if(state.rounds>=budget.maxRounds)throw failure('ROUND_LIMIT');
+                await record('model_failover',{originalModelOrdinal:reservation.modelOrdinal,inputHash:reservation.inputHash,reason:'exact-model-not-found',target:fallback.directResponses?'gpt-6.1-terra':'mimo-v2.6-flash'});
+                selected=fallback;continue;
+              }
+              throw error;
+            }
+            break;
           }
           state.gatewayOutcome='settled';validateProposal(proposal);
+          if(proposal.openAIReasoning!==undefined){
+            if(!state.openAISelected||proposal.kind!=='calls')throw failure('INVALID_DIRECT_RESPONSES_CHECKPOINT');
+            validateOpenAIReasoning(proposal.openAIReasoning);
+          }
+          const assistantMessage=proposal.kind==='calls'?{role:'assistant',calls:structuredClone(proposal.calls),
+            ...(proposal.openAIReasoning?{openAIReasoning:structuredClone(proposal.openAIReasoning)}:{})}:null;
+          if(proposal.openAIReasoning)delete proposal.openAIReasoning;
           const lastValidation=state.messages.at(-1)?.result?.validation;
           if(lastValidation?.schemaVersion===ORIGINAL_READ_CORRECTION&&
             !matchesOriginalReadCorrection(proposal,lastValidation.resultRef))throw failure('READ_RESULT_CORRECTION_REQUIRED');
           if(proposal.kind==='calls'){if(proposal.calls.some(c=>c.name==='ask_response')){if(!ordinaryResponse||proposal.calls.length!==1)throw failure('INVALID_ORDINARY_RESPONSE');validateResponseCall(proposal.calls[0]);if(multiResponse?durable.store.responseHistory(runId).length>=interaction.maxQuestions:durable.store.responseStatus(runId))throw failure('QUESTION_LIMIT');}const ids=new Set();for(const c of proposal.calls){if(state.usedIds.includes(c.id)||ids.has(c.id))throw failure('DUPLICATE_CALL_ID');ids.add(c.id);}if(state.toolsDispatched+proposal.calls.length>budget.maxTools)throw failure('TOOL_LIMIT');}
           // Use the original Session codec before mutating the recoverable state.
           // A malformed JS-only Gateway result must not poison its own failure checkpoint.
-          if(claim)durable.store.validateCheckpoint({...state,phase:'proposal-sealed',proposal:structuredClone(proposal),cursor:0,result:null,working:null,messages:proposal.kind==='calls'?[...state.messages,{role:'assistant',calls:structuredClone(proposal.calls)}]:state.messages});
+          if(claim)durable.store.validateCheckpoint({...state,phase:'proposal-sealed',proposal:structuredClone(proposal),cursor:0,result:null,working:null,messages:assistantMessage?[...state.messages,assistantMessage]:state.messages});
           state.proposal=structuredClone(proposal);state.cursor=0;state.result=null;state.working=null;
-          if(proposal.kind==='calls')state.messages.push({role:'assistant',calls:structuredClone(proposal.calls)});
+          if(assistantMessage)state.messages.push(assistantMessage);
           await checkpoint('proposal-sealed');await record('model_proposal',{kind:proposal.kind,...(reasoningEffort===undefined||!reservation||reservation.runId!==reservation.rootId||reservation.purpose!==undefined?{}:{reasoningEffort}),callIds:proposal.calls?.map(c=>c.id)||[],usage:proposal.usage??null,cost:null,...(reservation?{modelOrdinal:reservation.modelOrdinal,inputHash:reservation.inputHash}:{}),durationMs:performance.now()-start});
         }
         if(state.proposal.kind==='final'){
