@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {randomBytes} from 'node:crypto';
 import {request} from 'node:http';
-import {mkdir,mkdtemp,rm,writeFile} from 'node:fs/promises';
+import {cp,mkdir,mkdtemp,rm,writeFile} from 'node:fs/promises';
 import {join,resolve} from 'node:path';
 import {accountProjectBasename,startAccountSite} from '../src/account-site.mjs';
 import {sha256} from '../src/source.mjs';
@@ -174,6 +174,38 @@ test('file-backed conversation catalog keeps identity and title across reopen in
  await app.close();
  const reopened=await startAccountSite({projectRoot:root,origin,auth});t.after(()=>reopened.close());
  await verify(reopened);
+});
+test('restored Project preserves published body and sources without redispatch',async t=>{
+ const root=await workspace(t),snapshot=await workspace(t),auth=fixtureAuth();
+ const app=await startAccountSite({projectRoot:root,origin,auth});t.after(()=>app.close());
+ const owner=await signIn(app,creds[0]),other=await signIn(app,creds[1]);
+ const {detailPath,reportPath}=await createSyntheticReport(app,owner);
+ const paths=[reportPath,...['body','sources'].map(s=>reportPath.replace(/report[.]md$/,s))];
+ const read=async site=>{
+   const contents=[];
+   for(const path of paths){
+     const response=await send(site,path,{cookie:owner});
+     assert.equal(response.status,200,path);
+     assert.ok(response.text);
+     contents.push(response.text);
+     const denied=await send(site,path,{cookie:other});
+     assert.equal(denied.status,404,path);
+     if(path!==reportPath)assert.deepEqual(denied.value,{error:'NOT_FOUND'},path);
+   }
+   const workspacePath='/api/workspace';
+   const own=await send(site,workspacePath,{cookie:owner}), sibling=await send(site,workspacePath,{cookie:other});
+   assert.equal(own.status,200);assert.equal(sibling.status,200);
+   assert.equal(own.value.conversations[0].id,detailPath.split('/').at(-1));
+   assert.deepEqual(sibling.value.conversations,[]);
+   return {projectId:own.value.projectId,conversations:own.value.conversations,contents};
+ };
+ const before=await read(app);
+ await app.close();
+ await cp(root,snapshot,{recursive:true});
+ const outbound=t.mock.method(globalThis,'fetch',async()=>assert.fail('unexpected outbound fetch'));
+ const restored=await startAccountSite({projectRoot:snapshot,origin,auth});t.after(()=>restored.close());
+ assert.deepEqual(await read(restored),before);
+ assert.equal(outbound.mock.callCount(),0);
 });
 test('operator cookie policy fails closed and unsafe subject cannot become a filesystem path',async t=>{
  const root=await workspace(t);
