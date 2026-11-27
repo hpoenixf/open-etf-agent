@@ -102,6 +102,10 @@ async function makeProjection(args,run,callId,messages){
   const candidates=originalSources(run,messages);
   const refs=new Set(), verified=new Set();
   for(const e of args.evidence??[]){
+   if(typeof e==='string'){
+    if(refPattern.test(e)&&candidates.has(e)&&refs.size<7)refs.add(e);
+    continue;
+   }
    if(!exact(e,'key,quote,ref,series')||!refPattern.test(e.ref)||!boundedQuote(e.quote)||
       !Number.isInteger(e.key)||!Number.isInteger(e.series)||e.key<0||e.key>=d.keys.length||e.series<0||e.series>=d.series.length)continue;
    const doc=candidates.get(e.ref);
@@ -124,9 +128,9 @@ const shape={
    keys:{type:'array',items:{type:'string'}},series:{type:'array',items:{type:'object',additionalProperties:false,required:['label','values'],
     properties:{label:{type:'string'},values:{type:'array',items:{anyOf:[{type:'number'},{type:'null'},{type:'object',additionalProperties:false,required:['open','high','low','close'],properties:{open:{type:'number'},high:{type:'number'},low:{type:'number'},close:{type:'number'}}}]}}}}},
   }},
-  evidence:{type:'array',items:{type:'object',additionalProperties:false,required:['series','key','ref','quote'],properties:{
+  evidence:{type:'array',description:'Usually an array of exact citation references from this run. Optional point-level proofs are more specific.',items:{anyOf:[{type:'string',description:'WEB:<manifestSha256>:<page> or PDF:<sourceRef>'},{type:'object',additionalProperties:false,required:['series','key','ref','quote'],properties:{
    series:{type:'integer'},key:{type:'integer'},ref:{type:'string',description:'Exact WEB or PDF citation reference from a previously committed original read in this run, without brackets.'},quote:{type:'string',description:'Exact source passage for this point, no invented wording. Indexes are zero-based.'},
-  }}},
+  }}]}},
  },
 };
 export function openAgentChart({readRun}){
