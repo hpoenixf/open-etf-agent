@@ -9,6 +9,7 @@ import { openLinkedWebPdfOwner } from './web-linked-pdf.mjs';
 import { loadProjectSources } from './project-sources.mjs';
 import { readProjectJson } from './research-project.mjs';
 import { normalizeWebUrl, ownerDocumentUrl, validateOwnerWebPageInput } from './web-policy.mjs';
+import { callYuanbaoSearchMcp } from './yuanbao-search-mcp.mjs';
 import { ensureSafeDirectory, publishImmutable } from './storage-files.mjs';
 
 const hash=value=>createHash('sha256').update(value).digest('hex');
@@ -24,6 +25,7 @@ export const OWNER_WEB_SEARCH='public_web_search';
 const paidSearch=Object.freeze({
  'deepseek-search':Object.freeze({endpoint:'https://api.deepseek.com/v1/tools/search',keyEnv:'WEB_RESEARCH_DEEPSEEK_API_KEY',missing:'GUI_DEEPSEEK_SEARCH_API_KEY_REQUIRED',label:'DeepSeek Search (paid provider, 1–128 characters)'}),
  'yuanbao-search':Object.freeze({endpoint:'https://api.wsa.cloud.tencent.com/SearchPro',keyEnv:'WEB_RESEARCH_YUANBAO_API_KEY',missing:'GUI_YUANBAO_SEARCH_API_KEY_REQUIRED',label:'Tencent Yuanbao SearchPro (paid provider)'}),
+ 'yuanbao-mcp':Object.freeze({mcp:true,keyEnv:'WEB_RESEARCH_YUANBAO_API_KEY',missing:'GUI_YUANBAO_SEARCH_API_KEY_REQUIRED',label:'Tencent Yuanbao SearchPro MCP (paid provider)'}),
 });
 export const OWNER_SEARCH_PROVIDERS=Object.freeze(['exa-public-preview',...Object.keys(paidSearch)]);
 export function prepareOwnerSearch(provider,env){
@@ -104,28 +106,30 @@ async function readSearchResponse(response,mediaTypes){
  return {text,mediaType};
 }
 function parseJson(text){try{return JSON.parse(text);}catch{fail('WEB_SEARCH_RESPONSE_INVALID');}}
-async function searchByKey(provider,backend,query,signal,fetchImpl,settings){
+async function searchByKey(provider,backend,query,signal,fetchImpl,settings,id){
  if(!settings)fail(backend.missing);
  const deepSeek=provider==='deepseek-search';
+ const body=backend.mcp?await callYuanbaoSearchMcp({query,id,signal,fetchImpl,authorization:settings.authorization()}):await (async()=>{
  const response=await fetchImpl(backend.endpoint,{
   method:'POST',redirect:'error',signal:AbortSignal.any([signal??new AbortController().signal,AbortSignal.timeout(30000)]),
   headers:{'content-type':'application/json','accept':'application/json','authorization':settings.authorization()},
   body:JSON.stringify(deepSeek?{query,count:3,need_content:false}:{Query:query}),
  });
  const {text}=await readSearchResponse(response,['application/json']);
- const body=parseJson(text);
+ return parseJson(text);
+ })();
  if(!deepSeek&&(body?.Response?.Error!==undefined||body?.Error!==undefined)){
   const code=(body.Response?.Error??body.Error)?.Code;
   fail(code==='UnauthorizedOperation'?'WEB_SEARCH_AUTH':
    ['RequestLimitExceeded','ResourceUnavailable'].includes(code)?'WEB_SEARCH_QUOTA':
    code==='InvalidParameter'?'WEB_SEARCH_QUERY_INVALID':'WEB_SEARCH_PROVIDER_ERROR');
  }
- const rows=deepSeek?body?.results:body?.Response?.Pages;
+ const rows=deepSeek?body?.results:body?.Response?.Pages??(backend.mcp?body?.Pages:undefined);
  if(!Array.isArray(rows))fail('WEB_SEARCH_RESPONSE_INVALID');
  const hits=[];
  for(const candidate of rows){
-  if(!deepSeek&&typeof candidate!=='string')fail('WEB_SEARCH_RESPONSE_INVALID');
-  const row=deepSeek?candidate:parseJson(candidate);
+  if(!deepSeek&&typeof candidate!=='string'&&(!backend.mcp||!candidate||typeof candidate!=='object'||Array.isArray(candidate)))fail('WEB_SEARCH_RESPONSE_INVALID');
+  const row=deepSeek||backend.mcp&&typeof candidate!=='string'?candidate:parseJson(candidate);
   if(typeof row?.url!=='string'||typeof row?.title!=='string'||!row.title.trim())continue;
   let url;try{url=normalizeWebUrl(row.url);}catch{continue;}
   const summary=(deepSeek?[row.summary,row.snippet]:[row.passage,row.content]).find(v=>typeof v==='string'&&v.trim())??'';
@@ -369,7 +373,7 @@ export function openOwnerWeb({profile,projectDir,projectId,runId,transport={},se
  const backend=Object.hasOwn(paidSearch,provider)?paidSearch[provider]:null;
  const deepSeek=provider==='deepseek-search';
  const validateQuery=args=>{if(!shape(args,'query')||typeof args.query!=='string'||!args.query.trim()||Buffer.byteLength(args.query)>2048||/[\x00-\x1f]/.test(args.query))fail('WEB_SEARCH_QUERY_INVALID');
-  if(deepSeek&&[...args.query].length>128)fail('WEB_SEARCH_QUERY_INVALID');
+  if((deepSeek&&[...args.query].length>128)||(backend?.mcp&&Buffer.byteLength(args.query)>1500))fail('WEB_SEARCH_QUERY_INVALID');
  };
  const searchDirectory=callId=>join(projectDir,'owner-web-search',operation('search',callId));
  const searchReceipt=async(args,{callId})=>{
@@ -378,7 +382,7 @@ export function openOwnerWeb({profile,projectDir,projectId,runId,transport={},se
   return saved.value;
  };
  const search={
-  name:alternate?`public_web_search_${provider.split('-')[0]}`:OWNER_WEB_SEARCH,recoveryVersion:backend?`owner-${provider}@1`:'owner-exa-search@1',
+  name:alternate?`public_web_search_${backend?.mcp?'yuanbao_mcp':provider.split('-')[0]}`:OWNER_WEB_SEARCH,recoveryVersion:backend?`owner-${provider}@1`:'owner-exa-search@1',
   description:`Discover public web sources using ${backend?.label??'Exa free preview'}. Send only public search terms, never private question or account data. Snippets are candidates, not original evidence; use public_web_read to verify a claim.`+(alternate?' Use only when the successful Exa lookup did not cover a material evidence gap. Never substitute a paid search for a failed free search.':''),
   parameters:schema('query','Public keywords to search; no credentials, URLs with secrets or private data.'),
   validate:validateQuery,
@@ -393,7 +397,7 @@ export function openOwnerWeb({profile,projectDir,projectId,runId,transport={},se
    try{await mkdir(directory,{mode:0o700});}catch(error){if(error.code==='EEXIST')fail('WEB_SEARCH_ALREADY_HELD');throw error;}
    await publishImmutable(directory,'request.json',Buffer.from(JSON.stringify({querySha256:hash(args.query)})),signal);
    let value;
-   try{value=alternateBlocked||alternate&&!freeSearchReady?unavailable('search',provider,'WEB_SEARCH_ALTERNATE_REQUIRES_FREE_RESULT','not-dispatched'):await (backend?searchByKey(provider,backend,args.query,signal,fetchImpl,settings):exaSearch(args.query,operation('search',callId),signal,fetchImpl));}
+   try{value=alternateBlocked||alternate&&!freeSearchReady?unavailable('search',provider,'WEB_SEARCH_ALTERNATE_REQUIRES_FREE_RESULT','not-dispatched'):await (backend?searchByKey(provider,backend,args.query,signal,fetchImpl,settings,operation('search',callId)):exaSearch(args.query,operation('search',callId),signal,fetchImpl));}
    catch(error){
     if(alternate){freeSearchReady=false;freeSearchEpoch++;}
     if(signal?.aborted)throw error;

@@ -310,3 +310,140 @@ test('successful Exa plus expected native page refusal still reaches a final ans
  assert.deepEqual(await fetch(cold.origin+path).then(r=>r.json()),thread);
  assert.deepEqual([modelCalls,searchCalls,pageCalls],[3,1,1]);
 });
+
+test('Yuanbao MCP uses bounded HTTPS handshake and only SearchPro; SSE results reconcile without replay',async t=>{
+ const projectDir=await scratch(t),connectivity={web:true,search:'yuanbao-mcp'};
+ await assert.rejects(startLocalGui({projectDir,liveConfig:{...config,connectivity},env}),{code:'GUI_YUANBAO_SEARCH_API_KEY_REQUIRED'});
+ const settings=prepareOwnerSearch('yuanbao-mcp',{WEB_RESEARCH_YUANBAO_API_KEY:'fixture-wsa'});
+ const methods=[];let cancelled=false;
+ const [,tool]=openOwnerWeb({profile:connectivity,projectDir,runId:'test-yuanbao-mcp',searchSettings:settings,
+  transport:{async searchFetch(endpoint,opts){
+   assert.equal(endpoint,'https://api.wsa.cloud.tencent.com/Mcp');
+   assert.equal(opts.redirect,'error');
+   assert.equal(opts.headers.authorization,'Bearer fixture-wsa');
+   if(opts.method==='DELETE'){assert.equal(opts.headers['mcp-session-id'],'ymcp-1');methods.push('DELETE');return new Response(null,{status:405});}
+   const req=JSON.parse(opts.body);
+   methods.push(req.method);
+   if(req.method==='initialize'){
+    assert.equal(req.params.protocolVersion,'2025-06-18');
+    assert.equal(opts.headers['mcp-session-id'],undefined);
+    return Response.json({jsonrpc:'2.0',id:req.id,result:{protocolVersion:'2025-06-18',capabilities:{tools:{}}}},
+     {headers:{'mcp-session-id':'ymcp-1'}});
+   }
+   assert.equal(opts.headers['mcp-session-id'],'ymcp-1');
+   assert.equal(opts.headers['mcp-protocol-version'],'2025-06-18');
+   if(req.method==='notifications/initialized'){
+    assert.ok(!Object.hasOwn(req,'id'));
+    return new Response(null,{status:202});
+   }
+   assert.equal(req.method,'tools/call');
+   assert.deepEqual(req.params,{name:'SearchPro',arguments:{Query:'基金指数编制公告',Mode:0,Cnt:10}});
+   const result={jsonrpc:'2.0',id:req.id,result:{content:[{type:'text',text:JSON.stringify({Response:{Pages:[
+    JSON.stringify({url,title:'公开公告',passage:'摘要',date:'2026-11-21',score:1}),
+    JSON.stringify({url:'http://example.com/http-only',title:'不可读'}),JSON.stringify({url:'https://127.0.0.1/internal',title:'私网'}),
+   ]}})}]}};
+   const encoder=new TextEncoder();
+   const bytes=encoder.encode('event: message\r\ndata: {"jsonrpc":"2.0","method":"notifications/message"}\r\n\r\ndata: '+JSON.stringify(result)+'\r\n\r\n');
+   const split=bytes.indexOf(0xe5)+1;
+   return new Response(new ReadableStream({start(c){c.enqueue(bytes.subarray(0,split));c.enqueue(bytes.subarray(split));},cancel(){cancelled=true;}}),
+    {headers:{'content-type':'text/event-stream'}});
+  }}});
+ assert.throws(()=>tool.validate({query:'中'.repeat(501)}),{code:'WEB_SEARCH_QUERY_INVALID'});
+ assert.doesNotThrow(()=>tool.validate({query:'中'.repeat(500)}));
+ const args={query:'基金指数编制公告'},ctx={callId:'mcp-1'};
+ const value=await tool.execute(args,ctx);
+ assert.deepEqual(value,{kind:'public-web-search@1',provider:'yuanbao-mcp',hits:[{url,title:'公开公告',summary:'摘要',publishedDate:'2026-11-21'}]});
+ assert.ok(cancelled);
+ assert.deepEqual(await tool.reconcile(args,ctx),value);
+ await assert.rejects(tool.execute(args,ctx),{code:'WEB_SEARCH_ALREADY_HELD'});
+ assert.deepEqual(methods,['initialize','notifications/initialized','tools/call','DELETE']);
+});
+
+test('Yuanbao MCP fails closed on session/auth and reports tool quota without leaking diagnostics',async t=>{
+ const projectDir=await scratch(t),connectivity={web:true,search:'exa-public-preview',searchAlternates:['yuanbao-search','yuanbao-mcp']};
+ const settings=Object.fromEntries(connectivity.searchAlternates.map(p=>[p,prepareOwnerSearch(p,{WEB_RESEARCH_YUANBAO_API_KEY:'fixture-wsa'})]));
+ let scenario='permission',calls=0;
+ const [,free,rest,mcp]=openOwnerWeb({profile:connectivity,projectDir,runId:'yuanbao-failures',searchSettings:settings,
+  transport:{async searchFetch(endpoint,opts){
+   calls++;
+   const req=JSON.parse(opts.body);
+   if(endpoint==='https://mcp.exa.ai/mcp')return Response.json({jsonrpc:'2.0',id:req.id,result:{content:[{type:'text',text:'Exa result'}]}});
+   if(scenario==='permission')return new Response('do not disclose auth failure detail',{status:401});
+   if(req.method==='initialize')return Response.json({jsonrpc:'2.0',id:req.id,result:{protocolVersion:'2025-06-18',capabilities:{tools:{}}}});
+   if(req.method==='notifications/initialized')return new Response(null,{status:202});
+   if(scenario==='oversize')return new Response('X'.repeat(65537),{headers:{'content-type':'application/json'}});
+   if(scenario==='wrong-id')return Response.json({jsonrpc:'2.0',id:'not-the-request',result:{structuredContent:{Pages:[]}}});
+   return Response.json({jsonrpc:'2.0',id:req.id,result:{isError:true,structuredContent:{Error:{Code:'RequestLimitExceeded',Message:'private provider detail'}}}});
+  }}});
+ assert.equal(rest.name,'public_web_search_yuanbao');
+ assert.equal(mcp.name,'public_web_search_yuanbao_mcp');
+ const input={query:'公开指数公告'};
+ assert.equal((await mcp.execute(input,{callId:'blocked'})).requestOutcome,'not-dispatched');
+ assert.equal(calls,0);
+ const cases=[['permission','WEB_SEARCH_AUTH'],['quota','WEB_SEARCH_QUOTA'],['oversize','WEB_SEARCH_BODY_LIMIT'],['wrong-id','WEB_SEARCH_RESPONSE_INVALID']];
+ for(const [kind,expected] of cases){
+  scenario=kind;
+  await free.execute(input,{callId:'exa-'+kind});
+  const result=await mcp.execute(input,{callId:kind});
+  assert.equal(result.reason,expected);
+  assert.doesNotMatch(JSON.stringify(result),/private provider detail|fixture-wsa|disclose auth/);
+ }
+ assert.equal(calls,14);
+});
+
+test('Yuanbao MCP owner GUI sends public keywords only and reads original evidence before citation',async t=>{
+ const projectDir=await scratch(t),connectivity={web:true,search:'yuanbao-mcp'};
+ let requests=0,pages=0,acquisitionId;
+ const gui=await startLocalGui({projectDir,liveConfig:{...config,connectivity},
+  env:{...env,WEB_RESEARCH_YUANBAO_API_KEY:'isolated-wsa-key'},
+  fetchImpl:async(_endpoint,opts)=>{
+   assert.equal(opts.headers.authorization,'Bearer fixture-placeholder');
+   const tools=JSON.parse(opts.body).messages.filter(m=>m.role==='tool');
+   if(!tools.length)return spec('public_web_search',{query:'public gold index methodology'});
+   const first=JSON.parse(tools[0].content).value;
+   assert.equal(first.provider,'yuanbao-mcp');
+   assert.equal(first.hits[0].url,url);
+   assert.ok(!first.hits[0].sourceRef);
+   if(tools.length===1)return spec('public_web_read',{url});
+   const original=JSON.parse(tools[1].content).value;
+   assert.match(original.text,/Public static text/);
+   return Response.json({choices:[{message:{role:'assistant',content:'Read original '+url},finish_reason:'stop'}]});
+  },
+  ownerWebTransport:{
+   async searchFetch(endpoint,opts){
+    requests++;
+    assert.equal(endpoint,'https://api.wsa.cloud.tencent.com/Mcp');
+    assert.equal(opts.headers.authorization,'Bearer isolated-wsa-key');
+    assert.doesNotMatch(opts.body,/Never-forward-test-marker|fixture-placeholder/);
+    const req=JSON.parse(opts.body);
+    if(req.method==='initialize')return Response.json({jsonrpc:'2.0',id:req.id,result:{protocolVersion:'2025-06-18',capabilities:{tools:{}}}});
+    if(req.method==='notifications/initialized')return new Response(null,{status:202});
+    assert.deepEqual(req.params.arguments,{Query:'public gold index methodology',Mode:0,Cnt:10});
+    return Response.json({jsonrpc:'2.0',id:req.id,result:{structuredContent:{Pages:[{title:'Gold index',url,passage:'Unverified search summary'}]}}});
+   },
+   async acquire(input){pages++;assert.deepEqual(input.urls,[url]);acquisitionId=input.acquisitionId;return safeSource;},
+   async inspect(input){assert.equal(input.acquisitionId,acquisitionId);return {status:'succeeded',manifestSha256,plan:{urls:[url]}};},
+   async load(input){assert.equal(input.manifestSha256,manifestSha256);return safeSource;},
+  }});
+ t.after(()=>gui.close());
+ const get=path=>fetch(gui.origin+path).then(r=>r.json());
+ const post=(path,body)=>fetch(gui.origin+path,{method:'POST',headers:{origin:gui.origin,'content-type':'application/json'},body:JSON.stringify(body)});
+ const workspace=await get('/api/workspace');
+ assert.equal(workspace.liveNotice.connectivity.searchProvider,'yuanbao-mcp');
+ assert.doesNotMatch(JSON.stringify(workspace),/isolated-wsa-key|WEB_RESEARCH_YUANBAO_API_KEY/);
+ assert.equal(requests,0);
+ const conversation=(await post('/api/conversations',{}).then(r=>r.json())).id;
+ const path='/api/conversations/'+conversation;
+ assert.equal((await post(path+'/messages',{messageId:'yuanbao-gui',question:'Never-forward-test-marker: find public gold index methodology'})).status,202);
+ let thread;
+ for(let i=0;i<160;i++){
+  thread=await get(path);
+  if(['completed','failed'].includes(thread.messages[0]?.status))break;
+  await delay(25);
+ }
+ assert.equal(thread.messages[0].status,'completed',JSON.stringify(thread));
+ const body=await get(path+'/messages/yuanbao-gui/body');
+ assert.equal(body.body.text,'Read original '+url);
+ assert.equal(requests,3);
+ assert.equal(pages,1);
+});
