@@ -4,7 +4,7 @@ import {mkdtemp,rm} from 'node:fs/promises';
 import {resolve} from 'node:path';
 import {setTimeout as delay} from 'node:timers/promises';
 import {startLocalGui} from '../src/gui-server.mjs';
-import {suppliedChartDatasets} from '../src/financial-chart-input.mjs';
+import {INPUT_CHART_GUIDANCE,suppliedChartDatasets} from '../src/financial-chart-input.mjs';
 import {compileFinancialChart,sealFinancialChartEvidence} from '../src/financial-chart.mjs';
 import {createFinancialChartView} from '../src/gui/financial-chart-view.mjs';
 
@@ -73,9 +73,22 @@ test('owner GUI auto offers five rich profiles from frozen data, renders SVG+tab
  const start=async()=>{gui=await startLocalGui({projectDir,liveConfig:{gateway:{provider:'opencode-go-owner',endpoint,model:'synthetic-go-model',
   apiKeyEnv:'ETF_GUI_PROVIDER_KEY'},limits:{model:4},connectivity:{web:true}},env:{ETF_GUI_PROVIDER_KEY:'fixture-placeholder'},async fetchImpl(url,{body}){
    assert.equal(String(url),endpoint);calls++;
-   const request=JSON.parse(body),builder=request.tools.find(x=>x.function.name==='build_financial_chart').function;
+   const request=JSON.parse(body),builder=request.tools?.find(x=>x.function.name==='build_financial_chart')?.function;
+   const chartSystem=request.messages.filter(m=>m.role==='system'&&m.content.includes('read_supplied_chart_data'));
+   if(!current){
+    assert.equal(builder,undefined);
+    assert.deepEqual(chartSystem,[]);
+    return result({content:'这是普通回答。'});
+   }
+   assert.deepEqual(chartSystem,[{role:'system',content:INPUT_CHART_GUIDANCE}]);
+   const userInput=request.messages.find(m=>m.role==='user').content;
+   const envelope=userInput.split('\n').find(line=>line.startsWith('{"request":'));
+   assert.ok(envelope?JSON.parse(envelope).request===fenced(current):userInput.startsWith(fenced(current)));
+   assert.ok(!userInput.includes('read_supplied_chart_data'));
+   assert.match(chartSystem[0].content,/renderer markers/);
+   assert.match(chartSystem[0].content,/open\/high\/low\/close/);
    assert.deepEqual(builder.parameters.properties.kind.enum,[current.kind]);
-   assert.match(JSON.stringify(request.messages),/heatmap for a same-unit/);
+   assert.match(chartSystem[0].content,/heatmap for a same-unit/);
    const results=request.messages.filter(x=>x.role==='tool').map(x=>JSON.parse(x.content).value);
    if(!results.length)return call('read_supplied_chart_data','range-source',{});
    if(results.length===1){assert.equal(results[0].receiptIds.length,current.series.length);return call('build_financial_chart','range-chart',results[0]);}
@@ -84,6 +97,10 @@ test('owner GUI auto offers five rich profiles from frozen data, renders SVG+tab
  await start();
  const get=path=>fetch(gui.origin+path).then(r=>r.json()),post=(path,value)=>fetch(gui.origin+path,{method:'POST',headers:{origin:gui.origin,'content-type':'application/json'},body:JSON.stringify(value)});
  const {id}=await post('/api/conversations',{}).then(r=>r.json()),path='/api/conversations/'+id;
+ const asset=await fetch(gui.origin+'/financial-chart-view.mjs');
+ assert.equal(asset.status,200);
+ assert.match(asset.headers.get('content-type'),/javascript/);
+ assert.match(await asset.text(),/financial-chart-period-hit/);
  const views=[];
  for(const [i,d] of cases.entries()){
   current=d;
@@ -152,4 +169,14 @@ test('owner GUI auto offers five rich profiles from frozen data, renders SVG+tab
  await gui.close();await start();
  assert.deepEqual((await get(path)).messages.map(m=>m.chartViews[0]),views);
  assert.equal(calls,15);
+ current=null;
+ assert.equal((await post(path+'/messages',{messageId:'not-chart',question:'请解释为什么没有数据时不作图。'})).status,202);
+ let ordinary;
+ for(let wait=0;wait<120;wait++){
+  ordinary=(await get(path)).messages.find(m=>m.id==='not-chart');
+  if(['completed','failed'].includes(ordinary?.status)&&!ordinary.working)break;
+  await delay(20);
+ }
+ assert.equal(ordinary?.status,'completed',JSON.stringify(ordinary));
+ assert.equal(calls,16);
 });

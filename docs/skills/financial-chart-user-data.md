@@ -97,3 +97,5 @@ row label, header and explicit unit; parse only exact numeric cell forms and
 compare like-for-like periods. On mismatch or insufficient evidence, keep
 the written answer and do not infer missing values. Linked public PDFs
 currently offer a physical-page text tool, not this confirmed cell binding.
+
+When both supplied-chart tools are enabled, Runtime adds chart selection guidance to the trusted system message list. The original request stays user data, and the answer uses the stored chart view rather than emitting renderer markers or protocol blocks. Runs with no supplied chart tools receive no supplied-chart guidance.
