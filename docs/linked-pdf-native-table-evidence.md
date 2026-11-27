@@ -31,9 +31,9 @@ justify rendering a chart as verified.
 ## Interactive chain (opt-in)
 When the owner enables `ETF_GUI_PDF_CHART_CHAIN=1` alongside authorized
 linked public PDF and controlled chart compute, a new interactive Run
-pins linked-PDF adapter 3 and chart compute profile 3. Older Runs keep
+pins linked-PDF adapter 4 and chart compute profile 3. Older Runs keep
 their pinned tool contracts. A model can discover a grid using
-`{linkId,page,tables:true}`, then select one cell with
+`{linkId,page,tables:true}`, which gives explicit table/row/column indices, then select one cell with
 `{linkId,page,table,row,column}` in the same existing PDF tool. The
 receipt opens the exact original PDF page; the saved source detail
 identifies its cell coordinates, row, column and unit. Dynamic or
