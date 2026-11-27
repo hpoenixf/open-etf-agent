@@ -44,6 +44,7 @@ const profiles={
  'financial-combo':{chart:'combo',title:'同口径柱线组合',units:comparableUnits,bases:['user-supplied'],dim:'category'},
  'financial-multi-line':{chart:'multi-line',title:'多指标走势对比',units:comparableUnits,bases:['user-supplied'],dim:'date'},
  'financial-area':{chart:'area',title:'指标面积走势',units:comparableUnits,bases:['user-supplied'],dim:'date'},
+ 'financial-ohlc':{chart:'candlestick',title:'用户提供的开盘、最高、最低、收盘',units:['CNY/share','USD/share','HKD/share'],bases:['user-supplied'],dim:'date'},
  'ohlc-candlestick':{chart:'candlestick',title:'日开盘、最高、最低、收盘',units:['CNY/share','USD/share','HKD/share'],bases:['exchange-daily-ohlc-unadjusted','exchange-daily-ohlc-adjusted'],dim:'date'},
 };
 export function financialChartInputLimits(kind){
@@ -64,7 +65,7 @@ function ohlc(value){
   &&value.low<=Math.min(value.open,value.close)&&value.high>=Math.max(value.open,value.close);
 }
 function range(metric,n){
- if(metric==='ohlc-candlestick') return ohlc(n);
+ if(profiles[metric].chart==='candlestick') return ohlc(n);
  return typeof n==='number'&&Number.isFinite(n)&&
   (metric.startsWith('financial-')&&metric!=='financial-share'?Math.abs(n)<=1e9:['nav-series','exchange-close-line'].includes(metric)?n>0&&n<=1e9:metric==='return-comparison'?n>=-100&&n<=1e6:n>=0&&n<=100);
 }

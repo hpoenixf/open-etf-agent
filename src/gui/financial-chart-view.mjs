@@ -26,6 +26,9 @@ function valid(view){
   new Set(view.keys).size!==view.keys.length||new Set(view.series.map(s=>s.label)).size!==view.series.length||
   view.series.some(s=>!s.values.some(number))))return false;
  if(view.chart==='combo'&&(view.series[0].mark!=='bar'||view.series[1].mark!=='line'))return false;
+ if(view.chart==='candlestick'&&view.provenance==='user-supplied'&&view.kind!=='financial-ohlc')return false;
+ if(view.kind==='financial-ohlc'&&(view.chart!=='candlestick'||view.basis!=='user-supplied'||view.provenance!=='user-supplied'||
+    !['CNY/share','USD/share','HKD/share'].includes(view.unit)||!view.series[0].values.some(candle)))return false;
  if(view.chart==='pie'){
   const c=view.coverage;
   return c?.total===100&&number(c.remainder)&&c.remainder>=0&&c.remainder<=100&&safe(c.remainderLabel)&&
@@ -48,7 +51,7 @@ export function createFinancialChartView(doc,view){
  figure.setAttribute('class','financial-chart-figure');
  figure.append(caption,html('p',view.provenance==='synthetic'?'合成样例，不是实时数据。':
   view.provenance==='user-supplied'?'用户提供的数据，未独立核验。':'按来源报告的数据，不代表独立验证或实时行情。'));
- const svg=svgEl('svg',{viewBox:'0 0 640 320',role:'img','aria-label':view.title});
+ const svg=svgEl('svg',{viewBox:'0 0 640 320',role:view.chart==='combo'?'group':'img','aria-label':view.title});
  svg.append(svgEl('title',{},view.title),svgEl('desc',{},'下方表格列出原始数值、缺失项和口径。'));
  figure.append(svg);
  const marks=(name,attrs)=>svg.append(svgEl(name,attrs));
@@ -152,6 +155,33 @@ export function createFinancialChartView(doc,view){
   });
   [0,view.keys.length-1].filter((x,i,a)=>a.indexOf(x)===i).forEach(i=>svg.append(svgEl('text',
    {x:x(i),y:307,'text-anchor':i===0?'start':'end',fill:'#293542','font-size':11},view.keys[i].slice(0,18))));
+  if(view.chart==='combo'){
+   const help='将鼠标移到某期或用 Tab 选中，查看同一时期的柱值和线值。';
+   const readout=html('p',help);readout.setAttribute('aria-live','polite');
+   readout.setAttribute('class','financial-chart-combo-readout');figure.append(readout);
+   const guide=svgEl('line',{x1:x0,x2:x0,y1:y0,y2:y1,stroke:'#374151','stroke-dasharray':'4 3',visibility:'hidden','pointer-events':'none','aria-hidden':'true'});
+   svg.append(guide);
+   const detailsFor=j=>view.keys[j]+'：'+view.series.map(s=>s.label+(s.mark==='bar'?'（柱）':'（线）')+' '+
+    (s.values[j]===null?'缺失':fmt.format(s.values[j])+' '+view.unit)).join('；');
+   let hovered=null,focused=null;
+   const update=()=>{
+    const j=hovered??focused;
+    if(j===null){guide.setAttribute('visibility','hidden');readout.textContent=help;return;}
+    const cx=String(x(j));guide.setAttribute('x1',cx);guide.setAttribute('x2',cx);guide.setAttribute('visibility','visible');
+    readout.textContent=detailsFor(j);
+   };
+   view.keys.forEach((_,j)=>{
+    const width=W/view.keys.length,label=detailsFor(j);
+    const hit=svgEl('rect',{x:x(j)-width/2,y:y0,width,height:y1-y0,fill:'transparent',tabindex:'0',
+     'aria-label':label,class:'financial-chart-period-hit'});
+    hit.append(svgEl('title',{},label));
+    hit.addEventListener('pointerenter',()=>{hovered=j;update();});
+    hit.addEventListener('pointerleave',()=>{hovered=null;update();});
+    hit.addEventListener('focus',()=>{focused=j;update();});
+    hit.addEventListener('blur',()=>{focused=null;update();});
+    svg.append(hit);
+   });
+  }
  }
  if(view.provenance==='user-supplied'&&view.chart!=='heatmap'){ const legend=html('p'); legend.setAttribute('aria-label','图例');legend.setAttribute('class','financial-chart-legend');
  const legendItems=view.chart==='pie'?[...view.keys,view.coverage.remainderLabel]:view.series.map(s=>s.label+(s.mark==='bar'?'（柱）':s.mark==='line'?'（线）':''));

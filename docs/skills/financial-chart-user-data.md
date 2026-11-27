@@ -31,6 +31,7 @@ still supported for richer units and chart types.
 | `financial-multi-line` | Two to four aligned, comparable ISO-date series | How did two strategies' cumulative returns compare over the same dates? |
 | `financial-area` | One dated series with a meaningful zero; fill stops at missing data | Which weeks recorded net inflows vs. outflows? |
 | `financial-combo` | Exactly two comparable series; first is bar, second is line, with one shared unit and axis | How did actual same-currency revenue compare to its target? |
+| `financial-ohlc` | One dated user-supplied series of open, high, low, and close; a null bar is missing | How did the range and direction vary across these supplied observations? |
 | `financial-heatmap` | A 2–12 row by 2–12 column matrix of comparable values; rows are `series`, columns are `keys` | Which market and month combinations had high or low returns? |
 
 The data block is a single JSON object. `asOf` is an ISO date, and `unit` is
@@ -62,13 +63,24 @@ Do not stack a subtotal and its constituent segments on the same axis.
 
 Use the explicit headed data block for advanced types. Set `kind` to the desired
 profile. A combination chart does not accept arbitrary marks or dual axes.
-Use one consistent unit and one meaningful definition across its two series.
+Use one consistent unit and one meaningful definition across its two series,
+such as actual revenue against a same-currency plan. Focus or point at a
+period to read both values together; missing values are labeled, not estimated.
 For a heatmap, compare like with like (for example monthly total returns);
 for mixed metrics, first provide legitimately normalized scores and their
 meaning. Neutral/missing cells remain missing, not zero. Heatmap color uses a
 symmetric scale around zero when values cross zero; otherwise it uses a
 single sequential scale. The table and cell titles preserve the exact values.
 Multi-line curves and area fills stop at gaps and never extrapolate.
+For the user-supplied candlestick, use strictly increasing ISO dates, a
+share-price unit (`CNY/share`, `USD/share`, or `HKD/share`), and each non-null
+bar has exactly `open`, `high`, `low`, and `close`. All four must be finite
+and positive, and high/low must enclose open/close. No trading-price
+vendor, adjustment convention, or missing OHLC component is inferred.
+
+```financial-chart-data
+{"kind":"financial-ohlc","asOf":"2026-09-30","unit":"CNY/share","keys":["2026-09-28","2026-09-29","2026-09-30"],"series":[{"label":"Synthetic share price","values":[{"open":10,"high":12,"low":9,"close":11},null,{"open":11,"high":12,"low":8,"close":9}]}]}
+```
 
 ```financial-chart-data
 {"kind":"financial-heatmap","asOf":"2026-09-30","unit":"%","keys":["7 月","8 月","9 月"],"series":[{"label":"市场甲","values":[-2,0.5,null]},{"label":"市场乙","values":[1.2,-0.8,2]}]}

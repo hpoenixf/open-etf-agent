@@ -16,11 +16,14 @@ const heatmap=data('financial-heatmap',periods,[['利差',[8,-4,null]],['增长'
 const combo=data('financial-combo',periods,[['行业甲',[5,-3,4]],['行业乙',[2,4,1]]]);
 const multiline=data('financial-multi-line',dates.slice(0,3),[['策略甲',[1,null,3]],['策略乙',[2,3,4]]]);
 const area=data('financial-area',dates,[['净流入',[2,3,null,-4,-5]]]);
+const firstBar={open:10,high:13,low:9,close:12};
+const lastBar={open:11,high:12,low:8,close:9};
+const ohlc={...data('financial-ohlc',dates.slice(0,3),[['示例份额',[firstBar,null,lastBar]]]),unit:'CNY/share'};
 const fenced=d=>'请只用我给出的合成数据作图。\n'+String.fromCharCode(96).repeat(3)+'financial-chart-data\n'+JSON.stringify(d)+'\n'+String.fromCharCode(96).repeat(3);
 
 function dom(){
  const nodes=[];
- const create=tag=>{const n={tag,textContent:'',attrs:{},children:[],append(...items){this.children.push(...items);},setAttribute(k,v){this.attrs[k]=v;}};nodes.push(n);return n;};
+ const create=tag=>{const n={tag,textContent:'',attrs:{},children:[],events:{},addEventListener(type,handler){this.events[type]=handler;},append(...items){this.children.push(...items);},setAttribute(k,v){this.attrs[k]=v;}};nodes.push(n);return n;};
  return {nodes,createElement:create,createElementNS:(_,tag)=>create(tag)};
 }
 test('advanced charts reject malformed or unproved input, inconsistent data and unsupported chart inference',async()=>{
@@ -37,6 +40,14 @@ test('advanced charts reject malformed or unproved input, inconsistent data and 
   {...multiline,series:multiline.series.slice(0,1)},
   {...area,keys:[...area.keys.slice(0,4),'2026-11-30']},
   {...area,series:[...area.series,{label:'加入',values:[1,2,3,4,5]}]},
+  {...ohlc,kind:'ohlc-candlestick'},
+  {...ohlc,kind:'exchange-close-line'},
+  {...ohlc,asOf:'2026-11-07'},
+  {...ohlc,unit:'%'},
+  {...ohlc,series:[{label:'无收盘输入',values:[10,null,9]}]},
+  {...ohlc,series:[{label:'无有效交易',values:[null,null,null]}]},
+  ...[{...firstBar,high:11},{...firstBar,open:0},{...firstBar,low:11},{...firstBar,close:-1},{...firstBar,adjustment:'unadjusted'}]
+   .map(bar=>({...ohlc,series:[{label:'错误 OHLC',values:[bar,null,lastBar]}]})),
  ])assert.deepEqual(suppliedChartDatasets(fenced(d),runId),[],d.kind);
  assert.deepEqual(suppliedChartDatasets('画一个热力图，把没提供的权重猜一下。',runId),[]);
  const [accepted]=suppliedChartDatasets(fenced(combo),runId);
@@ -50,11 +61,11 @@ test('advanced charts reject malformed or unproved input, inconsistent data and 
   readCommittedEvidence:({receiptId:id})=>[a,{...b,receiptId:shiftedId,data:shiftedData}].find(x=>x.receiptId===id)}),{code:'CHART_NONCOMPARABLE'});
 });
 
-test('owner GUI auto offers four rich profiles from frozen data, renders SVG+table, and reopens without model calls',async t=>{
+test('owner GUI auto offers five rich profiles from frozen data, renders SVG+table, and reopens without model calls',async t=>{
  const projectDir=await mkdtemp(resolve('.advanced-chart-test-'));
  let gui,calls=0;
  t.after(async()=>{await gui?.close();await rm(projectDir,{recursive:true,force:true});});
- const cases=[heatmap,combo,multiline,area];
+ const cases=[heatmap,combo,multiline,area,ohlc];
  let current;
  const result=(message,finish_reason='stop')=>Response.json({choices:[{message:{role:'assistant',...message},finish_reason}]});
  const call=(name,id,args)=>result({tool_calls:[{id,type:'function',function:{name,arguments:JSON.stringify(args)}}]},'tool_calls');
@@ -100,7 +111,25 @@ test('owner GUI auto offers four rich profiles from frozen data, renders SVG+tab
    assert.ok(tags('td').some(n=>n.textContent==='缺失'));
   }else if(view.chart==='combo'){
    assert.deepEqual(view.series.map(s=>s.mark),['bar','line']);
-   assert.equal(svg.children.filter(n=>n.tag==='rect').length,3);
+   const hit=svg.children.filter(n=>n.attrs.class==='financial-chart-period-hit');
+   assert.equal(svg.children.filter(n=>n.tag==='rect'&&!n.attrs.class).length,3);
+   assert.equal(hit.length,3);
+   assert.equal(hit[1].attrs.tabindex,'0');
+   const readout=tags('p').find(n=>n.attrs['aria-live']==='polite');
+   const guide=svg.children.find(n=>n.attrs['stroke-dasharray']);
+   assert.equal(guide.attrs.visibility,'hidden');
+   hit[1].events.focus();
+   assert.equal(guide.attrs.visibility,'visible');
+   assert.equal(readout.textContent,'报告期二：行业甲（柱） -3 %；行业乙（线） 4 %');
+   const secondPeriodX=guide.attrs.x1;
+   hit[2].events.pointerenter();
+   assert.equal(guide.attrs.x1,guide.attrs.x2);
+   assert.notEqual(guide.attrs.x1,secondPeriodX);
+   assert.equal(readout.textContent,'报告期三：行业甲（柱） 4 %；行业乙（线） 1 %');
+   hit[2].events.pointerleave();
+   assert.equal(guide.attrs.x1,secondPeriodX);
+   hit[1].events.blur();
+   assert.equal(guide.attrs.visibility,'hidden');
    assert.equal(svg.children.filter(n=>n.tag==='line'&&n.attrs['stroke-width']==='2').length,2);
    const malformed=structuredClone(view);malformed.series[0].mark='line';
    assert.throws(()=>createFinancialChartView(dom(),malformed),/Invalid approved/);
@@ -110,10 +139,17 @@ test('owner GUI auto offers four rich profiles from frozen data, renders SVG+tab
   }else if(view.chart==='area'){
    assert.equal(svg.children.filter(n=>n.tag==='polygon').length,2);
    assert.equal(svg.children.filter(n=>n.tag==='polyline').length,2);
+  }else if(view.chart==='candlestick'){
+   assert.equal(view.kind,'financial-ohlc');
+   assert.equal(view.basis,'user-supplied');
+   assert.equal(svg.children.filter(n=>n.tag==='rect').length,2);
+   assert.ok(tags('td').some(n=>n.textContent==='开 10；高 13；低 9；收 12'));
+   assert.ok(tags('td').some(n=>n.textContent==='缺失'));
+   assert.throws(()=>createFinancialChartView(dom(),{...view,kind:'ohlc-candlestick'}),/Invalid approved/);
   }
  }
- assert.equal(calls,12);
+ assert.equal(calls,15);
  await gui.close();await start();
  assert.deepEqual((await get(path)).messages.map(m=>m.chartViews[0]),views);
- assert.equal(calls,12);
+ assert.equal(calls,15);
 });
