@@ -1,6 +1,6 @@
 import {createHash} from 'node:crypto';
 import {isDeepStrictEqual} from 'node:util';
-import {openOwnerWeb,OWNER_LINKED_PDF_REVISION,OWNER_WEB_PAGE,OWNER_WEB_CONTINUE,OWNER_WEB_LINKED_PDF,OWNER_WEB_EXCERPTS,OWNER_WEB_EXCERPTS_LOCAL_MISS} from './gui-owner-web.mjs';
+import {openOwnerWeb,OWNER_LINKED_PDF_REVISION,OWNER_LINKED_PDF_LOCAL_MISS,OWNER_WEB_PAGE,OWNER_WEB_CONTINUE,OWNER_WEB_LINKED_PDF,OWNER_WEB_EXCERPTS,OWNER_WEB_EXCERPTS_LOCAL_MISS} from './gui-owner-web.mjs';
 import {publicPdfNavigationQuery} from './public-pdf-navigation.mjs';
 import {normalizeWebUrl} from './web-policy.mjs';
 import {WEB_TEXT_MAX_PAGES,WEB_TEXT_PAGE_BYTES} from './web-text-pages.mjs';
@@ -45,7 +45,7 @@ export async function readOwnerWebSources({projectDir,definition,run,publication
  if((phase!=='terminal'&&!(phase==='proposal-sealed'&&proposal?.kind==='final'))||
     !Array.isArray(messages)||messages.length>maxMessages)return output('unavailable');
 
- const linkedPdf=definition.ownerLinkedPdfRevision===OWNER_LINKED_PDF_REVISION&&definition.config.ownerConnectivity.linkedPdf===true;
+ const linkedPdf=[OWNER_LINKED_PDF_REVISION,OWNER_LINKED_PDF_LOCAL_MISS].includes(definition.ownerLinkedPdfRevision)&&definition.config.ownerConnectivity.linkedPdf===true;
  const canonicalBody=publication.content?.text??'';
  const markers=new Set(linkedPdf?[...canonicalBody.matchAll(/\[\[PDF:(web-pdf-page:sha256:[a-f0-9]{64})\]\]/g)].map(match=>match[1]):[]);
  const webMarkers=new Set([...canonicalBody.matchAll(/\[\[(WEB:[a-f0-9]{64}:[1-9][0-9]{0,3})\]\]/g)].map(match=>match[1]));

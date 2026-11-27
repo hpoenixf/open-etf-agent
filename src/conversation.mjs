@@ -13,7 +13,7 @@ import {safeDirectory,ensureSafeDirectory,publishImmutable} from './storage-file
 import {readProjectJson,inspectResearchProject,submitResearchTask,inspectResearchTask,workResearchTask,cancelResearchTask,readResearchReport,readResearchOutput,resumeResearchTaskAdmission,supportsOwnerFreeform,respondResearchTask,inspectResearchInteraction,listResearchInteractions,controlResearchTask,inspectResearchControl} from './research-project.mjs';
 import {readReportReview} from './report-review.mjs';
 import {readResearchPublication} from './research-project.mjs';
-import {OWNER_LINKED_PDF_REVISION} from './gui-owner-web.mjs';
+import {OWNER_LINKED_PDF_REVISION,OWNER_LINKED_PDF_LOCAL_MISS} from './gui-owner-web.mjs';
 import {readOwnerWebSources} from './conversation-owner-read-sources.mjs';
 const fail=code=>{throw Object.assign(new Error(code),{code});};
 const id=v=>{if(typeof v!=='string'||!/^[A-Za-z0-9_-]{1,48}$/.test(v))fail('CONVERSATION_INVALID_ID');return v;};
@@ -78,7 +78,8 @@ export async function submitConversationMessage({projectDir,conversationId,messa
  if(reasoningEffort!==undefined&&(dailyResearch!==undefined||parent!==null||review!==null||continuationOfMessageId!==null||
    !authorization?.providerApproved||!authorization?.dataApproved||!authorization?.costApproved||
    !offerReasoningEffort((await inspectResearchProject({projectDir:loc.projectDir})).config).options.includes(reasoningEffort)))fail('CONVERSATION_REASONING_EFFORT_UNAVAILABLE');
- if(ownerLinkedPdfRevision!==undefined&&(ownerLinkedPdfRevision!==OWNER_LINKED_PDF_REVISION||!freeform||dailyResearch!==undefined||
+ if(ownerLinkedPdfRevision!==undefined&&(![OWNER_LINKED_PDF_REVISION,OWNER_LINKED_PDF_LOCAL_MISS].includes(ownerLinkedPdfRevision)||
+   (ownerLinkedPdfRevision===OWNER_LINKED_PDF_LOCAL_MISS&&chartSkill!==AGENT_CHART_SKILL)||!freeform||dailyResearch!==undefined||
    !authorization?.providerApproved||!authorization?.dataApproved||!authorization?.costApproved||
    (await inspectResearchProject({projectDir:loc.projectDir})).config.ownerConnectivity?.linkedPdf!==true))fail('CONVERSATION_LINKED_PDF_UNAVAILABLE');
  const geminiPublicSha256=approveGeminiPublic===true?sha256(text):undefined;

@@ -19,7 +19,7 @@ import {
 import { createResearchProject, dailyWatchConfigVersion, inspectResearchProject, inspectResearchTask, maintainOwnerGuiAdmission, readProjectJson, supportsOwnerFreeform, updateResearchProject, validateResearchConfig } from './research-project.mjs';
 import { importProjectSources, importUploadedPdf, PROJECT_SOURCE_LIMITS } from './project-sources.mjs';
 import { ensureSafeDirectory, publishImmutable, safeDirectory } from './storage-files.mjs';
-import { OWNER_LINKED_PDF_REVISION, prepareOwnerSearch } from './gui-owner-web.mjs';
+import { OWNER_LINKED_PDF_REVISION, OWNER_LINKED_PDF_LOCAL_MISS, prepareOwnerSearch } from './gui-owner-web.mjs';
 import { prepareOwnerDailyDigest } from './gui-daily-digest-delivery.mjs';
 import { prepareScheduledSmtp } from './scheduled-smtp.mjs';
 import { createScheduledReportEmailHook, inspectScheduledEmailDelivery, prepareFullWatchEmail } from './scheduled-report-email.mjs';
@@ -597,7 +597,7 @@ export async function createLocalGuiWorkspace({ projectDir, origin: mountOrigin,
            freeform&&!attachment&&input.researchDepth!=='standard'&&chartAuto?OWNER_CHART_AUTO:undefined;
           const m = await submitConversationMessage({ projectDir, conversationId, messageId: input.messageId,
             text: input.question, sourceManifestSha256: sourceId, skillId:input.skillId,approveGeminiPublic:input.approveGeminiPublic,
-            ownerLinkedPdfRevision:retry?priorInput?.ownerLinkedPdfRevision:live&&freeform&&!attachment&&!input.approveGeminiPublic&&connectivity.linkedPdf===true?OWNER_LINKED_PDF_REVISION:undefined,...(chartSkill?{chartSkill}:{}),...(input.researchDepth===undefined?{}:{researchDepth:input.researchDepth}),...(input.reasoningEffort===undefined?{}:{reasoningEffort:input.reasoningEffort}),
+            ownerLinkedPdfRevision:retry?priorInput?.ownerLinkedPdfRevision:live&&freeform&&!attachment&&!input.approveGeminiPublic&&connectivity.linkedPdf===true?(chartSkill===AGENT_CHART_SKILL?OWNER_LINKED_PDF_LOCAL_MISS:OWNER_LINKED_PDF_REVISION):undefined,...(chartSkill?{chartSkill}:{}),...(input.researchDepth===undefined?{}:{researchDepth:input.researchDepth}),...(input.reasoningEffort===undefined?{}:{reasoningEffort:input.reasoningEffort}),
             ...(live?{authorization:{providerApproved:true,dataApproved:true,costApproved:true,...(goHealth&&!attachment?{openAIApproved:true}:{})}}:{}) });
           if (m.status === 'active' && !retry) begin(conversationId,input.messageId,sourceId);
           return send(202,{ id:m.messageId,runId:m.runId,status:m.status });

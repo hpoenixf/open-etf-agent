@@ -20,6 +20,7 @@ export const OWNER_WEB_CONTINUE='public_web_continue';
 export const OWNER_WEB_EXCERPTS='owner-web-excerpts@1';
 export const OWNER_WEB_EXCERPTS_LOCAL_MISS='owner-web-excerpts@2';
 export const OWNER_LINKED_PDF_REVISION='owner-public-linked-pdf@1';
+export const OWNER_LINKED_PDF_LOCAL_MISS='owner-public-linked-pdf@2';
 export const OWNER_WEB_LINKED_PDF='public_web_linked_pdf_page';
 export const OWNER_WEB_SEARCH='public_web_search';
 const paidSearch=Object.freeze({
@@ -153,7 +154,8 @@ export function openOwnerWeb({profile,projectDir,projectId,runId,transport={},se
  const operation=(name,callId)=>name+'-'+hash(JSON.stringify([runId,callId])).slice(0,40);
  const localInvalidCursor=excerptRevision===OWNER_WEB_EXCERPTS_LOCAL_MISS;
  const withExcerpts=localInvalidCursor||excerptRevision===OWNER_WEB_EXCERPTS;
- const linkedPdf=linkedPdfRevision===OWNER_LINKED_PDF_REVISION&&profile.linkedPdf===true&&withExcerpts;
+ const localInvalidPdfLink=linkedPdfRevision===OWNER_LINKED_PDF_LOCAL_MISS;
+ const linkedPdf=(localInvalidPdfLink||linkedPdfRevision===OWNER_LINKED_PDF_REVISION)&&profile.linkedPdf===true&&withExcerpts;
  const htmlBytes=document=>Buffer.from(document.originalBase64,'base64');
  if(withExcerpts&&(typeof readRun!=='function'||typeof projectId!=='string'||!projectId))fail('WEB_PAGE_RUN_REQUIRED');
  const cursor=(firstCallId,nextPage,source)=>hash(JSON.stringify([
@@ -303,9 +305,10 @@ export function openOwnerWeb({profile,projectDir,projectId,runId,transport={},se
    // The authenticated GUI mounts only the selected owner Project; neither
    // a model argument nor a public URL carries workspace authority.
    const scope={projectId,runId,accountId:projectId};
+   const validLinkId=id=>typeof id==='string'&&/^web-pdf-link:sha256:[a-f0-9]{64}$/.test(id);
    const validatePdf=args=>{
     if(!args||typeof args!=='object'||Array.isArray(args)||Object.keys(args).length!==2||
-       typeof args.linkId!=='string'||!/^web-pdf-link:sha256:[a-f0-9]{64}$/.test(args.linkId)||!Number.isSafeInteger(args.page)||args.page<1)
+       typeof args.linkId!=='string'||(localInvalidPdfLink?(args.linkId.length>2048||/[\u0000-\u001f\u007f]/.test(args.linkId)):!validLinkId(args.linkId))||!Number.isSafeInteger(args.page)||args.page<1)
      fail('WEB_PDF_ARGUMENTS_INVALID');
    };
    const preparePdf=(callId,signal)=>openLinkedWebPdfOwner({
@@ -333,10 +336,27 @@ export function openOwnerWeb({profile,projectDir,projectId,runId,transport={},se
    });
    const usePdf=async(args,{callId,signal},dispatch)=>{
     validatePdf(args);signal?.throwIfAborted();
+    let linkId=args.linkId;
+    if(localInvalidPdfLink&&!validLinkId(linkId)){
+     // A raw URL is a lookup key only, never a fetch target. Require one
+     // receipt identity in prior committed HTML; acquire/readPage then
+     // re-derive that receipt from retained original bytes as usual.
+     const ids=new Set();
+     if(linkId.startsWith('https://')){
+      for(const {call,value} of earlierReceipts(callId,true).values()){
+       if(call.name!==OWNER_WEB_PAGE||value.pdfLinks?.schemaVersion!=='web-pdf-link-inventory@1'||!Array.isArray(value.pdfLinks.links))continue;
+       for(const link of value.pdfLinks.links)if(link?.url===linkId&&validLinkId(link.id))ids.add(link.id);
+      }
+     }
+     if(ids.size!==1)return {kind:'web-pdf-unavailable@1',status:'unavailable',code:'WEB_PDF_LINK_NOT_IN_EARLIER_HTML',
+      networkAttempted:false,automaticReplayAllowed:false,
+      hint:'Open the public HTML release page first, then copy its exact pdfLinks.links[].id. Do not try the raw URL again. If the PDF is still unavailable, answer from verified sources and disclose the gap.'};
+     [linkId]=ids;
+    }
     const owner=preparePdf(callId,signal);
     try{
-     if(dispatch)await owner.acquire(args.linkId,{signal});
-     const page=await owner.readPage(args.linkId,args.page);
+     if(dispatch)await owner.acquire(linkId,{signal});
+     const page=await owner.readPage(linkId,args.page);
      if(page.status==='unknown')return null;
      return page;
     }catch(error){
@@ -345,8 +365,8 @@ export function openOwnerWeb({profile,projectDir,projectId,runId,transport={},se
      throw error;
     }
    };
-   webTools.push({name:OWNER_WEB_LINKED_PDF,recoveryVersion:'owner-public-linked-pdf@1',
-    description:'Read an exact physical PDF page from a link available on an earlier consumed original webpage in this run. Copy linkId exactly. Start with page 1 if unspecific. To cite a returned page in your final answer, copy [[PDF:<sourceRef>]] using the entire returned sourceRef, not the linkId. Never infer facts from unavailable pages.',
+   webTools.push({name:OWNER_WEB_LINKED_PDF,recoveryVersion:localInvalidPdfLink?OWNER_LINKED_PDF_LOCAL_MISS:OWNER_LINKED_PDF_REVISION,
+    description:'Read an exact physical PDF page from a link available on an earlier consumed original webpage in this run. Copy linkId exactly. Start with page 1 if unspecific. To cite a returned page in your final answer, copy [[PDF:<sourceRef>]] using the entire returned sourceRef, not the linkId. Never infer facts from unavailable pages.'+(localInvalidPdfLink?' Search results and direct URLs not previously listed in this run’s HTML PDF inventory cannot open a PDF. Use a publisher HTML release page to obtain the receipt, or continue from other verified evidence.':''),
     parameters:{type:'object',properties:{linkId:{type:'string'},page:{type:'integer',minimum:1}},required:['linkId','page'],additionalProperties:false},
     validate:validatePdf,
     async execute(args,context){const value=await usePdf(args,context,true);if(!value)fail('WEB_PDF_OUTCOME_UNKNOWN');return value;},

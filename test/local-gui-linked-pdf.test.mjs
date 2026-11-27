@@ -4,7 +4,7 @@ import {createHash} from 'node:crypto';
 import { mkdir, mkdtemp, readFile, rm } from 'node:fs/promises';
 import {resolve} from 'node:path';
 import {setTimeout as delay} from 'node:timers/promises';
-import {openOwnerWeb,OWNER_WEB_EXCERPTS_LOCAL_MISS,OWNER_LINKED_PDF_REVISION} from '../src/gui-owner-web.mjs';
+import {openOwnerWeb,OWNER_WEB_EXCERPTS_LOCAL_MISS,OWNER_LINKED_PDF_REVISION,OWNER_LINKED_PDF_LOCAL_MISS} from '../src/gui-owner-web.mjs';
 import {extractWebPdfLinks} from '../src/web-extraction.mjs';
 import {inspectResearchTask} from '../src/research-project.mjs';
 import {startLocalGui} from '../src/gui-server.mjs';
@@ -282,4 +282,99 @@ test('cold receipt verification accepts an exact pre-upgrade inventory but not a
  remember({...old,pdfLinks:{...old.pdfLinks,links:[]}});
  await assert.rejects(next().verifyResult(pageTwo,{call:continued}),{code:'WEB_PAGE_EVIDENCE_CHANGED'});
  await assert.rejects(tool().verifyResult({...old,pdfLinks:{...old.pdfLinks,links:[]}},{call}),{code:'WEB_PAGE_EVIDENCE_CHANGED'});
+});
+
+test('chart-enabled linked PDF returns a local miss for a bare search URL, then binds an exact earlier HTML receipt and persists body and cold sources',async t=>{
+ await mkdir('test-output',{recursive:true});
+ const projectDir=await mkdtemp(resolve('test-output/linked-pdf-chart-local-miss-'));
+ const network=mockWebNetwork(t,{passthroughLoopback:true,routes:{
+  'https://www.cnindex.com.cn/robots.txt':{body:'User-agent: *\nAllow: /\n'},
+  [url]:{body:html,headers:{'content-type':'text/html'}},
+  [pdfUrl]:{body:pdf,headers:{'content-type':'application/pdf'}},
+ }});
+ const sent=()=>network.calls.filter(value=>value.url===pdfUrl).length;
+ let gui,answer,modelCalls=0;
+ t.after(async()=>{await gui?.close();await rm(projectDir,{recursive:true,force:true});});
+ const opts={projectDir,env:{ETF_GUI_PROVIDER_KEY:'synthetic-placeholder',ETF_GUI_AGENT_FINANCIAL_CHART:'1'},liveConfig:{
+  gateway:{provider:'opencode-go-owner',endpoint:'https://opencode.ai/inference/go/openai/v1/chat/completions',model:'synthetic',apiKeyEnv:'ETF_GUI_PROVIDER_KEY'},
+  limits:{model:7},connectivity:{web:true,linkedPdf:true},
+ },async fetchImpl(_url,{body}){
+  modelCalls++;
+  const prior=JSON.parse(body).messages.filter(m=>m.role==='tool').map(m=>JSON.parse(m.content).value);
+  if(!prior.length)return proposal(call('direct-unproven','public_web_linked_pdf_page',{page:1,linkId:pdfUrl}));
+  if(prior.length===1){
+   assert.equal(sent(),0);
+   assert.equal(prior[0].code,'WEB_PDF_LINK_NOT_IN_EARLIER_HTML');
+   assert.equal(prior[0].networkAttempted,false);
+   assert.match(prior[0].hint,/answer from verified sources/);
+   return proposal(call('html-positive','public_web_read',{url}));
+  }
+  if(prior.length===2){
+   assert.equal(prior[1].pdfLinks.links[0].url,pdfUrl);
+   return proposal(call('direct-bound','public_web_linked_pdf_page',{page:1,linkId:pdfUrl}));
+  }
+  if(prior.length===3){
+   assert.equal(prior[2].kind,'web-pdf-original-page');
+   assert.equal(sent(),1);
+   return proposal(call('exact-receipt','public_web_linked_pdf_page',{page:3,linkId:prior[1].pdfLinks.links[0].id}));
+  }
+  assert.equal(prior[3].kind,'web-pdf-original-page');
+  answer='Verified official PDF evidence [[PDF:'+prior[2].sourceRef+']]';
+  return Response.json({choices:[{message:{role:'assistant',content:answer},finish_reason:'stop'}]});
+ }};
+ gui=await startLocalGui(opts);
+ const post=(p,v)=>fetch(gui.origin+p,{method:'POST',headers:{origin:gui.origin,'content-type':'application/json'},body:JSON.stringify(v)});
+ const get=p=>fetch(gui.origin+p).then(r=>r.json());
+ const path='/api/conversations/'+(await post('/api/conversations',{}).then(r=>r.json())).id;
+ const request=await post(path+'/messages',{messageId:'pdf-chart',question:'Read the original PDF and preserve a verified citation.',skillId:'auto'});
+ assert.equal(request.status,202,await request.text());
+ let message;
+ for(let i=0;i<100;i++){
+  message=(await get(path)).messages[0];
+  if(message&&!message.working&&['completed','failed'].includes(message.status))break;
+  await delay(35);
+ }
+ assert.equal(message.status,'completed',JSON.stringify(message));
+ assert.equal(message.output.answer,answer);
+ const {definition}=await inspectResearchTask({projectDir,runId:message.runId});
+ assert.equal(definition.ownerLinkedPdfRevision,'owner-public-linked-pdf@2');
+ const bodyPath=path+'/messages/pdf-chart/body',sourcePath=path+'/messages/pdf-chart/sources';
+ const savedBody=await get(bodyPath),savedSources=await get(sourcePath);
+ assert.equal(savedSources.availability,'available');
+ assert.deepEqual(savedSources.readSources.filter(row=>row.kind==='web-pdf-original-page').map(row=>[row.page,row.cited]),[[1,true],[3,false]]);
+ await gui.close();gui=await startLocalGui(opts);
+ assert.deepEqual(await get(bodyPath),savedBody);
+ assert.deepEqual(await get(sourcePath),savedSources);
+ assert.equal(sent(),1);
+ assert.equal(modelCalls,5);
+});
+
+test('raw URL alias cannot use a sibling proposal, a different URL, duplicate receipt identities, or another run',async()=>{
+ const exact='https://www.cnindex.com.cn/notice.pdf';
+ const idA='web-pdf-link:sha256:'+'a'.repeat(64),idB='web-pdf-link:sha256:'+'b'.repeat(64);
+ const read={id:'read',name:'public_web_read',arguments:{url}};
+ const next={...read,id:'read-2'};
+ const requested={id:'pdf',name:'public_web_linked_pdf_page',arguments:{linkId:exact,page:1}};
+ const result=(call,id,pdf=exact)=>({role:'tool',callId:call.id,result:{callId:call.id,status:'succeeded',dispatched:true,
+  value:{kind:'public-web-page@2',pdfLinks:{schemaVersion:'web-pdf-link-inventory@1',links:[{url:pdf,id}]}}}});
+ const group=(...calls)=>({role:'assistant',calls});
+ let messages,runId='alias-test';
+ const noRequest=()=>{throw Error('unexpected web transport or local receipt read');};
+ const tool=openOwnerWeb({projectDir:'unused',projectId:'fixture',runId:'alias-test',profile:{web:true,linkedPdf:true},
+  linkedPdfRevision:OWNER_LINKED_PDF_LOCAL_MISS,excerptRevision:OWNER_WEB_EXCERPTS_LOCAL_MISS,readRun:()=>({runId,snapshot:{messages}}),
+  transport:{inspect:noRequest,fetchPdf:noRequest}}).find(row=>row.name===requested.name);
+ for(const snapshot of [
+  [group(read,requested),result(read,idA)],
+  [group(requested),group(read),result(read,idA)],
+  [group(read),result(read,idA,exact+'?id=1'),group(requested)],
+  [group(read),result(read,idA),group(next),result(next,idB),group(requested)],
+ ]){
+  messages=snapshot;
+  const miss=await tool.execute(requested.arguments,{callId:requested.id});
+  assert.equal(miss.code,'WEB_PDF_LINK_NOT_IN_EARLIER_HTML');
+  assert.equal(miss.networkAttempted,false);
+  await tool.verifyResult(miss,{call:requested});
+ }
+ runId='different-run';messages=[group(read),result(read,idA),group(requested)];
+ await assert.rejects(tool.execute(requested.arguments,{callId:requested.id}),{code:'WEB_PAGE_RUN_REQUIRED'});
 });
