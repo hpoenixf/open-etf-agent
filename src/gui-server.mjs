@@ -2,6 +2,7 @@ import {ownerToolCatalog} from './gui-tool-catalog.mjs';
 import {isResearchSkillChoice} from './financial-analysis-methods.mjs';
 import {INPUT_CHART_SKILL,INPUT_CHART_AUTO,hasSuppliedChartData} from './financial-chart-input.mjs';
 import {dailyBriefLabel} from './conversation-daily-context.mjs';
+import {AGENT_CHART_SKILL} from './financial-chart-agent.mjs';
 import {OWNER_CHART_SKILL,OWNER_CHART_AUTO} from './financial-chart-owner.mjs';
 import {readResearchIntent,isAutoResearchProfile,isDeepResearchProfile,readDeepResearchProgress} from './research-intent.mjs';
 import { createServer } from 'node:http';
@@ -149,6 +150,7 @@ export async function createLocalGuiWorkspace({ projectDir, origin: mountOrigin,
   const reasoningEffort=offerReasoningEffort(expectedConfig);
   const connectivity=expectedConfig.ownerConnectivity??{};
   const chartAvailable=freeform;
+  const agentChart=chartAvailable&&Boolean(live)&&env.ETF_GUI_AGENT_FINANCIAL_CHART==='1';
   const chartAuto=chartAvailable&&connectivity.wind===true&&env.ETF_GUI_FINANCIAL_CHART_AUTO==='1';
   const ownerSearchSettings=Object.fromEntries([connectivity.search,...(connectivity.searchAlternates??[])].filter(Boolean).map(provider=>[provider,prepareOwnerSearch(provider,env)]));
   const ownerWindSettings=connectivity.wind?((await import('./gui-owner-wind.mjs')).prepareOwnerWind(true,env)):undefined;
@@ -449,9 +451,9 @@ export async function createLocalGuiWorkspace({ projectDir, origin: mountOrigin,
         if (req.url === '/api/workspace') return send(200, {
           schemaVersion: 'local-gui@1', mode, reasoningEffort,
           ...(live?.geminiFreeKey?{geminiFreePublicFallback:true}:{}),
-          ...(freeform?{toolCatalog:ownerToolCatalog({connectivity,chartAvailable,chartAuto,dailyBrief:Boolean(dailyBriefSkill)})}:{}),
+          ...(freeform?{toolCatalog:ownerToolCatalog({connectivity,chartAvailable,chartAuto:chartAuto||agentChart,dailyBrief:Boolean(dailyBriefSkill)})}:{}),
           ...(live?{liveNotice:{...(ownerAdmission?{maxConcurrentRuns:workerCapacity}:{}),maxModelCallsPerRun:expectedConfig.limits.model,...(freeform?{freeform:true,connectivity:{web:connectivity.web===true,...(connectivity.linkedPdf===true?{linkedPdf:true}:{}),search:!!connectivity.search,...(connectivity.search?{searchProvider:connectivity.search}:{}),...(connectivity.searchAlternates?{searchAlternates:connectivity.searchAlternates}:{}),wind:connectivity.wind===true}}:{})}}:{}),
-          capabilities: ['conversations','progress','reports','sources','read-web-sources',...(freeform?['pdf-attachment','daily-watch','deep-research','research-intent']:[]),...(chartAvailable?['financial-chart-skill']:[]),...(chartAuto?['financial-chart-auto']:[])],
+          capabilities: ['conversations','progress','reports','sources','read-web-sources',...(freeform?['pdf-attachment','daily-watch','deep-research','research-intent']:[]),...(chartAvailable?['financial-chart-skill']:[]),...(chartAuto||agentChart?['financial-chart-auto']:[])],
           projectId: demo.projectId, conversations: await list({titles:true}), sources: publicSources,
         });
         if(req.url==='/api/daily-watch'&&daily)return send(200,{timeZone:DAILY_TIME_ZONE,autorun:dailyAutorun,
@@ -587,9 +589,10 @@ export async function createLocalGuiWorkspace({ projectDir, origin: mountOrigin,
           // old replay cannot retroactively acquire the changed auto policy.
           const supplied=!attachment&&freeform&&hasSuppliedChartData(input.question);
           const explicit=input.chartSkill===OWNER_CHART_SKILL;
-          const priorExplicit=[OWNER_CHART_SKILL,INPUT_CHART_SKILL].includes(priorInput?.chartSkill);
+          const priorExplicit=priorInput?.chartSkill===AGENT_CHART_SKILL?explicit:[OWNER_CHART_SKILL,INPUT_CHART_SKILL].includes(priorInput?.chartSkill);
           const chartSkill=input.approveGeminiPublic?undefined:retry&&explicit===priorExplicit?priorInput?.chartSkill:
            supplied?(explicit?INPUT_CHART_SKILL:INPUT_CHART_AUTO):
+           freeform&&!attachment&&agentChart?AGENT_CHART_SKILL:
            explicit?(connectivity.wind?OWNER_CHART_SKILL:undefined):
            freeform&&!attachment&&input.researchDepth!=='standard'&&chartAuto?OWNER_CHART_AUTO:undefined;
           const m = await submitConversationMessage({ projectDir, conversationId, messageId: input.messageId,

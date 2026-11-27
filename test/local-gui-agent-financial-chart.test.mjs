@@ -1,0 +1,84 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {mkdir,mkdtemp,rm} from 'node:fs/promises';
+import {resolve} from 'node:path';
+import {setTimeout as delay} from 'node:timers/promises';
+import {createHash} from 'node:crypto';
+import {startLocalGui} from '../src/gui-server.mjs';
+import {openAgentChart,readAgentChartViews} from '../src/financial-chart-agent.mjs';
+import {mockWebNetwork} from './fixtures/web-network.mjs';
+
+const url='https://example.com/results';
+const quotes=['Revenue 2025Q2 CNY million 18,450','Revenue 2025Q3 CNY million 19,287'];
+const dataset={kind:'financial-columns',keys:['2025Q2','2025Q3'],series:[{label:'Revenue',values:[18450,19287]}],asOf:'2025-09-30',unit:'CNY million'};
+const proposal=(id,name,args)=>Response.json({choices:[{message:{role:'assistant',tool_calls:[{type:'function',id,function:{name,arguments:JSON.stringify(args)}}]},finish_reason:'tool_calls'}]});
+const final=()=>Response.json({choices:[{message:{role:'assistant',content:'The comparison and its limitations are noted. The document values are synthetic.'},finish_reason:'stop'}]});
+
+test('owner Auto accepts structured values from a committed report and reopens the rendered view from History',async t=>{
+ await mkdir('test-output',{recursive:true});const projectDir=await mkdtemp(resolve('test-output/agent-chart-'));
+ mockWebNetwork(t,{passthroughLoopback:true,routes:{'https://example.com/robots.txt':{body:'User-agent: *\nAllow: /\n'},[url]:{body:quotes.join('\n')}}});
+ let gui,requests=0;
+ t.after(async()=>{await gui?.close();await rm(projectDir,{recursive:true,force:true});});
+ const opts={projectDir,env:{ETF_GUI_PROVIDER_KEY:'test-only',ETF_GUI_AGENT_FINANCIAL_CHART:'1'},
+  liveConfig:{gateway:{provider:'opencode-go-owner',endpoint:'https://opencode.ai/inference/go/openai/v1/chat/completions',model:'synthetic',apiKeyEnv:'ETF_GUI_PROVIDER_KEY'},limits:{model:6},connectivity:{web:true}},
+  async fetchImpl(_url,{body}){
+   requests++;const r=JSON.parse(body),prior=r.messages.filter(x=>x.role==='tool');
+   assert.ok(r.tools.some(t=>t.function.name==='render_financial_chart'));
+   if(!prior.length)return proposal('report','public_web_read',{url});
+   if(prior.length===1){
+    const source=JSON.parse(prior[0].content).value;
+    const ref='WEB:'+source.manifestSha256+':'+source.page;
+    return proposal('chart','render_financial_chart',{dataset,evidence:quotes.map((quote,key)=>({quote,key,ref,series:0}))});
+   }
+   assert.equal(JSON.parse(prior.at(-1).content).value.view.provenance,'document-reported');
+   return final();
+  }};
+ gui=await startLocalGui(opts);
+ const post=(p,v)=>fetch(gui.origin+p,{method:'POST',headers:{origin:gui.origin,'content-type':'application/json'},body:JSON.stringify(v)});
+ const get=p=>fetch(gui.origin+p).then(r=>r.json());
+ const conv='/api/conversations/'+(await post('/api/conversations',{}).then(r=>r.json())).id;
+ const response=await post(conv+'/messages',{messageId:'report-chart',question:'Show a chart from the publisher’s latest quarterly results.',skillId:'auto'});
+ assert.equal(response.status,202,await response.text());
+ let m;
+ for(let i=0;i<100;i++){
+  m=(await get(conv)).messages[0];if(m&&!m.working&&['completed','failed'].includes(m.status))break;await delay(30);
+ }
+ assert.equal(m?.status,'completed',JSON.stringify(m));
+ assert.deepEqual(m.chartViews[0].series[0].values,[18450,19287]);
+ assert.equal(m.chartViews[0].sources[0].url,url);
+ assert.equal(m.chartViews[0].provenance,'document-reported');
+ await gui.close();gui=await startLocalGui(opts);
+ const cold=(await get(conv)).messages[0];
+ assert.deepEqual(cold.chartViews,m.chartViews);assert.equal(cold.output.answer,m.output.answer);assert.equal(requests,3);
+});
+
+test('cross-run or altered evidence cannot gain source-checked attribution; script-equivalent payload is accepted',async()=>{
+ const r={runId:'fixture',snapshot:{messages:[]}};
+ const t=openAgentChart({readRun:()=>r});
+ const c={id:'chart1',name:t.name,arguments:{dataset,evidence:[{key:0,series:0,ref:'WEB:'+'e'.repeat(64)+':1',quote:quotes[0]}]}};
+ r.snapshot.messages.push({role:'assistant',calls:[c]});
+ const v=await t.execute(c.arguments,{callId:c.id});
+ assert.equal(v.status,'saved');
+ assert.equal(v.view.provenance,'agent-supplied');
+ assert.deepEqual(v.view.sources,[]);
+ r.snapshot.messages.push({role:'tool',callId:c.id,result:{callId:c.id,status:'succeeded',dispatched:true,value:v}});
+ assert.equal((await readAgentChartViews(r)).length,1);
+ assert.deepEqual(await t.execute({dataset:{...dataset,series:[{label:'invalid',values:[1,Infinity]}]}},{callId:'bad'}),{schemaVersion:'agent-financial-chart@1',status:'unavailable',reason:'CHART_DATA_INVALID'});
+ await assert.rejects(t.verifyResult({...v,view:{...v.view,provenance:'document-reported'}},{call:c}),{code:'CHART_RESULT_CHANGED'});
+});
+
+test('PDF page citations are from accepted original reads, not invented URLs',async()=>{
+ const r={runId:'pdf-proof',snapshot:{messages:[]}};
+ const sourceRef='web-pdf-page:sha256:'+'d'.repeat(64), body=quotes.join('\n');
+ const pdf={id:'pdf1',name:'public_web_linked_pdf_page',arguments:{page:2}};
+ const result={kind:'web-pdf-original-page',url:'https://example.com/quarter.pdf',page:2,sourceRef,text:body,sha256:createHash('sha256').update(body).digest('hex')};
+ r.snapshot.messages.push({role:'assistant',calls:[pdf]},{role:'tool',callId:pdf.id,result:{callId:pdf.id,status:'succeeded',dispatched:true,value:result}});
+ const arguments_={dataset,evidence:quotes.map((quote,key)=>({quote,key,ref:'PDF:'+sourceRef,series:0}))};
+ r.snapshot.messages.push({role:'assistant',calls:[{id:'chart',name:'render_financial_chart',arguments:arguments_}]});
+ const v=await openAgentChart({readRun:()=>r}).execute(arguments_,{callId:'chart'});
+ assert.equal(v.view.provenance,'document-reported');
+ assert.equal(v.view.sources[0].url,'https://example.com/quarter.pdf#page=2');
+ const tampered={...arguments_,dataset:{...dataset,series:[{label:'Revenue',values:[19287,18450]}]}};
+ const disputed=await openAgentChart({readRun:()=>r}).execute(tampered,{callId:'chart'});
+ assert.equal(disputed.view.provenance,'agent-supplied');
+});
