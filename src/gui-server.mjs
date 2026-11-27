@@ -112,12 +112,12 @@ async function guiProject(projectDir, expectedConfig, live, freeform) {
     project = await createResearchProject({ directory: projectDir, config:expectedConfig });
   }
   if (!isDeepStrictEqual(project.config, expectedConfig)) {
-    const {ownerConnectivity:oldConnectivity,ownerOpenAIResponses:oldOpenAI,...oldBase}=project.config;
-    const {ownerConnectivity:nextConnectivity,ownerOpenAIResponses:nextOpenAI,...nextBase}=expectedConfig;
+    const {ownerConnectivity:oldConnectivity,ownerOpenAIResponses:oldOpenAI,ownerGeminiFree:oldGemini,...oldBase}=project.config;
+    const {ownerConnectivity:nextConnectivity,ownerOpenAIResponses:nextOpenAI,ownerGeminiFree:nextGemini,...nextBase}=expectedConfig;
     // Only the trusted launch config can change connectivity on this existing
     // owner project. Other changes still fail closed. Old Run definitions
     // retain their original profile and historical readback.
-    if(!freeform||!isDeepStrictEqual(oldBase,nextBase)||!nextConnectivity&&!oldConnectivity&&!oldOpenAI&&!nextOpenAI) {
+    if(!freeform||!isDeepStrictEqual(oldBase,nextBase)||!nextConnectivity&&!oldConnectivity&&!oldOpenAI&&!nextOpenAI&&!oldGemini&&!nextGemini) {
       reject(400, live?'GUI_LIVE_PROJECT_REQUIRED':'GUI_DEMO_PROJECT_REQUIRED');
     }
     project=await updateResearchProject({projectDir,config:expectedConfig,expectedConfigSha256:project.configSha256});
@@ -135,7 +135,7 @@ async function guiProject(projectDir, expectedConfig, live, freeform) {
 export async function createLocalGuiWorkspace({ projectDir, origin: mountOrigin, liveConfig, env = process.env, fetchImpl, ownerWebTransport, ownerWindFetch, dailyClock, onDailyCompleted, smtpOptions, ownerDailyDigest, langfuseOptions } = {}) {
   const live = liveConfig === undefined ? null : prepareGuiLiveConfig(liveConfig,env);
   const mode = live?'live-research':'offline-demo';
-  const goHealth=live?.openAIKey?createGoHealth({fetchImpl}):undefined;
+  const goHealth=live?.openAIKey||live?.geminiFreeKey?createGoHealth({fetchImpl}):undefined;
   const telemetry=live?prepareOwnerLangfuse(env,langfuseOptions):null;
   let telemetryLoop;
   const expectedConfig=live?.config??validatedConfig;
@@ -293,7 +293,7 @@ export async function createLocalGuiWorkspace({ projectDir, origin: mountOrigin,
     const trace=telemetry?.start();
     const p = Promise.resolve().then(() =>
       workConversationMessage({ projectDir, conversationId, messageId,
-        ...(live?{apiKey:live.apiKey,openAIKey:live.openAIKey,goHealth,fetchImpl,ownerWebTransport,ownerWindSettings,ownerSearchSettings,ownerWindFetch,ownerAdmission,observeGuiRun:trace?.observe}:{gateway:demoGateway(source)}), hostSignal: hostSignal.signal })
+        ...(live?{apiKey:live.apiKey,openAIKey:live.openAIKey,geminiFreeKey:live.geminiFreeKey,goHealth,fetchImpl,ownerWebTransport,ownerWindSettings,ownerSearchSettings,ownerWindFetch,ownerAdmission,observeGuiRun:trace?.observe}:{gateway:demoGateway(source)}), hostSignal: hostSignal.signal })
     ).catch(() => { /* Lifecycle and original execution evidence remain in Project. */ });
     if(trace)void p.then(async()=>{
       const turn=await inspectConversationMessage({projectDir,conversationId,messageId});
@@ -448,6 +448,7 @@ export async function createLocalGuiWorkspace({ projectDir, origin: mountOrigin,
         if (asset) return send(200, asset.bytes, asset.type+'; charset=utf-8');
         if (req.url === '/api/workspace') return send(200, {
           schemaVersion: 'local-gui@1', mode, reasoningEffort,
+          ...(live?.geminiFreeKey?{geminiFreePublicFallback:true}:{}),
           ...(freeform?{toolCatalog:ownerToolCatalog({connectivity,chartAvailable,chartAuto,dailyBrief:Boolean(dailyBriefSkill)})}:{}),
           ...(live?{liveNotice:{...(ownerAdmission?{maxConcurrentRuns:workerCapacity}:{}),maxModelCallsPerRun:expectedConfig.limits.model,...(freeform?{freeform:true,connectivity:{web:connectivity.web===true,...(connectivity.linkedPdf===true?{linkedPdf:true}:{}),search:!!connectivity.search,...(connectivity.search?{searchProvider:connectivity.search}:{}),...(connectivity.searchAlternates?{searchAlternates:connectivity.searchAlternates}:{}),wind:connectivity.wind===true}}:{})}}:{}),
           capabilities: ['conversations','progress','reports','sources','read-web-sources',...(freeform?['pdf-attachment','daily-watch','deep-research','research-intent']:[]),...(chartAvailable?['financial-chart-skill']:[]),...(chartAuto?['financial-chart-auto']:[])],
@@ -561,12 +562,14 @@ export async function createLocalGuiWorkspace({ projectDir, origin: mountOrigin,
       if (!action) {
         const input = await inputFor(req);
         if (needsConsent && input?.approveLive!==true) reject(400,'GUI_LIVE_APPROVAL_REQUIRED');
-        if (!exact(input, freeform?['messageId','question',...(Object.hasOwn(input??{},'attachmentId')?['attachmentId']:Object.hasOwn(input??{},'chartSkill')?['chartSkill']:[]),...(Object.hasOwn(input??{},'researchDepth')?['researchDepth']:[]),...(Object.hasOwn(input??{},'reasoningEffort')?['reasoningEffort']:[]),...(Object.hasOwn(input??{},'skillId')?['skillId']:[])]:needsConsent?['messageId','question','sourceId','approveLive']:['messageId','question','sourceId']) || typeof input.messageId !== 'string'
+        if (!exact(input, freeform?['messageId','question',...(Object.hasOwn(input??{},'approveGeminiPublic')?['approveGeminiPublic']:[]),...(Object.hasOwn(input??{},'attachmentId')?['attachmentId']:Object.hasOwn(input??{},'chartSkill')?['chartSkill']:[]),...(Object.hasOwn(input??{},'researchDepth')?['researchDepth']:[]),...(Object.hasOwn(input??{},'reasoningEffort')?['reasoningEffort']:[]),...(Object.hasOwn(input??{},'skillId')?['skillId']:[])]:needsConsent?['messageId','question','sourceId','approveLive']:['messageId','question','sourceId']) || typeof input.messageId !== 'string'
           || !idPattern.test(input.messageId) || typeof input.question !== 'string' || !input.question.trim()
           || (Object.hasOwn(input,'researchDepth')&&!['auto','standard','deep'].includes(input.researchDepth)) || Buffer.byteLength(input.question)>12000 || !freeform&&!sourceFor(input.sourceId)) reject(400,'INVALID_MESSAGE');
         if (Object.hasOwn(input,'reasoningEffort')&&!reasoningEffort.options.includes(input.reasoningEffort))reject(400,'GUI_REASONING_EFFORT_UNSUPPORTED');
         if (Object.hasOwn(input,'chartSkill')&&(!chartAvailable||input.chartSkill!==OWNER_CHART_SKILL))reject(400,'GUI_CHART_SKILL_UNAVAILABLE');
         if (Object.hasOwn(input,'skillId')&&(!freeform||!isResearchSkillChoice(input.skillId)))reject(400,'GUI_RESEARCH_SKILL_UNAVAILABLE');
+        if(Object.hasOwn(input,'approveGeminiPublic')&&(!live?.geminiFreeKey||input.approveGeminiPublic!==true||
+          input.attachmentId!==undefined||input.chartSkill!==undefined||input.skillId!==undefined))reject(400,'GUI_GEMINI_PUBLIC_SCOPE');
         const inputKey=workKey(conversationId,input.messageId);
         reserve(inputKey);
         try {
@@ -585,13 +588,13 @@ export async function createLocalGuiWorkspace({ projectDir, origin: mountOrigin,
           const supplied=!attachment&&freeform&&hasSuppliedChartData(input.question);
           const explicit=input.chartSkill===OWNER_CHART_SKILL;
           const priorExplicit=[OWNER_CHART_SKILL,INPUT_CHART_SKILL].includes(priorInput?.chartSkill);
-          const chartSkill=retry&&explicit===priorExplicit?priorInput?.chartSkill:
+          const chartSkill=input.approveGeminiPublic?undefined:retry&&explicit===priorExplicit?priorInput?.chartSkill:
            supplied?(explicit?INPUT_CHART_SKILL:INPUT_CHART_AUTO):
            explicit?(connectivity.wind?OWNER_CHART_SKILL:undefined):
            freeform&&!attachment&&input.researchDepth!=='standard'&&chartAuto?OWNER_CHART_AUTO:undefined;
           const m = await submitConversationMessage({ projectDir, conversationId, messageId: input.messageId,
-            text: input.question, sourceManifestSha256: sourceId, skillId:input.skillId,
-            ownerLinkedPdfRevision:retry?priorInput?.ownerLinkedPdfRevision:live&&freeform&&!attachment&&connectivity.linkedPdf===true?OWNER_LINKED_PDF_REVISION:undefined,...(chartSkill?{chartSkill}:{}),...(input.researchDepth===undefined?{}:{researchDepth:input.researchDepth}),...(input.reasoningEffort===undefined?{}:{reasoningEffort:input.reasoningEffort}),
+            text: input.question, sourceManifestSha256: sourceId, skillId:input.skillId,approveGeminiPublic:input.approveGeminiPublic,
+            ownerLinkedPdfRevision:retry?priorInput?.ownerLinkedPdfRevision:live&&freeform&&!attachment&&!input.approveGeminiPublic&&connectivity.linkedPdf===true?OWNER_LINKED_PDF_REVISION:undefined,...(chartSkill?{chartSkill}:{}),...(input.researchDepth===undefined?{}:{researchDepth:input.researchDepth}),...(input.reasoningEffort===undefined?{}:{reasoningEffort:input.reasoningEffort}),
             ...(live?{authorization:{providerApproved:true,dataApproved:true,costApproved:true,...(goHealth&&!attachment?{openAIApproved:true}:{})}}:{}) });
           if (m.status === 'active' && !retry) begin(conversationId,input.messageId,sourceId);
           return send(202,{ id:m.messageId,runId:m.runId,status:m.status });
@@ -619,7 +622,7 @@ export async function createLocalGuiWorkspace({ projectDir, origin: mountOrigin,
       } finally { submitting.delete(retryKey); }
     } catch (e) {
       const code = e.status ? e.message : typeof e.code === 'string' && /^[A-Z0-9_]+$/.test(e.code) ? e.code : 'GUI_REQUEST_FAILED';
-      const status = e.status ?? (code==='ENOENT'||code==='UNKNOWN_RUN'?404:code.includes('ID_CONFLICT')?409:code==='PDF_LIMIT_BYTES'||code==='PDF_LIMIT_PAGES'||code==='PDF_LIMIT_TEXT'?413:code==='PROJECT_SOURCE_INVALID_INPUT'||code==='PDF_ENCRYPTED'||code==='PDF_PARSE_FAILED'||code==='PDF_INVALID_FORMAT'||code==='PDF_NO_TEXT_LAYER'||code==='PDF_TIMEOUT'?422:500);
+      const status = e.status ?? (code==='ENOENT'||code==='UNKNOWN_RUN'?404:code.includes('ID_CONFLICT')?409:code==='CONVERSATION_GEMINI_PUBLIC_SCOPE'?400:code==='PDF_LIMIT_BYTES'||code==='PDF_LIMIT_PAGES'||code==='PDF_LIMIT_TEXT'?413:code==='PROJECT_SOURCE_INVALID_INPUT'||code==='PDF_ENCRYPTED'||code==='PDF_PARSE_FAILED'||code==='PDF_INVALID_FORMAT'||code==='PDF_NO_TEXT_LAYER'||code==='PDF_TIMEOUT'?422:500);
       if (!res.headersSent && !res.destroyed) send(status,{ error:code });
     }
   }

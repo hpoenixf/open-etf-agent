@@ -71,6 +71,7 @@
           <div id="source-picker" class="source-picker"><label for="source">演练资料</label><select id="source" required></select></div>
           <label for="question" class="visually-hidden">研究问题</label>
           <textarea id="question" rows="3" maxlength="3000" required placeholder="例如：对比 Alpha 与 Beta 的费率，并注明来源。"></textarea>
+          <label id="gemini-public-label" hidden><input id="gemini-public" type="checkbox" autocomplete="off"> 此条不含私密信息；前两路不可用时，允许 Google 免费 API 处理并可能留存</label>
           <div id="composer-actions" class="composer-actions">
             <div id="chart-skill-slot" hidden>
             <details id="chart-skill-picker" class="composer-option" hidden>

@@ -232,6 +232,7 @@ export async function createSharedAdmission({ directory, routeId, maxQueue = 8, 
       }
       return {policy:shortUnknown?'three-minute-local-release@1':'two-hour-local-release@1',origin:shortUnknown?'entered-unknown':'createdAt-includes-queue',observedAt,items};
     },
+    attemptLimitReached() { return maxAttempts!==undefined&&db.prepare("SELECT count(*) AS n FROM requests").get().n>=maxAttempts; },
     snapshot() { return { routeId, capacity, maxQueue, occupied:activeCount(),requests: db.prepare('SELECT request_id FROM requests ORDER BY sequence').all().map(x => projectRow(x.request_id)) }; },
     inspect(ticketId) { return projectRow(ticketId); },
     inspectReservation(identity) { const value = db.prepare('SELECT request_id FROM requests WHERE reservation_id=?').get(reservationId(identity)); return value ? projectRow(value.request_id) : null; },
