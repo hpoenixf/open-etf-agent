@@ -6,10 +6,10 @@ const keys=(v,s)=>v&&typeof v==='object'&&!Array.isArray(v)&&Object.keys(v).sort
 const position=v=>Array.isArray(v)&&v.length===2&&v.every(p=>Number.isFinite(p)&&p>=0&&p<=1000);
 const n=v=>Math.round(v*1000)/1000;
 const amount=/^(?:\((?:\d+|\d{1,3}(?:,\d{3})+)(?:\.\d+)?\)|[-+]?(?:\d+|\d{1,3}(?:,\d{3})+)(?:\.\d+)?)$/;
-const unitSuffix=/\((%|USD|EUR|GBP|CNY|bps)\)$/i;
+const unitSuffix=/\((%|USD|EUR|GBP|CNY|bps|RMB million)\)$/i;
 const heading=/[\p{L}][^\n]{1,100}\s*\((%|USD|EUR|GBP|CNY|bps)\)$/iu;
 const unitMarker=/\b(?:USD|EUR|GBP|CNY|RMB|JPY|HKD|AUD|CAD|CHF|INR|SGD|KRW|MXN|NZD|NOK|SEK|ZAR|PCT|bps|thousands?|millions?|billions?|trillions?|dollars?|euros?|pounds?|cents?|basis points?)\b|%|[$€£¥]|(?:^|\s)[KMBT]$/i;
-const canonicalUnit=value=>value?.toLowerCase()==='bps'?'bps':value?.toUpperCase();
+const canonicalUnit=value=>value?.toLowerCase()==='bps'?'bps':value?.toLowerCase()==='rmb million'?'RMB million':value?.toUpperCase();
 function headerUnit(text){
  // Unrecognized labels that look like units/scales are not silently inherited.
  const suffix=text.match(/\(([^()]*)\)$/)??text.match(/(?:^|\s)(USD|EUR|GBP|CNY|bps|%)$/i);
@@ -60,11 +60,63 @@ const provesUnit=(caption,headers,unit)=>{
  if(captionUnit!==undefined&&captionUnit!==unit||headerUnits.some(value=>value!==undefined&&value!==unit))return false;
  return canonicalUnit(caption.match(unitSuffix)?.[1])===unit||headers.length===1&&canonicalUnit(headers[0].match(unitSuffix)?.[1])===unit;
 };
-export function extractPdfTables(input) {
+// A bounded, explicitly scaled income/financial table with stacked
+// period/day/year header rows. Column identity comes from printed geometry,
+// never from date sorting: quarterly and YTD columns can share a date.
+function scaledPeriodTable(rows,i){
+ const note=rows[i],groups=rows[i-3],dates=rows[i-2],years=rows[i-1];
+ if(note.items.length!==1||!/^\(RMB in millions(?:, unless specified)?\)$/i.test(note.items[0].text)||
+    !groups||[dates.y-groups.y,years.y-dates.y,note.y-years.y].some(gap=>gap>1.35))return null;
+ const gs=groups.items,ds=dates.items,ys=years.items;
+ const period=/^(Three|Six|Nine|Twelve) months ended$/i;
+ const date=/^(?:[1-9]|[12]\d|3[01]) (?:January|February|March|April|May|June|July|August|September|October|November|December)$/;
+ const width=s=>Number.isFinite(s.w)&&s.w>0&&s.w<=100;
+ if(gs.length<1||gs.length>3||!gs.every(s=>period.test(s.text)&&width(s))||
+    new Set(gs.map(s=>s.text.toLowerCase())).size!==gs.length||
+    ys.length<2||ys.length>maxColumns||ds.length!==ys.length||
+    !ys.every(s=>/^(?:19|20)\d\d$/.test(s.text)&&width(s))||
+    !ds.every(s=>date.test(s.text)&&width(s)))return null;
+ const anchors=ys.map(s=>s.x+s.w);
+ if(anchors.some((x,k)=>k>0&&x-anchors[k-1]<2.6))return null;
+ const groupCounts=gs.map(()=>0),headers=[];
+ for(const [k,y] of ys.entries()){
+  const d=ds[k],center=y.x+y.w/2;
+  if(Math.abs(d.x+d.w/2-center)>1.1)return null;
+  const seats=gs.map((g,j)=>center>=g.x-.25&&center<=g.x+g.w+.25?j:-1).filter(j=>j>=0);
+  if(seats.length!==1)return null;
+  const j=seats[0];groupCounts[j]++;
+  headers.push(gs[j].text+' '+d.text+' '+y.text);
+ }
+ if(groupCounts.some(count=>count===0)||new Set(headers).size!==headers.length)return null;
+ const first=rows[i+1],title=rows.slice(Math.max(0,i-6),i-3).flatMap(r=>r.items)
+   .filter(s=>s.x<ys[0].x-4&&label(s.text)&&!unitMarker.test(s.text)).at(-1);
+ if(!first||!title||first.y-note.y>2||title.x>=ys[0].x-4)return null;
+ let priorY=first.y,processed=0;const data=[];
+ for(const row of rows.slice(i+1,i+maxRows+2)){
+  const [name,...values]=row.items;
+  if(row.y-priorY>1.35||!values.length)break;
+  if(++processed>maxRows||values.length!==ys.length||!label(name.text)||Math.abs(name.x-title.x)>.4||
+     values.some((v,k)=>!width(v)||Math.abs(v.x+v.w-anchors[k])>.9))return null;
+  priorY=row.y;
+  // Explicit percent rows are not currency. An ambiguous or mixed row
+  // invalidates this candidate instead of shifting cells or inferring units.
+  if(values.every(v=>/^[-+]?\d+(?:\.\d+)?%$/.test(v.text))){
+   if(!/unless specified/i.test(note.items[0].text))return null;
+   continue;
+  }
+  if(unitMarker.test(name.text)||!values.every(v=>validPdfCellText(v.text))||data.some(r=>r.label===name.text))return null;
+  data.push({label:name.text,cells:values.map(v=>({text:v.text,at:[n(v.x),n(v.y)]}))});
+ }
+ const table={caption:title.text+' (RMB million)',unit:'RMB million',headers,rows:data};
+ return validPdfTables([table])?table:null;
+}
+export function extractPdfTables(input,{scaledPeriods=false}={}) {
  if(!Array.isArray(input)||input.length>2400)return [];
  const rows=grouped(input.filter(s=>short(s.text,150)&&position([s.x,s.y])));
  const tables=[];
  for(let i=0;i<rows.length&&tables.length<maxTables;i++){
+  const scaled=scaledPeriods?scaledPeriodTable(rows,i):null;
+  if(scaled)tables.push(scaled);
   for(const caption of rows[i].items.filter(s=>heading.test(s.text))){
    if(tables.length>=maxTables)break;
    const separate=twoColumnSection(rows,i,caption);

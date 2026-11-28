@@ -1,34 +1,37 @@
 // One owned byte-buffer parse. No paths, URLs, rendering or external services.
 import PDFParser from 'pdf2json';
+import {UPLOADED_PDF_LIMITS,LINKED_PDF_LIMITS} from './pdf-parse-limits.mjs';
 import {extractPdfTables} from './pdf-table-evidence.mjs';
 const decode=text=>decodeURIComponent(text.replace(/%(?![a-f0-9]{2})/gi,'%25'));
 process.once('message',job=>{
+  const linked=job?.profile==='linked-web-pdf@1';
+  const limits=linked?LINKED_PDF_LIMITS:UPLOADED_PDF_LIMITS;
   let done=false,count=0,total=0;
   const finish=value=>{if(done)return;done=true;process.send(value);};
   const parser=new PDFParser();
   parser.on('pdfParser_dataError',()=>finish({kind:'failure',code:'PDF_PARSE_FAILED'}));
   parser.on('data',page=>{
     if(!page||done)return;
-    if(++count>16)finish({kind:'failure',code:'PDF_LIMIT_PAGES'});
+    if(++count>limits.pages)finish({kind:'failure',code:'PDF_LIMIT_PAGES'});
   });
   parser.on('pdfParser_dataReady',value=>{
     if(done)return;
     try{
       if(!Array.isArray(value?.Pages)||!value.Pages.length)throw new Error('pages');
-      if(value.Pages.length>16){finish({kind:'failure',code:'PDF_LIMIT_PAGES'});return;}
+      if(value.Pages.length>limits.pages){finish({kind:'failure',code:'PDF_LIMIT_PAGES'});return;}
       const tables=[];
       const pages=value.Pages.map(page=>{
         if(!Array.isArray(page.Texts))throw new Error('text');
         // Preserve parser item order, not a visual/semantic reading-order claim.
         const spans=page.Texts.map(item=>{
           if(!Array.isArray(item.R))throw new Error('runs');
-          return {x:item.x,y:item.y,text:item.R.map(run=>{if(typeof run.T!=='string')throw new Error('run');return decode(run.T);}).join('')};
+          return {x:item.x,y:item.y,w:item.w,text:item.R.map(run=>{if(typeof run.T!=='string')throw new Error('run');return decode(run.T);}).join('')};
         });
         const text=spans.map(s=>s.text).join('\n').replace(/\r\n?/g,'\n').trim();
         const size=Buffer.byteLength(text);total+=size;
-        if(size>64000||total>131072)throw Object.assign(new Error('limit'),{code:'PDF_LIMIT_TEXT'});
+        if(size>limits.pageTextBytes||total>limits.totalTextBytes)throw Object.assign(new Error('limit'),{code:'PDF_LIMIT_TEXT'});
         if(text.includes('\0'))throw new Error('text');
-        const candidates=extractPdfTables(spans.map(s=>({...s,text:s.text.trim()})));
+        const candidates=extractPdfTables(spans.map(s=>({...s,text:s.text.trim()})),{scaledPeriods:linked});
         tables.push(Buffer.byteLength(JSON.stringify(candidates))<=24000?candidates:[]);
         return text;
       });
@@ -36,7 +39,7 @@ process.once('message',job=>{
     }catch(error){finish({kind:'failure',code:error.code==='PDF_LIMIT_TEXT'?'PDF_LIMIT_TEXT':'PDF_PARSE_FAILED'});}
   });
   process.send({kind:'ready'});
-  try{if(!Buffer.isBuffer(job?.bytes))throw new Error('bytes');// Upstream parseBuffer rewraps pooled Buffers at backing offset zero.
+  try{if(!Buffer.isBuffer(job?.bytes)||job.bytes.length>limits.bytes)throw new Error('bytes');// Upstream parseBuffer rewraps pooled Buffers at backing offset zero.
     // Own an exact-length backing store so only the selected PDF bytes enter it.
     const exact=Buffer.alloc(job.bytes.length);job.bytes.copy(exact);parser.parseBuffer(exact,0);}
   catch{finish({kind:'failure',code:'PDF_PARSE_FAILED'});}
