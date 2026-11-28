@@ -59,6 +59,7 @@ test('429, unrelated 404, 503, thrown network failure, and spoofed error code do
    ()=>Response.json({error:{code:'wrong_path',message:'no route'}},{status:404}),
    ()=>Response.json({error:{code:'model_not_found',message:'unavailable'}},{status:503}),
    ()=>{throw new TypeError('network');},
+   ()=>Response.json({choices:[{message:{role:'assistant',content:null},finish_reason:'stop'}]}),
    ()=>{throw Object.assign(new Error('spoof'),{code:'PROVIDER_HTTP_404'});}
  ]){
    const {done,requests,tickets}=await fixture(t,{first});

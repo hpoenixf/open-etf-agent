@@ -271,10 +271,12 @@ export async function createSharedAdmission({ directory, routeId, maxQueue = 8, 
           settledDenials.delete(error);
           const toMiMo=proof.model===GO_DEEPSEEK_MODEL;
           if(!toMiMo&&!(proof.model===GO_MIMO_MODEL&&independentFallback))return null;
-          return Object.freeze({...(toMiMo?{takeModelFallback:(e,r)=>result.takeModelFallback(e,r)}:{directResponses:true,inputBudget:independentFallback.inputBudget}),
+          const emptyFinal=proof.reason==='empty-final-stop';
+          return Object.freeze({...(!toMiMo?{directResponses:true,inputBudget:independentFallback.inputBudget}:
+            emptyFinal?{fallbackReason:'empty-final-stop'}:{takeModelFallback:(e,r)=>result.takeModelFallback(e,r)}),
             async next(input){
             const current=projectModelReservation(input?.reservation);
-            if(!current||current.runId!==runId||current.owner!==prior.owner||current.fence!==prior.fence||
+            if(!current||emptyFinal&&input.finalOnly!==true||current.runId!==runId||current.owner!==prior.owner||current.fence!==prior.fence||
                current.purpose!==undefined||current.inputHash!==prior.inputHash||
                current.modelOrdinal!==prior.modelOrdinal+1||current.round!==prior.round+1)fail('ADMISSION_FALLBACK_RESERVATION_MISMATCH');
             return toMiMo?dispatch(input,sameGroupFallback):independentFallback.next(input);
@@ -357,7 +359,7 @@ export async function createSharedAdmission({ directory, routeId, maxQueue = 8, 
             // A caller-invented error.code or local AbortSignal is never such evidence.
             const diagnostic = projectProviderProtocolDiagnostic(error);
             const denial=sameGroupFallback&&(!alternate||independentFallback)&&!signal?.aborted?projectExactGoModelDenial(error):null;
-            const recognizedDenial=denial&&denial.model===(alternate?GO_MIMO_MODEL:GO_DEEPSEEK_MODEL)&&denial.rootId===reservation.rootId&&denial.modelOrdinal===reservation.modelOrdinal&&denial.inputHash===reservation.inputHash;
+            const recognizedDenial=denial&&(!denial.reason||denial.reason==='empty-final-stop'&&!alternate&&input.finalOnly===true)&&denial.model===(alternate?GO_MIMO_MODEL:GO_DEEPSEEK_MODEL)&&denial.rootId===reservation.rootId&&denial.modelOrdinal===reservation.modelOrdinal&&denial.inputHash===reservation.inputHash;
             let terminal = recognizedDenial || diagnostic?.reason === 'NON_SUCCESS_FINISH' && diagnostic.hashScope === 'complete-body';
             try { currentFence(); } catch { terminal = false; }
             transition(requestId, reservation, 'dispatched', terminal ? (diagnostic?.finishKind === 'aborted' ? 'cancelled' : 'completed') : 'unknown');

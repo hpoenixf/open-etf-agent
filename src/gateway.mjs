@@ -257,6 +257,14 @@ export function createChatGateway({ provider, endpoint, model, apiKey, authoriza
         } catch (error) {
           const diagnostic = projectProviderProtocolDiagnostic(error);
           if (diagnostic) diagnostics.set(error, Object.freeze({ ...diagnostic, bytes: bytes.length, hashScope: 'complete-body', bodySha256: createHash('sha256').update(bytes).digest('hex') }));
+          // The complete stop envelope proves this call ended, not that it was
+          // free. Only a final-only Go request to the primary earns one alternate.
+          if(finalOnly&&go&&provider===OPENCODE_GO_OWNER_PROVIDER&&url.href===OPENCODE_GO_CURRENT_ENDPOINT&&model===GO_DEEPSEEK_MODEL&&
+             reservation?.runId===reservation?.rootId&&reservation?.rootId&&reservation.purpose===undefined&&!signal?.aborted&&
+             diagnostic?.reason==='FINISH_OR_CALLS_SHAPE'&&diagnostic.wireFinish==='stop'&&
+             diagnostic.wireContent==='absent'&&['absent','empty'].includes(diagnostic.wireCalls))
+            modelDenials.set(error,Object.freeze({reason:'empty-final-stop',model,rootId:reservation.rootId,modelOrdinal:reservation.modelOrdinal,inputHash:reservation.inputHash}));
+
           throw error;
         }
       }

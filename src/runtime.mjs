@@ -462,7 +462,8 @@ async function drive({ question, gateway, outputRoot='runs', requireReport=false
           const filingCloseout=filingEvidence&&closeFilingAcquisition({filing,originalsRead:filingEvidence.originalsRead,
             acquisitionCalls:evidenceUsage(state.messages).calls,slots,modelLimit:durable?.rootLimits?.model??budget.maxRounds});
           const chartCapacityReached=filing&&savedChartCount(state.messages)>=FINANCIAL_CHART_VIEW_LIMIT;
-          const phase=controlled?(slots<=1||chartCapacityReached?'deliver':meteredRemaining<=0||filingCloseout?'output':slots<=4?'prepare':null):null;
+          const reserveFilingFinal=filing&&slots<=2&&(durable?.rootLimits?.model??budget.maxRounds)>4;
+          const phase=controlled?(slots<=1||chartCapacityReached||reserveFilingFinal?'deliver':meteredRemaining<=0||filingCloseout?'output':slots<=4?'prepare':null):null;
           const toolsForTurn=()=>phase==='deliver'?[]:host.definitions.filter(tool=>
             (phase!=='output'||omitsToolDebit(controlled,tool.name))&&
             (tool.name!==RESEARCH_NEEDS_TOOL||isDeepResearchNeedsActive(researchProfile,state.messages)));
@@ -585,8 +586,8 @@ async function drive({ question, gateway, outputRoot='runs', requireReport=false
                 ? selected.takeModelFallback?.(error,reservation) : null;
               if(fallback){
                 gatewayUnsettled=false;state.gatewayOutcome='settled';
-                if(state.rounds>=budget.maxRounds)throw failure('ROUND_LIMIT');
-                await record('model_failover',{originalModelOrdinal:reservation.modelOrdinal,inputHash:reservation.inputHash,reason:'exact-model-not-found',target:fallback.directResponses?'gpt-6.1-terra':'mimo-v2.6-flash'});
+                if(state.rounds>=budget.maxRounds||rootBudget.snapshot().model>=(durable?.rootLimits?.model??budget.maxRounds)){if(fallback.fallbackReason==='empty-final-stop')throw error;throw failure('ROUND_LIMIT');}
+                await record('model_failover',{originalModelOrdinal:reservation.modelOrdinal,inputHash:reservation.inputHash,reason:fallback.fallbackReason??'exact-model-not-found',target:fallback.directResponses?'gpt-6.1-terra':'mimo-v2.6-flash'});
                 selected=fallback;continue;
               }
               throw error;

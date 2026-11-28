@@ -6,6 +6,7 @@ import {setTimeout as delay} from 'node:timers/promises';
 import {createHash} from 'node:crypto';
 import {startLocalGui} from '../src/gui-server.mjs';
 import {openAgentChart,readAgentChartViews} from '../src/financial-chart-agent.mjs';
+import {GO_DEEPSEEK_MODEL,GO_MIMO_MODEL} from '../src/gateway.mjs';
 import {mockWebNetwork} from './fixtures/web-network.mjs';
 
 const url='https://example.com/results';
@@ -175,7 +176,7 @@ test('a filing with eight distinct backed charts delivers before the last physic
  let gui;const wire=[];
  t.after(async()=>{await gui?.close();await rm(projectDir,{recursive:true,force:true});});
  const opts={projectDir,env:{ETF_GUI_PROVIDER_KEY:'test-only',ETF_GUI_AGENT_FINANCIAL_CHART:'1'},
-  liveConfig:{gateway:{provider:'opencode-go-owner',endpoint:'https://opencode.ai/inference/go/openai/v1/chat/completions',model:'synthetic',apiKeyEnv:'ETF_GUI_PROVIDER_KEY'},limits:{model:12,maxRounds:12,maxTools:12,tool:12},connectivity:{web:true}},
+  liveConfig:{gateway:{provider:'opencode-go-owner',endpoint:'https://opencode.ai/inference/go/openai/v1/chat/completions',model:GO_DEEPSEEK_MODEL,apiKeyEnv:'ETF_GUI_PROVIDER_KEY'},limits:{model:12,maxRounds:12,maxTools:12,tool:12},goMimoFallback:'exact-go-model-not-found@1',connectivity:{web:true}},
   async fetchImpl(_url,{body}){
    const request=JSON.parse(body); wire.push(request);
    if(wire.length===1)return proposal('source-eight','public_web_read',{url});
@@ -185,9 +186,14 @@ test('a filing with eight distinct backed charts delivers before the last physic
     return proposal('chart-eight-'+i,'render_financial_chart',{dataset:{...dataset,series:[cases[i]]},
        evidence:lines.slice(i*2,i*2+2).map((quote,key)=>({quote,key,ref,series:0}))});
    }
-   assert.equal(wire.length,10);
    assert.equal(Object.hasOwn(request,'tools'),false);
    assert.match(request.messages.map(m=>m.content).join('\n'),/protected delivery turn/);
+   if(wire.length===10){
+    assert.equal(request.model,GO_DEEPSEEK_MODEL);
+    return Response.json({choices:[{message:{role:'assistant',content:null},finish_reason:'stop'}]});
+   }
+   assert.equal(wire.length,11);assert.equal(request.model,GO_MIMO_MODEL);
+   assert.deepEqual(wire[9].messages,request.messages);
    return final();
  }};
  gui=await startLocalGui(opts);
@@ -197,7 +203,7 @@ test('a filing with eight distinct backed charts delivers before the last physic
  const accepted=await post(conv+'/messages',{messageId:'eight-charts',question:'根据腾讯财报绘制相关解读的图表，要尽可能多',skillId:'auto',researchDepth:'auto'});
  assert.equal(accepted.status,202);
  let m;for(let i=0;i<120;i++){m=(await get(conv)).messages[0];if(m&&!m.working&&['completed','failed'].includes(m.status))break;await delay(30);}
- assert.equal(m?.status,'completed',JSON.stringify(m));assert.equal(wire.length,10);
+ assert.equal(m?.status,'completed',JSON.stringify(m));assert.equal(wire.length,11);
  assert.equal(m.chartViews.length,8);assert.equal(m.chartViews.every(v=>v.sources[0]?.url===url),true);
  await gui.close();gui=await startLocalGui(opts);
  const cold=(await get(conv)).messages[0];assert.deepEqual(cold.chartViews,m.chartViews);assert.equal(cold.output.answer,m.output.answer);
