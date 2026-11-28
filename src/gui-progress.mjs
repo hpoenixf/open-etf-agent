@@ -18,7 +18,18 @@ const TOOLS = Object.freeze({
   wind_fund_daily_close:'查询 Wind 基金日收盘价', read_page:'读取所选资料',
   read_pdf_page:'读取 PDF 文字', read_pdf_cell:'核对 PDF 表格',
   save_report:'保存报告', read_result:'读取已保存资料',
+  calculate_change:'计算变化', compute_chart_formula:'按原数据计算',
+  read_supplied_chart_data:'读取图表数据', render_financial_chart:'生成金融图表', build_financial_chart:'生成金融图表',
 });
+const GROUP = Object.freeze({
+  public_web_search:'search', public_web_search_deepseek:'search', public_web_search_yuanbao:'search',
+  public_web_read:'reading', public_web_continue:'reading', wind_fund_daily_close:'reading',
+  read_page:'reading', read_pdf_page:'reading', read_pdf_cell:'reading', read_result:'reading',
+  read_supplied_chart_data:'analysis', calculate_change:'analysis', compute_chart_formula:'analysis',
+  render_financial_chart:'analysis', build_financial_chart:'analysis', save_report:'delivery',
+});
+const RETURNED = new Set(['succeeded','reused']);
+const UNAVAILABLE_TOOL = new Set(['failed','rejected','cancelled','unknown']);
 const TERMINAL = Object.freeze({completed:'回答已完成',failed:'本轮未完成',cancelled:'本轮已取消'});
 const UNAVAILABLE = Object.freeze({schemaVersion:'gui-research-progress@1',status:'unavailable',steps:[]});
 
@@ -37,7 +48,9 @@ export async function readGuiResearchProgress(projectDir, run) {
   }
   const steps=[];
   const add=(code,label)=>steps.push({code,label});
-  let found=false,started=false;
+  let found=false,started=false,modelReturns=0;
+  const groups=new Map();
+  const seenToolResults=new Set();
   for (const event of entries) {
     if (event.runId!==run.runId||event.rootId!==run.rootId||!Number.isSafeInteger(event.sequence)) continue;
     // The native log can repeat a sequence on recovery; source order remains
@@ -54,9 +67,21 @@ export async function readGuiResearchProgress(projectDir, run) {
       const tool=TOOLS[event.name];
       // “Returned” is intentionally neutral: the Runtime may carry a typed
       // provider refusal in a successfully returned tool result.
-      if(['succeeded','reused'].includes(event.status))add('tool_returned',tool+'已返回');
-      if(['failed','rejected','cancelled','unknown'].includes(event.status))add('tool_unavailable',tool+'未完成');
+      const returned=RETURNED.has(event.status);
+      const limited=UNAVAILABLE_TOOL.has(event.status);
+      if(returned||limited){
+        const group=GROUP[event.name];
+        const key=event.callId&&JSON.stringify([event.name,event.callId,event.status]);
+        if(key&&seenToolResults.has(key))continue;
+        if(key)seenToolResults.add(key);
+        const stats=groups.get(group)??{kind:group,returned:0,unavailable:0};
+        if(returned)stats.returned++;
+        else stats.unavailable++;
+        groups.set(group,stats);
+        add(returned?'tool_returned':'tool_unavailable',tool+(returned?'已返回':'未完成'));
+      }
     }
+    if(event.type==='model_proposal'&&(event.kind==='calls'||event.kind==='final'))modelReturns++;
     if(event.type==='model_proposal'&&event.kind==='final')add('synthesis','已生成正文，正在确认交付');
     if(event.type==='worker_interrupted')add('interrupted','处理曾中断');
   }
@@ -64,5 +89,7 @@ export async function readGuiResearchProgress(projectDir, run) {
   // own terminal state is used here. Do not string-project any native fields.
   if(found&&Object.hasOwn(TERMINAL,run.status))add(run.status,TERMINAL[run.status]);
   const shown=steps.slice(-80);
-  return {schemaVersion:'gui-research-progress@1',status:'available',steps:shown,omitted:steps.length-shown.length};
+  const activity=modelReturns||groups.size?{modelReturns,tools:['search','reading','analysis','delivery'].flatMap(kind=>groups.has(kind)?[groups.get(kind)]:[])}:null;
+  return {schemaVersion:'gui-research-progress@1',status:'available',steps:shown,omitted:steps.length-shown.length,
+    ...(activity?{activity}:{})};
 }

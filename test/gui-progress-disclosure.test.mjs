@@ -26,7 +26,13 @@ test('technical steps preserve explicit expansion and collapse across poll, miss
   const before = first(content,'details');
   assert.equal(before.open,false);
   before.open=true; // Native toggle may not have emitted its event before a poll.
-  context.progressContent(content,steps('updated'),entry);
+  context.progressContent(content,{...steps('updated'),activity:{modelReturns:4,tools:[
+    {kind:'search',returned:2,unavailable:1},
+    {kind:'analysis',returned:1,unavailable:0},
+  ]}},entry);
+  assert.deepEqual(content.children.filter(el=>el.tag==='p').map(el=>el.text),[
+    '模型已返回 4 轮', '检索：2 次已返回，1 次未完成 · 计算与图表：1 次已返回',
+  ]);
   assert.equal(first(content,'details').open,true);
   assert.equal(first(first(content,'details'),'ol').children[0].text,'updated');
   context.progressContent(content,{status:'unavailable'},entry);

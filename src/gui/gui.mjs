@@ -305,6 +305,17 @@ function progressContent(target, value, entry) {
   const deep=value?.deepProgress;
   const label={ 'awaiting-first-proposal':'等待首轮研究',collecting:'正在查找原始资料','sources-checked':'已完成来源查询，暂无可用原文','originals-read':'已读取原始资料','delivery-unverified':'运行结束，正文尚未核验','delivered':'正文已保存并读回',stopped:'研究已停止' }[deep?.phase];
   if(label)target.append(make('p',label+' · 已读取原文条目 '+deep.originalsRead+(deep.unavailableSourceChecks?' · 无可用原文的查询 '+deep.unavailableSourceChecks+' 次':''),'muted'));
+  const activity=value?.activity;
+  if(activity&&value.status==='available'){
+    const labels={search:'检索',reading:'资料读取与核对',analysis:'计算与图表',delivery:'报告保存'};
+    if(Number.isSafeInteger(activity.modelReturns)&&activity.modelReturns>0)
+      target.append(make('p','模型已返回 '+activity.modelReturns+' 轮','muted'));
+    const groups=Array.isArray(activity.tools)?activity.tools.flatMap(row=>{
+      if(!row||!Object.hasOwn(labels,row.kind)||!Number.isSafeInteger(row.returned)||row.returned<0||!Number.isSafeInteger(row.unavailable)||row.unavailable<0)return [];
+      return [labels[row.kind]+'：'+[row.returned?row.returned+' 次已返回':'',row.unavailable?row.unavailable+' 次未完成':''].filter(Boolean).join('，')];
+    }):[];
+    if(groups.length)target.append(make('p',groups.join(' · '),'muted'));
+  }
   if (!value || value.status!=='available' || !value.steps?.length) {
     target.append(make('p',value?.status==='unavailable'?'暂未读到可显示的研究记录。':'尚无已记录的步骤。','muted'));
     return;

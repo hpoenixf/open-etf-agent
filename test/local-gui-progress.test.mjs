@@ -48,6 +48,8 @@ test('own GUI progress is scoped by conversation and stable across cold reopen; 
  assert.deepEqual(clean.steps.map(x=>x.code),['started','tool_prepare','tool_returned','tool_prepare','tool_returned','synthesis','completed']);
  assert.ok(clean.steps.some(x=>x.label==='读取所选资料已返回'));
  assert.ok(clean.steps.some(x=>x.label==='保存报告已返回'));
+ assert.equal(clean.activity.modelReturns,3);
+ assert.deepEqual(clean.activity.tools,[{kind:'reading',returned:1,unavailable:0},{kind:'delivery',returned:1,unavailable:0}]);
  const hostile='private-input-example BEARER-X <img src=x onerror=x> https://secret.example/private?q=token';
  const envelope={runId:run.runId,rootId:run.rootId,sequence:999};
  await appendFile(join(run.directory,'run.jsonl'),[
@@ -59,6 +61,7 @@ test('own GUI progress is scoped by conversation and stable across cold reopen; 
  const projected=await g.get(endpoint).then(r=>r.json());
  assert.equal(projected.steps.length,clean.steps.length+1);
  assert.deepEqual(projected.steps.at(-2),{code:'tool_unavailable',label:'读取公开网页未完成'});
+ assert.deepEqual(projected.activity.tools,[{kind:'reading',returned:1,unavailable:1},{kind:'delivery',returned:1,unavailable:0}]);
  assert.doesNotMatch(JSON.stringify(projected),/private-input-example|BEARER-X|secret\.example|external_unknown_tool|reasoning_content|arguments|onerror|runId|123/);
  assert.equal((await g.get(endpoint,{headers:{origin:'https://example.test'}})).status,403);
  assert.equal((await readGuiResearchProgress(fixture.projectDir,{...run,directory:fixture.projectDir})).status,'unavailable');
