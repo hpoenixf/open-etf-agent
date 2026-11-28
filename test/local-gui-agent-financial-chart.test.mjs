@@ -117,3 +117,49 @@ test('date-safe agent chart accepts null and drops a cutoff absent from the curr
  const legacy=await openAgentChart({readRun}).execute({dataset:{...dataset,asOf:'2025-09-30'}},{callId:'chart'});
  assert.equal(legacy.view.asOf,'2025-09-30');
 });
+
+for(const mixed of [false,true])test('acquisition exhaustion '+(mixed?'inside a mixed group':'before a new group')+' allows chart and publication',async t=>{
+ await mkdir('test-output',{recursive:true});
+ const projectDir=await mkdtemp(resolve('test-output/research-control-'));
+ mockWebNetwork(t,{passthroughLoopback:true,routes:{'https://example.com/robots.txt':{body:'User-agent: *\nAllow: /\n'},[url]:{body:quotes.join('\n')},[url+'-second']:{body:quotes.join('\n')}}});
+ let gui;const wire=[];
+ t.after(async()=>{await gui?.close();await rm(projectDir,{recursive:true,force:true});});
+ const opts={projectDir,env:{ETF_GUI_PROVIDER_KEY:'test-only',ETF_GUI_AGENT_FINANCIAL_CHART:'1'},
+  liveConfig:{gateway:{provider:'opencode-go-owner',endpoint:'https://opencode.ai/inference/go/openai/v1/chat/completions',model:'synthetic',apiKeyEnv:'ETF_GUI_PROVIDER_KEY'},limits:{model:3,maxRounds:6,maxTools:mixed?2:1,tool:mixed?2:1},connectivity:{web:true}},
+  async fetchImpl(_url,{body}){
+   const r=JSON.parse(body),prior=r.messages.filter(x=>x.role==='tool');wire.push(r);
+   if(wire.length===1)return proposal('source','public_web_read',{url});
+   if(wire.length===2){
+    assert.equal(r.tools.some(t=>t.function.name==='public_web_read'),mixed);
+    assert.ok(r.tools.some(t=>t.function.name==='render_financial_chart'));
+    const source=JSON.parse(prior[0].content).value,ref='WEB:'+source.manifestSha256+':'+source.page;
+    const chart={dataset,evidence:quotes.map((quote,key)=>({quote,key,ref,series:0}))};
+    if(!mixed)return proposal('chart','render_financial_chart',chart);
+    const calls=[['second-source','public_web_read',{url:url+'-second'}],['extra-source','public_web_read',{url:url+'-unregistered-on-fixture'}],['chart','render_financial_chart',chart]];
+    return Response.json({choices:[{message:{role:'assistant',tool_calls:calls.map(([id,name,args])=>({
+     id,type:'function',function:{name,arguments:JSON.stringify(args)},
+    }))},finish_reason:'tool_calls'}]});
+   }
+   return final();
+  }};
+ gui=await startLocalGui(opts);
+ const post=(p,v)=>fetch(gui.origin+p,{method:'POST',headers:{origin:gui.origin,'content-type':'application/json'},body:JSON.stringify(v)});
+ const get=p=>fetch(gui.origin+p).then(r=>r.json());
+ const conv='/api/conversations/'+(await post('/api/conversations',{}).then(r=>r.json())).id;
+ const response=await post(conv+'/messages',{messageId:'research-control',question:'根据腾讯财报绘制相关解读的图表，要尽可能多',skillId:'auto',researchDepth:'auto'});
+ assert.equal(response.status,202,await response.text());
+ let m;
+ for(let i=0;i<120;i++){m=(await get(conv)).messages[0];if(m&&!m.working&&['completed','failed'].includes(m.status))break;await delay(30);}
+ assert.equal(m.status,'completed',JSON.stringify(m));assert.equal(wire.length,3);
+ assert.match(wire[0].messages[0].content,/deep-evidence@4/);
+ assert.equal(wire.flatMap(r=>r.messages).filter(m=>m.role==='system'&&m.content.includes('Evidence acquisition advisory: 80%')).length,1);
+ assert.deepEqual(wire[2].tools,[]);assert.equal(m.chartViews.length,1);
+ if(mixed){
+  const refused=wire[2].messages.find(m=>m.role==='tool'&&m.tool_call_id==='extra-source');
+  assert.ok(refused);assert.match(refused.content,/TOOL_LIMIT/);
+  const second=wire[2].messages.find(m=>m.role==='tool'&&m.tool_call_id==='second-source');
+  assert.match(second?.content??'',/public-web-page@/);
+ }
+ await gui.close();gui=await startLocalGui(opts);
+ const cold=(await get(conv)).messages[0];assert.deepEqual(cold.chartViews,m.chartViews);assert.equal(cold.output.answer,m.output.answer);assert.equal(wire.length,3);
+});

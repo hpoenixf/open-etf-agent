@@ -1,3 +1,4 @@
+import {RESEARCH_CONTROL,omitsToolDebit,evidenceMilestone,evidenceAdvisory} from './research-control-policy.mjs';
 import {INPUT_CHART_GUIDANCE,INPUT_CHART_PROMPT_REVISION} from './financial-chart-input.mjs';
 import {readResearchNeeds,researchNeedsInstruction,RESEARCH_NEEDS_TOOL} from './research-needs.mjs';
 import {validResearchProfile,isDeepResearchNeedsActive,readDeepResearchProgress,deepResearchInstruction} from './research-intent.mjs';
@@ -124,7 +125,7 @@ export function materializeScheduledRun(options, reference, observation = {}) {
  const prior=options.durable.store.inspectSchedule(reference);
  return drive(options, true, {kind:'materialize',schedule:prior.envelope.schedule,reference,reportFresh:observation.reportFresh===true});
 }
-async function drive({ question, gateway, outputRoot='runs', requireReport=false, reportDelivery, signal, hostSignal, limits={}, extensions=[], hooks, plugins, rootBudget, allowedTools, allowedDocuments, taskId=null, contextBytes, contextWorkingSetBytes, workingInput, durable, publication = false, pdfInput, taskTime, ordinaryResponse = false, documentProtection = false, documentCatalog, interaction, hostProjection, knowledgeQueryEffects, researchProfile, reasoningEffort, observeToolResult, chartPromptRevision, directResponses }, submitting, scheduleOperation) {
+async function drive({ question, gateway, outputRoot='runs', requireReport=false, reportDelivery, signal, hostSignal, limits={}, extensions=[], hooks, plugins, rootBudget, allowedTools, allowedDocuments, taskId=null, contextBytes, contextWorkingSetBytes, workingInput, durable, publication = false, pdfInput, taskTime, ordinaryResponse = false, documentProtection = false, documentCatalog, interaction, hostProjection, knowledgeQueryEffects, researchProfile, reasoningEffort, observeToolResult, chartPromptRevision, researchControl, directResponses }, submitting, scheduleOperation) {
   if(pdfInput?.snapshot!==undefined){if(Object.keys(pdfInput).length!==1)throw failure('PDF_INVALID_INPUT');pdfInput=Object.freeze({snapshot:normalizePdfSnapshot(pdfInput.snapshot)});}
   documentCatalog=documentCatalog===undefined?undefined:normalizeDocumentCatalog(documentCatalog);
   if(documentCatalog&&documentProtection)throw failure('CUSTOM_PROTECTED_CATALOG_UNSUPPORTED');
@@ -178,6 +179,7 @@ async function drive({ question, gateway, outputRoot='runs', requireReport=false
   const publicationBinding = durable?.bindings?.adapters?.find(item => item.id === PUBLICATION_BINDING.id);
   if(typeof publication !== 'boolean' || (publication ? !durable || canonical(publicationBinding) !== canonical(PUBLICATION_BINDING) : publicationBinding !== undefined))throw failure('PUBLICATION_BINDING_MISMATCH');
   if(publication && durable.parentRunId)throw failure('PUBLICATION_SCOPE_MISMATCH');
+  if(researchControl!==undefined&&(researchControl!==RESEARCH_CONTROL||!durable||durable.parentRunId||gateway.mode!=='live'||!publication||requireReport||scheduleOperation||!allowedTools?.includes('render_financial_chart')||!extensions.some(x=>x.name==='render_financial_chart')))throw failure('INVALID_RESEARCH_CONTROL');
   if(chartPromptRevision!==undefined&&(chartPromptRevision!==INPUT_CHART_PROMPT_REVISION||!durable||durable.parentRunId||gateway.mode!=='live'||!publication||scheduleOperation||!['read_supplied_chart_data','build_financial_chart'].every(name=>allowedTools?.includes(name)&&extensions.some(x=>x.name===name))))throw failure('INVALID_CHART_PROMPT_REVISION');
   if(reasoningEffort!==undefined&&(!isReasoningEffort(reasoningEffort)||!durable||durable.parentRunId||gateway.mode!=='live'||!publication||scheduleOperation))throw failure('INVALID_REASONING_EFFORT');
   if(researchProfile!==undefined&&(!validResearchProfile(researchProfile)||!durable||durable.parentRunId||gateway.mode!=='live'||!publication||scheduleOperation))throw failure('INVALID_RESEARCH_PROFILE');
@@ -224,7 +226,7 @@ async function drive({ question, gateway, outputRoot='runs', requireReport=false
       } catch (error) { if (error.code !== 'UNKNOWN_RUN') throw error; }
     }
     if (!temporal && taskTime !== undefined) temporal = createTaskTime(taskTime);
-    const config={requireReport,...(directResponses===true?{directResponses:true}:{}),...(chartPromptRevision?{chartPromptRevision}:{}),...(reasoningEffort===undefined?{}:{reasoningEffort}),...(researchProfile?{researchProfile}:{}),...(knowledgeQueryEffects?{knowledgeQueryEffects}:{}),...(reportDelivery===undefined?{}:{reportDelivery}),...(hostProjection?{hostProjection}:{}),...(pdfInput?.snapshot?{pdfSnapshot:pdfSnapshotBinding(pdfInput.snapshot)}:{}),...(documentCatalog?{documentCatalog:documentCatalogBinding(documentCatalog)}:{}),...(protectedMode?{documentProtection:{authorityId:authority.authorityId,libraryId:authority.libraryId}}:{}),...(ordinaryResponse?{ordinaryResponse:multiResponse?INTERACTION_PROFILE:RESPONSE_PROFILE,...(multiResponse?{interaction}:{})}:{}),...(temporal?{taskTime:temporal}:{}),...(publication?{publication:PUBLICATION_BINDING.version}:{}),...(allowedTools?{allowedTools}:{}),...(allowedDocuments?{allowedDocuments}:{}),...(contextBytes===undefined?{}:{contextBytes}),...(contextWorkingSetBytes===undefined?{}:{contextWorkingSetBytes}),taskId,...(workingInput?{workingInput:{...(workingInput.memoryLibrary?{memoryLibraryId:workingInput.memoryLibrary.libraryId}:{}),...(workingInput.compaction?{compaction:{thresholdBytes:workingInput.compaction.thresholdBytes,summaryTimeoutMs:workingInput.compaction.summaryTimeoutMs??2000,version:encodedCompaction?'gateway-history-compaction@3':workingInput.compaction.mode==='gateway'?'gateway-history-compaction@2':'history-compaction@1',...(encodedCompaction?{encodedMaxBytes:workingInput.compaction.encodedMaxBytes??gateway.inputBudget?.maxBytes??null}:{}),...(workingInput.compaction.mode==='gateway'?{maxSummaryRounds:workingInput.compaction.maxSummaryRounds??6}:{})}}:{})}}:{})};
+    const config={requireReport,...(researchControl?{researchControl}:{}),...(directResponses===true?{directResponses:true}:{}),...(chartPromptRevision?{chartPromptRevision}:{}),...(reasoningEffort===undefined?{}:{reasoningEffort}),...(researchProfile?{researchProfile}:{}),...(knowledgeQueryEffects?{knowledgeQueryEffects}:{}),...(reportDelivery===undefined?{}:{reportDelivery}),...(hostProjection?{hostProjection}:{}),...(pdfInput?.snapshot?{pdfSnapshot:pdfSnapshotBinding(pdfInput.snapshot)}:{}),...(documentCatalog?{documentCatalog:documentCatalogBinding(documentCatalog)}:{}),...(protectedMode?{documentProtection:{authorityId:authority.authorityId,libraryId:authority.libraryId}}:{}),...(ordinaryResponse?{ordinaryResponse:multiResponse?INTERACTION_PROFILE:RESPONSE_PROFILE,...(multiResponse?{interaction}:{})}:{}),...(temporal?{taskTime:temporal}:{}),...(publication?{publication:PUBLICATION_BINDING.version}:{}),...(allowedTools?{allowedTools}:{}),...(allowedDocuments?{allowedDocuments}:{}),...(contextBytes===undefined?{}:{contextBytes}),...(contextWorkingSetBytes===undefined?{}:{contextWorkingSetBytes}),taskId,...(workingInput?{workingInput:{...(workingInput.memoryLibrary?{memoryLibraryId:workingInput.memoryLibrary.libraryId}:{}),...(workingInput.compaction?{compaction:{thresholdBytes:workingInput.compaction.thresholdBytes,summaryTimeoutMs:workingInput.compaction.summaryTimeoutMs??2000,version:encodedCompaction?'gateway-history-compaction@3':workingInput.compaction.mode==='gateway'?'gateway-history-compaction@2':'history-compaction@1',...(encodedCompaction?{encodedMaxBytes:workingInput.compaction.encodedMaxBytes??gateway.inputBudget?.maxBytes??null}:{}),...(workingInput.compaction.mode==='gateway'?{maxSummaryRounds:workingInput.compaction.maxSummaryRounds??6}:{})}}:{})}}:{})};
     let stored,claim,directory,runId,boundChild=false,deadlineAt=Date.now()+budget.timeoutMs;
     let state={schemaVersion:'runtime-checkpoint@1',phase:'ready',messages:[{role:'user',content:question}],usedIds:[],rounds:0,toolsDispatched:0,proposal:null,cursor:0,result:null,host:null,working:null,gatewayOutcome:'settled',answer:'',status:'failed',code:null,unknownEffects:[],partialEffects:[],hookErrors:[]};
     function verifyCorrectionHistory(host){
@@ -451,10 +453,19 @@ async function drive({ question, gateway, outputRoot='runs', requireReport=false
         }
         if(['ready','working-input'].includes(state.phase)){
           if(state.rounds>=budget.maxRounds)throw failure('ROUND_LIMIT');
+          const controlled=researchControl===RESEARCH_CONTROL;
+          const slots=Math.min(budget.maxRounds-state.rounds,(durable?.rootLimits?.model??budget.maxRounds)-rootBudget.snapshot().model);
+          const meteredRemaining=controlled?Math.min(budget.maxTools-state.toolsDispatched,(durable.rootLimits?.tool??budget.maxTools)-rootBudget.snapshot().tool):budget.maxTools-state.toolsDispatched;
+          const phase=controlled?(slots<=1?'deliver':meteredRemaining<=0?'output':slots<=4?'prepare':null):null;
+          const toolsForTurn=()=>phase==='deliver'?[]:host.definitions.filter(tool=>
+            (phase!=='output'||omitsToolDebit(controlled,tool.name))&&
+            (tool.name!==RESEARCH_NEEDS_TOOL||isDeepResearchNeedsActive(researchProfile,state.messages)));
+          const stage=controlled?evidenceMilestone(state.messages,budget):0;
+          const advisory=stage>(state.evidenceAdvisoryDelivered??0)?evidenceAdvisory(stage):null;
           if(!state.working){
             const lookupMemory=ref=>{if(ref.libraryId!==workingInput.memoryLibrary.libraryId)throw failure('MEMORY_SCOPE_MISMATCH');return workingInput.memoryLibrary.state(ref.id);};
             const memoryMessages=workingInput?.memoryLibrary?await projectMemory({messages:state.messages,lookupState:lookupMemory}):structuredClone(state.messages);
-            const mainTools=host.definitions.filter(tool=>tool.name!==RESEARCH_NEEDS_TOOL||isDeepResearchNeedsActive(researchProfile,state.messages));
+            const mainTools=toolsForTurn();
             const chartFraming=chartPromptRevision&&['read_supplied_chart_data','build_financial_chart'].every(name=>mainTools.some(tool=>tool.name===name));
             const workingMessages=projectControlProofs(projectTaskTime(chartFraming?[memoryMessages[0],{role:'system',content:INPUT_CHART_GUIDANCE},...memoryMessages.slice(1)]:memoryMessages, temporal));
             const routeBudget=state.openAISelected?gateway.directResponsesGateway?.inputBudget:gateway.inputBudget;
@@ -464,7 +475,7 @@ async function drive({ question, gateway, outputRoot='runs', requireReport=false
             if(measured!==null&&(!Number.isSafeInteger(measured)||measured<0))throw failure('INVALID_COMPACTION_PRESSURE_MEASUREMENT');
             const highPressure=workingInput?.compaction&&(encodedCompaction?measured!==null&&(measured>=workingInput.compaction.thresholdBytes||measured>gateway.inputBudget.maxBytes):Buffer.byteLength(JSON.stringify(requestMessages))>=workingInput.compaction.thresholdBytes);
             if(encodedCompaction)await record('compaction_pressure',{status:measured===null?'capacity-unknown':highPressure?'pressured':'under-threshold',requestBytes:measured,thresholdBytes:workingInput.compaction.thresholdBytes,limitBytes:gateway.inputBudget?.maxBytes??null});
-            if(workingInput?.compaction&&(state.compactionState?.frontier||highPressure)){
+            if(!phase&&workingInput?.compaction&&(state.compactionState?.frontier||highPressure)){
               // A crash during summary generation keeps its consumed root reservation; no adoption is implied.
               const managed=workingInput.compaction.mode==='gateway';
               const compactionState=state.compactionState??{frontier:null,summaryAttempts:0,...(encodedCompaction?{noGainHash:null}:{})};
@@ -510,11 +521,19 @@ async function drive({ question, gateway, outputRoot='runs', requireReport=false
                 }
               }
             }
+            const guard=phase==='deliver'?'Use this protected delivery turn to write the final answer. Do not call tools.':
+              phase==='output'?'Do not acquire new evidence. Use existing data for analysis and charts, then deliver.':
+              phase==='prepare'?'Evidence work is nearing its end. Consolidate the answer and prepare necessary charts.':null;
+            for(const content of [guard,advisory])if(content){
+              const guided=[requestMessages[0],{role:'system',content},...requestMessages.slice(1)];
+              const inputBudget=state.openAISelected?gateway.directResponsesGateway?.inputBudget:gateway.inputBudget;
+              if(Buffer.byteLength(JSON.stringify(guided))<=(contextBytes??1048576)&&(!inputBudget||inputBudget.measure({messages:guided,tools:mainTools})<=inputBudget.maxBytes))requestMessages=guided;
+            }
             state.working={schemaVersion:'working-input@1',messages:requestMessages,noteRef,hash:sha256(JSON.stringify(requestMessages))};await checkpoint('working-input');
           }
           // Forgetting after adoption but before dispatch removes old typed Memory from the next actual input.
           if(workingInput?.memoryLibrary){state.working.messages=await projectMemory({messages:state.working.messages,lookupState:ref=>workingInput.memoryLibrary.state(ref.id)});state.working.hash=sha256(JSON.stringify(state.working.messages));}
-          const mainTools=host.definitions.filter(tool=>tool.name!==RESEARCH_NEEDS_TOOL||isDeepResearchNeedsActive(researchProfile,state.messages));
+          const mainTools=toolsForTurn();
           assertContextCapacity({messages:state.working.messages,tools:mainTools,maxBytes:contextBytes,inputBudget:gateway.inputBudget});
           let proposal,selected=state.openAISelected?gateway.directResponsesGateway:gateway,start,reservation;
           const gemini=claim&&!state.openAISelected&&state.rounds===0&&!scheduleOperation&&!durable?.parentRunId&&gateway.selectGeminiBeforeDispatch
@@ -569,6 +588,7 @@ async function drive({ question, gateway, outputRoot='runs', requireReport=false
             break;
           }
           state.gatewayOutcome='settled';validateProposal(proposal);
+          if(phase==='deliver'&&proposal.kind!=='final')throw failure('RESEARCH_FINAL_REQUIRED');
           if(proposal.openAIReasoning!==undefined){
             if(!state.openAISelected||proposal.kind!=='calls')throw failure('INVALID_DIRECT_RESPONSES_CHECKPOINT');
             validateOpenAIReasoning(proposal.openAIReasoning);
@@ -579,10 +599,12 @@ async function drive({ question, gateway, outputRoot='runs', requireReport=false
           const lastValidation=state.messages.at(-1)?.result?.validation;
           if(lastValidation?.schemaVersion===ORIGINAL_READ_CORRECTION&&
             !matchesOriginalReadCorrection(proposal,lastValidation.resultRef))throw failure('READ_RESULT_CORRECTION_REQUIRED');
-          if(proposal.kind==='calls'){if(proposal.calls.some(c=>c.name==='ask_response')){if(!ordinaryResponse||proposal.calls.length!==1)throw failure('INVALID_ORDINARY_RESPONSE');validateResponseCall(proposal.calls[0]);if(multiResponse?durable.store.responseHistory(runId).length>=interaction.maxQuestions:durable.store.responseStatus(runId))throw failure('QUESTION_LIMIT');}const ids=new Set();for(const c of proposal.calls){if(state.usedIds.includes(c.id)||ids.has(c.id))throw failure('DUPLICATE_CALL_ID');ids.add(c.id);}if(state.toolsDispatched+proposal.calls.length>budget.maxTools)throw failure('TOOL_LIMIT');}
+          if(proposal.kind==='calls'){if(proposal.calls.some(c=>c.name==='ask_response')){if(!ordinaryResponse||proposal.calls.length!==1)throw failure('INVALID_ORDINARY_RESPONSE');validateResponseCall(proposal.calls[0]);if(multiResponse?durable.store.responseHistory(runId).length>=interaction.maxQuestions:durable.store.responseStatus(runId))throw failure('QUESTION_LIMIT');}const ids=new Set();for(const c of proposal.calls){if(state.usedIds.includes(c.id)||ids.has(c.id))throw failure('DUPLICATE_CALL_ID');ids.add(c.id);}const counted=proposal.calls.filter(c=>!omitsToolDebit(controlled,c.name)).length;
+           if(counted>meteredRemaining&&!(controlled&&counted<proposal.calls.length))throw failure('TOOL_LIMIT');}
           // Use the original Session codec before mutating the recoverable state.
           // A malformed JS-only Gateway result must not poison its own failure checkpoint.
           if(claim)durable.store.validateCheckpoint({...state,phase:'proposal-sealed',proposal:structuredClone(proposal),cursor:0,result:null,working:null,messages:assistantMessage?[...state.messages,assistantMessage]:state.messages});
+          if(advisory&&state.working.messages.some(m=>m.role==='system'&&m.content===advisory))state.evidenceAdvisoryDelivered=stage;
           state.proposal=structuredClone(proposal);state.cursor=0;state.result=null;state.working=null;
           if(assistantMessage)state.messages.push(assistantMessage);
           await checkpoint('proposal-sealed');await record('model_proposal',{kind:proposal.kind,...(reasoningEffort===undefined||!reservation||reservation.runId!==reservation.rootId||reservation.purpose!==undefined?{}:{reasoningEffort}),callIds:proposal.calls?.map(c=>c.id)||[],usage:proposal.usage??null,cost:null,...(reservation?{modelOrdinal:reservation.modelOrdinal,inputHash:reservation.inputHash}:{}),durationMs:performance.now()-start});
@@ -619,10 +641,18 @@ async function drive({ question, gateway, outputRoot='runs', requireReport=false
         if(state.phase!=='result-committed'){
           await record('tool_proposal',{callId:call.id,name:call.name});controller.signal.throwIfAborted();
           if(!state.usedIds.includes(call.id))state.usedIds.push(call.id);
-          const result=await effect(host.execute(call,{signal:controller.signal,onDispatch:({original,effective})=>{
+          const boundedRefusal=researchControl===RESEARCH_CONTROL&&!hooks&&!omitsToolDebit(true,call.name)&&
+            (state.toolsDispatched>=budget.maxTools||rootBudget.snapshot().tool>=(durable.rootLimits?.tool??budget.maxTools))&&
+            state.proposal.calls.slice(state.cursor+1).some(c=>omitsToolDebit(true,c.name));
+          const result=boundedRefusal?{callId:call.id,status:'rejected',dispatched:false,error:'RESEARCH_TOOL_LIMIT',durationMs:0}:
+            await effect(host.execute(call,{signal:controller.signal,onDispatch:({original,effective})=>{
             controller.signal.throwIfAborted();const dispatch={callId:effective.id,name:effective.name,effective,...(effective.name!==original.name?{originalName:original.name}:{})};
-            if(claim)claim.reserve('tool',{...state,phase:'tool-dispatched',toolsDispatched:state.toolsDispatched+1,host:host.snapshot(),inFlight:dispatch});else rootBudget.claim('tool');
-            state.toolsDispatched++;inFlight=dispatch;state.phase='tool-dispatched';
+            const free=omitsToolDebit(researchControl===RESEARCH_CONTROL,original.name,effective.name);
+            if(researchControl===RESEARCH_CONTROL&&!free&&(state.toolsDispatched>=budget.maxTools||
+              rootBudget.snapshot().tool>=(durable.rootLimits?.tool??budget.maxTools)))throw failure('TOOL_LIMIT');
+            const debit=free?0:1,pending={...state,phase:'tool-dispatched',toolsDispatched:state.toolsDispatched+debit,host:host.snapshot(),inFlight:dispatch};
+            if(free)claim.dispatchUnmeteredTool(pending);else if(claim)claim.reserve('tool',pending);else rootBudget.claim('tool');
+            state.toolsDispatched+=debit;inFlight=dispatch;state.phase='tool-dispatched';
 
           }}));
           if(result.callId!==call.id)throw failure('CALL_PAIR_MISMATCH');state.result=result;
@@ -637,7 +667,12 @@ async function drive({ question, gateway, outputRoot='runs', requireReport=false
         if(result.memoryEffect)state.partialEffects.push({callId:call.id,name:effectiveName,memoryEffect:structuredClone(result.memoryEffect)});
         let correctionOffered=false;
         const candidate=await host.answerCandidate(call,result);
-        const toolDecision=decideRunControl({kind:'tool-result',succeeded:result.status==='succeeded',dispatched:result.dispatched,answerProved:Boolean(candidate),correctionProved:await host.correctionEligible(call,result),ownerWebUrlRefusalProved:!gatewayUnsettled&&state.gatewayOutcome==='settled'&&host.ownerWebUrlRefusalProved(call,result)},
+        const toolDecision=decideRunControl({kind:'tool-result',succeeded:result.status==='succeeded',dispatched:result.dispatched,answerProved:Boolean(candidate),budgetRefusalProved:researchControl===RESEARCH_CONTROL&&
+            result.status==='rejected'&&result.dispatched===false&&result.error==='RESEARCH_TOOL_LIMIT'&&
+            !omitsToolDebit(true,call.name)&&!gatewayUnsettled&&state.gatewayOutcome==='settled'&&
+            (state.toolsDispatched>=budget.maxTools||rootBudget.snapshot().tool>=(durable.rootLimits?.tool??budget.maxTools))&&
+            state.proposal.calls.slice(state.cursor+1).some(c=>omitsToolDebit(true,c.name)),
+          correctionProved:await host.correctionEligible(call,result),ownerWebUrlRefusalProved:!gatewayUnsettled&&state.gatewayOutcome==='settled'&&host.ownerWebUrlRefusalProved(call,result)},
           {singleCall:state.proposal.calls.length===1,hooks:!!hooks,partial:state.partialEffects.length>0,unknown:state.unknownEffects.length>0,corrections:state.corrections??0});
         state.failureCode=toolDecision.action==='stop'?toolDecision.reason:null;
         if(toolDecision.reason==='LOCAL_CORRECTION'){state.corrections=1;correctionOffered=true;}
