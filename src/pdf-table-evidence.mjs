@@ -63,6 +63,7 @@ const provesUnit=(caption,headers,unit)=>{
 // A bounded, explicitly scaled income/financial table with stacked
 // period/day/year header rows. Column identity comes from printed geometry,
 // never from date sorting: quarterly and YTD columns can share a date.
+const rowSpecificScale = /\b(?:EPS|per[\s-]+(?:share|unit)|yuan|renminbi|cents?)\b|每股|每单位|[（(]\s*(?:(?:人民币|港|美)?元|分|倍)\s*[）)]/iu;
 function scaledPeriodTable(rows,i){
  const note=rows[i],groups=rows[i-3],dates=rows[i-2],years=rows[i-1];
  if(note.items.length!==1||!/^\(RMB in millions(?:, unless specified)?\)$/i.test(note.items[0].text)||
@@ -104,7 +105,14 @@ function scaledPeriodTable(rows,i){
    if(!/unless specified/i.test(note.items[0].text))return null;
    continue;
   }
-  if(unitMarker.test(name.text)||!values.every(v=>validPdfCellText(v.text))||data.some(r=>r.label===name.text))return null;
+  if(!values.every(v=>validPdfCellText(v.text)))return null;
+  // A known row-specific unit is not equivalent to the table's currency scale.
+  // Drop only clearly identified exceptions where the issuer permits them.
+  if(rowSpecificScale.test(name.text)){
+   if(!/unless specified/i.test(note.items[0].text))return null;
+   continue;
+  }
+  if(unitMarker.test(name.text)||data.some(r=>r.label===name.text))return null;
   data.push({label:name.text,cells:values.map(v=>({text:v.text,at:[n(v.x),n(v.y)]}))});
  }
  const table={caption:title.text+' (RMB million)',unit:'RMB million',headers,rows:data};

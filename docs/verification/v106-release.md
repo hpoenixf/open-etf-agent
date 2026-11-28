@@ -11,3 +11,5 @@ Scope: original static text PDFs. This does not add OCR, arbitrary browser autom
 ## Verification
 
 The fixed Stage cohort passed all 10 real-model cases: 58 completed model requests and no unknown request outcomes. Every completed body was read back and matched its canonical digest; cases verified original physical-page citations and, where requested, table cells and chart delivery. All 6 focused local cases passed, including the original bilingual financial filing and a bounded large-PDF case. The Stage cohort used one filing and does not qualify arbitrary types of PDFs. [Sanitized evidence](v106-pdf-qualification.safe.json).
+
+Pre-release follow-up: the parser omits explicit per-share or yuan rows rather than inheriting the table-wide RMB-million unit. In the exact filing used by the live cohort, all 50 text pages and all extracted tables matched the live candidate byte-for-byte; a focused 17-case suite separately covered the new unit exception and the unchanged acquisition, chart and readback path. The live counts above refer only to the recorded Stage source.
