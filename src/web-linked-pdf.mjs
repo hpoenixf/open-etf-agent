@@ -9,11 +9,12 @@ import {readProjectJson} from './research-project.mjs';
 import {ensureSafeDirectory,safeDirectory,publishImmutable} from './storage-files.mjs';
 import {verifyWebPdfLink} from './web-extraction.mjs';
 import {acquireApprovedWebPdf} from './web-transport.mjs';
-import {WEB_LIMITS} from './web-policy.mjs';
+import {LINKED_PDF_LIMITS} from './pdf-parse-limits.mjs';
 import {WEB_TEXT_PAGE_BYTES,webTextPageSizes} from './web-text-pages.mjs';
-import {pdfSnapshotBinding,prepareUploadedPdfSnapshot} from './pdf-input.mjs';
+import {prepareLinkedWebPdfSnapshot} from './pdf-input.mjs';
 import {pdfCellLimits,validPdfTables} from './pdf-table-evidence.mjs';
 
+const maxRecordBytes=2097152;
 export const LINKED_PDF_NATIVE_TABLES='linked-pdf-native-tables@1';
 
 const digest=x=>createHash('sha256').update(x).digest('hex');
@@ -25,11 +26,13 @@ const pageSnapshot=snapshot=>({originalSha256:snapshot.originalSha256,originalBy
  parser:snapshot.parser,parserWorkerSha256:snapshot.parserWorkerSha256,pages:snapshot.pages});
 const hex=x=>typeof x==='string'&&/^[a-f0-9]{64}$/.test(x);
 function verifyPageSnapshot(value){
+ const limits=LINKED_PDF_LIMITS;
  return value&&Object.keys(value).sort().join(',')==='originalBytes,originalSha256,pages,parser,parserWorkerSha256'&&
   hex(value.originalSha256)&&hex(value.parserWorkerSha256)&&typeof value.parser==='string'&&
-  Number.isSafeInteger(value.originalBytes)&&value.originalBytes>=5&&value.originalBytes<=WEB_LIMITS.bodyBytes&&
-  Array.isArray(value.pages)&&value.pages.length>=1&&value.pages.length<=16&&
-  value.pages.every(t=>typeof t==='string'&&t.isWellFormed()&&Buffer.byteLength(t)<=65536);
+  Number.isSafeInteger(value.originalBytes)&&value.originalBytes>=5&&value.originalBytes<=limits.bytes&&
+  Array.isArray(value.pages)&&value.pages.length>=1&&value.pages.length<=limits.pages&&
+  value.pages.every(t=>typeof t==='string'&&t.isWellFormed()&&Buffer.byteLength(t)<=limits.pageTextBytes)&&
+  value.pages.reduce((sum,t)=>sum+Buffer.byteLength(t),0)<=limits.totalTextBytes;
 }
 const validTablePages=(pages,count)=>Array.isArray(pages)&&pages.length===count&&
  pages.every(t=>validPdfTables(t)&&Buffer.byteLength(JSON.stringify(t))<=24000)&&
@@ -66,7 +69,7 @@ export function openLinkedWebPdfOwner({projectDir,authority,resolveConsumedHtml,
  }
  async function readRecord(directory,binding){
   let record;
-  try{record=await readProjectJson(join(directory,'final.json'));}catch(e){if(e.code==='ENOENT')return null;throw e;}
+  try{record=await readProjectJson(join(directory,'final.json'),maxRecordBytes);}catch(e){if(e.code==='ENOENT')return null;throw e;}
   const tableRecord=record?.schemaVersion==='web-linked-pdf-record@2';
   if((!tableRecord&&record?.schemaVersion!=='web-linked-pdf-record@1')||!isDeepStrictEqual(record.binding,binding))
    fail('WEB_PDF_RECORD_CHANGED');
@@ -132,11 +135,11 @@ export function openLinkedWebPdfOwner({projectDir,authority,resolveConsumedHtml,
     signal?.throwIfAborted();
     if(!successful(response,proven.binding.downloadUrl))fail('WEB_PDF_RESPONSE_UNBOUND');
     if(typeof response.contentType!=='string'||response.contentType.trim().toLowerCase()!=='application/pdf')fail('WEB_PDF_CONTENT_TYPE');
-    if(!Buffer.isBuffer(response.body)||response.body.length>WEB_LIMITS.bodyBytes)fail('WEB_BODY_LIMIT');
+    if(!Buffer.isBuffer(response.body)||response.body.length>LINKED_PDF_LIMITS.bytes)fail('WEB_BODY_LIMIT');
     if(!response.body.subarray(0,5).equals(Buffer.from('%PDF-')))fail('WEB_PDF_INVALID_MAGIC');
     if(typeof response.fetchedAt!=='string'||!Number.isFinite(Date.parse(response.fetchedAt)))fail('WEB_PDF_RESPONSE_UNBOUND');
-    const snapshot=await prepareUploadedPdfSnapshot(response.body,{signal});
-    const binding=pdfSnapshotBinding(snapshot),pages=pageSnapshot(snapshot);
+    const {snapshot,binding}=await prepareLinkedWebPdfSnapshot(response.body,{signal});
+    const pages=pageSnapshot(snapshot);
     if(!verifyPageSnapshot(pages))fail('WEB_PDF_RECORD_CHANGED');
     result={...base,status:'saved',retrievedAt:response.fetchedAt,snapshotBinding:binding,snapshot:pages,
      pageSnapshotSha256:digest(JSON.stringify([binding,pages]))};
@@ -154,7 +157,10 @@ export function openLinkedWebPdfOwner({projectDir,authority,resolveConsumedHtml,
     result={...base,status:'unavailable',code:e.code};
    }
    signal?.throwIfAborted();
-   await publishImmutable(directory,'final.json',Buffer.from(JSON.stringify(result)),signal);
+   const encoded=Buffer.from(JSON.stringify(result));
+   const retained=encoded.length<=maxRecordBytes?encoded:Buffer.from(JSON.stringify({...base,status:'unavailable',code:'PDF_LIMIT_TEXT'}));
+   if(encoded!==retained)result={...base,status:'unavailable',code:'PDF_LIMIT_TEXT'};
+   await publishImmutable(directory,'final.json',retained,signal);
    await syncDir(directory);
    return safeSummary(result);
   },

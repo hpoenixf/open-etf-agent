@@ -3,7 +3,8 @@ import {PLATFORM_PROFILE,prepareWebNetworkProfile,readPreparedWebNetworkProfile,
 import https from 'node:https';
 import {createHash} from 'node:crypto';
 import robotsParser from 'robots-parser';
-import {WEB_USER_AGENT,normalizeWebUrl,publicAddresses,webLimits,webFailure,forwardWebAcquisitionAbort,boundedRobotsText,normalizeRobotsOctets} from './web-policy.mjs';
+import {WEB_LIMITS,WEB_USER_AGENT,normalizeWebUrl,publicAddresses,webLimits,webFailure,forwardWebAcquisitionAbort,boundedRobotsText,normalizeRobotsOctets} from './web-policy.mjs';
+import {LINKED_PDF_LIMITS} from './pdf-parse-limits.mjs';
 import {extractWebText} from './web-extraction.mjs';
 export {prepareWebNetworkProfile} from './web-platform-profile.mjs';
 export {WEB_LIMITS,WEB_USER_AGENT,normalizeWebUrl} from './web-policy.mjs';
@@ -80,7 +81,9 @@ export async function acquireApprovedWebPdf({url,signal,networkProfile,preparedN
 async function acquirePublicDocument({url,allowedUrls,signal,limits:input,networkProfile='system-direct@1',preparedNetworkProfile,recordLocalTimeoutClose=false}={},pdf=false){
  if(!['system-direct@1',PLATFORM_PROFILE].includes(networkProfile))throw webFailure('WEB_NETWORK_PROFILE_INVALID');
  const platformConfig=readPreparedWebNetworkProfile(preparedNetworkProfile??prepareWebNetworkProfile(networkProfile),networkProfile);
- const limits=webLimits(input),requestedUrl=normalizeWebUrl(url);
+ // Only the exact host-approved linked-PDF entry point gets the larger
+ // bounded transport. Keep at most the old allowance for all overhead.
+ const limits=pdf?{...WEB_LIMITS,bodyBytes:LINKED_PDF_LIMITS.bytes,totalBytes:LINKED_PDF_LIMITS.bytes+WEB_LIMITS.totalBytes}:webLimits(input),requestedUrl=normalizeWebUrl(url);
  if(!Array.isArray(allowedUrls)||allowedUrls.length<1||allowedUrls.length>16)throw webFailure('WEB_AUTHORITY_INVALID');
  const allowed=new Set(allowedUrls.map(normalizeWebUrl));if(allowed.size!==allowedUrls.length||!allowed.has(requestedUrl))throw webFailure('WEB_URL_NOT_ADMITTED');
  const deadlineAt=Date.now()+limits.timeoutMs;

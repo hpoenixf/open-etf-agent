@@ -1,6 +1,7 @@
 import {createHash} from 'node:crypto';
 import {isDeepStrictEqual} from 'node:util';
 import {openOwnerWeb,OWNER_LINKED_PDF_REVISION,OWNER_LINKED_PDF_LOCAL_MISS,OWNER_LINKED_PDF_CELLS,OWNER_LINKED_PDF_INDEXED_CELLS,OWNER_WEB_PAGE,OWNER_WEB_CONTINUE,OWNER_WEB_LINKED_PDF,OWNER_WEB_EXCERPTS,OWNER_WEB_EXCERPTS_LOCAL_MISS,OWNER_WEB_EXCERPTS_URL_MISS} from './gui-owner-web.mjs';
+import {LINKED_PDF_LIMITS} from './pdf-parse-limits.mjs';
 import {publicPdfNavigationQuery} from './public-pdf-navigation.mjs';
 import {normalizeWebUrl} from './web-policy.mjs';
 import {WEB_TEXT_MAX_PAGES,WEB_TEXT_PAGE_BYTES} from './web-text-pages.mjs';
@@ -27,7 +28,7 @@ function readRow({projectId,runId},value,markers){
 function readPdfRow(value,markers,{cell=false}={}){
  const {url,retrievedAt,page,pages,text,sha256,originalSha256,sourceRef}=value;
  if(normalizeWebUrl(url)!==url||(url.includes('?')&&!publicPdfNavigationQuery(new URL(url)))||new Date(retrievedAt).toISOString()!==retrievedAt||
-    !Number.isSafeInteger(page)||!Number.isSafeInteger(pages)||page<1||page>pages||pages>16||
+    !Number.isSafeInteger(page)||!Number.isSafeInteger(pages)||page<1||page>pages||pages>LINKED_PDF_LIMITS.pages||
     typeof text!=='string'||!text.trim()||!text.isWellFormed()||Buffer.byteLength(text)>65536||
     ![sha256,originalSha256].every(isHash)||digest(text)!==sha256||
     !(cell?/^web-pdf-cell:sha256:[a-f0-9]{64}$/:/^web-pdf-page:sha256:[a-f0-9]{64}$/).test(sourceRef))return null;

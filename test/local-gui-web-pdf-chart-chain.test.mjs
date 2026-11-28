@@ -9,7 +9,7 @@ import {inspectResearchTask} from '../src/research-project.mjs';
 import {startLocalGui} from '../src/gui-server.mjs';
 import {createFinancialChartView} from '../src/gui/financial-chart-view.mjs';
 import {mockWebNetwork} from './fixtures/web-network.mjs';
-import {pdf} from './fixtures/native-table-pdf.mjs';
+import {multiPagePdf,pdf} from './fixtures/native-table-pdf.mjs';
 
 const page='https://issuer.example/reports/latest';
 const filing='https://issuer.example/reports/data.pdf';
@@ -18,15 +18,18 @@ const result=(msg,finish_reason='stop')=>Response.json({choices:[{message:{role:
 const call=(id,name,args)=>({type:'function',id,function:{name,arguments:JSON.stringify(args)}});
 const proposal=(...calls)=>result({tool_calls:calls},'tool_calls');
 
-test('HTML to linked native cells to controlled chart, with exact original-source cold readback',{skip:!chartComputeAvailable()},async t=>{
+test('HTML to a late page of a large linked PDF, then native cells to controlled chart, with exact original-source cold readback',{skip:!chartComputeAvailable()},async t=>{
  await mkdir('test-output',{recursive:true});
  const projectDir=await mkdtemp(resolve('test-output/web-pdf-chain-'));
+ const physicalPage=28;
+ const original=multiPagePdf(Array.from({length:50},(_,i)=>i===physicalPage-1?rows:[]),{padding:1048576});
+ assert.ok(original.length>1048576);
  let gui, modelCalls=0, linkId, refs, answer;
  t.after(async()=>{await gui?.close();await rm(projectDir,{recursive:true,force:true});});
  const network=mockWebNetwork(t,{passthroughLoopback:true,routes:{
   'https://issuer.example/robots.txt':{body:'User-agent: *\nAllow: /\n'},
   [page]:{body:'<main><h1>Public report</h1><a href="./data.pdf">Original filing PDF</a></main>',headers:{'content-type':'text/html'}},
-  [filing]:{body:pdf(rows),headers:{'content-type':'application/pdf'}},
+  [filing]:{body:original,headers:{'content-type':'application/pdf'}},
  }});
  const options={projectDir,env:{ETF_GUI_PROVIDER_KEY:'test-only',ETF_GUI_AGENT_FINANCIAL_CHART:'1',ETF_GUI_CHART_COMPUTE:'1',ETF_GUI_PDF_CHART_CHAIN:'1'},
   liveConfig:{gateway:{provider:'opencode-go-owner',endpoint:'https://opencode.ai/inference/go/openai/v1/chat/completions',model:'synthetic',apiKeyEnv:'ETF_GUI_PROVIDER_KEY'},limits:{model:12},connectivity:{web:true,linkedPdf:true}},
@@ -39,12 +42,12 @@ test('HTML to linked native cells to controlled chart, with exact original-sourc
    assert.ok(parameters('compute_chart_formula').cells);
    assert.ok(parameters('render_financial_chart').dataset.properties.series.items.anyOf);
    if(p.length===0)return proposal(call('html','public_web_read',{url:page}));
-   if(p.length===1){linkId=p[0].pdfLinks.links[0].id;return proposal(call('tables','public_web_linked_pdf_page',{linkId,page:1,tables:true}));}
+   if(p.length===1){linkId=p[0].pdfLinks.links[0].id;return proposal(call('tables','public_web_linked_pdf_page',{linkId,page:physicalPage,tables:true}));}
    if(p.length===2){
     assert.equal(p[1].kind,'web-pdf-original-tables@1');
     assert.deepEqual(p[1].tables,[{table:1,caption:'PERFORMANCE (%)',columns:[{column:1,label:'2025'},{column:2,label:'2026'}],
      rows:[{row:1,label:'NAV'},{row:2,label:'Benchmark'}],unit:'%'}]);
-    const cell=column=>({linkId,page:1,table:1,row:1,column});
+    const cell=column=>({linkId,page:physicalPage,table:1,row:1,column});
     return proposal(call('cell-first','public_web_linked_pdf_page',cell(1)),call('cell-second','public_web_linked_pdf_page',cell(2)),
      call('invalid-selector','public_web_linked_pdf_page',{...cell(1),tables:true}));
    }
@@ -87,19 +90,19 @@ test('HTML to linked native cells to controlled chart, with exact original-sourc
  assert.equal(task.definition.chartSkill,CHART_PDF_COMPUTE_CANONICAL);
  const base=conv+'/messages/report',sources=await get(base+'/sources'),body=await get(base+'/body');
  const cells=sources.readSources.filter(x=>x.kind==='web-pdf-original-cell@1');
- assert.deepEqual(cells.map(x=>[x.cited,x.page,x.cell.header,x.cell.unit]),[[true,1,'2025','%'],[true,1,'2026','%']]);
- assert.deepEqual(m.chartViews[0].sources.map(x=>[x.ref,x.url]),refs.map(ref=>[ref,filing+'#page=1']));
+ assert.deepEqual(cells.map(x=>[x.cited,x.page,x.cell.header,x.cell.unit]),[[true,physicalPage,'2025','%'],[true,physicalPage,'2026','%']]);
+ assert.deepEqual(m.chartViews[0].sources.map(x=>[x.ref,x.url]),refs.map(ref=>[ref,filing+'#page='+physicalPage]));
  assert.equal(m.chartViews.length,2);
  function assertRawChart(view){
   assert.equal(view.provenance,'agent-supplied');
   assert.deepEqual(view.series[0].values,[99]);
-  assert.deepEqual(view.sources.map(x=>[x.ref,x.url]),[[refs[0],filing+'#page=1']]);
+  assert.deepEqual(view.sources.map(x=>[x.ref,x.url]),[[refs[0],filing+'#page='+physicalPage]]);
   const nodes=[];
   const create=tag=>{const node={tag,textContent:'',attrs:{},append(){},setAttribute(k,v){this.attrs[k]=v;}};nodes.push(node);return node;};
   createFinancialChartView({createElement:create,createElementNS:(_,tag)=>create(tag)},view);
   assert.ok(nodes.some(n=>n.textContent.includes('图中数值未逐项核验')));
   assert.ok(!nodes.some(n=>n.textContent.includes('按来源报告的数据')));
-  assert.ok(nodes.some(n=>n.tag==='a'&&n.attrs.href===filing+'#page=1'));
+  assert.ok(nodes.some(n=>n.tag==='a'&&n.attrs.href===filing+'#page='+physicalPage));
  }
  assertRawChart(m.chartViews[1]);
  const before=[modelCalls,network.calls.length];

@@ -4,6 +4,7 @@ import {fileURLToPath} from 'node:url';
 import {open,constants,readFile,realpath} from 'node:fs/promises';
 import {resolve,extname} from 'node:path';
 import {sha256,validateSource} from './source.mjs';
+import {UPLOADED_PDF_LIMITS,LINKED_PDF_LIMITS} from './pdf-parse-limits.mjs';
 import {validPdfTables} from './pdf-table-evidence.mjs';
 const validTablePages=(tables,count)=>Array.isArray(tables)&&tables.length===count&&tables.some(t=>t?.length)&&tables.every(t=>validPdfTables(t)&&Buffer.byteLength(JSON.stringify(t))<=24000)&&Buffer.byteLength(JSON.stringify(tables))<=131072;
 const freezeTree=value=>{if(value&&typeof value==='object'){for(const child of Object.values(value))freezeTree(child);Object.freeze(value);}return value;};
@@ -13,10 +14,12 @@ const cancelled=signal=>{if(signal?.aborted)fail('PDF_CANCELLED');};
 const parser='pdf2json@4.1.0';
 const failures=new Set(['PDF_LIMIT_PAGES','PDF_LIMIT_TEXT','PDF_PARSE_FAILED']);
 // Process options are a host-only testing seam, never model arguments.
-export async function parsePdfBytes(bytes,{signal,timeoutMs=5000,workerUrl=new URL('./pdf-parser-worker.mjs',import.meta.url),onSpawn,onReady}={}){
+export function parsePdfBytes(bytes,options) {return parseBoundedPdfBytes(bytes,options);}
+async function parseBoundedPdfBytes(bytes,{signal,timeoutMs=5000,workerUrl=new URL('./pdf-parser-worker.mjs',import.meta.url),onSpawn,onReady}={},linked=false){
+  const limits=linked?LINKED_PDF_LIMITS:UPLOADED_PDF_LIMITS;
   cancelled(signal);
   if(!Buffer.isBuffer(bytes))fail('PDF_INVALID_FORMAT');
-  if(bytes.length>1048576)fail('PDF_LIMIT_BYTES');
+  if(bytes.length>limits.bytes)fail('PDF_LIMIT_BYTES');
   if(!bytes.subarray(0,5).equals(Buffer.from('%PDF-')))fail('PDF_INVALID_FORMAT');
   if(/\/Encrypt\b/.test(bytes.toString('latin1')))fail('PDF_ENCRYPTED');
   if(!Number.isSafeInteger(timeoutMs)||timeoutMs<1||timeoutMs>10000)fail('PDF_INVALID_LIMIT');
@@ -44,16 +47,16 @@ export async function parsePdfBytes(bytes,{signal,timeoutMs=5000,workerUrl=new U
         try{
           if(message?.kind==='ready'){onReady?.();return;}
           if(message?.kind==='failure'&&failures.has(message.code)){finish(message.code);return;}
-          if(message?.kind!=='parsed'||message.parser!==parser||!Array.isArray(message.pages)||!message.pages.length||message.pages.length>16)throw new Error('protocol');
-          let total=0;for(const text of message.pages){if(typeof text!=='string'||text.includes('\0')||Buffer.byteLength(text)>64000)throw new Error('text');total+=Buffer.byteLength(text);}
-          if(total>131072)throw new Error('text');
+          if(message?.kind!=='parsed'||message.parser!==parser||!Array.isArray(message.pages)||!message.pages.length||message.pages.length>limits.pages)throw new Error('protocol');
+          let total=0;for(const text of message.pages){if(typeof text!=='string'||text.includes('\0')||Buffer.byteLength(text)>limits.pageTextBytes)throw new Error('text');total+=Buffer.byteLength(text);}
+          if(total>limits.totalTextBytes)throw new Error('text');
           if(message.tables!==undefined&&!validTablePages(message.tables,message.pages.length))throw new Error('table');
           finish(null,{parser,pages:message.pages,...(message.tables?{tables:message.tables}:{})});
         }catch{finish('PDF_PARSE_FAILED');}
       });
       onSpawn?.(child.pid);
       cancelled(signal);
-      child.send({bytes},sendError=>{if(sendError)finish('PDF_PARSE_FAILED');});
+      child.send({bytes,...(linked?{profile:'linked-web-pdf@1'}:{})},sendError=>{if(sendError)finish('PDF_PARSE_FAILED');});
     }catch(e){finish(e.code==='PDF_CANCELLED'?'PDF_CANCELLED':'PDF_PARSE_FAILED');}
   });
 }
@@ -81,18 +84,21 @@ async function selectedBytes(input,signal){
 }
 // Prepared snapshots are host-owned recovery material, not model-provided parser
 // claims. Admission pins all original and extracted bytes before execution starts.
-export function normalizePdfSnapshot(value) {
+export function normalizePdfSnapshot(value) {return normalizeBoundedPdfSnapshot(value,UPLOADED_PDF_LIMITS);}
+function normalizeBoundedPdfSnapshot(value,limits) {
   const invalid=()=>fail('PDF_INVALID_SNAPSHOT');
   const typed=value?.schemaVersion==='pdf-input-snapshot@2';
-  if(!value||typeof value!=='object'||Array.isArray(value)||Object.keys(value).sort().join(',')!=='originalBase64,originalBytes,originalSha256,pages,parser,parserWorkerSha256,schemaVersion,synthetic'+(typed?',tables':'')||!typed&&value.schemaVersion!=='pdf-input-snapshot@1'||value.parser!==parser||typeof value.parserWorkerSha256!=='string'||!/^([a-f0-9]{64})$/.test(value.parserWorkerSha256)||typeof value.synthetic!=='boolean'||typeof value.originalBase64!=='string'||value.originalBase64.length>1398104||!Number.isSafeInteger(value.originalBytes)||value.originalBytes<5||value.originalBytes>1048576||!Array.isArray(value.pages)||!value.pages.length||value.pages.length>16)invalid();
+  if(!value||typeof value!=='object'||Array.isArray(value)||Object.keys(value).sort().join(',')!=='originalBase64,originalBytes,originalSha256,pages,parser,parserWorkerSha256,schemaVersion,synthetic'+(typed?',tables':'')||!typed&&value.schemaVersion!=='pdf-input-snapshot@1'||value.parser!==parser||typeof value.parserWorkerSha256!=='string'||!/^([a-f0-9]{64})$/.test(value.parserWorkerSha256)||typeof value.synthetic!=='boolean'||typeof value.originalBase64!=='string'||value.originalBase64.length>4*Math.ceil(limits.bytes/3)||!Number.isSafeInteger(value.originalBytes)||value.originalBytes<5||value.originalBytes>limits.bytes||!Array.isArray(value.pages)||!value.pages.length||value.pages.length>limits.pages)invalid();
   const bytes=Buffer.from(value.originalBase64,'base64');
   if(bytes.toString('base64')!==value.originalBase64||bytes.length!==value.originalBytes||sha256(bytes)!==value.originalSha256||!bytes.subarray(0,5).equals(Buffer.from('%PDF-'))||/\/Encrypt\b/.test(bytes.toString('latin1')))invalid();
-  let total=0;const pages=value.pages.map(text=>{if(typeof text!=='string'||text.includes('\0')||Buffer.byteLength(text)>64000)invalid();total+=Buffer.byteLength(text);return text;});if(total>131072)invalid();
+  let total=0;const pages=value.pages.map(text=>{if(typeof text!=='string'||text.includes('\0')||Buffer.byteLength(text)>limits.pageTextBytes)invalid();total+=Buffer.byteLength(text);return text;});if(total>limits.totalTextBytes)invalid();
   if(typed&&!validTablePages(value.tables,pages.length))invalid();
   return Object.freeze({schemaVersion:value.schemaVersion,parser,parserWorkerSha256:value.parserWorkerSha256,originalBase64:value.originalBase64,originalSha256:value.originalSha256,originalBytes:value.originalBytes,synthetic:value.synthetic,pages:Object.freeze(pages),...(typed?{tables:freezeTree(structuredClone(value.tables))}:{})});
 }
 export function pdfSnapshotBinding(snapshot) {
-  const value=normalizePdfSnapshot(snapshot);
+  return bindPdfSnapshot(normalizePdfSnapshot(snapshot));
+}
+function bindPdfSnapshot(value) {
   return Object.freeze({schemaVersion:value.schemaVersion,parser:value.parser,parserWorkerSha256:value.parserWorkerSha256,originalSha256:value.originalSha256,originalBytes:value.originalBytes,snapshotSha256:sha256(JSON.stringify(value))});
 }
 export async function preparePdfSnapshot({input={},signal}={}) {
@@ -103,9 +109,14 @@ export async function preparePdfSnapshot({input={},signal}={}) {
 export async function prepareUploadedPdfSnapshot(bytes,{signal}={}) {
   return freezePdfBytes({bytes,synthetic:false},{signal});
 }
-async function freezePdfBytes(original,{signal}) {
-  const parsed=await parsePdfBytes(original.bytes,{signal});cancelled(signal);
-  return normalizePdfSnapshot({schemaVersion:parsed.tables?'pdf-input-snapshot@2':'pdf-input-snapshot@1',parser:parsed.parser,parserWorkerSha256:sha256(await readFile(new URL('./pdf-parser-worker.mjs',import.meta.url))),originalBase64:original.bytes.toString('base64'),originalSha256:sha256(original.bytes),originalBytes:original.bytes.length,synthetic:original.synthetic,pages:parsed.pages,...(parsed.tables?{tables:parsed.tables}:{})});
+// This path is called only by the linked source owner after URL and body validation.
+export async function prepareLinkedWebPdfSnapshot(bytes,{signal}={}) {
+  const snapshot=await freezePdfBytes({bytes,synthetic:false},{signal},true);
+  return {snapshot,binding:bindPdfSnapshot(snapshot)};
+}
+async function freezePdfBytes(original,{signal},linked=false) {
+  const parsed=await parseBoundedPdfBytes(original.bytes,{signal},linked);cancelled(signal);
+  return normalizeBoundedPdfSnapshot({schemaVersion:parsed.tables?'pdf-input-snapshot@2':'pdf-input-snapshot@1',parser:parsed.parser,parserWorkerSha256:sha256(await readFile(new URL('./pdf-parser-worker.mjs',import.meta.url))),originalBase64:original.bytes.toString('base64'),originalSha256:sha256(original.bytes),originalBytes:original.bytes.length,synthetic:original.synthetic,pages:parsed.pages,...(parsed.tables?{tables:parsed.tables}:{})},linked?LINKED_PDF_LIMITS:UPLOADED_PDF_LIMITS);
 }
 function selectPdfCell(tables,{table,row,column}){
  const t=tables?.[table-1],r=t?.rows[row-1],c=r?.cells[column-1];
