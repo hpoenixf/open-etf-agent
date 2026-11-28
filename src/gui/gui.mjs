@@ -295,7 +295,11 @@ function resetEvidence() {
   workbench.lastCitation=null;
   if(byId('mobile-evidence').open)setEvidenceOpen(false);
 }
-function progressContent(target, value) {
+function progressContent(target, value, entry) {
+  // A native disclosure changes .open synchronously; its toggle event may
+  // still be queued when either poll replaces this DOM.
+  if(entry.technicalDetails)entry.technicalOpen=entry.technicalDetails.open;
+  entry.technicalDetails=null;
   target.replaceChildren();
   if(value?.researchIntent==='deep'||value?.researchIntent==='research')target.append(make('p',value.researchIntent==='deep'?'当前模式：深度研究':'当前模式：资料查证','muted'));
   const deep=value?.deepProgress;
@@ -307,6 +311,8 @@ function progressContent(target, value) {
   }
   if(value.omitted>0)target.append(make('p','仅展示最近的步骤。','muted'));
   const sequence=make('details');
+  sequence.open=entry.technicalOpen??false;
+  entry.technicalDetails=sequence;
   sequence.append(make('summary','查看技术步骤'));
   const list=make('ol');
   for(const step of value.steps)list.append(make('li',step.label));
@@ -321,9 +327,9 @@ async function loadProgress(conversation, entry, message) {
     if(state.conversation!==conversation||state.progress.get(message.id)!==entry)return;
     entry.data=value;
     entry.cachedTerminal=['completed','failed','cancelled'].includes(message.status)&&value.status==='available';
-    if(entry.content?.isConnected)progressContent(entry.content,value);
+    if(entry.content?.isConnected)progressContent(entry.content,value,entry);
   } catch {
-    if(entry.content?.isConnected)progressContent(entry.content,{status:'unavailable'});
+    if(entry.content?.isConnected)progressContent(entry.content,{status:'unavailable'},entry);
   } finally { entry.loading=false; }
 }
 function progressDetails(message, context) {
@@ -331,15 +337,17 @@ function progressDetails(message, context) {
   const content=make('div',undefined,'research-progress-body');
   const conversation=state.conversation;
   const entry=state.progress.get(message.id)??{open:false};
+  if(entry.details)entry.open=entry.details.open;
+  entry.details=details;
   entry.content=content;
   state.progress.set(message.id,entry);
   details.append(make('summary','研究进度'));
   if(context.childElementCount)details.append(context);
   details.append(content);
-  progressContent(content,{...entry.data,...(message.deepProgress?{deepProgress:message.deepProgress}:{})});
+  progressContent(content,{...entry.data,...(message.deepProgress?{deepProgress:message.deepProgress}:{})},entry);
   details.open=entry.open;
   details.addEventListener('toggle',()=>{
-    if(!details.isConnected)return;
+    if(!details.isConnected||entry.details!==details)return;
     entry.open=details.open;
     if(details.open)void loadProgress(conversation,entry,message);
   });
