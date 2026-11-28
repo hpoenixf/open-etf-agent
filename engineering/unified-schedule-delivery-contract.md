@@ -16,3 +16,11 @@ Pre-release acceptance:
 1. Model-free PostgreSQL test: first claimant commits one synthetic slot but loses its acknowledgment. Race a second claimant/reconciler against a definition edit. Both readers resolve the one original Run/report/notice identity and only a later future slot binds the new revision. Cover same-day edits, account boundaries and process restart.
 2. Stage browser: create and edit through the conversation confirmation and management list; exercise once and recurring, pause/resume, daily entry and explicit email choice. Check that an unconfirmed draft has no durable effects and an off-by-default email sends nothing.
 3. Stage scheduler: run a fixed short future-only test, verify a single claim/run/notice in the ledger, then restore the test owner's state without enabling or touching any production deliveries.
+
+First implementation slice: the draft codec recognizes explicit minute/hour/day
+delay or interval requests in Chinese and English. It has no store, runner, or
+delivery effect. Final confirmation resolves a relative start against the server's
+confirmation instant; an elapsed repeat interval is not a calendar day rule.
+Legacy daily civil-time scheduling keeps its existing owner. Before connecting this
+draft to the UI, persist the confirmation idempotently with the resolved schedule
+and route all admitted schedule kinds through the single management surface.

@@ -37,6 +37,16 @@ test('scaled linked grid names the matching period even when two date pairs repe
  const forged=structuredClone(table);forged.headers[2]=forged.headers[0];
  assert.equal(validPdfTables([forged]),false);
 });
+test('scaled table never labels per-share or yuan exceptions as RMB millions',()=>{
+ const kinds=['Basic earnings per share (yuan)','Diluted EPS','Dividend per share','每股收益（元）','Unit price (yuan)'];
+ for(const label of kinds){
+  const data=fixture().map(v=>v.y===12.5?{...v,text:v.text==='Adjusted margin'?label:v.text.slice(0,-1)}:v);
+  const [table]=extractPdfTables(data,scoped);
+  assert.deepEqual(table?.rows.map(r=>r.label),['Capital expenditures','Revenue'],label);
+  const noExceptions=data.map(v=>v.text.startsWith('(RMB in')?{...v,text:'(RMB in millions)'}:v);
+  assert.deepEqual(extractPdfTables(noExceptions,scoped),[],label);
+ }
+});
 test('overlapping periods, missing cells, and mixed currency/percent rows fail closed',()=>{
  for(const change of [
   a=>a.map((v,i)=>i===1?{...v,w:14}:v),
