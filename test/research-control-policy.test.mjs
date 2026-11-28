@@ -41,3 +41,15 @@ test('mid-run Deep needs a verified original and physical room, and its receipt 
  assert.equal(readResearchIntent(messages),'deep');
  assert.equal(await tool.reconcile(args,{callId:call.id}),null);
 });
+
+
+test('filing output preserves chart turns after repeated acquisition or when four model slots remain', async () => {
+ const {closeFilingAcquisition} = await import('../src/research-control-policy.mjs');
+ const active={filing:true, originalsRead:2, acquisitionCalls:9, slots:6, modelLimit:24};
+ assert.equal(closeFilingAcquisition(active),false);
+ assert.equal(closeFilingAcquisition({...active,acquisitionCalls:10}),true);
+ assert.equal(closeFilingAcquisition({...active,slots:4}),true);
+ assert.equal(closeFilingAcquisition({...active,slots:4,originalsRead:0}),false);
+ assert.equal(closeFilingAcquisition({...active,slots:2,modelLimit:3}),false);
+ assert.equal(closeFilingAcquisition({...active,filing:false,acquisitionCalls:10}),false);
+});

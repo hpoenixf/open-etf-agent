@@ -148,15 +148,15 @@ export function createChatGateway({ provider, endpoint, model, apiKey, authoriza
   // DeepSeek's thinking mode requires replaying reasoning_content on tool turns.
   // This adapter only encodes durable tool messages, not provider reasoning.
   // Keep the explicit direct profile in documented non-thinking mode every round.
-  const encodeInput = ({messages,tools,wireEffort}) => {
+  const encodeInput = ({messages,tools,wireEffort,finalOnly=false}) => {
     const automatic=isAutoResearchProfile(researchProfile);
     const first=automatic&&hasResearchEvidence(tools)&&tools.some(t=>t.name===RESEARCH_INTENT_TOOL)&&!messages.some(m=>m.role==='assistant'||m.role==='tool');
     const depth=automatic?readResearchIntent(messages):null;
     const policy=first?'Choose the normal question path. Answer simple or ambiguous requests directly; use the optional intent tool alone for a current evidentiary lookup (research) or substantial multi-source synthesis (deep), and only when authorized evidence tools can help. Do not use it for its own sake. This never expands rights or budgets.'
       :isDeepResearchProfile(researchProfile)||depth==='deep'?(usesResearchAnalysis(researchProfile)?DEEP_RESEARCH_SYSTEM.replace('deep-evidence@1','deep-evidence@4')+FINANCIAL_ANALYSIS_GUIDANCE:usesDeepEvidenceMilestones(researchProfile)?DEEP_RESEARCH_SYSTEM.replace('deep-evidence@1',usesResearchNeeds(researchProfile)?'deep-evidence@3':'deep-evidence@2'):DEEP_RESEARCH_SYSTEM)
       :depth==='research'?'Check the available original source and its date or scope before answering verifiable current claims. Be candid if no source confirms them.':null;
-    const exposed=automatic&&!first?tools.filter(t=>t.name!==RESEARCH_INTENT_TOOL):tools;
-    return JSON.stringify({ model, stream, ...(stream ? { stream_options: { include_usage: true } } : {}),
+    const exposed=finalOnly?[]:automatic&&!first?tools.filter(t=>t.name!==RESEARCH_INTENT_TOOL):tools;
+    return JSON.stringify({ model, stream, ...(finalOnly?{tool_choice:'none'}:{}), ...(stream ? { stream_options: { include_usage: true } } : {}),
       ...(directDeepSeek ? {thinking:{type:'disabled'}} : {n:1}),
       ...(wireEffort===undefined?{}:{reasoning_effort:wireEffort}),
       messages: [...(policy?[{role:'system',content:policy}]:[]),...encodeMessages(messages)],
@@ -165,9 +165,9 @@ export function createChatGateway({ provider, endpoint, model, apiKey, authoriza
   const gateway = {
     mode: 'live',
     inputBudget: Object.freeze({maxBytes:maxInputBytes,measure:input=>Buffer.byteLength(encodeInput({...input,wireEffort:reasoningEffort}))}),
-    async next({ messages, tools, signal: callerSignal, reservation }) {
+    async next({ messages, tools, signal: callerSignal, reservation, finalOnly }) {
       const wireEffort=reservation&&reservation.runId===reservation.rootId&&reservation.purpose===undefined?reasoningEffort:undefined;
-      const body = encodeInput({messages,tools,wireEffort});
+      const body = encodeInput({messages,tools,wireEffort,finalOnly});
       if (Buffer.byteLength(body) > maxInputBytes) throw new Error('PROVIDER_INPUT_BYTE_LIMIT');
       const headers = requestHeaders(reservation);
       let response;

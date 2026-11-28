@@ -1,4 +1,5 @@
-import {RESEARCH_CONTROL,omitsToolDebit,evidenceMilestone,evidenceAdvisory} from './research-control-policy.mjs';
+import {RESEARCH_CONTROL,omitsToolDebit,evidenceMilestone,evidenceAdvisory,evidenceUsage,complexFiling,closeFilingAcquisition} from './research-control-policy.mjs';
+import {currentOwnerRequest} from './conversation-owner-context.mjs';
 import {INPUT_CHART_GUIDANCE,INPUT_CHART_PROMPT_REVISION} from './financial-chart-input.mjs';
 import {readResearchNeeds,researchNeedsInstruction,RESEARCH_NEEDS_TOOL} from './research-needs.mjs';
 import {validResearchProfile,isDeepResearchNeedsActive,readDeepResearchProgress,deepResearchInstruction} from './research-intent.mjs';
@@ -456,7 +457,11 @@ async function drive({ question, gateway, outputRoot='runs', requireReport=false
           const controlled=researchControl===RESEARCH_CONTROL;
           const slots=Math.min(budget.maxRounds-state.rounds,(durable?.rootLimits?.model??budget.maxRounds)-rootBudget.snapshot().model);
           const meteredRemaining=controlled?Math.min(budget.maxTools-state.toolsDispatched,(durable.rootLimits?.tool??budget.maxTools)-rootBudget.snapshot().tool):budget.maxTools-state.toolsDispatched;
-          const phase=controlled?(slots<=1?'deliver':meteredRemaining<=0?'output':slots<=4?'prepare':null):null;
+          const filing=controlled&&complexFiling(currentOwnerRequest(question));
+          const filingEvidence=filing?readDeepResearchProgress(researchProfile,state):null;
+          const filingCloseout=filingEvidence&&closeFilingAcquisition({filing,originalsRead:filingEvidence.originalsRead,
+            acquisitionCalls:evidenceUsage(state.messages).calls,slots,modelLimit:durable?.rootLimits?.model??budget.maxRounds});
+          const phase=controlled?(slots<=1?'deliver':meteredRemaining<=0||filingCloseout?'output':slots<=4?'prepare':null):null;
           const toolsForTurn=()=>phase==='deliver'?[]:host.definitions.filter(tool=>
             (phase!=='output'||omitsToolDebit(controlled,tool.name))&&
             (tool.name!==RESEARCH_NEEDS_TOOL||isDeepResearchNeedsActive(researchProfile,state.messages)));
@@ -522,7 +527,7 @@ async function drive({ question, gateway, outputRoot='runs', requireReport=false
               }
             }
             const guard=phase==='deliver'?'Use this protected delivery turn to write the final answer. Do not call tools.':
-              phase==='output'?'Do not acquire new evidence. Use existing data for analysis and charts, then deliver.':
+              phase==='output'?'Do not acquire new evidence. Use the original documents and extracted data already retained. When charts were requested, call the chart tool now for distinct supported comparisons. Never invent values or count an unavailable chart as delivered. Then write the answer with sources and any material gaps.':
               phase==='prepare'?'Evidence work is nearing its end. Consolidate the answer and prepare necessary charts.':null;
             for(const content of [guard,advisory])if(content){
               const guided=[requestMessages[0],{role:'system',content},...requestMessages.slice(1)];
@@ -565,7 +570,7 @@ async function drive({ question, gateway, outputRoot='runs', requireReport=false
             state.rounds++;state.gatewayOutcome='unknown';reservation=undefined;if(claim){const reservedView=await checkpoint('model-reserved',{reserve:'model'});if(gateway.admission==='shared-admission@1')reservation=modelReservation(reservedView);}else{rootBudget.claim('model');gatewayUnsettled=true;}
             start=performance.now();
             try{
-              proposal=await effect(Promise.resolve().then(()=>{controller.signal.throwIfAborted();gatewayUnsettled=true;return selected.next({messages:structuredClone(state.working.messages),tools:structuredClone(mainTools),signal:controller.signal,...(reservation?{reservation}:{})});}));
+              proposal=await effect(Promise.resolve().then(()=>{controller.signal.throwIfAborted();gatewayUnsettled=true;return selected.next({messages:structuredClone(state.working.messages),tools:structuredClone(mainTools),...(phase==='deliver'?{finalOnly:true}:{}),signal:controller.signal,...(reservation?{reservation}:{})});}));
               controller.signal.throwIfAborted();gatewayUnsettled=false;
             }catch(error){
               // Only the original Gateway and Admission can prove a terminal outcome.

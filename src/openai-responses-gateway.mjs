@@ -28,7 +28,7 @@ export function validateOpenAIReasoning(items) {
       Buffer.byteLength(JSON.stringify(items))>TEXT_LIMIT||new Set(items.map(i=>i.id)).size!==items.length)fail('OPENAI_RESPONSES_REASONING_INVALID');
 }
 
-function encode({messages,tools,reasoningByCall={}},maxOutputTokens){
+function encode({messages,tools,reasoningByCall={},finalOnly=false},maxOutputTokens){
   const input=[];
   const seenCalls=new Set(), seenOutputs=new Set();let pending=null;
   for(const m of messages){
@@ -54,7 +54,7 @@ function encode({messages,tools,reasoningByCall={}},maxOutputTokens){
   }
   if(pending?.size)fail('OPENAI_RESPONSES_INPUT_INVALID');
   return JSON.stringify({model:OPENAI_RESPONSES_MODEL,store:false,stream:false,include:['reasoning.encrypted_content'],
-    max_output_tokens:maxOutputTokens,input,tools:tools.map(({name,description,parameters})=>({type:'function',name,description,parameters,strict:false}))});
+    max_output_tokens:maxOutputTokens,input,...(finalOnly?{tool_choice:'none'}:{}),tools:(finalOnly?[]:tools).map(({name,description,parameters})=>({type:'function',name,description,parameters,strict:false}))});
 }
 
 function project(reply,key){
@@ -91,11 +91,11 @@ export function createOpenAIResponsesGateway({apiKey, authorization, maxOutputTo
   const gateway={
     mode:'live',
     inputBudget:Object.freeze({maxBytes:maxInputBytes,measure:input=>Buffer.byteLength(encode(input,maxOutputTokens))}),
-    async next({messages,tools,signal:callerSignal,reservation,reasoningByCall}){
+    async next({messages,tools,signal:callerSignal,reservation,reasoningByCall,finalOnly}){
       const at=Date.now();let response;
       try{return await runProviderIdleTransport(async(signal,progress)=>{
         signal?.throwIfAborted();
-        const body=encode({messages,tools,reasoningByCall},maxOutputTokens);
+        const body=encode({messages,tools,reasoningByCall,finalOnly},maxOutputTokens);
         if(body.includes(apiKey))fail('OPENAI_RESPONSES_CREDENTIAL_ECHO');
         if(Buffer.byteLength(body)>maxInputBytes)fail('PROVIDER_INPUT_BYTE_LIMIT');
         response=await fetchImpl(new URL(OPENAI_RESPONSES_ENDPOINT),{method:'POST',redirect:'error',signal,headers:{authorization:'Bearer '+apiKey,'content-type':'application/json'},body},reservation);

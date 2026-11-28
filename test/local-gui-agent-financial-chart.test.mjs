@@ -153,7 +153,7 @@ for(const mixed of [false,true])test('acquisition exhaustion '+(mixed?'inside a 
  assert.equal(m.status,'completed',JSON.stringify(m));assert.equal(wire.length,3);
  assert.match(wire[0].messages[0].content,/deep-evidence@4/);
  assert.equal(wire.flatMap(r=>r.messages).filter(m=>m.role==='system'&&m.content.includes('Evidence acquisition advisory: 80%')).length,1);
- assert.deepEqual(wire[2].tools,[]);assert.equal(m.chartViews.length,1);
+ assert.deepEqual(wire[2].tools,[]);assert.equal(wire[2].tool_choice,'none');assert.equal(m.chartViews.length,1);
  if(mixed){
   const refused=wire[2].messages.find(m=>m.role==='tool'&&m.tool_call_id==='extra-source');
   assert.ok(refused);assert.match(refused.content,/TOOL_LIMIT/);

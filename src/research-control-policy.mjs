@@ -50,3 +50,10 @@ export function complexFiling(text){
  return /财报|财务报告|年报|季报|financial (?:report|statements?)|earnings (?:report|release)|annual report|quarterly results|10-[qk]/iu.test(ownerRequest)&&
   /解读|分析|多图|尽可能多|复算|比较|多季度|多期|analysis|deep dive|multiple charts|as many charts|recalculat|compare .*quarters/iu.test(ownerRequest);
 }
+
+// Once a filing has readable original evidence, a long search phase must
+// leave time for chart composition as well as the final answer. Short task
+// budgets still reserve only their existing final turn.
+export function closeFilingAcquisition({ filing, originalsRead, acquisitionCalls, slots, modelLimit }) {
+ return filing===true&&originalsRead>0&&(acquisitionCalls>=10||(modelLimit>4&&slots<=4));
+}
