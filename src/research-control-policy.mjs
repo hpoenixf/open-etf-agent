@@ -61,6 +61,13 @@ export function closeFilingAcquisition({ filing, originalsRead, acquisitionCalls
 // Match the maximum rendered views. Count only settled, distinct saved charts,
 // not calls that returned an unavailable result or repeated the same figure.
 export const FINANCIAL_CHART_VIEW_LIMIT=8;
+export function chartDisplayKey(view){
+ if(view?.schemaVersion!=='financial-chart-view@1'||typeof view.kind!=='string'||
+   !Array.isArray(view.keys)||!Array.isArray(view.series))return null;
+ // A receipt contains call identity; use the projected data to identify a chart.
+ return JSON.stringify([view.kind,view.unit,view.asOf,view.periodStart,view.keys,
+  view.series.map(s=>[s.label,s.values,s.mark])]);
+}
 export function savedChartCount(messages){
  const proposals=new Map(), saved=new Set();
  for(const frame of messages){
@@ -69,7 +76,7 @@ export function savedChartCount(messages){
   const r=frame.result,v=r?.value;
   if(r?.callId===frame.callId&&r.dispatched===true&&r.status==='succeeded'&&
      v?.schemaVersion==='agent-financial-chart@1'&&v.status==='saved'&&
-     v.view?.schemaVersion==='financial-chart-view@1'&&/^[a-f0-9]{64}$/.test(v.view.integrity??''))saved.add(v.view.integrity);
+     /^[a-f0-9]{64}$/.test(v.view?.integrity??'')) { const key=chartDisplayKey(v.view); if(key!==null)saved.add(key); }
  }
  return saved.size;
 }

@@ -163,3 +163,42 @@ for(const mixed of [false,true])test('acquisition exhaustion '+(mixed?'inside a 
  await gui.close();gui=await startLocalGui(opts);
  const cold=(await get(conv)).messages[0];assert.deepEqual(cold.chartViews,m.chartViews);assert.equal(cold.output.answer,m.output.answer);assert.equal(wire.length,3);
 });
+
+test('a filing with eight distinct backed charts delivers before the last physical round and cold History retains them',async t=>{
+ await mkdir('test-output',{recursive:true});
+ const projectDir=await mkdtemp(resolve('test-output/filing-chart-cap-'));
+ const cases=Array.from({length:8},(_,i)=>({
+   label:'Metric '+(i+1), values:[100+i,200+i],
+ }));
+ const lines=cases.flatMap(({label,values})=>values.map((v,i)=>label+' 2025Q'+(i+2)+' CNY million '+v));
+ mockWebNetwork(t,{passthroughLoopback:true,routes:{'https://example.com/robots.txt':{body:'User-agent: *\nAllow: /\n'},[url]:{body:lines.join('\n')}}});
+ let gui;const wire=[];
+ t.after(async()=>{await gui?.close();await rm(projectDir,{recursive:true,force:true});});
+ const opts={projectDir,env:{ETF_GUI_PROVIDER_KEY:'test-only',ETF_GUI_AGENT_FINANCIAL_CHART:'1'},
+  liveConfig:{gateway:{provider:'opencode-go-owner',endpoint:'https://opencode.ai/inference/go/openai/v1/chat/completions',model:'synthetic',apiKeyEnv:'ETF_GUI_PROVIDER_KEY'},limits:{model:12,maxRounds:12,maxTools:12,tool:12},connectivity:{web:true}},
+  async fetchImpl(_url,{body}){
+   const request=JSON.parse(body); wire.push(request);
+   if(wire.length===1)return proposal('source-eight','public_web_read',{url});
+   const prior=request.messages.filter(m=>m.role==='tool');
+   if(wire.length<=9){
+    const i=wire.length-2, source=JSON.parse(prior[0].content).value,ref='WEB:'+source.manifestSha256+':'+source.page;
+    return proposal('chart-eight-'+i,'render_financial_chart',{dataset:{...dataset,series:[cases[i]]},
+       evidence:lines.slice(i*2,i*2+2).map((quote,key)=>({quote,key,ref,series:0}))});
+   }
+   assert.equal(wire.length,10);
+   assert.equal(Object.hasOwn(request,'tools'),false);
+   assert.match(request.messages.map(m=>m.content).join('\n'),/protected delivery turn/);
+   return final();
+ }};
+ gui=await startLocalGui(opts);
+ const post=(p,v)=>fetch(gui.origin+p,{method:'POST',headers:{origin:gui.origin,'content-type':'application/json'},body:JSON.stringify(v)});
+ const get=p=>fetch(gui.origin+p).then(r=>r.json());
+ const conv='/api/conversations/'+(await post('/api/conversations',{}).then(r=>r.json())).id;
+ const accepted=await post(conv+'/messages',{messageId:'eight-charts',question:'根据腾讯财报绘制相关解读的图表，要尽可能多',skillId:'auto',researchDepth:'auto'});
+ assert.equal(accepted.status,202);
+ let m;for(let i=0;i<120;i++){m=(await get(conv)).messages[0];if(m&&!m.working&&['completed','failed'].includes(m.status))break;await delay(30);}
+ assert.equal(m?.status,'completed',JSON.stringify(m));assert.equal(wire.length,10);
+ assert.equal(m.chartViews.length,8);assert.equal(m.chartViews.every(v=>v.sources[0]?.url===url),true);
+ await gui.close();gui=await startLocalGui(opts);
+ const cold=(await get(conv)).messages[0];assert.deepEqual(cold.chartViews,m.chartViews);assert.equal(cold.output.answer,m.output.answer);
+});

@@ -56,9 +56,9 @@ test('filing output preserves chart turns after repeated acquisition or when fou
 
 test('chart closeout counts distinct saved views, not successful unavailable calls',()=>{
  const render=proposal(...Array(4).fill('render_financial_chart'));
- const fixture=(c,integrity,status='saved')=>({...result(c),result:{...result(c).result,status:'succeeded',
-  value:{schemaVersion:'agent-financial-chart@1',status,view:{schemaVersion:'financial-chart-view@1',integrity}}}});
- const msgs=[{role:'assistant',calls:render},fixture(render[0],'a'.repeat(64)),fixture(render[1],'a'.repeat(64)),
-  fixture(render[2],'b'.repeat(64)),fixture(render[3],'c'.repeat(64),'unavailable')];
+ const fixture=(c,integrity,value,status='saved')=>({...result(c),result:{...result(c).result,status:'succeeded',
+  value:{schemaVersion:'agent-financial-chart@1',status,view:{schemaVersion:'financial-chart-view@1',kind:'financial-columns',unit:'ratio',keys:['Q1'],series:[{label:'result',values:[value]}],integrity}}}});
+ const msgs=[{role:'assistant',calls:render},fixture(render[0],'a'.repeat(64),1),fixture(render[1],'d'.repeat(64),1),
+  fixture(render[2],'b'.repeat(64),2),fixture(render[3],'c'.repeat(64),3,'unavailable')];
  assert.equal(savedChartCount(msgs),2);
 });
