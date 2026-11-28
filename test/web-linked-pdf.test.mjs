@@ -5,9 +5,11 @@ import {mkdtemp,mkdir,readFile,readdir,writeFile} from 'node:fs/promises';
 import {join,resolve} from 'node:path';
 import {extractWebPdfLinks} from '../src/web-extraction.mjs';
 import {LINKED_PDF_NATIVE_TABLES,openLinkedWebPdfOwner} from '../src/web-linked-pdf.mjs';
-import {acquireApprovedWebPdf} from '../src/web-transport.mjs';
+import {parsePdfBytes} from '../src/pdf-input.mjs';
+import {LINKED_PDF_LIMITS} from '../src/pdf-parse-limits.mjs';
+import {acquireApprovedWebPdf,acquireWebPage} from '../src/web-transport.mjs';
 import {mockWebNetwork} from './fixtures/web-network.mjs';
-import {pdf} from './fixtures/native-table-pdf.mjs';
+import {multiPagePdf,pdf} from './fixtures/native-table-pdf.mjs';
 
 const originals=JSON.parse(await readFile(new URL('../fixtures/local-pdf.json',import.meta.url),'utf8')).documents;
 const fixtureRoot=resolve('test-output');
@@ -72,7 +74,7 @@ test('wrong format, encrypted and blank pages become explicit unavailable; settl
  for(const [changes,code] of [
   [{responseChanges:{contentType:'text/html'}},'WEB_PDF_CONTENT_TYPE'],
   [{responseChanges:{body:Buffer.from('Not PDF')}},'WEB_PDF_INVALID_MAGIC'],
-  [{responseChanges:{body:Buffer.alloc(262145)}},'WEB_BODY_LIMIT'],
+  [{responseChanges:{body:Buffer.alloc(LINKED_PDF_LIMITS.bytes+1)}},'WEB_BODY_LIMIT'],
   [{name:'encrypted'},'PDF_ENCRYPTED']
  ]){
   const f=await fixture(changes);
@@ -214,4 +216,29 @@ test('PDF path with the actual shared broker respects same security and distinct
  const isolated=await fixture();
  assert.equal((await isolated.open({fetchPdf:acquireApprovedWebPdf}).acquire(link.id)).code,'WEB_REDIRECT_NOT_ADMITTED');
  assert.equal(mocked.calls.some(v=>v.url.includes('different.example')),false);
+});
+
+
+test('larger parse and transport limits stay confined to approved linked originals',async t=>{
+ const robot='https://issuer.example/robots.txt';
+ const oversized=multiPagePdf(Array.from({length:65},()=>[]));
+ const large=multiPagePdf(Array.from({length:20},()=>[]),{padding:1050000});
+ const long=multiPagePdf(Array.from({length:20},()=>[]));
+ await assert.rejects(parsePdfBytes(large),{code:'PDF_LIMIT_BYTES'});
+ await assert.rejects(parsePdfBytes(long),{code:'PDF_LIMIT_PAGES'});
+ const f=await fixture({pdfBytes:oversized});
+ assert.equal((await f.open().acquire(link.id)).code,'PDF_LIMIT_PAGES');
+ const html='https://issuer.example/oversized';
+ let tooLarge=false;
+ mockWebNetwork(t,{routes:{[robot]:{body:'User-agent: *\nAllow: /'},
+  [html]:{body:'x'.repeat(262145),headers:{'content-type':'text/html'}},
+  [link.url]:()=>({body:large,headers:{'content-type':'application/pdf',...(tooLarge?{'content-length':String(LINKED_PDF_LIMITS.bytes+1)}:{})}}),
+ }});
+ await assert.rejects(acquireWebPage({url:html,allowedUrls:[html]}),{code:'WEB_BODY_LIMIT'});
+ const picked=await fixture();
+ const owner=picked.open({fetchPdf:acquireApprovedWebPdf});
+ assert.equal((await owner.acquire(link.id)).pages,20);
+ tooLarge=true;
+ const next=await fixture();
+ assert.equal((await next.open({fetchPdf:acquireApprovedWebPdf}).acquire(link.id)).code,'WEB_BODY_LIMIT');
 });

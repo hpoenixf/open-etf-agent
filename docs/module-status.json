@@ -1,9 +1,9 @@
 {
   "schemaVersion": 2,
-  "reviewedVersion": "1.0.5",
-  "reviewedSource": "b8e7f235915c89434a58a67bd98eeef0ed4f1118",
+  "reviewedVersion": "1.0.6",
+  "reviewedSource": "69099abf273d5bbc5d82277b4769bc94f0316b65",
   "articleSource": "https://github.com/hpoenixf/eff-agent-article/blob/249f0b866f9446f33b57f186fbc6d35b5d82c119/articles/open-etf-agent-v010-system-design.md",
-  "evidence": "docs/verification/v105-release.md",
+  "evidence": "docs/verification/v106-release.md",
   "layers": [
     {
       "id": "L1",
@@ -780,8 +780,8 @@
       "group": "tools",
       "name": "PDF",
       "summary": {
-        "en": "Text PDF and linked grid cells",
-        "zh": "原始 PDF 页面及链接表格单元格"
+        "en": "Original PDF and period-aware cells",
+        "zh": "原始 PDF 页面与按期间区分的链接单元格"
       },
       "boundary": {
         "zh": "支持静态链接和原生文本，不做 OCR",
