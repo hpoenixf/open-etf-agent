@@ -1,0 +1,40 @@
+# Example only. Review with systemd-analyze verify on the target OS before use.
+# Instantiate only for reviewed names, e.g. stage or prod.
+[Unit]
+Description=Open ETF Agent (%i)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=etf-%i
+Group=etf-%i
+WorkingDirectory=/opt/open-etf-agent/environments/%i/current
+# Only non-secret settings such as PORT. Deployment validates this before activation.
+EnvironmentFile=/etc/open-etf-agent/%i/runtime.env
+# Secret file is deliberately independent of the immutable artifact.
+LoadCredential=live-config.json:/etc/open-etf-agent/%i/credentials/live-config.json
+LoadCredential=primary-api.key:/etc/open-etf-agent/%i/credentials/primary-api.key
+# Add provider-specific LoadCredential rows only with their corresponding enabled profile.
+# LoadCredential=openai-backup.key:/etc/open-etf-agent/%i/credentials/openai-backup.key
+# LoadCredential=gemini-free.key:/etc/open-etf-agent/%i/credentials/gemini-free.key
+# LoadCredential=yuanbao-search.key:/etc/open-etf-agent/%i/credentials/yuanbao-search.key
+# Only after verifying that the configured project is on the free tier:
+# Environment=ETF_GUI_GEMINI_FREE_PROJECT_VERIFIED=1
+StateDirectory=open-etf-agent-%i
+StateDirectoryMode=0700
+UMask=0077
+# Install the adjacent reviewed launcher at this path. It maps credential files to the CLI contract.
+ExecStart=/usr/local/libexec/open-etf-agent/run-open-owner.sh
+Restart=on-failure
+RestartSec=3s
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=yes
+# Only bind a narrowly reviewed, non-secret and service-readable input directory
+# if actually required; don't expose an entire home or private project checkout.
+# BindReadOnlyPaths=/opt/open-etf-agent/approved-inputs/%i:/run/open-etf-agent-inputs/%i
+
+[Install]
+WantedBy=multi-user.target
