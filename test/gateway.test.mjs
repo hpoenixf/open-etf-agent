@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { normalizeChatCompletion, createChatGateway } from '../src/gateway.mjs';
+import { normalizeChatCompletion, createChatGateway, projectProviderProtocolDiagnostic } from '../src/gateway.mjs';
 const completion = (message, finish_reason) => ({ choices: [{ index: 0, message: { role: 'assistant', ...message }, finish_reason }] });
 test('1.4 normalize complete non-streaming text and tool protocol', () => {
   assert.deepEqual(normalizeChatCompletion(completion({ content: 'answer' }, 'stop')), { kind: 'final', text: 'answer', usage: null });
@@ -27,4 +27,21 @@ test('1.4 injected offline transport verifies request encoding and matched tool 
   assert.equal(request.stream, false); assert.equal(request.messages[0].content, 'exact question');
   assert.equal(request.messages[1].tool_calls[0].id, 'c1'); assert.equal(request.messages[2].tool_call_id, 'c1');
   assert.equal(captured.options.redirect, 'error');
+});
+
+test('malformed wire shape reports only fixed labels and never accepts a malformed reply', () => {
+  const checks = [
+    [completion({content:null}, 'stop'), ['stop','absent','absent']],
+    [completion({content:'private',tool_calls:[]}, 'tool_calls'), ['tool_calls','text','empty']],
+    [completion({content:null,tool_calls:Array(17).fill({})}, 'tool_calls'), ['tool_calls','absent','excess']],
+    [completion({content:null,tool_calls:{private:'tool params'}}, 'private finish'), ['other','absent','other']],
+  ];
+  for (const [payload, expected] of checks) assert.throws(() => normalizeChatCompletion(payload), error => {
+    assert.equal(error.code,'PROVIDER_PROTOCOL_INVALID');
+    const d = projectProviderProtocolDiagnostic(error);
+    assert.equal(d.reason,'FINISH_OR_CALLS_SHAPE');
+    assert.deepEqual([d.wireFinish,d.wireContent,d.wireCalls],expected);
+    assert.doesNotMatch(JSON.stringify(d),/private|tool params/);
+    return true;
+  });
 });

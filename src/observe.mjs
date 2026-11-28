@@ -21,7 +21,7 @@ export async function readTimeline(directory) {
   const checks = {
     runId: identity, rootId: identity, taskId: value => value === null || identity(value),
     sequence: value => count(value) && value > 0,
-    type: value => ['run_started', 'run_resumed', 'run_yielded', 'model_proposal', 'summary_proposal', 'tool_proposal', 'tool_result', 'file_saved', 'run_finished','worker_interrupted','working_note','compaction_pressure','context_fit','validation_correction_offered'].includes(value),
+    type: value => ['run_started', 'run_resumed', 'run_yielded', 'model_proposal', 'summary_proposal', 'tool_proposal', 'tool_result', 'file_saved', 'run_finished','worker_interrupted','working_note','compaction_pressure','context_fit','validation_correction_offered','model_protocol_rejected','model_failover'].includes(value),
     settlementPhase: value => value==='pre-settlement', terminalAuthority: value => ['Session.finish','Runtime.return'].includes(value), remainingRounds: count,
     kind: value => ['calls', 'final'].includes(value), callId: identity,
     callIds: value => Array.isArray(value) && value.length <= 16 && value.every(identity),

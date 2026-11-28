@@ -57,3 +57,19 @@ export function complexFiling(text){
 export function closeFilingAcquisition({ filing, originalsRead, acquisitionCalls, slots, modelLimit }) {
  return filing===true&&originalsRead>0&&(acquisitionCalls>=10||(modelLimit>4&&slots<=4));
 }
+
+// Match the maximum rendered views. Count only settled, distinct saved charts,
+// not calls that returned an unavailable result or repeated the same figure.
+export const FINANCIAL_CHART_VIEW_LIMIT=8;
+export function savedChartCount(messages){
+ const proposals=new Map(), saved=new Set();
+ for(const frame of messages){
+  if(frame.role==='assistant'&&Array.isArray(frame.calls))for(const call of frame.calls)proposals.set(call.id,call.name);
+  if(frame.role!=='tool'||proposals.get(frame.callId)!=='render_financial_chart')continue;
+  const r=frame.result,v=r?.value;
+  if(r?.callId===frame.callId&&r.dispatched===true&&r.status==='succeeded'&&
+     v?.schemaVersion==='agent-financial-chart@1'&&v.status==='saved'&&
+     v.view?.schemaVersion==='financial-chart-view@1'&&/^[a-f0-9]{64}$/.test(v.view.integrity??''))saved.add(v.view.integrity);
+ }
+ return saved.size;
+}

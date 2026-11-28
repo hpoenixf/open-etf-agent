@@ -1,3 +1,4 @@
+import {FINANCIAL_CHART_VIEW_LIMIT} from './research-control-policy.mjs';
 import {readFileSync} from 'node:fs';
 import {createHash} from 'node:crypto';
 import {isDeepStrictEqual} from 'node:util';
@@ -207,5 +208,5 @@ export async function readAgentChartViews(run,options){
   const v=await makeProjection(c.arguments,run,c.id,messages.slice(0,selected.at),options);
   if(v.status==='saved'&&isDeepStrictEqual(v,r.value))verified.set(c.id,v.view);
  }
- return [...verified].filter(([id])=>!dup.has(id)).map(([,v])=>v).slice(0,8);
+ return [...verified].filter(([id])=>!dup.has(id)).map(([,v])=>v).slice(0,FINANCIAL_CHART_VIEW_LIMIT);
 }

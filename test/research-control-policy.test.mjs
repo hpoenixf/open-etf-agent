@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {evidenceUsage,evidenceMilestone,evidenceAdvisory,omitsToolDebit} from '../src/research-control-policy.mjs';
+import {evidenceUsage,evidenceMilestone,evidenceAdvisory,omitsToolDebit,savedChartCount} from '../src/research-control-policy.mjs';
 
 const proposal=(...names)=>names.map((name,i)=>({id:name+i,name}));
 const result=c=>({role:'tool',callId:c.id,result:{callId:c.id,dispatched:true}});
@@ -52,4 +52,13 @@ test('filing output preserves chart turns after repeated acquisition or when fou
  assert.equal(closeFilingAcquisition({...active,slots:4,originalsRead:0}),false);
  assert.equal(closeFilingAcquisition({...active,slots:2,modelLimit:3}),false);
  assert.equal(closeFilingAcquisition({...active,filing:false,acquisitionCalls:10}),false);
+});
+
+test('chart closeout counts distinct saved views, not successful unavailable calls',()=>{
+ const render=proposal(...Array(4).fill('render_financial_chart'));
+ const fixture=(c,integrity,status='saved')=>({...result(c),result:{...result(c).result,status:'succeeded',
+  value:{schemaVersion:'agent-financial-chart@1',status,view:{schemaVersion:'financial-chart-view@1',integrity}}}});
+ const msgs=[{role:'assistant',calls:render},fixture(render[0],'a'.repeat(64)),fixture(render[1],'a'.repeat(64)),
+  fixture(render[2],'b'.repeat(64)),fixture(render[3],'c'.repeat(64),'unavailable')];
+ assert.equal(savedChartCount(msgs),2);
 });

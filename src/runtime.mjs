@@ -1,4 +1,4 @@
-import {RESEARCH_CONTROL,omitsToolDebit,evidenceMilestone,evidenceAdvisory,evidenceUsage,complexFiling,closeFilingAcquisition} from './research-control-policy.mjs';
+import {RESEARCH_CONTROL,omitsToolDebit,evidenceMilestone,evidenceAdvisory,evidenceUsage,complexFiling,closeFilingAcquisition, savedChartCount, FINANCIAL_CHART_VIEW_LIMIT} from './research-control-policy.mjs';
 import {currentOwnerRequest} from './conversation-owner-context.mjs';
 import {INPUT_CHART_GUIDANCE,INPUT_CHART_PROMPT_REVISION} from './financial-chart-input.mjs';
 import {readResearchNeeds,researchNeedsInstruction,RESEARCH_NEEDS_TOOL} from './research-needs.mjs';
@@ -461,7 +461,8 @@ async function drive({ question, gateway, outputRoot='runs', requireReport=false
           const filingEvidence=filing?readDeepResearchProgress(researchProfile,state):null;
           const filingCloseout=filingEvidence&&closeFilingAcquisition({filing,originalsRead:filingEvidence.originalsRead,
             acquisitionCalls:evidenceUsage(state.messages).calls,slots,modelLimit:durable?.rootLimits?.model??budget.maxRounds});
-          const phase=controlled?(slots<=1?'deliver':meteredRemaining<=0||filingCloseout?'output':slots<=4?'prepare':null):null;
+          const chartCapacityReached=filing&&savedChartCount(state.messages)>=FINANCIAL_CHART_VIEW_LIMIT;
+          const phase=controlled?(slots<=1||chartCapacityReached?'deliver':meteredRemaining<=0||filingCloseout?'output':slots<=4?'prepare':null):null;
           const toolsForTurn=()=>phase==='deliver'?[]:host.definitions.filter(tool=>
             (phase!=='output'||omitsToolDebit(controlled,tool.name))&&
             (tool.name!==RESEARCH_NEEDS_TOOL||isDeepResearchNeedsActive(researchProfile,state.messages)));
@@ -527,7 +528,7 @@ async function drive({ question, gateway, outputRoot='runs', requireReport=false
               }
             }
             const guard=phase==='deliver'?'Use this protected delivery turn to write the final answer. Do not call tools.':
-              phase==='output'?'Do not acquire new evidence. Use the original documents and extracted data already retained. When charts were requested, call the chart tool now for distinct supported comparisons. Never invent values or count an unavailable chart as delivered. Then write the answer with sources and any material gaps.':
+              phase==='output'?'Do not acquire new evidence. Use the original documents and extracted data already retained. When charts were requested, render distinct supported comparisons in batches, not a separate model round for each chart. At most eight charts can be shown. Never invent values or count an unavailable chart as delivered. Then write the answer with sources and any material gaps.':
               phase==='prepare'?'Evidence work is nearing its end. Consolidate the answer and prepare necessary charts.':null;
             for(const content of [guard,advisory])if(content){
               const guided=[requestMessages[0],{role:'system',content},...requestMessages.slice(1)];

@@ -47,9 +47,9 @@ export function projectProviderProtocolDiagnostic(error) {
   const value = error && typeof error === 'object' ? diagnostics.get(error) : null;
   return value ? { ...value } : null;
 }
-const reject = (reason) => {
+const reject = (reason, shape = {}) => {
   const error = Object.assign(new Error('INCOMPLETE_OR_UNSUPPORTED_PROTOCOL'), { code: 'PROVIDER_PROTOCOL_INVALID' });
-  diagnostics.set(error, Object.freeze({ schemaVersion: 'provider-protocol-diagnostic@1', phase: 'normalization', reason }));
+  diagnostics.set(error, Object.freeze({ schemaVersion: 'provider-protocol-diagnostic@1', phase: 'normalization', reason, ...shape }));
   throw error;
 };
 // Shared closed classification; a recognized non-success finish never yields a proposal.
@@ -76,7 +76,15 @@ export function normalizeChatCompletion(response) {
   }
   const usage = response.usage ?? null;
   if (finish === 'stop' && typeof message.content === 'string' && !message.tool_calls?.length) return { kind: 'final', text: message.content, usage };
-  if (finish !== 'tool_calls' || !Array.isArray(message.tool_calls) || !message.tool_calls.length || message.tool_calls.length > 16) reject('FINISH_OR_CALLS_SHAPE');
+  if (finish !== 'tool_calls' || !Array.isArray(message.tool_calls) || !message.tool_calls.length || message.tool_calls.length > 16) {
+    // Fixed labels only. Never log the reply, tool names/args, or arbitrary provider strings.
+    reject('FINISH_OR_CALLS_SHAPE', {
+      wireFinish: finish === 'stop' || finish === 'tool_calls' ? finish : finish == null ? 'missing' : 'other',
+      wireContent: typeof message.content === 'string' ? 'text' : message.content == null ? 'absent' : 'other',
+      wireCalls: message.tool_calls == null ? 'absent' : !Array.isArray(message.tool_calls) ? 'other' :
+        message.tool_calls.length === 0 ? 'empty' : message.tool_calls.length <= 16 ? 'bounded' : 'excess',
+    });
+  }
   const ids = new Set();
   const calls = message.tool_calls.map(c => {
     if (!plainObject(c)) reject('CALL_SHAPE');
@@ -156,11 +164,11 @@ export function createChatGateway({ provider, endpoint, model, apiKey, authoriza
       :isDeepResearchProfile(researchProfile)||depth==='deep'?(usesResearchAnalysis(researchProfile)?DEEP_RESEARCH_SYSTEM.replace('deep-evidence@1','deep-evidence@4')+FINANCIAL_ANALYSIS_GUIDANCE:usesDeepEvidenceMilestones(researchProfile)?DEEP_RESEARCH_SYSTEM.replace('deep-evidence@1',usesResearchNeeds(researchProfile)?'deep-evidence@3':'deep-evidence@2'):DEEP_RESEARCH_SYSTEM)
       :depth==='research'?'Check the available original source and its date or scope before answering verifiable current claims. Be candid if no source confirms them.':null;
     const exposed=finalOnly?[]:automatic&&!first?tools.filter(t=>t.name!==RESEARCH_INTENT_TOOL):tools;
-    return JSON.stringify({ model, stream, ...(finalOnly?{tool_choice:'none'}:{}), ...(stream ? { stream_options: { include_usage: true } } : {}),
+    return JSON.stringify({ model, stream, ...(finalOnly&&!go?{tool_choice:'none'}:{}), ...(stream ? { stream_options: { include_usage: true } } : {}),
       ...(directDeepSeek ? {thinking:{type:'disabled'}} : {n:1}),
       ...(wireEffort===undefined?{}:{reasoning_effort:wireEffort}),
       messages: [...(policy?[{role:'system',content:policy}]:[]),...encodeMessages(messages)],
-      tools: exposed.map(t => ({ type: 'function', function: t })) });
+      ...(finalOnly&&go?{}:{tools: exposed.map(t => ({ type: 'function', function: t }))}) });
   };
   const gateway = {
     mode: 'live',
