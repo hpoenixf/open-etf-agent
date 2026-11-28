@@ -17,6 +17,7 @@ export const isAutoResearchProfile=profile=>profile===AUTO_RESEARCH_INTENT||prof
 export const usesDeepEvidenceMilestones=profile=>profile===DEEP_EVIDENCE_PROFILE||profile===AUTO_EVIDENCE_PROFILE||usesResearchNeeds(profile);
 export const isDeepResearchProfile=profile=>profile===DEEP_RESEARCH_CONTRACT||profile===DEEP_EVIDENCE_PROFILE||profile===DEEP_NEEDS_PROFILE||profile===DEEP_ANALYSIS_PROFILE;
 export const RESEARCH_INTENT_TOOL='select_research_intent';
+const MIDRUN='auto-midrun-intent@1';
 export function researchProfileFor(mode,revision){
  if(revision!==undefined){
   if(revision===ANALYSIS_RESEARCH_REVISION)return mode==='deep'?DEEP_ANALYSIS_PROFILE:mode==='auto'?AUTO_ANALYSIS_PROFILE:undefined;
@@ -33,6 +34,11 @@ const firstCalls=messages=>messages.find(m=>m.role==='assistant')?.calls;
 function selection(value){return value==='research'||value==='deep';}
 // Only a matching actual first Host result, not model prose or source text, can promote.
 export function readResearchIntent(messages){
+ for(const [i,m] of messages.entries()){
+  if(m.role!=='assistant'||m.calls?.length!==1||m.calls[0].name!==RESEARCH_INTENT_TOOL||m.calls[0].arguments?.intent!=='deep')continue;
+  const prior=messages[i+1],r=prior?.result;
+  if(prior?.role==='tool'&&prior.callId===m.calls[0].id&&r?.callId===prior.callId&&r.status==='succeeded'&&r.dispatched===true&&r.value?.kind===MIDRUN&&r.value.intent==='deep')return 'deep';
+ }
  const calls=firstCalls(messages);
  if(!Array.isArray(calls)||calls.length!==1||calls[0].name!==RESEARCH_INTENT_TOOL)return 'direct';
  const {id,arguments:args}=calls[0];
@@ -41,22 +47,39 @@ export function readResearchIntent(messages){
  const value=result?.value;
  return result?.status==='succeeded'&&result.callId===id&&value?.kind===AUTO_RESEARCH_INTENT&&selection(value.intent)&&value.intent===args?.intent?value.intent:'direct';
 }
-export function researchIntentTool(readSnapshot){
+export function researchIntentTool(readSnapshot,{readRun}={}){
+ function midrun(args,callId,time,submittedModels){
+  const run=readRun?.(),messages=run?.snapshot?.messages??[];
+  if(!run||args?.intent!=='deep'||Object.keys(args).length!==1||!Number.isSafeInteger(time))return null;
+  const index=messages.findIndex(m=>m.role==='assistant'&&m.calls?.length===1&&m.calls[0].name===RESEARCH_INTENT_TOOL&&m.calls[0].id===callId);
+  if(index<1||messages.slice(0,index).some(m=>m.role==='assistant'&&m.calls?.some(c=>c.name===RESEARCH_INTENT_TOOL&&c.arguments?.intent==='deep')))return null;
+  const before=messages.slice(0,index),originals=readDeepResearchProgress(DEEP_ANALYSIS_PROFILE,{messages:before})?.originalsRead??0;
+  const rounds=before.filter(m=>m.role==='assistant'&&m.calls?.length).length+1;
+  const limits=run.definition.rootLimits;
+  const start=run.definition.deadlineAt-run.definition.limits.timeoutMs;
+  const modelUsed=submittedModels??run.rootUsage?.model;
+  if(originals<1||!Number.isSafeInteger(modelUsed)||modelUsed<rounds||modelUsed>run.rootUsage?.model||modelUsed*5>=limits.model*4||time<start||(time-start)*5>=run.definition.limits.timeoutMs*4)return null;
+  return {kind:MIDRUN,intent:'deep',observedAt:time,modelUsed};
+ }
  function result(args,callId){
   const snapshot=readSnapshot();
   const first=firstCalls(snapshot?.messages??[]);
+  return midrun(args,callId,Date.now())??firstResult(args,callId,first);
+ }
+ function firstResult(args,callId,first=firstCalls(readSnapshot()?.messages??[])){
   if(first?.length!==1||first[0]?.id!==callId||first[0]?.name!==RESEARCH_INTENT_TOOL||!selection(args?.intent)||Object.keys(args).length!==1)return {kind:'research-intent-unapplied@1'};
   return {kind:AUTO_RESEARCH_INTENT,intent:args.intent};
  }
  return {
-  name:RESEARCH_INTENT_TOOL,recoveryVersion:AUTO_RESEARCH_INTENT,
-  description:'Optional first-round choice only for a current source lookup or a substantial multi-source synthesis. Use alone, with no other tool calls. For simple, ambiguous, or unsupported requests, skip it and continue normally. This does not change permissions or limits.',
+  name:RESEARCH_INTENT_TOOL,recoveryVersion:readRun?MIDRUN:AUTO_RESEARCH_INTENT,
+  description:(readRun?'When an original source is already verified and early time/budget remains, you may use intent deep alone once for a material gap. ':'')+'Optional first-round choice for a current source lookup or a substantial multi-source synthesis. Use alone, with no other tool calls. For simple, ambiguous, or unsupported requests, skip it and continue normally. This does not change permissions or limits.',
   parameters:{type:'object',properties:{intent:{type:'string',enum:['research','deep']}},required:['intent'],additionalProperties:false},
   validate(){}, // Malformed optional semantic selection remains unapplied; normal work can continue.
   async execute(args,{callId}){return result(args,callId);},
-  async reconcile(args,{callId}){return result(args,callId);},
+  async reconcile(args,{callId}){return readRun?null:result(args,callId);},
   async verifyResult(value,{call}){
-   if(JSON.stringify(value)!==JSON.stringify(result(call.arguments,call.id)))throw Object.assign(new Error('RESEARCH_INTENT_RECEIPT_CHANGED'),{code:'RESEARCH_INTENT_RECEIPT_CHANGED'});
+   const expected=value?.kind===MIDRUN?midrun(call.arguments,call.id,value.observedAt,value.modelUsed):readRun?firstResult(call.arguments,call.id):result(call.arguments,call.id);
+   if(JSON.stringify(value)!==JSON.stringify(expected))throw Object.assign(new Error('RESEARCH_INTENT_RECEIPT_CHANGED'),{code:'RESEARCH_INTENT_RECEIPT_CHANGED'});
   }
  };
 }

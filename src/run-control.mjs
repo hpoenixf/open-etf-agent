@@ -25,6 +25,8 @@ export function decideRunControl(fact, context = {}) {
   // within its existing budget and normal Publication rules.
   if(fact.ownerWebUrlRefusalProved===true && fact.dispatched===false && !context.hooks && !context.partial && !context.unknown)
    return {action:'continue',reason:'LOCAL_WEB_URL_REFUSAL'};
+  if(fact.budgetRefusalProved===true&&fact.dispatched===false&&!context.hooks&&!context.partial&&!context.unknown)
+   return {action:'continue',reason:'LOCAL_RESEARCH_TOOL_LIMIT'};
   return stop(fact.dispatched?'TOOL_FAILED':'TOOL_REJECTED');
  }
  if(fact.kind==='sealed-final'){

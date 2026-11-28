@@ -1,3 +1,4 @@
+import {RESEARCH_CONTROL,omitsToolDebit} from './research-control-policy.mjs';
 import {INPUT_CHART_PROMPT_REVISION} from './financial-chart-input.mjs';
 import {isReasoningEffort} from './gateway.mjs';
 import {validResearchProfile} from './research-intent.mjs';
@@ -86,10 +87,11 @@ function validateBindings(value) {
  }
 }
 function validateConfig(value, ordinary = false, protectedProfile = false, interaction = false, dynamicKnowledge = false) {
- fields(value, [], ['directResponses', 'chartPromptRevision', 'knowledgeQueryEffects', 'researchProfile', 'reasoningEffort', 'requireReport', 'reportDelivery', 'hostProjection', 'allowedTools', 'allowedDocuments', 'documentCatalog', 'pdfSnapshot', 'contextBytes', 'contextWorkingSetBytes', 'taskId', 'workingInput', 'publication', 'taskTime', ...(ordinary ? ['ordinaryResponse'] : []), ...(interaction ? ['interaction'] : []), ...(protectedProfile ? ['documentProtection'] : [])]);
+ fields(value, [], ['directResponses', 'chartPromptRevision', 'researchControl', 'knowledgeQueryEffects', 'researchProfile', 'reasoningEffort', 'requireReport', 'reportDelivery', 'hostProjection', 'allowedTools', 'allowedDocuments', 'documentCatalog', 'pdfSnapshot', 'contextBytes', 'contextWorkingSetBytes', 'taskId', 'workingInput', 'publication', 'taskTime', ...(ordinary ? ['ordinaryResponse'] : []), ...(interaction ? ['interaction'] : []), ...(protectedProfile ? ['documentProtection'] : [])]);
  if(value.directResponses!==undefined&&(value.directResponses!==true||ordinary||protectedProfile||dynamicKnowledge||value.publication!=='publication@1'||value.documentCatalog!==undefined||value.pdfSnapshot!==undefined||value.workingInput!==undefined))fail('INVALID_DEFINITION');
  if(dynamicKnowledge!==(value.knowledgeQueryEffects!==undefined))fail('KNOWLEDGE_QUERY_SCOPE');
  if(value.knowledgeQueryEffects!==undefined){validateKnowledgeQueryConfig(value.knowledgeQueryEffects);if(ordinary||protectedProfile)fail('KNOWLEDGE_QUERY_SCOPE');}
+ if(value.researchControl!==undefined&&(value.researchControl!==RESEARCH_CONTROL||protectedProfile||ordinary||value.requireReport!==false||value.publication!=='publication@1'||!value.allowedTools?.includes('render_financial_chart')))fail('INVALID_RESEARCH_CONTROL');
  if(value.chartPromptRevision!==undefined&&(value.chartPromptRevision!==INPUT_CHART_PROMPT_REVISION||protectedProfile||value.publication!=='publication@1'||!Array.isArray(value.allowedTools)||!['read_supplied_chart_data','build_financial_chart'].every(name=>value.allowedTools.includes(name))))fail('INVALID_DEFINITION');
  if(value.reasoningEffort!==undefined&&(!isReasoningEffort(value.reasoningEffort)||protectedProfile||value.publication!=='publication@1'))fail('INVALID_DEFINITION');
  if(value.researchProfile!==undefined&&(!validResearchProfile(value.researchProfile)||protectedProfile||value.publication!=='publication@1'))fail('INVALID_DEFINITION');
@@ -127,6 +129,7 @@ function definitionBytes(value, ordinary = false, protectedProfile = false, inte
  validateBindings(value.bindings); validateConfig(value.config, ordinary, protectedProfile, interaction, dynamicKnowledge); if(interaction)validateInteractionDefinition(value);else validateResponseProfile(value, ordinary); return json(value, 65536);
 }
 function checkpointBytes(value, terminal = false, ordinary = false, interaction = false) {
+ if(value?.evidenceAdvisoryDelivered!==undefined&&![20,50,80].includes(value.evidenceAdvisoryDelivered))fail('INVALID_RESEARCH_ADVISORY');
  if(interaction)validateInteractionCheckpoint(value);else validateResponseCheckpoint(value, ordinary);validateGatewayOutcomeCheckpoint(value);validateControlObservations(value);
  if (!object(value) || value.schemaVersion !== 'runtime-checkpoint@1' || !(phases.has(value.phase) || ordinary && value.phase === 'awaiting-response') || (terminal ? value.phase !== 'terminal' || !['completed', 'failed', 'cancelled'].includes(value.status) : value.phase === 'terminal')) fail('INVALID_CHECKPOINT');
  return json(value, MAX_CHECKPOINT_JSON);
@@ -841,6 +844,17 @@ export async function openSession({ directory, clock = Date.now, leaseMs = 1000,
      });
     },
     reserve,
+    dispatchUnmeteredTool(snapshot) {const encoded=encodeCheckpoint(snapshot);return transaction(()=>{
+      const row=writer(runId,owner,fence),{definition,snapshot:prior}=view(row);
+      const call=prior.proposal?.calls?.[prior.cursor],effect=snapshot.inFlight;
+      if(row.parent_run_id!==null||!omitsToolDebit(definition.config.researchControl===RESEARCH_CONTROL,call?.name,effect?.name)||
+         !definition.config.allowedTools.includes(call.name)||!['proposal-sealed','result-consumed'].includes(prior.phase)||
+         snapshot.phase!=='tool-dispatched'||canonical(snapshot.proposal)!==canonical(prior.proposal)||
+         snapshot.cursor!==prior.cursor||snapshot.rounds!==prior.rounds||snapshot.toolsDispatched!==prior.toolsDispatched||
+         effect?.callId!==call.id||effect?.name!==call.name||canonical(effect.effective)!==canonical(call))fail('UNMETERED_TOOL_DISPATCH_MISMATCH');
+      db.prepare('UPDATE runs SET snapshot=? WHERE run_id=?').run(encoded,runId);
+      return view(getRun(runId));
+    });},
     publish(prepared) {
      initialPublicationAck=undefined;
      let candidate;

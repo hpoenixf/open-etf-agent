@@ -211,6 +211,7 @@ export async function createLocalGuiWorkspace({ projectDir, origin: mountOrigin,
   };
   function observedResearchRoute(input,run) {
     if(!run)return null;
+    if(input.researchDepth==='auto'&&run.definition?.config?.researchControl==='research-control@1'&&isDeepResearchProfile(run.definition.config.researchProfile))return 'deep';
     if(input.researchDepth==='auto'&&isAutoResearchProfile(run.definition?.config?.researchProfile)){
       const adopted=readResearchIntent(run.snapshot?.messages??[]);
       return adopted!=='direct'?adopted:run.status==='completed'?'direct':null;

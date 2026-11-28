@@ -1,3 +1,4 @@
+import {RESEARCH_CONTROL,evidenceMilestone} from './research-control-policy.mjs';
 import { dirname, resolve } from 'node:path';
 import { readTimeline } from './observe.mjs';
 import {isReasoningEffort} from './gateway.mjs';
@@ -59,6 +60,10 @@ export async function readGuiResearchProgress(projectDir, run) {
     }
     if(event.type==='model_proposal'&&event.kind==='final')add('synthesis','已生成正文，正在确认交付');
     if(event.type==='worker_interrupted')add('interrupted','处理曾中断');
+  }
+  if(run.status==='active'&&run.definition?.config?.researchControl===RESEARCH_CONTROL){
+    const stage=evidenceMilestone(run.snapshot?.messages??[],run.definition.limits);
+    if(stage)add('acquisition_budget','已到取证预算的 '+stage+'% 提醒点');
   }
   // run_finished is pre-settlement, not authoritative. Only the Session's
   // own terminal state is used here. Do not string-project any native fields.
