@@ -1,0 +1,94 @@
+{
+  "schemaVersion": "linked-pdf-release-evidence@1",
+  "sourceCommit": "69099abf273d5bbc5d82277b4769bc94f0316b65",
+  "sourceTree": "c71c167330b45cd6a82ca2b57d955ad6eeb795ec",
+  "environment": "stage",
+  "node": "26.11.1",
+  "fixedCohort": 10,
+  "requiredPasses": 9,
+  "completedModelRequests": 58,
+  "unknownModelRequests": 0,
+  "originalPdfSha256": "cc70d57e4a3677f0ac9bb28085b8a9f1c2c83e49cbdae3a0d916cd82624d9614",
+  "cases": [
+    {
+      "case": 1,
+      "passed": true,
+      "bodyDigestVerified": true,
+      "exactPageCitations": 4,
+      "originalCellCitations": 4,
+      "charts": 2
+    },
+    {
+      "case": 2,
+      "passed": true,
+      "bodyDigestVerified": true,
+      "exactPageCitations": 1,
+      "originalCellCitations": 0,
+      "charts": 0
+    },
+    {
+      "case": 3,
+      "passed": true,
+      "bodyDigestVerified": true,
+      "exactPageCitations": 3,
+      "originalCellCitations": 3,
+      "charts": 0
+    },
+    {
+      "case": 4,
+      "passed": true,
+      "bodyDigestVerified": true,
+      "exactPageCitations": 2,
+      "originalCellCitations": 2,
+      "charts": 0
+    },
+    {
+      "case": 5,
+      "passed": true,
+      "bodyDigestVerified": true,
+      "exactPageCitations": 2,
+      "originalCellCitations": 2,
+      "charts": 0
+    },
+    {
+      "case": 6,
+      "passed": true,
+      "bodyDigestVerified": true,
+      "exactPageCitations": 3,
+      "originalCellCitations": 2,
+      "charts": 2
+    },
+    {
+      "case": 7,
+      "passed": true,
+      "bodyDigestVerified": true,
+      "exactPageCitations": 1,
+      "originalCellCitations": 0,
+      "charts": 0
+    },
+    {
+      "case": 8,
+      "passed": true,
+      "bodyDigestVerified": true,
+      "exactPageCitations": 2,
+      "originalCellCitations": 2,
+      "charts": 0
+    },
+    {
+      "case": 9,
+      "passed": true,
+      "bodyDigestVerified": true,
+      "exactPageCitations": 4,
+      "originalCellCitations": 4,
+      "charts": 0
+    },
+    {
+      "case": 10,
+      "passed": true,
+      "bodyDigestVerified": true,
+      "exactPageCitations": 2,
+      "originalCellCitations": 2,
+      "charts": 1
+    }
+  ]
+}

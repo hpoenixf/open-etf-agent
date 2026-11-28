@@ -1,5 +1,6 @@
 **English** | [简体中文](README.zh-CN.md)
 
+- [v1.0.6 · Safer linked PDF table reading](v106-release.md)
 - [v1.0.5 · Linked PDF cells and controlled chart calculations](v105-release.md)
 - [v1.0.4 · Advanced chart profiles](v104-release.md)
 - [v1.0.3 · Grounded bar and pie charts](v103-release.md)
