@@ -4,7 +4,8 @@ import {UPLOADED_PDF_LIMITS,LINKED_PDF_LIMITS} from './pdf-parse-limits.mjs';
 import {extractPdfTables} from './pdf-table-evidence.mjs';
 const decode=text=>decodeURIComponent(text.replace(/%(?![a-f0-9]{2})/gi,'%25'));
 process.once('message',job=>{
-  const limits=job?.profile==='linked-web-pdf@1'?LINKED_PDF_LIMITS:UPLOADED_PDF_LIMITS;
+  const linked=job?.profile==='linked-web-pdf@1';
+  const limits=linked?LINKED_PDF_LIMITS:UPLOADED_PDF_LIMITS;
   let done=false,count=0,total=0;
   const finish=value=>{if(done)return;done=true;process.send(value);};
   const parser=new PDFParser();
@@ -24,13 +25,13 @@ process.once('message',job=>{
         // Preserve parser item order, not a visual/semantic reading-order claim.
         const spans=page.Texts.map(item=>{
           if(!Array.isArray(item.R))throw new Error('runs');
-          return {x:item.x,y:item.y,text:item.R.map(run=>{if(typeof run.T!=='string')throw new Error('run');return decode(run.T);}).join('')};
+          return {x:item.x,y:item.y,w:item.w,text:item.R.map(run=>{if(typeof run.T!=='string')throw new Error('run');return decode(run.T);}).join('')};
         });
         const text=spans.map(s=>s.text).join('\n').replace(/\r\n?/g,'\n').trim();
         const size=Buffer.byteLength(text);total+=size;
         if(size>limits.pageTextBytes||total>limits.totalTextBytes)throw Object.assign(new Error('limit'),{code:'PDF_LIMIT_TEXT'});
         if(text.includes('\0'))throw new Error('text');
-        const candidates=extractPdfTables(spans.map(s=>({...s,text:s.text.trim()})));
+        const candidates=extractPdfTables(spans.map(s=>({...s,text:s.text.trim()})),{scaledPeriods:linked});
         tables.push(Buffer.byteLength(JSON.stringify(candidates))<=24000?candidates:[]);
         return text;
       });
