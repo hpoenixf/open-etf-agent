@@ -59,3 +59,85 @@ test('exact public HKEX original retains four correctly scoped page 12 capex poi
  assert.deepEqual([0,2,3,4].map(i=>[table.headers[i],row.cells[i].text]),labels.map((v,i)=>[v,['81,433','12,983','166,153','59,566'][i]]));
  assert.equal(table.rows.some(r=>r.label.includes('margin')),false);
 });
+
+test('exact public capex cells feed amount and growth charts and survive a cold GUI read',
+ {skip:!originalPath},async t=>{
+ const {mkdir,mkdtemp,rm}=await import('node:fs/promises');
+ const {resolve}=await import('node:path');
+ const {setTimeout:delay}=await import('node:timers/promises');
+ const {startLocalGui}=await import('../src/gui-server.mjs');
+ const {chartComputeAvailable}=await import('../src/financial-chart-compute.mjs');
+ const {mockWebNetwork}=await import('./fixtures/web-network.mjs');
+ if(!chartComputeAvailable())return t.skip('Controlled formula worker is unavailable');
+ const file=await readFile(originalPath);
+ const page='https://issuer.example/results',pdf='https://issuer.example/report.pdf';
+ const wire=mockWebNetwork(t,{passthroughLoopback:true,routes:{
+  'https://issuer.example/robots.txt':{body:'User-agent: *\nAllow: /'},
+  [page]:{body:'<main><a href="./report.pdf">Report PDF</a></main>',headers:{'content-type':'text/html'}},
+  [pdf]:{body:file,headers:{'content-type':'application/pdf'}},
+ }});
+ await mkdir('test-output',{recursive:true});
+ const projectDir=await mkdtemp(resolve('test-output/scaled-pdf-charts-'));
+ let gui,calls=0,ids;
+ t.after(async()=>{await gui?.close();await rm(projectDir,{recursive:true,force:true});});
+ const res=(message,finish_reason='stop')=>Response.json({choices:[{message:{role:'assistant',...message},finish_reason}]});
+ const f=(id,name,args)=>({id,type:'function',function:{name,arguments:JSON.stringify(args)}});
+ const tool=(...tool_calls)=>res({tool_calls},'tool_calls');
+ const amounts=[81433,12983,166153,59566];
+ const periodKeys=['Q3 2026','Q3 2025','9M 2026','9M 2025'];
+ const growthKeys=['Q3 YoY','9M YoY'];
+ const expectedGrowth=[527.2279134252484,178.9393278044522];
+ const chart=(id,unit,keys,formulaCallId)=>f(id,'render_financial_chart',{dataset:{kind:'financial-columns',asOf:'2026-09-30',unit,keys,series:[{label:'Capital expenditures',formulaCallId}]}});
+ const options={projectDir,env:{ETF_GUI_PROVIDER_KEY:'test-only',ETF_GUI_AGENT_FINANCIAL_CHART:'1',ETF_GUI_CHART_COMPUTE:'1',ETF_GUI_PDF_CHART_CHAIN:'1'},
+  liveConfig:{gateway:{provider:'opencode-go-owner',endpoint:'https://opencode.ai/inference/go/openai/v1/chat/completions',model:'synthetic',apiKeyEnv:'ETF_GUI_PROVIDER_KEY'},limits:{model:12},connectivity:{web:true,linkedPdf:true}},
+  async fetchImpl(_url,{body}){
+   const p=JSON.parse(body).messages.filter(m=>m.role==='tool').map(m=>JSON.parse(m.content).value);
+   switch(++calls){
+    case 1:return tool(f('html','public_web_read',{url:page}));
+    case 2:return tool(f('table','public_web_linked_pdf_page',{linkId:p[0].pdfLinks.links[0].id,page:12,tables:true}));
+    case 3:{
+     const hit=p[1].tables.find(t=>t.rows.some(r=>r.label.startsWith('Capital expenditures')));
+     const row=hit.rows.find(r=>r.label.startsWith('Capital expenditures')).row;
+     assert.equal(hit.unit,'RMB million');
+     return tool(...[1,3,4,5].map((column,i)=>f('capex-'+i,'public_web_linked_pdf_page',{linkId:p[0].pdfLinks.links[0].id,page:12,table:hit.table,row,column})));
+    }
+    case 4:{
+     const cells=p.slice(2,6);assert.deepEqual(cells.map(x=>x.cell.header),labels);
+     ids=cells.map(x=>x.sourceRef);
+     return tool(f('amounts','compute_chart_formula',{script:'capex',cells:{capex:ids}}),
+      f('growth','compute_chart_formula',{script:'pct(newcap, oldcap) - 100',cells:{newcap:[ids[0],ids[2]],oldcap:[ids[1],ids[3]]}}));
+    }
+    case 5:
+     assert.deepEqual(p[6].value,amounts);
+     assert.equal(p[7].value.length,2);
+     p[7].value.forEach((v,i)=>assert.ok(Math.abs(v-expectedGrowth[i])<1e-9));
+     return tool(chart('currency','RMB million',periodKeys,'amounts'),chart('percent','%',growthKeys,'growth'));
+    default:return res({content:'Capital expenditures: '+ids.map(id=>'[[PDF:'+id+']]').join(' ')});
+   }
+  }};
+ gui=await startLocalGui(options);
+ const get=path=>fetch(gui.origin+path).then(r=>r.json());
+ const post=(path,v)=>fetch(gui.origin+path,{method:'POST',headers:{origin:gui.origin,'content-type':'application/json'},body:JSON.stringify(v)});
+ const conv='/api/conversations/'+(await post('/api/conversations',{}).then(r=>r.json())).id;
+ const endpoint=conv+'/messages/report';
+ const admitted=await post(conv+'/messages',{messageId:'report',question:'Read the filing and chart the quarterly and nine-month capex amounts and year-over-year changes.'});
+ assert.equal(admitted.status,202);
+ let m;
+ for(let n=0;n<150;n++){m=(await get(conv)).messages[0];if(m&&!m.working&&['completed','failed'].includes(m.status))break;await delay(35);}
+ assert.equal(m?.status,'completed');
+ assert.equal(m.chartViews.length,2);
+ const [currency,growth]=m.chartViews;
+ assert.deepEqual([currency.unit,growth.unit],['CNY million','%']);
+ assert.deepEqual([currency.keys,growth.keys],[periodKeys,growthKeys]);
+ assert.deepEqual(currency.series[0].values,amounts);
+ growth.series[0].values.forEach((v,i)=>assert.ok(Math.abs(v-expectedGrowth[i])<1e-9));
+ const saved=await get(endpoint+'/sources');
+ assert.deepEqual(saved.readSources.filter(s=>s.kind==='web-pdf-original-cell@1').map(s=>[s.page,s.cell.header,s.cell.unit,s.cited]),
+  labels.map(h=>[12,h,'RMB million',true]));
+ const before=[calls,wire.calls.length];
+ assert.equal(wire.calls.filter(x=>x.url===pdf).length,1);
+ await gui.close();gui=await startLocalGui({...options,env:{ETF_GUI_PROVIDER_KEY:'test-only'}});
+ assert.deepEqual((await get(conv)).messages[0].chartViews,m.chartViews);
+ assert.deepEqual(await get(endpoint+'/sources'),saved);
+ assert.deepEqual([calls,wire.calls.length],before);
+});
